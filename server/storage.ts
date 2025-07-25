@@ -190,6 +190,24 @@ export class MemStorage implements IStorage {
     return this.canvasElements.delete(id);
   }
 
+  async deleteCanvasElementsByLogo(logoId: string): Promise<number> {
+    let deleteCount = 0;
+    const elementsToDelete: string[] = [];
+    
+    this.canvasElements.forEach((element, id) => {
+      if (element.logoId === logoId) {
+        elementsToDelete.push(id);
+      }
+    });
+    
+    elementsToDelete.forEach(id => {
+      this.canvasElements.delete(id);
+      deleteCount++;
+    });
+    
+    return deleteCount;
+  }
+
   // Template size methods
   async getTemplateSize(id: string): Promise<TemplateSize | undefined> {
     return this.templateSizes.get(id);
@@ -205,6 +223,8 @@ export class MemStorage implements IStorage {
     this.templateSizes.set(id, templateSize);
     return templateSize;
   }
+
+
 }
 
 export const storage = new MemStorage();

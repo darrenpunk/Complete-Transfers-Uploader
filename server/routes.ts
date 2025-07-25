@@ -140,6 +140,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete logo
+  app.delete("/api/logos/:id", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+      
+      // Delete the file from disk
+      const filePath = path.join(uploadDir, logo.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      // Delete canvas elements using this logo
+      await storage.deleteCanvasElementsByLogo(logoId);
+      
+      // Delete the logo record
+      const deleted = await storage.deleteLogo(logoId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+      
+      res.json({ message: "Logo deleted successfully" });
+    } catch (error) {
+      console.error('Delete logo error:', error);
+      res.status(500).json({ message: "Failed to delete logo" });
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');

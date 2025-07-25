@@ -303,26 +303,34 @@ export default function CanvasWorkspace({
                         className="absolute -top-6 left-1/2 transform -translate-x-1/2 cursor-grab"
                         onMouseDown={(e) => {
                           e.stopPropagation();
-                          // Handle rotation logic here
+                          let rotationTimeout: NodeJS.Timeout;
+                          
                           const handleRotationMouseMove = (moveEvent: MouseEvent) => {
                             if (!canvasRef.current) return;
                             
-                            const rect = canvasRef.current.getBoundingClientRect();
-                            const centerX = elementX + elementWidth / 2;
-                            const centerY = elementY + elementHeight / 2;
+                            clearTimeout(rotationTimeout);
                             
-                            const angle = Math.atan2(
-                              moveEvent.clientY - rect.top - centerY,
-                              moveEvent.clientX - rect.left - centerX
-                            ) * (180 / Math.PI);
-                            
-                            updateElementMutation.mutate({
-                              id: element.id,
-                              updates: { rotation: Math.round(angle) }
-                            });
+                            rotationTimeout = setTimeout(() => {
+                              if (!updateElementMutation.isPending) {
+                                const rect = canvasRef.current!.getBoundingClientRect();
+                                const centerX = elementX + elementWidth / 2;
+                                const centerY = elementY + elementHeight / 2;
+                                
+                                const angle = Math.atan2(
+                                  moveEvent.clientY - rect.top - centerY,
+                                  moveEvent.clientX - rect.left - centerX
+                                ) * (180 / Math.PI);
+                                
+                                updateElementMutation.mutate({
+                                  id: element.id,
+                                  updates: { rotation: Math.round(angle) }
+                                });
+                              }
+                            }, 100);
                           };
                           
                           const handleRotationMouseUp = () => {
+                            clearTimeout(rotationTimeout);
                             document.removeEventListener('mousemove', handleRotationMouseMove);
                             document.removeEventListener('mouseup', handleRotationMouseUp);
                           };

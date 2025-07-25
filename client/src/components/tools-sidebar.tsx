@@ -72,6 +72,41 @@ export default function ToolsSidebar({
     },
   });
 
+  // Delete logo mutation
+  const deleteLogoMutation = useMutation({
+    mutationFn: async (logoId: string) => {
+      const response = await fetch(`/api/logos/${logoId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Delete failed');
+      }
+      return logoId;
+    },
+    onSuccess: (deletedLogoId) => {
+      // Update logos cache
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "logos"],
+        (oldLogos: any[] = []) => oldLogos.filter(logo => logo.id !== deletedLogoId)
+      );
+      
+      // Invalidate canvas elements to remove any elements using this logo
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      
+      toast({
+        title: "Success",
+        description: "Logo deleted successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete logo. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleFilesSelected = (files: File[]) => {
     uploadLogosMutation.mutate(files);
   };
@@ -127,10 +162,58 @@ export default function ToolsSidebar({
             ))}
           </div>
           
-          <Button variant="outline" className="w-full mt-4 border-dashed">
-            <Plus className="w-4 h-4 mr-2" />
-            Add More Logos
-          </Button>
+          <div className="mt-4 space-y-3">
+            <Button 
+              variant="outline" 
+              className="w-full border-dashed"
+              onClick={() => document.getElementById('more-logos-input')?.click()}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add More Logos
+            </Button>
+            <input
+              id="more-logos-input"
+              type="file"
+              multiple
+              accept=".png,.jpg,.jpeg,.svg,.pdf"
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) {
+                  uploadLogosMutation.mutate(files);
+                  e.target.value = '';
+                }
+              }}
+            />
+            
+            {/* Logo List with Delete Option */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Uploaded Logos</h4>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {logos.map((logo) => (
+                  <div key={logo.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center flex-shrink-0 text-xs">
+                        {logo.mimeType?.startsWith('image/') ? '🖼️' : '📄'}
+                      </div>
+                      <span className="truncate text-xs" title={logo.originalName}>
+                        {logo.originalName}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteLogoMutation.mutate(logo.id)}
+                      className="text-red-600 hover:text-red-700 h-6 w-6 p-0 flex-shrink-0"
+                      disabled={deleteLogoMutation.isPending}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
