@@ -104,30 +104,35 @@ export class PDFGenerator {
     const originalPdf = await PDFDocument.load(originalPdfBytes);
     
     // Get the first page of the original PDF
-    const [originalPage] = await pdfDoc.copyPages(originalPdf, [0]);
+    const originalPages = originalPdf.getPages();
+    if (originalPages.length === 0) {
+      throw new Error('PDF has no pages');
+    }
+    
+    // Copy the first page to our document
+    const [copiedPage] = await pdfDoc.copyPages(originalPdf, [0]);
     
     // Calculate position and scale
     const x = element.x * 2.834645669; // Convert from mm to points
     const y = (templateSize.height - element.y - element.height) * 2.834645669;
-    const width = element.width * 2.834645669;
-    const height = element.height * 2.834645669;
+    const targetWidth = element.width * 2.834645669;
+    const targetHeight = element.height * 2.834645669;
     
     // Get original page dimensions
-    const { width: origWidth, height: origHeight } = originalPage.getSize();
+    const { width: origWidth, height: origHeight } = copiedPage.getSize();
     
-    // Calculate scale to fit the element bounds
-    const scaleX = width / origWidth;
-    const scaleY = height / origHeight;
+    // Calculate scale to fit the element bounds while maintaining aspect ratio
+    const scaleX = targetWidth / origWidth;
+    const scaleY = targetHeight / origHeight;
     const scale = Math.min(scaleX, scaleY);
     
-    // Draw the embedded page with proper scaling and positioning
-    page.drawPage(originalPage, {
+    // Draw the page directly instead of embedding
+    page.drawPage(copiedPage, {
       x: x,
       y: y,
       width: origWidth * scale,
       height: origHeight * scale,
       rotate: degrees(element.rotation || 0),
-      opacity: 1.0, // Remove opacity for now since it's not in schema
     });
   }
   
