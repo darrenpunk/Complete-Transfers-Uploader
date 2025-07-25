@@ -9,7 +9,7 @@ import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Eye, ArrowLeft, ArrowRight } from "lucide-react";
+import { Save, Eye, ArrowLeft, ArrowRight, Download } from "lucide-react";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -77,6 +77,39 @@ export default function UploadTool() {
     onSuccess: (updatedProject) => {
       setCurrentProject(updatedProject);
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id] });
+    },
+  });
+
+  // Generate PDF with vector preservation
+  const generatePDFMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/projects/${currentProject?.id}/generate-pdf`);
+      if (!response.ok) throw new Error('Failed to generate PDF');
+      const blob = await response.blob();
+      return { blob, filename: `${currentProject?.name}.pdf` };
+    },
+    onSuccess: ({ blob, filename }) => {
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Production PDF downloaded with preserved vector graphics",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "PDF Generation Failed",
+        description: "Unable to generate PDF. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -224,6 +257,16 @@ export default function UploadTool() {
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
+            {currentStep >= 3 && (
+              <Button 
+                variant="outline"
+                onClick={() => generatePDFMutation.mutate()}
+                disabled={generatePDFMutation.isPending}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {generatePDFMutation.isPending ? "Generating..." : "Download Vector PDF"}
+              </Button>
+            )}
             <Button onClick={handleNextStep} disabled={currentStep === 5}>
               {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
               <ArrowRight className="w-4 h-4 ml-2" />

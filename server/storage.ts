@@ -140,7 +140,10 @@ export class MemStorage implements IStorage {
       ...insertLogo, 
       id,
       width: insertLogo.width || null,
-      height: insertLogo.height || null
+      height: insertLogo.height || null,
+      originalFilename: insertLogo.originalFilename ?? null,
+      originalMimeType: insertLogo.originalMimeType ?? null,
+      originalUrl: insertLogo.originalUrl ?? null
     };
     this.logos.set(id, logo);
     return logo;

@@ -9,6 +9,7 @@ import { insertProjectSchema, insertLogoSchema, insertCanvasElementSchema, updat
 import { fromPath } from "pdf2pic";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { pdfGenerator } from "./pdf-generator";
 
 const execAsync = promisify(exec);
 
@@ -166,7 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           size: file.size,
           width: null,
           height: null,
-          url: finalUrl
+          url: finalUrl,
+          // Store original PDF data for vector output if it was converted
+          originalFilename: file.mimetype === 'application/pdf' ? file.filename : null,
+          originalMimeType: file.mimetype === 'application/pdf' ? file.mimetype : null,
+          originalUrl: file.mimetype === 'application/pdf' ? `/uploads/${file.filename}` : null,
         };
 
         const validatedData = insertLogoSchema.parse(logoData);
@@ -267,6 +272,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete canvas element" });
+    }
+  });
+
+  // Generate PDF with vector preservation
+  app.get("/api/projects/:projectId/generate-pdf", async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      
+      // Get project data
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      const logos = await storage.getLogosByProject(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      const templateSize = await storage.getTemplateSize(project.templateSize);
+      
+      if (!templateSize) {
+        return res.status(400).json({ message: "Template size not found" });
+      }
+
+      // Generate PDF with vector preservation
+      const pdfBuffer = await pdfGenerator.generateProductionPDF({
+        projectId,
+        templateSize,
+        canvasElements,
+        logos
+      });
+
+      // Set response headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${project.name}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ message: "Failed to generate PDF" });
     }
   });
 

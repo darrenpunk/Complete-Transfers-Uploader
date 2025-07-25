@@ -28,6 +28,9 @@ export const logos = pgTable("logos", {
   width: integer("width"),
   height: integer("height"),
   url: text("url").notNull(),
+  originalFilename: text("original_filename"), // Store original PDF filename for vector output
+  originalMimeType: text("original_mime_type"), // Store original PDF mime type
+  originalUrl: text("original_url"), // Store original PDF URL for vector output
 });
 
 export const canvasElements = pgTable("canvas_elements", {
