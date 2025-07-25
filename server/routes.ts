@@ -6,6 +6,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { insertProjectSchema, insertLogoSchema, insertCanvasElementSchema, updateCanvasElementSchema } from "@shared/schema";
+import { fromPath } from "pdf2pic";
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -102,15 +103,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const logos = [];
       for (const file of files) {
+        let finalFilename = file.filename;
+        let finalMimeType = file.mimetype;
+        let finalUrl = `/uploads/${file.filename}`;
+
+        // If it's a PDF, convert it to PNG for display
+        if (file.mimetype === 'application/pdf') {
+          try {
+            const convert = fromPath(file.path, {
+              density: 300,           // DPI for high quality
+              saveFilename: "page",
+              savePath: uploadDir,
+              format: "png",
+              width: 2000,           // Max width
+              height: 2000           // Max height
+            });
+
+            const results = await convert(1, { responseType: "buffer" }); // Convert first page
+            if (results && results.buffer) {
+              // Save the converted PNG
+              finalFilename = `${file.filename}.png`;
+              const pngPath = path.join(uploadDir, finalFilename);
+              fs.writeFileSync(pngPath, results.buffer);
+              
+              finalMimeType = 'image/png';
+              finalUrl = `/uploads/${finalFilename}`;
+              
+              console.log(`PDF converted to PNG: ${finalFilename}`);
+            }
+          } catch (error) {
+            console.error('PDF conversion failed:', error);
+            // Fall back to original PDF file if conversion fails
+          }
+        }
+
         const logoData = {
           projectId: req.params.projectId,
-          filename: file.filename,
+          filename: finalFilename,
           originalName: file.originalname,
-          mimeType: file.mimetype,
+          mimeType: finalMimeType,
           size: file.size,
           width: null,
           height: null,
-          url: `/uploads/${file.filename}`
+          url: finalUrl
         };
 
         const validatedData = insertLogoSchema.parse(logoData);
