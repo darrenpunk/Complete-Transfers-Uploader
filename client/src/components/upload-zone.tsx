@@ -33,6 +33,12 @@ export default function UploadZone({ onFilesSelected, isUploading }: UploadZoneP
     },
     multiple: true,
     maxSize: 10 * 1024 * 1024, // 10MB
+    onDropRejected: (rejectedFiles) => {
+      console.log('Files rejected:', rejectedFiles.map(f => ({ 
+        name: f.file.name, 
+        errors: f.errors.map(e => e.message) 
+      })));
+    }
   });
 
   const removeFile = (index: number) => {
@@ -77,6 +83,9 @@ export default function UploadZone({ onFilesSelected, isUploading }: UploadZoneP
             </p>
             <p className="text-xs text-gray-500">
               Supports PNG, JPEG, SVG, PDF • Max 10MB per file
+            </p>
+            <p className="text-xs text-blue-600 mt-2">
+              📷 Images display as previews • 📄 PDFs show as document icons
             </p>
           </div>
         </CardContent>

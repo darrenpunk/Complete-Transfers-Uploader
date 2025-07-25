@@ -81,6 +81,8 @@ export default function CanvasWorkspace({
   };
 
   useEffect(() => {
+    let dragUpdateTimeout: NodeJS.Timeout;
+
     const handleMouseMove = (event: MouseEvent) => {
       if (!isDragging || !selectedElement || !canvasRef.current) return;
 
@@ -88,18 +90,23 @@ export default function CanvasWorkspace({
       const newX = (event.clientX - rect.left - dragOffset.x) / (zoom / 100);
       const newY = (event.clientY - rect.top - dragOffset.y) / (zoom / 100);
 
-      // Throttle updates to prevent too many API calls
-      if (updateElementMutation.isPending) return;
+      // Clear previous timeout
+      clearTimeout(dragUpdateTimeout);
 
-      // Update element position
-      updateElementMutation.mutate({
-        id: selectedElement.id,
-        updates: { x: Math.max(0, newX), y: Math.max(0, newY) }
-      });
+      // Update position with throttling
+      dragUpdateTimeout = setTimeout(() => {
+        if (!updateElementMutation.isPending) {
+          updateElementMutation.mutate({
+            id: selectedElement.id,
+            updates: { x: Math.max(0, newX), y: Math.max(0, newY) }
+          });
+        }
+      }, 50); // Throttle to 20fps
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      clearTimeout(dragUpdateTimeout);
     };
 
     if (isDragging) {
@@ -110,6 +117,7 @@ export default function CanvasWorkspace({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      clearTimeout(dragUpdateTimeout);
     };
   }, [isDragging, selectedElement, dragOffset, zoom]);
 
@@ -235,26 +243,7 @@ export default function CanvasWorkspace({
                 >
                   {/* Logo Content */}
                   <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded overflow-hidden">
-                    {logo.mimeType === 'application/pdf' ? (
-                      <div className="flex flex-col items-center justify-center text-gray-500 p-4">
-                        <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-xs font-medium">PDF</span>
-                        <span className="text-xs">{logo.originalName}</span>
-                      </div>
-                    ) : logo.mimeType === 'image/svg+xml' ? (
-                      <object
-                        data={logo.url}
-                        type="image/svg+xml"
-                        className="max-w-full max-h-full"
-                        style={{ pointerEvents: 'none' }}
-                      >
-                        <div className="flex items-center justify-center text-gray-500">
-                          <span className="text-xs">SVG</span>
-                        </div>
-                      </object>
-                    ) : (
+                    {logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={logo.url}
                         alt={logo.originalName}
@@ -262,8 +251,37 @@ export default function CanvasWorkspace({
                         draggable={false}
                         onError={(e) => {
                           console.error('Failed to load image:', logo.url);
+                          // Show fallback icon if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="flex flex-col items-center justify-center text-gray-500 p-2">
+                                <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-xs">${logo.originalName}</span>
+                              </div>
+                            `;
+                          }
                         }}
                       />
+                    ) : logo.mimeType === 'application/pdf' ? (
+                      <div className="flex flex-col items-center justify-center text-gray-500 p-2">
+                        <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs font-medium">PDF</span>
+                        <span className="text-xs text-center break-all">{logo.originalName}</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-gray-500 p-2">
+                        <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs text-center break-all">{logo.originalName}</span>
+                      </div>
                     )}
                   </div>
 
@@ -281,9 +299,40 @@ export default function CanvasWorkspace({
                       <div className="absolute top-1/2 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-w-resize transform -translate-y-1/2" />
                       
                       {/* Rotation Handle */}
-                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                      <div 
+                        className="absolute -top-6 left-1/2 transform -translate-x-1/2 cursor-grab"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          // Handle rotation logic here
+                          const handleRotationMouseMove = (moveEvent: MouseEvent) => {
+                            if (!canvasRef.current) return;
+                            
+                            const rect = canvasRef.current.getBoundingClientRect();
+                            const centerX = elementX + elementWidth / 2;
+                            const centerY = elementY + elementHeight / 2;
+                            
+                            const angle = Math.atan2(
+                              moveEvent.clientY - rect.top - centerY,
+                              moveEvent.clientX - rect.left - centerX
+                            ) * (180 / Math.PI);
+                            
+                            updateElementMutation.mutate({
+                              id: element.id,
+                              updates: { rotation: Math.round(angle) }
+                            });
+                          };
+                          
+                          const handleRotationMouseUp = () => {
+                            document.removeEventListener('mousemove', handleRotationMouseMove);
+                            document.removeEventListener('mouseup', handleRotationMouseUp);
+                          };
+                          
+                          document.addEventListener('mousemove', handleRotationMouseMove);
+                          document.addEventListener('mouseup', handleRotationMouseUp);
+                        }}
+                      >
                         <div className="w-1 h-4 bg-primary" />
-                        <div className="w-4 h-4 bg-primary border-2 border-white rounded-full cursor-grab" />
+                        <div className="w-4 h-4 bg-primary border-2 border-white rounded-full" />
                       </div>
                     </>
                   )}
