@@ -114,46 +114,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If it's a PDF, convert it to SVG to preserve vectors
         if (file.mimetype === 'application/pdf') {
           try {
-            // Use pdftocairo directly to convert PDF to SVG
-            finalFilename = `${file.filename}.svg`;
-            const svgPath = path.join(uploadDir, finalFilename);
+            // Try SVG conversion first using pdftocairo
+            const svgBasename = `${file.filename}`;
+            const svgCommand = `pdftocairo -svg -f 1 -l 1 "${file.path}" "${path.join(uploadDir, svgBasename)}"`;
             
-            const command = `pdftocairo -svg -f 1 -l 1 "${file.path}" "${svgPath.replace('.svg', '')}"`;
-            await execAsync(command);
+            await execAsync(svgCommand);
             
-            if (fs.existsSync(svgPath)) {
+            // pdftocairo creates filename.svg automatically
+            const svgPath = path.join(uploadDir, `${svgBasename}.svg`);
+            
+            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+              finalFilename = `${svgBasename}.svg`;
               finalMimeType = 'image/svg+xml';
               finalUrl = `/uploads/${finalFilename}`;
               console.log(`PDF converted to SVG: ${finalFilename}`);
             } else {
-              throw new Error('SVG file not created');
+              throw new Error('SVG conversion failed or created empty file');
             }
-          } catch (error) {
-            console.error('PDF to SVG conversion failed:', error);
-            // Try PNG conversion as fallback
+          } catch (svgError) {
+            console.error('PDF to SVG conversion failed:', svgError);
+            
+            // Fallback: Try PNG conversion with better error handling
             try {
-              const convertPng = fromPath(file.path, {
-                density: 300,
-                saveFilename: "page",
-                savePath: uploadDir,
-                format: "png",
-                width: 2000,
-                height: 2000
-              });
-
-              const pngResults = await convertPng(1, { responseType: "buffer" });
-              if (pngResults && pngResults.buffer) {
-                finalFilename = `${file.filename}.png`;
-                const pngPath = path.join(uploadDir, finalFilename);
-                fs.writeFileSync(pngPath, pngResults.buffer);
+              const pngBasename = `${file.filename}`;
+              const pngCommand = `pdftocairo -png -f 1 -l 1 -r 300 "${file.path}" "${path.join(uploadDir, pngBasename)}"`;
+              
+              await execAsync(pngCommand);
+              
+              // pdftocairo creates filename-1.png for PNG
+              const pngPath = path.join(uploadDir, `${pngBasename}-1.png`);
+              
+              if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                // Rename to simpler filename
+                finalFilename = `${pngBasename}.png`;
+                const finalPngPath = path.join(uploadDir, finalFilename);
+                fs.renameSync(pngPath, finalPngPath);
                 
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
                 console.log(`PDF converted to PNG as fallback: ${finalFilename}`);
+              } else {
+                throw new Error('PNG conversion also failed');
               }
-            } catch (fallbackError) {
-              console.error('PNG fallback conversion also failed:', fallbackError);
+            } catch (pngError) {
+              console.error('PNG fallback conversion also failed:', pngError);
+              // Use original PDF file
+              console.log('Using original PDF file as final fallback');
             }
           }
         }
