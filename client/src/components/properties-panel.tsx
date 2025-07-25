@@ -39,8 +39,15 @@ export default function PropertiesPanel({
       const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", selectedElement?.projectId, "canvas-elements"] });
+    onSuccess: (updatedElement) => {
+      // Update cache manually instead of invalidating to prevent re-fetching
+      queryClient.setQueryData(
+        ["/api/projects", selectedElement?.projectId, "canvas-elements"],
+        (oldData: CanvasElement[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
+        }
+      );
     },
   });
 

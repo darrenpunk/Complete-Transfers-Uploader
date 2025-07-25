@@ -35,8 +35,15 @@ export default function CanvasWorkspace({
       const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+    onSuccess: (updatedElement) => {
+      // Update cache manually instead of invalidating to prevent re-fetching
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "canvas-elements"],
+        (oldData: CanvasElement[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
+        }
+      );
     },
   });
 
@@ -81,6 +88,9 @@ export default function CanvasWorkspace({
       const newX = (event.clientX - rect.left - dragOffset.x) / (zoom / 100);
       const newY = (event.clientY - rect.top - dragOffset.y) / (zoom / 100);
 
+      // Throttle updates to prevent too many API calls
+      if (updateElementMutation.isPending) return;
+
       // Update element position
       updateElementMutation.mutate({
         id: selectedElement.id,
@@ -101,7 +111,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, selectedElement, dragOffset, zoom, updateElementMutation]);
+  }, [isDragging, selectedElement, dragOffset, zoom]);
 
   if (!template) {
     return (
@@ -225,12 +235,36 @@ export default function CanvasWorkspace({
                 >
                   {/* Logo Content */}
                   <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded overflow-hidden">
-                    <img
-                      src={logo.url}
-                      alt={logo.originalName}
-                      className="max-w-full max-h-full object-contain"
-                      draggable={false}
-                    />
+                    {logo.mimeType === 'application/pdf' ? (
+                      <div className="flex flex-col items-center justify-center text-gray-500 p-4">
+                        <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs font-medium">PDF</span>
+                        <span className="text-xs">{logo.originalName}</span>
+                      </div>
+                    ) : logo.mimeType === 'image/svg+xml' ? (
+                      <object
+                        data={logo.url}
+                        type="image/svg+xml"
+                        className="max-w-full max-h-full"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <div className="flex items-center justify-center text-gray-500">
+                          <span className="text-xs">SVG</span>
+                        </div>
+                      </object>
+                    ) : (
+                      <img
+                        src={logo.url}
+                        alt={logo.originalName}
+                        className="max-w-full max-h-full object-contain"
+                        draggable={false}
+                        onError={(e) => {
+                          console.error('Failed to load image:', logo.url);
+                        }}
+                      />
+                    )}
                   </div>
 
                   {/* Transformation Handles */}

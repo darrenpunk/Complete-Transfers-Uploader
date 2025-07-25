@@ -83,18 +83,14 @@ export default function UploadTool() {
   useEffect(() => {
     if (project) {
       setCurrentProject(project);
-      // Determine current step based on project status and data
-      if (logos.length === 0) {
-        setCurrentStep(1);
-      } else if (canvasElements.length === 0) {
-        setCurrentStep(2);
-      } else {
-        setCurrentStep(2);
-      }
-    } else if (!id) {
+    }
+  }, [project]);
+
+  useEffect(() => {
+    if (!id && templateSizes.length > 0 && !currentProject) {
       // Create a new project if no ID provided
       const defaultTemplate = templateSizes.find(t => t.name === "A4");
-      if (defaultTemplate && !currentProject) {
+      if (defaultTemplate) {
         createProjectMutation.mutate({
           name: `Project ${new Date().toLocaleDateString()}`,
           templateSize: defaultTemplate.id,
@@ -102,7 +98,18 @@ export default function UploadTool() {
         });
       }
     }
-  }, [project, id, templateSizes, logos.length, canvasElements.length]);
+  }, [id, templateSizes, currentProject]);
+
+  useEffect(() => {
+    // Determine current step based on project status and data
+    if (currentProject) {
+      if (logos.length === 0) {
+        setCurrentStep(1);
+      } else {
+        setCurrentStep(2);
+      }
+    }
+  }, [currentProject, logos.length]);
 
   const handleTemplateChange = (templateId: string) => {
     if (currentProject) {

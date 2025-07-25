@@ -48,9 +48,16 @@ export default function ToolsSidebar({
       
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+    onSuccess: (newLogos) => {
+      // Update logos cache directly
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "logos"],
+        (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+      );
+      
+      // Only invalidate canvas elements to fetch new ones
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      
       toast({
         title: "Success",
         description: "Logos uploaded successfully!",

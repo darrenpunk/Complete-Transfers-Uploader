@@ -108,6 +108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           originalName: file.originalname,
           mimeType: file.mimetype,
           size: file.size,
+          width: null,
+          height: null,
           url: `/uploads/${file.filename}`
         };
 
