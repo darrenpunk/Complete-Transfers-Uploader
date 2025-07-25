@@ -111,56 +111,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert it to SVG to preserve vectors
+        // If it's a PDF, convert it using ImageMagick for better compatibility
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try SVG conversion first using pdftocairo
-            const svgBasename = `${file.filename}`;
-            const svgCommand = `pdftocairo -svg -f 1 -l 1 "${file.path}" "${path.join(uploadDir, svgBasename)}"`;
+            // Try PNG conversion using ImageMagick convert command
+            const pngFilename = `${file.filename}.png`;
+            const pngPath = path.join(uploadDir, pngFilename);
             
-            await execAsync(svgCommand);
+            // ImageMagick convert with specific PDF handling
+            const convertCommand = `convert -density 300 -quality 90 "${file.path}[0]" "${pngPath}"`;
             
-            // pdftocairo creates filename.svg automatically
-            const svgPath = path.join(uploadDir, `${svgBasename}.svg`);
+            await execAsync(convertCommand);
             
-            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-              finalFilename = `${svgBasename}.svg`;
-              finalMimeType = 'image/svg+xml';
+            if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+              finalFilename = pngFilename;
+              finalMimeType = 'image/png';
               finalUrl = `/uploads/${finalFilename}`;
-              console.log(`PDF converted to SVG: ${finalFilename}`);
+              
+              console.log(`PDF converted to PNG using ImageMagick: ${finalFilename}`);
             } else {
-              throw new Error('SVG conversion failed or created empty file');
+              throw new Error('ImageMagick conversion failed');
             }
-          } catch (svgError) {
-            console.error('PDF to SVG conversion failed:', svgError);
+          } catch (convertError) {
+            console.error('PDF conversion failed:', convertError);
             
-            // Fallback: Try PNG conversion with better error handling
+            // Final fallback: Try with mutool (if available)
             try {
-              const pngBasename = `${file.filename}`;
-              const pngCommand = `pdftocairo -png -f 1 -l 1 -r 300 "${file.path}" "${path.join(uploadDir, pngBasename)}"`;
+              const pngFilename = `${file.filename}.png`;
+              const pngPath = path.join(uploadDir, pngFilename);
               
-              await execAsync(pngCommand);
-              
-              // pdftocairo creates filename-1.png for PNG
-              const pngPath = path.join(uploadDir, `${pngBasename}-1.png`);
+              const mutoolCommand = `mutool draw -r 300 -o "${pngPath}" "${file.path}" 1`;
+              await execAsync(mutoolCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                // Rename to simpler filename
-                finalFilename = `${pngBasename}.png`;
-                const finalPngPath = path.join(uploadDir, finalFilename);
-                fs.renameSync(pngPath, finalPngPath);
-                
+                finalFilename = pngFilename;
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
-                console.log(`PDF converted to PNG as fallback: ${finalFilename}`);
+                console.log(`PDF converted to PNG using mutool: ${finalFilename}`);
               } else {
-                throw new Error('PNG conversion also failed');
+                throw new Error('All conversion methods failed');
               }
-            } catch (pngError) {
-              console.error('PNG fallback conversion also failed:', pngError);
-              // Use original PDF file
-              console.log('Using original PDF file as final fallback');
+            } catch (mutoolError) {
+              console.error('All PDF conversion methods failed:', mutoolError);
             }
           }
         }
