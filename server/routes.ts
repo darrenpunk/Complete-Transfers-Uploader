@@ -7,6 +7,10 @@ import path from "path";
 import fs from "fs";
 import { insertProjectSchema, insertLogoSchema, insertCanvasElementSchema, updateCanvasElementSchema } from "@shared/schema";
 import { fromPath } from "pdf2pic";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -107,33 +111,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert it to PNG for display
+        // If it's a PDF, convert it to SVG to preserve vectors
         if (file.mimetype === 'application/pdf') {
           try {
-            const convert = fromPath(file.path, {
-              density: 300,           // DPI for high quality
-              saveFilename: "page",
-              savePath: uploadDir,
-              format: "png",
-              width: 2000,           // Max width
-              height: 2000           // Max height
-            });
-
-            const results = await convert(1, { responseType: "buffer" }); // Convert first page
-            if (results && results.buffer) {
-              // Save the converted PNG
-              finalFilename = `${file.filename}.png`;
-              const pngPath = path.join(uploadDir, finalFilename);
-              fs.writeFileSync(pngPath, results.buffer);
-              
-              finalMimeType = 'image/png';
+            // Use pdftocairo directly to convert PDF to SVG
+            finalFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, finalFilename);
+            
+            const command = `pdftocairo -svg -f 1 -l 1 "${file.path}" "${svgPath.replace('.svg', '')}"`;
+            await execAsync(command);
+            
+            if (fs.existsSync(svgPath)) {
+              finalMimeType = 'image/svg+xml';
               finalUrl = `/uploads/${finalFilename}`;
-              
-              console.log(`PDF converted to PNG: ${finalFilename}`);
+              console.log(`PDF converted to SVG: ${finalFilename}`);
+            } else {
+              throw new Error('SVG file not created');
             }
           } catch (error) {
-            console.error('PDF conversion failed:', error);
-            // Fall back to original PDF file if conversion fails
+            console.error('PDF to SVG conversion failed:', error);
+            // Try PNG conversion as fallback
+            try {
+              const convertPng = fromPath(file.path, {
+                density: 300,
+                saveFilename: "page",
+                savePath: uploadDir,
+                format: "png",
+                width: 2000,
+                height: 2000
+              });
+
+              const pngResults = await convertPng(1, { responseType: "buffer" });
+              if (pngResults && pngResults.buffer) {
+                finalFilename = `${file.filename}.png`;
+                const pngPath = path.join(uploadDir, finalFilename);
+                fs.writeFileSync(pngPath, pngResults.buffer);
+                
+                finalMimeType = 'image/png';
+                finalUrl = `/uploads/${finalFilename}`;
+                
+                console.log(`PDF converted to PNG as fallback: ${finalFilename}`);
+              }
+            } catch (fallbackError) {
+              console.error('PNG fallback conversion also failed:', fallbackError);
+            }
           }
         }
 
