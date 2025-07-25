@@ -243,6 +243,10 @@ export default function CanvasWorkspace({
                 >
                   {/* Logo Content */}
                   <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded overflow-hidden">
+                    {/* Debug info - remove this later */}
+                    <div className="absolute top-0 left-0 text-xs bg-black text-white p-1 opacity-75 z-50">
+                      {logo.mimeType}
+                    </div>
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={logo.url}
@@ -268,12 +272,17 @@ export default function CanvasWorkspace({
                         }}
                       />
                     ) : logo.mimeType === 'application/pdf' ? (
-                      <div className="flex flex-col items-center justify-center text-gray-500 p-2">
-                        <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                      <div className="flex flex-col items-center justify-center text-red-600 p-2 bg-red-50 border border-red-200">
+                        <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                          <path d="M10.5,11.5C10.5,12.3 9.8,13 9,13H8V15H6.5V9H9C9.8,9 10.5,9.7 10.5,10.5V11.5M9,10.5H8V11.5H9V10.5Z" />
+                          <path d="M12.5,9H14.5C15.3,9 16,9.7 16,10.5V11C16,11.8 15.3,12.5 14.5,12.5H13V15H12.5V9M14.5,10.5H13V11H14.5V10.5Z" />
+                          <path d="M18.5,9V15H17V13H16V15H14.5V9H16V11.5H17V9H18.5Z" />
                         </svg>
-                        <span className="text-xs font-medium">PDF</span>
-                        <span className="text-xs text-center break-all">{logo.originalName}</span>
+                        <div className="text-center">
+                          <div className="text-xs font-bold">PDF DOCUMENT</div>
+                          <div className="text-xs mt-1 px-1 max-w-full break-words">{logo.originalName}</div>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-gray-500 p-2">
