@@ -2,6 +2,7 @@ import { storage } from "./storage";
 import type { CanvasElement, Logo, TemplateSize } from "@shared/schema";
 import fs from "fs";
 import path from "path";
+import { PDFDocument, rgb, degrees } from "pdf-lib";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -12,15 +13,159 @@ export interface PDFGenerationData {
 
 export class PDFGenerator {
   async generateProductionPDF(data: PDFGenerationData): Promise<Buffer> {
-    // This will generate a PDF that preserves vector data from original PDFs
-    // For now, return a simple implementation - this can be expanded with actual PDF generation
-    
     const { projectId, templateSize, canvasElements, logos } = data;
     
-    // Create a simple PDF structure that references original vector PDFs
-    const pdfContent = this.createVectorPreservingPDF(templateSize, canvasElements, logos);
+    try {
+      // Create a new PDF document
+      const pdfDoc = await PDFDocument.create();
+      
+      // Convert template size from mm to points (1mm = 2.834645669 points)
+      const pageWidth = templateSize.width * 2.834645669;
+      const pageHeight = templateSize.height * 2.834645669;
+      
+      // Add a page with the template dimensions
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Create a logo map for quick lookup
+      const logoMap = new Map(logos.map(logo => [logo.id, logo]));
+      
+      // Process each canvas element
+      for (const element of canvasElements) {
+        const logo = logoMap.get(element.logoId);
+        if (!logo || !element.isVisible) continue;
+        
+        try {
+          await this.embedLogoInPDF(pdfDoc, page, element, logo, templateSize);
+        } catch (error) {
+          console.error(`Failed to embed logo ${logo.originalName}:`, error);
+          // Continue with other elements even if one fails
+        }
+      }
+      
+      // Serialize the PDF
+      const pdfBytes = await pdfDoc.save();
+      return Buffer.from(pdfBytes);
+      
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      throw new Error('Failed to generate PDF');
+    }
+  }
+  
+  private async embedLogoInPDF(
+    pdfDoc: PDFDocument, 
+    page: ReturnType<PDFDocument['addPage']>, 
+    element: CanvasElement, 
+    logo: Logo, 
+    templateSize: TemplateSize
+  ) {
+    const uploadDir = path.join(process.cwd(), "uploads");
     
-    return Buffer.from(pdfContent);
+    // Try to use original PDF if available, otherwise use the converted image
+    const shouldUseOriginal = logo.originalMimeType === 'application/pdf' && logo.originalFilename;
+    const filePath = shouldUseOriginal 
+      ? path.join(uploadDir, logo.originalFilename!)
+      : path.join(uploadDir, logo.filename);
+    
+    if (!fs.existsSync(filePath)) {
+      console.warn(`File not found: ${filePath}`);
+      return;
+    }
+    
+    try {
+      if (shouldUseOriginal) {
+        // Embed original PDF as vector
+        await this.embedOriginalPDF(pdfDoc, page, element, filePath, templateSize);
+      } else {
+        // Embed as image
+        await this.embedImageFile(pdfDoc, page, element, filePath, logo.mimeType, templateSize);
+      }
+    } catch (error) {
+      console.error(`Failed to embed file ${filePath}:`, error);
+      // Fallback to image version if PDF embedding fails
+      if (shouldUseOriginal) {
+        const imagePath = path.join(uploadDir, logo.filename);
+        if (fs.existsSync(imagePath)) {
+          await this.embedImageFile(pdfDoc, page, element, imagePath, logo.mimeType, templateSize);
+        }
+      }
+    }
+  }
+  
+  private async embedOriginalPDF(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    pdfPath: string,
+    templateSize: TemplateSize
+  ) {
+    // Read and embed the original PDF
+    const originalPdfBytes = fs.readFileSync(pdfPath);
+    const originalPdf = await PDFDocument.load(originalPdfBytes);
+    
+    // Get the first page of the original PDF
+    const [originalPage] = await pdfDoc.copyPages(originalPdf, [0]);
+    
+    // Calculate position and scale
+    const x = element.x * 2.834645669; // Convert from mm to points
+    const y = (templateSize.height - element.y - element.height) * 2.834645669;
+    const width = element.width * 2.834645669;
+    const height = element.height * 2.834645669;
+    
+    // Get original page dimensions
+    const { width: origWidth, height: origHeight } = originalPage.getSize();
+    
+    // Calculate scale to fit the element bounds
+    const scaleX = width / origWidth;
+    const scaleY = height / origHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Draw the embedded page with proper scaling and positioning
+    page.drawPage(originalPage, {
+      x: x,
+      y: y,
+      width: origWidth * scale,
+      height: origHeight * scale,
+      rotate: degrees(element.rotation || 0),
+      opacity: 1.0, // Remove opacity for now since it's not in schema
+    });
+  }
+  
+  private async embedImageFile(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    imagePath: string,
+    mimeType: string,
+    templateSize: TemplateSize
+  ) {
+    const imageBytes = fs.readFileSync(imagePath);
+    
+    let image;
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } else if (mimeType.includes('png')) {
+      image = await pdfDoc.embedPng(imageBytes);
+    } else {
+      console.warn(`Unsupported image type: ${mimeType}`);
+      return;
+    }
+    
+    // Calculate position (flip Y coordinate for PDF)
+    const x = element.x * 2.834645669;
+    const y = (templateSize.height - element.y - element.height) * 2.834645669;
+    const width = element.width * 2.834645669;
+    const height = element.height * 2.834645669;
+    
+    // Draw the image
+    page.drawImage(image, {
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      rotate: degrees(element.rotation || 0),
+      opacity: 1.0, // Remove opacity for now since it's not in schema
+    });
   }
   
   private createVectorPreservingPDF(templateSize: TemplateSize, elements: CanvasElement[], logos: Logo[]): string {
