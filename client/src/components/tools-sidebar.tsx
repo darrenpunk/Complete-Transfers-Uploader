@@ -16,6 +16,7 @@ import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
 import dtfIconPath from "@assets/DTF_1753540006979.png";
+import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -285,11 +286,18 @@ export default function ToolsSidebar({
                       className="h-12 w-12 object-contain"
                     />
                   )}
+                  {groupName === "Full Colour Transfer Sizes" && (
+                    <img 
+                      src={fullColourIconPath} 
+                      alt="Full Colour Transfer" 
+                      className="h-12 w-12 object-contain"
+                    />
+                  )}
                   <span className="text-sm font-medium text-gray-800">{groupName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">
-                    {templates.length} {groupName === "DTF Transfer Sizes" ? "sizes" : "templates"}
+                    {templates.length} {(groupName === "DTF Transfer Sizes" || groupName === "Full Colour Transfer Sizes") ? "sizes" : "templates"}
                   </span>
                   {expandedGroups.includes(`template-${groupName}`) 
                     ? <ChevronDown className="w-4 h-4" />
@@ -299,7 +307,7 @@ export default function ToolsSidebar({
               </CollapsibleTrigger>
               <CollapsibleContent className="px-2 py-2">
                 {/* Show first 4 templates in 2x2 grid if they're standard sizes */}
-                {groupName === "Full Colour / Single Color Transfer Templates" && templates.length >= 4 && (
+                {groupName === "Full Colour Transfer Sizes" && templates.length >= 4 && (
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {templates.slice(0, 4).map((template) => (
                       <Button
@@ -317,7 +325,7 @@ export default function ToolsSidebar({
                 
                 {/* Show remaining templates in single column */}
                 <div className="grid grid-cols-1 gap-2">
-                  {(groupName === "Full Colour / Single Color Transfer Templates" ? templates.slice(4) : templates).map((template) => (
+                  {(groupName === "Full Colour Transfer Sizes" ? templates.slice(4) : templates).map((template) => (
                     <Button
                       key={template.id}
                       variant={project.templateSize === template.id ? "default" : "outline"}

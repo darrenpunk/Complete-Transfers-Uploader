@@ -58,15 +58,15 @@ export class MemStorage implements IStorage {
 
   private initializeTemplateSizes() {
     const standardSizes = [
-      // Full Colour / Single Color Transfer Templates
-      { name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "business_card", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour / Single Color Transfer Templates" },
-      { name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour / Single Color Transfer Templates" },
+      // Full Colour Transfer Sizes
+      { name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour Transfer Sizes" },
+      { name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour Transfer Sizes" },
+      { name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Full Colour Transfer Sizes" },
+      { name: "A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Full Colour Transfer Sizes" },
+      { name: "business_card", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Full Colour Transfer Sizes" },
+      { name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Full Colour Transfer Sizes" },
+      { name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour Transfer Sizes" },
+      { name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour Transfer Sizes" },
       
       // DTF Transfer Sizes
       { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Sizes" },
