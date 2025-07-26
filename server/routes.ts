@@ -456,13 +456,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create CMYK version filename (avoid duplicate _cmyk suffixes) 
-      const baseName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
-      const extension = path.parse(logo.filename).ext;
-      const cmykFilename = `${baseName}_cmyk${extension}`;
+      const originalName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
+      const extension = path.parse(logo.filename).ext || '.png'; // Ensure extension exists
+      const cmykFilename = `${originalName}_cmyk${extension}`;
       const cmykPath = path.join(uploadDir, cmykFilename);
       
+      console.log('Original filename:', logo.filename);
+      console.log('CMYK filename will be:', cmykFilename);
+      
       // First convert to TIFF to get proper CMYK, then back to original format for web display
-      const tempTiffPath = path.join(uploadDir, `${baseName}_temp.tiff`);
+      const tempTiffPath = path.join(uploadDir, `${originalName}_temp.tiff`);
 
       // Convert to CMYK using ImageMagick with TIFF format for proper CMYK preservation
       const cmykCommand = `convert "${originalPath}" -colorspace CMYK -compress LZW "${tempTiffPath}"`;
@@ -520,6 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Successfully converted ${logo.filename} to CMYK: ${cmykFilename}`);
+      console.log('Updated logo data:', updatedLogo);
       res.json(updatedLogo);
     } catch (error) {
       console.error('CMYK conversion error:', error);
