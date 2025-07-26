@@ -227,7 +227,7 @@ export default function ToolsSidebar({
           }, {} as Record<string, typeof templateSizes>)
         ).map(([groupName, templates]) => (
           <div key={groupName} className="mb-6 last:mb-0">
-            <h4 className="text-sm font-medium text-gray-700 mb-3">{groupName}</h4>
+            <h4 className="text-base font-bold text-gray-800 mb-3">{groupName}</h4>
             
             {/* Show first 4 templates in 2x2 grid if they're standard sizes */}
             {groupName === "Full Colour / Single Color Transfer Templates" && templates.length >= 4 && (
