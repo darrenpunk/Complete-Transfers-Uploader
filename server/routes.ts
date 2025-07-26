@@ -641,6 +641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:projectId/generate-pdf", async (req, res) => {
     try {
       const projectId = req.params.projectId;
+      const colorSpace = req.query.colorSpace as string || 'auto'; // 'rgb', 'cmyk', or 'auto'
       
       // Get project data
       const project = await storage.getProject(projectId);
@@ -656,14 +657,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Template size not found" });
       }
 
-      // Generate PDF with vector preservation
-      const pdfBuffer = await pdfGenerator.generateProductionPDF({
-        projectId,
-        templateSize,
-        canvasElements,
-        logos,
-        garmentColor: project.garmentColor
+      // Determine PDF generation method based on colorSpace parameter
+      const hasCMYKLogos = logos.some(logo => {
+        const colorInfo = logo.svgColors as any;
+        return colorInfo && colorInfo.mode === 'CMYK';
       });
+
+      let pdfBuffer: Buffer;
+      
+      if (colorSpace === 'rgb') {
+        console.log('Forced RGB PDF generation requested');
+        pdfBuffer = await pdfGenerator.generateProductionPDF({
+          projectId,
+          templateSize,
+          canvasElements,
+          logos,
+          garmentColor: project.garmentColor
+        });
+      } else if (colorSpace === 'cmyk' || (colorSpace === 'auto' && hasCMYKLogos)) {
+        console.log('CMYK PDF generation requested or detected CMYK images');
+        pdfBuffer = await pdfGenerator.generateImageMagickPDF({
+          projectId,
+          templateSize,
+          canvasElements,
+          logos,
+          garmentColor: project.garmentColor
+        });
+        console.log('Generated CMYK-preserving PDF successfully');
+      } else {
+        console.log('Using standard PDF generation for RGB images');
+        pdfBuffer = await pdfGenerator.generateProductionPDF({
+          projectId,
+          templateSize,
+          canvasElements,
+          logos,
+          garmentColor: project.garmentColor
+        });
+      }
 
       // Set response headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');

@@ -87,11 +87,12 @@ export default function UploadTool() {
 
   // Generate PDF with vector preservation
   const generatePDFMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/projects/${currentProject?.id}/generate-pdf`);
+    mutationFn: async (colorSpace: string = 'auto') => {
+      const url = `/api/projects/${currentProject?.id}/generate-pdf${colorSpace !== 'auto' ? `?colorSpace=${colorSpace}` : ''}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to generate PDF');
       const blob = await response.blob();
-      return { blob, filename: `${currentProject?.name}.pdf` };
+      return { blob, filename: `${currentProject?.name}_${colorSpace}.pdf` };
     },
     onSuccess: ({ blob, filename }) => {
       // Create download link
@@ -349,14 +350,26 @@ export default function UploadTool() {
               Preview
             </Button>
             {currentStep >= 3 && (
-              <Button 
-                variant="outline"
-                onClick={() => generatePDFMutation.mutate()}
-                disabled={generatePDFMutation.isPending}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {generatePDFMutation.isPending ? "Generating..." : "Download Vector PDF"}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => generatePDFMutation.mutate('rgb')}
+                  disabled={generatePDFMutation.isPending}
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  RGB PDF
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => generatePDFMutation.mutate('cmyk')}
+                  disabled={generatePDFMutation.isPending}
+                  size="sm"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  CMYK PDF
+                </Button>
+              </div>
             )}
             <Button onClick={handleNextStep} disabled={currentStep === 5}>
               {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
