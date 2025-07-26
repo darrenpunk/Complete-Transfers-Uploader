@@ -282,7 +282,7 @@ export default function ToolsSidebar({
                     <img 
                       src={dtfIconPath} 
                       alt="DTF Transfer" 
-                      className="h-8 w-8 object-contain"
+                      className="h-12 w-12 object-contain"
                     />
                   )}
                   <span className="text-sm font-medium text-gray-800">{groupName}</span>
