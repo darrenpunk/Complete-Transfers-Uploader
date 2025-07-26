@@ -249,6 +249,13 @@ export default function CanvasWorkspace({
 
   return (
     <div className="flex-1 flex flex-col">
+      {/* Garment Color Required Warning */}
+      {!project.garmentColor && (
+        <div className="bg-red-500 text-white px-4 py-2 text-sm font-medium">
+          ⚠️ Please select a garment color in the sidebar before uploading logos
+        </div>
+      )}
+      
       {/* Canvas Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -273,6 +280,7 @@ export default function CanvasWorkspace({
               <Button 
                 variant="default" 
                 size="sm"
+                disabled={!project.garmentColor}
                 onClick={() => document.getElementById('canvas-upload-input')?.click()}
               >
                 <Upload className="w-4 h-4 mr-2" />

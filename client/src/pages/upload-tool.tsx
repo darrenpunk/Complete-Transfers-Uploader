@@ -121,13 +121,13 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject) {
-      // Create a new project if no ID provided
+      // Create a new project if no ID provided - but start with no garment color to force selection
       const defaultTemplate = templateSizes.find(t => t.name === "A4");
       if (defaultTemplate) {
         createProjectMutation.mutate({
           name: `Project ${new Date().toLocaleDateString()}`,
           templateSize: defaultTemplate.id,
-          garmentColor: "#FFFFFF"
+          garmentColor: "" // Start with empty color to force selection
         });
       }
     }

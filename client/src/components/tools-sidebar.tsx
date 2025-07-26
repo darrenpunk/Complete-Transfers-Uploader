@@ -152,7 +152,18 @@ export default function ToolsSidebar({
             <Button 
               variant="outline" 
               className="w-full border-dashed"
-              onClick={() => document.getElementById('more-logos-input')?.click()}
+              disabled={!project.garmentColor}
+              onClick={() => {
+                if (!project.garmentColor) {
+                  toast({
+                    title: "Garment Color Required",
+                    description: "Please select a garment color before uploading logos.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                document.getElementById('more-logos-input')?.click();
+              }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add More Logos
@@ -256,7 +267,22 @@ export default function ToolsSidebar({
 
       {/* Garment Color Selection */}
       <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Garment Color</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          Garment Color
+          {!project.garmentColor && (
+            <span className="text-red-500 text-sm font-normal">*Required</span>
+          )}
+        </h3>
+        {!project.garmentColor && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700 font-medium">
+              ⚠️ Please select a garment color to continue
+            </p>
+            <p className="text-xs text-red-600 mt-1">
+              Choose from the color swatches below or create a custom CMYK color
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-6 gap-2 mb-4">
           {garmentColors.map((color) => (
             <button
@@ -272,7 +298,9 @@ export default function ToolsSidebar({
           ))}
         </div>
         <div className="text-sm text-gray-600 mb-2">
-          Selected: <span className="font-medium">{project.garmentColor}</span>
+          Selected: <span className={`font-medium ${!project.garmentColor ? 'text-red-500' : ''}`}>
+            {project.garmentColor || 'None selected'}
+          </span>
         </div>
         
         {/* Custom Color CMYK Picker */}
