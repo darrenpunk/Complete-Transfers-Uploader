@@ -28,6 +28,10 @@ export default function CanvasWorkspace({
   const [showGuides, setShowGuides] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null);
+  const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
+  const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -64,6 +68,17 @@ export default function CanvasWorkspace({
     onElementSelect(null);
   };
 
+  const handleResizeStart = (event: React.MouseEvent, element: CanvasElement, handle: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    setIsResizing(true);
+    setResizeHandle(handle);
+    setInitialSize({ width: element.width, height: element.height });
+    setInitialPosition({ x: element.x, y: element.y });
+    onElementSelect(element);
+  };
+
   const handleMouseDown = (element: CanvasElement, event: React.MouseEvent) => {
     if (!element) return;
     
@@ -81,24 +96,81 @@ export default function CanvasWorkspace({
   };
 
   useEffect(() => {
-    let dragUpdateTimeout: NodeJS.Timeout;
+    let updateTimeout: NodeJS.Timeout;
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isDragging || !selectedElement || !canvasRef.current) return;
+      if (!canvasRef.current || updateElementMutation.isPending) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const newX = (event.clientX - rect.left - dragOffset.x) / (zoom / 100);
-      const newY = (event.clientY - rect.top - dragOffset.y) / (zoom / 100);
+      const scaleFactor = zoom / 100;
 
       // Clear previous timeout
-      clearTimeout(dragUpdateTimeout);
+      clearTimeout(updateTimeout);
 
-      // Update position with throttling
-      dragUpdateTimeout = setTimeout(() => {
-        if (!updateElementMutation.isPending) {
+      updateTimeout = setTimeout(() => {
+        if (isDragging && selectedElement) {
+          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor;
+          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor;
+
           updateElementMutation.mutate({
             id: selectedElement.id,
             updates: { x: Math.max(0, newX), y: Math.max(0, newY) }
+          });
+        } else if (isResizing && selectedElement && resizeHandle) {
+          const mouseX = (event.clientX - rect.left) / scaleFactor;
+          const mouseY = (event.clientY - rect.top) / scaleFactor;
+
+          let newWidth = initialSize.width;
+          let newHeight = initialSize.height;
+          let newX = initialPosition.x;
+          let newY = initialPosition.y;
+
+          // Calculate new dimensions based on resize handle
+          switch (resizeHandle) {
+            case 'se': // Southeast
+              newWidth = Math.max(20, mouseX - initialPosition.x);
+              newHeight = Math.max(20, mouseY - initialPosition.y);
+              break;
+            case 'sw': // Southwest
+              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
+              newHeight = Math.max(20, mouseY - initialPosition.y);
+              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              break;
+            case 'ne': // Northeast
+              newWidth = Math.max(20, mouseX - initialPosition.x);
+              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
+              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              break;
+            case 'nw': // Northwest
+              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
+              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
+              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              break;
+            case 'e': // East
+              newWidth = Math.max(20, mouseX - initialPosition.x);
+              break;
+            case 'w': // West
+              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
+              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              break;
+            case 'n': // North
+              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
+              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              break;
+            case 's': // South
+              newHeight = Math.max(20, mouseY - initialPosition.y);
+              break;
+          }
+
+          updateElementMutation.mutate({
+            id: selectedElement.id,
+            updates: { 
+              width: Math.round(newWidth), 
+              height: Math.round(newHeight),
+              x: Math.round(newX),
+              y: Math.round(newY)
+            }
           });
         }
       }, 50); // Throttle to 20fps
@@ -106,10 +178,12 @@ export default function CanvasWorkspace({
 
     const handleMouseUp = () => {
       setIsDragging(false);
-      clearTimeout(dragUpdateTimeout);
+      setIsResizing(false);
+      setResizeHandle(null);
+      clearTimeout(updateTimeout);
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -117,9 +191,9 @@ export default function CanvasWorkspace({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      clearTimeout(dragUpdateTimeout);
+      clearTimeout(updateTimeout);
     };
-  }, [isDragging, selectedElement, dragOffset, zoom]);
+  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom, updateElementMutation]);
 
   if (!template) {
     return (
@@ -294,15 +368,39 @@ export default function CanvasWorkspace({
                   {/* Transformation Handles */}
                   {isSelected && (
                     <>
-                      {/* Corner handles */}
-                      <div className="absolute -top-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-nw-resize" />
-                      <div className="absolute -top-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-n-resize transform -translate-x-1/2" />
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-ne-resize" />
-                      <div className="absolute top-1/2 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-e-resize transform -translate-y-1/2" />
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-se-resize" />
-                      <div className="absolute -bottom-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-s-resize transform -translate-x-1/2" />
-                      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-sw-resize" />
-                      <div className="absolute top-1/2 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-w-resize transform -translate-y-1/2" />
+                      {/* Corner handles with resize functionality */}
+                      <div 
+                        className="absolute -top-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-nw-resize" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'nw')}
+                      />
+                      <div 
+                        className="absolute -top-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-n-resize transform -translate-x-1/2" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'n')}
+                      />
+                      <div 
+                        className="absolute -top-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-ne-resize" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'ne')}
+                      />
+                      <div 
+                        className="absolute top-1/2 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-e-resize transform -translate-y-1/2" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'e')}
+                      />
+                      <div 
+                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-se-resize" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'se')}
+                      />
+                      <div 
+                        className="absolute -bottom-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-s-resize transform -translate-x-1/2" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 's')}
+                      />
+                      <div 
+                        className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-sw-resize" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'sw')}
+                      />
+                      <div 
+                        className="absolute top-1/2 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-w-resize transform -translate-y-1/2" 
+                        onMouseDown={(e) => handleResizeStart(e, element, 'w')}
+                      />
                       
                       {/* Rotation Handle */}
                       <div 

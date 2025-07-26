@@ -159,14 +159,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
+        // Get dimensions from the final display file (PNG)
+        let actualWidth = null;
+        let actualHeight = null;
+        try {
+          const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
+          const [w, h] = stdout.trim().split(' ').map(Number);
+          actualWidth = w;
+          actualHeight = h;
+        } catch (error) {
+          console.error('Failed to get image dimensions:', error);
+        }
+
         const logoData = {
           projectId: req.params.projectId,
           filename: finalFilename,
           originalName: file.originalname,
           mimeType: finalMimeType,
           size: file.size,
-          width: null,
-          height: null,
+          width: actualWidth,
+          height: actualHeight,
           url: finalUrl,
           // Store original PDF data for vector output if it was converted
           originalFilename: file.mimetype === 'application/pdf' ? file.filename : null,
@@ -178,14 +190,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const logo = await storage.createLogo(validatedData);
         logos.push(logo);
 
-        // Create canvas element for the logo
+        // Create canvas element for the logo using actual dimensions scaled to mm
+        const scaleFactor = 0.264583; // Convert pixels to mm (96 DPI)
+        const displayWidth = actualWidth ? Math.round(actualWidth * scaleFactor) : 200;
+        const displayHeight = actualHeight ? Math.round(actualHeight * scaleFactor) : 150;
+        
         const canvasElementData = {
           projectId: req.params.projectId,
           logoId: logo.id,
           x: 50 + (logos.length - 1) * 20,
           y: 50 + (logos.length - 1) * 20,
-          width: 200,
-          height: 150,
+          width: Math.min(displayWidth, 300), // Cap max width at 300mm
+          height: Math.min(displayHeight, 300), // Cap max height at 300mm
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
