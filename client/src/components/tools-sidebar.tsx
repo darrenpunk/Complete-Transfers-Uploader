@@ -277,7 +277,7 @@ export default function ToolsSidebar({
               open={expandedGroups.includes(`template-${groupName}`)}
               onOpenChange={() => toggleGroup(`template-${groupName}`)}
             >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-gray-50 rounded-lg border border-gray-200">
+              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-gray-100 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-2">
                   {groupName === "DTF Transfer Sizes" && (
                     <img 
@@ -421,7 +421,7 @@ export default function ToolsSidebar({
                     open={expandedGroups.includes(`${manufacturerName}-${group.name}`)}
                     onOpenChange={() => toggleGroup(`${manufacturerName}-${group.name}`)}
                   >
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-50 rounded text-sm">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded text-sm">
                       <span className="font-medium text-gray-700">{group.name}</span>
                       <span className="text-xs text-gray-500">
                         {group.colors.length} colors
