@@ -39,6 +39,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Collapsible template interface**: Template categories now use accordion interface with expand/collapse functionality and template counts
 ✓ **Dual-page PDF output**: PDF generation includes second page with artwork displayed on selected garment background color
 ✓ **Individual Garment Color Assignment**: Each logo can now have its own garment color selection independent of project default, with multi-color PDF visualization showing each logo on its assigned background color
+✓ **Conditional Garment Color Selection**: Garment color interface now only appears for Full Colour Transfer templates, with automatic default colors for other template types
 ✓ **White Element Display Fix**: Resolved critical issue where white fills (rgb(100%, 100%, 100%)) and light elements were invisible due to aggressive CSS hiding rules and server-side removal
 
 ## User Preferences

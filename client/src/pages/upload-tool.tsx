@@ -122,13 +122,15 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject) {
-      // Create a new project if no ID provided - but start with no garment color to force selection
+      // Create a new project if no ID provided
       const defaultTemplate = templateSizes.find(t => t.name === "A4");
       if (defaultTemplate) {
+        // Only require garment color for Full Colour Transfer Sizes
+        const isFullColourTemplate = defaultTemplate.group === "Full Colour Transfer Sizes";
         createProjectMutation.mutate({
           name: `Project ${new Date().toLocaleDateString()}`,
           templateSize: defaultTemplate.id,
-          garmentColor: "" // Start with empty color to force selection
+          garmentColor: isFullColourTemplate ? "" : "#FFFFFF" // Only force selection for Full Colour templates
         });
       }
     }
@@ -147,7 +149,20 @@ export default function UploadTool() {
 
   const handleTemplateChange = (templateId: string) => {
     if (currentProject) {
-      updateProjectMutation.mutate({ templateSize: templateId });
+      const selectedTemplate = templateSizes.find(t => t.id === templateId);
+      const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
+      
+      // If switching to a non-Full Colour template, set a default white color
+      // If switching to Full Colour template, keep existing color or clear it
+      const updates: Partial<Project> = { templateSize: templateId };
+      
+      if (!isFullColourTemplate && !currentProject.garmentColor) {
+        updates.garmentColor = "#FFFFFF";
+      } else if (isFullColourTemplate && currentProject.garmentColor === "#FFFFFF") {
+        updates.garmentColor = ""; // Clear default color to force selection for Full Colour
+      }
+      
+      updateProjectMutation.mutate(updates);
     }
   };
 
