@@ -256,25 +256,28 @@ export default function CanvasWorkspace({
           <div className="flex items-center space-x-4">
             {/* Upload Section */}
             <div className="flex items-center space-x-3">
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  multiple
-                  accept=".png,.jpg,.jpeg,.svg,.pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || []);
-                    if (files.length > 0 && onLogoUpload) {
-                      onLogoUpload(files);
-                      e.target.value = '';
-                    }
-                  }}
-                />
-                <Button variant="default" size="sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Logos
-                </Button>
-              </label>
+              <input
+                id="canvas-upload-input"
+                type="file"
+                multiple
+                accept=".png,.jpg,.jpeg,.svg,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length > 0 && onLogoUpload) {
+                    onLogoUpload(files);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={() => document.getElementById('canvas-upload-input')?.click()}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Logos
+              </Button>
               
               {/* Logo Count Display */}
               {logos && logos.length > 0 && (
