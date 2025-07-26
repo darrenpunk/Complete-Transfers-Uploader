@@ -8,7 +8,7 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ✓ **Professional Color Palette**: Replaced basic colors with 27 professional garment colors including Hi-Viz, pastels, and specialized inks
 ✓ **Enhanced Color Tooltips**: Rich hover information showing color names, HEX, RGB, CMYK values, and ink types (Process/Spot)
-✓ **Manufacturer Color Integration**: Comprehensive Gildan color database with CMYK values organized in collapsible accordion groups
+✓ **Dual Manufacturer Integration**: Comprehensive Gildan and Fruit of the Loom color databases with CMYK values organized in collapsible accordion groups
 ✓ **Forced Garment Color Selection**: Mandatory color selection with validation warnings and disabled states until color chosen
 ✓ **CMYK popup color picker**: Professional modal dialog with full C/M/Y/K sliders, gradients, and numeric inputs for precise print control
 ✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)

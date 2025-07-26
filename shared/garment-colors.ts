@@ -134,6 +134,108 @@ export const gildanColors: ManufacturerColorGroup[] = [
   }
 ];
 
+// Function to convert hexadecimal to approximate HEX for missing hex values
+function convertCMYKToHex(c: number, m: number, y: number, k: number): string {
+  // Convert CMYK to RGB
+  const r = Math.round(255 * (1 - c / 100) * (1 - k / 100));
+  const g = Math.round(255 * (1 - m / 100) * (1 - k / 100));
+  const b = Math.round(255 * (1 - y / 100) * (1 - k / 100));
+  
+  // Convert RGB to HEX
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+export const fruitOfTheLoomColors: ManufacturerColorGroup[] = [
+  {
+    name: "Basic Colors",
+    colors: [
+      { code: "030", name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 }, pantone: "1-0601-TCX" },
+      { code: "036", name: "Black", hex: "#000000", cmyk: { c: 0, m: 0, y: 0, k: 100 }, pantone: "9-4007-TCX" },
+      { code: "093", name: "Natural", hex: "#F5F0E8", cmyk: { c: 4, m: 9, y: 25, k: 0 }, pantone: "1-0606-TCX" },
+      { code: "042", name: "Charcoal", hex: convertCMYKToHex(10, 0, 10, 85), cmyk: { c: 10, m: 0, y: 10, k: 85 }, pantone: "9-0508-TCX" },
+      { code: "032", name: "Navy", hex: convertCMYKToHex(100, 65, 0, 60), cmyk: { c: 100, m: 65, y: 0, k: 60 }, pantone: "9-3925-TCX" },
+      { code: "ZN", name: "Zinc", hex: convertCMYKToHex(33, 21, 25, 7), cmyk: { c: 33, m: 21, y: 25, k: 7 }, pantone: "4-4103-TCX" },
+    ]
+  },
+  {
+    name: "Red Colors", 
+    colors: [
+      { code: "RD", name: "Red", hex: convertCMYKToHex(0, 100, 82, 0), cmyk: { c: 0, m: 100, y: 82, k: 0 }, pantone: "8-1763-TCX" },
+      { code: "BR", name: "Brick Red", hex: convertCMYKToHex(6, 100, 78, 27), cmyk: { c: 6, m: 100, y: 78, k: 27 }, pantone: "9-1862-TCX" },
+      { code: "BU", name: "Burgundy", hex: convertCMYKToHex(28, 89, 29, 53), cmyk: { c: 28, m: 89, y: 29, k: 53 }, pantone: "9-2024-TCX" },
+      { code: "CR", name: "Cranberry", hex: convertCMYKToHex(0, 0, 0, 0), cmyk: { c: 0, m: 0, y: 0, k: 0 } }, // Missing CMYK data
+      { code: "FL", name: "Flame", hex: convertCMYKToHex(0, 87, 85, 0), cmyk: { c: 0, m: 87, y: 85, k: 0 }, pantone: "7-1558 TCX" },
+      { code: "HB", name: "Heather Burgundy", hex: convertCMYKToHex(24, 89, 5, 37), cmyk: { c: 24, m: 89, y: 5, k: 37 }, pantone: "9-2431 TCX" },
+      { code: "HR", name: "Heather Red", hex: convertCMYKToHex(18, 100, 45, 67), cmyk: { c: 18, m: 100, y: 45, k: 67 }, pantone: "8-1633 TCX" },
+    ]
+  },
+  {
+    name: "Blue Colors",
+    colors: [
+      { code: "AB", name: "Azure Blue", hex: convertCMYKToHex(100, 12, 0, 2), cmyk: { c: 100, m: 12, y: 0, k: 2 }, pantone: "7-4440-TCX" },
+      { code: "CB", name: "Cobalt Blue", hex: convertCMYKToHex(100, 95, 5, 39), cmyk: { c: 100, m: 95, y: 5, k: 39 }, pantone: "9-3953 TCX" },
+      { code: "DN", name: "Deep Navy", hex: convertCMYKToHex(100, 70, 0, 80), cmyk: { c: 100, m: 70, y: 0, k: 80 }, pantone: "9-3920-TCX" },
+      { code: "HN", name: "Heather Navy", hex: convertCMYKToHex(95, 72, 15, 67), cmyk: { c: 95, m: 72, y: 15, k: 67 }, pantone: "9-3933 TCX" },
+      { code: "HRO", name: "Heather Royal", hex: convertCMYKToHex(65, 45, 0, 0), cmyk: { c: 65, m: 45, y: 0, k: 0 }, pantone: "9-4050 TCX" },
+      { code: "MB", name: "Mineral Blue", hex: "#96a4c2", cmyk: { c: 47, m: 28, y: 11, k: 4 }, pantone: "17-4021-TCX" },
+      { code: "MT", name: "Mountain Blue", hex: convertCMYKToHex(0, 0, 0, 0), cmyk: { c: 0, m: 0, y: 0, k: 0 } }, // Missing CMYK data
+      { code: "RB", name: "Royal Blue", hex: convertCMYKToHex(91, 64, 0, 0), cmyk: { c: 91, m: 64, y: 0, k: 0 }, pantone: "9-4056-TCX" },
+      { code: "SB", name: "Sky Blue", hex: convertCMYKToHex(43, 11, 0, 0), cmyk: { c: 43, m: 11, y: 0, k: 0 }, pantone: "4-4121-TCX" },
+    ]
+  },
+  {
+    name: "Green Colors",
+    colors: [
+      { code: "BG", name: "Bottle Green", hex: convertCMYKToHex(80, 36, 76, 58), cmyk: { c: 80, m: 36, y: 76, k: 58 }, pantone: "9-6311-TCX" },
+      { code: "CG", name: "College Green", hex: convertCMYKToHex(0, 0, 0, 0), cmyk: { c: 0, m: 0, y: 0, k: 0 } }, // Missing CMYK data
+      { code: "EM", name: "Emerald", hex: convertCMYKToHex(93, 7, 49, 28), cmyk: { c: 93, m: 7, y: 49, k: 28 }, pantone: "7-5029-TCX" },
+      { code: "FG", name: "Forest Green", hex: convertCMYKToHex(86, 36, 73, 63), cmyk: { c: 86, m: 36, y: 73, k: 63 }, pantone: "9-4906-TCX" },
+      { code: "HG", name: "Heather Green", hex: convertCMYKToHex(99, 0, 84, 0), cmyk: { c: 99, m: 0, y: 84, k: 0 }, pantone: "7-5937 TCX" },
+      { code: "KG", name: "Kelly Green", hex: convertCMYKToHex(92, 1, 85, 0), cmyk: { c: 92, m: 1, y: 85, k: 0 }, pantone: "6-5938-TCX" },
+      { code: "LI", name: "Lime", hex: convertCMYKToHex(57, 0, 100, 0), cmyk: { c: 57, m: 0, y: 100, k: 0 }, pantone: "5-0146-TCX" },
+      { code: "NM", name: "Neo Mint", hex: convertCMYKToHex(38, 0, 41, 0), cmyk: { c: 38, m: 0, y: 41, k: 0 }, pantone: "3-0117 TCX" },
+    ]
+  },
+  {
+    name: "Yellow/Orange Colors",
+    colors: [
+      { code: "BY", name: "Bright Yellow", hex: convertCMYKToHex(7, 0, 83, 0), cmyk: { c: 7, m: 0, y: 83, k: 0 }, pantone: "3-0650-TCX" },
+      { code: "OR", name: "Orange", hex: convertCMYKToHex(0, 72, 100, 0), cmyk: { c: 0, m: 72, y: 100, k: 0 }, pantone: "6-1364-TCX" },
+      { code: "SF", name: "Sunflower", hex: convertCMYKToHex(0, 22, 100, 0), cmyk: { c: 0, m: 22, y: 100, k: 0 }, pantone: "3-0859-TCX" },
+      { code: "YE", name: "Yellow", hex: convertCMYKToHex(0, 0, 100, 0), cmyk: { c: 0, m: 0, y: 100, k: 0 }, pantone: "3-0858-TCX" },
+    ]
+  },
+  {
+    name: "Purple/Pink Colors",
+    colors: [
+      { code: "FU", name: "Fuchsia", hex: convertCMYKToHex(0, 88, 24, 0), cmyk: { c: 0, m: 88, y: 24, k: 0 }, pantone: "7-2036-TCX" },
+      { code: "HP", name: "Heather Purple", hex: convertCMYKToHex(80, 98, 5, 27), cmyk: { c: 80, m: 98, y: 5, k: 27 }, pantone: "9-3638 TCX" },
+      { code: "LP", name: "Light Pink", hex: convertCMYKToHex(0, 34, 5, 0), cmyk: { c: 0, m: 34, y: 5, k: 0 }, pantone: "4-2808-TCX" },
+      { code: "PR", name: "Powder Rose", hex: "#dcc6c4", cmyk: { c: 11, m: 26, y: 19, k: 0 }, pantone: "13-1504-TCX" },
+      { code: "PU", name: "Purple", hex: convertCMYKToHex(90, 100, 4, 16), cmyk: { c: 90, m: 100, y: 4, k: 16 }, pantone: "9-3731-TCX" },
+      { code: "SL", name: "Soft Lavender", hex: "#c5c1e0", cmyk: { c: 25, m: 24, y: 0, k: 0 }, pantone: "14-3812-TCX" },
+    ]
+  },
+  {
+    name: "Grey/Neutral Colors",
+    colors: [
+      { code: "AH", name: "Athletic Heather", hex: convertCMYKToHex(35, 29, 28, 0), cmyk: { c: 35, m: 29, y: 28, k: 0 }, pantone: "15-4703 TCX" },
+      { code: "CO", name: "Classic Olive", hex: convertCMYKToHex(51, 37, 60, 33), cmyk: { c: 51, m: 37, y: 60, k: 33 }, pantone: "8-0521-TCX" },
+      { code: "CH", name: "Chocolate", hex: convertCMYKToHex(52, 62, 68, 58), cmyk: { c: 52, m: 62, y: 68, k: 58 }, pantone: "9-0912-TCX" },
+      { code: "DH", name: "Dark Heather Grey", hex: convertCMYKToHex(65, 43, 26, 78), cmyk: { c: 65, m: 43, y: 26, k: 78 }, pantone: "9-4110 TCX" },
+      { code: "DP", name: "Dark Plum", hex: convertCMYKToHex(65, 74, 51, 47), cmyk: { c: 65, m: 74, y: 51, k: 47 }, pantone: "19-3316 TCX" },
+      { code: "DS", name: "Desert Sand", hex: convertCMYKToHex(0, 0, 0, 0), cmyk: { c: 0, m: 0, y: 0, k: 0 } }, // Missing CMYK data
+      { code: "HG", name: "Heather Grey", hex: convertCMYKToHex(23, 15, 14, 2), cmyk: { c: 23, m: 15, y: 14, k: 2 }, pantone: "4-4102-TCX" },
+      { code: "KH", name: "Khaki", hex: convertCMYKToHex(28, 31, 45, 14), cmyk: { c: 28, m: 31, y: 45, k: 14 }, pantone: "7-1009-TCX" },
+      { code: "LG", name: "Light Graphite", hex: convertCMYKToHex(62, 53, 53, 51), cmyk: { c: 62, m: 53, y: 53, k: 51 }, pantone: "9-3906-TCX" },
+      { code: "OT", name: "Ocean Teal", hex: convertCMYKToHex(75, 41, 49, 14), cmyk: { c: 75, m: 41, y: 49, k: 14 }, pantone: "18-4936 TCX" },
+      { code: "SA", name: "Sage", hex: "#85a4a1", cmyk: { c: 56, m: 17, y: 35, k: 8 }, pantone: "16-5304-TCX" },
+      { code: "TR", name: "Truffle", hex: convertCMYKToHex(54, 57, 70, 41), cmyk: { c: 54, m: 57, y: 70, k: 41 }, pantone: "19-0916 TCX" },
+    ]
+  }
+];
+
 export const manufacturerColors = {
-  "Gildan": gildanColors
+  "Gildan": gildanColors,
+  "Fruit of the Loom": fruitOfTheLoomColors
 };
