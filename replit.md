@@ -2,7 +2,15 @@
 
 ## Overview
 
-This is a full-stack web application for uploading logo files and designing layouts on garment templates. The application provides a workflow-based interface where users can upload logos, position them on canvas templates, and generate production-ready outputs. It's built with a modern React frontend and Express.js backend, using PostgreSQL for data persistence.
+This is a full-stack web application for uploading logo files and designing layouts on garment templates. The application provides a workflow-based interface where users can upload logos, position them on canvas templates, and generate production-ready outputs with preserved vector graphics. It's built with a modern React frontend and Express.js backend, using PostgreSQL for data persistence.
+
+## Recent Changes (July 26, 2025)
+
+✓ **Fixed PDF vector embedding**: Resolved issue where original PDF vector graphics were being rasterized in output
+✓ **Corrected A3 PDF sizing**: Fixed aspect ratio detection to properly identify A3 portrait (297×420mm) vs landscape dimensions  
+✓ **Implemented millimeter-based coordinate system**: All canvas elements now store dimensions in mm, convert to pixels only for display
+✓ **Enhanced properties panel**: Added mm unit labels to clarify measurement system throughout interface
+✓ **Fixed canvas interaction**: Drag/resize operations now properly convert between screen pixels and stored mm values
 
 ## User Preferences
 
@@ -41,9 +49,10 @@ Preferred communication style: Simple, everyday language.
 - **Template Sizes**: Predefined canvas dimensions for different garment types
 
 ### File Upload System
-- **Storage**: Local filesystem storage in `/uploads` directory
+- **Storage**: Local filesystem storage in `/uploads` directory with original PDF preservation
 - **Validation**: File type restrictions (PNG, JPEG, SVG, PDF) with 10MB size limit
-- **Processing**: Image dimension extraction and metadata storage
+- **Processing**: Dual-approach processing - ImageMagick PNG conversion for display + original PDF storage for vector output
+- **Vector Preservation**: Original PDF files retained alongside converted images for production-quality output
 
 ### Canvas System
 - **Workspace**: Interactive canvas for logo positioning and manipulation
@@ -60,9 +69,11 @@ Preferred communication style: Simple, everyday language.
 
 1. **Project Creation**: User creates a new project with template size and garment color selection
 2. **Logo Upload**: Multiple file upload with client-side validation and progress tracking
-3. **Canvas Design**: Drag-and-drop logo positioning with real-time property updates
-4. **Element Management**: CRUD operations on canvas elements with optimistic updates
-5. **State Persistence**: All changes automatically saved to PostgreSQL via Drizzle ORM
+3. **PDF Processing**: Dual conversion - ImageMagick PNG for canvas display + original PDF storage for vector output
+4. **Canvas Design**: Drag-and-drop logo positioning with millimeter-precise coordinates and real-time property updates
+5. **Element Management**: CRUD operations on canvas elements with mm-based storage and pixel conversion for display
+6. **Vector PDF Generation**: Production PDFs generated using pdf-lib with embedded original vector graphics
+7. **State Persistence**: All changes automatically saved to PostgreSQL via Drizzle ORM
 
 ## External Dependencies
 
