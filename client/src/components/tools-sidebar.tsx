@@ -350,8 +350,12 @@ export default function ToolsSidebar({
         </div>
       </div>
 
-      {/* Garment Color Selection */}
-      <div className="p-6">
+      {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
+      {(() => {
+        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
+        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
+        return isFullColourTemplate ? (
+          <div className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           Garment Color
           {!project.garmentColor && (
@@ -510,7 +514,9 @@ export default function ToolsSidebar({
             </button>
           }
         />
-      </div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }
