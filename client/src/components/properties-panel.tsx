@@ -34,7 +34,12 @@ export default function PropertiesPanel({
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   
-  console.log('PropertiesPanel - Selected element rotation:', selectedElement?.rotation);
+  // Get the current element data from canvasElements to ensure it's up-to-date
+  const currentElement = selectedElement 
+    ? canvasElements.find(el => el.id === selectedElement.id) || selectedElement
+    : null;
+  
+  console.log('PropertiesPanel - Selected element rotation:', currentElement?.rotation);
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -45,15 +50,15 @@ export default function PropertiesPanel({
     onSuccess: (updatedElement) => {
       // Force invalidation to ensure UI updates
       queryClient.invalidateQueries({
-        queryKey: ["/api/projects", selectedElement?.projectId, "canvas-elements"]
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
     },
   });
 
   const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
 
-    console.log('Property change:', property, 'from', selectedElement[property], 'to', value);
+    console.log('Property change:', property, 'from', currentElement[property], 'to', value);
 
     // Convert string inputs to numbers for numeric properties
     let processedValue = value;
@@ -75,15 +80,15 @@ export default function PropertiesPanel({
       processedValue = Math.max(1, Math.min(420, processedValue));
     }
     if (property === 'rotation') {
-      processedValue = processedValue % 360;
-      if (processedValue < 0) processedValue += 360;
+      // Normalize rotation to 0-360 range
+      processedValue = ((processedValue % 360) + 360) % 360;
     }
 
     let updates: Partial<CanvasElement> = { [property]: processedValue };
 
     // Handle aspect ratio maintenance for width/height changes
     if (maintainAspectRatio && (property === 'width' || property === 'height')) {
-      const aspectRatio = selectedElement.width / selectedElement.height;
+      const aspectRatio = currentElement.width / currentElement.height;
       if (property === 'width') {
         updates.height = Math.round(processedValue / aspectRatio);
       } else {
@@ -93,7 +98,7 @@ export default function PropertiesPanel({
 
     console.log('Sending updates:', updates);
     updateElementMutation.mutate({
-      id: selectedElement.id,
+      id: currentElement.id,
       updates
     });
   };
@@ -114,47 +119,47 @@ export default function PropertiesPanel({
 
   // Alignment functions
   const alignLeft = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning left');
     handlePropertyChange('x', 0);
   };
 
   const alignCenter = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning center horizontally');
     // Get template from the first element's project (we need template size)
     const templateWidth = 297; // A3 width in mm - should get from template
-    const centerX = (templateWidth - selectedElement.width) / 2;
+    const centerX = (templateWidth - currentElement.width) / 2;
     handlePropertyChange('x', Math.round(centerX));
   };
 
   const alignRight = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning right');
     const templateWidth = 297; // A3 width in mm - should get from template
-    const rightX = templateWidth - selectedElement.width;
+    const rightX = templateWidth - currentElement.width;
     handlePropertyChange('x', Math.round(rightX));
   };
 
   const alignTop = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning top');
     handlePropertyChange('y', 0);
   };
 
   const alignMiddle = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning middle vertically');
     const templateHeight = 420; // A3 height in mm - should get from template
-    const middleY = (templateHeight - selectedElement.height) / 2;
+    const middleY = (templateHeight - currentElement.height) / 2;
     handlePropertyChange('y', Math.round(middleY));
   };
 
   const alignBottom = () => {
-    if (!selectedElement) return;
+    if (!currentElement) return;
     console.log('Aligning bottom');
     const templateHeight = 420; // A3 height in mm - should get from template
-    const bottomY = templateHeight - selectedElement.height;
+    const bottomY = templateHeight - currentElement.height;
     handlePropertyChange('y', Math.round(bottomY));
   };
 
@@ -169,7 +174,7 @@ export default function PropertiesPanel({
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
       {/* Logo Properties */}
-      {selectedElement && (
+      {currentElement && (
         <Card className="rounded-none border-x-0 border-t-0">
           <CardHeader>
             <CardTitle className="text-lg">Logo Properties</CardTitle>
@@ -183,7 +188,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">X (mm)</Label>
                   <Input
                     type="number"
-                    value={selectedElement.x}
+                    value={currentElement.x}
                     onChange={(e) => handlePropertyChange('x', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -195,7 +200,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Y (mm)</Label>
                   <Input
                     type="number"
-                    value={selectedElement.y}
+                    value={currentElement.y}
                     onChange={(e) => handlePropertyChange('y', e.target.value)}
                     className="text-sm"
                     step="1" 
@@ -214,7 +219,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    value={selectedElement.width}
+                    value={currentElement.width}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -226,7 +231,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    value={selectedElement.height}
+                    value={currentElement.height}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
                     step="1"
@@ -252,7 +257,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Rotation</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
-                  value={[selectedElement.rotation || 0]}
+                  value={[currentElement.rotation || 0]}
                   onValueChange={([value]) => handlePropertyChange('rotation', value)}
                   min={0}
                   max={360}
@@ -261,7 +266,7 @@ export default function PropertiesPanel({
                 />
                 <Input
                   type="number"
-                  value={selectedElement.rotation || 0}
+                  value={currentElement.rotation || 0}
                   onChange={(e) => handlePropertyChange('rotation', e.target.value)}
                   min={0}
                   max={360}
@@ -290,7 +295,7 @@ export default function PropertiesPanel({
                 const logo = logos.find(l => l.id === element.logoId);
                 if (!logo) return null;
 
-                const isSelected = selectedElement?.id === element.id;
+                const isSelected = currentElement?.id === element.id;
 
                 return (
                   <div
