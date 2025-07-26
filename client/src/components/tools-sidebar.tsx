@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
 import CMYKColorModal from "@/components/cmyk-color-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
 
 interface ToolsSidebarProps {
@@ -298,16 +299,27 @@ export default function ToolsSidebar({
         {/* Quick Colors */}
         <div className="grid grid-cols-6 gap-2 mb-4">
           {garmentColors.map((color) => (
-            <button
-              key={color}
-              className={`w-10 h-10 rounded-full border-2 shadow-sm ${
-                project.garmentColor === color
-                  ? "border-primary ring-2 ring-blue-200"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
-              style={{ backgroundColor: color }}
-              onClick={() => onGarmentColorChange(color)}
-            />
+            <TooltipProvider key={color}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
+                      project.garmentColor === color
+                        ? "border-primary ring-2 ring-blue-200"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => onGarmentColorChange(color)}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <div className="text-sm">
+                    <div className="font-semibold">Quick Color</div>
+                    <div className="text-xs font-mono">{color}</div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ))}
         </div>
 
@@ -339,25 +351,47 @@ export default function ToolsSidebar({
                     <CollapsibleContent className="px-2 pb-2">
                       <div className="grid grid-cols-6 gap-1">
                         {group.colors.map((color) => (
-                          <CMYKColorModal
-                            key={color.code}
-                            initialColor={color.hex}
-                            currentColor={project.garmentColor}
-                            onChange={(newColor) => onGarmentColorChange(newColor)}
-                            label={`${color.name} (${color.code})`}
-                            cmykValues={color.cmyk}
-                            trigger={
-                              <button
-                                className={`w-8 h-8 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                                  project.garmentColor === color.hex
-                                    ? "border-primary ring-2 ring-blue-200"
-                                    : "border-gray-300 hover:border-gray-400"
-                                }`}
-                                style={{ backgroundColor: color.hex }}
-                                title={`${color.name} (${color.code})\nCMYK: ${color.cmyk.c}/${color.cmyk.m}/${color.cmyk.y}/${color.cmyk.k}`}
-                              />
-                            }
-                          />
+                          <TooltipProvider key={color.code}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div>
+                                  <CMYKColorModal
+                                    initialColor={color.hex}
+                                    currentColor={project.garmentColor}
+                                    onChange={(newColor) => onGarmentColorChange(newColor)}
+                                    label={`${color.name} (${color.code})`}
+                                    cmykValues={color.cmyk}
+                                    trigger={
+                                      <button
+                                        className={`w-8 h-8 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
+                                          project.garmentColor === color.hex
+                                            ? "border-primary ring-2 ring-blue-200"
+                                            : "border-gray-300 hover:border-gray-400"
+                                        }`}
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                    }
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <div className="text-sm">
+                                  <div className="font-semibold text-gray-900">{color.name}</div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    <div>Code: <span className="font-mono">{color.code}</span></div>
+                                    <div>HEX: <span className="font-mono">{color.hex}</span></div>
+                                    <div>CMYK: <span className="font-mono">C{color.cmyk.c} M{color.cmyk.m} Y{color.cmyk.y} K{color.cmyk.k}</span></div>
+                                    {color.pantone && (
+                                      <div>Pantone: <span className="font-mono">{color.pantone}</span></div>
+                                    )}
+                                    {color.pantoneTextile && (
+                                      <div>Textile: <span className="font-mono">{color.pantoneTextile}</span></div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         ))}
                       </div>
                     </CollapsibleContent>
