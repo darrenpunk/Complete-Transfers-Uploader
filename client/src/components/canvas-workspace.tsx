@@ -87,10 +87,12 @@ export default function CanvasWorkspace({
     onElementSelect(element);
     
     const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
+    if (rect && template) {
+      // Convert mm to pixels for drag offset calculation
+      const mmToPixelRatio = template.pixelWidth / template.width;
       setDragOffset({
-        x: event.clientX - rect.left - element.x * (zoom / 100),
-        y: event.clientY - rect.top - element.y * (zoom / 100)
+        x: event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100),
+        y: event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100)
       });
     }
   };
@@ -108,17 +110,21 @@ export default function CanvasWorkspace({
       clearTimeout(updateTimeout);
 
       updateTimeout = setTimeout(() => {
-        if (isDragging && selectedElement) {
-          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor;
-          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor;
+        if (isDragging && selectedElement && template) {
+          // Convert pixels back to mm for storage
+          const mmToPixelRatio = template.pixelWidth / template.width;
+          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
+          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
 
           updateElementMutation.mutate({
             id: selectedElement.id,
             updates: { x: Math.max(0, newX), y: Math.max(0, newY) }
           });
-        } else if (isResizing && selectedElement && resizeHandle) {
-          const mouseX = (event.clientX - rect.left) / scaleFactor;
-          const mouseY = (event.clientY - rect.top) / scaleFactor;
+        } else if (isResizing && selectedElement && resizeHandle && template) {
+          // Convert pixels back to mm for storage
+          const mmToPixelRatio = template.pixelWidth / template.width;
+          const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
+          const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
@@ -293,10 +299,12 @@ export default function CanvasWorkspace({
               if (!logo || !element.isVisible) return null;
 
               const isSelected = selectedElement?.id === element.id;
-              const elementWidth = element.width * (zoom / 100);
-              const elementHeight = element.height * (zoom / 100);
-              const elementX = element.x * (zoom / 100);
-              const elementY = element.y * (zoom / 100);
+              // Convert mm to pixels for display (using template's pixel ratio)
+              const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+              const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
+              const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
+              const elementX = element.x * mmToPixelRatio * (zoom / 100);
+              const elementY = element.y * mmToPixelRatio * (zoom / 100);
 
               return (
                 <div

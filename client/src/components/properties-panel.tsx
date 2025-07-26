@@ -108,7 +108,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Position</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">X</Label>
+                  <Label className="text-xs text-gray-500">X (mm)</Label>
                   <Input
                     type="number"
                     value={Math.round(selectedElement.x)}
@@ -117,7 +117,7 @@ export default function PropertiesPanel({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Y</Label>
+                  <Label className="text-xs text-gray-500">Y (mm)</Label>
                   <Input
                     type="number"
                     value={Math.round(selectedElement.y)}
@@ -133,7 +133,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Size</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">Width</Label>
+                  <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
                     value={Math.round(selectedElement.width)}
@@ -142,7 +142,7 @@ export default function PropertiesPanel({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Height</Label>
+                  <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
                     value={Math.round(selectedElement.height)}
