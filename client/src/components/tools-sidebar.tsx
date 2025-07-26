@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
+import { manufacturerColors } from "@shared/garment-colors";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
@@ -55,6 +56,28 @@ const quickColors = [
   { name: "Burgundy", hex: "#762009", rgb: "118, 32, 9", cmyk: "26, 100, 88, 27", inkType: "Process" },
   { name: "Purple", hex: "#4C0A6A", rgb: "76, 10, 106", cmyk: "75, 100, 0, 0", inkType: "Process" }
 ];
+
+// Function to get color name from hex value
+function getColorName(hex: string): string {
+  // Check quick colors first
+  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (quickColor) {
+    return quickColor.name;
+  }
+
+  // Check manufacturer colors
+  for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
+    for (const group of colorGroups) {
+      const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+      if (manufacturerColor) {
+        return `${manufacturerColor.name} (${manufacturerColor.code})`;
+      }
+    }
+  }
+
+  // If no match found, return hex as fallback
+  return hex;
+}
 
 export default function ToolsSidebar({
   currentStep,
@@ -382,7 +405,7 @@ export default function ToolsSidebar({
                   />
                   <div className="text-sm">
                     <div className="font-medium text-gray-900">Selected Color</div>
-                    <div className="text-gray-600">{project.garmentColor}</div>
+                    <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
                   </div>
                 </div>
               )}

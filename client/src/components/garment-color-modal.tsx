@@ -47,6 +47,28 @@ const quickColors = [
   { name: "Purple", hex: "#4C0A6A", rgb: "76, 10, 106", cmyk: "75, 100, 0, 0", inkType: "Process" }
 ];
 
+// Function to get color name from hex value
+function getColorName(hex: string): string {
+  // Check quick colors first
+  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (quickColor) {
+    return quickColor.name;
+  }
+
+  // Check manufacturer colors
+  for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
+    for (const group of colorGroups) {
+      const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+      if (manufacturerColor) {
+        return `${manufacturerColor.name} (${manufacturerColor.code})`;
+      }
+    }
+  }
+
+  // If no match found, return hex as fallback
+  return hex;
+}
+
 export default function GarmentColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: GarmentColorModalProps) {
   const [open, setOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -232,7 +254,7 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
           <div className="border-t pt-4">
             <div className="text-sm text-gray-600 mb-3">
               Selected: <span className={`font-medium ${!currentColor ? 'text-red-500' : ''}`}>
-                {currentColor || 'None selected'}
+                {currentColor ? getColorName(currentColor) : 'None selected'}
               </span>
             </div>
             
