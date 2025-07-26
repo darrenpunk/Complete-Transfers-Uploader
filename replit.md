@@ -6,12 +6,12 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ## Recent Changes (July 26, 2025)
 
-✓ **Comprehensive white background removal**: Implemented multi-layer filtering system with detailed console logging to eliminate pdf2svg background artifacts
+✓ **Professional Color Palette**: Replaced basic colors with 27 professional garment colors including Hi-Viz, pastels, and specialized inks
+✓ **Enhanced Color Tooltips**: Rich hover information showing color names, HEX, RGB, CMYK values, and ink types (Process/Spot)
+✓ **Manufacturer Color Integration**: Comprehensive Gildan color database with CMYK values organized in collapsible accordion groups
+✓ **Forced Garment Color Selection**: Mandatory color selection with validation warnings and disabled states until color chosen
 ✓ **CMYK popup color picker**: Professional modal dialog with full C/M/Y/K sliders, gradients, and numeric inputs for precise print control
-✓ **CSS-based background suppression**: Added global CSS rules to force transparent backgrounds and hide white fill elements
-✓ **Enhanced PDF color preservation**: Implemented Ghostscript-first conversion approach to maintain original PDF colors and transparency
 ✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)
-✓ **Streamlined sidebar layout**: Removed duplicate vertical progress, focusing space on tools and current step functionality
 ✓ **Template grouping with DTF support**: Added "Full Colour / Single Color Transfer Templates" and "DTF Transfer Templates" groups
 ✓ **Smart zoom for large templates**: 1000×550mm DTF template automatically displays at 25% zoom for better overview
 ✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
