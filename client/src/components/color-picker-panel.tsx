@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Palette, RotateCcw } from "lucide-react";
-import CMYKColorPicker from "./cmyk-color-picker";
+import CMYKColorModal from "./cmyk-color-modal";
 import type { CanvasElement, Logo } from "@shared/schema";
 
 interface SVGColorInfo {
@@ -149,8 +149,9 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 )}
               </div>
             <div className="flex-1">
-              <CMYKColorPicker
+              <CMYKColorModal
                 initialColor={colorInfo.originalColor}
+                currentColor={getDisplayColor(colorInfo.originalColor)}
                 onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
                 label={`${colorInfo.elementType} (${colorInfo.attribute})`}
               />

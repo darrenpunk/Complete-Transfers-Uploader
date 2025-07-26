@@ -164,18 +164,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 svgContent = svgContent.replace(/<rect[^>]*x="0"[^>]*y="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
                 svgContent = svgContent.replace(/<rect[^>]*y="0"[^>]*x="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
                 
-                // Remove the first element if it's a white rect covering the page
-                const lines = svgContent.split('\n');
-                const filteredLines = lines.filter((line, index) => {
-                  // Skip the first rect element if it's a full-page white background
-                  if (index < 10 && line.includes('<rect') && line.includes('fill=') && 
-                      (line.includes('width="841.89"') || line.includes('height="1190.55"'))) {
-                    console.log('Removing suspected background rect:', line.trim());
-                    return false;
-                  }
-                  return true;
-                });
-                svgContent = filteredLines.join('\n');
+                // More aggressive approach - remove the very first path/rect if it's likely a background
+                svgContent = svgContent.replace(/(<svg[^>]*>)\s*<rect[^>]*fill="[^"]*"[^>]*\/?>/, '$1');
+                svgContent = svgContent.replace(/(<svg[^>]*>)\s*<path[^>]*fill="[^"]*"[^>]*\/?>/, '$1');
+                
+                // Remove any element that spans the full canvas dimensions
+                svgContent = svgContent.replace(/<(rect|path)[^>]*(?:width="841\.89"|height="1190\.55")[^>]*fill="[^"]*"[^>]*\/?>/g, '');
+                
+                // Final cleanup - remove empty lines and normalize spacing
+                svgContent = svgContent.replace(/^\s*[\r\n]/gm, '').replace(/\n\s*\n/g, '\n');
                 
                 // Ensure the SVG root has no background
                 if (!svgContent.includes('style=') && svgContent.includes('<svg')) {
