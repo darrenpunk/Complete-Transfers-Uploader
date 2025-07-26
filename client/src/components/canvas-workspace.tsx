@@ -24,6 +24,18 @@ export default function CanvasWorkspace({
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
+
+  // Set default zoom based on template size
+  useEffect(() => {
+    if (template) {
+      // Set 25% zoom for large DTF template (1000x550mm)
+      if (template.width === 1000 && template.height === 550) {
+        setZoom(25);
+      } else {
+        setZoom(100);
+      }
+    }
+  }, [template]);
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
