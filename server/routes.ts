@@ -191,17 +191,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logos.push(logo);
 
         // Create canvas element for the logo using actual dimensions scaled to mm
-        const scaleFactor = 0.264583; // Convert pixels to mm (96 DPI)
-        const displayWidth = actualWidth ? Math.round(actualWidth * scaleFactor) : 200;
-        const displayHeight = actualHeight ? Math.round(actualHeight * scaleFactor) : 150;
+        // For 300 DPI images (our ImageMagick conversion), use 0.08466667 mm per pixel
+        const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
+        let displayWidth = actualWidth ? Math.round(actualWidth * scaleFactor) : 200;
+        let displayHeight = actualHeight ? Math.round(actualHeight * scaleFactor) : 150;
+        
+        // For A3 PDFs, ensure we match A3 dimensions (297x420mm)
+        if (file.mimetype === 'application/pdf') {
+          // Check if this looks like an A3 ratio
+          const aspectRatio = actualWidth / actualHeight;
+          const a3Ratio = 297 / 420; // A3 landscape ratio
+          const a3PortraitRatio = 420 / 297; // A3 portrait ratio
+          
+          if (Math.abs(aspectRatio - a3Ratio) < 0.1) {
+            // Landscape A3
+            displayWidth = 420;
+            displayHeight = 297;
+          } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.1) {
+            // Portrait A3  
+            displayWidth = 297;
+            displayHeight = 420;
+          }
+        }
         
         const canvasElementData = {
           projectId: req.params.projectId,
           logoId: logo.id,
           x: 50 + (logos.length - 1) * 20,
           y: 50 + (logos.length - 1) * 20,
-          width: Math.min(displayWidth, 300), // Cap max width at 300mm
-          height: Math.min(displayHeight, 300), // Cap max height at 300mm
+          width: displayWidth,
+          height: displayHeight,
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
