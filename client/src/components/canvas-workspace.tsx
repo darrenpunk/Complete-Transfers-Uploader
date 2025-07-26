@@ -357,7 +357,7 @@ export default function CanvasWorkspace({
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Logo Content */}
-                  <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded overflow-hidden">
+                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
@@ -365,6 +365,7 @@ export default function CanvasWorkspace({
                           : logo.url}
                         alt={logo.originalName}
                         className="max-w-full max-h-full object-contain"
+                        style={{ background: 'transparent', backgroundColor: 'transparent' }}
                         draggable={false}
                         onError={(e) => {
                           console.error('Failed to load image:', logo.url);

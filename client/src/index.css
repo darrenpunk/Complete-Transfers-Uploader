@@ -2,9 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force transparent backgrounds for SVG elements */
-svg {
+/* Force transparent backgrounds for SVG elements everywhere */
+svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Force transparent backgrounds on canvas elements */
+.canvas-element {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* Hide any white background elements in SVGs */
@@ -15,6 +22,11 @@ svg path[fill="white"],
 svg path[fill="#ffffff"], 
 svg path[fill="rgb(100%, 100%, 100%)"] {
   display: none !important;
+}
+
+/* Ensure canvas workspace has transparent background */
+.canvas-workspace, .canvas-container {
+  background: transparent !important;
 }
 
 :root {
