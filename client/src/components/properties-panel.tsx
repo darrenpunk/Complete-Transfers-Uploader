@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { CanvasElement, Logo } from "@shared/schema";
@@ -248,13 +248,60 @@ export default function PropertiesPanel({
     handlePropertyChange('y', Math.round(bottomY));
   };
 
-  // Pre-flight check results
-  const preflightChecks = [
-    { name: "File Resolution", status: "pass", value: "300 DPI" },
-    { name: "Color Mode", status: "pass", value: "CMYK" },
-    { name: "File Format", status: "pass", value: "Vector" },
-    { name: "Bleed Area", status: "warning", value: "Check" },
-  ];
+  // Dynamic pre-flight check results based on current project data
+  const preflightChecks = useMemo(() => {
+    if (!currentElement) return [];
+    
+    const logo = logos.find(l => l.id === currentElement.logoId);
+    const checks = [];
+    
+    // File Resolution Check
+    if (logo) {
+      const hasGoodResolution = logo.width && logo.height && (logo.width >= 300 || logo.height >= 300);
+      checks.push({
+        name: "File Resolution",
+        status: hasGoodResolution ? "pass" : "warning",
+        value: hasGoodResolution ? "High Res" : "Check Size"
+      });
+      
+      // File Format Check
+      const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+      checks.push({
+        name: "File Format",
+        status: isVector ? "pass" : "warning",
+        value: isVector ? "Vector" : "Raster"
+      });
+      
+      // Color Mode Check
+      const hasColors = logo.svgColors && logo.svgColors.length > 0;
+      checks.push({
+        name: "Color Analysis",
+        status: hasColors ? "pass" : "warning",
+        value: hasColors ? `${logo.svgColors.length} Colors` : "No Colors"
+      });
+    }
+    
+    // Position Check - ensure logo is within template bounds
+    const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
+                          currentElement.x + currentElement.width <= 297 && 
+                          currentElement.y + currentElement.height <= 420;
+    checks.push({
+      name: "Position",
+      status: isWithinBounds ? "pass" : "warning",
+      value: isWithinBounds ? "In Bounds" : "Check Position"
+    });
+    
+    // Size Check - reasonable print size
+    const hasReasonableSize = currentElement.width >= 10 && currentElement.height >= 10 &&
+                             currentElement.width <= 250 && currentElement.height <= 350;
+    checks.push({
+      name: "Print Size",
+      status: hasReasonableSize ? "pass" : "warning",
+      value: hasReasonableSize ? "Good Size" : "Check Size"
+    });
+    
+    return checks;
+  }, [currentElement, logos]);
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
@@ -572,21 +619,28 @@ export default function PropertiesPanel({
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {preflightChecks.map((check) => (
-              <div key={check.name} className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">{check.name}</span>
-                <div className="flex items-center">
-                  {check.status === "pass" ? (
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 mr-1" />
-                  )}
-                  <Badge variant={check.status === "pass" ? "default" : "secondary"}>
-                    {check.value}
-                  </Badge>
-                </div>
+            {preflightChecks.length === 0 ? (
+              <div className="text-center text-gray-500 py-4">
+                <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm">Select a logo to run pre-flight checks</p>
               </div>
-            ))}
+            ) : (
+              preflightChecks.map((check) => (
+                <div key={check.name} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{check.name}</span>
+                  <div className="flex items-center">
+                    {check.status === "pass" ? (
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-yellow-500 mr-1" />
+                    )}
+                    <Badge variant={check.status === "pass" ? "default" : "secondary"}>
+                      {check.value}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
