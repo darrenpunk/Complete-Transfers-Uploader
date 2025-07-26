@@ -279,31 +279,7 @@ export default function ToolsSidebar({
         </div>
       )}
 
-      {/* Product Selector */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Selector</h3>
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => {
-            window.location.href = '/';
-          }}
-        >
-          <span className="mr-2">📐</span>
-          Change Template Size
-        </Button>
-        <p className="text-xs text-gray-500 mt-2">
-          Currently using template with different transfer sizes available
-        </p>
-      </div>
 
-      {/* Pre-flight Check */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pre-flight Check</h3>
-        <div className="text-sm text-gray-600">
-          Select a logo in the properties panel to run pre-flight checks
-        </div>
-      </div>
 
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
       {(() => {
