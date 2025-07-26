@@ -129,10 +129,13 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md" aria-describedby="cmyk-editor-description">
         <DialogHeader>
           <DialogTitle>CMYK Color Editor</DialogTitle>
         </DialogHeader>
+        <div id="cmyk-editor-description" className="sr-only">
+          Professional CMYK color editor with sliders and numeric inputs for precise color control
+        </div>
         
         <div className="space-y-4">
           {/* Color Preview */}
