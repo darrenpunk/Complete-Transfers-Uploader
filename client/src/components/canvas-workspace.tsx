@@ -360,7 +360,9 @@ export default function CanvasWorkspace({
                   <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded overflow-hidden">
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
-                        src={logo.url}
+                        src={element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                          ? `/uploads/${element.id}_modified.svg` 
+                          : logo.url}
                         alt={logo.originalName}
                         className="max-w-full max-h-full object-contain"
                         draggable={false}

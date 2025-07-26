@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const svgFilename = `${file.filename}.svg`;
             const svgPath = path.join(uploadDir, svgFilename);
             
-            // Use pdf2svg if available, otherwise fallback to ImageMagick
+            // Use pdf2svg with post-processing to remove white backgrounds
             let svgCommand;
             try {
               // Check if pdf2svg is available
@@ -129,13 +129,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log('Using pdf2svg for conversion');
             } catch {
               // Fallback to ImageMagick SVG conversion
-              svgCommand = `convert -density 300 "${file.path}[0]" "${svgPath}"`;
+              svgCommand = `convert -density 300 -background none "${file.path}[0]" "${svgPath}"`;
               console.log('Using ImageMagick for SVG conversion');
             }
             
             await execAsync(svgCommand);
             
             if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+              // Post-process SVG to remove white backgrounds and fix transparency
+              try {
+                let svgContent = fs.readFileSync(svgPath, 'utf8');
+                
+                // Remove white backgrounds from various formats
+                svgContent = svgContent.replace(/fill\s*=\s*["']#ffffff["']/gi, 'fill="none"');
+                svgContent = svgContent.replace(/fill\s*=\s*["']white["']/gi, 'fill="none"');
+                svgContent = svgContent.replace(/fill\s*=\s*["']rgb\(255,\s*255,\s*255\)["']/gi, 'fill="none"');
+                svgContent = svgContent.replace(/fill\s*=\s*["']rgb\(100%,\s*100%,\s*100%\)["']/gi, 'fill="none"');
+                
+                // Remove white rectangles that might be backgrounds (common in pdf2svg output)
+                svgContent = svgContent.replace(/<rect[^>]*fill\s*=\s*["'](?:#ffffff|white|rgb\(255,\s*255,\s*255\)|rgb\(100%,\s*100%,\s*100%\))["'][^>]*\/?>(?:<\/rect>)?/gi, '');
+                
+                // Also remove rect elements that are purely white without other attributes
+                svgContent = svgContent.replace(/<rect[^>]*fill\s*=\s*["'](?:#ffffff|white)["'][^>]*>\s*<\/rect>/gi, '');
+                
+                // Ensure the SVG root has no background
+                if (!svgContent.includes('style=') && svgContent.includes('<svg')) {
+                  svgContent = svgContent.replace('<svg', '<svg style="background:transparent"');
+                }
+                
+                fs.writeFileSync(svgPath, svgContent);
+                console.log('Removed white backgrounds from SVG');
+              } catch (postProcessError) {
+                console.error('SVG post-processing failed:', postProcessError);
+              }
+              
               finalFilename = svgFilename;
               finalMimeType = 'image/svg+xml';
               finalUrl = `/uploads/${finalFilename}`;
