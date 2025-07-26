@@ -113,52 +113,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert it preserving colors and transparency
+        // If it's a PDF, try to convert to SVG first for color editing capabilities
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try Ghostscript first for better color handling of PDFs
-            const pngFilename = `${file.filename}.png`;
-            const pngPath = path.join(uploadDir, pngFilename);
+            // Try PDF to SVG conversion first for color manipulation
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
             
-            // Ghostscript command with color profile preservation
-            const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dUseCropBox -sOutputFile="${pngPath}" "${file.path}"`;
+            // Use pdf2svg if available, otherwise fallback to ImageMagick
+            let svgCommand;
+            try {
+              // Check if pdf2svg is available
+              await execAsync('which pdf2svg');
+              svgCommand = `pdf2svg "${file.path}" "${svgPath}"`;
+              console.log('Using pdf2svg for conversion');
+            } catch {
+              // Fallback to ImageMagick SVG conversion
+              svgCommand = `convert -density 300 "${file.path}[0]" "${svgPath}"`;
+              console.log('Using ImageMagick for SVG conversion');
+            }
             
-            await execAsync(gsCommand);
+            await execAsync(svgCommand);
             
-            if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-              finalFilename = pngFilename;
-              finalMimeType = 'image/png';
+            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+              finalFilename = svgFilename;
+              finalMimeType = 'image/svg+xml';
               finalUrl = `/uploads/${finalFilename}`;
               
-              console.log(`PDF converted to PNG using Ghostscript with alpha: ${finalFilename}`);
+              console.log(`PDF converted to SVG for color editing: ${finalFilename}`);
             } else {
-              throw new Error('Ghostscript PNG conversion failed');
+              throw new Error('SVG conversion failed');
             }
-          } catch (gsError) {
-            console.error('Ghostscript conversion failed, trying ImageMagick:', gsError);
+          } catch (svgError) {
+            console.error('SVG conversion failed, falling back to PNG with Ghostscript:', svgError);
             
-            // Fallback to ImageMagick with enhanced color settings
+            // Fallback to PNG conversion with Ghostscript for color preservation
             try {
               const pngFilename = `${file.filename}.png`;
               const pngPath = path.join(uploadDir, pngFilename);
               
-              // ImageMagick with color profile preservation and transparency
-              const imCommand = `convert -density 300 -colorspace sRGB -alpha on -background none "${file.path}[0]" "${pngPath}"`;
-              await execAsync(imCommand);
+              // Ghostscript command with color profile preservation
+              const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dUseCropBox -sOutputFile="${pngPath}" "${file.path}"`;
+              await execAsync(gsCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                 finalFilename = pngFilename;
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
-                console.log(`PDF converted using ImageMagick with color preservation: ${finalFilename}`);
+                console.log(`PDF converted to PNG using Ghostscript with alpha: ${finalFilename}`);
               } else {
-                throw new Error('ImageMagick conversion also failed');
+                throw new Error('Ghostscript PNG conversion also failed');
               }
-            } catch (imError) {
-              console.error('All PDF conversion methods failed:', imError);
+            } catch (gsError) {
+              console.error('Ghostscript conversion also failed, trying ImageMagick PNG:', gsError);
               
-              // Final fallback - try basic ImageMagick without transparency
+              // Final fallback to ImageMagick PNG
               try {
                 const pngFilename = `${file.filename}.png`;
                 const pngPath = path.join(uploadDir, pngFilename);
@@ -171,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   finalMimeType = 'image/png';
                   finalUrl = `/uploads/${finalFilename}`;
                   
-                  console.log(`PDF converted using basic ImageMagick: ${finalFilename}`);
+                  console.log(`PDF converted using basic ImageMagick PNG: ${finalFilename}`);
                 }
               } catch (basicError) {
                 console.error('All conversion attempts failed:', basicError);

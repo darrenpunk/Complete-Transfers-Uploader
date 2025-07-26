@@ -149,7 +149,8 @@ export class MemStorage implements IStorage {
       height: insertLogo.height || null,
       originalFilename: insertLogo.originalFilename ?? null,
       originalMimeType: insertLogo.originalMimeType ?? null,
-      originalUrl: insertLogo.originalUrl ?? null
+      originalUrl: insertLogo.originalUrl ?? null,
+      svgColors: insertLogo.svgColors || null
     };
     this.logos.set(id, logo);
     return logo;
@@ -180,7 +181,8 @@ export class MemStorage implements IStorage {
       rotation: insertElement.rotation || 0,
       zIndex: insertElement.zIndex || 0,
       isVisible: insertElement.isVisible !== undefined ? insertElement.isVisible : true,
-      isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false
+      isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false,
+      colorOverrides: insertElement.colorOverrides || null
     };
     this.canvasElements.set(id, element);
     return element;
@@ -199,7 +201,7 @@ export class MemStorage implements IStorage {
     return this.canvasElements.delete(id);
   }
 
-  async deleteCanvasElementsByLogo(logoId: string): Promise<number> {
+  async deleteCanvasElementsByLogo(logoId: string): Promise<void> {
     let deleteCount = 0;
     const elementsToDelete: string[] = [];
     
