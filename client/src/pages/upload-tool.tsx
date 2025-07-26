@@ -22,6 +22,7 @@ export default function UploadTool() {
   const [selectedElement, setSelectedElement] = useState<CanvasElement | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -124,18 +125,20 @@ export default function UploadTool() {
   }, [project]);
 
   useEffect(() => {
-    if (!id && templateSizes.length > 0 && !currentProject && !showTemplateSelector) {
-      // Show template selector modal on launch for new projects
-      console.log('Showing template selector modal', { id, templateSizesLength: templateSizes.length, currentProject });
+    if (!id && templateSizes.length > 0 && !currentProject && !hasInitialized) {
+      // Show template selector modal on launch for new projects (only once)
+      console.log('Showing template selector modal', { templateSizesLength: templateSizes.length, currentProject });
       setShowTemplateSelector(true);
+      setHasInitialized(true);
     }
-  }, [id, templateSizes, currentProject, showTemplateSelector]);
+  }, [id, templateSizes, currentProject, hasInitialized]);
 
   // Handle template selection from modal
   const handleTemplateSelect = (templateId: string) => {
     const selectedTemplate = templateSizes.find(t => t.id === templateId);
     if (selectedTemplate) {
       setShowTemplateSelector(false);
+      setHasInitialized(true); // Prevent reopening
       // Only require garment color for Full Colour Transfer Sizes
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
       createProjectMutation.mutate({

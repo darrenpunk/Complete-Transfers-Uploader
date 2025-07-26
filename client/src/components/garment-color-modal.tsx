@@ -76,18 +76,18 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
 
   // Auto-open modal when autoOpen is true and no color is selected (only once)
   useEffect(() => {
-    if (autoOpen && !currentColor && !open && !hasAutoOpened) {
+    if (autoOpen && !currentColor && !hasAutoOpened) {
       setOpen(true);
       setHasAutoOpened(true);
     }
-  }, [autoOpen, currentColor, open, hasAutoOpened]);
+  }, [autoOpen, currentColor, hasAutoOpened]);
 
   // Reset hasAutoOpened when currentColor changes to a valid color
   useEffect(() => {
-    if (currentColor) {
+    if (currentColor && hasAutoOpened) {
       setHasAutoOpened(false);
     }
-  }, [currentColor]);
+  }, [currentColor, hasAutoOpened]);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
