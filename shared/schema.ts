@@ -31,6 +31,7 @@ export const logos = pgTable("logos", {
   originalFilename: text("original_filename"), // Store original PDF filename for vector output
   originalMimeType: text("original_mime_type"), // Store original PDF mime type
   originalUrl: text("original_url"), // Store original PDF URL for vector output
+  svgColors: jsonb("svg_colors"), // Store detected SVG colors for color manipulation
 });
 
 export const canvasElements = pgTable("canvas_elements", {
@@ -45,6 +46,7 @@ export const canvasElements = pgTable("canvas_elements", {
   zIndex: integer("z_index").notNull().default(0),
   isVisible: boolean("is_visible").notNull().default(true),
   isLocked: boolean("is_locked").notNull().default(false),
+  colorOverrides: jsonb("color_overrides"), // Store SVG color changes as JSON
 });
 
 export const templateSizes = pgTable("template_sizes", {

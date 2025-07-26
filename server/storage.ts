@@ -37,6 +37,7 @@ export interface IStorage {
   createCanvasElement(element: InsertCanvasElement): Promise<CanvasElement>;
   updateCanvasElement(id: string, updates: Partial<CanvasElement>): Promise<CanvasElement | undefined>;
   deleteCanvasElement(id: string): Promise<boolean>;
+  deleteCanvasElementsByLogo(logoId: string): Promise<void>;
 
   // Template size methods
   getTemplateSize(id: string): Promise<TemplateSize | undefined>;

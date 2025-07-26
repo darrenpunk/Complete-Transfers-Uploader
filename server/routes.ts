@@ -10,6 +10,7 @@ import { fromPath } from "pdf2pic";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
+import { extractSVGColors, applySVGColorChanges } from "./svg-color-utils";
 
 const execAsync = promisify(exec);
 
@@ -194,6 +195,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Failed to get image dimensions:', error);
         }
 
+        // Extract SVG colors if it's an SVG file or was converted from PDF to SVG
+        let svgColors = null;
+        if (finalMimeType === 'image/svg+xml' || file.mimetype === 'image/svg+xml') {
+          try {
+            const svgPath = path.join(uploadDir, finalFilename);
+            const colors = extractSVGColors(svgPath);
+            if (colors.length > 0) {
+              svgColors = colors;
+              console.log(`Extracted ${colors.length} colors from SVG:`, colors.map(c => c.originalColor));
+            }
+          } catch (error) {
+            console.error('Failed to extract SVG colors:', error);
+          }
+        }
+
         const logoData = {
           projectId: req.params.projectId,
           filename: finalFilename,
@@ -207,6 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           originalFilename: file.mimetype === 'application/pdf' ? file.filename : null,
           originalMimeType: file.mimetype === 'application/pdf' ? file.mimetype : null,
           originalUrl: file.mimetype === 'application/pdf' ? `/uploads/${file.filename}` : null,
+          svgColors: svgColors,
         };
 
         const validatedData = insertLogoSchema.parse(logoData);
@@ -253,7 +270,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
-          isLocked: false
+          isLocked: false,
+          colorOverrides: null // Initialize with no color overrides
         };
 
         await storage.createCanvasElement(canvasElementData);
@@ -336,6 +354,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete canvas element" });
+    }
+  });
+
+  // Apply SVG color changes to canvas element
+  app.post("/api/canvas-elements/:id/update-colors", async (req, res) => {
+    try {
+      const elementId = req.params.id;
+      const { colorOverrides } = req.body;
+
+      // Get the canvas element and associated logo
+      const element = await storage.getCanvasElement(elementId);
+      if (!element) {
+        return res.status(404).json({ message: "Canvas element not found" });
+      }
+
+      const logo = await storage.getLogo(element.logoId);
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      // Only process SVG files
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ message: "Color changes only supported for SVG files" });
+      }
+
+      // Apply color changes to create a modified SVG
+      const originalSvgPath = path.join(uploadDir, logo.filename);
+      const modifiedSvgContent = applySVGColorChanges(originalSvgPath, colorOverrides);
+      
+      if (!modifiedSvgContent) {
+        return res.status(500).json({ message: "Failed to apply color changes" });
+      }
+
+      // Save modified SVG with unique filename
+      const modifiedFilename = `${element.id}_modified.svg`;
+      const modifiedSvgPath = path.join(uploadDir, modifiedFilename);
+      fs.writeFileSync(modifiedSvgPath, modifiedSvgContent);
+
+      // Update canvas element with color overrides
+      const updatedElement = await storage.updateCanvasElement(elementId, {
+        colorOverrides: colorOverrides
+      });
+
+      res.json({
+        element: updatedElement,
+        modifiedSvgUrl: `/uploads/${modifiedFilename}`,
+        message: "Colors updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating SVG colors:', error);
+      res.status(500).json({ message: "Failed to update colors" });
     }
   });
 

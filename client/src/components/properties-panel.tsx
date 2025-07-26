@@ -20,6 +20,7 @@ import {
   AlignEndVertical,
   Square
 } from "lucide-react";
+import ColorPickerPanel from "./color-picker-panel";
 
 interface PropertiesPanelProps {
   selectedElement: CanvasElement | null;
@@ -291,9 +292,17 @@ export default function PropertiesPanel({
               </div>
             </div>
 
-
+            
           </CardContent>
         </Card>
+      )}
+
+      {/* SVG Color Picker Panel */}
+      {currentElement && (
+        (() => {
+          const logo = logos.find(l => l.id === currentElement.logoId);
+          return logo ? <ColorPickerPanel selectedElement={currentElement} logo={logo} /> : null;
+        })()
       )}
 
       {/* Layer Management */}

@@ -1,0 +1,6 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="10" width="80" height="80" fill="#ff0000" stroke="#0000ff" stroke-width="2"/>
+  <circle cx="150" cy="50" r="30" fill="#00ff00" stroke="#ff00ff" stroke-width="1"/>
+  <path d="M 50 150 L 100 100 L 150 150 Z" fill="#ffff00" stroke="#000000" stroke-width="2"/>
+  <text x="20" y="180" font-family="Arial" font-size="14" fill="#333333">Test SVG</text>
+</svg>
