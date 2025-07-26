@@ -80,6 +80,13 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
     }
   }, [autoOpen, currentColor, open]);
 
+  // Close auto-opened modal when color is selected
+  useEffect(() => {
+    if (currentColor && autoOpen) {
+      setOpen(false);
+    }
+  }, [currentColor, autoOpen]);
+
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
       prev.includes(groupName) 
@@ -89,6 +96,7 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
   };
 
   const handleColorSelect = (color: string) => {
+    console.log("GarmentColorModal: Selecting color", color);
     onColorChange(color);
     setOpen(false);
   };

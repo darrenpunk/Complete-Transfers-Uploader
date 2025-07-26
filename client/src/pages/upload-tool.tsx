@@ -167,7 +167,9 @@ export default function UploadTool() {
   };
 
   const handleGarmentColorChange = (color: string) => {
+    console.log("UploadTool: Garment color change requested", color);
     if (currentProject) {
+      console.log("UploadTool: Updating project with color", color);
       updateProjectMutation.mutate({ garmentColor: color });
     }
   };
