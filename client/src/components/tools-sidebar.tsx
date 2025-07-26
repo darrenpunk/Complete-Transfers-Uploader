@@ -43,15 +43,17 @@ const quickColors = [
   { name: "Light Grey Marl", hex: "#919393", rgb: "145, 147, 147", cmyk: "0, 0, 0, 50", inkType: "Process" },
   { name: "Ash Grey", hex: "#A6A9A2", rgb: "166, 169, 162", cmyk: "32, 24, 26, 5", inkType: "Process" },
   { name: "Light Grey", hex: "#BCBFBB", rgb: "188, 191, 187", cmyk: "25, 18, 20, 2", inkType: "Process" },
-  { name: "Charcoal Grey", hex: "#353330", rgb: "53, 51, 48", cmyk: "66, 57, 54, 60", inkType: "Process" },
-  { name: "Pastel Blue", hex: "#B9DBEA", rgb: "185, 219, 234", cmyk: "32, 0, 5, 0", inkType: "Process" },
-  { name: "Sky Blue", hex: "#5998D4", rgb: "89, 152, 212", cmyk: "70, 15, 0, 0", inkType: "Process" },
-  { name: "Navy", hex: "#201C3A", rgb: "32, 28, 58", cmyk: "100, 92, 36, 39", inkType: "Process" },
-  { name: "Royal Blue", hex: "#221866", rgb: "34, 24, 102", cmyk: "100, 95, 5, 0", inkType: "Process" },
-  { name: "Pastel Green", hex: "#B5D55E", rgb: "181, 213, 94", cmyk: "34, 0, 73, 0", inkType: "Process" },
-  { name: "Lime Green", hex: "#90BF33", rgb: "144, 191, 51", cmyk: "50, 0, 99, 0", inkType: "Process" },
-  { name: "Kelly Green", hex: "#3C8A35", rgb: "60, 138, 53", cmyk: "85, 10, 100, 0", inkType: "Process" },
-  { name: "Pastel Pink", hex: "#E7BBD0", rgb: "231, 187, 208", cmyk: "0, 32, 3, 0", inkType: "Process" },
+  { name: "Charcoal", hex: "#505050", rgb: "80, 80, 80", cmyk: "0, 0, 0, 69", inkType: "Process" },
+  { name: "Navy", hex: "#0F2942", rgb: "15, 41, 66", cmyk: "100, 78, 18, 11", inkType: "Process" },
+  { name: "Oxford Navy", hex: "#1A2F4A", rgb: "26, 47, 74", cmyk: "95, 73, 20, 8", inkType: "Process" },
+  { name: "Royal Blue", hex: "#2157A6", rgb: "33, 87, 166", cmyk: "92, 59, 0, 0", inkType: "Process" },
+  { name: "French Navy", hex: "#2C4364", rgb: "44, 67, 100", cmyk: "95, 69, 25, 12", inkType: "Process" },
+  { name: "Sky Blue", hex: "#7ED3F7", rgb: "126, 211, 247", cmyk: "49, 0, 0, 0", inkType: "Process" },
+  { name: "Orange", hex: "#D4580A", rgb: "212, 88, 10", cmyk: "0, 77, 97, 0", inkType: "Process" },
+  { name: "Kelly Green", hex: "#3C8A35", rgb: "60, 138, 53", cmyk: "79, 19, 100, 4", inkType: "Process" },
+  { name: "Irish Green", hex: "#009639", rgb: "0, 150, 57", cmyk: "85, 0, 100, 0", inkType: "Process" },
+  { name: "Forest Green", hex: "#1B5A20", rgb: "27, 90, 32", cmyk: "85, 28, 100, 15", inkType: "Process" },
+  { name: "Bottle Green", hex: "#264935", rgb: "38, 73, 53", cmyk: "82, 45, 73, 28", inkType: "Process" },
   { name: "Light Pink", hex: "#D287A2", rgb: "210, 135, 162", cmyk: "2, 53, 11, 0", inkType: "Process" },
   { name: "Fuchsia Pink", hex: "#C42469", rgb: "196, 36, 105", cmyk: "0, 94, 20, 0", inkType: "Process" },
   { name: "Red", hex: "#C02300", rgb: "192, 35, 0", cmyk: "0, 99, 97, 0", inkType: "Process" },
@@ -143,12 +145,14 @@ export default function ToolsSidebar({
   // Delete logo mutation
   const deleteLogoMutation = useMutation({
     mutationFn: async (logoId: string) => {
-      const response = await fetch(`/api/logos/${logoId}`, {
+      const response = await apiRequest(`/api/logos/${logoId}`, {
         method: 'DELETE',
       });
+      
       if (!response.ok) {
         throw new Error('Delete failed');
       }
+      
       return logoId;
     },
     onSuccess: (deletedLogoId) => {
@@ -175,14 +179,10 @@ export default function ToolsSidebar({
     },
   });
 
-
-
   const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-
-
 
       {/* Uploaded Logos */}
       {logos.length > 0 && (
@@ -281,170 +281,31 @@ export default function ToolsSidebar({
         </div>
       )}
 
-      {/* Template Size Selection */}
+      {/* Product Selector */}
       <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Template Size</h3>
-        
-        {/* Group templates by category with collapsible interface */}
-        <div className="space-y-2">
-          {Object.entries(
-            templateSizes.reduce((groups, template) => {
-              const group = template.group || 'Other';
-              if (!groups[group]) groups[group] = [];
-              groups[group].push(template);
-              return groups;
-            }, {} as Record<string, typeof templateSizes>)
-          ).map(([groupName, templates]) => (
-            <Collapsible 
-              key={groupName}
-              open={expandedGroups.includes(`template-${groupName}`)}
-              onOpenChange={() => toggleGroup(`template-${groupName}`)}
-            >
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-gray-100 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2">
-                  {groupName === "DTF Transfer Sizes" && (
-                    <img 
-                      src={dtfIconPath} 
-                      alt="DTF Transfer" 
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  {groupName === "Full Colour Transfer Sizes" && (
-                    <img 
-                      src={fullColourIconPath} 
-                      alt="Full Colour Transfer" 
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  {groupName === "Single Colour Transfer Sizes" && (
-                    <img 
-                      src={fullColourIconPath} 
-                      alt="Single Colour Transfer" 
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  {groupName === "UV DTF Transfers" && (
-                    <img 
-                      src={uvdtfIconPath} 
-                      alt="UV DTF Transfer" 
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  {groupName === "Woven Badges" && (
-                    <img 
-                      src={wovenBadgeIconPath} 
-                      alt="Woven Badge" 
-                      className="h-12 w-12 object-contain"
-                    />
-                  )}
-                  <span className="text-sm font-medium text-gray-800">{groupName}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">
-                    {templates.length} {(groupName === "DTF Transfer Sizes" || groupName === "Full Colour Transfer Sizes" || groupName === "Single Colour Transfer Sizes" || groupName === "UV DTF Transfers" || groupName === "Woven Badges") ? "sizes" : "templates"}
-                  </span>
-                  {expandedGroups.includes(`template-${groupName}`) 
-                    ? <ChevronDown className="w-4 h-4" />
-                    : <ChevronRight className="w-4 h-4" />
-                  }
-                </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="px-2 py-2">
-                {/* Show first 4 templates in 2x2 grid if they're standard sizes */}
-                {(groupName === "Full Colour Transfer Sizes" || groupName === "Single Colour Transfer Sizes") && templates.length >= 4 && (
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {templates.slice(0, 4).map((template) => (
-                      <Button
-                        key={template.id}
-                        variant={project.templateSize === template.id ? "default" : "outline"}
-                        className="h-auto p-3 flex flex-col"
-                        onClick={() => onTemplateChange(template.id)}
-                      >
-                        <span className="font-medium">{template.name}</span>
-                        <span className="text-xs opacity-70">{template.width}×{template.height}mm</span>
-                      </Button>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Show remaining templates in single column */}
-                <div className="grid grid-cols-1 gap-2">
-                  {(groupName === "Full Colour Transfer Sizes" || groupName === "Single Colour Transfer Sizes" ? templates.slice(4) : templates).map((template) => (
-                    <Button
-                      key={template.id}
-                      variant={project.templateSize === template.id ? "default" : "outline"}
-                      className="h-auto p-3 justify-between"
-                      onClick={() => onTemplateChange(template.id)}
-                    >
-                      <span className="font-medium">{template.label}</span>
-                      <span className="text-xs opacity-70">({template.width}×{template.height}mm)</span>
-                    </Button>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Selector</h3>
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => {
+            window.location.href = '/';
+          }}
+        >
+          <span className="mr-2">📐</span>
+          Change Template Size
+        </Button>
+        <p className="text-xs text-gray-500 mt-2">
+          Currently using template with different transfer sizes available
+        </p>
       </div>
 
-      {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
-      {(() => {
-        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
-        return isFullColourTemplate ? (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              Garment Color
-              {!project.garmentColor && (
-                <span className="text-red-500 text-sm font-normal">*Required</span>
-              )}
-            </h3>
-            
-            {!project.garmentColor && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700 font-medium">
-                  ⚠️ Please select a garment color to continue
-                </p>
-                <p className="text-xs text-red-600 mt-1">
-                  Click the button below to open the color selection window
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {/* Current Selection Display */}
-              {project.garmentColor && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div 
-                    className="w-8 h-8 rounded-full border-2 border-gray-300"
-                    style={{ backgroundColor: project.garmentColor }}
-                  />
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">Selected Color</div>
-                    <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Garment Color Modal Trigger */}
-              <GarmentColorModal
-                currentColor={project.garmentColor || ""}
-                onColorChange={onGarmentColorChange}
-                autoOpen={!project.garmentColor}
-                trigger={
-                  <Button 
-                    variant={project.garmentColor ? "outline" : "default"} 
-                    className="w-full"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-        ) : null;
-      })()}
+      {/* Pre-flight Check */}
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pre-flight Check</h3>
+        <div className="text-sm text-gray-600">
+          Select a logo in the properties panel to run pre-flight checks
+        </div>
+      </div>
     </div>
   );
 }

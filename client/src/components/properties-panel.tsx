@@ -311,26 +311,23 @@ export default function PropertiesPanel({
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
-      {/* Product Selector */}
+      {/* Template Size Selection */}
       <Card className="rounded-none border-x-0 border-t-0">
         <CardHeader>
-          <CardTitle className="text-lg">Product Selector</CardTitle>
+          <CardTitle className="text-lg">Template Size</CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-sm text-gray-600 mb-3">
+            Current template: {templates.find(t => t.id === selectedTemplateId)?.label || 'None selected'}
+          </p>
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => {
-              // Open template selector - this should be passed from parent
-              window.location.href = '/';
-            }}
+            onClick={() => setShowTemplateSelector(true)}
           >
             <span className="mr-2">📐</span>
             Change Template Size
           </Button>
-          <p className="text-xs text-gray-500 mt-2">
-            Currently using template with different transfer sizes available
-          </p>
         </CardContent>
       </Card>
 
