@@ -72,14 +72,23 @@ function getColorName(hex: string): string {
 export default function GarmentColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: GarmentColorModalProps) {
   const [open, setOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
-  // Auto-open modal when autoOpen is true and no color is selected
+  // Auto-open modal when autoOpen is true and no color is selected (only once)
   useEffect(() => {
-    if (autoOpen && !currentColor && !open) {
+    if (autoOpen && !currentColor && !open && !hasAutoOpened) {
       console.log("GarmentColorModal: Auto-opening modal");
       setOpen(true);
+      setHasAutoOpened(true);
     }
-  }, [autoOpen, currentColor, open]);
+  }, [autoOpen, currentColor, open, hasAutoOpened]);
+
+  // Reset hasAutoOpened when currentColor changes to a valid color
+  useEffect(() => {
+    if (currentColor) {
+      setHasAutoOpened(false);
+    }
+  }, [currentColor]);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 

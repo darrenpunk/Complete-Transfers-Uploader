@@ -428,7 +428,7 @@ export default function ToolsSidebar({
 
               {/* Garment Color Modal Trigger */}
               <GarmentColorModal
-                currentColor={project.garmentColor}
+                currentColor={project.garmentColor || ""}
                 onColorChange={onGarmentColorChange}
                 autoOpen={!project.garmentColor}
                 trigger={
