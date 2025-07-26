@@ -22,8 +22,10 @@ import {
 } from "lucide-react";
 import ColorPickerPanel from "./color-picker-panel";
 import CMYKColorModal from "./cmyk-color-modal";
+import GarmentColorModal from "./garment-color-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
+import { Palette } from "lucide-react";
 
 // Professional color palette
 const quickColors = [
@@ -36,6 +38,28 @@ const quickColors = [
   { name: "Yellow", hex: "#F0F42A", rgb: "240, 244, 42", cmyk: "5, 0, 90, 0", inkType: "Process" },
   { name: "Purple", hex: "#4C0A6A", rgb: "76, 10, 106", cmyk: "75, 100, 0, 0", inkType: "Process" }
 ];
+
+// Function to get color name from hex value
+function getColorName(hex: string): string {
+  // Check quick colors first
+  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (quickColor) {
+    return quickColor.name;
+  }
+
+  // Check manufacturer colors
+  for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
+    for (const group of colorGroups) {
+      const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+      if (manufacturerColor) {
+        return `${manufacturerColor.name} (${manufacturerColor.code})`;
+      }
+    }
+  }
+
+  // If no match found, return hex as fallback
+  return hex;
+}
 
 interface PropertiesPanelProps {
   selectedElement: CanvasElement | null;
@@ -72,6 +96,16 @@ export default function PropertiesPanel({
       });
     },
   });
+
+  // Handle garment color change for individual logos
+  const handleGarmentColorChange = (color: string) => {
+    if (currentElement) {
+      updateElementMutation.mutate({
+        id: currentElement.id,
+        updates: { garmentColor: color }
+      });
+    }
+  };
 
   const handlePropertyChange = (property: keyof CanvasElement, value: any, debounce = false) => {
     if (!currentElement) return;
@@ -313,69 +347,49 @@ export default function PropertiesPanel({
               </div>
             </div>
 
-            <Separator />
-
-            {/* Individual Garment Color */}
+            {/* Garment Color Selection */}
             <div>
-              <Label className="text-sm font-medium">Garment Color for This Logo</Label>
-              <p className="text-xs text-gray-500 mb-3">
-                Override the project garment color for this specific logo
-              </p>
-              
-              {/* Quick Colors */}
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                {quickColors.map((color) => (
-                  <TooltipProvider key={color.hex}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                            currentElement.garmentColor === color.hex
-                              ? "border-primary ring-2 ring-blue-200"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                          style={{ backgroundColor: color.hex }}
-                          onClick={() => handlePropertyChange('garmentColor', color.hex)}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="bg-gray-900 text-white p-3 rounded-lg shadow-lg max-w-xs">
-                        <div className="space-y-1">
-                          <div className="font-semibold">{color.name}</div>
-                          <div className="text-xs space-y-0.5 opacity-90">
-                            <div>HEX: {color.hex}</div>
-                            <div>RGB: {color.rgb}</div>
-                            <div>CMYK: {color.cmyk}</div>
-                            <div>Type: {color.inkType}</div>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                ))}
+              <Label className="text-sm font-medium">Garment Color</Label>
+              <div className="space-y-3 mt-2">
+                {/* Current Selection Display */}
+                {currentElement.garmentColor && (
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-gray-300"
+                      style={{ backgroundColor: currentElement.garmentColor }}
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900">Selected Color</div>
+                      <div className="text-gray-600">{getColorName(currentElement.garmentColor)}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Garment Color Modal Trigger */}
+                <GarmentColorModal
+                  currentColor={currentElement.garmentColor || ""}
+                  onColorChange={handleGarmentColorChange}
+                  trigger={
+                    <Button 
+                      variant={currentElement.garmentColor ? "outline" : "default"} 
+                      className="w-full"
+                      size="sm"
+                    >
+                      <Palette className="w-4 h-4 mr-2" />
+                      {currentElement.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                    </Button>
+                  }
+                />
+
+                {!currentElement.garmentColor && (
+                  <p className="text-xs text-gray-500">
+                    Select a garment color to visualize how this logo will look when printed
+                  </p>
+                )}
               </div>
-
-              {/* Custom CMYK Color Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCMYKModal(true)}
-                className="w-full mb-2"
-              >
-                Custom CMYK Color
-              </Button>
-
-              {/* Clear Individual Color */}
-              {currentElement.garmentColor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handlePropertyChange('garmentColor', null)}
-                  className="w-full text-sm text-gray-600"
-                >
-                  Use Project Default Color
-                </Button>
-              )}
             </div>
+
+            <Separator />
           </CardContent>
         </Card>
       )}
