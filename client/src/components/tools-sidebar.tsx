@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, Logo, TemplateSize } from "@shared/schema";
-import ProgressSteps from "./progress-steps";
+
 import UploadZone from "./upload-zone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,10 +115,6 @@ export default function ToolsSidebar({
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-      {/* Progress Steps */}
-      <div className="p-6 border-b border-gray-200">
-        <ProgressSteps currentStep={currentStep} />
-      </div>
 
       {/* Upload Zone */}
       {currentStep === 1 && (
