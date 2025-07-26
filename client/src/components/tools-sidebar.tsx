@@ -1,13 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import type { Project, Logo, TemplateSize } from "@shared/schema";
 
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
 import CMYKColorModal from "@/components/cmyk-color-modal";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { manufacturerColors } from "@shared/garment-colors";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -32,6 +35,15 @@ export default function ToolsSidebar({
   onGarmentColorChange
 }: ToolsSidebarProps) {
   const { toast } = useToast();
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupName) 
+        ? prev.filter(name => name !== groupName)
+        : [...prev, groupName]
+    );
+  };
 
   const uploadLogosMutation = useMutation({
     mutationFn: async (files: File[]) => {
@@ -283,6 +295,7 @@ export default function ToolsSidebar({
             </p>
           </div>
         )}
+        {/* Quick Colors */}
         <div className="grid grid-cols-6 gap-2 mb-4">
           {garmentColors.map((color) => (
             <button
@@ -295,6 +308,63 @@ export default function ToolsSidebar({
               style={{ backgroundColor: color }}
               onClick={() => onGarmentColorChange(color)}
             />
+          ))}
+        </div>
+
+        {/* Manufacturer Colors */}
+        <div className="space-y-2 mb-4">
+          <h4 className="text-sm font-semibold text-gray-700">Manufacturer Colors</h4>
+          {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
+            <div key={manufacturerName} className="border border-gray-200 rounded-lg">
+              <div className="p-3 bg-gray-50 border-b border-gray-200">
+                <h5 className="text-sm font-medium text-gray-800">{manufacturerName}</h5>
+              </div>
+              <div className="p-2 space-y-1">
+                {colorGroups.map((group) => (
+                  <Collapsible 
+                    key={group.name}
+                    open={expandedGroups.includes(`${manufacturerName}-${group.name}`)}
+                    onOpenChange={() => toggleGroup(`${manufacturerName}-${group.name}`)}
+                  >
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-50 rounded text-sm">
+                      <span className="font-medium text-gray-700">{group.name}</span>
+                      <span className="text-xs text-gray-500">
+                        {group.colors.length} colors
+                      </span>
+                      {expandedGroups.includes(`${manufacturerName}-${group.name}`) 
+                        ? <ChevronDown className="w-4 h-4" />
+                        : <ChevronRight className="w-4 h-4" />
+                      }
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-2 pb-2">
+                      <div className="grid grid-cols-6 gap-1">
+                        {group.colors.map((color) => (
+                          <CMYKColorModal
+                            key={color.code}
+                            initialColor={color.hex}
+                            currentColor={project.garmentColor}
+                            onChange={(newColor) => onGarmentColorChange(newColor)}
+                            label={`${color.name} (${color.code})`}
+                            cmykValues={color.cmyk}
+                            trigger={
+                              <button
+                                className={`w-8 h-8 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
+                                  project.garmentColor === color.hex
+                                    ? "border-primary ring-2 ring-blue-200"
+                                    : "border-gray-300 hover:border-gray-400"
+                                }`}
+                                style={{ backgroundColor: color.hex }}
+                                title={`${color.name} (${color.code})\nCMYK: ${color.cmyk.c}/${color.cmyk.m}/${color.cmyk.y}/${color.cmyk.k}`}
+                              />
+                            }
+                          />
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         <div className="text-sm text-gray-600 mb-2">

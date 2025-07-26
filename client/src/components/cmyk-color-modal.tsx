@@ -18,6 +18,12 @@ interface CMYKColorModalProps {
   label: string;
   currentColor: string;
   trigger?: React.ReactNode;
+  cmykValues?: {
+    c: number;
+    m: number;
+    y: number;
+    k: number;
+  };
 }
 
 // Color conversion utilities
@@ -91,9 +97,9 @@ function getCMYKFromColor(colorString: string): CMYKColor | null {
   return null;
 }
 
-export default function CMYKColorModal({ initialColor, onChange, label, currentColor, trigger }: CMYKColorModalProps) {
+export default function CMYKColorModal({ initialColor, onChange, label, currentColor, trigger, cmykValues }: CMYKColorModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const initialCMYK = getCMYKFromColor(currentColor) || getCMYKFromColor(initialColor) || { c: 0, m: 0, y: 0, k: 0 };
+  const initialCMYK = cmykValues || getCMYKFromColor(currentColor) || getCMYKFromColor(initialColor) || { c: 0, m: 0, y: 0, k: 0 };
   const [cmyk, setCmyk] = useState<CMYKColor>(initialCMYK);
 
   const handleCMYKChange = (channel: keyof CMYKColor, value: number) => {
