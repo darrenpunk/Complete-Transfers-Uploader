@@ -6,11 +6,12 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ## Recent Changes (July 26, 2025)
 
-✓ **Fixed PDF vector embedding**: Resolved issue where original PDF vector graphics were being rasterized in output
-✓ **Corrected A3 PDF sizing**: Fixed aspect ratio detection to properly identify A3 portrait (297×420mm) vs landscape dimensions  
-✓ **Implemented millimeter-based coordinate system**: All canvas elements now store dimensions in mm, convert to pixels only for display
-✓ **Enhanced properties panel**: Added mm unit labels to clarify measurement system throughout interface
-✓ **Fixed canvas interaction**: Drag/resize operations now properly convert between screen pixels and stored mm values
+✓ **Enhanced PDF color preservation**: Implemented Ghostscript-first conversion approach to maintain original PDF colors and transparency
+✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)
+✓ **Streamlined sidebar layout**: Removed duplicate vertical progress, focusing space on tools and current step functionality
+✓ **Template grouping with DTF support**: Added "Full Colour / Single Color Transfer Templates" and "DTF Transfer Templates" groups
+✓ **Smart zoom for large templates**: 1000×550mm DTF template automatically displays at 25% zoom for better overview
+✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
 
 ## User Preferences
 
@@ -51,7 +52,8 @@ Preferred communication style: Simple, everyday language.
 ### File Upload System
 - **Storage**: Local filesystem storage in `/uploads` directory with original PDF preservation
 - **Validation**: File type restrictions (PNG, JPEG, SVG, PDF) with 10MB size limit
-- **Processing**: Dual-approach processing - ImageMagick PNG conversion for display + original PDF storage for vector output
+- **Processing**: Multi-tier PDF conversion - Ghostscript primary (color accuracy), ImageMagick fallback, original PDF storage for vector output
+- **Color Preservation**: Ghostscript with `pngalpha` device maintains PDF color profiles and transparency without white backgrounds
 - **Vector Preservation**: Original PDF files retained alongside converted images for production-quality output
 
 ### Canvas System
