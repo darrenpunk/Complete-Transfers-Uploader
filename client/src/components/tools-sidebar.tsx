@@ -12,6 +12,7 @@ import CMYKColorModal from "@/components/cmyk-color-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
+import logoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -376,7 +377,16 @@ export default function ToolsSidebar({
           {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
             <div key={manufacturerName} className="border border-gray-200 rounded-lg">
               <div className="p-3 bg-gray-50 border-b border-gray-200">
-                <h5 className="text-sm font-medium text-gray-800">{manufacturerName}</h5>
+                <div className="flex items-center gap-3">
+                  {manufacturerName === "Gildan" && (
+                    <img 
+                      src={logoPath} 
+                      alt="CompleteTransfers" 
+                      className="h-5 w-auto object-contain"
+                    />
+                  )}
+                  <h5 className="text-sm font-medium text-gray-800">{manufacturerName}</h5>
+                </div>
               </div>
               <div className="p-2 space-y-1">
                 {colorGroups.map((group) => (
