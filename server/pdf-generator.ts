@@ -431,10 +431,10 @@ export class PDFGenerator {
     const canvasWidth = Math.round(templateSize.width * 11.811);
     const canvasHeight = Math.round(templateSize.height * 11.811);
     
-    // Create base canvas with background color in CMYK colorspace
-    let magickCommand = `convert -size ${canvasWidth}x${canvasHeight} -colorspace CMYK xc:"${backgroundColor}"`;
+    // Create base canvas with background color in RGB first for better compositing
+    let magickCommand = `convert -size ${canvasWidth}x${canvasHeight} xc:"${backgroundColor}"`;
     
-    // Composite each CMYK logo onto the canvas
+    // Composite each logo onto the canvas using RGB for better color preservation
     for (const element of logoElements) {
       const logo = logoMap.get(element.logoId);
       if (!logo) continue;
@@ -448,25 +448,15 @@ export class PDFGenerator {
       const width = Math.round(element.width * 11.811);
       const height = Math.round(element.height * 11.811);
       
-      // Ensure logo is in CMYK colorspace with better color preservation and composite
-      magickCommand += ` \\( "${logoPath}" -colorspace CMYK -intent relative -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+      // Use original RGB logo for compositing to preserve colors better
+      magickCommand += ` \\( "${logoPath}" -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
     }
     
-    // Convert final composite to PDF with CMYK colorspace preserved
-    const tempImagePath = outputPath.replace('.pdf', '.png');
-    magickCommand += ` "${tempImagePath}"`;
+    // Convert final RGB composite directly to CMYK PDF with perceptual intent for best color preservation
+    magickCommand += ` -colorspace CMYK -intent perceptual "${outputPath}"`;
+    
+    console.log('Executing improved CMYK composite command:', magickCommand);
     await execAsync(magickCommand);
-    
-    // Convert PNG to PDF while preserving CMYK
-    const pdfCommand = `convert "${tempImagePath}" -colorspace CMYK "${outputPath}"`;
-    await execAsync(pdfCommand);
-    
-    // Clean up temporary image
-    try {
-      fs.unlinkSync(tempImagePath);
-    } catch (error) {
-      console.warn('Failed to clean up temp image:', error);
-    }
   }
 
   private async generateStandardPDF(data: PDFGenerationData): Promise<Buffer> {
