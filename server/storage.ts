@@ -82,6 +82,9 @@ export class MemStorage implements IStorage {
       { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Sizes" },
       { name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF Transfer Sizes" },
       
+      // UV DTF Transfers
+      { name: "uv_dtf_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "UV DTF Transfers" },
+      
       // Woven Badges
       { name: "woven_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Woven Badges" },
       { name: "woven_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Woven Badges" },
