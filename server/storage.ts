@@ -68,6 +68,16 @@ export class MemStorage implements IStorage {
       { name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour Transfer Sizes" },
       { name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour Transfer Sizes" },
       
+      // Single Colour Transfer Sizes
+      { name: "single_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Single Colour Transfer Sizes" },
+      { name: "single_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Single Colour Transfer Sizes" },
+      { name: "single_A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Single Colour Transfer Sizes" },
+      { name: "single_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Single Colour Transfer Sizes" },
+      { name: "single_business_card", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Single Colour Transfer Sizes" },
+      { name: "single_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Single Colour Transfer Sizes" },
+      { name: "single_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Single Colour Transfer Sizes" },
+      { name: "single_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Single Colour Transfer Sizes" },
+      
       // DTF Transfer Sizes
       { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Sizes" },
       { name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF Transfer Sizes" },

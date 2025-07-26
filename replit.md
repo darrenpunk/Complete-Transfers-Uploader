@@ -33,7 +33,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Forced Garment Color Selection**: Mandatory color selection with validation warnings and disabled states until color chosen
 ✓ **CMYK popup color picker**: Professional modal dialog with full C/M/Y/K sliders, gradients, and numeric inputs for precise print control
 ✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)
-✓ **Template grouping with DTF support**: Added "Full Colour Transfer Sizes" and "DTF Transfer Sizes" groups with custom icons
+✓ **Template grouping with DTF support**: Added "Full Colour Transfer Sizes", "Single Colour Transfer Sizes", and "DTF Transfer Sizes" groups with custom icons
 ✓ **Smart zoom for large templates**: 1000×550mm DTF template automatically displays at 25% zoom for better overview
 ✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
 ✓ **Collapsible template interface**: Template categories now use accordion interface with expand/collapse functionality and template counts
