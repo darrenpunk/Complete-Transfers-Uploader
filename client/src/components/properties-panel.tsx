@@ -54,15 +54,21 @@ export default function PropertiesPanel({
   const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
     if (!selectedElement) return;
 
-    let updates: Partial<CanvasElement> = { [property]: value };
+    // Convert string inputs to numbers for numeric properties
+    let processedValue = value;
+    if (property === 'x' || property === 'y' || property === 'width' || property === 'height' || property === 'rotation') {
+      processedValue = parseFloat(value) || 0;
+    }
+
+    let updates: Partial<CanvasElement> = { [property]: processedValue };
 
     // Handle aspect ratio maintenance for width/height changes
     if (maintainAspectRatio && (property === 'width' || property === 'height')) {
       const aspectRatio = selectedElement.width / selectedElement.height;
       if (property === 'width') {
-        updates.height = value / aspectRatio;
+        updates.height = Math.round(processedValue / aspectRatio);
       } else {
-        updates.width = value * aspectRatio;
+        updates.width = Math.round(processedValue * aspectRatio);
       }
     }
 
@@ -84,6 +90,46 @@ export default function PropertiesPanel({
       id: element.id,
       updates: { isLocked: !element.isLocked }
     });
+  };
+
+  // Alignment functions
+  const alignLeft = () => {
+    if (!selectedElement) return;
+    handlePropertyChange('x', 0);
+  };
+
+  const alignCenter = () => {
+    if (!selectedElement) return;
+    // Get template from the first element's project (we need template size)
+    const templateWidth = 297; // A3 width in mm - should get from template
+    const centerX = (templateWidth - selectedElement.width) / 2;
+    handlePropertyChange('x', Math.round(centerX));
+  };
+
+  const alignRight = () => {
+    if (!selectedElement) return;
+    const templateWidth = 297; // A3 width in mm - should get from template
+    const rightX = templateWidth - selectedElement.width;
+    handlePropertyChange('x', Math.round(rightX));
+  };
+
+  const alignTop = () => {
+    if (!selectedElement) return;
+    handlePropertyChange('y', 0);
+  };
+
+  const alignMiddle = () => {
+    if (!selectedElement) return;
+    const templateHeight = 420; // A3 height in mm - should get from template
+    const middleY = (templateHeight - selectedElement.height) / 2;
+    handlePropertyChange('y', Math.round(middleY));
+  };
+
+  const alignBottom = () => {
+    if (!selectedElement) return;
+    const templateHeight = 420; // A3 height in mm - should get from template
+    const bottomY = templateHeight - selectedElement.height;
+    handlePropertyChange('y', Math.round(bottomY));
   };
 
   // Pre-flight check results
@@ -112,7 +158,7 @@ export default function PropertiesPanel({
                   <Input
                     type="number"
                     value={Math.round(selectedElement.x)}
-                    onChange={(e) => handlePropertyChange('x', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handlePropertyChange('x', e.target.value)}
                     className="text-sm"
                   />
                 </div>
@@ -121,7 +167,7 @@ export default function PropertiesPanel({
                   <Input
                     type="number"
                     value={Math.round(selectedElement.y)}
-                    onChange={(e) => handlePropertyChange('y', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handlePropertyChange('y', e.target.value)}
                     className="text-sm"
                   />
                 </div>
@@ -137,7 +183,7 @@ export default function PropertiesPanel({
                   <Input
                     type="number"
                     value={Math.round(selectedElement.width)}
-                    onChange={(e) => handlePropertyChange('width', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                   />
                 </div>
@@ -146,7 +192,7 @@ export default function PropertiesPanel({
                   <Input
                     type="number"
                     value={Math.round(selectedElement.height)}
-                    onChange={(e) => handlePropertyChange('height', parseInt(e.target.value) || 0)}
+                    onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm"
                   />
                 </div>
@@ -177,7 +223,7 @@ export default function PropertiesPanel({
                 <Input
                   type="number"
                   value={Math.round(selectedElement.rotation)}
-                  onChange={(e) => handlePropertyChange('rotation', parseInt(e.target.value) || 0)}
+                  onChange={(e) => handlePropertyChange('rotation', e.target.value)}
                   className="w-16 text-sm"
                 />
                 <span className="text-sm text-gray-500">°</span>
@@ -255,22 +301,22 @@ export default function PropertiesPanel({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <Button variant="outline" size="sm" title="Align Left">
+            <Button variant="outline" size="sm" title="Align Left" onClick={alignLeft} disabled={!selectedElement}>
               <AlignLeft className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" title="Align Center">
+            <Button variant="outline" size="sm" title="Align Center" onClick={alignCenter} disabled={!selectedElement}>
               <AlignCenter className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" title="Align Right">
+            <Button variant="outline" size="sm" title="Align Right" onClick={alignRight} disabled={!selectedElement}>
               <AlignRight className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" title="Align Top">
+            <Button variant="outline" size="sm" title="Align Top" onClick={alignTop} disabled={!selectedElement}>
               <AlignStartVertical className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" title="Align Middle">
+            <Button variant="outline" size="sm" title="Align Middle" onClick={alignMiddle} disabled={!selectedElement}>
               <AlignCenterVertical className="w-4 h-4" />
             </Button>
-            <Button variant="outline" size="sm" title="Align Bottom">
+            <Button variant="outline" size="sm" title="Align Bottom" onClick={alignBottom} disabled={!selectedElement}>
               <AlignEndVertical className="w-4 h-4" />
             </Button>
           </div>

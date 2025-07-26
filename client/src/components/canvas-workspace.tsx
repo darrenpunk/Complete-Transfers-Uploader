@@ -32,6 +32,8 @@ export default function CanvasWorkspace({
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
+  const [history, setHistory] = useState<CanvasElement[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -58,6 +60,61 @@ export default function CanvasWorkspace({
   const handleZoomOut = () => {
     setZoom(Math.max(zoom - 25, 25));
   };
+
+  // History management
+  const saveToHistory = (elements: CanvasElement[]) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push([...elements]);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const previousState = history[historyIndex - 1];
+      setHistoryIndex(historyIndex - 1);
+      // Apply the previous state to all elements
+      previousState.forEach(element => {
+        updateElementMutation.mutate({
+          id: element.id,
+          updates: {
+            x: element.x,
+            y: element.y,
+            width: element.width,
+            height: element.height,
+            rotation: element.rotation
+          }
+        });
+      });
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(historyIndex + 1);
+      // Apply the next state to all elements
+      nextState.forEach(element => {
+        updateElementMutation.mutate({
+          id: element.id,
+          updates: {
+            x: element.x,
+            y: element.y,
+            width: element.width,
+            height: element.height,
+            rotation: element.rotation
+          }
+        });
+      });
+    }
+  };
+
+  // Save initial state to history when canvas elements change
+  useEffect(() => {
+    if (canvasElements.length > 0 && history.length === 0) {
+      saveToHistory(canvasElements);
+    }
+  }, [canvasElements]);
 
   const handleElementClick = (element: CanvasElement, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -249,11 +306,11 @@ export default function CanvasWorkspace({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleUndo} disabled={historyIndex <= 0}>
               <Undo className="w-4 h-4 mr-1" />
               Undo
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
               <Redo className="w-4 h-4 mr-1" />
               Redo
             </Button>
