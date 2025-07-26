@@ -331,7 +331,7 @@ export default function ToolsSidebar({
               value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
             });
             
-            // File Format Check
+            // File Format Check  
             const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
             checks.push({
               name: "File Format",
@@ -339,13 +339,33 @@ export default function ToolsSidebar({
               value: isVector ? "Vector" : "Raster"
             });
             
-            // Color Mode Check
+            // Color Mode Check - Enhanced for different file types
             const svgColors = logo.svgColors as string[] | undefined;
-            const hasColors = svgColors && Array.isArray(svgColors) && svgColors.length > 0;
+            const isRasterImage = logo.mimeType?.startsWith('image/') && !logo.mimeType.includes('svg');
+            
+            let colorStatus = "pass";
+            let colorValue = "Unknown";
+            
+            if (isVector && svgColors && Array.isArray(svgColors) && svgColors.length > 0) {
+              // Vector files with detected colors
+              colorValue = `${svgColors.length} Vector Colors`;
+            } else if (isVector) {
+              // Vector files without detected colors (might be single color or grayscale)
+              colorValue = "Vector (Monochrome)";
+            } else if (isRasterImage) {
+              // Raster images - we can't easily detect colors on the client side
+              // but we can assume they contain colors since they're images
+              colorValue = "Raster Image";
+              colorStatus = "pass"; // Assume raster images have color data
+            } else {
+              colorValue = "Unknown Format";
+              colorStatus = "warning";
+            }
+            
             checks.push({
               name: "Color Analysis",
-              status: hasColors ? "pass" : "warning",
-              value: hasColors ? `${svgColors.length} Colors` : "No Colors"
+              status: colorStatus,
+              value: colorValue
             });
           }
           
