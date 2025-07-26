@@ -182,16 +182,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   return match;
                 });
                 
-                // 2. Remove any path elements that span the entire canvas or are at origin
+                // 2. Remove only full-page background paths, preserve white content elements
                 const pathRegex = /<path[^>]*>/g;
                 let pathMatch;
                 while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
                   const pathElement = pathMatch[0];
-                  // Look for paths that might be backgrounds - typically have large coordinate ranges
-                  if (pathElement.includes('M 0 0') || 
-                      pathElement.includes('fill="white"') || 
-                      pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
-                      pathElement.includes('fill="#ffffff"')) {
+                  // Only remove paths that are clearly full-page backgrounds
+                  // Check for paths that start at origin AND cover full dimensions
+                  const isFullPageBackground = (
+                    pathElement.includes('M 0 0') && 
+                    (pathElement.includes('L 624.703125 0') || pathElement.includes('L 595.2') || pathElement.includes('L 841.8')) &&
+                    (pathElement.includes('fill="white"') || 
+                     pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
+                     pathElement.includes('fill="#ffffff"'))
+                  );
+                  
+                  if (isFullPageBackground) {
                     console.log('Removing suspected background path:', pathElement.substring(0, 100) + '...');
                     svgContent = svgContent.replace(pathElement, '');
                   }

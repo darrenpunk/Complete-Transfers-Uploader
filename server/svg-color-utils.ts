@@ -31,7 +31,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     elementMatches.forEach((elementMatch, index) => {
       const elementType = elementMatch.match(/<(\w+)/)?.[1] || 'unknown';
       
-      // Check for fill colors
+      // Check for fill colors (including white colors)
       const fillMatch = elementMatch.match(/fill\s*=\s*["']([^"']+)["']/i);
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
         colors.push({
@@ -60,7 +60,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       if (styleMatch) {
         const style = styleMatch[1];
         
-        // Extract fill from style
+        // Extract fill from style (including white colors)
         const styleFillMatch = style.match(/fill\s*:\s*([^;]+)/i);
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
           colors.push({
