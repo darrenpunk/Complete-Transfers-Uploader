@@ -368,11 +368,10 @@ export default function CanvasWorkspace({
           <div
             ref={canvasRef}
             className="relative shadow-xl rounded-lg overflow-hidden"
-            style={{ backgroundColor: '#D8D8D8' }}
             style={{
               width: canvasWidth,
               height: canvasHeight,
-              backgroundColor: project.garmentColor
+              backgroundColor: project.garmentColor || '#EAEAEA'
             }}
             onClick={handleCanvasClick}
           >
