@@ -112,61 +112,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert it using ImageMagick for better compatibility
+        // If it's a PDF, convert it to SVG to preserve vector graphics and transparency
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try PNG conversion using ImageMagick convert command
-            const pngFilename = `${file.filename}.png`;
-            const pngPath = path.join(uploadDir, pngFilename);
+            // Try SVG conversion using ImageMagick convert command
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
             
-            // ImageMagick convert with specific PDF handling
-            const convertCommand = `convert -density 300 -quality 90 "${file.path}[0]" "${pngPath}"`;
+            // ImageMagick convert PDF to SVG with transparent background
+            const convertCommand = `convert -density 300 -background transparent "${file.path}[0]" "${svgPath}"`;
             
             await execAsync(convertCommand);
             
-            if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-              finalFilename = pngFilename;
-              finalMimeType = 'image/png';
+            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+              finalFilename = svgFilename;
+              finalMimeType = 'image/svg+xml';
               finalUrl = `/uploads/${finalFilename}`;
               
-              console.log(`PDF converted to PNG using ImageMagick: ${finalFilename}`);
+              console.log(`PDF converted to SVG using ImageMagick: ${finalFilename}`);
             } else {
-              throw new Error('ImageMagick conversion failed');
+              throw new Error('ImageMagick SVG conversion failed');
             }
           } catch (convertError) {
-            console.error('PDF conversion failed:', convertError);
+            console.error('PDF to SVG conversion failed, trying PNG fallback:', convertError);
             
-            // Final fallback: Try with mutool (if available)
+            // Fallback to PNG with transparent background
             try {
               const pngFilename = `${file.filename}.png`;
               const pngPath = path.join(uploadDir, pngFilename);
               
-              const mutoolCommand = `mutool draw -r 300 -o "${pngPath}" "${file.path}" 1`;
-              await execAsync(mutoolCommand);
+              // PNG with transparent background
+              const pngCommand = `convert -density 300 -background transparent "${file.path}[0]" "${pngPath}"`;
+              await execAsync(pngCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                 finalFilename = pngFilename;
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
-                console.log(`PDF converted to PNG using mutool: ${finalFilename}`);
+                console.log(`PDF converted to PNG with transparency: ${finalFilename}`);
               } else {
-                throw new Error('All conversion methods failed');
+                throw new Error('PNG conversion also failed');
               }
-            } catch (mutoolError) {
-              console.error('All PDF conversion methods failed:', mutoolError);
+            } catch (pngError) {
+              console.error('All PDF conversion methods failed:', pngError);
             }
           }
         }
 
-        // Get dimensions from the final display file (PNG)
+        // Get dimensions from the final display file (SVG/PNG)
         let actualWidth = null;
         let actualHeight = null;
         try {
-          const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
-          const [w, h] = stdout.trim().split(' ').map(Number);
-          actualWidth = w;
-          actualHeight = h;
+          if (finalMimeType === 'image/svg+xml') {
+            // For SVG files, try to extract viewBox or width/height attributes
+            try {
+              const svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
+              const viewBoxMatch = svgContent.match(/viewBox="[^"]*(\d+\.?\d*)\s+(\d+\.?\d*)"/) || 
+                                   svgContent.match(/viewBox='[^']*(\d+\.?\d*)\s+(\d+\.?\d*)'/) ||
+                                   svgContent.match(/width="(\d+\.?\d*)".*height="(\d+\.?\d*)"/);
+              
+              if (viewBoxMatch && viewBoxMatch.length >= 3) {
+                actualWidth = Math.round(parseFloat(viewBoxMatch[1]));
+                actualHeight = Math.round(parseFloat(viewBoxMatch[2]));
+              }
+            } catch (svgParseError) {
+              console.log('Could not parse SVG dimensions, using ImageMagick identify');
+            }
+          }
+          
+          // Fallback to ImageMagick identify for all formats
+          if (!actualWidth || !actualHeight) {
+            const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
+            const [w, h] = stdout.trim().split(' ').map(Number);
+            actualWidth = w;
+            actualHeight = h;
+          }
         } catch (error) {
           console.error('Failed to get image dimensions:', error);
         }
