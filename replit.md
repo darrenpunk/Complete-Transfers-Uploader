@@ -17,6 +17,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
 ✓ **Collapsible template interface**: Template categories now use accordion interface with expand/collapse functionality and template counts
 ✓ **Dual-page PDF output**: PDF generation includes second page with artwork displayed on selected garment background color
+✓ **Individual Garment Color Assignment**: Each logo can now have its own garment color selection independent of project default, with multi-color PDF visualization showing each logo on its assigned background color
 
 ## User Preferences
 
