@@ -203,17 +203,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
                 
-                // 3. Force complete transparency
+                // 3. Force SVG background transparency only
                 svgContent = svgContent.replace('<svg', '<svg style="background:transparent !important"');
-                svgContent = svgContent.replace('</svg>', `
-                  <defs>
-                    <style>
-                      svg { background: transparent !important; }
-                      rect[fill="white"], rect[fill="#ffffff"], rect[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
-                      path[fill="white"], path[fill="#ffffff"], path[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
-                    </style>
-                  </defs>
-                </svg>`);
                 
                 console.log('Processed SVG first 500 chars:', svgContent.substring(0, 500));
                 
