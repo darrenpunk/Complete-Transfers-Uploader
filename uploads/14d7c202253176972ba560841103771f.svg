@@ -605,8 +605,6 @@
                   <defs>
                     <style>
                       svg { background: transparent !important; }
-                      rect[fill="white"], rect[fill="#ffffff"], rect[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
-                      path[fill="white"], path[fill="#ffffff"], path[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
                     </style>
                   </defs>
                 </svg>
