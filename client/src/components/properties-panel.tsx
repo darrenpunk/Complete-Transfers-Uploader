@@ -33,6 +33,8 @@ export default function PropertiesPanel({
   logos
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
+  
+  console.log('PropertiesPanel - Selected element rotation:', selectedElement?.rotation);
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -60,7 +62,11 @@ export default function PropertiesPanel({
     // Convert string inputs to numbers for numeric properties
     let processedValue = value;
     if (property === 'x' || property === 'y' || property === 'width' || property === 'height' || property === 'rotation') {
-      processedValue = parseFloat(value) || 0;
+      processedValue = parseFloat(value);
+      if (isNaN(processedValue)) {
+        console.log('Invalid number input, ignoring');
+        return;
+      }
     }
 
     let updates: Partial<CanvasElement> = { [property]: processedValue };
@@ -170,6 +176,7 @@ export default function PropertiesPanel({
                     value={Math.round(selectedElement.x)}
                     onChange={(e) => handlePropertyChange('x', e.target.value)}
                     className="text-sm"
+                    step="1"
                   />
                 </div>
                 <div>
@@ -179,6 +186,7 @@ export default function PropertiesPanel({
                     value={Math.round(selectedElement.y)}
                     onChange={(e) => handlePropertyChange('y', e.target.value)}
                     className="text-sm"
+                    step="1"
                   />
                 </div>
               </div>
@@ -195,6 +203,8 @@ export default function PropertiesPanel({
                     value={Math.round(selectedElement.width)}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
+                    step="1"
+                    min="1"
                   />
                 </div>
                 <div>
@@ -204,6 +214,8 @@ export default function PropertiesPanel({
                     value={Math.round(selectedElement.height)}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm"
+                    step="1"
+                    min="1"
                   />
                 </div>
               </div>
@@ -237,6 +249,7 @@ export default function PropertiesPanel({
                   onChange={(e) => handlePropertyChange('rotation', e.target.value)}
                   min={0}
                   max={360}
+                  step="1"
                   className="w-16 text-sm"
                 />
                 <span className="text-sm text-gray-500">°</span>
