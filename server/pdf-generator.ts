@@ -448,8 +448,8 @@ export class PDFGenerator {
       const width = Math.round(element.width * 11.811);
       const height = Math.round(element.height * 11.811);
       
-      // Ensure logo is in CMYK colorspace and composite
-      magickCommand += ` \\( "${logoPath}" -colorspace CMYK -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+      // Ensure logo is in CMYK colorspace with better color preservation and composite
+      magickCommand += ` \\( "${logoPath}" -profile sRGB -colorspace CMYK -intent relative -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
     }
     
     // Convert final composite to PDF with CMYK colorspace preserved

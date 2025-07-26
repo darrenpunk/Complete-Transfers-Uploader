@@ -467,8 +467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First convert to TIFF to get proper CMYK, then back to original format for web display
       const tempTiffPath = path.join(uploadDir, `${originalName}_temp.tiff`);
 
-      // Convert to CMYK using ImageMagick with TIFF format for proper CMYK preservation
-      const cmykCommand = `convert "${originalPath}" -colorspace CMYK -compress LZW "${tempTiffPath}"`;
+      // Convert to CMYK using ImageMagick with better color preservation
+      const cmykCommand = `convert "${originalPath}" -profile sRGB -colorspace CMYK -intent relative -compress LZW "${tempTiffPath}"`;
       console.log('Executing CMYK conversion command:', cmykCommand);
       await execAsync(cmykCommand);
 
