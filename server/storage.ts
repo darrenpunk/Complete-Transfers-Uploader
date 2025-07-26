@@ -81,6 +81,18 @@ export class MemStorage implements IStorage {
       // DTF Transfer Sizes
       { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Sizes" },
       { name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF Transfer Sizes" },
+      
+      // Woven Badges
+      { name: "woven_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Woven Badges" },
+      { name: "woven_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Woven Badges" },
+      { name: "woven_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Woven Badges" },
+      { name: "woven_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Woven Badges" },
+      
+      // Applique Badges
+      { name: "applique_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Applique Badges" },
+      { name: "applique_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Applique Badges" },
+      { name: "applique_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Applique Badges" },
+      { name: "applique_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Applique Badges" },
     ];
 
     standardSizes.forEach(size => {
