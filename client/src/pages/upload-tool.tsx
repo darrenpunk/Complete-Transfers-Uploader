@@ -303,6 +303,8 @@ export default function UploadTool() {
           project={currentProject}
           logos={logos}
           templateSizes={templateSizes}
+          canvasElements={canvasElements}
+          selectedElement={selectedElement}
           onTemplateChange={handleTemplateChange}
           onGarmentColorChange={handleGarmentColorChange}
         />

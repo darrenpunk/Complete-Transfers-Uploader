@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import type { Project, Logo, TemplateSize } from "@shared/schema";
+import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema";
 
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ interface ToolsSidebarProps {
   project: Project;
   logos: Logo[];
   templateSizes: TemplateSize[];
+  canvasElements: CanvasElement[];
+  selectedElement: CanvasElement | null;
   onTemplateChange: (templateId: string) => void;
   onGarmentColorChange: (color: string) => void;
 }
@@ -88,6 +90,8 @@ export default function ToolsSidebar({
   project,
   logos,
   templateSizes,
+  canvasElements,
+  selectedElement,
   onTemplateChange,
   onGarmentColorChange
 }: ToolsSidebarProps) {
@@ -300,9 +304,92 @@ export default function ToolsSidebar({
       {/* Pre-flight Check */}
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Pre-flight Check</h3>
-        <div className="text-sm text-gray-600">
-          Select a logo in the properties panel to run pre-flight checks
-        </div>
+        {(() => {
+          if (!selectedElement) {
+            return (
+              <div className="text-center text-gray-500 py-4">
+                <div className="w-8 h-8 mx-auto mb-2 text-gray-400">⚠️</div>
+                <p className="text-sm">Select a logo to run pre-flight checks</p>
+              </div>
+            );
+          }
+
+          // Get logo for selected element
+          const logo = logos.find(l => l.id === selectedElement.logoId);
+          const checks = [];
+          
+          // File Resolution Check
+          if (logo) {
+            const scaleX = selectedElement.width / (logo.width || 1);
+            const scaleY = selectedElement.height / (logo.height || 1);
+            const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+            const hasGoodResolution = effectiveResolution >= 150;
+            
+            checks.push({
+              name: "Print Resolution",
+              status: hasGoodResolution ? "pass" : "warning",
+              value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
+            });
+            
+            // File Format Check
+            const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+            checks.push({
+              name: "File Format",
+              status: isVector ? "pass" : "warning",
+              value: isVector ? "Vector" : "Raster"
+            });
+            
+            // Color Mode Check
+            const svgColors = logo.svgColors as string[] | undefined;
+            const hasColors = svgColors && Array.isArray(svgColors) && svgColors.length > 0;
+            checks.push({
+              name: "Color Analysis",
+              status: hasColors ? "pass" : "warning",
+              value: hasColors ? `${svgColors.length} Colors` : "No Colors"
+            });
+          }
+          
+          // Position Check
+          const isWithinBounds = selectedElement.x >= 0 && selectedElement.y >= 0 && 
+                                selectedElement.x + selectedElement.width <= 297 && 
+                                selectedElement.y + selectedElement.height <= 420;
+          checks.push({
+            name: "Position",
+            status: isWithinBounds ? "pass" : "warning",
+            value: isWithinBounds ? "In Bounds" : "Check Position"
+          });
+          
+          // Size Check
+          const hasReasonableSize = selectedElement.width >= 5 && selectedElement.height >= 5 &&
+                                   selectedElement.width <= 280 && selectedElement.height <= 400;
+          checks.push({
+            name: "Print Size",
+            status: hasReasonableSize ? "pass" : "warning",
+            value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`
+          });
+
+          return (
+            <div className="space-y-3">
+              {checks.map((check) => (
+                <div key={check.name} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{check.name}</span>
+                  <div className="flex items-center">
+                    {check.status === "pass" ? (
+                      <div className="w-4 h-4 text-green-500 mr-1">✓</div>
+                    ) : (
+                      <div className="w-4 h-4 text-yellow-500 mr-1">⚠️</div>
+                    )}
+                    <span className={`text-xs px-2 py-1 rounded ${
+                      check.status === "pass" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                    }`}>
+                      {check.value}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
