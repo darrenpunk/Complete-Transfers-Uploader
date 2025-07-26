@@ -48,6 +48,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Color Name Display**: Updated interface to show readable color names like "Kelly Green (3C8A35)" instead of hex codes in garment color selection
 ✓ **Individual Logo Garment Colors**: Added per-logo garment color selection in properties panel with popup modal interface, allowing each logo to have its own background color independent of project settings
 ✓ **Duplicate Logo Feature**: Added duplicate button in properties panel to create copies of existing logos with offset positioning, eliminating need to re-upload same files
+✓ **Product Selector & Preflight Reorganization**: Replaced template group sidebar with "Product Selector" button at top of properties panel, moved preflight checks directly below for improved visibility and workflow
+✓ **Template Modal Icon Integration**: Added actual product icons from sidebar to template selector modal (DTF, Full Colour, UV DTF, Woven Badge images) with visual distinctions for different transfer types
 
 ## User Preferences
 

@@ -7,23 +7,65 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TemplateSize } from "@shared/schema";
 
-// Template group icons - using better visual icons
+// Import the same icons used in the sidebar
+import dtfIconPath from "@assets/DTF_1753540006979.png";
+import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.png";
+import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
+import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
+
+// Template group icons - using same icons as sidebar
 const getTemplateGroupIcon = (group: string) => {
   switch (group) {
     case "Full Colour Transfer Sizes":
-      return "🎨"; // Palette for full color
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Full Colour Transfer" 
+          className="h-10 w-10 object-contain"
+        />
+      );
     case "Single Colour Transfer Sizes":
-      return "⚫"; // Single dot for single color
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Single Colour Transfer" 
+          className="h-10 w-10 object-contain filter grayscale"
+        />
+      );
     case "DTF Transfer Sizes":
-      return "🖨️"; // Printer for DTF
+      return (
+        <img 
+          src={dtfIconPath} 
+          alt="DTF Transfer" 
+          className="h-10 w-10 object-contain"
+        />
+      );
     case "UV DTF Transfers":
-      return "💡"; // Light bulb for UV
+      return (
+        <img 
+          src={uvdtfIconPath} 
+          alt="UV DTF Transfer" 
+          className="h-10 w-10 object-contain"
+        />
+      );
     case "Woven Badges":
-      return "🧵"; // Thread for woven
+      return (
+        <img 
+          src={wovenBadgeIconPath} 
+          alt="Woven Badge" 
+          className="h-10 w-10 object-contain"
+        />
+      );
     case "Applique Badges":
-      return "✂️"; // Scissors for applique
+      return (
+        <img 
+          src={wovenBadgeIconPath} 
+          alt="Applique Badge" 
+          className="h-10 w-10 object-contain filter sepia"
+        />
+      );
     default:
-      return "📐";
+      return <span className="text-2xl">📐</span>;
   }
 };
 
@@ -99,7 +141,7 @@ export default function TemplateSelectorModal({
                     className="w-full justify-between p-4 h-auto hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{getTemplateGroupIcon(groupName)}</span>
+                      <div className="flex-shrink-0">{getTemplateGroupIcon(groupName)}</div>
                       <div className="text-left">
                         <div className="font-semibold text-lg">{groupName}</div>
                         <div className="text-sm text-gray-500">
