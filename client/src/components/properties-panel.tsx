@@ -173,20 +173,24 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">X (mm)</Label>
                   <Input
                     type="number"
-                    value={Math.round(selectedElement.x)}
+                    value={selectedElement.x}
                     onChange={(e) => handlePropertyChange('x', e.target.value)}
                     className="text-sm"
                     step="1"
+                    min="0"
+                    max="297"
                   />
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Y (mm)</Label>
                   <Input
                     type="number"
-                    value={Math.round(selectedElement.y)}
+                    value={selectedElement.y}
                     onChange={(e) => handlePropertyChange('y', e.target.value)}
                     className="text-sm"
-                    step="1"
+                    step="1" 
+                    min="0"
+                    max="420"
                   />
                 </div>
               </div>
@@ -200,22 +204,24 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    value={Math.round(selectedElement.width)}
+                    value={selectedElement.width}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
                     min="1"
+                    max="297"
                   />
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    value={Math.round(selectedElement.height)}
+                    value={selectedElement.height}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
-                    className="text-sm"
+                    className="text-sm" 
                     step="1"
                     min="1"
+                    max="420"
                   />
                 </div>
               </div>
@@ -245,7 +251,7 @@ export default function PropertiesPanel({
                 />
                 <Input
                   type="number"
-                  value={Math.round(selectedElement.rotation || 0)}
+                  value={selectedElement.rotation || 0}
                   onChange={(e) => handlePropertyChange('rotation', e.target.value)}
                   min={0}
                   max={360}
