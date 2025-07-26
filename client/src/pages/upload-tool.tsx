@@ -126,6 +126,7 @@ export default function UploadTool() {
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject) {
       // Show template selector modal on launch for new projects
+      console.log('Showing template selector modal', { id, templateSizesLength: templateSizes.length, currentProject });
       setShowTemplateSelector(true);
     }
   }, [id, templateSizes, currentProject]);
@@ -238,6 +239,14 @@ export default function UploadTool() {
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
         </div>
+        
+        {/* Template Selector Modal */}
+        <TemplateSelectorModal
+          open={showTemplateSelector}
+          templates={templateSizes}
+          onSelectTemplate={handleTemplateSelect}
+          onClose={() => setShowTemplateSelector(false)}
+        />
       </div>
     );
   }

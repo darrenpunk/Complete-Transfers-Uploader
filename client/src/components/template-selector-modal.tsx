@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -72,16 +72,18 @@ export default function TemplateSelectorModal({
     }
   };
 
+  console.log('TemplateSelectorModal render', { open, templatesLength: templates.length });
+  
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+    <Dialog open={open} onOpenChange={() => {}} modal={true}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
             Select Your Template Size
           </DialogTitle>
-          <p className="text-center text-gray-600">
+          <DialogDescription className="text-center text-gray-600">
             Choose a template that matches your project requirements. Different templates are optimized for specific print types.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4 pr-2">
