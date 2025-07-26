@@ -200,15 +200,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (file.mimetype === 'application/pdf') {
           // Check if this looks like an A3 ratio
           const aspectRatio = actualWidth / actualHeight;
-          const a3Ratio = 297 / 420; // A3 landscape ratio
-          const a3PortraitRatio = 420 / 297; // A3 portrait ratio
+          const a3LandscapeRatio = 420 / 297; // A3 landscape ratio (wider than tall)
+          const a3PortraitRatio = 297 / 420; // A3 portrait ratio (taller than wide)
           
-          if (Math.abs(aspectRatio - a3Ratio) < 0.1) {
-            // Landscape A3
+          if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.1) {
+            // Landscape A3 (wider than tall)
             displayWidth = 420;
             displayHeight = 297;
           } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.1) {
-            // Portrait A3  
+            // Portrait A3 (taller than wide)
             displayWidth = 297;
             displayHeight = 420;
           }
