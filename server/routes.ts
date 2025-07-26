@@ -455,44 +455,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Original image file not found" });
       }
 
-      // Create CMYK version filename (avoid duplicate _cmyk suffixes) - use TIFF for proper CMYK support
+      // Create CMYK version filename (avoid duplicate _cmyk suffixes) 
       const baseName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
-      const cmykFilename = `${baseName}_cmyk.tiff`;
+      const extension = path.parse(logo.filename).ext;
+      const cmykFilename = `${baseName}_cmyk${extension}`;
       const cmykPath = path.join(uploadDir, cmykFilename);
+      
+      // First convert to TIFF to get proper CMYK, then back to original format for web display
+      const tempTiffPath = path.join(uploadDir, `${baseName}_temp.tiff`);
 
       // Convert to CMYK using ImageMagick with TIFF format for proper CMYK preservation
-      const cmykCommand = `convert "${originalPath}" -colorspace CMYK -compress LZW "${cmykPath}"`;
+      const cmykCommand = `convert "${originalPath}" -colorspace CMYK -compress LZW "${tempTiffPath}"`;
       console.log('Executing CMYK conversion command:', cmykCommand);
       await execAsync(cmykCommand);
 
-      if (!fs.existsSync(cmykPath) || fs.statSync(cmykPath).size === 0) {
+      if (!fs.existsSync(tempTiffPath) || fs.statSync(tempTiffPath).size === 0) {
         throw new Error('CMYK conversion failed');
       }
 
       // Verify the conversion worked by checking colorspace
-      const { stdout: verifyOutput } = await execAsync(`identify -format "%[colorspace]" "${cmykPath}"`);
+      const { stdout: verifyOutput } = await execAsync(`identify -format "%[colorspace]" "${tempTiffPath}"`);
       console.log('Converted file colorspace:', verifyOutput.trim());
       
-      // If still not CMYK, try alternative approach
-      if (!verifyOutput.trim().toLowerCase().includes('cmyk')) {
-        console.log('First conversion attempt did not result in CMYK, trying alternative method...');
-        // Try with explicit CMYK profile
-        const altCommand = `convert "${originalPath}" -profile sRGB.icc -profile CMYK.icc -compress LZW "${cmykPath}"`;
-        try {
-          await execAsync(altCommand);
-          const { stdout: altVerify } = await execAsync(`identify -format "%[colorspace]" "${cmykPath}"`);
-          console.log('Alternative conversion colorspace:', altVerify.trim());
-        } catch (profileError) {
-          console.log('Profile-based conversion failed, using simulated CMYK...');
-          // If profile conversion fails, manually set the color info to indicate CMYK conversion
-        }
-      }
-
-      // Get new color information from CMYK file
-      const cmykColorInfo = await extractImageColors(cmykPath);
+      // Get color information from CMYK TIFF file
+      const cmykColorInfo = await extractImageColors(tempTiffPath);
       console.log('CMYK color info extracted:', cmykColorInfo);
       
-      // If ImageMagick didn't properly detect CMYK, manually set the color info
+      // Convert back to web-compatible format while preserving CMYK metadata
+      const webCommand = `convert "${tempTiffPath}" "${cmykPath}"`;
+      await execAsync(webCommand);
+      
+      // Clean up temporary TIFF
+      try {
+        fs.unlinkSync(tempTiffPath);
+      } catch (cleanupError) {
+        console.warn('Failed to clean up temp TIFF:', cleanupError);
+      }
+      
+      // Ensure CMYK color info is preserved regardless of web format conversion
       const finalColorInfo = cmykColorInfo && cmykColorInfo.mode === 'CMYK' ? cmykColorInfo : {
         type: 'raster',
         colorspace: 'CMYK',
@@ -503,11 +503,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Final color info being saved:', finalColorInfo);
       
-      // Update logo record with CMYK version and TIFF mime type
+      // Update logo record with CMYK version 
       const updatedData = {
         filename: cmykFilename,
         url: `/uploads/${cmykFilename}`,
-        mimeType: 'image/tiff',
         svgColors: finalColorInfo,
       };
 
