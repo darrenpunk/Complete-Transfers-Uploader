@@ -17,7 +17,8 @@ import {
   AlignRight,
   AlignStartVertical,
   AlignCenterVertical,
-  AlignEndVertical
+  AlignEndVertical,
+  Square
 } from "lucide-react";
 
 interface PropertiesPanelProps {
@@ -94,11 +95,13 @@ export default function PropertiesPanel({
   // Alignment functions
   const alignLeft = () => {
     if (!selectedElement) return;
+    console.log('Aligning left');
     handlePropertyChange('x', 0);
   };
 
   const alignCenter = () => {
     if (!selectedElement) return;
+    console.log('Aligning center horizontally');
     // Get template from the first element's project (we need template size)
     const templateWidth = 297; // A3 width in mm - should get from template
     const centerX = (templateWidth - selectedElement.width) / 2;
@@ -107,6 +110,7 @@ export default function PropertiesPanel({
 
   const alignRight = () => {
     if (!selectedElement) return;
+    console.log('Aligning right');
     const templateWidth = 297; // A3 width in mm - should get from template
     const rightX = templateWidth - selectedElement.width;
     handlePropertyChange('x', Math.round(rightX));
@@ -114,11 +118,13 @@ export default function PropertiesPanel({
 
   const alignTop = () => {
     if (!selectedElement) return;
+    console.log('Aligning top');
     handlePropertyChange('y', 0);
   };
 
   const alignMiddle = () => {
     if (!selectedElement) return;
+    console.log('Aligning middle vertically');
     const templateHeight = 420; // A3 height in mm - should get from template
     const middleY = (templateHeight - selectedElement.height) / 2;
     handlePropertyChange('y', Math.round(middleY));
@@ -126,6 +132,7 @@ export default function PropertiesPanel({
 
   const alignBottom = () => {
     if (!selectedElement) return;
+    console.log('Aligning bottom');
     const templateHeight = 420; // A3 height in mm - should get from template
     const bottomY = templateHeight - selectedElement.height;
     handlePropertyChange('y', Math.round(bottomY));
@@ -213,16 +220,19 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Rotation</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
-                  value={[selectedElement.rotation]}
+                  value={[selectedElement.rotation || 0]}
                   onValueChange={([value]) => handlePropertyChange('rotation', value)}
+                  min={0}
                   max={360}
                   step={1}
                   className="flex-1"
                 />
                 <Input
                   type="number"
-                  value={Math.round(selectedElement.rotation)}
+                  value={Math.round(selectedElement.rotation || 0)}
                   onChange={(e) => handlePropertyChange('rotation', e.target.value)}
+                  min={0}
+                  max={360}
                   className="w-16 text-sm"
                 />
                 <span className="text-sm text-gray-500">°</span>
@@ -299,24 +309,56 @@ export default function PropertiesPanel({
           <CardTitle className="text-lg">Alignment</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <Button variant="outline" size="sm" title="Align Left" onClick={alignLeft} disabled={!selectedElement}>
-              <AlignLeft className="w-4 h-4" />
+          <div className="grid grid-cols-3 gap-1 mb-4">
+            {/* Top row */}
+            <Button variant="outline" size="sm" title="Align Top Left" onClick={() => { alignLeft(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 left-0 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
-            <Button variant="outline" size="sm" title="Align Center" onClick={alignCenter} disabled={!selectedElement}>
-              <AlignCenter className="w-4 h-4" />
+            <Button variant="outline" size="sm" title="Align Top Center" onClick={() => { alignCenter(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
-            <Button variant="outline" size="sm" title="Align Right" onClick={alignRight} disabled={!selectedElement}>
-              <AlignRight className="w-4 h-4" />
+            <Button variant="outline" size="sm" title="Align Top Right" onClick={() => { alignRight(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 right-0 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
-            <Button variant="outline" size="sm" title="Align Top" onClick={alignTop} disabled={!selectedElement}>
-              <AlignStartVertical className="w-4 h-4" />
+            
+            {/* Middle row */}
+            <Button variant="outline" size="sm" title="Align Middle Left" onClick={() => { alignLeft(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
-            <Button variant="outline" size="sm" title="Align Middle" onClick={alignMiddle} disabled={!selectedElement}>
-              <AlignCenterVertical className="w-4 h-4" />
+            <Button variant="outline" size="sm" title="Align Center" onClick={() => { alignCenter(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
-            <Button variant="outline" size="sm" title="Align Bottom" onClick={alignBottom} disabled={!selectedElement}>
-              <AlignEndVertical className="w-4 h-4" />
+            <Button variant="outline" size="sm" title="Align Middle Right" onClick={() => { alignRight(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            
+            {/* Bottom row */}
+            <Button variant="outline" size="sm" title="Align Bottom Left" onClick={() => { alignLeft(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 left-0 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Bottom Center" onClick={() => { alignCenter(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Bottom Right" onClick={() => { alignRight(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 right-0 w-2 h-2 bg-gray-600"></div>
+              </div>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
