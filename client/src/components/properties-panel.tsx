@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { CanvasElement, Logo } from "@shared/schema";
+import type { CanvasElement, Logo, Project, TemplateSize } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,12 +65,18 @@ interface PropertiesPanelProps {
   selectedElement: CanvasElement | null;
   canvasElements: CanvasElement[];
   logos: Logo[];
+  project: Project;
+  templateSizes: TemplateSize[];
+  onTemplateChange: (templateId: string) => void;
 }
 
 export default function PropertiesPanel({
   selectedElement,
   canvasElements,
-  logos
+  logos,
+  project,
+  templateSizes,
+  onTemplateChange
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
@@ -318,12 +324,15 @@ export default function PropertiesPanel({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600 mb-3">
-            Current template: {templates.find(t => t.id === selectedTemplateId)?.label || 'None selected'}
+            Current template: {templateSizes.find(t => t.id === project.templateSize)?.label || 'None selected'}
           </p>
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => setShowTemplateSelector(true)}
+            onClick={() => {
+              // For now, just navigate to home to change template
+              window.location.href = '/';
+            }}
           >
             <span className="mr-2">📐</span>
             Change Template Size

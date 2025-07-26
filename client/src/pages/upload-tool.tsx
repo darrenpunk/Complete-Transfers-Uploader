@@ -319,6 +319,9 @@ export default function UploadTool() {
           selectedElement={selectedElement}
           canvasElements={canvasElements}
           logos={logos}
+          project={currentProject}
+          templateSizes={templateSizes}
+          onTemplateChange={handleTemplateChange}
         />
       </div>
 
