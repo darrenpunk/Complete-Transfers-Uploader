@@ -423,6 +423,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Duplicate canvas element
+  app.post("/api/canvas-elements/:id/duplicate", async (req, res) => {
+    try {
+      const duplicate = await storage.duplicateCanvasElement(req.params.id);
+      if (!duplicate) {
+        return res.status(404).json({ message: "Canvas element not found" });
+      }
+      res.json(duplicate);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to duplicate canvas element" });
+    }
+  });
+
   // Apply SVG color changes to canvas element
   app.post("/api/canvas-elements/:id/update-colors", async (req, res) => {
     try {

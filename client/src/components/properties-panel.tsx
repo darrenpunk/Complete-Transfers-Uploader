@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -106,6 +106,20 @@ export default function PropertiesPanel({
       });
     }
   };
+
+  // Duplicate logo mutation
+  const duplicateLogoMutation = useMutation({
+    mutationFn: async (elementId: string) => {
+      const response = await apiRequest("POST", `/api/canvas-elements/${elementId}/duplicate`);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refresh canvas elements to show the new duplicate
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
+    },
+  });
 
   const handlePropertyChange = (property: keyof CanvasElement, value: any, debounce = false) => {
     if (!currentElement) return;
@@ -390,6 +404,26 @@ export default function PropertiesPanel({
             </div>
 
             <Separator />
+
+            {/* Duplicate Logo Button */}
+            <div>
+              <Label className="text-sm font-medium">Actions</Label>
+              <div className="mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => duplicateLogoMutation.mutate(currentElement.id)}
+                  disabled={duplicateLogoMutation.isPending}
+                  className="w-full"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  {duplicateLogoMutation.isPending ? "Duplicating..." : "Duplicate Logo"}
+                </Button>
+                <p className="text-xs text-gray-500 mt-1">
+                  Create a copy of this logo positioned nearby
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

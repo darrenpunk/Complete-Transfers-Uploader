@@ -46,6 +46,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **White Element Display Fix**: Resolved critical issue where white fills (rgb(100%, 100%, 100%)) and light elements were invisible due to aggressive CSS hiding rules and server-side removal
 ✓ **Double Selection Bug Fix**: Fixed garment color modal requiring two selections by implementing hasAutoOpened state to prevent modal from reopening after color selection
 ✓ **Color Name Display**: Updated interface to show readable color names like "Kelly Green (3C8A35)" instead of hex codes in garment color selection
+✓ **Individual Logo Garment Colors**: Added per-logo garment color selection in properties panel with popup modal interface, allowing each logo to have its own background color independent of project settings
+✓ **Duplicate Logo Feature**: Added duplicate button in properties panel to create copies of existing logos with offset positioning, eliminating need to re-upload same files
 
 ## User Preferences
 

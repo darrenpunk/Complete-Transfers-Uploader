@@ -37,6 +37,7 @@ export interface IStorage {
   createCanvasElement(element: InsertCanvasElement): Promise<CanvasElement>;
   updateCanvasElement(id: string, updates: Partial<CanvasElement>): Promise<CanvasElement | undefined>;
   deleteCanvasElement(id: string): Promise<boolean>;
+  duplicateCanvasElement(id: string): Promise<CanvasElement | undefined>;
   deleteCanvasElementsByLogo(logoId: string): Promise<void>;
 
   // Template size methods
@@ -225,6 +226,24 @@ export class MemStorage implements IStorage {
 
   async deleteCanvasElement(id: string): Promise<boolean> {
     return this.canvasElements.delete(id);
+  }
+
+  async duplicateCanvasElement(id: string): Promise<CanvasElement | undefined> {
+    const original = this.canvasElements.get(id);
+    if (!original) return undefined;
+    
+    // Create a duplicate with new ID and offset position
+    const duplicateId = randomUUID();
+    const duplicate: CanvasElement = {
+      ...original,
+      id: duplicateId,
+      x: original.x + 20, // Offset by 20mm
+      y: original.y + 20, // Offset by 20mm
+      zIndex: Math.max(...Array.from(this.canvasElements.values()).map(el => el.zIndex)) + 1
+    };
+    
+    this.canvasElements.set(duplicateId, duplicate);
+    return duplicate;
   }
 
   async deleteCanvasElementsByLogo(logoId: string): Promise<void> {
