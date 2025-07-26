@@ -363,11 +363,12 @@ export default function CanvasWorkspace({
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 bg-gray-100 p-8 overflow-auto">
+      <div className="flex-1 p-8 overflow-auto" style={{ backgroundColor: '#606060' }}>
         <div className="flex items-center justify-center min-h-full">
           <div
             ref={canvasRef}
-            className="relative bg-white shadow-xl rounded-lg overflow-hidden"
+            className="relative shadow-xl rounded-lg overflow-hidden"
+            style={{ backgroundColor: '#D8D8D8' }}
             style={{
               width: canvasWidth,
               height: canvasHeight,
