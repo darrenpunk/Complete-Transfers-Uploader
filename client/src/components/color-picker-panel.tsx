@@ -71,9 +71,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
 
   // Only show for SVG logos with detected colors
   const svgColors = logo.svgColors as SVGColorInfo[] | null;
-  if (!svgColors || svgColors.length === 0 || logo.mimeType !== 'image/svg+xml') {
-    return null;
-  }
+  const shouldShow = svgColors && svgColors.length > 0 && logo.mimeType === 'image/svg+xml';
 
   const updateColorsMutation = useMutation({
     mutationFn: async (colors: Record<string, string>) => {
@@ -113,6 +111,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   const getDisplayColor = (originalColor: string) => {
     return colorOverrides[originalColor] || originalColor;
   };
+
+  if (!shouldShow) {
+    return null;
+  }
 
   return (
     <Card className="mt-4">
