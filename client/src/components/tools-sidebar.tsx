@@ -340,23 +340,28 @@ export default function ToolsSidebar({
             });
             
             // Color Mode Check - Enhanced for different file types
-            const svgColors = logo.svgColors as string[] | undefined;
+            const svgColors = logo.svgColors as any;
             const isRasterImage = logo.mimeType?.startsWith('image/') && !logo.mimeType.includes('svg');
             
             let colorStatus = "pass";
             let colorValue = "Unknown";
             
-            if (isVector && svgColors && Array.isArray(svgColors) && svgColors.length > 0) {
-              // Vector files with detected colors
+            if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
+              // Vector files with detected SVG colors
               colorValue = `${svgColors.length} Vector Colors`;
             } else if (isVector) {
               // Vector files without detected colors (might be single color or grayscale)
               colorValue = "Vector (Monochrome)";
+            } else if (isRasterImage && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
+              // Raster images with extracted color information
+              const mode = svgColors.mode || 'RGB';
+              const uniqueColors = svgColors.uniqueColors || 0;
+              colorValue = `${mode} (${uniqueColors} colors)`;
+              colorStatus = mode === 'CMYK' ? "pass" : (mode === 'RGB' ? "pass" : "warning");
             } else if (isRasterImage) {
-              // Raster images - we can't easily detect colors on the client side
-              // but we can assume they contain colors since they're images
+              // Raster images without detailed color info (fallback)
               colorValue = "Raster Image";
-              colorStatus = "pass"; // Assume raster images have color data
+              colorStatus = "pass";
             } else {
               colorValue = "Unknown Format";
               colorStatus = "warning";

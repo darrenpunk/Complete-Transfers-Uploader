@@ -14,6 +14,42 @@ import { extractSVGColors, applySVGColorChanges } from "./svg-color-utils";
 
 const execAsync = promisify(exec);
 
+// Function to extract color information from raster images using ImageMagick
+async function extractImageColors(imagePath: string): Promise<any> {
+  try {
+    // Use ImageMagick identify to get color space and other properties
+    const { stdout: imageInfo } = await execAsync(`identify -verbose "${imagePath}"`);
+    
+    // Extract color space (RGB, CMYK, Grayscale, etc.)
+    const colorspaceMatch = imageInfo.match(/Colorspace: (\w+)/);
+    const colorspace = colorspaceMatch ? colorspaceMatch[1] : 'Unknown';
+    
+    // Extract depth
+    const depthMatch = imageInfo.match(/Depth: (\d+)-bit/);
+    const depth = depthMatch ? depthMatch[1] : 'Unknown';
+    
+    // Get unique colors count
+    const { stdout: colorsOutput } = await execAsync(`identify -format "%k" "${imagePath}"`);
+    const uniqueColors = parseInt(colorsOutput.trim()) || 0;
+    
+    // Determine if it's likely CMYK based on color space
+    const isCMYK = colorspace.toLowerCase().includes('cmyk');
+    const isRGB = colorspace.toLowerCase().includes('rgb') || colorspace.toLowerCase() === 'srgb';
+    const isGrayscale = colorspace.toLowerCase().includes('gray') || colorspace.toLowerCase().includes('grey');
+    
+    return {
+      type: 'raster',
+      colorspace: colorspace,
+      depth: `${depth}-bit`,
+      uniqueColors: uniqueColors,
+      mode: isCMYK ? 'CMYK' : (isRGB ? 'RGB' : (isGrayscale ? 'Grayscale' : colorspace))
+    };
+  } catch (error) {
+    console.error('Error extracting image colors:', error);
+    return null;
+  }
+}
+
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -261,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Failed to get image dimensions:', error);
         }
 
-        // Extract SVG colors if it's an SVG file or was converted from PDF to SVG
+        // Extract colors from different file types
         let svgColors = null;
         if (finalMimeType === 'image/svg+xml' || file.mimetype === 'image/svg+xml') {
           try {
@@ -273,6 +309,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error) {
             console.error('Failed to extract SVG colors:', error);
+          }
+        } else if (finalMimeType?.startsWith('image/')) {
+          // Extract color information from raster images
+          try {
+            const imagePath = path.join(uploadDir, finalFilename);
+            const colorInfo = await extractImageColors(imagePath);
+            if (colorInfo) {
+              svgColors = colorInfo;
+              console.log(`Extracted color info from ${finalMimeType}:`, colorInfo);
+            }
+          } catch (error) {
+            console.error('Failed to extract image colors:', error);
           }
         }
 
