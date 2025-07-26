@@ -17,6 +17,7 @@ import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
 import dtfIconPath from "@assets/DTF_1753540006979.png";
 import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.png";
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
+import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -329,11 +330,18 @@ export default function ToolsSidebar({
                       className="h-12 w-12 object-contain"
                     />
                   )}
+                  {groupName === "Woven Badges" && (
+                    <img 
+                      src={wovenBadgeIconPath} 
+                      alt="Woven Badge" 
+                      className="h-12 w-12 object-contain"
+                    />
+                  )}
                   <span className="text-sm font-medium text-gray-800">{groupName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">
-                    {templates.length} {(groupName === "DTF Transfer Sizes" || groupName === "Full Colour Transfer Sizes" || groupName === "Single Colour Transfer Sizes" || groupName === "UV DTF Transfers") ? "sizes" : "templates"}
+                    {templates.length} {(groupName === "DTF Transfer Sizes" || groupName === "Full Colour Transfer Sizes" || groupName === "Single Colour Transfer Sizes" || groupName === "UV DTF Transfers" || groupName === "Woven Badges") ? "sizes" : "templates"}
                   </span>
                   {expandedGroups.includes(`template-${groupName}`) 
                     ? <ChevronDown className="w-4 h-4" />

@@ -42,6 +42,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Conditional Garment Color Selection**: Garment color interface now only appears for Full Colour Transfer templates, with automatic default colors for other template types
 ✓ **Auto-Opening Garment Color Modal**: Modal automatically opens when Full Colour Transfer template is selected and no garment color is chosen, guiding users through required selection
 ✓ **UV DTF Custom Icon**: Added dedicated UV DTF transfer icon to template group for better visual identification
+✓ **Woven Badge Icon**: Added custom woven badge icon showing football-themed embroidered patch design
 ✓ **White Element Display Fix**: Resolved critical issue where white fills (rgb(100%, 100%, 100%)) and light elements were invisible due to aggressive CSS hiding rules and server-side removal
 
 ## User Preferences
