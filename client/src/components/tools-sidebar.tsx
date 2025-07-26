@@ -282,14 +282,14 @@ export default function ToolsSidebar({
                     <img 
                       src={dtfIconPath} 
                       alt="DTF Transfer" 
-                      className="h-5 w-5 object-contain"
+                      className="h-8 w-8 object-contain"
                     />
                   )}
-                  <span className="font-medium text-gray-800">{groupName}</span>
+                  <span className="text-sm font-medium text-gray-800">{groupName}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">
-                    {templates.length} templates
+                    {templates.length} {groupName === "DTF Transfer Sizes" ? "sizes" : "templates"}
                   </span>
                   {expandedGroups.includes(`template-${groupName}`) 
                     ? <ChevronDown className="w-4 h-4" />
