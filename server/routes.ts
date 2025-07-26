@@ -444,25 +444,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only raster images can be converted to CMYK" });
       }
 
+      // Check if already CMYK (prevent duplicate conversions)
+      const currentColors = logo.svgColors as any;
+      if (currentColors && currentColors.mode === 'CMYK') {
+        return res.status(400).json({ message: "Image is already in CMYK format" });
+      }
+
       const originalPath = path.join(uploadDir, logo.filename);
       if (!fs.existsSync(originalPath)) {
         return res.status(404).json({ message: "Original image file not found" });
       }
 
-      // Create CMYK version filename
-      const cmykFilename = `${path.parse(logo.filename).name}_cmyk${path.parse(logo.filename).ext}`;
+      // Create CMYK version filename (avoid duplicate _cmyk suffixes)
+      const baseName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
+      const extension = path.parse(logo.filename).ext;
+      const cmykFilename = `${baseName}_cmyk${extension}`;
       const cmykPath = path.join(uploadDir, cmykFilename);
 
-      // Convert to CMYK using ImageMagick
-      const cmykCommand = `convert "${originalPath}" -colorspace CMYK "${cmykPath}"`;
+      // Convert to CMYK using ImageMagick with explicit profile conversion
+      const cmykCommand = `convert "${originalPath}" -colorspace CMYK -compress None "${cmykPath}"`;
+      console.log('Executing CMYK conversion command:', cmykCommand);
       await execAsync(cmykCommand);
 
       if (!fs.existsSync(cmykPath) || fs.statSync(cmykPath).size === 0) {
         throw new Error('CMYK conversion failed');
       }
 
-      // Get new color information
+      // Verify the conversion worked by checking colorspace
+      const { stdout: verifyOutput } = await execAsync(`identify -format "%[colorspace]" "${cmykPath}"`);
+      console.log('Converted file colorspace:', verifyOutput.trim());
+
+      // Get new color information from CMYK file
       const cmykColorInfo = await extractImageColors(cmykPath);
+      console.log('CMYK color info extracted:', cmykColorInfo);
       
       // Update logo record with CMYK version
       const updatedData = {
