@@ -43,11 +43,45 @@ export class PDFGenerator {
         }
       }
       
-      // Page 2: Artwork with background color (if garment color is specified)
-      if (garmentColor) {
-        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-        
-        // Parse garment color and fill background
+      // Page 2: Multi-color visualization showing each logo on its assigned garment color
+      const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Check if we have individual garment colors per logo
+      const hasIndividualColors = canvasElements.some(element => element.garmentColor);
+      
+      if (hasIndividualColors) {
+        // Multi-color visualization: show each logo on its own garment color background
+        for (const element of canvasElements) {
+          const logo = logoMap.get(element.logoId);
+          if (!logo || !element.isVisible) continue;
+          
+          // Use individual garment color or fall back to project default
+          const logoGarmentColor = element.garmentColor || garmentColor || '#FFFFFF';
+          
+          // Calculate logo position and create background rectangle
+          const x = element.x * 2.834645669;
+          const y = (templateSize.height - element.y - element.height) * 2.834645669;
+          const width = element.width * 2.834645669;
+          const height = element.height * 2.834645669;
+          
+          // Draw background rectangle for this logo
+          const { r, g, b } = this.hexToRgb(logoGarmentColor);
+          page2.drawRectangle({
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            color: rgb(r / 255, g / 255, b / 255),
+          });
+          
+          try {
+            await this.embedLogoInPDF(pdfDoc, page2, element, logo, templateSize);
+          } catch (error) {
+            console.error(`Failed to embed logo ${logo.originalName}:`, error);
+          }
+        }
+      } else if (garmentColor) {
+        // Single color visualization: all artwork on project garment color
         const { r, g, b } = this.hexToRgb(garmentColor);
         page2.drawRectangle({
           x: 0,
@@ -66,7 +100,6 @@ export class PDFGenerator {
             await this.embedLogoInPDF(pdfDoc, page2, element, logo, templateSize);
           } catch (error) {
             console.error(`Failed to embed logo ${logo.originalName}:`, error);
-            // Continue with other elements even if one fails
           }
         }
       }

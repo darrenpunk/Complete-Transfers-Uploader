@@ -47,6 +47,7 @@ export const canvasElements = pgTable("canvas_elements", {
   isVisible: boolean("is_visible").notNull().default(true),
   isLocked: boolean("is_locked").notNull().default(false),
   colorOverrides: jsonb("color_overrides"), // Store SVG color changes as JSON
+  garmentColor: text("garment_color"), // Individual garment color per logo
 });
 
 export const templateSizes = pgTable("template_sizes", {

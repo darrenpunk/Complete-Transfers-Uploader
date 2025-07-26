@@ -27,7 +27,9 @@ interface CMYKColorModalProps {
 }
 
 // Color conversion utilities
-function parseRGBPercentage(rgbString: string): { r: number; g: number; b: number } | null {
+function parseRGBPercentage(rgbString: string | undefined): { r: number; g: number; b: number } | null {
+  if (!rgbString) return null;
+  
   const match = rgbString.match(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/);
   if (!match) return null;
 

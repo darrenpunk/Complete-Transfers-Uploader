@@ -182,7 +182,8 @@ export class MemStorage implements IStorage {
       zIndex: insertElement.zIndex || 0,
       isVisible: insertElement.isVisible !== undefined ? insertElement.isVisible : true,
       isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false,
-      colorOverrides: insertElement.colorOverrides || null
+      colorOverrides: insertElement.colorOverrides || null,
+      garmentColor: insertElement.garmentColor || null
     };
     this.canvasElements.set(id, element);
     return element;
@@ -202,7 +203,6 @@ export class MemStorage implements IStorage {
   }
 
   async deleteCanvasElementsByLogo(logoId: string): Promise<void> {
-    let deleteCount = 0;
     const elementsToDelete: string[] = [];
     
     this.canvasElements.forEach((element, id) => {
@@ -213,10 +213,7 @@ export class MemStorage implements IStorage {
     
     elementsToDelete.forEach(id => {
       this.canvasElements.delete(id);
-      deleteCount++;
     });
-    
-    return deleteCount;
   }
 
   // Template size methods
@@ -234,8 +231,6 @@ export class MemStorage implements IStorage {
     this.templateSizes.set(id, templateSize);
     return templateSize;
   }
-
-
 }
 
 export const storage = new MemStorage();
