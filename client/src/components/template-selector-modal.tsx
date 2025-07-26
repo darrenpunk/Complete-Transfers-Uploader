@@ -7,21 +7,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TemplateSize } from "@shared/schema";
 
-// Template group icons
+// Template group icons - using better visual icons
 const getTemplateGroupIcon = (group: string) => {
   switch (group) {
     case "Full Colour Transfer Sizes":
-      return "🎨";
+      return "🎨"; // Palette for full color
     case "Single Colour Transfer Sizes":
-      return "🖤";
+      return "⚫"; // Single dot for single color
     case "DTF Transfer Sizes":
-      return "🔄";
+      return "🖨️"; // Printer for DTF
     case "UV DTF Transfers":
-      return "☀️";
+      return "💡"; // Light bulb for UV
     case "Woven Badges":
-      return "🏅";
+      return "🧵"; // Thread for woven
     case "Applique Badges":
-      return "📎";
+      return "✂️"; // Scissors for applique
     default:
       return "📐";
   }
