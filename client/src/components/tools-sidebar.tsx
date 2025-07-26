@@ -111,9 +111,16 @@ export default function ToolsSidebar({
   const handleRGBtoCMYKConversion = async (logoId: string) => {
     setConvertingLogo(logoId);
     try {
-      await apiRequest(`/api/logos/${logoId}/convert-to-cmyk`, {
+      const response = await fetch(`/api/logos/${logoId}/convert-to-cmyk`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+      
+      if (!response.ok) {
+        throw new Error("Conversion failed");
+      }
       
       // Refresh logos and canvas elements to get updated data
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
