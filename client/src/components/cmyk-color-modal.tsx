@@ -17,6 +17,7 @@ interface CMYKColorModalProps {
   onChange: (newColor: string) => void;
   label: string;
   currentColor: string;
+  trigger?: React.ReactNode;
 }
 
 // Color conversion utilities
@@ -90,7 +91,7 @@ function getCMYKFromColor(colorString: string): CMYKColor | null {
   return null;
 }
 
-export default function CMYKColorModal({ initialColor, onChange, label, currentColor }: CMYKColorModalProps) {
+export default function CMYKColorModal({ initialColor, onChange, label, currentColor, trigger }: CMYKColorModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const initialCMYK = getCMYKFromColor(currentColor) || getCMYKFromColor(initialColor) || { c: 0, m: 0, y: 0, k: 0 };
   const [cmyk, setCmyk] = useState<CMYKColor>(initialCMYK);
@@ -115,19 +116,21 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-          <div 
-            className="w-8 h-8 rounded border-2 border-gray-300 flex-shrink-0"
-            style={{ backgroundColor: currentColor }}
-          />
-          <div className="flex-1">
-            <div className="text-xs text-gray-600">{label}</div>
-            <div className="text-xs font-mono text-gray-500">{currentColor}</div>
+        {trigger || (
+          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <div 
+              className="w-8 h-8 rounded border-2 border-gray-300 flex-shrink-0"
+              style={{ backgroundColor: currentColor }}
+            />
+            <div className="flex-1">
+              <div className="text-xs text-gray-600">{label}</div>
+              <div className="text-xs font-mono text-gray-500">{currentColor}</div>
+            </div>
+            <Button variant="outline" size="sm">
+              <Palette className="w-4 h-4" />
+            </Button>
           </div>
-          <Button variant="outline" size="sm">
-            <Palette className="w-4 h-4" />
-          </Button>
-        </div>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md" aria-describedby="cmyk-editor-description">
         <DialogHeader>

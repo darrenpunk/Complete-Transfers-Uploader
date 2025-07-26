@@ -119,46 +119,57 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
           <Palette className="w-4 h-4" />
-          SVG Colors
+          Logo Colors
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {svgColors.map((colorInfo) => {
-          const cmykColor = getCMYKFromRGBPercentage(colorInfo.originalColor);
-          
-          return (
-            <div key={colorInfo.id} className="flex items-center gap-2">
-              <div className="flex-1">
-                <div className="text-xs text-muted-foreground mb-1">
-                  {colorInfo.elementType} ({colorInfo.attribute})
-                </div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
-                    style={{ backgroundColor: colorInfo.originalColor }}
-                    title={`Original: ${colorInfo.originalColor}`}
-                  />
-                  <div className="text-xs font-mono text-muted-foreground">
-                    {colorInfo.originalColor}
-                  </div>
-                </div>
-                {cmykColor && (
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    C{cmykColor.c} M{cmykColor.m} Y{cmykColor.y} K{cmykColor.k}
-                  </Badge>
-                )}
-              </div>
-            <div className="flex-1">
+      <CardContent className="space-y-4">
+        {/* Color Grid - Same style as garment colors */}
+        <div className="grid grid-cols-6 gap-2">
+          {svgColors.map((colorInfo, index) => {
+            const currentColor = getDisplayColor(colorInfo.originalColor);
+            const rgbPercent = parseRGBPercentage(colorInfo.originalColor);
+            let displayColor = colorInfo.originalColor;
+            
+            // Convert RGB percentage to hex for display
+            if (rgbPercent) {
+              displayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
+            }
+            
+            return (
               <CMYKColorModal
+                key={`${colorInfo.originalColor}-${index}`}
                 initialColor={colorInfo.originalColor}
                 currentColor={getDisplayColor(colorInfo.originalColor)}
                 onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
-                label={`${colorInfo.elementType} (${colorInfo.attribute})`}
+                label={`Color ${index + 1}`}
+                trigger={
+                  <button
+                    className={`w-10 h-10 rounded-full border-2 shadow-sm transition-all hover:scale-105 ${
+                      colorOverrides[colorInfo.originalColor]
+                        ? "border-primary ring-2 ring-blue-200"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                    style={{ backgroundColor: displayColor }}
+                    title={`${colorInfo.elementType} color - Click to edit with CMYK`}
+                  />
+                }
               />
-              </div>
+            );
+          })}
+        </div>
+        
+        {/* Color Information */}
+        <div className="space-y-2">
+          <div className="text-xs text-gray-600">
+            {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
+          </div>
+          {Object.keys(colorOverrides).length > 0 && (
+            <div className="text-xs text-blue-600">
+              {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} modified
             </div>
-          );
-        })}
+          )}
+        </div>
+
         
         <div className="flex gap-2 pt-2 border-t">
           <Button
