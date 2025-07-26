@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { manufacturerColors } from "@shared/garment-colors";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
+import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -377,17 +378,21 @@ export default function ToolsSidebar({
           <h4 className="text-sm font-semibold text-gray-700">Manufacturer Colors</h4>
           {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
             <div key={manufacturerName} className="border border-gray-200 rounded-lg">
-              <div className="p-3 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                  {manufacturerName === "Gildan" && (
-                    <img 
-                      src={gildanLogoPath} 
-                      alt="Gildan" 
-                      className="h-4 w-auto object-contain"
-                    />
-                  )}
-                  <h5 className="text-sm font-medium text-gray-800">{manufacturerName}</h5>
-                </div>
+              <div className="p-3 bg-gray-50 border-b border-gray-200 flex justify-center">
+                {manufacturerName === "Gildan" && (
+                  <img 
+                    src={gildanLogoPath} 
+                    alt="Gildan" 
+                    className="h-6 w-auto object-contain"
+                  />
+                )}
+                {manufacturerName === "Fruit of the Loom" && (
+                  <img 
+                    src={fruitOfTheLoomLogoPath} 
+                    alt="Fruit of the Loom" 
+                    className="h-8 w-auto object-contain"
+                  />
+                )}
               </div>
               <div className="p-2 space-y-1">
                 {colorGroups.map((group) => (
