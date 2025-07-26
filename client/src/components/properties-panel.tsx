@@ -97,6 +97,19 @@ export default function PropertiesPanel({
     },
   });
 
+  // Duplicate logo mutation
+  const duplicateLogoMutation = useMutation({
+    mutationFn: async (elementId: string) => {
+      const response = await apiRequest("POST", `/api/canvas-elements/${elementId}/duplicate`);
+      return response.json();
+    },
+    onSuccess: (duplicatedElement) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
+    },
+  });
+
   // Handle garment color change for individual logos
   const handleGarmentColorChange = (color: string) => {
     if (currentElement) {
@@ -107,19 +120,7 @@ export default function PropertiesPanel({
     }
   };
 
-  // Duplicate logo mutation
-  const duplicateLogoMutation = useMutation({
-    mutationFn: async (elementId: string) => {
-      const response = await apiRequest("POST", `/api/canvas-elements/${elementId}/duplicate`);
-      return response.json();
-    },
-    onSuccess: () => {
-      // Refresh canvas elements to show the new duplicate
-      queryClient.invalidateQueries({
-        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
-      });
-    },
-  });
+
 
   const handlePropertyChange = (property: keyof CanvasElement, value: any, debounce = false) => {
     if (!currentElement) return;
@@ -592,13 +593,13 @@ export default function PropertiesPanel({
 
       {/* CMYK Color Modal */}
       <CMYKColorModal
-        isOpen={showCMYKModal}
-        onClose={() => setShowCMYKModal(false)}
-        onColorSelect={(color) => {
+        initialColor={currentElement?.garmentColor || "#FFFFFF"}
+        onChange={(color: string) => {
           handlePropertyChange('garmentColor', color);
           setShowCMYKModal(false);
         }}
-        initialColor={currentElement?.garmentColor || "#FFFFFF"}
+        label="Select Garment Color"
+        currentColor={currentElement?.garmentColor || "#FFFFFF"}
       />
     </div>
   );

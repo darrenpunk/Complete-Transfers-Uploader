@@ -7,6 +7,7 @@ import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema"
 import ToolsSidebar from "@/components/tools-sidebar";
 import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
+import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download } from "lucide-react";
@@ -20,6 +21,7 @@ export default function UploadTool() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [selectedElement, setSelectedElement] = useState<CanvasElement | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -123,19 +125,24 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject) {
-      // Create a new project if no ID provided
-      const defaultTemplate = templateSizes.find(t => t.name === "A4");
-      if (defaultTemplate) {
-        // Only require garment color for Full Colour Transfer Sizes
-        const isFullColourTemplate = defaultTemplate.group === "Full Colour Transfer Sizes";
-        createProjectMutation.mutate({
-          name: `Project ${new Date().toLocaleDateString()}`,
-          templateSize: defaultTemplate.id,
-          garmentColor: isFullColourTemplate ? "" : "#FFFFFF" // Only force selection for Full Colour templates
-        });
-      }
+      // Show template selector modal on launch for new projects
+      setShowTemplateSelector(true);
     }
   }, [id, templateSizes, currentProject]);
+
+  // Handle template selection from modal
+  const handleTemplateSelect = (templateId: string) => {
+    const selectedTemplate = templateSizes.find(t => t.id === templateId);
+    if (selectedTemplate) {
+      // Only require garment color for Full Colour Transfer Sizes
+      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
+      createProjectMutation.mutate({
+        name: `Project ${new Date().toLocaleDateString()}`,
+        templateSize: templateId,
+        garmentColor: isFullColourTemplate ? "" : "#FFFFFF"
+      });
+    }
+  };
 
   useEffect(() => {
     // Determine current step based on project status and data
@@ -340,6 +347,14 @@ export default function UploadTool() {
           </div>
         </div>
       </div>
+
+      {/* Template Selector Modal */}
+      <TemplateSelectorModal
+        open={showTemplateSelector}
+        templates={templateSizes}
+        onSelectTemplate={handleTemplateSelect}
+        onClose={() => setShowTemplateSelector(false)}
+      />
     </div>
   );
 }
