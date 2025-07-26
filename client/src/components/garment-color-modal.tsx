@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,6 +13,7 @@ interface GarmentColorModalProps {
   currentColor: string | null;
   onColorChange: (color: string) => void;
   trigger?: React.ReactNode;
+  autoOpen?: boolean;
 }
 
 // Professional color palette with complete specifications
@@ -46,9 +47,16 @@ const quickColors = [
   { name: "Purple", hex: "#4C0A6A", rgb: "76, 10, 106", cmyk: "75, 100, 0, 0", inkType: "Process" }
 ];
 
-export default function GarmentColorModal({ currentColor, onColorChange, trigger }: GarmentColorModalProps) {
+export default function GarmentColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: GarmentColorModalProps) {
   const [open, setOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  // Auto-open modal when autoOpen is true and no color is selected
+  useEffect(() => {
+    if (autoOpen && !currentColor && !open) {
+      setOpen(true);
+    }
+  }, [autoOpen, currentColor, open]);
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
@@ -80,6 +88,9 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
             Select Garment Color
             {!currentColor && <span className="text-red-500 text-sm font-normal">*Required</span>}
           </DialogTitle>
+          <DialogDescription>
+            Choose a garment color for your Full Colour Transfer design. This will be the background color for your artwork.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

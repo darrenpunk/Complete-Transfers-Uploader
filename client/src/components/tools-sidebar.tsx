@@ -391,6 +391,7 @@ export default function ToolsSidebar({
               <GarmentColorModal
                 currentColor={project.garmentColor}
                 onColorChange={onGarmentColorChange}
+                autoOpen={!project.garmentColor}
                 trigger={
                   <Button 
                     variant={project.garmentColor ? "outline" : "default"} 
