@@ -432,7 +432,7 @@ export default function CanvasWorkspace({
                           ? `/uploads/${element.id}_modified.svg` 
                           : logo.url}
                         alt={logo.originalName}
-                        className="max-w-full max-h-full object-contain"
+                        className="w-full h-full object-fill"
                         style={{ background: 'transparent', backgroundColor: 'transparent' }}
                         draggable={false}
                         onError={(e) => {

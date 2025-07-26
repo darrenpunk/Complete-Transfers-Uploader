@@ -255,13 +255,18 @@ export default function PropertiesPanel({
     const logo = logos.find(l => l.id === currentElement.logoId);
     const checks = [];
     
-    // File Resolution Check
+    // File Resolution Check - use canvas element dimensions for accurate scaling
     if (logo) {
-      const hasGoodResolution = logo.width && logo.height && (logo.width >= 300 || logo.height >= 300);
+      // Calculate effective resolution based on actual canvas element size
+      const scaleX = currentElement.width / (logo.width || 1);
+      const scaleY = currentElement.height / (logo.height || 1);
+      const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+      const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
+      
       checks.push({
-        name: "File Resolution",
+        name: "Print Resolution",
         status: hasGoodResolution ? "pass" : "warning",
-        value: hasGoodResolution ? "High Res" : "Check Size"
+        value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
       });
       
       // File Format Check
@@ -291,13 +296,13 @@ export default function PropertiesPanel({
       value: isWithinBounds ? "In Bounds" : "Check Position"
     });
     
-    // Size Check - reasonable print size
-    const hasReasonableSize = currentElement.width >= 10 && currentElement.height >= 10 &&
-                             currentElement.width <= 250 && currentElement.height <= 350;
+    // Size Check - reasonable print size with actual dimensions
+    const hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
+                             currentElement.width <= 280 && currentElement.height <= 400;
     checks.push({
       name: "Print Size",
       status: hasReasonableSize ? "pass" : "warning",
-      value: hasReasonableSize ? "Good Size" : "Check Size"
+      value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`
     });
     
     return checks;
