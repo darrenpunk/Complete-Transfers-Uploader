@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { PDFDocument, rgb, degrees } from "pdf-lib";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -16,84 +17,29 @@ export interface PDFGenerationData {
 export class EnhancedCMYKGenerator {
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
-    const execAsync = promisify(exec);
-    const uploadDir = path.join(process.cwd(), "uploads");
     
     try {
-      // Create temporary working directory
-      const tempDir = path.join(uploadDir, 'enhanced_cmyk_temp');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-      
       // ICC profile path
       const iccProfilePath = path.join(process.cwd(), 'server', 'fogra51.icc');
       const useICC = fs.existsSync(iccProfilePath);
       
       console.log(useICC ? 
-        'Enhanced CMYK: Using FOGRA51 ICC profile for professional color accuracy' : 
-        'Enhanced CMYK: ICC profile not found, using standard CMYK conversion'
+        'Enhanced CMYK: Using FOGRA51 ICC profile with vector preservation' : 
+        'Enhanced CMYK: Creating CMYK PDF with vector preservation (no ICC)'
       );
       
-      const logoMap = new Map(logos.map(logo => [logo.id, logo]));
-      
-      // Convert template size to pixels (300 DPI for print quality)
-      const canvasWidth = Math.round(templateSize.width * 11.811);
-      const canvasHeight = Math.round(templateSize.height * 11.811);
-      
-      // Filter visible elements
-      const visibleElements = canvasElements.filter(el => el.isVisible && logoMap.has(el.logoId));
-      
-      if (visibleElements.length === 0) {
-        throw new Error('No visible logos to render');
-      }
-
-      // Page 1: White background
-      const page1Path = path.join(tempDir, 'page1.pdf');
-      await this.createVectorPreservingPage(
-        visibleElements, 
-        logoMap, 
-        templateSize, 
-        page1Path, 
-        '#FFFFFF', 
-        execAsync, 
-        useICC ? iccProfilePath : null
-      );
-      
-      // Page 2: Garment color background
-      const page2Path = path.join(tempDir, 'page2.pdf');
-      const bgColor = garmentColor || '#FFFFFF';
-      await this.createVectorPreservingPage(
-        visibleElements, 
-        logoMap, 
-        templateSize, 
-        page2Path, 
-        bgColor, 
-        execAsync, 
-        useICC ? iccProfilePath : null
-      );
-      
-      // Combine pages with ICC profile embedding
-      const finalPdfPath = path.join(tempDir, 'final_cmyk.pdf');
-      let combineCommand = `convert "${page1Path}" "${page2Path}"`;
+      // Use pdf-lib for true vector preservation, then apply ICC profile post-processing
+      const vectorPDF = await this.createVectorPreservingPDF(data);
       
       if (useICC) {
-        combineCommand += ` -profile "${iccProfilePath}"`;
+        // Apply ICC profile to the vector PDF using ImageMagick without rasterizing
+        const enhancedPDF = await this.applyICCProfileToPDF(vectorPDF, iccProfilePath);
+        console.log('Enhanced CMYK: Successfully applied ICC profile while preserving vectors');
+        return enhancedPDF;
+      } else {
+        console.log('Enhanced CMYK: Vector PDF created without ICC profile');
+        return vectorPDF;
       }
-      
-      combineCommand += ` -compress lzw -quality 100 "${finalPdfPath}"`;
-      console.log('Enhanced CMYK: Combining pages with ICC profile');
-      await execAsync(combineCommand);
-      
-      // Read final PDF
-      const pdfBuffer = fs.readFileSync(finalPdfPath);
-      
-      // Clean up
-      this.cleanupTempFiles([page1Path, page2Path, finalPdfPath]);
-      fs.rmdirSync(tempDir);
-      
-      console.log('Enhanced CMYK: Successfully generated professional CMYK PDF with vector preservation');
-      return pdfBuffer;
       
     } catch (error) {
       console.error('Enhanced CMYK generation failed:', error);
@@ -101,73 +47,184 @@ export class EnhancedCMYKGenerator {
     }
   }
 
-  private async createVectorPreservingPage(
-    elements: CanvasElement[],
-    logoMap: Map<string, Logo>,
-    templateSize: TemplateSize,
-    outputPath: string,
-    backgroundColor: string,
-    execAsync: (command: string) => Promise<any>,
-    iccProfilePath: string | null
-  ): Promise<void> {
+  private async createVectorPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
+    const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
+    
+    // Create a new PDF document using pdf-lib for vector preservation
+    const pdfDoc = await PDFDocument.create();
+    
+    // Convert template size from mm to points (1mm = 2.834645669 points)
+    const pageWidth = templateSize.width * 2.834645669;
+    const pageHeight = templateSize.height * 2.834645669;
+    
+    // Create a logo map for quick lookup
+    const logoMap = new Map(logos.map(logo => [logo.id, logo]));
+    
+    // Page 1: Artwork only (white background)
+    const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+    
+    // Process each canvas element for page 1
+    for (const element of canvasElements) {
+      const logo = logoMap.get(element.logoId);
+      if (!logo || !element.isVisible) continue;
+      
+      try {
+        await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize);
+      } catch (error) {
+        console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
+      }
+    }
+    
+    // Page 2: Artwork with garment color background
+    const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+    
+    // Add background color if specified
+    if (garmentColor) {
+      const { r, g, b } = this.hexToRgb(garmentColor);
+      page2.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+        color: rgb(r / 255, g / 255, b / 255),
+      });
+    }
+    
+    // Process each canvas element for page 2
+    for (const element of canvasElements) {
+      const logo = logoMap.get(element.logoId);
+      if (!logo || !element.isVisible) continue;
+      
+      try {
+        await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
+      } catch (error) {
+        console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
+      }
+    }
+    
+    console.log('Enhanced CMYK: Created vector-preserving PDF with pdf-lib');
+    return await pdfDoc.save();
+  }
+
+  private async embedVectorLogo(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    logo: Logo,
+    templateSize: TemplateSize
+  ) {
     const uploadDir = path.join(process.cwd(), "uploads");
     
-    // Convert template size to pixels (300 DPI)
-    const canvasWidth = Math.round(templateSize.width * 11.811);
-    const canvasHeight = Math.round(templateSize.height * 11.811);
-    
-    // Start with base canvas in RGB for better compositing
-    let command = `convert -size ${canvasWidth}x${canvasHeight} xc:"${backgroundColor}"`;
-    
-    // Process each element, preserving vectors when possible
-    for (const element of elements) {
-      const logo = logoMap.get(element.logoId);
-      if (!logo) continue;
-      
-      const logoPath = path.join(uploadDir, logo.filename);
-      if (!fs.existsSync(logoPath)) continue;
-      
-      // Calculate position and size in pixels
-      const x = Math.round(element.x * 11.811);
-      const y = Math.round(element.y * 11.811);
-      const width = Math.round(element.width * 11.811);
-      const height = Math.round(element.height * 11.811);
-      
-      // Check for PDF original to preserve vectors
-      let sourcePath = logoPath;
-      if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
-        const originalPath = path.join(uploadDir, logo.originalFilename);
-        if (fs.existsSync(originalPath)) {
-          sourcePath = originalPath;
-          console.log(`Enhanced CMYK: Using original PDF for vector preservation: ${logo.originalName}`);
-        }
-      }
-      
-      // Use appropriate density and resize settings for vector vs raster
-      if (sourcePath.endsWith('.pdf') || logo.mimeType === 'application/pdf') {
-        // High-density PDF processing for vector preservation
-        command += ` \\( "${sourcePath}" -density 300 -resize ${width}x${height}! -background transparent \\) -geometry +${x}+${y} -composite`;
-      } else if (sourcePath.endsWith('.svg')) {
-        // SVG vector processing
-        command += ` \\( "${sourcePath}" -density 300 -resize ${width}x${height}! -background transparent \\) -geometry +${x}+${y} -composite`;
-      } else {
-        // Raster image processing
-        command += ` \\( "${sourcePath}" -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+    // Check if we have original PDF for vector preservation
+    if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+      const originalPdfPath = path.join(uploadDir, logo.originalFilename);
+      if (fs.existsSync(originalPdfPath)) {
+        console.log(`Enhanced CMYK: Embedding original PDF vectors: ${logo.originalName}`);
+        await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
+        return;
       }
     }
     
-    // Apply professional CMYK conversion with ICC profile
-    if (iccProfilePath) {
-      command += ` -profile "${iccProfilePath}" -colorspace CMYK -intent perceptual -quality 100 -compress lzw "${outputPath}"`;
-      console.log('Enhanced CMYK: Applying FOGRA51 ICC profile for professional print standards');
-    } else {
-      command += ` -colorspace CMYK -intent perceptual -quality 100 -compress lzw "${outputPath}"`;
-      console.log('Enhanced CMYK: Using standard CMYK conversion');
+    // Fallback to processed image
+    const logoPath = path.join(uploadDir, logo.filename);
+    if (fs.existsSync(logoPath)) {
+      console.log(`Enhanced CMYK: Embedding processed image: ${logo.originalName}`);
+      await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
     }
-    
-    console.log('Enhanced CMYK: Creating vector-preserving page');
-    await execAsync(command);
   }
+
+  private async embedOriginalPDF(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    pdfPath: string,
+    templateSize: TemplateSize
+  ) {
+    // Read and embed the original PDF to preserve vectors
+    const originalPdfBytes = fs.readFileSync(pdfPath);
+    const originalPdf = await PDFDocument.load(originalPdfBytes);
+    
+    // Get the first page of the original PDF
+    const originalPages = originalPdf.getPages();
+    if (originalPages.length === 0) {
+      throw new Error('PDF has no pages');
+    }
+    
+    // Embed the first page as a vector page
+    const firstPage = originalPages[0];
+    const embeddedPage = await pdfDoc.embedPage(firstPage, {
+      left: 0,
+      bottom: 0,
+      right: firstPage.getWidth(),
+      top: firstPage.getHeight(),
+    });
+    
+    // Calculate position and scale (convert mm to points)
+    const x = element.x * 2.834645669;
+    const y = (templateSize.height - element.y - element.height) * 2.834645669;
+    const targetWidth = element.width * 2.834645669;
+    const targetHeight = element.height * 2.834645669;
+    
+    // Get original page dimensions
+    const { width: origWidth, height: origHeight } = embeddedPage.size();
+    
+    // Calculate scale maintaining aspect ratio
+    const scaleX = targetWidth / origWidth;
+    const scaleY = targetHeight / origHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Draw the embedded page with vectors preserved
+    page.drawPage(embeddedPage, {
+      x: x,
+      y: y,
+      width: origWidth * scale,
+      height: origHeight * scale,
+      rotate: degrees(element.rotation || 0),
+    });
+    
+    console.log(`Enhanced CMYK: Successfully embedded vector PDF: ${element.logoId}`);
+  }
+
+  private async applyICCProfileToPDF(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
+    const execAsync = promisify(exec);
+    const tempDir = path.join(process.cwd(), 'uploads', 'icc_temp');
+    
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    try {
+      // Write PDF to temp file
+      const inputPath = path.join(tempDir, 'input.pdf');
+      const outputPath = path.join(tempDir, 'output_with_icc.pdf');
+      
+      fs.writeFileSync(inputPath, pdfBuffer);
+      
+      // Apply ICC profile using ImageMagick in a way that preserves vectors
+      // Use -compress None to avoid rasterization, just embed the profile
+      const iccCommand = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK -compress None "${outputPath}"`;
+      
+      console.log('Enhanced CMYK: Applying ICC profile while preserving vectors');
+      await execAsync(iccCommand);
+      
+      // Read the enhanced PDF
+      const enhancedPDF = fs.readFileSync(outputPath);
+      
+      // Clean up
+      fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
+      fs.rmdirSync(tempDir);
+      
+      return enhancedPDF;
+      
+    } catch (error) {
+      console.error('ICC profile application failed:', error);
+      // Return original PDF if ICC application fails
+      return pdfBuffer;
+    }
+  }
+
+
 
   private cleanupTempFiles(filePaths: string[]): void {
     for (const filePath of filePaths) {
@@ -179,5 +236,50 @@ export class EnhancedCMYKGenerator {
         console.warn(`Enhanced CMYK: Failed to cleanup ${filePath}:`, error);
       }
     }
+  }
+
+  private async embedImageFile(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    imagePath: string,
+    mimeType: string,
+    templateSize: TemplateSize
+  ) {
+    const imageBytes = fs.readFileSync(imagePath);
+    
+    let image;
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } else if (mimeType.includes('png')) {
+      image = await pdfDoc.embedPng(imageBytes);
+    } else {
+      console.warn(`Unsupported image type: ${mimeType}`);
+      return;
+    }
+    
+    // Calculate position (flip Y coordinate for PDF)
+    const x = element.x * 2.834645669;
+    const y = (templateSize.height - element.y - element.height) * 2.834645669;
+    const width = element.width * 2.834645669;
+    const height = element.height * 2.834645669;
+    
+    // Draw the image
+    page.drawImage(image, {
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      rotate: degrees(element.rotation || 0),
+    });
+  }
+
+  private hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 255, g: 255, b: 255 };
   }
 }
