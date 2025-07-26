@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>White Elements Test</title>
+    <style>
+        body { margin: 20px; background: #f0f0f0; }
+        .container { display: flex; gap: 20px; }
+        .test-canvas { 
+            background: white; 
+            border: 2px solid #000; 
+            padding: 10px;
+            width: 400px;
+            height: 300px;
+        }
+        .dark-canvas { 
+            background: #333; 
+            border: 2px solid #000; 
+            padding: 10px;
+            width: 400px;
+            height: 300px;
+        }
+        svg { max-width: 100%; max-height: 100%; }
+    </style>
+</head>
+<body>
+    <h1>White Elements Visibility Test</h1>
+    <div class="container">
+        <div>
+            <h3>On White Background</h3>
+            <div class="test-canvas">
+                <svg width="200" height="100" viewBox="0 0 200 100">
+                    <!-- Very light gray like the PDF -->
+                    <rect x="10" y="10" width="80" height="30" fill="rgb(93.751526%, 92.207336%, 92.939758%)" stroke="black" stroke-width="1"/>
+                    <!-- Pure white -->
+                    <rect x="10" y="50" width="80" height="30" fill="white" stroke="black" stroke-width="1"/>
+                    <!-- Text labels -->
+                    <text x="100" y="25" font-size="12">Light Gray (PDF color)</text>
+                    <text x="100" y="65" font-size="12">Pure White</text>
+                </svg>
+            </div>
+        </div>
+        <div>
+            <h3>On Dark Background</h3>
+            <div class="dark-canvas">
+                <svg width="200" height="100" viewBox="0 0 200 100">
+                    <!-- Very light gray like the PDF -->
+                    <rect x="10" y="10" width="80" height="30" fill="rgb(93.751526%, 92.207336%, 92.939758%)" stroke="white" stroke-width="1"/>
+                    <!-- Pure white -->
+                    <rect x="10" y="50" width="80" height="30" fill="white" stroke="white" stroke-width="1"/>
+                    <!-- Text labels -->
+                    <text x="100" y="25" font-size="12" fill="white">Light Gray (PDF color)</text>
+                    <text x="100" y="65" font-size="12" fill="white">Pure White</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <h2>Test the actual uploaded SVG</h2>
+    <div class="container">
+        <div>
+            <h3>White Background</h3>
+            <div class="test-canvas">
+                <img src="/uploads/14d7c202253176972ba560841103771f.svg" style="max-width: 100%; max-height: 100%;" />
+            </div>
+        </div>
+        <div>
+            <h3>Dark Background</h3>
+            <div class="dark-canvas">
+                <img src="/uploads/14d7c202253176972ba560841103771f.svg" style="max-width: 100%; max-height: 100%;" />
+            </div>
+        </div>
+    </div>
+</body>
+</html>

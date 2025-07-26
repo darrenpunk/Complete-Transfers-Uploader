@@ -14,15 +14,7 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   background-color: transparent !important;
 }
 
-/* Hide any white background elements in SVGs */
-svg rect[fill="white"], 
-svg rect[fill="#ffffff"], 
-svg rect[fill="rgb(100%, 100%, 100%)"],
-svg path[fill="white"], 
-svg path[fill="#ffffff"], 
-svg path[fill="rgb(100%, 100%, 100%)"] {
-  display: none !important;
-}
+/* Note: Removed aggressive white element hiding to preserve white content in logos */
 
 /* Ensure canvas workspace has transparent background */
 .canvas-workspace, .canvas-container {
