@@ -115,47 +115,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If it's a PDF, convert it preserving colors and transparency
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try PNG conversion with transparent background to preserve colors
+            // Try Ghostscript first for better color handling of PDFs
             const pngFilename = `${file.filename}.png`;
             const pngPath = path.join(uploadDir, pngFilename);
             
-            // ImageMagick convert PDF to PNG with transparent background and color preservation
-            const convertCommand = `convert -density 300 -background transparent -colorspace RGB "${file.path}[0]" "${pngPath}"`;
+            // Ghostscript command with color profile preservation
+            const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dUseCropBox -sOutputFile="${pngPath}" "${file.path}"`;
             
-            await execAsync(convertCommand);
+            await execAsync(gsCommand);
             
             if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
               finalFilename = pngFilename;
               finalMimeType = 'image/png';
               finalUrl = `/uploads/${finalFilename}`;
               
-              console.log(`PDF converted to PNG with transparency and colors: ${finalFilename}`);
+              console.log(`PDF converted to PNG using Ghostscript with alpha: ${finalFilename}`);
             } else {
-              throw new Error('ImageMagick PNG conversion failed');
+              throw new Error('Ghostscript PNG conversion failed');
             }
-          } catch (convertError) {
-            console.error('PDF conversion failed, trying without transparent background:', convertError);
+          } catch (gsError) {
+            console.error('Ghostscript conversion failed, trying ImageMagick:', gsError);
             
-            // Final fallback: PNG without transparent background to ensure colors are preserved
+            // Fallback to ImageMagick with enhanced color settings
             try {
               const pngFilename = `${file.filename}.png`;
               const pngPath = path.join(uploadDir, pngFilename);
               
-              // PNG conversion focusing on color preservation
-              const pngCommand = `convert -density 300 -colorspace RGB "${file.path}[0]" "${pngPath}"`;
-              await execAsync(pngCommand);
+              // ImageMagick with color profile preservation and transparency
+              const imCommand = `convert -density 300 -colorspace sRGB -alpha on -background none "${file.path}[0]" "${pngPath}"`;
+              await execAsync(imCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                 finalFilename = pngFilename;
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
-                console.log(`PDF converted to PNG with color preservation: ${finalFilename}`);
+                console.log(`PDF converted using ImageMagick with color preservation: ${finalFilename}`);
               } else {
-                throw new Error('All conversion methods failed');
+                throw new Error('ImageMagick conversion also failed');
               }
-            } catch (pngError) {
-              console.error('All PDF conversion methods failed:', pngError);
+            } catch (imError) {
+              console.error('All PDF conversion methods failed:', imError);
+              
+              // Final fallback - try basic ImageMagick without transparency
+              try {
+                const pngFilename = `${file.filename}.png`;
+                const pngPath = path.join(uploadDir, pngFilename);
+                
+                const basicCommand = `convert -density 300 "${file.path}[0]" "${pngPath}"`;
+                await execAsync(basicCommand);
+                
+                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                  finalFilename = pngFilename;
+                  finalMimeType = 'image/png';
+                  finalUrl = `/uploads/${finalFilename}`;
+                  
+                  console.log(`PDF converted using basic ImageMagick: ${finalFilename}`);
+                }
+              } catch (basicError) {
+                console.error('All conversion attempts failed:', basicError);
+              }
             }
           }
         }
