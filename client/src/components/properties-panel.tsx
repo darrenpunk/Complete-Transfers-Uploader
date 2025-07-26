@@ -317,61 +317,6 @@ export default function PropertiesPanel({
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
-      {/* Template Size Selection */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader>
-          <CardTitle className="text-lg">Template Size</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600 mb-3">
-            Current template: {templateSizes.find(t => t.id === project.templateSize)?.label || 'None selected'}
-          </p>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => {
-              // For now, just navigate to home to change template
-              window.location.href = '/';
-            }}
-          >
-            <span className="mr-2">📐</span>
-            Change Template Size
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Pre-flight Check */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader>
-          <CardTitle className="text-lg">Pre-flight Check</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {preflightChecks.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm">Select a logo to run pre-flight checks</p>
-              </div>
-            ) : (
-              preflightChecks.map((check) => (
-                <div key={check.name} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{check.name}</span>
-                  <div className="flex items-center">
-                    {check.status === "pass" ? (
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-yellow-500 mr-1" />
-                    )}
-                    <Badge variant={check.status === "pass" ? "default" : "secondary"}>
-                      {check.value}
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Logo Properties */}
       {currentElement && (
