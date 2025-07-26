@@ -3,7 +3,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, Logo, TemplateSize } from "@shared/schema";
 
-import UploadZone from "./upload-zone";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus } from "lucide-react";
@@ -107,25 +107,14 @@ export default function ToolsSidebar({
     },
   });
 
-  const handleFilesSelected = (files: File[]) => {
-    uploadLogosMutation.mutate(files);
-  };
+
 
   const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
 
-      {/* Upload Zone */}
-      {currentStep === 1 && (
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Upload Logos</h3>
-          <UploadZone
-            onFilesSelected={handleFilesSelected}
-            isUploading={uploadLogosMutation.isPending}
-          />
-        </div>
-      )}
+
 
       {/* Uploaded Logos */}
       {logos.length > 0 && (

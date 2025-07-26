@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload } from "lucide-react";
 
 interface CanvasWorkspaceProps {
   project: Project;
@@ -12,6 +12,7 @@ interface CanvasWorkspaceProps {
   canvasElements: CanvasElement[];
   selectedElement: CanvasElement | null;
   onElementSelect: (element: CanvasElement | null) => void;
+  onLogoUpload?: (files: File[]) => void;
 }
 
 export default function CanvasWorkspace({
@@ -20,7 +21,8 @@ export default function CanvasWorkspace({
   logos,
   canvasElements,
   selectedElement,
-  onElementSelect
+  onElementSelect,
+  onLogoUpload
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
@@ -250,7 +252,57 @@ export default function CanvasWorkspace({
       {/* Canvas Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
+          {/* Left section - Upload and Controls */}
           <div className="flex items-center space-x-4">
+            {/* Upload Section */}
+            <div className="flex items-center space-x-3">
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  multiple
+                  accept=".png,.jpg,.jpeg,.svg,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0 && onLogoUpload) {
+                      onLogoUpload(files);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <Button variant="default" size="sm">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Logos
+                </Button>
+              </label>
+              
+              {/* Logo Count Display */}
+              {logos && logos.length > 0 && (
+                <>
+                  <div className="h-6 w-px bg-gray-300"></div>
+                  <span className="text-sm text-gray-600">
+                    {logos.length} logo{logos.length !== 1 ? 's' : ''}
+                  </span>
+                  {/* Quick Logo Preview */}
+                  <div className="flex items-center space-x-1">
+                    {logos.slice(0, 3).map((logo, index) => (
+                      <div key={logo.id} className="w-6 h-6 bg-gray-100 border border-gray-200 rounded flex items-center justify-center text-xs">
+                        {logo.mimeType?.startsWith('image/') ? '🖼️' : '📄'}
+                      </div>
+                    ))}
+                    {logos.length > 3 && (
+                      <div className="w-6 h-6 bg-gray-100 border border-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                        +{logos.length - 3}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            
+            <div className="h-6 w-px bg-gray-300"></div>
+            
+            {/* Zoom Controls */}
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Zoom:</span>
               <Button variant="outline" size="sm" onClick={handleZoomOut}>
@@ -261,7 +313,10 @@ export default function CanvasWorkspace({
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
+            
             <div className="h-6 w-px bg-gray-300"></div>
+            
+            {/* Grid and Guide Controls */}
             <div className="flex items-center space-x-2">
               <Button
                 variant={showGrid ? "default" : "outline"}
@@ -281,6 +336,8 @@ export default function CanvasWorkspace({
               </Button>
             </div>
           </div>
+          
+          {/* Right section - Undo/Redo */}
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={handleUndo} disabled={historyIndex <= 0}>
               <Undo className="w-4 h-4 mr-1" />

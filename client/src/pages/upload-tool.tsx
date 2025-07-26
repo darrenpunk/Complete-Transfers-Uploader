@@ -168,6 +168,45 @@ export default function UploadTool() {
     }
   };
 
+  // Upload logos handler for canvas toolbar
+  const handleFilesUpload = (files: File[]) => {
+    if (!currentProject) return;
+    
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    
+    fetch(`/api/projects/${currentProject.id}/logos`, {
+      method: 'POST',
+      body: formData,
+    })
+      .then(response => {
+        if (!response.ok) throw new Error('Upload failed');
+        return response.json();
+      })
+      .then((newLogos) => {
+        // Update logos cache directly
+        queryClient.setQueryData(
+          ["/api/projects", currentProject.id, "logos"],
+          (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+        );
+        
+        // Invalidate canvas elements to fetch new ones
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+        
+        toast({
+          title: "Success",
+          description: "Logos uploaded successfully!",
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to upload logos. Please try again.",
+          variant: "destructive",
+        });
+      });
+  };
+
   if (!currentProject) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -235,6 +274,7 @@ export default function UploadTool() {
           canvasElements={canvasElements}
           selectedElement={selectedElement}
           onElementSelect={setSelectedElement}
+          onLogoUpload={handleFilesUpload}
         />
 
         {/* Right Properties Panel */}
