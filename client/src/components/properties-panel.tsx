@@ -40,19 +40,17 @@ export default function PropertiesPanel({
       return response.json();
     },
     onSuccess: (updatedElement) => {
-      // Update cache manually instead of invalidating to prevent re-fetching
-      queryClient.setQueryData(
-        ["/api/projects", selectedElement?.projectId, "canvas-elements"],
-        (oldData: CanvasElement[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
-        }
-      );
+      // Invalidate and refetch to ensure UI consistency
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", selectedElement?.projectId, "canvas-elements"]
+      });
     },
   });
 
   const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
     if (!selectedElement) return;
+
+    console.log('Property change:', property, 'from', selectedElement[property], 'to', value);
 
     // Convert string inputs to numbers for numeric properties
     let processedValue = value;
@@ -72,6 +70,7 @@ export default function PropertiesPanel({
       }
     }
 
+    console.log('Sending updates:', updates);
     updateElementMutation.mutate({
       id: selectedElement.id,
       updates

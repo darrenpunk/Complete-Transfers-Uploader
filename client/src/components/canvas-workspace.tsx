@@ -42,14 +42,10 @@ export default function CanvasWorkspace({
       return response.json();
     },
     onSuccess: (updatedElement) => {
-      // Update cache manually instead of invalidating to prevent re-fetching
-      queryClient.setQueryData(
-        ["/api/projects", project.id, "canvas-elements"],
-        (oldData: CanvasElement[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
-        }
-      );
+      // Invalidate and refetch to ensure UI consistency 
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
     },
   });
 
@@ -70,11 +66,14 @@ export default function CanvasWorkspace({
   };
 
   const handleUndo = () => {
+    console.log('Undo clicked, historyIndex:', historyIndex, 'history length:', history.length);
     if (historyIndex > 0) {
       const previousState = history[historyIndex - 1];
+      console.log('Undoing to state:', previousState);
       setHistoryIndex(historyIndex - 1);
       // Apply the previous state to all elements
       previousState.forEach(element => {
+        console.log('Updating element:', element.id, 'to:', element);
         updateElementMutation.mutate({
           id: element.id,
           updates: {
@@ -90,11 +89,14 @@ export default function CanvasWorkspace({
   };
 
   const handleRedo = () => {
+    console.log('Redo clicked, historyIndex:', historyIndex, 'history length:', history.length);
     if (historyIndex < history.length - 1) {
       const nextState = history[historyIndex + 1];
+      console.log('Redoing to state:', nextState);
       setHistoryIndex(historyIndex + 1);
       // Apply the next state to all elements
       nextState.forEach(element => {
+        console.log('Updating element:', element.id, 'to:', element);
         updateElementMutation.mutate({
           id: element.id,
           updates: {
@@ -109,10 +111,14 @@ export default function CanvasWorkspace({
     }
   };
 
-  // Save initial state to history when canvas elements change
+  // Save to history when elements change (but not on every render)
   useEffect(() => {
-    if (canvasElements.length > 0 && history.length === 0) {
-      saveToHistory(canvasElements);
+    if (canvasElements.length > 0) {
+      // Only save if this is a meaningful change (different from last saved state)
+      const lastSavedState = history[historyIndex];
+      if (!lastSavedState || JSON.stringify(lastSavedState) !== JSON.stringify(canvasElements)) {
+        saveToHistory(canvasElements);
+      }
     }
   }, [canvasElements]);
 
