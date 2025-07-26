@@ -9,11 +9,12 @@ export interface PDFGenerationData {
   templateSize: TemplateSize;
   canvasElements: CanvasElement[];
   logos: Logo[];
+  garmentColor?: string;
 }
 
 export class PDFGenerator {
   async generateProductionPDF(data: PDFGenerationData): Promise<Buffer> {
-    const { projectId, templateSize, canvasElements, logos } = data;
+    const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     try {
       // Create a new PDF document
@@ -23,22 +24,50 @@ export class PDFGenerator {
       const pageWidth = templateSize.width * 2.834645669;
       const pageHeight = templateSize.height * 2.834645669;
       
-      // Add a page with the template dimensions
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      
       // Create a logo map for quick lookup
       const logoMap = new Map(logos.map(logo => [logo.id, logo]));
       
-      // Process each canvas element
+      // Page 1: Artwork only (white background)
+      const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Process each canvas element for page 1
       for (const element of canvasElements) {
         const logo = logoMap.get(element.logoId);
         if (!logo || !element.isVisible) continue;
         
         try {
-          await this.embedLogoInPDF(pdfDoc, page, element, logo, templateSize);
+          await this.embedLogoInPDF(pdfDoc, page1, element, logo, templateSize);
         } catch (error) {
           console.error(`Failed to embed logo ${logo.originalName}:`, error);
           // Continue with other elements even if one fails
+        }
+      }
+      
+      // Page 2: Artwork with background color (if garment color is specified)
+      if (garmentColor) {
+        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+        
+        // Parse garment color and fill background
+        const { r, g, b } = this.hexToRgb(garmentColor);
+        page2.drawRectangle({
+          x: 0,
+          y: 0,
+          width: pageWidth,
+          height: pageHeight,
+          color: rgb(r / 255, g / 255, b / 255),
+        });
+        
+        // Process each canvas element for page 2 (same artwork on colored background)
+        for (const element of canvasElements) {
+          const logo = logoMap.get(element.logoId);
+          if (!logo || !element.isVisible) continue;
+          
+          try {
+            await this.embedLogoInPDF(pdfDoc, page2, element, logo, templateSize);
+          } catch (error) {
+            console.error(`Failed to embed logo ${logo.originalName}:`, error);
+            // Continue with other elements even if one fails
+          }
         }
       }
       
@@ -292,6 +321,18 @@ export class PDFGenerator {
     }
     
     return refs;
+  }
+  
+  private hexToRgb(hex: string): { r: number, g: number, b: number } {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse hex color
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    return { r, g, b };
   }
 }
 

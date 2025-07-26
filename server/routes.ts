@@ -523,7 +523,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId,
         templateSize,
         canvasElements,
-        logos
+        logos,
+        garmentColor: project.garmentColor
       });
 
       // Set response headers for PDF download

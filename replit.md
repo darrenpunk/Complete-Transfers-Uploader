@@ -15,6 +15,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Template grouping with DTF support**: Added "Full Colour / Single Color Transfer Templates" and "DTF Transfer Templates" groups
 ✓ **Smart zoom for large templates**: 1000×550mm DTF template automatically displays at 25% zoom for better overview
 ✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
+✓ **Collapsible template interface**: Template categories now use accordion interface with expand/collapse functionality and template counts
+✓ **Dual-page PDF output**: PDF generation includes second page with artwork displayed on selected garment background color
 
 ## User Preferences
 
