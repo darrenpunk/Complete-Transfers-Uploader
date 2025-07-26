@@ -140,70 +140,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
               try {
                 let svgContent = fs.readFileSync(svgPath, 'utf8');
                 
-                // Remove white backgrounds from various formats
-                svgContent = svgContent.replace(/fill\s*=\s*["']#ffffff["']/gi, 'fill="none"');
-                svgContent = svgContent.replace(/fill\s*=\s*["']white["']/gi, 'fill="none"');
-                svgContent = svgContent.replace(/fill\s*=\s*["']rgb\(255,\s*255,\s*255\)["']/gi, 'fill="none"');
-                svgContent = svgContent.replace(/fill\s*=\s*["']rgb\(100%,\s*100%,\s*100%\)["']/gi, 'fill="none"');
-                
-                // Remove white rectangles that might be backgrounds (common in pdf2svg output)
-                svgContent = svgContent.replace(/<rect[^>]*fill\s*=\s*["'](?:#ffffff|white|rgb\(255,\s*255,\s*255\)|rgb\(100%,\s*100%,\s*100%\))["'][^>]*\/?>(?:<\/rect>)?/gi, '');
-                
-                // Also remove rect elements that are purely white without other attributes
-                svgContent = svgContent.replace(/<rect[^>]*fill\s*=\s*["'](?:#ffffff|white)["'][^>]*>\s*<\/rect>/gi, '');
-                
-                // Remove full-page background rectangles (common in pdf2svg output)
-                svgContent = svgContent.replace(/<rect\s+x="0"\s+y="0"\s+width="[^"]*"\s+height="[^"]*"\s+fill="[^"]*"[^>]*\/?>/, '');
-                svgContent = svgContent.replace(/<rect\s+fill="[^"]*"\s+x="0"\s+y="0"\s+width="[^"]*"\s+height="[^"]*"[^>]*\/?>/, '');
-                
-                // More aggressive white background removal - match any rect that fills entire canvas
-                svgContent = svgContent.replace(/<rect[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*fill="[^"]*"[^>]*\/?>/, '');
-                svgContent = svgContent.replace(/<rect[^>]*height="1190\.55"[^>]*width="841\.89"[^>]*fill="[^"]*"[^>]*\/?>/, '');
-                
-                // Remove any rect elements that are at position 0,0 and cover full dimensions
-                svgContent = svgContent.replace(/<rect[^>]*x="0"[^>]*y="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
-                svgContent = svgContent.replace(/<rect[^>]*y="0"[^>]*x="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
-                
-                // Complete background removal strategy
+                // SELECTIVE white background removal - only remove obvious page backgrounds
                 console.log('Original SVG first 500 chars:', svgContent.substring(0, 500));
                 
-                // 1. Remove any rect elements that could be backgrounds
+                // Only remove full-page background rectangles at origin with full dimensions
+                svgContent = svgContent.replace(/<rect\s+x="0"\s+y="0"\s+width="841\.89"\s+height="1190\.55"\s+fill="[^"]*"[^>]*\/?>/, '');
+                svgContent = svgContent.replace(/<rect\s+x="0"\s+y="0"\s+width="624\.703125"\s+height="[^"]*"\s+fill="[^"]*"[^>]*\/?>/, '');
+                
+                // Remove rect elements ONLY if they are at origin (0,0) AND cover full canvas dimensions
                 svgContent = svgContent.replace(/<rect[^>]*>/g, (match) => {
-                  console.log('Found rect element:', match);
-                  // Keep rects that are clearly not backgrounds (have specific positioning)
-                  if (match.includes('x="0"') && match.includes('y="0"')) {
-                    console.log('Removing background rect:', match);
+                  // Only remove if it's clearly a full-page background (at origin with large dimensions)
+                  const isAtOrigin = match.includes('x="0"') && match.includes('y="0"');
+                  const isFullSize = match.includes('width="841.89"') || match.includes('width="624.703125"') || 
+                                   match.includes('height="1190.55"') || match.includes('height="587.646"');
+                  
+                  if (isAtOrigin && isFullSize) {
+                    console.log('Removing suspected background rect:', match.substring(0, 100) + '...');
                     return '';
                   }
-                  if (match.includes('width="841.89"') || match.includes('height="1190.55"')) {
-                    console.log('Removing full-canvas rect:', match);
-                    return '';
-                  }
+                  // Keep all other rect elements, including white content
                   return match;
                 });
                 
-                // 2. Remove only full-page background paths, preserve white content elements
+                // Only remove paths that are clearly full-page backgrounds (very specific criteria)
                 const pathRegex = /<path[^>]*>/g;
                 let pathMatch;
                 while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
                   const pathElement = pathMatch[0];
-                  // Only remove paths that are clearly full-page backgrounds
-                  // Check for paths that start at origin AND cover full dimensions
-                  const isFullPageBackground = (
-                    pathElement.includes('M 0 0') && 
-                    (pathElement.includes('L 624.703125 0') || pathElement.includes('L 595.2') || pathElement.includes('L 841.8')) &&
-                    (pathElement.includes('fill="white"') || 
-                     pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
-                     pathElement.includes('fill="#ffffff"'))
-                  );
+                  // Only remove paths that start at origin, go to full canvas corners, AND are white
+                  const startsAtOrigin = pathElement.includes('M 0 0');
+                  const goesToFullCorners = (pathElement.includes('L 624.703125 0') && pathElement.includes('L 624.703125 587.646')) ||
+                                          (pathElement.includes('L 841.89 0') && pathElement.includes('L 841.89 1190.55'));
+                  const isWhiteFill = pathElement.includes('fill="white"') || 
+                                    pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
+                                    pathElement.includes('fill="#ffffff"');
                   
-                  if (isFullPageBackground) {
-                    console.log('Removing suspected background path:', pathElement.substring(0, 100) + '...');
+                  if (startsAtOrigin && goesToFullCorners && isWhiteFill) {
+                    console.log('Removing full-page background path:', pathElement.substring(0, 100) + '...');
                     svgContent = svgContent.replace(pathElement, '');
                   }
                 }
                 
-                // 3. Force SVG background transparency only
+                // Force SVG background transparency only
                 svgContent = svgContent.replace('<svg', '<svg style="background:transparent !important"');
                 
                 console.log('Processed SVG first 500 chars:', svgContent.substring(0, 500));

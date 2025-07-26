@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>White Element Preservation Test</title>
+    <style>
+        body { margin: 20px; background: #f0f0f0; font-family: Arial, sans-serif; }
+        .container { display: flex; gap: 20px; margin-bottom: 20px; }
+        .test-canvas { 
+            background: white; 
+            border: 2px solid #333; 
+            padding: 10px;
+            width: 400px;
+            height: 300px;
+        }
+        .dark-canvas { 
+            background: #333; 
+            border: 2px solid #666; 
+            padding: 10px;
+            width: 400px;
+            height: 300px;
+        }
+        svg, img { max-width: 100%; max-height: 100%; }
+        h2 { color: #333; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .fixed { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .issue { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>White Element Preservation Test - After Fix</h1>
+    
+    <div class="status fixed">
+        <strong>✓ CSS Fix Applied:</strong> Removed aggressive white element hiding rules from frontend CSS
+    </div>
+    
+    <div class="status fixed">
+        <strong>✓ Server Fix Applied:</strong> Updated SVG processing to preserve white content elements
+    </div>
+    
+    <h2>Test 1: Reference SVG with Known White Elements</h2>
+    <div class="container">
+        <div>
+            <h3>On White Background</h3>
+            <div class="test-canvas">
+                <img src="/uploads/test-complete-logo-fixed.svg" alt="Test logo with white elements" />
+            </div>
+            <p><small>Should show white text and elements from CompleteTransfers logo</small></p>
+        </div>
+        <div>
+            <h3>On Dark Background</h3>
+            <div class="dark-canvas">
+                <img src="/uploads/test-complete-logo-fixed.svg" alt="Test logo with white elements" />
+            </div>
+            <p><small>White elements should be clearly visible against dark background</small></p>
+        </div>
+    </div>
+    
+    <h2>Test 2: Previously Uploaded File</h2>
+    <div class="container">
+        <div>
+            <h3>On White Background</h3>
+            <div class="test-canvas">
+                <img src="/uploads/14d7c202253176972ba560841103771f.svg" alt="Previously uploaded file" />
+            </div>
+            <p><small>Previous file should now show white/light elements</small></p>
+        </div>
+        <div>
+            <h3>On Dark Background</h3>
+            <div class="dark-canvas">
+                <img src="/uploads/14d7c202253176972ba560841103771f.svg" alt="Previously uploaded file" />
+            </div>
+            <p><small>Light gray elements (93%, 92%, 92%) should be visible</small></p>
+        </div>
+    </div>
+    
+    <h2>Test 3: Manual SVG with White Elements</h2>
+    <div class="container">
+        <div>
+            <h3>On White Background</h3>
+            <div class="test-canvas">
+                <svg width="200" height="100" viewBox="0 0 200 100">
+                    <!-- Test various white formats -->
+                    <rect x="10" y="10" width="30" height="20" fill="rgb(100%, 100%, 100%)" stroke="black" stroke-width="1"/>
+                    <rect x="50" y="10" width="30" height="20" fill="white" stroke="black" stroke-width="1"/>
+                    <rect x="90" y="10" width="30" height="20" fill="#ffffff" stroke="black" stroke-width="1"/>
+                    <rect x="130" y="10" width="30" height="20" fill="rgb(255, 255, 255)" stroke="black" stroke-width="1"/>
+                    
+                    <!-- Test light gray (like in the PDF) -->
+                    <rect x="10" y="40" width="80" height="20" fill="rgb(93.751526%, 92.207336%, 92.939758%)" stroke="black" stroke-width="1"/>
+                    
+                    <text x="10" y="75" font-size="12">All white variants should be visible</text>
+                </svg>
+            </div>
+        </div>
+        <div>
+            <h3>On Dark Background</h3>
+            <div class="dark-canvas">
+                <svg width="200" height="100" viewBox="0 0 200 100">
+                    <!-- Test various white formats -->
+                    <rect x="10" y="10" width="30" height="20" fill="rgb(100%, 100%, 100%)" stroke="white" stroke-width="1"/>
+                    <rect x="50" y="10" width="30" height="20" fill="white" stroke="white" stroke-width="1"/>
+                    <rect x="90" y="10" width="30" height="20" fill="#ffffff" stroke="white" stroke-width="1"/>
+                    <rect x="130" y="10" width="30" height="20" fill="rgb(255, 255, 255)" stroke="white" stroke-width="1"/>
+                    
+                    <!-- Test light gray (like in the PDF) -->
+                    <rect x="10" y="40" width="80" height="20" fill="rgb(93.751526%, 92.207336%, 92.939758%)" stroke="white" stroke-width="1"/>
+                    
+                    <text x="10" y="75" font-size="12" fill="white">All white variants should be visible</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; padding: 15px; background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 5px;">
+        <h3>What to Look For:</h3>
+        <ul>
+            <li><strong>White rectangles:</strong> Should be visible with black/white borders</li>
+            <li><strong>Light gray elements:</strong> Should appear as very light gray, not invisible</li>
+            <li><strong>Text elements:</strong> White text should be readable on dark backgrounds</li>
+            <li><strong>Logo elements:</strong> CompleteTransfers logo should show all white/light elements</li>
+        </ul>
+    </div>
+</body>
+</html>
