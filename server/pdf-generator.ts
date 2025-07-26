@@ -25,9 +25,8 @@ export class PDFGenerator {
     );
     
     if (hasCMYKImages) {
-      console.log('Detected CMYK images - note: PDF will embed CMYK images but final output may be RGB due to pdf-lib limitations');
-      // For now, use standard PDF generation with CMYK images
-      // Future enhancement: implement proper ImageMagick-based CMYK PDF generation
+      console.log('Detected CMYK images, using ImageMagick for PDF generation with preserved colorspace');
+      return await this.generateImageMagickPDF(data);
     }
     
     try {
@@ -312,7 +311,7 @@ export class PDFGenerator {
     }
   }
 
-  private async generateCMYKPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
+  private async generateImageMagickPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     const execAsync = promisify(exec);
     const uploadDir = path.join(process.cwd(), "uploads");
@@ -330,19 +329,26 @@ export class PDFGenerator {
       const canvasWidth = Math.round(templateSize.width * 11.811); // mm to pixels at 300 DPI
       const canvasHeight = Math.round(templateSize.height * 11.811);
       
+      // Create individual logo composites with proper CMYK colorspace
+      const logoElements = canvasElements.filter(el => el.isVisible && logoMap.has(el.logoId));
+      
+      if (logoElements.length === 0) {
+        throw new Error('No visible logos to render');
+      }
+
       // Page 1: White background with artwork
-      const page1Path = path.join(tempDir, 'page1.png');
-      await this.renderCanvasToImage(canvasElements, logoMap, templateSize, page1Path, '#FFFFFF');
+      const page1Path = path.join(tempDir, 'page1.pdf');
+      await this.createCMYKCompositePage(logoElements, logoMap, templateSize, page1Path, '#FFFFFF', execAsync);
       
       // Page 2: Artwork on garment color background
-      const page2Path = path.join(tempDir, 'page2.png');
+      const page2Path = path.join(tempDir, 'page2.pdf');
       const bgColor = garmentColor || '#FFFFFF';
-      await this.renderCanvasToImage(canvasElements, logoMap, templateSize, page2Path, bgColor);
+      await this.createCMYKCompositePage(logoElements, logoMap, templateSize, page2Path, bgColor, execAsync);
       
-      // Convert to CMYK and create PDF using ImageMagick
+      // Combine pages into final PDF
       const outputPdfPath = path.join(tempDir, 'output.pdf');
-      const cmykCommand = `convert "${page1Path}" "${page2Path}" -colorspace CMYK -compress LZW "${outputPdfPath}"`;
-      await execAsync(cmykCommand);
+      const combineCommand = `convert "${page1Path}" "${page2Path}" "${outputPdfPath}"`;
+      await execAsync(combineCommand);
       
       // Read the generated PDF
       const pdfBuffer = fs.readFileSync(outputPdfPath);
@@ -363,7 +369,7 @@ export class PDFGenerator {
     } catch (error) {
       console.error('CMYK PDF generation failed:', error);
       // Fallback to regular PDF generation
-      console.log('Falling back to standard PDF generation');
+      console.log('ImageMagick PDF generation failed, falling back to standard PDF generation');
       return await this.generateStandardPDF(data);
     }
   }
@@ -409,6 +415,58 @@ export class PDFGenerator {
     magickCommand += ` "${outputPath}"`;
     
     await execAsync(magickCommand);
+  }
+
+  private async createCMYKCompositePage(
+    logoElements: CanvasElement[],
+    logoMap: Map<string, Logo>,
+    templateSize: TemplateSize,
+    outputPath: string,
+    backgroundColor: string,
+    execAsync: (command: string) => Promise<any>
+  ): Promise<void> {
+    const uploadDir = path.join(process.cwd(), "uploads");
+    
+    // Convert template size to pixels (300 DPI)
+    const canvasWidth = Math.round(templateSize.width * 11.811);
+    const canvasHeight = Math.round(templateSize.height * 11.811);
+    
+    // Create base canvas with background color in CMYK colorspace
+    let magickCommand = `convert -size ${canvasWidth}x${canvasHeight} -colorspace CMYK xc:"${backgroundColor}"`;
+    
+    // Composite each CMYK logo onto the canvas
+    for (const element of logoElements) {
+      const logo = logoMap.get(element.logoId);
+      if (!logo) continue;
+      
+      const logoPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(logoPath)) continue;
+      
+      // Calculate position and size in pixels
+      const x = Math.round(element.x * 11.811);
+      const y = Math.round(element.y * 11.811);
+      const width = Math.round(element.width * 11.811);
+      const height = Math.round(element.height * 11.811);
+      
+      // Ensure logo is in CMYK colorspace and composite
+      magickCommand += ` \\( "${logoPath}" -colorspace CMYK -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+    }
+    
+    // Convert final composite to PDF with CMYK colorspace preserved
+    const tempImagePath = outputPath.replace('.pdf', '.png');
+    magickCommand += ` "${tempImagePath}"`;
+    await execAsync(magickCommand);
+    
+    // Convert PNG to PDF while preserving CMYK
+    const pdfCommand = `convert "${tempImagePath}" -colorspace CMYK "${outputPath}"`;
+    await execAsync(pdfCommand);
+    
+    // Clean up temporary image
+    try {
+      fs.unlinkSync(tempImagePath);
+    } catch (error) {
+      console.warn('Failed to clean up temp image:', error);
+    }
   }
 
   private async generateStandardPDF(data: PDFGenerationData): Promise<Buffer> {
