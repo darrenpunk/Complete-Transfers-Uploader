@@ -164,43 +164,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 svgContent = svgContent.replace(/<rect[^>]*x="0"[^>]*y="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
                 svgContent = svgContent.replace(/<rect[^>]*y="0"[^>]*x="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
                 
-                // Target the first significant element after SVG tag - often a white background
-                const svgLines = svgContent.split('\n');
-                let foundSvgTag = false;
-                let removedElements = 0;
+                // Complete background removal strategy
+                console.log('Original SVG first 500 chars:', svgContent.substring(0, 500));
                 
-                const filteredLines = svgLines.filter((line, index) => {
-                  if (line.includes('<svg')) {
-                    foundSvgTag = true;
-                    return true;
+                // 1. Remove any rect elements that could be backgrounds
+                svgContent = svgContent.replace(/<rect[^>]*>/g, (match) => {
+                  console.log('Found rect element:', match);
+                  // Keep rects that are clearly not backgrounds (have specific positioning)
+                  if (match.includes('x="0"') && match.includes('y="0"')) {
+                    console.log('Removing background rect:', match);
+                    return '';
                   }
-                  
-                  // Remove first few elements after SVG tag if they look like backgrounds
-                  if (foundSvgTag && removedElements < 3) {
-                    if ((line.includes('<rect') || line.includes('<path')) && 
-                        (line.includes('fill=') || line.includes('stroke='))) {
-                      console.log(`Removing suspected background element ${removedElements + 1}:`, line.trim());
-                      removedElements++;
-                      return false;
-                    }
+                  if (match.includes('width="841.89"') || match.includes('height="1190.55"')) {
+                    console.log('Removing full-canvas rect:', match);
+                    return '';
                   }
-                  
-                  return true;
+                  return match;
                 });
                 
-                svgContent = filteredLines.join('\n');
-                
-                // Additional cleanup for any remaining full-canvas elements
-                svgContent = svgContent.replace(/<(rect|path)[^>]*(?:width="841\.89"|height="1190\.55")[^>]*\/?>/g, '');
-                svgContent = svgContent.replace(/^\s*[\r\n]/gm, '').replace(/\n\s*\n/g, '\n');
-                
-                // Force transparent background and prevent white canvas rendering
-                svgContent = svgContent.replace('</svg>', '<style>svg { background: transparent !important; }</style></svg>');
-                
-                // Ensure the SVG root has no background
-                if (!svgContent.includes('style=') && svgContent.includes('<svg')) {
-                  svgContent = svgContent.replace('<svg', '<svg style="background:transparent"');
+                // 2. Remove any path elements that span the entire canvas or are at origin
+                const pathRegex = /<path[^>]*>/g;
+                let pathMatch;
+                while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
+                  const pathElement = pathMatch[0];
+                  // Look for paths that might be backgrounds - typically have large coordinate ranges
+                  if (pathElement.includes('M 0 0') || 
+                      pathElement.includes('fill="white"') || 
+                      pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
+                      pathElement.includes('fill="#ffffff"')) {
+                    console.log('Removing suspected background path:', pathElement.substring(0, 100) + '...');
+                    svgContent = svgContent.replace(pathElement, '');
+                  }
                 }
+                
+                // 3. Force complete transparency
+                svgContent = svgContent.replace('<svg', '<svg style="background:transparent !important"');
+                svgContent = svgContent.replace('</svg>', `
+                  <defs>
+                    <style>
+                      svg { background: transparent !important; }
+                      rect[fill="white"], rect[fill="#ffffff"], rect[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
+                      path[fill="white"], path[fill="#ffffff"], path[fill="rgb(100%, 100%, 100%)"] { display: none !important; }
+                    </style>
+                  </defs>
+                </svg>`);
+                
+                console.log('Processed SVG first 500 chars:', svgContent.substring(0, 500));
                 
                 fs.writeFileSync(svgPath, svgContent);
                 console.log('Removed white backgrounds from SVG');

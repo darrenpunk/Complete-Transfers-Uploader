@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force transparent backgrounds for SVG elements */
+svg {
+  background: transparent !important;
+}
+
+/* Hide any white background elements in SVGs */
+svg rect[fill="white"], 
+svg rect[fill="#ffffff"], 
+svg rect[fill="rgb(100%, 100%, 100%)"],
+svg path[fill="white"], 
+svg path[fill="#ffffff"], 
+svg path[fill="rgb(100%, 100%, 100%)"] {
+  display: none !important;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

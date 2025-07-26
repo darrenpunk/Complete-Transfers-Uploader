@@ -6,6 +6,9 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ## Recent Changes (July 26, 2025)
 
+✓ **Comprehensive white background removal**: Implemented multi-layer filtering system with detailed console logging to eliminate pdf2svg background artifacts
+✓ **CMYK popup color picker**: Professional modal dialog with full C/M/Y/K sliders, gradients, and numeric inputs for precise print control
+✓ **CSS-based background suppression**: Added global CSS rules to force transparent backgrounds and hide white fill elements
 ✓ **Enhanced PDF color preservation**: Implemented Ghostscript-first conversion approach to maintain original PDF colors and transparency
 ✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)
 ✓ **Streamlined sidebar layout**: Removed duplicate vertical progress, focusing space on tools and current step functionality
