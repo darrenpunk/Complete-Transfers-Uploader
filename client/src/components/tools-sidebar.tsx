@@ -145,9 +145,7 @@ export default function ToolsSidebar({
   // Delete logo mutation
   const deleteLogoMutation = useMutation({
     mutationFn: async (logoId: string) => {
-      const response = await apiRequest(`/api/logos/${logoId}`, {
-        method: 'DELETE',
-      });
+      const response = await apiRequest('DELETE', `/api/logos/${logoId}`);
       
       if (!response.ok) {
         throw new Error('Delete failed');
@@ -306,6 +304,65 @@ export default function ToolsSidebar({
           Select a logo in the properties panel to run pre-flight checks
         </div>
       </div>
+
+      {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
+      {(() => {
+        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
+        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
+        return isFullColourTemplate ? (
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              Garment Color
+              {!project.garmentColor && (
+                <span className="text-red-500 text-sm font-normal">*Required</span>
+              )}
+            </h3>
+            
+            {!project.garmentColor && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700 font-medium">
+                  ⚠️ Please select a garment color to continue
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Click the button below to open the color selection window
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Current Selection Display */}
+              {project.garmentColor && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div 
+                    className="w-8 h-8 rounded-full border-2 border-gray-300"
+                    style={{ backgroundColor: project.garmentColor }}
+                  />
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">Selected Color</div>
+                    <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Garment Color Modal Trigger */}
+              <GarmentColorModal
+                currentColor={project.garmentColor || ""}
+                onColorChange={onGarmentColorChange}
+                autoOpen={!project.garmentColor}
+                trigger={
+                  <Button 
+                    variant={project.garmentColor ? "outline" : "default"} 
+                    className="w-full"
+                  >
+                    <Palette className="w-4 h-4 mr-2" />
+                    {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }

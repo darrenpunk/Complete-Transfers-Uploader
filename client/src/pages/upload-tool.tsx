@@ -124,17 +124,18 @@ export default function UploadTool() {
   }, [project]);
 
   useEffect(() => {
-    if (!id && templateSizes.length > 0 && !currentProject) {
+    if (!id && templateSizes.length > 0 && !currentProject && !showTemplateSelector) {
       // Show template selector modal on launch for new projects
       console.log('Showing template selector modal', { id, templateSizesLength: templateSizes.length, currentProject });
       setShowTemplateSelector(true);
     }
-  }, [id, templateSizes, currentProject]);
+  }, [id, templateSizes, currentProject, showTemplateSelector]);
 
   // Handle template selection from modal
   const handleTemplateSelect = (templateId: string) => {
     const selectedTemplate = templateSizes.find(t => t.id === templateId);
     if (selectedTemplate) {
+      setShowTemplateSelector(false);
       // Only require garment color for Full Colour Transfer Sizes
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
       createProjectMutation.mutate({
