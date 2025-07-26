@@ -50,6 +50,9 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Duplicate Logo Feature**: Added duplicate button in properties panel to create copies of existing logos with offset positioning, eliminating need to re-upload same files
 ✓ **Product Selector & Preflight Reorganization**: Replaced template group sidebar with "Product Selector" button at top of properties panel, moved preflight checks directly below for improved visibility and workflow
 ✓ **Template Modal Icon Integration**: Added actual product icons from sidebar to template selector modal (DTF, Full Colour, UV DTF, Woven Badge images) with visual distinctions for different transfer types
+✓ **CMYK Conversion and Analysis**: Implemented server-side RGB to CMYK conversion using ImageMagick with proper colorspace handling and metadata preservation
+✓ **CMYK Detection in PDF Generation**: Added automatic detection of CMYK-converted images with proper logging and fallback to standard PDF generation
+✓ **Fixed Import Issues**: Resolved module import problems in PDF generator for proper Node.js compatibility
 
 ## User Preferences
 

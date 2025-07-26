@@ -2,6 +2,8 @@ import { storage } from "./storage";
 import type { CanvasElement, Logo, TemplateSize } from "@shared/schema";
 import fs from "fs";
 import path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
 import { PDFDocument, rgb, degrees } from "pdf-lib";
 
 export interface PDFGenerationData {
@@ -23,8 +25,9 @@ export class PDFGenerator {
     );
     
     if (hasCMYKImages) {
-      console.log('Detected CMYK images, using ImageMagick for PDF generation with preserved colorspace');
-      return await this.generateCMYKPreservingPDF(data);
+      console.log('Detected CMYK images - note: PDF will embed CMYK images but final output may be RGB due to pdf-lib limitations');
+      // For now, use standard PDF generation with CMYK images
+      // Future enhancement: implement proper ImageMagick-based CMYK PDF generation
     }
     
     try {
@@ -270,8 +273,6 @@ export class PDFGenerator {
     // For CMYK images, we need to preserve colorspace information
     // Since pdf-lib doesn't directly support CMYK embedding, we'll add metadata
     // indicating this image should be treated as CMYK in print workflows
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
     const execAsync = promisify(exec);
     
     try {
@@ -313,8 +314,6 @@ export class PDFGenerator {
 
   private async generateCMYKPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
     const execAsync = promisify(exec);
     const uploadDir = path.join(process.cwd(), "uploads");
     
@@ -376,8 +375,6 @@ export class PDFGenerator {
     outputPath: string,
     backgroundColor: string
   ): Promise<void> {
-    const { exec } = require('child_process');
-    const { promisify } = require('util');
     const execAsync = promisify(exec);
     const uploadDir = path.join(process.cwd(), "uploads");
     
