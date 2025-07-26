@@ -152,6 +152,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Also remove rect elements that are purely white without other attributes
                 svgContent = svgContent.replace(/<rect[^>]*fill\s*=\s*["'](?:#ffffff|white)["'][^>]*>\s*<\/rect>/gi, '');
                 
+                // Remove full-page background rectangles (common in pdf2svg output)
+                svgContent = svgContent.replace(/<rect\s+x="0"\s+y="0"\s+width="[^"]*"\s+height="[^"]*"\s+fill="[^"]*"[^>]*\/?>/, '');
+                svgContent = svgContent.replace(/<rect\s+fill="[^"]*"\s+x="0"\s+y="0"\s+width="[^"]*"\s+height="[^"]*"[^>]*\/?>/, '');
+                
+                // More aggressive white background removal - match any rect that fills entire canvas
+                svgContent = svgContent.replace(/<rect[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*fill="[^"]*"[^>]*\/?>/, '');
+                svgContent = svgContent.replace(/<rect[^>]*height="1190\.55"[^>]*width="841\.89"[^>]*fill="[^"]*"[^>]*\/?>/, '');
+                
                 // Ensure the SVG root has no background
                 if (!svgContent.includes('style=') && svgContent.includes('<svg')) {
                   svgContent = svgContent.replace('<svg', '<svg style="background:transparent"');

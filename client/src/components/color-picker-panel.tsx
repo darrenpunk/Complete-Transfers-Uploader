@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Palette, RotateCcw } from "lucide-react";
 import type { CanvasElement, Logo } from "@shared/schema";
 
@@ -12,6 +13,49 @@ interface SVGColorInfo {
   elementType: string;
   attribute: string;
   selector: string;
+}
+
+interface CMYKColor {
+  c: number;
+  m: number;
+  y: number;
+  k: number;
+}
+
+// Color conversion utilities
+function parseRGBPercentage(rgbString: string): { r: number; g: number; b: number } | null {
+  const match = rgbString.match(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/);
+  if (!match) return null;
+
+  const r = Math.round((parseFloat(match[1]) / 100) * 255);
+  const g = Math.round((parseFloat(match[2]) / 100) * 255);
+  const b = Math.round((parseFloat(match[3]) / 100) * 255);
+
+  return { r, g, b };
+}
+
+function rgbToCmyk(rgb: { r: number; g: number; b: number }): CMYKColor {
+  const r = rgb.r / 255;
+  const g = rgb.g / 255;
+  const b = rgb.b / 255;
+
+  const k = 1 - Math.max(r, Math.max(g, b));
+  const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+  const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
+  const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+
+  return {
+    c: Math.round(c * 100),
+    m: Math.round(m * 100),
+    y: Math.round(y * 100),
+    k: Math.round(k * 100)
+  };
+}
+
+function getCMYKFromRGBPercentage(rgbString: string): CMYKColor | null {
+  const rgb = parseRGBPercentage(rgbString);
+  if (!rgb) return null;
+  return rgbToCmyk(rgb);
 }
 
 interface ColorPickerPanelProps {
@@ -78,23 +122,31 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {svgColors.map((colorInfo) => (
-          <div key={colorInfo.id} className="flex items-center gap-2">
-            <div className="flex-1">
-              <div className="text-xs text-muted-foreground mb-1">
-                {colorInfo.elementType} ({colorInfo.attribute})
-              </div>
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
-                  style={{ backgroundColor: colorInfo.originalColor }}
-                  title={`Original: ${colorInfo.originalColor}`}
-                />
-                <div className="text-xs font-mono text-muted-foreground">
-                  {colorInfo.originalColor}
+        {svgColors.map((colorInfo) => {
+          const cmykColor = getCMYKFromRGBPercentage(colorInfo.originalColor);
+          
+          return (
+            <div key={colorInfo.id} className="flex items-center gap-2">
+              <div className="flex-1">
+                <div className="text-xs text-muted-foreground mb-1">
+                  {colorInfo.elementType} ({colorInfo.attribute})
                 </div>
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-6 h-6 rounded border border-gray-300 flex-shrink-0"
+                    style={{ backgroundColor: colorInfo.originalColor }}
+                    title={`Original: ${colorInfo.originalColor}`}
+                  />
+                  <div className="text-xs font-mono text-muted-foreground">
+                    {colorInfo.originalColor}
+                  </div>
+                </div>
+                {cmykColor && (
+                  <Badge variant="secondary" className="text-xs mt-1">
+                    C{cmykColor.c} M{cmykColor.m} Y{cmykColor.y} K{cmykColor.k}
+                  </Badge>
+                )}
               </div>
-            </div>
             <div className="flex items-center gap-2">
               <input
                 type="color"
@@ -108,9 +160,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 style={{ backgroundColor: getDisplayColor(colorInfo.originalColor) }}
                 title={`Current: ${getDisplayColor(colorInfo.originalColor)}`}
               />
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         
         <div className="flex gap-2 pt-2 border-t">
           <Button
