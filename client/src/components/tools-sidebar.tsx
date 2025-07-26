@@ -97,6 +97,7 @@ export default function ToolsSidebar({
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
   
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
@@ -104,6 +105,33 @@ export default function ToolsSidebar({
         ? prev.filter(name => name !== groupName)
         : [...prev, groupName]
     );
+  };
+
+  // RGB to CMYK conversion handler
+  const handleRGBtoCMYKConversion = async (logoId: string) => {
+    setConvertingLogo(logoId);
+    try {
+      await apiRequest(`/api/logos/${logoId}/convert-to-cmyk`, {
+        method: "POST",
+      });
+      
+      // Refresh logos and canvas elements to get updated data
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      
+      toast({
+        title: "Success",
+        description: "Image converted to CMYK successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to convert image to CMYK",
+        variant: "destructive",
+      });
+    } finally {
+      setConvertingLogo(null);
+    }
   };
 
   const uploadLogosMutation = useMutation({
@@ -357,7 +385,7 @@ export default function ToolsSidebar({
               const mode = svgColors.mode || 'RGB';
               const uniqueColors = svgColors.uniqueColors || 0;
               colorValue = `${mode} (${uniqueColors} colors)`;
-              colorStatus = mode === 'CMYK' ? "pass" : (mode === 'RGB' ? "pass" : "warning");
+              colorStatus = mode === 'CMYK' ? "pass" : (mode === 'RGB' ? "warning" : "warning");
             } else if (isRasterImage) {
               // Raster images without detailed color info (fallback)
               colorValue = "Raster Image";
@@ -393,23 +421,44 @@ export default function ToolsSidebar({
             value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`
           });
 
+          const logoSvgColors = logo?.svgColors as any;
+          const isRGBImage = logo && logoSvgColors && typeof logoSvgColors === 'object' && 
+                             logoSvgColors.type === 'raster' && logoSvgColors.mode === 'RGB';
+
           return (
             <div className="space-y-3">
               {checks.map((check) => (
-                <div key={check.name} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{check.name}</span>
-                  <div className="flex items-center">
-                    {check.status === "pass" ? (
-                      <div className="w-4 h-4 text-green-500 mr-1">✓</div>
-                    ) : (
-                      <div className="w-4 h-4 text-yellow-500 mr-1">⚠️</div>
-                    )}
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      check.status === "pass" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                    }`}>
-                      {check.value}
-                    </span>
+                <div key={check.name} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700">{check.name}</span>
+                    <div className="flex items-center">
+                      {check.status === "pass" ? (
+                        <div className="w-4 h-4 text-green-500 mr-1">✓</div>
+                      ) : (
+                        <div className="w-4 h-4 text-yellow-500 mr-1">⚠️</div>
+                      )}
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        check.status === "pass" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {check.value}
+                      </span>
+                    </div>
                   </div>
+                  
+                  {/* RGB to CMYK Conversion Option */}
+                  {check.name === "Color Analysis" && isRGBImage && (
+                    <div className="ml-4 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => handleRGBtoCMYKConversion(logo.id)}
+                        disabled={convertingLogo === logo.id}
+                      >
+                        {convertingLogo === logo.id ? "Converting..." : "Convert to CMYK"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

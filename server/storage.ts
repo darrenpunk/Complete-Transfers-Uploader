@@ -29,6 +29,7 @@ export interface IStorage {
   getLogo(id: string): Promise<Logo | undefined>;
   getLogosByProject(projectId: string): Promise<Logo[]>;
   createLogo(logo: InsertLogo): Promise<Logo>;
+  updateLogo(id: string, updates: Partial<Logo>): Promise<Logo | undefined>;
   deleteLogo(id: string): Promise<boolean>;
 
   // Canvas element methods
@@ -180,6 +181,15 @@ export class MemStorage implements IStorage {
     };
     this.logos.set(id, logo);
     return logo;
+  }
+
+  async updateLogo(id: string, updates: Partial<Logo>): Promise<Logo | undefined> {
+    const existing = this.logos.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updates };
+    this.logos.set(id, updated);
+    return updated;
   }
 
   async deleteLogo(id: string): Promise<boolean> {

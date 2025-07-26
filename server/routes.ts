@@ -429,6 +429,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convert RGB image to CMYK
+  app.post("/api/logos/:id/convert-to-cmyk", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      // Check if it's a raster image
+      if (!logo.mimeType?.startsWith('image/') || logo.mimeType.includes('svg')) {
+        return res.status(400).json({ message: "Only raster images can be converted to CMYK" });
+      }
+
+      const originalPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(originalPath)) {
+        return res.status(404).json({ message: "Original image file not found" });
+      }
+
+      // Create CMYK version filename
+      const cmykFilename = `${path.parse(logo.filename).name}_cmyk${path.parse(logo.filename).ext}`;
+      const cmykPath = path.join(uploadDir, cmykFilename);
+
+      // Convert to CMYK using ImageMagick
+      const cmykCommand = `convert "${originalPath}" -colorspace CMYK "${cmykPath}"`;
+      await execAsync(cmykCommand);
+
+      if (!fs.existsSync(cmykPath) || fs.statSync(cmykPath).size === 0) {
+        throw new Error('CMYK conversion failed');
+      }
+
+      // Get new color information
+      const cmykColorInfo = await extractImageColors(cmykPath);
+      
+      // Update logo record with CMYK version
+      const updatedData = {
+        filename: cmykFilename,
+        url: `/uploads/${cmykFilename}`,
+        svgColors: cmykColorInfo,
+      };
+
+      const updatedLogo = await storage.updateLogo(logoId, updatedData);
+      
+      // Clean up original RGB file
+      try {
+        fs.unlinkSync(originalPath);
+      } catch (cleanupError) {
+        console.warn('Failed to clean up original RGB file:', cleanupError);
+      }
+
+      console.log(`Successfully converted ${logo.filename} to CMYK: ${cmykFilename}`);
+      res.json(updatedLogo);
+    } catch (error) {
+      console.error('CMYK conversion error:', error);
+      res.status(500).json({ message: "Failed to convert image to CMYK" });
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
