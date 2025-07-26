@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Palette, RotateCcw } from "lucide-react";
+import CMYKColorPicker from "./cmyk-color-picker";
 import type { CanvasElement, Logo } from "@shared/schema";
 
 interface SVGColorInfo {
@@ -147,18 +148,11 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                   </Badge>
                 )}
               </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={getDisplayColor(colorInfo.originalColor)}
-                onChange={(e) => handleColorChange(colorInfo.originalColor, e.target.value)}
-                className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
-                title="Choose new color"
-              />
-              <div 
-                className="w-6 h-6 rounded border border-gray-300"
-                style={{ backgroundColor: getDisplayColor(colorInfo.originalColor) }}
-                title={`Current: ${getDisplayColor(colorInfo.originalColor)}`}
+            <div className="flex-1">
+              <CMYKColorPicker
+                initialColor={colorInfo.originalColor}
+                onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
+                label={`${colorInfo.elementType} (${colorInfo.attribute})`}
               />
               </div>
             </div>

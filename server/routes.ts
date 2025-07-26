@@ -160,6 +160,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 svgContent = svgContent.replace(/<rect[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*fill="[^"]*"[^>]*\/?>/, '');
                 svgContent = svgContent.replace(/<rect[^>]*height="1190\.55"[^>]*width="841\.89"[^>]*fill="[^"]*"[^>]*\/?>/, '');
                 
+                // Remove any rect elements that are at position 0,0 and cover full dimensions
+                svgContent = svgContent.replace(/<rect[^>]*x="0"[^>]*y="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
+                svgContent = svgContent.replace(/<rect[^>]*y="0"[^>]*x="0"[^>]*width="841\.89"[^>]*height="1190\.55"[^>]*\/?>/, '');
+                
+                // Remove the first element if it's a white rect covering the page
+                const lines = svgContent.split('\n');
+                const filteredLines = lines.filter((line, index) => {
+                  // Skip the first rect element if it's a full-page white background
+                  if (index < 10 && line.includes('<rect') && line.includes('fill=') && 
+                      (line.includes('width="841.89"') || line.includes('height="1190.55"'))) {
+                    console.log('Removing suspected background rect:', line.trim());
+                    return false;
+                  }
+                  return true;
+                });
+                svgContent = filteredLines.join('\n');
+                
                 // Ensure the SVG root has no background
                 if (!svgContent.includes('style=') && svgContent.includes('<svg')) {
                   svgContent = svgContent.replace('<svg', '<svg style="background:transparent"');
