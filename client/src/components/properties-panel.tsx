@@ -41,10 +41,14 @@ export default function PropertiesPanel({
       return response.json();
     },
     onSuccess: (updatedElement) => {
-      // Invalidate and refetch to ensure UI consistency
-      queryClient.invalidateQueries({
-        queryKey: ["/api/projects", selectedElement?.projectId, "canvas-elements"]
-      });
+      // Update cache manually to avoid UI lag
+      queryClient.setQueryData(
+        ["/api/projects", selectedElement?.projectId, "canvas-elements"],
+        (oldData: CanvasElement[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
+        }
+      );
     },
   });
 
