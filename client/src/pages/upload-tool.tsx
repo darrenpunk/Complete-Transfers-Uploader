@@ -210,8 +210,13 @@ export default function UploadTool() {
         </div>
       </header>
 
+      {/* Workflow Progress Bar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <ProgressSteps currentStep={currentStep} layout="horizontal" />
+      </div>
+
       {/* Main Workspace */}
-      <div className="flex h-[calc(100vh-80px)]">
+      <div className="flex h-[calc(100vh-140px)]">
         {/* Left Sidebar */}
         <ToolsSidebar
           currentStep={currentStep}
