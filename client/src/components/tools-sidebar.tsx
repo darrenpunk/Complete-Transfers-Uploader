@@ -8,10 +8,8 @@ import type { Project, Logo, TemplateSize } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
-import CMYKColorModal from "@/components/cmyk-color-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { manufacturerColors } from "@shared/garment-colors";
+import GarmentColorModal from "@/components/garment-color-modal";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
@@ -356,164 +354,54 @@ export default function ToolsSidebar({
         const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
         return isFullColourTemplate ? (
           <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          Garment Color
-          {!project.garmentColor && (
-            <span className="text-red-500 text-sm font-normal">*Required</span>
-          )}
-        </h3>
-        {!project.garmentColor && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 font-medium">
-              ⚠️ Please select a garment color to continue
-            </p>
-            <p className="text-xs text-red-600 mt-1">
-              Choose from the professional colors below or create a custom CMYK color
-            </p>
-          </div>
-        )}
-        {/* Professional Colors */}
-        <div className="grid grid-cols-6 gap-2 mb-4">
-          {quickColors.map((color) => (
-            <TooltipProvider key={color.hex}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                      project.garmentColor === color.hex
-                        ? "border-primary ring-2 ring-blue-200"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => onGarmentColorChange(color.hex)}
-                  />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <div className="text-sm">
-                    <div className="font-semibold text-gray-900">{color.name}</div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      <div>HEX: <span className="font-mono">{color.hex}</span></div>
-                      <div>RGB: <span className="font-mono">{color.rgb}</span></div>
-                      <div>CMYK: <span className="font-mono">{color.cmyk}</span></div>
-                      <div>Type: <span className="font-mono">{color.inkType}</span></div>
-                    </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ))}
-        </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              Garment Color
+              {!project.garmentColor && (
+                <span className="text-red-500 text-sm font-normal">*Required</span>
+              )}
+            </h3>
+            
+            {!project.garmentColor && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700 font-medium">
+                  ⚠️ Please select a garment color to continue
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Click the button below to open the color selection window
+                </p>
+              </div>
+            )}
 
-        {/* Manufacturer Colors */}
-        <div className="space-y-2 mb-4">
-          <h4 className="text-sm font-semibold text-gray-700">Manufacturer Colors</h4>
-          {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
-            <div key={manufacturerName} className="border border-gray-200 rounded-lg">
-              <div className="p-3 bg-gray-50 border-b border-gray-200 flex justify-center">
-                {manufacturerName === "Gildan" && (
-                  <img 
-                    src={gildanLogoPath} 
-                    alt="Gildan" 
-                    className="h-6 w-auto object-contain"
+            <div className="space-y-3">
+              {/* Current Selection Display */}
+              {project.garmentColor && (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div 
+                    className="w-8 h-8 rounded-full border-2 border-gray-300"
+                    style={{ backgroundColor: project.garmentColor }}
                   />
-                )}
-                {manufacturerName === "Fruit of the Loom" && (
-                  <img 
-                    src={fruitOfTheLoomLogoPath} 
-                    alt="Fruit of the Loom" 
-                    className="h-8 w-auto object-contain"
-                  />
-                )}
-              </div>
-              <div className="p-2 space-y-1">
-                {colorGroups.map((group) => (
-                  <Collapsible 
-                    key={group.name}
-                    open={expandedGroups.includes(`${manufacturerName}-${group.name}`)}
-                    onOpenChange={() => toggleGroup(`${manufacturerName}-${group.name}`)}
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">Selected Color</div>
+                    <div className="text-gray-600">{project.garmentColor}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Garment Color Modal Trigger */}
+              <GarmentColorModal
+                currentColor={project.garmentColor}
+                onColorChange={onGarmentColorChange}
+                trigger={
+                  <Button 
+                    variant={project.garmentColor ? "outline" : "default"} 
+                    className="w-full"
                   >
-                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded text-sm">
-                      <span className="font-medium text-gray-700">{group.name}</span>
-                      <span className="text-xs text-gray-500">
-                        {group.colors.length} colors
-                      </span>
-                      {expandedGroups.includes(`${manufacturerName}-${group.name}`) 
-                        ? <ChevronDown className="w-4 h-4" />
-                        : <ChevronRight className="w-4 h-4" />
-                      }
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="px-2 pb-2">
-                      <div className="grid grid-cols-6 gap-1">
-                        {group.colors.map((color) => (
-                          <TooltipProvider key={color.code}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div>
-                                  <CMYKColorModal
-                                    initialColor={color.hex}
-                                    currentColor={project.garmentColor}
-                                    onChange={(newColor) => onGarmentColorChange(newColor)}
-                                    label={`${color.name} (${color.code})`}
-                                    cmykValues={color.cmyk}
-                                    trigger={
-                                      <button
-                                        className={`w-8 h-8 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                                          project.garmentColor === color.hex
-                                            ? "border-primary ring-2 ring-blue-200"
-                                            : "border-gray-300 hover:border-gray-400"
-                                        }`}
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                    }
-                                  />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <div className="text-sm">
-                                  <div className="font-semibold text-gray-900">{color.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">
-                                    <div>Code: <span className="font-mono">{color.code}</span></div>
-                                    <div>HEX: <span className="font-mono">{color.hex}</span></div>
-                                    <div>CMYK: <span className="font-mono">C{color.cmyk.c} M{color.cmyk.m} Y{color.cmyk.y} K{color.cmyk.k}</span></div>
-                                    {color.pantone && (
-                                      <div>Pantone: <span className="font-mono">{color.pantone}</span></div>
-                                    )}
-                                    {color.pantoneTextile && (
-                                      <div>Textile: <span className="font-mono">{color.pantoneTextile}</span></div>
-                                    )}
-                                  </div>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
+                    <Palette className="w-4 h-4 mr-2" />
+                    {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                  </Button>
+                }
+              />
             </div>
-          ))}
-        </div>
-        <div className="text-sm text-gray-600 mb-2">
-          Selected: <span className={`font-medium ${!project.garmentColor ? 'text-red-500' : ''}`}>
-            {project.garmentColor || 'None selected'}
-          </span>
-        </div>
-        
-        {/* Custom Color CMYK Picker */}
-        <CMYKColorModal
-          initialColor="#FFFFFF"
-          currentColor={project.garmentColor}
-          onChange={(newColor) => onGarmentColorChange(newColor)}
-          label="Custom Garment Color"
-          trigger={
-            <button className="text-sm text-primary hover:text-blue-700 flex items-center gap-1">
-              <Palette className="w-3 h-3" />
-              + Custom Color
-            </button>
-          }
-        />
           </div>
         ) : null;
       })()}
