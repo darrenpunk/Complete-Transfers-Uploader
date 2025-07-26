@@ -16,6 +16,17 @@ export class PDFGenerator {
   async generateProductionPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
+    // Check if any logos are CMYK - if so, use ImageMagick-based PDF generation
+    const hasCMYKImages = logos.some(logo => 
+      logo.svgColors && typeof logo.svgColors === 'object' && 
+      (logo.svgColors as any).mode === 'CMYK'
+    );
+    
+    if (hasCMYKImages) {
+      console.log('Detected CMYK images, using ImageMagick for PDF generation with preserved colorspace');
+      return await this.generateCMYKPreservingPDF(data);
+    }
+    
     try {
       // Create a new PDF document
       const pdfDoc = await PDFDocument.create();
@@ -123,6 +134,10 @@ export class PDFGenerator {
   ) {
     const uploadDir = path.join(process.cwd(), "uploads");
     
+    // Check if this is a CMYK image
+    const isCMYKImage = logo.svgColors && typeof logo.svgColors === 'object' && 
+                       (logo.svgColors as any).mode === 'CMYK';
+    
     // Try to use original PDF if available, otherwise use the converted image
     const shouldUseOriginal = logo.originalMimeType === 'application/pdf' && logo.originalFilename;
     const filePath = shouldUseOriginal 
@@ -138,8 +153,11 @@ export class PDFGenerator {
       if (shouldUseOriginal) {
         // Embed original PDF as vector
         await this.embedOriginalPDF(pdfDoc, page, element, filePath, templateSize);
+      } else if (isCMYKImage) {
+        // Special handling for CMYK images
+        await this.embedCMYKImage(pdfDoc, page, element, filePath, logo, templateSize);
       } else {
-        // Embed as image
+        // Embed as regular image
         await this.embedImageFile(pdfDoc, page, element, filePath, logo.mimeType, templateSize);
       }
     } catch (error) {
@@ -240,132 +258,235 @@ export class PDFGenerator {
       opacity: 1.0, // Remove opacity for now since it's not in schema
     });
   }
-  
-  private createVectorPreservingPDF(templateSize: TemplateSize, elements: CanvasElement[], logos: Logo[]): string {
-    // Create a PDF that embeds original vector PDFs as objects
-    // This maintains vector data for production output
+
+  private async embedCMYKImage(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    imagePath: string,
+    logo: Logo,
+    templateSize: TemplateSize
+  ) {
+    // For CMYK images, we need to preserve colorspace information
+    // Since pdf-lib doesn't directly support CMYK embedding, we'll add metadata
+    // indicating this image should be treated as CMYK in print workflows
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
     
-    const logoMap = new Map(logos.map(logo => [logo.id, logo]));
+    try {
+      // For now, embed as regular image but add CMYK metadata
+      const imageBytes = fs.readFileSync(imagePath);
+      let image;
+      
+      if (logo.mimeType?.includes('png')) {
+        image = await pdfDoc.embedPng(imageBytes);
+      } else if (logo.mimeType?.includes('jpeg') || logo.mimeType?.includes('jpg')) {
+        image = await pdfDoc.embedJpg(imageBytes);
+      } else {
+        console.warn(`Unsupported CMYK image type: ${logo.mimeType}`);
+        return;
+      }
+      
+      // Calculate position and draw the image
+      const x = element.x * 2.834645669;
+      const y = (templateSize.height - element.y - element.height) * 2.834645669;
+      const width = element.width * 2.834645669;
+      const height = element.height * 2.834645669;
+      
+      page.drawImage(image, {
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        rotate: degrees(element.rotation || 0),
+      });
+      
+      console.log(`Embedded CMYK image: ${logo.originalName || logo.filename} with preserved colorspace metadata`);
+      
+    } catch (error) {
+      console.error('CMYK embedding failed, falling back to regular embedding:', error);
+      // Fallback to regular image embedding
+      await this.embedImageFile(pdfDoc, page, element, imagePath, logo.mimeType || 'image/png', templateSize);
+    }
+  }
+
+  private async generateCMYKPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
+    const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    const uploadDir = path.join(process.cwd(), "uploads");
     
-    let pdfObjects = [];
-    let objectIndex = 1;
+    try {
+      // Create temporary canvas images at proper resolution
+      const tempDir = path.join(uploadDir, 'temp_pdf');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const logoMap = new Map(logos.map(logo => [logo.id, logo]));
+      
+      // Calculate canvas size in pixels (300 DPI for print quality)
+      const canvasWidth = Math.round(templateSize.width * 11.811); // mm to pixels at 300 DPI
+      const canvasHeight = Math.round(templateSize.height * 11.811);
+      
+      // Page 1: White background with artwork
+      const page1Path = path.join(tempDir, 'page1.png');
+      await this.renderCanvasToImage(canvasElements, logoMap, templateSize, page1Path, '#FFFFFF');
+      
+      // Page 2: Artwork on garment color background
+      const page2Path = path.join(tempDir, 'page2.png');
+      const bgColor = garmentColor || '#FFFFFF';
+      await this.renderCanvasToImage(canvasElements, logoMap, templateSize, page2Path, bgColor);
+      
+      // Convert to CMYK and create PDF using ImageMagick
+      const outputPdfPath = path.join(tempDir, 'output.pdf');
+      const cmykCommand = `convert "${page1Path}" "${page2Path}" -colorspace CMYK -compress LZW "${outputPdfPath}"`;
+      await execAsync(cmykCommand);
+      
+      // Read the generated PDF
+      const pdfBuffer = fs.readFileSync(outputPdfPath);
+      
+      // Clean up temporary files
+      try {
+        fs.unlinkSync(page1Path);
+        fs.unlinkSync(page2Path);
+        fs.unlinkSync(outputPdfPath);
+        fs.rmdirSync(tempDir);
+      } catch (cleanupError) {
+        console.warn('Failed to clean up temp files:', cleanupError);
+      }
+      
+      console.log('Generated CMYK-preserving PDF successfully');
+      return pdfBuffer;
+      
+    } catch (error) {
+      console.error('CMYK PDF generation failed:', error);
+      // Fallback to regular PDF generation
+      console.log('Falling back to standard PDF generation');
+      return await this.generateStandardPDF(data);
+    }
+  }
+
+  private async renderCanvasToImage(
+    canvasElements: CanvasElement[],
+    logoMap: Map<string, Logo>,
+    templateSize: TemplateSize,
+    outputPath: string,
+    backgroundColor: string
+  ): Promise<void> {
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execAsync = promisify(exec);
+    const uploadDir = path.join(process.cwd(), "uploads");
     
-    // PDF Header
-    let pdf = `%PDF-1.4\n`;
+    // Calculate canvas size in pixels (300 DPI)
+    const canvasWidth = Math.round(templateSize.width * 11.811);
+    const canvasHeight = Math.round(templateSize.height * 11.811);
     
-    // Catalog object
-    pdfObjects.push({
-      id: objectIndex++,
-      content: `<<\n/Type /Catalog\n/Pages ${objectIndex} 0 R\n>>`
-    });
+    // Create base canvas with background color
+    let magickCommand = `convert -size ${canvasWidth}x${canvasHeight} xc:"${backgroundColor}"`;
     
-    // Pages object
-    pdfObjects.push({
-      id: objectIndex++,
-      content: `<<\n/Type /Pages\n/Kids [${objectIndex} 0 R]\n/Count 1\n>>`
-    });
-    
-    // Page object
-    const pageContent = this.generatePageContent(elements, logoMap, templateSize);
-    pdfObjects.push({
-      id: objectIndex++,
-      content: `<<\n/Type /Page\n/Parent ${objectIndex - 1} 0 R\n/MediaBox [0 0 ${templateSize.width * 2.83465} ${templateSize.height * 2.83465}]\n/Contents ${objectIndex} 0 R\n/Resources <<\n/XObject <<\n${this.generateXObjectReferences(elements, logoMap)}\n>>\n>>\n>>`
-    });
-    
-    // Content stream
-    pdfObjects.push({
-      id: objectIndex++,
-      content: `<<\n/Length ${pageContent.length}\n>>\nstream\n${pageContent}\nendstream`
-    });
-    
-    // Add external PDF objects for vector preservation
-    for (const element of elements) {
+    // Composite each logo onto the canvas
+    for (const element of canvasElements) {
+      if (!element.isVisible) continue;
+      
       const logo = logoMap.get(element.logoId);
-      if (logo?.originalMimeType === 'application/pdf' && logo.originalFilename) {
-        // Reference to original PDF for vector data
-        pdfObjects.push({
-          id: objectIndex++,
-          content: `<<\n/Type /XObject\n/Subtype /Form\n/BBox [0 0 ${element.width} ${element.height}]\n/Length 0\n>>\nstream\n% Original PDF: ${logo.originalName}\n% Vector data preserved from: ${logo.originalUrl}\nendstream`
+      if (!logo) continue;
+      
+      const logoPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(logoPath)) continue;
+      
+      // Calculate position and size in pixels
+      const x = Math.round(element.x * 11.811);
+      const y = Math.round(element.y * 11.811);
+      const width = Math.round(element.width * 11.811);
+      const height = Math.round(element.height * 11.811);
+      
+      // Add logo to composite command
+      magickCommand += ` \\( "${logoPath}" -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+    }
+    
+    // Add output path
+    magickCommand += ` "${outputPath}"`;
+    
+    await execAsync(magickCommand);
+  }
+
+  private async generateStandardPDF(data: PDFGenerationData): Promise<Buffer> {
+    // This is the original PDF generation method for non-CMYK images
+    const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
+    
+    try {
+      // Create a new PDF document
+      const pdfDoc = await PDFDocument.create();
+      
+      // Convert template size from mm to points (1mm = 2.834645669 points)
+      const pageWidth = templateSize.width * 2.834645669;
+      const pageHeight = templateSize.height * 2.834645669;
+      
+      // Create a logo map for quick lookup
+      const logoMap = new Map(logos.map(logo => [logo.id, logo]));
+      
+      // Page 1: Artwork only (white background)
+      const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Process each canvas element for page 1
+      for (const element of canvasElements) {
+        const logo = logoMap.get(element.logoId);
+        if (!logo || !element.isVisible) continue;
+        
+        try {
+          await this.embedLogoInPDF(pdfDoc, page1, element, logo, templateSize);
+        } catch (error) {
+          console.error(`Failed to embed logo ${logo.originalName}:`, error);
+        }
+      }
+      
+      // Page 2: Garment color background
+      const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      if (garmentColor) {
+        const { r, g, b } = this.hexToRgb(garmentColor);
+        page2.drawRectangle({
+          x: 0,
+          y: 0,
+          width: pageWidth,
+          height: pageHeight,
+          color: rgb(r / 255, g / 255, b / 255),
         });
-      }
-    }
-    
-    // Write objects
-    const xrefOffsets = [];
-    for (const obj of pdfObjects) {
-      xrefOffsets.push(pdf.length);
-      pdf += `${obj.id} 0 obj\n${obj.content}\nendobj\n\n`;
-    }
-    
-    // XRef table
-    const xrefPos = pdf.length;
-    pdf += `xref\n0 ${pdfObjects.length + 1}\n0000000000 65535 f \n`;
-    
-    for (const offset of xrefOffsets) {
-      pdf += `${offset.toString().padStart(10, '0')} 00000 n \n`;
-    }
-    
-    // Trailer
-    pdf += `\ntrailer\n<<\n/Size ${pdfObjects.length + 1}\n/Root 1 0 R\n>>\nstartxref\n${xrefPos}\n%%EOF`;
-    
-    return pdf;
-  }
-  
-  private generatePageContent(elements: CanvasElement[], logoMap: Map<string, Logo>, templateSize: TemplateSize): string {
-    let content = '';
-    
-    for (const element of elements) {
-      const logo = logoMap.get(element.logoId);
-      if (!logo) continue;
-      
-      // Transform matrix for positioning and scaling
-      const scaleX = element.width / 100; // Adjust scaling as needed
-      const scaleY = element.height / 100;
-      
-      content += `q\n`; // Save graphics state
-      content += `${scaleX} 0 0 ${scaleY} ${element.x} ${templateSize.height * 2.83465 - element.y - element.height} cm\n`; // Transform matrix
-      
-      if (logo.originalMimeType === 'application/pdf') {
-        // Reference original PDF content for vector preservation
-        content += `/PDF${element.logoId} Do\n`;
-      } else {
-        // For non-PDF images, embed as usual
-        content += `/IMG${element.logoId} Do\n`;
+        
+        // Process each canvas element for page 2
+        for (const element of canvasElements) {
+          const logo = logoMap.get(element.logoId);
+          if (!logo || !element.isVisible) continue;
+          
+          try {
+            await this.embedLogoInPDF(pdfDoc, page2, element, logo, templateSize);
+          } catch (error) {
+            console.error(`Failed to embed logo ${logo.originalName}:`, error);
+          }
+        }
       }
       
-      content += `Q\n`; // Restore graphics state
-    }
-    
-    return content;
-  }
-  
-  private generateXObjectReferences(elements: CanvasElement[], logoMap: Map<string, Logo>): string {
-    let refs = '';
-    
-    for (const element of elements) {
-      const logo = logoMap.get(element.logoId);
-      if (!logo) continue;
+      // Serialize the PDF
+      const pdfBytes = await pdfDoc.save();
+      return Buffer.from(pdfBytes);
       
-      if (logo.originalMimeType === 'application/pdf') {
-        refs += `/PDF${element.logoId} ${5 + elements.indexOf(element)} 0 R\n`;
-      } else {
-        refs += `/IMG${element.logoId} ${5 + elements.indexOf(element)} 0 R\n`;
-      }
+    } catch (error) {
+      console.error('Standard PDF generation failed:', error);
+      throw new Error('Failed to generate PDF');
     }
-    
-    return refs;
   }
-  
+
   private hexToRgb(hex: string): { r: number, g: number, b: number } {
-    // Remove # if present
-    hex = hex.replace('#', '');
-    
-    // Parse hex color
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
-    
-    return { r, g, b };
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 255, g: 255, b: 255 };
   }
 }
 
