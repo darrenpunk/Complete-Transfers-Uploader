@@ -215,33 +215,53 @@ export default function ToolsSidebar({
 
       {/* Template Size Selection */}
       <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Template Size</h3>
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {templateSizes.slice(0, 4).map((template) => (
-            <Button
-              key={template.id}
-              variant={project.templateSize === template.id ? "default" : "outline"}
-              className="h-auto p-3 flex flex-col"
-              onClick={() => onTemplateChange(template.id)}
-            >
-              <span className="font-medium">{template.name}</span>
-              <span className="text-xs opacity-70">{template.width}×{template.height}mm</span>
-            </Button>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-2">
-          {templateSizes.slice(4).map((template) => (
-            <Button
-              key={template.id}
-              variant={project.templateSize === template.id ? "default" : "outline"}
-              className="h-auto p-3 justify-between"
-              onClick={() => onTemplateChange(template.id)}
-            >
-              <span className="font-medium">{template.label}</span>
-              <span className="text-xs opacity-70">({template.width}×{template.height}mm)</span>
-            </Button>
-          ))}
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Template Size</h3>
+        
+        {/* Group templates by category */}
+        {Object.entries(
+          templateSizes.reduce((groups, template) => {
+            const group = template.group || 'Other';
+            if (!groups[group]) groups[group] = [];
+            groups[group].push(template);
+            return groups;
+          }, {} as Record<string, typeof templateSizes>)
+        ).map(([groupName, templates]) => (
+          <div key={groupName} className="mb-6 last:mb-0">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">{groupName}</h4>
+            
+            {/* Show first 4 templates in 2x2 grid if they're standard sizes */}
+            {groupName === "Full Colour / Single Color Transfer Templates" && templates.length >= 4 && (
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {templates.slice(0, 4).map((template) => (
+                  <Button
+                    key={template.id}
+                    variant={project.templateSize === template.id ? "default" : "outline"}
+                    className="h-auto p-3 flex flex-col"
+                    onClick={() => onTemplateChange(template.id)}
+                  >
+                    <span className="font-medium">{template.name}</span>
+                    <span className="text-xs opacity-70">{template.width}×{template.height}mm</span>
+                  </Button>
+                ))}
+              </div>
+            )}
+            
+            {/* Show remaining templates in single column */}
+            <div className="grid grid-cols-1 gap-2">
+              {(groupName === "Full Colour / Single Color Transfer Templates" ? templates.slice(4) : templates).map((template) => (
+                <Button
+                  key={template.id}
+                  variant={project.templateSize === template.id ? "default" : "outline"}
+                  className="h-auto p-3 justify-between"
+                  onClick={() => onTemplateChange(template.id)}
+                >
+                  <span className="font-medium">{template.label}</span>
+                  <span className="text-xs opacity-70">({template.width}×{template.height}mm)</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Garment Color Selection */}
