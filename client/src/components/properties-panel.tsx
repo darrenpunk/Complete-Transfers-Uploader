@@ -43,14 +43,10 @@ export default function PropertiesPanel({
       return response.json();
     },
     onSuccess: (updatedElement) => {
-      // Update cache manually to avoid UI lag
-      queryClient.setQueryData(
-        ["/api/projects", selectedElement?.projectId, "canvas-elements"],
-        (oldData: CanvasElement[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
-        }
-      );
+      // Force invalidation to ensure UI updates
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", selectedElement?.projectId, "canvas-elements"]
+      });
     },
   });
 
@@ -67,6 +63,20 @@ export default function PropertiesPanel({
         console.log('Invalid number input, ignoring');
         return;
       }
+    }
+
+    // Add constraints to prevent unreasonable values
+    if (property === 'width' && (processedValue < 1 || processedValue > 297)) {
+      console.log('Width out of range, clamping');
+      processedValue = Math.max(1, Math.min(297, processedValue));
+    }
+    if (property === 'height' && (processedValue < 1 || processedValue > 420)) {
+      console.log('Height out of range, clamping');
+      processedValue = Math.max(1, Math.min(420, processedValue));
+    }
+    if (property === 'rotation') {
+      processedValue = processedValue % 360;
+      if (processedValue < 0) processedValue += 360;
     }
 
     let updates: Partial<CanvasElement> = { [property]: processedValue };

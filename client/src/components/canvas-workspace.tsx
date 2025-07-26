@@ -42,14 +42,10 @@ export default function CanvasWorkspace({
       return response.json();
     },
     onSuccess: (updatedElement) => {
-      // Update cache manually to avoid UI lag
-      queryClient.setQueryData(
-        ["/api/projects", project.id, "canvas-elements"],
-        (oldData: CanvasElement[] | undefined) => {
-          if (!oldData) return oldData;
-          return oldData.map(el => el.id === updatedElement.id ? updatedElement : el);
-        }
-      );
+      // Force invalidation to ensure UI updates
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
     },
   });
 
