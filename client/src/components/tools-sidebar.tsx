@@ -6,7 +6,8 @@ import type { Project, Logo, TemplateSize } from "@shared/schema";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus } from "lucide-react";
+import { Image, Plus, Palette } from "lucide-react";
+import CMYKColorModal from "@/components/cmyk-color-modal";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -273,7 +274,20 @@ export default function ToolsSidebar({
         <div className="text-sm text-gray-600 mb-2">
           Selected: <span className="font-medium">{project.garmentColor}</span>
         </div>
-        <button className="text-sm text-primary hover:text-blue-700">+ Custom Color</button>
+        
+        {/* Custom Color CMYK Picker */}
+        <CMYKColorModal
+          initialColor="#FFFFFF"
+          currentColor={project.garmentColor}
+          onChange={(newColor) => onGarmentColorChange(newColor)}
+          label="Custom Garment Color"
+          trigger={
+            <button className="text-sm text-primary hover:text-blue-700 flex items-center gap-1">
+              <Palette className="w-3 h-3" />
+              + Custom Color
+            </button>
+          }
+        />
       </div>
     </div>
   );
