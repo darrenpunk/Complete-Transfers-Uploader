@@ -41,7 +41,7 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
 
 /* Progress indicator styling */
 .progress-step {
-  color: hsl(240, 5%, 64.9%);
+  color: hsl(240, 5%, 75%);
 }
 
 .progress-step.active {
@@ -52,12 +52,38 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   color: hsl(322, 64%, 45%);
 }
 
+/* Force dark mode styling for specific elements */
+.bg-gray-50 {
+  @apply bg-background !important;
+}
+
+.bg-white {
+  @apply bg-card !important;
+}
+
+.border-gray-200 {
+  @apply border-border !important;
+}
+
+.text-gray-600, .text-gray-500, .text-gray-400 {
+  @apply text-muted-foreground !important;
+}
+
+.text-gray-700, .text-gray-800, .text-gray-900 {
+  @apply text-foreground !important;
+}
+
+/* Override any remaining light mode elements */
+* {
+  color-scheme: dark;
+}
+
 :root {
   /* Dark mode as default */
   --background: hsl(240, 10%, 3.9%);
   --foreground: hsl(0, 0%, 98%);
   --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
+  --muted-foreground: hsl(240, 5%, 75%);
   --popover: hsl(240, 10%, 3.9%);
   --popover-foreground: hsl(0, 0%, 98%);
   --card: hsl(240, 5%, 8%);
@@ -107,6 +133,11 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+  }
+  
+  /* Ensure all major containers inherit dark theme */
+  .app-container, .main-content, .sidebar, .content-area {
+    @apply bg-background text-foreground;
   }
 }
 

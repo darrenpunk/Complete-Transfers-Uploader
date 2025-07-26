@@ -209,10 +209,10 @@ export default function UploadTool() {
 
   if (!currentProject) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600">Setting up your workspace...</p>
+          <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
         </div>
       </div>
     );
@@ -221,19 +221,19 @@ export default function UploadTool() {
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="text-2xl font-bold text-primary">CompleteTransfers</div>
-            <div className="text-gray-400">|</div>
-            <div className="text-lg font-medium text-gray-700">Web-to-Print Upload Tool</div>
+            <div className="text-muted-foreground">|</div>
+            <div className="text-lg font-medium text-foreground">Web-to-Print Upload Tool</div>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>Step {currentStep} of 5:</span>
-              <span className="font-medium">
+              <span className="font-medium text-foreground">
                 {currentStep === 1 && "Upload Logos"}
                 {currentStep === 2 && "Design Layout"}
                 {currentStep === 3 && "Pre-flight Check"}
@@ -250,7 +250,7 @@ export default function UploadTool() {
       </header>
 
       {/* Workflow Progress Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
+      <div className="bg-card border-b border-border px-6 py-3">
         <ProgressSteps currentStep={currentStep} layout="horizontal" />
       </div>
 
@@ -286,14 +286,14 @@ export default function UploadTool() {
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="bg-white border-t border-gray-200 px-6 py-4">
+      <div className="bg-background border-t border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               {currentStep === 2 ? "Back to Upload" : "Back"}
             </Button>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               Auto-saved <span className="font-medium">2 minutes ago</span>
             </div>
           </div>
