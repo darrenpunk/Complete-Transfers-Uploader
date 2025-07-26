@@ -68,9 +68,9 @@ export class MemStorage implements IStorage {
       { name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour / Single Color Transfer Templates" },
       { name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour / Single Color Transfer Templates" },
       
-      // DTF Transfer Templates
-      { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Templates" },
-      { name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF Transfer Templates" },
+      // DTF Transfer Sizes
+      { name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF Transfer Sizes" },
+      { name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF Transfer Sizes" },
     ];
 
     standardSizes.forEach(size => {

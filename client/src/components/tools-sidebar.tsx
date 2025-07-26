@@ -15,6 +15,7 @@ import { manufacturerColors } from "@shared/garment-colors";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
+import dtfIconPath from "@assets/DTF_1753540006979.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -276,14 +277,25 @@ export default function ToolsSidebar({
               onOpenChange={() => toggleGroup(`template-${groupName}`)}
             >
               <CollapsibleTrigger className="flex items-center justify-between w-full p-3 text-left hover:bg-gray-50 rounded-lg border border-gray-200">
-                <span className="font-medium text-gray-800">{groupName}</span>
-                <span className="text-xs text-gray-500 mr-2">
-                  {templates.length} templates
-                </span>
-                {expandedGroups.includes(`template-${groupName}`) 
-                  ? <ChevronDown className="w-4 h-4" />
-                  : <ChevronRight className="w-4 h-4" />
-                }
+                <div className="flex items-center gap-2">
+                  {groupName === "DTF Transfer Sizes" && (
+                    <img 
+                      src={dtfIconPath} 
+                      alt="DTF Transfer" 
+                      className="h-5 w-5 object-contain"
+                    />
+                  )}
+                  <span className="font-medium text-gray-800">{groupName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {templates.length} templates
+                  </span>
+                  {expandedGroups.includes(`template-${groupName}`) 
+                    ? <ChevronDown className="w-4 h-4" />
+                    : <ChevronRight className="w-4 h-4" />
+                  }
+                </div>
               </CollapsibleTrigger>
               <CollapsibleContent className="px-2 py-2">
                 {/* Show first 4 templates in 2x2 grid if they're standard sizes */}
