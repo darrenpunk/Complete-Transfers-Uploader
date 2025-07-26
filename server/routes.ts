@@ -112,37 +112,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert it to SVG to preserve vector graphics and transparency
+        // If it's a PDF, convert it preserving colors and transparency
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try SVG conversion using ImageMagick convert command
-            const svgFilename = `${file.filename}.svg`;
-            const svgPath = path.join(uploadDir, svgFilename);
+            // Try PNG conversion with transparent background to preserve colors
+            const pngFilename = `${file.filename}.png`;
+            const pngPath = path.join(uploadDir, pngFilename);
             
-            // ImageMagick convert PDF to SVG with transparent background
-            const convertCommand = `convert -density 300 -background transparent "${file.path}[0]" "${svgPath}"`;
+            // ImageMagick convert PDF to PNG with transparent background and color preservation
+            const convertCommand = `convert -density 300 -background transparent -colorspace RGB "${file.path}[0]" "${pngPath}"`;
             
             await execAsync(convertCommand);
             
-            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-              finalFilename = svgFilename;
-              finalMimeType = 'image/svg+xml';
+            if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+              finalFilename = pngFilename;
+              finalMimeType = 'image/png';
               finalUrl = `/uploads/${finalFilename}`;
               
-              console.log(`PDF converted to SVG using ImageMagick: ${finalFilename}`);
+              console.log(`PDF converted to PNG with transparency and colors: ${finalFilename}`);
             } else {
-              throw new Error('ImageMagick SVG conversion failed');
+              throw new Error('ImageMagick PNG conversion failed');
             }
           } catch (convertError) {
-            console.error('PDF to SVG conversion failed, trying PNG fallback:', convertError);
+            console.error('PDF conversion failed, trying without transparent background:', convertError);
             
-            // Fallback to PNG with transparent background
+            // Final fallback: PNG without transparent background to ensure colors are preserved
             try {
               const pngFilename = `${file.filename}.png`;
               const pngPath = path.join(uploadDir, pngFilename);
               
-              // PNG with transparent background
-              const pngCommand = `convert -density 300 -background transparent "${file.path}[0]" "${pngPath}"`;
+              // PNG conversion focusing on color preservation
+              const pngCommand = `convert -density 300 -colorspace RGB "${file.path}[0]" "${pngPath}"`;
               await execAsync(pngCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -150,9 +150,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 finalMimeType = 'image/png';
                 finalUrl = `/uploads/${finalFilename}`;
                 
-                console.log(`PDF converted to PNG with transparency: ${finalFilename}`);
+                console.log(`PDF converted to PNG with color preservation: ${finalFilename}`);
               } else {
-                throw new Error('PNG conversion also failed');
+                throw new Error('All conversion methods failed');
               }
             } catch (pngError) {
               console.error('All PDF conversion methods failed:', pngError);
@@ -164,27 +164,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let actualWidth = null;
         let actualHeight = null;
         try {
-          if (finalMimeType === 'image/svg+xml') {
-            // For SVG files, try to extract viewBox or width/height attributes
-            try {
-              const svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
-              const viewBoxMatch = svgContent.match(/viewBox="[^"]*(\d+\.?\d*)\s+(\d+\.?\d*)"/) || 
-                                   svgContent.match(/viewBox='[^']*(\d+\.?\d*)\s+(\d+\.?\d*)'/) ||
-                                   svgContent.match(/width="(\d+\.?\d*)".*height="(\d+\.?\d*)"/);
-              
-              if (viewBoxMatch && viewBoxMatch.length >= 3) {
-                actualWidth = Math.round(parseFloat(viewBoxMatch[1]));
-                actualHeight = Math.round(parseFloat(viewBoxMatch[2]));
-              }
-            } catch (svgParseError) {
-              console.log('Could not parse SVG dimensions, using ImageMagick identify');
-            }
-          }
-          
-          // Fallback to ImageMagick identify for all formats
-          if (!actualWidth || !actualHeight) {
-            const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
-            const [w, h] = stdout.trim().split(' ').map(Number);
+          // Use ImageMagick identify for all formats to get accurate dimensions
+          const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
+          const [w, h] = stdout.trim().split(' ').map(Number);
+          if (w && h) {
             actualWidth = w;
             actualHeight = h;
           }
@@ -198,8 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           originalName: file.originalname,
           mimeType: finalMimeType,
           size: file.size,
-          width: actualWidth,
-          height: actualHeight,
+          width: actualWidth || 0,
+          height: actualHeight || 0,
           url: finalUrl,
           // Store original PDF data for vector output if it was converted
           originalFilename: file.mimetype === 'application/pdf' ? file.filename : null,
@@ -218,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayHeight = actualHeight ? Math.round(actualHeight * scaleFactor) : 150;
         
         // For A3 PDFs, ensure we match A3 dimensions (297x420mm)
-        if (file.mimetype === 'application/pdf') {
+        if (file.mimetype === 'application/pdf' && actualWidth && actualHeight) {
           // Check if this looks like an A3 ratio
           const aspectRatio = actualWidth / actualHeight;
           const a3LandscapeRatio = 420 / 297; // ~1.414 A3 landscape ratio (wider than tall)
