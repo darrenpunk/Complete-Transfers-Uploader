@@ -188,22 +188,14 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div>
-                                      <CMYKColorModal
-                                        initialColor={color.hex}
-                                        currentColor={currentColor || ""}
-                                        onChange={(newColor) => handleColorSelect(newColor)}
-                                        label={`${color.name} (${color.code})`}
-                                        cmykValues={color.cmyk}
-                                        trigger={
-                                          <button
-                                            className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                                              currentColor === color.hex
-                                                ? "border-primary ring-2 ring-blue-200"
-                                                : "border-gray-300 hover:border-gray-400"
-                                            }`}
-                                            style={{ backgroundColor: color.hex }}
-                                          />
-                                        }
+                                      <button
+                                        className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
+                                          currentColor === color.hex
+                                            ? "border-primary ring-2 ring-blue-200"
+                                            : "border-gray-300 hover:border-gray-400"
+                                        }`}
+                                        style={{ backgroundColor: color.hex }}
+                                        onClick={() => handleColorSelect(color.hex)}
                                       />
                                     </div>
                                   </TooltipTrigger>
