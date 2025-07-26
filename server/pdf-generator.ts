@@ -109,8 +109,14 @@ export class PDFGenerator {
       throw new Error('PDF has no pages');
     }
     
-    // Copy the first page to our document
-    const [copiedPage] = await pdfDoc.copyPages(originalPdf, [0]);
+    // Embed the first page as an embedded page
+    const firstPage = originalPages[0];
+    const embeddedPage = await pdfDoc.embedPage(firstPage, {
+      left: 0,
+      bottom: 0,
+      right: firstPage.getWidth(),
+      top: firstPage.getHeight(),
+    });
     
     // Calculate position and scale
     const x = element.x * 2.834645669; // Convert from mm to points
@@ -119,15 +125,15 @@ export class PDFGenerator {
     const targetHeight = element.height * 2.834645669;
     
     // Get original page dimensions
-    const { width: origWidth, height: origHeight } = copiedPage.getSize();
+    const { width: origWidth, height: origHeight } = embeddedPage.size();
     
     // Calculate scale to fit the element bounds while maintaining aspect ratio
     const scaleX = targetWidth / origWidth;
     const scaleY = targetHeight / origHeight;
     const scale = Math.min(scaleX, scaleY);
     
-    // Draw the page directly instead of embedding
-    page.drawPage(copiedPage, {
+    // Draw the embedded page with proper scaling
+    page.drawPage(embeddedPage, {
       x: x,
       y: y,
       width: origWidth * scale,
