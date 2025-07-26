@@ -72,14 +72,10 @@ export default function UploadTool() {
   const updateProjectMutation = useMutation({
     mutationFn: async (updates: Partial<Project>) => {
       if (!currentProject?.id) throw new Error("No project selected");
-      console.log("UpdateProject mutation: Sending updates", updates);
       const response = await apiRequest("PATCH", `/api/projects/${currentProject.id}`, updates);
-      const result = await response.json();
-      console.log("UpdateProject mutation: Server response", result);
-      return result;
+      return response.json();
     },
     onSuccess: (updatedProject) => {
-      console.log("UpdateProject mutation: Success, updating local state", updatedProject);
       setCurrentProject(updatedProject);
       // Update the query cache directly instead of invalidating
       queryClient.setQueryData(["/api/projects", currentProject?.id], updatedProject);
@@ -172,9 +168,7 @@ export default function UploadTool() {
   };
 
   const handleGarmentColorChange = (color: string) => {
-    console.log("UploadTool: Garment color change requested", color);
     if (currentProject) {
-      console.log("UploadTool: Updating project with color", color);
       updateProjectMutation.mutate({ garmentColor: color });
     }
   };

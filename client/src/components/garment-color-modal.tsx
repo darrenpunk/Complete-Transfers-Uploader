@@ -77,7 +77,6 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
   // Auto-open modal when autoOpen is true and no color is selected (only once)
   useEffect(() => {
     if (autoOpen && !currentColor && !open && !hasAutoOpened) {
-      console.log("GarmentColorModal: Auto-opening modal");
       setOpen(true);
       setHasAutoOpened(true);
     }
@@ -99,7 +98,6 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
   };
 
   const handleColorSelect = (color: string) => {
-    console.log("GarmentColorModal: Selecting color", color);
     onColorChange(color);
     setOpen(false);
   };

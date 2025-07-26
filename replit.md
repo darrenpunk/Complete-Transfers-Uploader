@@ -44,6 +44,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **UV DTF Custom Icon**: Added dedicated UV DTF transfer icon to template group for better visual identification
 ✓ **Woven Badge Icon**: Added custom woven badge icon showing football-themed embroidered patch design
 ✓ **White Element Display Fix**: Resolved critical issue where white fills (rgb(100%, 100%, 100%)) and light elements were invisible due to aggressive CSS hiding rules and server-side removal
+✓ **Double Selection Bug Fix**: Fixed garment color modal requiring two selections by implementing hasAutoOpened state to prevent modal from reopening after color selection
+✓ **Color Name Display**: Updated interface to show readable color names like "Kelly Green (3C8A35)" instead of hex codes in garment color selection
 
 ## User Preferences
 
