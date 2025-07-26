@@ -12,7 +12,8 @@ import CMYKColorModal from "@/components/cmyk-color-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
-import logoPath from "@assets/Artboard 1@4x_1753539065182.png";
+import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
+import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 
 interface ToolsSidebarProps {
   currentStep: number;
@@ -380,9 +381,9 @@ export default function ToolsSidebar({
                 <div className="flex items-center gap-3">
                   {manufacturerName === "Gildan" && (
                     <img 
-                      src={logoPath} 
-                      alt="CompleteTransfers" 
-                      className="h-5 w-auto object-contain"
+                      src={gildanLogoPath} 
+                      alt="Gildan" 
+                      className="h-4 w-auto object-contain"
                     />
                   )}
                   <h5 className="text-sm font-medium text-gray-800">{manufacturerName}</h5>

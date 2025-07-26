@@ -10,7 +10,7 @@ import PropertiesPanel from "@/components/properties-panel";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download } from "lucide-react";
-import logoPath from "@assets/Artboard 1@4x_1753539065182.png";
+import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -228,7 +228,7 @@ export default function UploadTool() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <img 
-              src={logoPath} 
+              src={completeTransfersLogoPath} 
               alt="CompleteTransfers" 
               className="h-8 w-auto object-contain"
             />
