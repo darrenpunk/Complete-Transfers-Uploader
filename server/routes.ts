@@ -675,15 +675,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           garmentColor: project.garmentColor
         });
       } else if (colorSpace === 'cmyk' || (colorSpace === 'auto' && hasCMYKLogos)) {
-        console.log('CMYK PDF generation requested or detected CMYK images');
-        pdfBuffer = await pdfGenerator.generateImageMagickPDF({
+        console.log('Enhanced CMYK PDF generation requested with ICC profile support');
+        const { EnhancedCMYKGenerator } = await import("./enhanced-cmyk-generator");
+        const enhancedCMYKGenerator = new EnhancedCMYKGenerator();
+        pdfBuffer = await enhancedCMYKGenerator.generateCMYKPDF({
           projectId,
           templateSize,
           canvasElements,
           logos,
           garmentColor: project.garmentColor
         });
-        console.log('Generated CMYK-preserving PDF successfully');
+        console.log('Generated enhanced CMYK PDF with vector preservation and ICC profile');
       } else {
         console.log('Using standard PDF generation for RGB images');
         pdfBuffer = await pdfGenerator.generateProductionPDF({

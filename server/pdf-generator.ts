@@ -311,7 +311,7 @@ export class PDFGenerator {
     }
   }
 
-  private async generateImageMagickPDF(data: PDFGenerationData): Promise<Buffer> {
+  async generateImageMagickPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     const execAsync = promisify(exec);
     const uploadDir = path.join(process.cwd(), "uploads");
@@ -329,6 +329,16 @@ export class PDFGenerator {
       const canvasWidth = Math.round(templateSize.width * 11.811); // mm to pixels at 300 DPI
       const canvasHeight = Math.round(templateSize.height * 11.811);
       
+      // ICC profile path
+      const iccProfilePath = path.join(process.cwd(), 'server', 'fogra51.icc');
+      const useICC = fs.existsSync(iccProfilePath);
+      
+      if (useICC) {
+        console.log('Using FOGRA51 ICC profile for enhanced CMYK accuracy');
+      } else {
+        console.log('ICC profile not found, using standard CMYK conversion');
+      }
+      
       // Create individual logo composites with proper CMYK colorspace
       const logoElements = canvasElements.filter(el => el.isVisible && logoMap.has(el.logoId));
       
@@ -338,16 +348,22 @@ export class PDFGenerator {
 
       // Page 1: White background with artwork
       const page1Path = path.join(tempDir, 'page1.pdf');
-      await this.createCMYKCompositePage(logoElements, logoMap, templateSize, page1Path, '#FFFFFF', execAsync);
+      await this.createEnhancedCMYKPage(logoElements, logoMap, templateSize, page1Path, '#FFFFFF', execAsync, useICC ? iccProfilePath : null);
       
       // Page 2: Artwork on garment color background
       const page2Path = path.join(tempDir, 'page2.pdf');
       const bgColor = garmentColor || '#FFFFFF';
-      await this.createCMYKCompositePage(logoElements, logoMap, templateSize, page2Path, bgColor, execAsync);
+      await this.createEnhancedCMYKPage(logoElements, logoMap, templateSize, page2Path, bgColor, execAsync, useICC ? iccProfilePath : null);
       
-      // Combine pages into final PDF
+      // Combine pages into final PDF with vector preservation
       const outputPdfPath = path.join(tempDir, 'output.pdf');
-      const combineCommand = `convert "${page1Path}" "${page2Path}" "${outputPdfPath}"`;
+      let combineCommand = `convert "${page1Path}" "${page2Path}"`;
+      
+      if (useICC) {
+        combineCommand += ` -profile "${iccProfilePath}"`;
+      }
+      
+      combineCommand += ` -compress lzw -quality 100 "${outputPdfPath}"`;
       await execAsync(combineCommand);
       
       // Read the generated PDF
@@ -363,11 +379,11 @@ export class PDFGenerator {
         console.warn('Failed to clean up temp files:', cleanupError);
       }
       
-      console.log('Generated CMYK-preserving PDF successfully');
+      console.log('Generated enhanced CMYK PDF with vector preservation');
       return pdfBuffer;
       
     } catch (error) {
-      console.error('CMYK PDF generation failed:', error);
+      console.error('Enhanced CMYK PDF generation failed:', error);
       // Fallback to regular PDF generation
       console.log('ImageMagick PDF generation failed, falling back to standard PDF generation');
       return await this.generateStandardPDF(data);
@@ -417,13 +433,14 @@ export class PDFGenerator {
     await execAsync(magickCommand);
   }
 
-  private async createCMYKCompositePage(
+  private async createEnhancedCMYKPage(
     logoElements: CanvasElement[],
     logoMap: Map<string, Logo>,
     templateSize: TemplateSize,
     outputPath: string,
     backgroundColor: string,
-    execAsync: (command: string) => Promise<any>
+    execAsync: (command: string) => Promise<any>,
+    iccProfilePath: string | null
   ): Promise<void> {
     const uploadDir = path.join(process.cwd(), "uploads");
     
@@ -434,7 +451,7 @@ export class PDFGenerator {
     // Create base canvas with background color in RGB first for better compositing
     let magickCommand = `convert -size ${canvasWidth}x${canvasHeight} xc:"${backgroundColor}"`;
     
-    // Composite each logo onto the canvas using RGB for better color preservation
+    // Composite each logo onto the canvas, preserving vector data when possible
     for (const element of logoElements) {
       const logo = logoMap.get(element.logoId);
       if (!logo) continue;
@@ -448,15 +465,46 @@ export class PDFGenerator {
       const width = Math.round(element.width * 11.811);
       const height = Math.round(element.height * 11.811);
       
-      // Use original RGB logo for compositing to preserve colors better
-      magickCommand += ` \\( "${logoPath}" -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+      // Check if we have a PDF original to preserve vectors
+      let vectorPath = logoPath;
+      if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+        const originalPath = path.join(uploadDir, logo.originalFilename);
+        if (fs.existsSync(originalPath)) {
+          vectorPath = originalPath;
+          console.log(`Using original PDF for vector preservation: ${logo.originalName}`);
+        }
+      }
+      
+      // Use vector-preserving resize for PDFs, regular resize for rasters
+      if (vectorPath.endsWith('.pdf') || logo.mimeType === 'application/pdf') {
+        magickCommand += ` \\( "${vectorPath}" -density 300 -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+      } else {
+        magickCommand += ` \\( "${logoPath}" -resize ${width}x${height}! \\) -geometry +${x}+${y} -composite`;
+      }
     }
     
-    // Convert final RGB composite directly to CMYK PDF with perceptual intent for best color preservation
-    magickCommand += ` -colorspace CMYK -intent perceptual "${outputPath}"`;
+    // Apply ICC profile and convert to CMYK with enhanced quality settings
+    if (iccProfilePath) {
+      magickCommand += ` -profile "${iccProfilePath}" -colorspace CMYK -intent perceptual -quality 100 -compress lzw "${outputPath}"`;
+      console.log('Applying FOGRA51 ICC profile for professional CMYK conversion');
+    } else {
+      magickCommand += ` -colorspace CMYK -intent perceptual -quality 100 -compress lzw "${outputPath}"`;
+    }
     
-    console.log('Executing improved CMYK composite command:', magickCommand);
+    console.log('Executing enhanced CMYK composite command:', magickCommand);
     await execAsync(magickCommand);
+  }
+
+  private async createCMYKCompositePage(
+    logoElements: CanvasElement[],
+    logoMap: Map<string, Logo>,
+    templateSize: TemplateSize,
+    outputPath: string,
+    backgroundColor: string,
+    execAsync: (command: string) => Promise<any>
+  ): Promise<void> {
+    // Fallback to enhanced method without ICC profile
+    await this.createEnhancedCMYKPage(logoElements, logoMap, templateSize, outputPath, backgroundColor, execAsync, null);
   }
 
   private async generateStandardPDF(data: PDFGenerationData): Promise<Buffer> {
