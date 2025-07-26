@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { CanvasElement, Logo } from "@shared/schema";
@@ -33,6 +33,7 @@ export default function PropertiesPanel({
   logos
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
+  const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
   const currentElement = selectedElement 
@@ -55,7 +56,7 @@ export default function PropertiesPanel({
     },
   });
 
-  const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
+  const handlePropertyChange = (property: keyof CanvasElement, value: any, debounce = false) => {
     if (!currentElement) return;
 
     console.log('Property change:', property, 'from', currentElement[property], 'to', value);
@@ -96,11 +97,24 @@ export default function PropertiesPanel({
       }
     }
 
-    console.log('Sending updates:', updates);
-    updateElementMutation.mutate({
-      id: currentElement.id,
-      updates
-    });
+    const sendUpdate = () => {
+      console.log('Sending updates:', updates);
+      updateElementMutation.mutate({
+        id: currentElement.id,
+        updates
+      });
+    };
+
+    if (debounce) {
+      // Clear existing timeout
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      // Set new timeout
+      debounceRef.current = setTimeout(sendUpdate, 150);
+    } else {
+      sendUpdate();
+    }
   };
 
   const toggleVisibility = (element: CanvasElement) => {
@@ -258,7 +272,7 @@ export default function PropertiesPanel({
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
                   value={[currentElement.rotation || 0]}
-                  onValueChange={([value]) => handlePropertyChange('rotation', value)}
+                  onValueChange={([value]) => handlePropertyChange('rotation', value, true)}
                   min={0}
                   max={360}
                   step={1}
