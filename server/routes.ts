@@ -200,17 +200,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (file.mimetype === 'application/pdf') {
           // Check if this looks like an A3 ratio
           const aspectRatio = actualWidth / actualHeight;
-          const a3LandscapeRatio = 420 / 297; // A3 landscape ratio (wider than tall)
-          const a3PortraitRatio = 297 / 420; // A3 portrait ratio (taller than wide)
+          const a3LandscapeRatio = 420 / 297; // ~1.414 A3 landscape ratio (wider than tall)
+          const a3PortraitRatio = 297 / 420;   // ~0.707 A3 portrait ratio (taller than wide)
           
-          if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.1) {
+          console.log(`PDF aspect ratio: ${aspectRatio.toFixed(3)}, A3 landscape: ${a3LandscapeRatio.toFixed(3)}, A3 portrait: ${a3PortraitRatio.toFixed(3)}`);
+          
+          if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.05) {
             // Landscape A3 (wider than tall)
             displayWidth = 420;
             displayHeight = 297;
-          } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.1) {
+            console.log('Detected A3 landscape');
+          } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.05) {
             // Portrait A3 (taller than wide)
             displayWidth = 297;
             displayHeight = 420;
+            console.log('Detected A3 portrait');
+          } else {
+            console.log('PDF does not match A3 ratio, using scale factor');
           }
         }
         
