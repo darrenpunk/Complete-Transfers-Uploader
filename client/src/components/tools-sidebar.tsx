@@ -7,7 +7,7 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
 import { manufacturerColors } from "@shared/garment-colors";
@@ -352,13 +352,87 @@ export default function ToolsSidebar({
         </Collapsible>
       )}
 
+      {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
+      {(() => {
+        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
+        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
+        return isFullColourTemplate ? (
+          <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+            <div className="border-b border-gray-200">
+              <CollapsibleTrigger asChild>
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <Shirt className="w-5 h-5" />
+                    Main Garment Colour
+                    {!project.garmentColor && (
+                      <span className="text-red-500 text-sm font-normal">*Required</span>
+                    )}
+                  </h3>
+                  {productSelectorCollapsed ? (
+                    <ChevronRight className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6">
+                  {!project.garmentColor && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ Please select a garment color to continue
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Click the button below to open the color selection window
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {/* Current Selection Display */}
+                    {project.garmentColor && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div 
+                          className="w-8 h-8 rounded-full border-2 border-gray-300"
+                          style={{ backgroundColor: project.garmentColor }}
+                        />
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">Selected Color</div>
+                          <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Garment Color Modal Trigger */}
+                    <GarmentColorModal
+                      currentColor={project.garmentColor || ""}
+                      onColorChange={onGarmentColorChange}
+                      autoOpen={!project.garmentColor}
+                      trigger={
+                        <Button 
+                          variant={project.garmentColor ? "outline" : "default"} 
+                          className="w-full"
+                        >
+                          <Palette className="w-4 h-4 mr-2" />
+                          {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                        </Button>
+                      }
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        ) : null;
+      })()}
+
       {/* Product Selector */}
-      <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+      <Collapsible open={!preflightCollapsed} onOpenChange={(open) => setPreflightCollapsed(!open)}>
         <div className="border-b border-gray-200">
           <CollapsibleTrigger asChild>
             <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">Product Selector</h3>
-              {productSelectorCollapsed ? (
+              {preflightCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
               ) : (
                 <ChevronDown className="w-4 h-4" />
@@ -367,16 +441,16 @@ export default function ToolsSidebar({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="px-6 pb-6">
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => {
-            window.location.href = '/';
-          }}
-        >
-          <span className="mr-2">📐</span>
-          Change Template Size
-        </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => {
+                  window.location.href = '/';
+                }}
+              >
+                <span className="mr-2">📐</span>
+                Change Template Size
+              </Button>
               <p className="text-xs text-gray-500 mt-2">
                 Currently using template with different transfer sizes available
               </p>
@@ -386,12 +460,12 @@ export default function ToolsSidebar({
       </Collapsible>
 
       {/* Pre-flight Check */}
-      <Collapsible open={!preflightCollapsed} onOpenChange={(open) => setPreflightCollapsed(!open)}>
+      <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
         <div className="border-b border-gray-200">
           <CollapsibleTrigger asChild>
             <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">Pre-flight Check</h3>
-              {preflightCollapsed ? (
+              {logosCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
               ) : (
                 <ChevronDown className="w-4 h-4" />
@@ -626,65 +700,6 @@ export default function ToolsSidebar({
           </CollapsibleContent>
         </div>
       </Collapsible>
-
-      {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
-      {(() => {
-        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
-        return isFullColourTemplate ? (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              Garment Color
-              {!project.garmentColor && (
-                <span className="text-red-500 text-sm font-normal">*Required</span>
-              )}
-            </h3>
-            
-            {!project.garmentColor && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700 font-medium">
-                  ⚠️ Please select a garment color to continue
-                </p>
-                <p className="text-xs text-red-600 mt-1">
-                  Click the button below to open the color selection window
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {/* Current Selection Display */}
-              {project.garmentColor && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div 
-                    className="w-8 h-8 rounded-full border-2 border-gray-300"
-                    style={{ backgroundColor: project.garmentColor }}
-                  />
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900">Selected Color</div>
-                    <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Garment Color Modal Trigger */}
-              <GarmentColorModal
-                currentColor={project.garmentColor || ""}
-                onColorChange={onGarmentColorChange}
-                autoOpen={!project.garmentColor}
-                trigger={
-                  <Button 
-                    variant={project.garmentColor ? "outline" : "default"} 
-                    className="w-full"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
-                  </Button>
-                }
-              />
-            </div>
-          </div>
-        ) : null;
-      })()}
     </div>
   );
 }
