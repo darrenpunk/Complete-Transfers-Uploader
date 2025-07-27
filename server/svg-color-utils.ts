@@ -267,6 +267,52 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       return { c, m, y, k: kPercent };
     };
 
+    // Function to detect embedded Pantone color information 
+    const detectEmbeddedPantone = (content: string): string | undefined => {
+      // Check for Pantone color names in various formats throughout the SVG
+      const pantonePatterns = [
+        /pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
+        /pms[\s-]*(\d+[\w\s]*[Cc]?)/gi,
+        /spot[\s-]*color[\s-]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
+        /color[\s-]*name[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
+        /<desc[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/desc>/gi,
+        /<title[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/title>/gi,
+        /id\s*=\s*["'].*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?["']/gi,
+        /<metadata[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/metadata>/gi,
+        /inkName[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
+        /spot-color[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi
+      ];
+
+      // First check the entire SVG content
+      for (const pattern of pantonePatterns) {
+        const matches = svgContent.match(pattern);
+        if (matches && matches.length > 0) {
+          for (const match of matches) {
+            const pantoneMatch = match.match(/pantone[\s-]*(\d+[\w\s]*[Cc]?)/i) || 
+                               match.match(/pms[\s-]*(\d+[\w\s]*[Cc]?)/i);
+            if (pantoneMatch) {
+              return `Pantone ${pantoneMatch[1].trim()}`;
+            }
+          }
+        }
+      }
+
+      // Then check the specific element content
+      for (const pattern of pantonePatterns) {
+        const matches = content.match(pattern);
+        if (matches && matches.length > 0) {
+          for (const match of matches) {
+            const pantoneMatch = match.match(/pantone[\s-]*(\d+[\w\s]*[Cc]?)/i) || 
+                               match.match(/pms[\s-]*(\d+[\w\s]*[Cc]?)/i);
+            if (pantoneMatch) {
+              return `Pantone ${pantoneMatch[1].trim()}`;
+            }
+          }
+        }
+      }
+      return undefined;
+    };
+
     // Function to get CMYK values from color string
     const getColorInfo = (colorString: string) => {
       let rgbColor = colorString;
@@ -324,13 +370,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       const fillMatch = elementMatch.match(/fill\s*=\s*["']([^"']+)["']/i);
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(fillMatch[1]);
-        const pantoneMatch = findClosestPantone(fillMatch[1]);
+        const embeddedPantone = detectEmbeddedPantone(elementMatch);
         colors.push({
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,
           cmykColor: colorInfo.cmyk,
-          pantoneMatch: pantoneMatch.distance < 50 ? (pantoneMatch.pantone || undefined) : undefined,
-          pantoneDistance: pantoneMatch.distance,
+          pantoneMatch: embeddedPantone,
+          pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'fill',
           selector: `${elementType}:nth-of-type(${index + 1})`
@@ -341,13 +387,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       const strokeMatch = elementMatch.match(/stroke\s*=\s*["']([^"']+)["']/i);
       if (strokeMatch && strokeMatch[1] !== 'none' && strokeMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(strokeMatch[1]);
-        const pantoneMatch = findClosestPantone(strokeMatch[1]);
+        const embeddedPantone = detectEmbeddedPantone(elementMatch);
         colors.push({
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,
           cmykColor: colorInfo.cmyk,
-          pantoneMatch: pantoneMatch.distance < 50 ? (pantoneMatch.pantone || undefined) : undefined,
-          pantoneDistance: pantoneMatch.distance,
+          pantoneMatch: embeddedPantone,
+          pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'stroke',
           selector: `${elementType}:nth-of-type(${index + 1})`
@@ -363,13 +409,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const styleFillMatch = style.match(/fill\s*:\s*([^;]+)/i);
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleFillMatch[1].trim());
-          const pantoneMatch = findClosestPantone(styleFillMatch[1].trim());
+          const embeddedPantone = detectEmbeddedPantone(elementMatch);
           colors.push({
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
             cmykColor: colorInfo.cmyk,
-            pantoneMatch: pantoneMatch.distance < 50 ? (pantoneMatch.pantone || undefined) : undefined,
-            pantoneDistance: pantoneMatch.distance,
+            pantoneMatch: embeddedPantone,
+            pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'fill',
             selector: `${elementType}:nth-of-type(${index + 1})`
@@ -380,13 +426,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const styleStrokeMatch = style.match(/stroke\s*:\s*([^;]+)/i);
         if (styleStrokeMatch && styleStrokeMatch[1] !== 'none' && styleStrokeMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleStrokeMatch[1].trim());
-          const pantoneMatch = findClosestPantone(styleStrokeMatch[1].trim());
+          const embeddedPantone = detectEmbeddedPantone(elementMatch);
           colors.push({
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
             cmykColor: colorInfo.cmyk,
-            pantoneMatch: pantoneMatch.distance < 50 ? (pantoneMatch.pantone || undefined) : undefined,
-            pantoneDistance: pantoneMatch.distance,
+            pantoneMatch: embeddedPantone,
+            pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'stroke',
             selector: `${elementType}:nth-of-type(${index + 1})`
