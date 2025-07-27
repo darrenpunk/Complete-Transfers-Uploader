@@ -481,6 +481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update existing SVG colors to indicate they've been "converted" to CMYK
           // Ensure consistent CMYK values by using our standard conversion
           finalColorInfo = currentColors.map(color => {
+            console.log('Processing color for conversion:', color.originalColor);
+            
             // Extract RGB values and convert to standardized CMYK
             const rgbMatch = color.originalColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
             let cmykColor = color.cmykColor;
@@ -489,6 +491,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const r = parseInt(rgbMatch[1]);
               const g = parseInt(rgbMatch[2]); 
               const b = parseInt(rgbMatch[3]);
+              
+              console.log('RGB values:', { r, g, b });
               
               // Standardized RGB to CMYK conversion
               const rPercent = r / 255;
@@ -500,7 +504,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const m = k === 1 ? 0 : (1 - gPercent - k) / (1 - k);
               const y = k === 1 ? 0 : (1 - bPercent - k) / (1 - k);
               
-              cmykColor = `C:${Math.round(c * 100)} M:${Math.round(m * 100)} Y:${Math.round(y * 100)} K:${Math.round(k * 100)}`;
+              const newCmykColor = `C:${Math.round(c * 100)} M:${Math.round(m * 100)} Y:${Math.round(y * 100)} K:${Math.round(k * 100)}`;
+              console.log('Old CMYK:', cmykColor, 'New CMYK:', newCmykColor);
+              cmykColor = newCmykColor;
             }
             
             return {
