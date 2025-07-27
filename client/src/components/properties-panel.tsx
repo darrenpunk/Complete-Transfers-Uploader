@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon, Ungroup } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -124,22 +124,7 @@ export default function PropertiesPanel({
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
   
-  // Ungroup mutation for breaking apart grouped graphics
-  const ungroupLogoMutation = useMutation({
-    mutationFn: async (logoId: string) => {
-      const response = await apiRequest("POST", `/api/logos/${logoId}/ungroup`);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      console.log("Logo ungrouped successfully:", data);
-      // Refresh logos and canvas elements to show new ungrouped elements
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
-    },
-    onError: (error: Error) => {
-      console.error("Error ungrouping logo:", error);
-    }
-  });
+
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
   const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
@@ -679,19 +664,8 @@ export default function PropertiesPanel({
                   Imposition Tool
                 </Button>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => ungroupLogoMutation.mutate(currentElement.logoId)}
-                  disabled={ungroupLogoMutation.isPending}
-                  className="w-full"
-                >
-                  <Ungroup className="w-4 h-4 mr-2" />
-                  {ungroupLogoMutation.isPending ? "Ungrouping..." : "Ungroup Elements"}
-                </Button>
-                
                 <p className="text-xs text-gray-500 mt-1">
-                  Duplicate, replicate, or break apart grouped graphics for individual selection
+                  Duplicate or replicate logos for multi-placement designs
                 </p>
               </div>
             </div>
