@@ -656,21 +656,19 @@ export default function CanvasWorkspace({
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
-                      {selectedElement?.id === element.id && (
-                        <div 
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Prevent multiple rapid clicks
-                            if (!deleteElementMutation.isPending) {
-                              deleteElementMutation.mutate(element.id);
-                            }
-                          }}
-                          title="Delete element"
-                        >
-                          <Trash2 className="w-3 h-3 text-white" />
-                        </div>
-                      )}
+                      <div 
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Prevent multiple rapid clicks
+                          if (!deleteElementMutation.isPending) {
+                            deleteElementMutation.mutate(element.id);
+                          }
+                        }}
+                        title="Delete element"
+                      >
+                        <Trash2 className="w-3 h-3 text-white" />
+                      </div>
                     </>
                   )}
                 </div>
