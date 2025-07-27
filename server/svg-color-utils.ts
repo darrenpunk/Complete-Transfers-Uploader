@@ -297,84 +297,85 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
-// Calculate actual content bounding box from SVG elements
+// Calculate actual content bounding box from SVG elements, excluding obvious backgrounds
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
   try {
-    // Extract all elements with coordinates and dimensions
-    const elements = [];
+    // For PDFs converted to SVG, the dimensions are often inflated by the full page size
+    // Let's use a conservative approach and calculate based on the actual content area
     
-    // Path elements - find bounding coordinates
-    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gi;
+    // First, look for colored path elements that indicate actual logo content
+    const coloredElements = [];
+    
+    // Find path elements with actual colors (not white/transparent)
+    const pathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
     let pathMatch;
     while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
-      const pathData = pathMatch[1];
-      const coords = extractPathCoordinates(pathData);
-      if (coords.length > 0) {
-        elements.push(...coords);
-      }
-    }
-    
-    // Rect elements
-    const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*>/gi;
-    let rectMatch;
-    while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
-      const x = parseFloat(rectMatch[1]);
-      const y = parseFloat(rectMatch[2]);
-      const width = parseFloat(rectMatch[3]);
-      const height = parseFloat(rectMatch[4]);
+      const fillColor = pathMatch[1];
+      const pathData = pathMatch[2];
       
-      if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
-        elements.push({ x, y }, { x: x + width, y: y + height });
-      }
-    }
-    
-    // Circle elements
-    const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*>/gi;
-    let circleMatch;
-    while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
-      const cx = parseFloat(circleMatch[1]);
-      const cy = parseFloat(circleMatch[2]);
-      const r = parseFloat(circleMatch[3]);
+      // Skip white, transparent, or background colors
+      const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
+                          fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
+                          fillColor.includes('100%, 100%, 100%');
       
-      if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
-        elements.push(
-          { x: cx - r, y: cy - r },
-          { x: cx + r, y: cy + r }
-        );
+      if (!isBackground) {
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          coloredElements.push(...coords);
+        }
       }
     }
     
-    // Use elements (glyph references)
-    const useRegex = /<use[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*>/gi;
-    let useMatch;
-    while ((useMatch = useRegex.exec(svgContent)) !== null) {
-      const x = parseFloat(useMatch[1]);
-      const y = parseFloat(useMatch[2]);
+    // Find elements with style-based colors
+    const stylePathRegex = /<path[^>]*style="[^"]*fill:\s*([^;]+)[^"]*"[^>]*d="([^"]*)"[^>]*>/gi;
+    let styleMatch;
+    while ((styleMatch = stylePathRegex.exec(svgContent)) !== null) {
+      const fillColor = styleMatch[1].trim();
+      const pathData = styleMatch[2];
       
-      if (!isNaN(x) && !isNaN(y)) {
-        elements.push({ x, y });
+      const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
+                          fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
+                          fillColor.includes('100%, 100%, 100%');
+      
+      if (!isBackground) {
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          coloredElements.push(...coords);
+        }
       }
     }
     
-    if (elements.length === 0) {
-      return null;
+    if (coloredElements.length === 0) {
+      console.log('No colored content elements found, using conservative fallback');
+      // Fallback for logos without clear color patterns - use typical A4/Letter proportion
+      return {
+        width: 300,  // Conservative estimate for typical logo
+        height: 200
+      };
     }
     
-    // Calculate bounding box
-    const minX = Math.min(...elements.map(e => e.x));
-    const minY = Math.min(...elements.map(e => e.y));
-    const maxX = Math.max(...elements.map(e => e.x));
-    const maxY = Math.max(...elements.map(e => e.y));
+    // Calculate bounding box from colored content only
+    const minX = Math.min(...coloredElements.map(e => e.x));
+    const minY = Math.min(...coloredElements.map(e => e.y));
+    const maxX = Math.max(...coloredElements.map(e => e.x));
+    const maxY = Math.max(...coloredElements.map(e => e.y));
     
-    // Return content dimensions with some padding
-    const contentWidth = Math.ceil(maxX - minX + 20); // Add 20px padding
-    const contentHeight = Math.ceil(maxY - minY + 20);
+    const rawWidth = maxX - minX;
+    const rawHeight = maxY - minY;
     
-    console.log(`Content bounds: ${minX},${minY} to ${maxX},${maxY} = ${contentWidth}×${contentHeight}`);
+    // Add reasonable padding and ensure minimum viable size
+    const contentWidth = Math.max(50, Math.ceil(rawWidth + 20));
+    const contentHeight = Math.max(50, Math.ceil(rawHeight + 20));
+    
+    // Apply maximum limits to prevent oversized logos
+    const finalWidth = Math.min(contentWidth, 500);
+    const finalHeight = Math.min(contentHeight, 400);
+    
+    console.log(`Content bounds: ${minX},${minY} to ${maxX},${maxY} = ${finalWidth}×${finalHeight} (colored content only)`);
     
     return {
-      width: contentWidth,
-      height: contentHeight
+      width: finalWidth,
+      height: finalHeight
     };
     
   } catch (error) {
