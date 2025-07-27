@@ -123,8 +123,11 @@ export default function ToolsSidebar({
       }
       
       // Refresh logos and canvas elements to get updated data
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      
+      // Force refetch to ensure fresh data
+      await queryClient.refetchQueries({ queryKey: ["/api/projects", project.id, "logos"] });
       
       toast({
         title: "Success",
