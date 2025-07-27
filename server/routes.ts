@@ -417,26 +417,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayHeight = 150; // Default fallback
         
         if (file.mimetype === 'application/pdf' && actualWidth && actualHeight) {
-          // For PDFs, check the original viewBox ratio from SVG to get true page proportions
-          let pdfAspectRatio = actualWidth / actualHeight;
+          // For PDFs, extract the viewBox dimensions which represent the actual page size
+          let viewBoxWidth = null;
+          let viewBoxHeight = null;
           
-          // Try to get the original PDF viewBox dimensions for more accurate ratio
           try {
             const svgPath = path.join(uploadDir, finalFilename);
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
             if (viewBoxMatch) {
-              const [, , , viewBoxWidth, viewBoxHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-              if (viewBoxWidth && viewBoxHeight) {
-                pdfAspectRatio = viewBoxWidth / viewBoxHeight;
-                console.log(`PDF viewBox ratio: ${pdfAspectRatio.toFixed(3)} (${viewBoxWidth}×${viewBoxHeight})`);
+              const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+              if (vbWidth && vbHeight) {
+                viewBoxWidth = vbWidth;
+                viewBoxHeight = vbHeight;
+                console.log(`PDF viewBox dimensions: ${viewBoxWidth}×${viewBoxHeight} points`);
               }
             }
           } catch (e) {
-            console.log('Could not extract viewBox ratio, using content bounds ratio');
+            console.log('Could not extract viewBox dimensions');
           }
           
-          const aspectRatio = pdfAspectRatio;
+          // Convert viewBox points to mm for display dimensions
+          if (viewBoxWidth && viewBoxHeight) {
+            // Convert points to mm (1 point = 0.352778 mm)
+            const pointsToMm = 0.352778;
+            displayWidth = Math.round(viewBoxWidth * pointsToMm);
+            displayHeight = Math.round(viewBoxHeight * pointsToMm);
+            console.log(`Using PDF page dimensions: ${viewBoxWidth}×${viewBoxHeight} pts = ${displayWidth}×${displayHeight}mm`);
+          } else {
+            // Fallback to aspect ratio detection
+            const aspectRatio = actualWidth / actualHeight;
           
           // Check for common PDF page sizes first
           const a3LandscapeRatio = 420 / 297; // ~1.414
@@ -496,6 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               displayHeight = Math.round(actualHeight * scaleFactor);
               console.log('Using 300 DPI scale factor for small content');
             }
+          }
           }
         } else if (actualWidth && actualHeight) {
           // For non-PDF images, use 300 DPI scale
