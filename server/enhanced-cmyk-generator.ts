@@ -154,6 +154,7 @@ export class EnhancedCMYKGenerator {
     
     // Check if we have individual garment colors per logo
     const hasIndividualColors = canvasElements.some(element => element.garmentColor);
+    console.log(`Enhanced CMYK: Color labeling - hasIndividualColors: ${hasIndividualColors}, garmentColor: ${garmentColor}`);
     
     if (hasIndividualColors) {
       // Load font for text labels
@@ -185,10 +186,12 @@ export class EnhancedCMYKGenerator {
         
         // Add color label text below the logo
         const colorName = this.getColorName(logoGarmentColor);
+        console.log(`Enhanced CMYK: Adding color label "${colorName}" for garment color ${logoGarmentColor}`);
         const fontSize = 8;
         const textWidth = font.widthOfTextAtSize(colorName, fontSize);
         const textX = x + (width - textWidth) / 2; // Center text horizontally
         const textY = y - 15; // Position text below the colored rectangle
+        console.log(`Enhanced CMYK: Label positioned at (${textX}, ${textY}) with width ${textWidth}`);
         
         // Choose text color based on background brightness
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
@@ -235,6 +238,7 @@ export class EnhancedCMYKGenerator {
       
       // Add color label in top-left corner
       const colorName = this.getColorName(garmentColor);
+      console.log(`Enhanced CMYK: Adding project color label "${colorName}" for garment color ${garmentColor}`);
       const fontSize = 12;
       const margin = 20;
       
