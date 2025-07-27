@@ -369,8 +369,42 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const rawWidth = maxX - minX;
         const rawHeight = maxY - minY;
         
-        // Check if we're still getting massive bounds (indicating background elements)
-        if (rawWidth > 600 || rawHeight > 600) {
+        // Check if we're still getting massive bounds that suggest background contamination
+        // For text logos, the actual content should be much smaller than the canvas
+        if (rawWidth > 500 && rawHeight > 500) {
+          // Try to find a better estimate by looking at the coordinate distribution
+          const centerX = (minX + maxX) / 2;
+          const centerY = (minY + maxY) / 2;
+          
+          // Filter coordinates to those closer to the center (likely actual content)
+          const centerCoords = coloredElements.filter(coord => {
+            const distFromCenterX = Math.abs(coord.x - centerX);
+            const distFromCenterY = Math.abs(coord.y - centerY);
+            return distFromCenterX < rawWidth * 0.3 && distFromCenterY < rawHeight * 0.3;
+          });
+          
+          if (centerCoords.length > 0) {
+            const centerMinX = Math.min(...centerCoords.map(e => e.x));
+            const centerMinY = Math.min(...centerCoords.map(e => e.y));
+            const centerMaxX = Math.max(...centerCoords.map(e => e.x));
+            const centerMaxY = Math.max(...centerCoords.map(e => e.y));
+            
+            const centerWidth = centerMaxX - centerMinX;
+            const centerHeight = centerMaxY - centerMinY;
+            
+            if (centerWidth > 0 && centerHeight > 0 && centerWidth < rawWidth * 0.8) {
+              console.log(`Using center-focused bounds for text logo: ${centerWidth.toFixed(1)}×${centerHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
+              
+              const contentWidth = Math.max(100, Math.ceil(centerWidth + 60));
+              const contentHeight = Math.max(50, Math.ceil(centerHeight + 40));
+              
+              return {
+                width: Math.min(contentWidth, 400),
+                height: Math.min(contentHeight, 300)
+              };
+            }
+          }
+          
           console.log(`Detected oversized bounds for text logo (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative text sizing`);
           return {
             width: 350,
@@ -463,6 +497,40 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     // Check if we're still getting massive bounds (indicating background elements)
     if (rawWidth > 700 || rawHeight > 1000) {
+      // Try to find a better estimate by looking at coordinate clustering
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      
+      // Filter coordinates to exclude outliers (likely background elements)
+      const filteredCoords = coloredElements.filter(coord => {
+        const distFromCenterX = Math.abs(coord.x - centerX);
+        const distFromCenterY = Math.abs(coord.y - centerY);
+        // Keep coordinates within 40% of the total span from center
+        return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
+      });
+      
+      if (filteredCoords.length > coloredElements.length * 0.5) { // At least half the coordinates should be in center
+        const filteredMinX = Math.min(...filteredCoords.map(e => e.x));
+        const filteredMinY = Math.min(...filteredCoords.map(e => e.y));
+        const filteredMaxX = Math.max(...filteredCoords.map(e => e.x));
+        const filteredMaxY = Math.max(...filteredCoords.map(e => e.y));
+        
+        const filteredWidth = filteredMaxX - filteredMinX;
+        const filteredHeight = filteredMaxY - filteredMinY;
+        
+        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.7 || filteredHeight < rawHeight * 0.7)) {
+          console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
+          
+          const contentWidth = Math.max(80, Math.ceil(filteredWidth + 40));
+          const contentHeight = Math.max(60, Math.ceil(filteredHeight + 30));
+          
+          return {
+            width: Math.min(contentWidth, 500),
+            height: Math.min(contentHeight, 400)
+          };
+        }
+      }
+      
       console.log(`Detected oversized bounds (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative logo sizing`);
       return {
         width: 300,
