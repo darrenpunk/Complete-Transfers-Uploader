@@ -12,6 +12,8 @@ interface SVGColorInfo {
   id: string;
   originalColor: string;
   cmykColor?: string;
+  pantoneMatch?: string;
+  pantoneDistance?: number;
   elementType: string;
   attribute: string;
   selector: string;
@@ -167,8 +169,15 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
           </div>
           {svgColors.map((color, index) => (
-            <div key={index} className="text-xs text-gray-500 font-mono">
-              {color.cmykColor || color.originalColor}
+            <div key={index} className="space-y-1">
+              <div className="text-xs text-gray-500 font-mono">
+                {color.cmykColor || color.originalColor}
+              </div>
+              {color.pantoneMatch && (
+                <div className="text-xs text-purple-600 dark:text-purple-400">
+                  🎨 {color.pantoneMatch} ({Math.round((1 - color.pantoneDistance / 255) * 100)}% match)
+                </div>
+              )}
             </div>
           ))}
           {Object.keys(colorOverrides).length > 0 && (
