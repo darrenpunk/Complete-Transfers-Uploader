@@ -4,6 +4,7 @@ import path from 'path';
 export interface SVGColorInfo {
   id: string;
   originalColor: string;
+  cmykColor?: string; // CMYK representation of the color
   elementType: string;
   attribute: string; // 'fill', 'stroke', etc.
   selector: string; // CSS selector to identify the element
@@ -15,15 +16,87 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     const colors: SVGColorInfo[] = [];
     let colorId = 0;
 
-    // Regular expressions to find color attributes
-    const colorPatterns = [
-      // fill="color"
-      /fill\s*=\s*["']([^"']+)["']/gi,
-      // stroke="color"
-      /stroke\s*=\s*["']([^"']+)["']/gi,
-      // style="fill:color" or style="stroke:color"
-      /style\s*=\s*["'][^"']*(?:fill|stroke)\s*:\s*([^;"']+)[^"']*["']/gi,
-    ];
+    // Function to convert RGB percentage to 0-255 values
+    const convertRgbPercent = (rgbString: string): string => {
+      const match = rgbString.match(/rgb\(([^)]+)\)/);
+      if (!match) return rgbString;
+      
+      const values = match[1].split(',').map(v => v.trim());
+      const rgbValues = values.map(v => {
+        if (v.includes('%')) {
+          // Convert percentage to 0-255
+          return Math.round(parseFloat(v) * 255 / 100);
+        }
+        return parseInt(v);
+      });
+      
+      return `rgb(${rgbValues.join(', ')})`;
+    };
+
+    // Function to convert RGB to CMYK
+    const rgbToCmyk = (r: number, g: number, b: number) => {
+      // Normalize RGB values to 0-1
+      r = r / 255;
+      g = g / 255;
+      b = b / 255;
+      
+      // Find the maximum of RGB values
+      const k = 1 - Math.max(r, Math.max(g, b));
+      
+      if (k === 1) {
+        return { c: 0, m: 0, y: 0, k: 100 };
+      }
+      
+      const c = Math.round(((1 - r - k) / (1 - k)) * 100);
+      const m = Math.round(((1 - g - k) / (1 - k)) * 100);
+      const y = Math.round(((1 - b - k) / (1 - k)) * 100);
+      const kPercent = Math.round(k * 100);
+      
+      return { c, m, y, k: kPercent };
+    };
+
+    // Function to get CMYK values from color string
+    const getColorInfo = (colorString: string) => {
+      let rgbColor = colorString;
+      
+      // Convert RGB percentage to standard RGB
+      if (colorString.includes('rgb(') && colorString.includes('%')) {
+        rgbColor = convertRgbPercent(colorString);
+      }
+      
+      // Extract RGB values for CMYK conversion
+      const rgbMatch = rgbColor.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+      if (rgbMatch) {
+        const r = parseInt(rgbMatch[1]);
+        const g = parseInt(rgbMatch[2]);
+        const b = parseInt(rgbMatch[3]);
+        const cmyk = rgbToCmyk(r, g, b);
+        
+        return {
+          display: rgbColor,
+          cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`
+        };
+      }
+      
+      // For hex colors, convert to RGB first
+      if (colorString.startsWith('#')) {
+        const hex = colorString.substring(1);
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const cmyk = rgbToCmyk(r, g, b);
+        
+        return {
+          display: `rgb(${r}, ${g}, ${b})`,
+          cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`
+        };
+      }
+      
+      return {
+        display: colorString,
+        cmyk: 'Unknown'
+      };
+    };
 
     // Extract element types and their colors
     const elementMatches = svgContent.match(/<(path|rect|circle|ellipse|polygon|polyline|line|text|g)[^>]*>/gi) || [];
@@ -34,9 +107,11 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       // Check for fill colors (including white colors)
       const fillMatch = elementMatch.match(/fill\s*=\s*["']([^"']+)["']/i);
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
+        const colorInfo = getColorInfo(fillMatch[1]);
         colors.push({
           id: `color_${colorId++}`,
-          originalColor: fillMatch[1],
+          originalColor: colorInfo.display,
+          cmykColor: colorInfo.cmyk,
           elementType,
           attribute: 'fill',
           selector: `${elementType}:nth-of-type(${index + 1})`
@@ -46,9 +121,11 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       // Check for stroke colors
       const strokeMatch = elementMatch.match(/stroke\s*=\s*["']([^"']+)["']/i);
       if (strokeMatch && strokeMatch[1] !== 'none' && strokeMatch[1] !== 'transparent') {
+        const colorInfo = getColorInfo(strokeMatch[1]);
         colors.push({
           id: `color_${colorId++}`,
-          originalColor: strokeMatch[1],
+          originalColor: colorInfo.display,
+          cmykColor: colorInfo.cmyk,
           elementType,
           attribute: 'stroke',
           selector: `${elementType}:nth-of-type(${index + 1})`
@@ -63,9 +140,11 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         // Extract fill from style (including white colors)
         const styleFillMatch = style.match(/fill\s*:\s*([^;]+)/i);
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
+          const colorInfo = getColorInfo(styleFillMatch[1].trim());
           colors.push({
             id: `color_${colorId++}`,
-            originalColor: styleFillMatch[1].trim(),
+            originalColor: colorInfo.display,
+            cmykColor: colorInfo.cmyk,
             elementType,
             attribute: 'fill',
             selector: `${elementType}:nth-of-type(${index + 1})`
@@ -75,9 +154,11 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         // Extract stroke from style
         const styleStrokeMatch = style.match(/stroke\s*:\s*([^;]+)/i);
         if (styleStrokeMatch && styleStrokeMatch[1] !== 'none' && styleStrokeMatch[1] !== 'transparent') {
+          const colorInfo = getColorInfo(styleStrokeMatch[1].trim());
           colors.push({
             id: `color_${colorId++}`,
-            originalColor: styleStrokeMatch[1].trim(),
+            originalColor: colorInfo.display,
+            cmykColor: colorInfo.cmyk,
             elementType,
             attribute: 'stroke',
             selector: `${elementType}:nth-of-type(${index + 1})`
@@ -86,9 +167,9 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       }
     });
 
-    // Remove duplicates
+    // Remove duplicates based on both color and CMYK values
     const uniqueColors = colors.filter((color, index, self) => 
-      index === self.findIndex(c => c.originalColor === color.originalColor && c.attribute === color.attribute)
+      index === self.findIndex(c => c.originalColor === color.originalColor && c.attribute === color.attribute && c.cmykColor === color.cmykColor)
     );
 
     return uniqueColors;

@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const colors = extractSVGColors(svgPath);
             if (colors.length > 0) {
               svgColors = colors;
-              console.log(`Extracted ${colors.length} colors from SVG:`, colors.map(c => c.originalColor));
+              console.log(`Extracted ${colors.length} colors from SVG:`, colors.map(c => `${c.originalColor} (${c.cmykColor})`));
             }
           } catch (error) {
             console.error('Failed to extract SVG colors:', error);

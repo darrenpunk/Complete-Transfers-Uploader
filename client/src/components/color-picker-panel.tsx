@@ -11,6 +11,7 @@ import type { CanvasElement, Logo } from "@shared/schema";
 interface SVGColorInfo {
   id: string;
   originalColor: string;
+  cmykColor?: string;
   elementType: string;
   attribute: string;
   selector: string;
@@ -165,6 +166,11 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           <div className="text-xs text-gray-600">
             {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
           </div>
+          {svgColors.map((color, index) => (
+            <div key={index} className="text-xs text-gray-500 font-mono">
+              {color.cmykColor || color.originalColor}
+            </div>
+          ))}
           {Object.keys(colorOverrides).length > 0 && (
             <div className="text-xs text-blue-600">
               {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} modified

@@ -382,8 +382,16 @@ export default function ToolsSidebar({
             let colorValue = "Unknown";
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
-              // Vector files with detected SVG colors
-              colorValue = `${svgColors.length} Vector Colors`;
+              // Vector files with detected SVG colors - show actual color values and CMYK
+              const colorsDisplay = svgColors.map(color => {
+                if (color.cmykColor) {
+                  return color.cmykColor;
+                } else if (color.originalColor) {
+                  return color.originalColor;
+                }
+                return "Unknown";
+              }).join(", ");
+              colorValue = `${svgColors.length} colors: ${colorsDisplay}`;
             } else if (isVector) {
               // Vector files without detected colors (might be single color or grayscale)
               colorValue = "Vector (Monochrome)";
