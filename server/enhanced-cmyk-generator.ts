@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts } from "pdf-lib";
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
+import { applySVGColorChanges } from "./svg-color-utils";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -309,6 +310,51 @@ export class EnhancedCMYKGenerator {
     return Buffer.from(pdfBytes);
   }
 
+  private async generateModifiedSVG(element: CanvasElement, logo: Logo, uploadDir: string) {
+    try {
+      // Get the original SVG path
+      const originalSvgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(originalSvgPath)) {
+        console.error(`Original SVG not found: ${originalSvgPath}`);
+        return;
+      }
+
+      // Apply color changes using the existing function
+      const colorOverrides = element.colorOverrides as Record<string, string>;
+      
+      // Map standardized colors to original formats from SVG analysis
+      let originalFormatOverrides: Record<string, string> = {};
+      
+      const svgColors = logo.svgColors as any[];
+      if (svgColors && Array.isArray(svgColors)) {
+        Object.entries(colorOverrides).forEach(([standardizedColor, newColor]) => {
+          // Find the matching color in the SVG analysis
+          const colorInfo = svgColors.find((c: any) => c.originalColor === standardizedColor);
+          if (colorInfo && colorInfo.originalFormat) {
+            originalFormatOverrides[colorInfo.originalFormat as string] = newColor as string;
+          } else {
+            // Fallback to standardized color if original format not found
+            originalFormatOverrides[standardizedColor as string] = newColor as string;
+          }
+        });
+      } else {
+        // Fallback if no SVG color analysis available
+        originalFormatOverrides = colorOverrides;
+      }
+
+      const modifiedSvgContent = applySVGColorChanges(originalSvgPath, originalFormatOverrides);
+      
+      if (modifiedSvgContent) {
+        // Save modified SVG with unique filename
+        const modifiedSvgPath = path.join(uploadDir, `${element.id}_modified.svg`);
+        fs.writeFileSync(modifiedSvgPath, modifiedSvgContent);
+        console.log(`Enhanced CMYK: Generated modified SVG: ${modifiedSvgPath}`);
+      }
+    } catch (error) {
+      console.error('Enhanced CMYK: Failed to generate modified SVG:', error);
+    }
+  }
+
   private async embedVectorLogo(
     pdfDoc: PDFDocument,
     page: ReturnType<PDFDocument['addPage']>,
@@ -320,8 +366,30 @@ export class EnhancedCMYKGenerator {
   ) {
     const uploadDir = path.join(process.cwd(), "uploads");
     
-    // For Single Colour Transfer templates, check for recolored SVG first
-    if (isSingleColourTransfer && inkColor) {
+    // Check for color overrides first (for ALL templates)
+    const hasColorOverrides = element.colorOverrides && Object.keys(element.colorOverrides).length > 0;
+    
+    if (hasColorOverrides) {
+      console.log(`Enhanced CMYK: Applying color overrides for ${logo.originalName}:`, element.colorOverrides);
+      const modifiedSvgPath = path.join(uploadDir, `${element.id}_modified.svg`);
+      
+      if (fs.existsSync(modifiedSvgPath)) {
+        console.log(`Enhanced CMYK: Using color-modified SVG: ${logo.originalName}`);
+        await this.embedImageFile(pdfDoc, page, element, modifiedSvgPath, 'image/svg+xml', templateSize);
+        return;
+      } else {
+        // Generate the modified SVG if it doesn't exist
+        await this.generateModifiedSVG(element, logo, uploadDir);
+        if (fs.existsSync(modifiedSvgPath)) {
+          console.log(`Enhanced CMYK: Generated and using color-modified SVG: ${logo.originalName}`);
+          await this.embedImageFile(pdfDoc, page, element, modifiedSvgPath, 'image/svg+xml', templateSize);
+          return;
+        }
+      }
+    }
+    
+    // For Single Colour Transfer templates, check for recolored SVG
+    if (isSingleColourTransfer && inkColor && !hasColorOverrides) {
       const recoloredSvgPath = path.join(uploadDir, `recolored_${logo.filename.replace(/\.[^.]+$/, '.svg')}`);
       if (fs.existsSync(recoloredSvgPath)) {
         console.log(`Enhanced CMYK: Using recolored SVG for Single Colour Transfer: ${logo.originalName} with ink color ${inkColor}`);
@@ -335,7 +403,12 @@ export class EnhancedCMYKGenerator {
       const originalPdfPath = path.join(uploadDir, logo.originalFilename);
       if (fs.existsSync(originalPdfPath)) {
         console.log(`Enhanced CMYK: Embedding original PDF vectors: ${logo.originalName}`);
-        if (isSingleColourTransfer && inkColor) {
+        
+        // Apply color overrides if they exist (for ALL templates)
+        if (hasColorOverrides) {
+          console.log(`Enhanced CMYK: Applying color overrides to PDF vector content`);
+          await this.embedRecoloredPDFWithCustomColors(pdfDoc, page, element, originalPdfPath, templateSize, element.colorOverrides);
+        } else if (isSingleColourTransfer && inkColor) {
           console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
           await this.embedRecoloredPDF(pdfDoc, page, element, originalPdfPath, templateSize, inkColor);
         } else {
@@ -403,6 +476,75 @@ export class EnhancedCMYKGenerator {
     });
     
     console.log(`Enhanced CMYK: Successfully embedded vector PDF: ${element.logoId}`);
+  }
+
+  private async embedRecoloredPDFWithCustomColors(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    pdfPath: string,
+    templateSize: TemplateSize,
+    colorOverrides: any
+  ) {
+    // For PDF files with custom color overrides, we need to convert to SVG first,
+    // apply color changes, then convert back to PDF
+    const uploadDir = path.join(process.cwd(), "uploads");
+    const execAsync = promisify(exec);
+    
+    try {
+      console.log(`Enhanced CMYK: Applying custom color overrides to PDF:`, colorOverrides);
+      
+      // Step 1: Convert PDF to SVG to enable color manipulation
+      const tempSvgPath = path.join(uploadDir, `temp_svg_${Date.now()}.svg`);
+      await execAsync(`pdf2svg "${pdfPath}" "${tempSvgPath}" 1`);
+      
+      if (!fs.existsSync(tempSvgPath)) {
+        throw new Error('PDF to SVG conversion failed');
+      }
+      
+      // Step 2: Apply color overrides to SVG
+      const modifiedSvgContent = applySVGColorChanges(tempSvgPath, colorOverrides as Record<string, string>);
+      
+      if (!modifiedSvgContent) {
+        throw new Error('Color override application failed');
+      }
+      
+      // Step 3: Save the color-modified SVG
+      const tempModifiedSvgPath = path.join(uploadDir, `temp_modified_svg_${Date.now()}.svg`);
+      fs.writeFileSync(tempModifiedSvgPath, modifiedSvgContent);
+      
+      // Step 4: Convert modified SVG back to PDF
+      const tempRecoloredPdfPath = path.join(uploadDir, `temp_recolored_pdf_${Date.now()}.pdf`);
+      await execAsync(`rsvg-convert -f pdf -o "${tempRecoloredPdfPath}" "${tempModifiedSvgPath}"`);
+      
+      // Clean up intermediate SVG files
+      if (fs.existsSync(tempSvgPath)) {
+        fs.unlinkSync(tempSvgPath);
+      }
+      if (fs.existsSync(tempModifiedSvgPath)) {
+        fs.unlinkSync(tempModifiedSvgPath);
+      }
+      
+      if (fs.existsSync(tempRecoloredPdfPath)) {
+        const stats = fs.statSync(tempRecoloredPdfPath);
+        console.log(`Enhanced CMYK: Successfully created color-override PDF (${stats.size} bytes)`);
+        
+        // Embed the recolored PDF
+        await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
+        
+        // Clean up temporary PDF
+        fs.unlinkSync(tempRecoloredPdfPath);
+        
+        console.log(`Enhanced CMYK: Custom color override successful`);
+      } else {
+        throw new Error('SVG to PDF conversion failed');
+      }
+      
+    } catch (error) {
+      console.error('Enhanced CMYK: Custom color override failed:', error);
+      // Fallback to original PDF without color changes
+      await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+    }
   }
 
   private async embedRecoloredPDF(
