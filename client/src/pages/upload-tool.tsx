@@ -420,21 +420,12 @@ export default function UploadTool() {
         />
         
         {/* Applique Badges Modal - Must be here since it appears before project creation */}
-        {showAppliqueBadgesModal && (
-          <div className="fixed inset-0 z-[99999] bg-red-500/90 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-lg border-8 border-yellow-400">
-              <h1 className="text-3xl font-bold text-black mb-4">🚨 APPLIQUE BADGES FORM 🚨</h1>
-              <p className="text-black mb-4">This proves the state management is working!</p>
-              <p className="text-black mb-4">State: {String(showAppliqueBadgesModal)}</p>
-              <button 
-                onClick={() => setShowAppliqueBadgesModal(false)}
-                className="bg-red-500 text-white px-4 py-2 rounded font-bold"
-              >
-                CLOSE MODAL
-              </button>
-            </div>
-          </div>
-        )}
+        <AppliqueBadgesModal
+          open={showAppliqueBadgesModal}
+          onOpenChange={setShowAppliqueBadgesModal}
+          onConfirm={handleAppliqueBadgesFormConfirm}
+          isLoading={createProjectMutation.isPending}
+        />
       </div>
     );
   }
