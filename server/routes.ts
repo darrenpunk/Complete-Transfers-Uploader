@@ -11,6 +11,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
 import { extractSVGColors, applySVGColorChanges } from "./svg-color-utils";
+import { ColorManagement } from "./color-management";
 
 const execAsync = promisify(exec);
 
@@ -528,6 +529,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('CMYK conversion error:', error);
       res.status(500).json({ message: "Failed to convert image to CMYK" });
+    }
+  });
+
+  // Generate color-managed preview using ICC profile
+  app.post("/api/logos/:id/color-managed-preview", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      const originalPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(originalPath)) {
+        return res.status(404).json({ message: "Logo file not found" });
+      }
+
+      // Generate color-managed preview
+      const colorManagedPath = await ColorManagement.generateColorManagedImage(logoId, originalPath);
+      
+      if (colorManagedPath) {
+        const colorManagedUrl = ColorManagement.getColorManagedUrl(logoId);
+        res.json({ 
+          colorManagedUrl,
+          message: "Color-managed preview generated successfully"
+        });
+      } else {
+        res.json({ 
+          message: "ICC profile not available, using original colors"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Color-managed preview error:', error);
+      res.status(500).json({ message: "Failed to generate color-managed preview" });
+    }
+  });
+
+  // Get color-managed preview URL if exists
+  app.get("/api/logos/:id/color-managed-url", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const colorManagedUrl = ColorManagement.getColorManagedUrl(logoId);
+      
+      if (colorManagedUrl) {
+        res.json({ colorManagedUrl });
+      } else {
+        res.json({ colorManagedUrl: null });
+      }
+      
+    } catch (error) {
+      console.error('Color-managed URL check error:', error);
+      res.status(500).json({ message: "Failed to check color-managed preview" });
     }
   });
 

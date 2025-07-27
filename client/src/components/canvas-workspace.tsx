@@ -4,6 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload } from "lucide-react";
+import ColorManagementToggle from "./color-management-toggle";
 
 interface CanvasWorkspaceProps {
   project: Project;
@@ -26,6 +27,8 @@ export default function CanvasWorkspace({
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
+  const [colorManagementEnabled, setColorManagementEnabled] = useState(false);
+  const [colorManagedUrls, setColorManagedUrls] = useState<Record<string, string>>({});
 
   // Set default zoom based on template size
   useEffect(() => {
@@ -63,6 +66,22 @@ export default function CanvasWorkspace({
     },
   });
 
+  // Generate color-managed preview mutation
+  const generateColorManagedPreviewMutation = useMutation({
+    mutationFn: async (logoId: string) => {
+      const response = await apiRequest("POST", `/api/logos/${logoId}/color-managed-preview`);
+      return response.json();
+    },
+    onSuccess: (data, logoId) => {
+      if (data.colorManagedUrl) {
+        setColorManagedUrls(prev => ({
+          ...prev,
+          [logoId]: data.colorManagedUrl
+        }));
+      }
+    },
+  });
+
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 25, 200));
   };
@@ -93,6 +112,26 @@ export default function CanvasWorkspace({
       saveToHistory(canvasElements);
     }
   }, [canvasElements]);
+
+  // Generate color-managed previews when color management is enabled
+  useEffect(() => {
+    if (colorManagementEnabled && logos.length > 0) {
+      logos.forEach(logo => {
+        // Only generate if we don't already have a color-managed version
+        if (!colorManagedUrls[logo.id]) {
+          generateColorManagedPreviewMutation.mutate(logo.id);
+        }
+      });
+    }
+  }, [colorManagementEnabled, logos]);
+
+  // Function to get the appropriate image URL for display
+  const getImageUrl = (logo: Logo): string => {
+    if (colorManagementEnabled && colorManagedUrls[logo.id]) {
+      return colorManagedUrls[logo.id];
+    }
+    return logo.url;
+  };
 
   const handleElementClick = (element: CanvasElement, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -346,6 +385,15 @@ export default function CanvasWorkspace({
                 Guides
               </Button>
             </div>
+
+            <div className="h-6 w-px bg-gray-300"></div>
+
+            {/* Color Management Toggle */}
+            <ColorManagementToggle
+              enabled={colorManagementEnabled}
+              onToggle={setColorManagementEnabled}
+              iccProfileName="PSO Coated FOGRA51 (EFI)"
+            />
           </div>
           
           {/* Right section - Undo/Redo */}
@@ -430,13 +478,13 @@ export default function CanvasWorkspace({
                       <img
                         src={element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
                           ? `/uploads/${element.id}_modified.svg` 
-                          : logo.url}
+                          : getImageUrl(logo)}
                         alt={logo.originalName}
                         className="w-full h-full object-fill"
                         style={{ background: 'transparent', backgroundColor: 'transparent' }}
                         draggable={false}
                         onError={(e) => {
-                          console.error('Failed to load image:', logo.url);
+                          console.error('Failed to load image:', getImageUrl(logo));
                           // Show fallback icon if image fails to load
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
@@ -567,6 +615,11 @@ export default function CanvasWorkspace({
             {/* Canvas Info */}
             <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
               {template.label} ({template.width}×{template.height}mm) • {project.garmentColor} Background
+              {colorManagementEnabled && (
+                <span className="ml-2 px-1 bg-primary text-primary-foreground rounded text-xs">
+                  ICC Preview
+                </span>
+              )}
             </div>
           </div>
         </div>
