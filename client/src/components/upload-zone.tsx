@@ -32,7 +32,7 @@ export default function UploadZone({ onFilesSelected, isUploading }: UploadZoneP
       'application/pdf': ['.pdf'],
     },
     multiple: true,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 50 * 1024 * 1024, // 50MB
     onDropRejected: (rejectedFiles) => {
       console.log('Files rejected:', rejectedFiles.map(f => ({ 
         name: f.file.name, 
