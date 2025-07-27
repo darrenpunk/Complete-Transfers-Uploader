@@ -144,6 +144,35 @@ export default function ToolsSidebar({
     }
   };
 
+  // Handle font outlining
+  const handleFontOutlining = async (logoId: string) => {
+    setConvertingLogo(logoId);
+    try {
+      const response = await apiRequest('POST', `/api/logos/${logoId}/outline-fonts`);
+      
+      if (response.ok) {
+        // Invalidate logos query to refresh the font analysis
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+        
+        toast({
+          title: "Success",
+          description: "Fonts outlined successfully! Text is now vector paths.",
+        });
+      } else {
+        throw new Error('Font outlining failed');
+      }
+    } catch (error) {
+      console.error('Font outlining error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to outline fonts. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setConvertingLogo(null);
+    }
+  };
+
   const uploadLogosMutation = useMutation({
     mutationFn: async (files: File[]) => {
       const formData = new FormData();
@@ -427,6 +456,19 @@ export default function ToolsSidebar({
             value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`
           });
 
+          // Font Check
+          if (logo) {
+            const svgFonts = logo.svgFonts as any;
+            if (svgFonts && Array.isArray(svgFonts) && svgFonts.length > 0) {
+              const hasOutlinedFonts = (logo as any).fontsOutlined === true;
+              checks.push({
+                name: "Typography",
+                status: hasOutlinedFonts ? "pass" : "warning",
+                value: hasOutlinedFonts ? "Fonts Outlined" : `${svgFonts.length} font(s) detected`
+              });
+            }
+          }
+
           const logoSvgColors = logo?.svgColors as any;
           const isRGBImage = logo && logoSvgColors && typeof logoSvgColors === 'object' && 
                              logoSvgColors.type === 'raster' && logoSvgColors.mode === 'RGB';
@@ -465,6 +507,24 @@ export default function ToolsSidebar({
                         disabled={convertingLogo === logo.id}
                       >
                         {convertingLogo === logo.id ? "Converting..." : "Convert to CMYK"}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Font Outlining Option */}
+                  {check.name === "Typography" && check.status === "warning" && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <div className="text-xs text-gray-600">
+                        Text elements detected. Outlining fonts ensures compatibility across all systems.
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => logo && handleFontOutlining(logo.id)}
+                        disabled={convertingLogo === (logo?.id)}
+                      >
+                        {convertingLogo === (logo?.id) ? "Outlining..." : "Outline Fonts"}
                       </Button>
                     </div>
                   )}

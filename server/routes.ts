@@ -10,7 +10,8 @@ import { fromPath } from "pdf2pic";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
-import { extractSVGColors, applySVGColorChanges } from "./svg-color-utils";
+import { extractSVGColors, applySVGColorChanges, analyzeSVG } from "./svg-color-utils";
+import { outlineFonts } from "./font-outliner";
 import { ColorManagement } from "./color-management";
 import { standardizeRgbToCmyk } from "./color-standardization";
 
@@ -299,13 +300,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Failed to get image dimensions:', error);
         }
 
-        // Extract colors from different file types
+        // Extract colors and fonts from different file types
         let svgColors = null;
+        let svgFonts = null;
+        let fontsOutlined = false;
+        
         if (finalMimeType === 'image/svg+xml' || file.mimetype === 'image/svg+xml') {
           try {
             const svgPath = path.join(uploadDir, finalFilename);
-            const colors = extractSVGColors(svgPath);
-            if (colors.length > 0) {
+            const svgAnalysis = analyzeSVG(svgPath);
+            
+            if (svgAnalysis.colors.length > 0 || svgAnalysis.fonts.length > 0) {
               // Check if original PDF was CMYK colorspace
               let isCmykPdf = false;
               if (file.mimetype === 'application/pdf') {
@@ -320,18 +325,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               // Mark colors as converted if original was CMYK
-              svgColors = colors.map(color => ({
+              svgColors = svgAnalysis.colors.map(color => ({
                 ...color,
                 converted: isCmykPdf
               }));
               
-              console.log(`Extracted ${colors.length} colors from SVG:`, colors.map(c => `${c.originalColor} (${c.cmykColor})`));
+              svgFonts = svgAnalysis.fonts;
+              fontsOutlined = false; // Initially fonts are not outlined
+              
+              console.log(`Extracted ${svgAnalysis.colors.length} colors from SVG:`, svgAnalysis.colors.map(c => `${c.originalColor} (${c.cmykColor})`));
+              console.log(`Detected ${svgAnalysis.fonts.length} fonts:`, svgAnalysis.fonts.map(f => `${f.fontFamily} (${f.textContent.substring(0, 20)}...)`));
+              
               if (isCmykPdf) {
                 console.log('Original PDF was CMYK - auto-marking colors as converted');
               }
             }
           } catch (error) {
-            console.error('Failed to extract SVG colors:', error);
+            console.error('Failed to extract SVG analysis:', error);
           }
         } else if (finalMimeType?.startsWith('image/')) {
           // Extract color information from raster images
@@ -361,6 +371,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           originalMimeType: file.mimetype === 'application/pdf' ? file.mimetype : null,
           originalUrl: file.mimetype === 'application/pdf' ? `/uploads/${file.filename}` : null,
           svgColors: svgColors,
+          svgFonts: svgFonts,
+          fontsOutlined: fontsOutlined,
         };
 
         const validatedData = insertLogoSchema.parse(logoData);
@@ -668,6 +680,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Color-managed URL check error:', error);
       res.status(500).json({ message: "Failed to check color-managed preview" });
+    }
+  });
+
+  // Outline fonts in SVG/PDF logos
+  app.post("/api/logos/:id/outline-fonts", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      // Check if logo has fonts to outline
+      const svgFonts = logo.svgFonts as any;
+      if (!svgFonts || !Array.isArray(svgFonts) || svgFonts.length === 0) {
+        return res.status(400).json({ message: "No fonts detected in this logo" });
+      }
+
+      // Check if fonts are already outlined
+      if (logo.fontsOutlined) {
+        return res.status(400).json({ message: "Fonts are already outlined in this logo" });
+      }
+
+      const uploadDir = path.join(process.cwd(), "uploads");
+      const originalPath = path.join(uploadDir, logo.filename);
+      
+      if (!fs.existsSync(originalPath)) {
+        return res.status(404).json({ message: "Logo file not found" });
+      }
+
+      // Outline fonts in the SVG/PDF
+      const outlinedPath = await outlineFonts(originalPath);
+      
+      if (outlinedPath && outlinedPath !== originalPath) {
+        // If a new file was created, update the logo record
+        const outlinedFilename = path.basename(outlinedPath);
+        const outlinedUrl = `/uploads/${outlinedFilename}`;
+        
+        const updatedData = {
+          filename: outlinedFilename,
+          url: outlinedUrl,
+          fontsOutlined: true,
+        };
+
+        const updatedLogo = await storage.updateLogo(logoId, updatedData);
+        
+        // Clean up original file if a new one was created
+        if (outlinedPath !== originalPath) {
+          try {
+            fs.unlinkSync(originalPath);
+          } catch (cleanupError) {
+            console.warn('Failed to clean up original file:', cleanupError);
+          }
+        }
+
+        console.log(`Successfully outlined fonts in ${logo.filename}: ${outlinedFilename}`);
+        res.json(updatedLogo);
+      } else {
+        // No new file created, just mark as outlined
+        const updatedData = {
+          fontsOutlined: true,
+        };
+
+        const updatedLogo = await storage.updateLogo(logoId, updatedData);
+        console.log(`Fonts marked as outlined in ${logo.filename}`);
+        res.json(updatedLogo);
+      }
+    } catch (error) {
+      console.error('Font outlining error:', error);
+      res.status(500).json({ message: "Failed to outline fonts" });
     }
   });
 

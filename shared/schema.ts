@@ -32,6 +32,8 @@ export const logos = pgTable("logos", {
   originalMimeType: text("original_mime_type"), // Store original PDF mime type
   originalUrl: text("original_url"), // Store original PDF URL for vector output
   svgColors: jsonb("svg_colors"), // Store detected SVG colors for color manipulation
+  svgFonts: jsonb("svg_fonts"), // Store detected SVG fonts for font analysis
+  fontsOutlined: boolean("fonts_outlined").default(false), // Track if fonts have been outlined
 });
 
 export const canvasElements = pgTable("canvas_elements", {

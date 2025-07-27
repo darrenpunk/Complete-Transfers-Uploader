@@ -9,6 +9,88 @@ export interface SVGColorInfo {
   elementType: string;
   attribute: string; // 'fill', 'stroke', etc.
   selector: string; // CSS selector to identify the element
+  converted?: boolean;
+}
+
+export interface FontInfo {
+  fontFamily: string;
+  fontSize: string;
+  fontWeight: string;
+  textContent: string;
+  elementType: string;
+  selector: string;
+}
+
+export interface SVGAnalysis {
+  colors: SVGColorInfo[];
+  fonts: FontInfo[];
+  hasText: boolean;
+}
+
+export function analyzeSVG(svgPath: string): SVGAnalysis {
+  const colors = extractSVGColors(svgPath);
+  const fonts = extractSVGFonts(svgPath);
+  
+  return {
+    colors,
+    fonts,
+    hasText: fonts.length > 0
+  };
+}
+
+export function extractSVGFonts(svgPath: string): FontInfo[] {
+  try {
+    const svgContent = fs.readFileSync(svgPath, 'utf8');
+    const fonts: FontInfo[] = [];
+    let fontId = 0;
+
+    // Extract text elements
+    const textElements = svgContent.match(/<text[^>]*>.*?<\/text>/gi) || [];
+    
+    textElements.forEach((textElement, index) => {
+      const fontFamily = textElement.match(/font-family\s*=\s*["']([^"']+)["']/i)?.[1] || 'inherit';
+      const fontSize = textElement.match(/font-size\s*=\s*["']([^"']+)["']/i)?.[1] || 'inherit';
+      const fontWeight = textElement.match(/font-weight\s*=\s*["']([^"']+)["']/i)?.[1] || 'normal';
+      const textContent = textElement.replace(/<[^>]*>/g, '').trim();
+      
+      if (textContent) {
+        fonts.push({
+          fontFamily,
+          fontSize,
+          fontWeight,
+          textContent,
+          elementType: 'text',
+          selector: `text:nth-of-type(${index + 1})`
+        });
+      }
+    });
+
+    // Extract tspan elements (nested text)
+    const tspanElements = svgContent.match(/<tspan[^>]*>.*?<\/tspan>/gi) || [];
+    
+    tspanElements.forEach((tspanElement, index) => {
+      const fontFamily = tspanElement.match(/font-family\s*=\s*["']([^"']+)["']/i)?.[1] || 'inherit';
+      const fontSize = tspanElement.match(/font-size\s*=\s*["']([^"']+)["']/i)?.[1] || 'inherit';
+      const fontWeight = tspanElement.match(/font-weight\s*=\s*["']([^"']+)["']/i)?.[1] || 'normal';
+      const textContent = tspanElement.replace(/<[^>]*>/g, '').trim();
+      
+      if (textContent) {
+        fonts.push({
+          fontFamily,
+          fontSize,
+          fontWeight,
+          textContent,
+          elementType: 'tspan',
+          selector: `tspan:nth-of-type(${index + 1})`
+        });
+      }
+    });
+
+    return fonts;
+  } catch (error) {
+    console.error('Error extracting SVG fonts:', error);
+    return [];
+  }
 }
 
 export function extractSVGColors(svgPath: string): SVGColorInfo[] {
