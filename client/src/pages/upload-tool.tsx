@@ -10,6 +10,7 @@ import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProductLauncherModal from "@/components/product-launcher-modal";
 import InkColorModal from "@/components/ink-color-modal";
+import ProjectNameModal from "@/components/project-name-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
@@ -27,6 +28,8 @@ export default function UploadTool() {
   const [showProductLauncher, setShowProductLauncher] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [showProjectNameModal, setShowProjectNameModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -91,15 +94,16 @@ export default function UploadTool() {
 
   // Generate CMYK PDF with vector preservation
   const generatePDFMutation = useMutation({
-    mutationFn: async () => {
-      if (!currentProject?.name || currentProject.name.trim() === '' || currentProject.name === 'Untitled Project') {
+    mutationFn: async (projectName?: string) => {
+      const name = projectName || currentProject?.name;
+      if (!name || name.trim() === '' || name === 'Untitled Project') {
         throw new Error('Please provide a project name before generating PDF');
       }
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to generate PDF');
       const blob = await response.blob();
-      return { blob, filename: `${currentProject?.name}_cmyk.pdf` };
+      return { blob, filename: `${name}_cmyk.pdf` };
     },
     onSuccess: ({ blob, filename }) => {
       // Create download link
@@ -125,6 +129,63 @@ export default function UploadTool() {
       });
     },
   });
+
+  // Handle project naming confirmation
+  const handleProjectNameConfirm = async (projectName: string) => {
+    try {
+      // Update project name if needed
+      if (currentProject && currentProject.name !== projectName) {
+        const updatedProject = await updateProjectMutation.mutateAsync({ name: projectName });
+        setCurrentProject(updatedProject);
+      }
+
+      // Execute the pending action
+      if (pendingAction === 'pdf') {
+        generatePDFMutation.mutate(projectName);
+      } else if (pendingAction === 'continue') {
+        setCurrentStep(prev => Math.min(prev + 1, 5));
+      }
+      
+      setPendingAction(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update project name. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Check if project needs naming before action
+  const needsProjectName = (currentProject?: Project | null) => {
+    return !currentProject?.name || 
+           currentProject.name.trim() === '' || 
+           currentProject.name === 'Untitled Project';
+  };
+
+  // Handle Generate PDF button click
+  const handleGeneratePDF = () => {
+    if (needsProjectName(currentProject)) {
+      setPendingAction('pdf');
+      setShowProjectNameModal(true);
+    } else {
+      generatePDFMutation.mutate(currentProject?.name);
+    }
+  };
+
+  // Handle Continue button click  
+  const handleNextStep = () => {
+    if (currentStep >= 3 && needsProjectName(currentProject)) {
+      setPendingAction('continue');
+      setShowProjectNameModal(true);
+    } else {
+      setCurrentStep(prev => Math.min(prev + 1, 5));
+    }
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
 
   useEffect(() => {
     if (project) {
@@ -227,17 +288,7 @@ export default function UploadTool() {
     });
   };
 
-  const handleNextStep = () => {
-    if (currentStep < 5) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
 
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
 
   // Upload logos handler for canvas toolbar
   const handleFilesUpload = (files: File[]) => {
@@ -406,8 +457,8 @@ export default function UploadTool() {
             {currentStep >= 3 && (
               <Button 
                 variant="outline"
-                onClick={() => generatePDFMutation.mutate()}
-                disabled={generatePDFMutation.isPending || !currentProject?.name || currentProject.name.trim() === '' || currentProject.name === 'Untitled Project'}
+                onClick={handleGeneratePDF}
+                disabled={generatePDFMutation.isPending}
                 size="sm"
               >
                 <Download className="w-4 h-4 mr-2" />
@@ -428,6 +479,21 @@ export default function UploadTool() {
         templates={templateSizes}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
+      />
+
+      {/* Project Name Modal */}
+      <ProjectNameModal
+        open={showProjectNameModal}
+        onOpenChange={setShowProjectNameModal}
+        currentName={currentProject?.name || ""}
+        onConfirm={handleProjectNameConfirm}
+        isGeneratingPDF={generatePDFMutation.isPending}
+        title={pendingAction === 'pdf' ? "Name Your Project for PDF" : "Name Your Project"}
+        description={
+          pendingAction === 'pdf' 
+            ? "Please provide a name for your project. This will be used for the PDF filename."
+            : "Please provide a name for your project before continuing."
+        }
       />
     </div>
   );
