@@ -369,21 +369,30 @@ export default function ToolsSidebar({
           const logo = logos.find(l => l.id === selectedElement.logoId);
           const checks = [];
           
-          // File Resolution Check
+          // File Resolution Check - skip for vector files
           if (logo) {
-            const scaleX = selectedElement.width / (logo.width || 1);
-            const scaleY = selectedElement.height / (logo.height || 1);
-            const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-            const hasGoodResolution = effectiveResolution >= 150;
+            const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
             
-            checks.push({
-              name: "Print Resolution",
-              status: hasGoodResolution ? "pass" : "warning",
-              value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
-            });
+            if (isVector) {
+              checks.push({
+                name: "Print Resolution",
+                status: "pass",
+                value: "Vector (Resolution Independent)"
+              });
+            } else {
+              const scaleX = selectedElement.width / (logo.width || 1);
+              const scaleY = selectedElement.height / (logo.height || 1);
+              const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+              const hasGoodResolution = effectiveResolution >= 150;
+              
+              checks.push({
+                name: "Print Resolution",
+                status: hasGoodResolution ? "pass" : "warning",
+                value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
+              });
+            }
             
             // File Format Check  
-            const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
             checks.push({
               name: "File Format",
               status: isVector ? "pass" : "warning",

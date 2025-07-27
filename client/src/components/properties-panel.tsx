@@ -316,22 +316,31 @@ export default function PropertiesPanel({
     const logo = logos.find(l => l.id === currentElement.logoId);
     const checks = [];
     
-    // File Resolution Check - use canvas element dimensions for accurate scaling
+    // File Resolution Check - skip for vector files as they're resolution-independent
     if (logo) {
-      // Calculate effective resolution based on actual canvas element size
-      const scaleX = currentElement.width / (logo.width || 1);
-      const scaleY = currentElement.height / (logo.height || 1);
-      const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-      const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
+      const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
       
-      checks.push({
-        name: "Print Resolution",
-        status: hasGoodResolution ? "pass" : "warning",
-        value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
-      });
+      if (isVector) {
+        checks.push({
+          name: "Print Resolution",
+          status: "pass",
+          value: "Vector (Resolution Independent)"
+        });
+      } else {
+        // Calculate effective resolution for raster files only
+        const scaleX = currentElement.width / (logo.width || 1);
+        const scaleY = currentElement.height / (logo.height || 1);
+        const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+        const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
+        
+        checks.push({
+          name: "Print Resolution",
+          status: hasGoodResolution ? "pass" : "warning",
+          value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
+        });
+      }
       
       // File Format Check
-      const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
       checks.push({
         name: "File Format",
         status: isVector ? "pass" : "warning",
@@ -348,19 +357,23 @@ export default function PropertiesPanel({
       });
     }
     
-    // Position Check - ensure logo is within template bounds
+    // Position Check - ensure logo is within template bounds (use reasonable defaults for common sizes)
+    const templateWidth = 420; // Use A3 landscape as reasonable default
+    const templateHeight = 420; // Use A3 height as reasonable default
     const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
-                          currentElement.x + currentElement.width <= 297 && 
-                          currentElement.y + currentElement.height <= 420;
+                          currentElement.x + currentElement.width <= templateWidth && 
+                          currentElement.y + currentElement.height <= templateHeight;
     checks.push({
       name: "Position",
       status: isWithinBounds ? "pass" : "warning",
       value: isWithinBounds ? "In Bounds" : "Check Position"
     });
     
-    // Size Check - reasonable print size with actual dimensions
+    // Size Check - reasonable print size (adjusted for larger templates like A3)
+    const maxWidth = Math.min(templateWidth * 0.95, 500); // Allow up to 95% of template width or 500mm max
+    const maxHeight = Math.min(templateHeight * 0.95, 500); // Allow up to 95% of template height or 500mm max
     const hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
-                             currentElement.width <= 280 && currentElement.height <= 400;
+                             currentElement.width <= maxWidth && currentElement.height <= maxHeight;
     checks.push({
       name: "Print Size",
       status: hasReasonableSize ? "pass" : "warning",
