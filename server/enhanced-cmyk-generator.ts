@@ -6,6 +6,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts } from "pdf-lib";
 import { manufacturerColors } from "@shared/garment-colors";
+import { recolorSVG } from "./svg-recolor";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -114,7 +115,7 @@ export class EnhancedCMYKGenerator {
     
     // Check if this is a Single Colour Transfer template for recoloring
     const project = await storage.getProject(projectId);
-    const template = await storage.getTemplateSize(project?.templateSize);
+    const template = project?.templateSize ? await storage.getTemplateSize(project.templateSize) : null;
     const isSingleColourTransfer = template?.group === 'Single Colour Transfers';
     const inkColor = project?.inkColor;
     
@@ -149,7 +150,7 @@ export class EnhancedCMYKGenerator {
       if (!logo || !element.isVisible) continue;
       
       try {
-        await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize, isSingleColourTransfer, inkColor);
+        await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
       } catch (error) {
         console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
       }
@@ -223,7 +224,7 @@ export class EnhancedCMYKGenerator {
         });
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -274,7 +275,7 @@ export class EnhancedCMYKGenerator {
         if (!logo || !element.isVisible) continue;
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -286,7 +287,7 @@ export class EnhancedCMYKGenerator {
         if (!logo || !element.isVisible) continue;
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -455,7 +456,6 @@ export class EnhancedCMYKGenerator {
 
   private recolorSVGContent(svgContent: string, inkColor: string): string {
     // Apply the same recoloring logic used in the frontend
-    const { recolorSVG } = require('./svg-recolor');
     return recolorSVG(svgContent, inkColor);
   }
 
