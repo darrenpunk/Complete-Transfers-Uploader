@@ -84,10 +84,10 @@ export default function PropertiesPanel({
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
-  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
-  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
-  const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
-  const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
+  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(true);
+  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(true);
+  const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(true);
+  const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(true);
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
