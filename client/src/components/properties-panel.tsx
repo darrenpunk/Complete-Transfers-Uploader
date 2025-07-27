@@ -127,11 +127,7 @@ export default function PropertiesPanel({
   // Ungroup mutation for breaking apart grouped graphics
   const ungroupLogoMutation = useMutation({
     mutationFn: async (logoId: string) => {
-      const response = await apiRequest(`/api/logos/${logoId}/ungroup`, "POST");
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to ungroup logo");
-      }
+      const response = await apiRequest("POST", `/api/logos/${logoId}/ungroup`);
       return response.json();
     },
     onSuccess: (data) => {
