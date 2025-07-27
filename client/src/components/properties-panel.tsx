@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -82,6 +82,8 @@ export default function PropertiesPanel({
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
+  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
+  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
@@ -563,69 +565,109 @@ export default function PropertiesPanel({
 
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader>
-          <CardTitle className="text-lg">Layers</CardTitle>
+        <CardHeader className="cursor-pointer" onClick={() => setLayersPanelCollapsed(!layersPanelCollapsed)}>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>Layers ({canvasElements.length})</span>
+            {layersPanelCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {canvasElements
-              .sort((a, b) => b.zIndex - a.zIndex)
-              .map((element) => {
-                const logo = logos.find(l => l.id === element.logoId);
-                if (!logo) return null;
+        {!layersPanelCollapsed && (
+          <CardContent>
+            {canvasElements.length === 0 ? (
+              <div className="text-sm text-gray-500 text-center py-4">
+                No elements on canvas
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {canvasElements
+                  .sort((a, b) => b.zIndex - a.zIndex)
+                  .map((element) => {
+                    const logo = logos.find(l => l.id === element.logoId);
+                    if (!logo) return null;
 
-                const isSelected = currentElement?.id === element.id;
+                    const isSelected = currentElement?.id === element.id;
 
-                return (
-                  <div
-                    key={element.id}
-                    className={`flex items-center justify-between p-2 rounded ${
-                      isSelected ? 'bg-blue-50 border border-blue-200' : 'border border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Image className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm font-medium">{logo.originalName}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleVisibility(element)}
-                        className="h-6 w-6 p-0"
+                    return (
+                      <div
+                        key={element.id}
+                        className={`flex items-center justify-between p-2 rounded cursor-pointer ${
+                          isSelected ? 'bg-blue-50 border border-blue-200' : 'border border-gray-200 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          // This would need to be passed as a prop to select an element
+                          console.log('Select element:', element.id);
+                        }}
                       >
-                        {element.isVisible ? (
-                          <Eye className="w-3 h-3" />
-                        ) : (
-                          <EyeOff className="w-3 h-3 text-gray-400" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleLock(element)}
-                        className="h-6 w-6 p-0"
-                      >
-                        {element.isLocked ? (
-                          <Lock className="w-3 h-3" />
-                        ) : (
-                          <Unlock className="w-3 h-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        </CardContent>
+                        <div className="flex items-center space-x-2">
+                          <Image className="w-4 h-4 text-gray-600" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium truncate max-w-[120px]">
+                              {logo.originalName}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {Math.round(element.width)}×{Math.round(element.height)}mm
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleVisibility(element);
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            {element.isVisible ? (
+                              <Eye className="w-3 h-3" />
+                            ) : (
+                              <EyeOff className="w-3 h-3 text-gray-400" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleLock(element);
+                            }}
+                            className="h-6 w-6 p-0"
+                          >
+                            {element.isLocked ? (
+                              <Lock className="w-3 h-3" />
+                            ) : (
+                              <Unlock className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
 
       {/* Alignment Tools */}
       <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader>
-          <CardTitle className="text-lg">Alignment</CardTitle>
+        <CardHeader className="cursor-pointer" onClick={() => setAlignmentPanelCollapsed(!alignmentPanelCollapsed)}>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>Alignment</span>
+            {alignmentPanelCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        {!alignmentPanelCollapsed && (
+          <CardContent>
           <div className="grid grid-cols-3 gap-1 mb-4">
             {/* Top row */}
             <Button variant="outline" size="sm" title="Align Top Left" onClick={() => { alignLeft(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
@@ -691,7 +733,8 @@ export default function PropertiesPanel({
               Center All
             </Button>
           </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* CMYK Color Modal */}
