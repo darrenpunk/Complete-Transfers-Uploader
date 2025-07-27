@@ -383,10 +383,10 @@ export default function ToolsSidebar({
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
-              const hasRgbColors = svgColors.some(color => 
-                color.originalColor && color.originalColor.includes('rgb(')
+              const hasUnconvertedRgbColors = svgColors.some(color => 
+                color.originalColor && color.originalColor.includes('rgb(') && !color.converted
               );
-              if (hasRgbColors) {
+              if (hasUnconvertedRgbColors) {
                 colorValue = `RGB Vector (${svgColors.length} colors)`;
                 colorStatus = "warning";
               } else {
@@ -443,7 +443,7 @@ export default function ToolsSidebar({
           
           // Check if vector has RGB colors that need conversion
           const isRGBVector = logo && Array.isArray(logoSvgColors) && logoSvgColors.some(color => 
-            color.originalColor && color.originalColor.includes('rgb(')
+            color.originalColor && color.originalColor.includes('rgb(') && !color.converted
           );
 
           return (
