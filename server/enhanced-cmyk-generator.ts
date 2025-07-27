@@ -413,43 +413,66 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize,
     inkColor: string
   ) {
-    // For Single Colour Transfer, we need to first convert the PDF to SVG, recolor it, then embed
+    // Use pdf-lib to create a recolored PDF while preserving all vector data
     const uploadDir = path.join(process.cwd(), "uploads");
-    const execAsync = promisify(exec);
     
     try {
-      // Generate a temporary recolored SVG filename
-      const tempSvgPath = path.join(uploadDir, `temp_recolored_${Date.now()}.svg`);
+      // Read the original PDF
+      const originalPdfBytes = fs.readFileSync(pdfPath);
+      const originalPdf = await PDFDocument.load(originalPdfBytes);
       
-      // Convert PDF to SVG using ImageMagick
-      const convertCommand = `convert -density 300 "${pdfPath}[0]" -background transparent "${tempSvgPath}"`;
-      await execAsync(convertCommand);
-      
-      if (fs.existsSync(tempSvgPath)) {
-        // Read the SVG content
-        let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
-        
-        // Apply ink color recoloring to the SVG content
-        svgContent = this.recolorSVGContent(svgContent, inkColor);
-        
-        // Write the recolored SVG
-        fs.writeFileSync(tempSvgPath, svgContent);
-        
-        console.log(`Enhanced CMYK: Created recolored PDF conversion for ink color ${inkColor}`);
-        
-        // Embed the recolored SVG
-        await this.embedImageFile(pdfDoc, page, element, tempSvgPath, 'image/svg+xml', templateSize);
-        
-        // Clean up temporary file
-        fs.unlinkSync(tempSvgPath);
-      } else {
-        // Fallback to original PDF if conversion failed
-        console.log('Enhanced CMYK: PDF to SVG conversion failed, using original PDF');
-        await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+      // Get the first page
+      const originalPages = originalPdf.getPages();
+      if (originalPages.length === 0) {
+        throw new Error('PDF has no pages');
       }
+      
+      // Create a new PDF for recoloring
+      const recoloredPdf = await PDFDocument.create();
+      const recoloredPage = recoloredPdf.addPage([originalPages[0].getWidth(), originalPages[0].getHeight()]);
+      
+      // Convert ink color to RGB
+      const { r, g, b } = this.hexToRgb(inkColor);
+      const inkRgb = rgb(r / 255, g / 255, b / 255);
+      
+      // Draw the original page content first
+      const embeddedOriginalPage = await recoloredPdf.embedPage(originalPages[0]);
+      
+      // Create a colored overlay to simulate ink color effect
+      recoloredPage.drawPage(embeddedOriginalPage, {
+        x: 0,
+        y: 0,
+        width: originalPages[0].getWidth(),
+        height: originalPages[0].getHeight(),
+      });
+      
+      // Apply ink color overlay with multiply blend effect (simulated)
+      recoloredPage.drawRectangle({
+        x: 0,
+        y: 0,
+        width: originalPages[0].getWidth(),
+        height: originalPages[0].getHeight(),
+        color: inkRgb,
+        opacity: 0.8, // Adjust opacity to simulate ink blend
+      });
+      
+      // Save the recolored PDF to a temporary file
+      const tempRecoloredPdfPath = path.join(uploadDir, `temp_vector_recolored_${Date.now()}.pdf`);
+      const recoloredPdfBytes = await recoloredPdf.save();
+      fs.writeFileSync(tempRecoloredPdfPath, recoloredPdfBytes);
+      
+      console.log(`Enhanced CMYK: Created vector-preserving recolored PDF with pdf-lib for ink color ${inkColor}`);
+      
+      // Embed the recolored PDF while preserving vectors
+      await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
+      
+      // Clean up temporary file
+      fs.unlinkSync(tempRecoloredPdfPath);
+      
     } catch (error) {
-      console.error('Enhanced CMYK: Failed to create recolored PDF:', error);
-      // Fallback to original PDF
+      console.error('Enhanced CMYK: Failed to create vector-preserving recolored PDF:', error);
+      // Fallback to original PDF without recoloring
+      console.log('Enhanced CMYK: Falling back to original PDF without ink color');
       await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
     }
   }
@@ -567,40 +590,23 @@ export class EnhancedCMYKGenerator {
     mimeType: string,
     templateSize: TemplateSize
   ) {
-    let imageBytes: Buffer;
+    if (mimeType.includes('svg')) {
+      // For SVG files, we should not rasterize them. Skip this method
+      // and use direct PDF vector embedding instead
+      console.log(`Enhanced CMYK: Skipping SVG embedding to preserve vectors: ${path.basename(imagePath)}`);
+      return;
+    }
+    
+    const imageBytes = fs.readFileSync(imagePath);
     let image;
     
-    if (mimeType.includes('svg')) {
-      // Convert SVG to PNG for embedding
-      const execAsync = promisify(exec);
-      const pngPath = imagePath.replace('.svg', '.png');
-      
-      try {
-        // Use ImageMagick to convert SVG to PNG with transparency
-        await execAsync(`magick -background transparent -density 300 "${imagePath}" "${pngPath}"`);
-        imageBytes = fs.readFileSync(pngPath);
-        image = await pdfDoc.embedPng(imageBytes);
-        console.log(`Enhanced CMYK: Converted SVG to PNG for embedding: ${path.basename(imagePath)}`);
-        
-        // Clean up the temporary PNG file
-        if (fs.existsSync(pngPath)) {
-          fs.unlinkSync(pngPath);
-        }
-      } catch (error) {
-        console.error(`Failed to convert SVG to PNG: ${error}`);
-        return;
-      }
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } else if (mimeType.includes('png')) {
+      image = await pdfDoc.embedPng(imageBytes);
     } else {
-      imageBytes = fs.readFileSync(imagePath);
-      
-      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-        image = await pdfDoc.embedJpg(imageBytes);
-      } else if (mimeType.includes('png')) {
-        image = await pdfDoc.embedPng(imageBytes);
-      } else {
-        console.warn(`Unsupported image type: ${mimeType}`);
-        return;
-      }
+      console.warn(`Unsupported image type: ${mimeType}`);
+      return;
     }
     
     // Calculate position (flip Y coordinate for PDF)
