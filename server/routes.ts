@@ -1332,7 +1332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if logo has an SVG file
-      const svgPath = path.join(uploadsDir, `${logo.filename.replace(/\.[^/.]+$/, "")}.svg`);
+      const svgPath = path.join(uploadDir, `${logo.filename.replace(/\.[^/.]+$/, "")}.svg`);
       if (!fs.existsSync(svgPath)) {
         return res.status(400).json({ message: "SVG file not found for ungrouping" });
       }
@@ -1346,7 +1346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create separate SVG files for each element
-      const newFilenames = createSeparateSVGFiles(elements, logo.filename, uploadsDir);
+      const newFilenames = createSeparateSVGFiles(elements, logo.filename, uploadDir);
       
       // Create new logo entries for each ungrouped element
       const newLogos = [];
@@ -1356,10 +1356,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Convert each SVG to PNG for display
         const pngFilename = filename.replace('.svg', '.png');
-        const pngPath = path.join(uploadsDir, pngFilename);
+        const pngPath = path.join(uploadDir, pngFilename);
         
         try {
-          await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -sOutputFile="${pngPath}" "${path.join(uploadsDir, filename)}"`);
+          await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -sOutputFile="${pngPath}" "${path.join(uploadDir, filename)}"`);
         } catch (error) {
           console.warn(`Failed to convert ${filename} to PNG:`, error);
         }
