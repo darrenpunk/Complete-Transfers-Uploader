@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error) {
           console.error('Failed to get image dimensions:', error);
         }
-
+        
         // Extract colors and fonts from different file types
         let svgColors = null;
         let svgFonts = null;
@@ -383,6 +383,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error('Failed to extract image colors:', error);
           }
         }
+
+        // Store flag to recalculate dimensions after font outlining  
+        const shouldRecalcAfterOutlining = finalMimeType === 'image/svg+xml' && 
+          (svgFonts && svgFonts.length > 0 && !fontsOutlined);
+          
+        console.log(`Should recalculate after outlining: ${shouldRecalcAfterOutlining}, has fonts: ${svgFonts?.length || 0}, outlined: ${fontsOutlined}`);
 
         const logoData = {
           projectId: req.params.projectId,
@@ -795,10 +801,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const outlinedFilename = path.basename(outlinedPath);
         const outlinedUrl = `/uploads/${outlinedFilename}`;
         
+        // Recalculate bounding box after font outlining since glyph references are now converted
+        let newWidth = logo.width;
+        let newHeight = logo.height;
+        
+        if (logo.mimeType === 'image/svg+xml') {
+          try {
+            console.log('Recalculating bounding box after font outlining...');
+            const svgContent = fs.readFileSync(outlinedPath, 'utf8');
+            const bbox = calculateSVGContentBounds(svgContent);
+            if (bbox) {
+              newWidth = bbox.width;
+              newHeight = bbox.height;
+              console.log(`Recalculated dimensions after outlining: ${newWidth}×${newHeight} (was ${logo.width}×${logo.height})`);
+            }
+          } catch (error) {
+            console.error('Failed to recalculate bounding box after outlining:', error);
+          }
+        }
+        
         const updatedData = {
           filename: outlinedFilename,
           url: outlinedUrl,
           fontsOutlined: true,
+          width: newWidth,
+          height: newHeight,
         };
 
         const updatedLogo = await storage.updateLogo(logoId, updatedData);
@@ -815,9 +842,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Successfully outlined fonts in ${logo.filename}: ${outlinedFilename}`);
         res.json(updatedLogo);
       } else {
-        // No new file created, just mark as outlined
+        // No new file created, just mark as outlined and recalculate if needed
+        let newWidth = logo.width;
+        let newHeight = logo.height;
+        
+        if (logo.mimeType === 'image/svg+xml') {
+          try {
+            console.log('Recalculating bounding box after font outlining (in-place)...');
+            const svgContent = fs.readFileSync(originalPath, 'utf8');
+            const bbox = calculateSVGContentBounds(svgContent);
+            if (bbox) {
+              newWidth = bbox.width;
+              newHeight = bbox.height;
+              console.log(`Recalculated dimensions after outlining: ${newWidth}×${newHeight} (was ${logo.width}×${logo.height})`);
+            }
+          } catch (error) {
+            console.error('Failed to recalculate bounding box after outlining:', error);
+          }
+        }
+        
         const updatedData = {
           fontsOutlined: true,
+          width: newWidth,
+          height: newHeight,
         };
 
         const updatedLogo = await storage.updateLogo(logoId, updatedData);

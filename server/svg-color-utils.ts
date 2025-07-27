@@ -297,13 +297,75 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
-// Calculate actual content bounding box from SVG elements, excluding obvious backgrounds
+// Calculate actual content bounding box from SVG elements, excluding obvious backgrounds and font definitions
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
   try {
-    // For PDFs converted to SVG, the dimensions are often inflated by the full page size
-    // Let's use a conservative approach and calculate based on the actual content area
+    // Check if this SVG has glyph references (text) that might be inflating the bounding box
+    const hasGlyphRefs = svgContent.includes('<use') && svgContent.includes('xlink:href="#glyph-');
+    const hasGlyphDefs = svgContent.includes('<g id="glyph-');
     
-    // First, look for colored path elements that indicate actual logo content
+    if (hasGlyphRefs || hasGlyphDefs) {
+      console.log('SVG contains font glyphs, using text-aware bounding box calculation');
+      
+      // For SVGs with text/glyphs, focus only on the actual visible content outside the defs section
+      // Remove the <defs> section which contains glyph definitions that inflate bounding box
+      const defsRegex = /<defs>[\s\S]*?<\/defs>/gi;
+      const contentWithoutDefs = svgContent.replace(defsRegex, '');
+      
+      // Now find colored path elements in the actual content area
+      const coloredElements = [];
+      
+      // Find path elements with actual colors (not white/transparent) outside of defs
+      const pathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
+      let pathMatch;
+      while ((pathMatch = pathRegex.exec(contentWithoutDefs)) !== null) {
+        const fillColor = pathMatch[1];
+        const pathData = pathMatch[2];
+        
+        // Skip white, transparent, or background colors
+        const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
+                            fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
+                            fillColor.includes('100%, 100%, 100%');
+        
+        if (!isBackground) {
+          const coords = extractPathCoordinates(pathData);
+          if (coords.length > 0) {
+            coloredElements.push(...coords);
+          }
+        }
+      }
+      
+      // If we found colored paths, use those for bounding box
+      if (coloredElements.length > 0) {
+        const minX = Math.min(...coloredElements.map(e => e.x));
+        const minY = Math.min(...coloredElements.map(e => e.y));
+        const maxX = Math.max(...coloredElements.map(e => e.x));
+        const maxY = Math.max(...coloredElements.map(e => e.y));
+        
+        const contentWidth = Math.max(50, Math.ceil((maxX - minX) + 40));
+        const contentHeight = Math.max(50, Math.ceil((maxY - minY) + 40));
+        
+        // Apply reasonable limits for text-based logos
+        const finalWidth = Math.min(contentWidth, 400);
+        const finalHeight = Math.min(contentHeight, 300);
+        
+        console.log(`Text-aware content bounds: ${minX},${minY} to ${maxX},${maxY} = ${finalWidth}×${finalHeight}`);
+        
+        return {
+          width: finalWidth,
+          height: finalHeight
+        };
+      }
+      
+      // Fallback for text-heavy logos - use conservative dimensions
+      console.log('Text/glyph SVG with no colored paths found, using text logo fallback');
+      return {
+        width: 250,  // Typical text logo width
+        height: 80   // Typical text logo height
+      };
+    }
+    
+    // Original logic for non-text SVGs
     const coloredElements = [];
     
     // Find path elements with actual colors (not white/transparent)
@@ -347,7 +409,6 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     if (coloredElements.length === 0) {
       console.log('No colored content elements found, using conservative fallback');
-      // Fallback for logos without clear color patterns - use typical A4/Letter proportion
       return {
         width: 300,  // Conservative estimate for typical logo
         height: 200
