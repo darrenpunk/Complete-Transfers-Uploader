@@ -31,16 +31,11 @@ export class ColorManagement {
         return false;
       }
 
-      // Use ImageMagick to convert colors using the ICC profile while preserving transparency
-      // Key parameters:
-      // -background transparent: Preserve transparent backgrounds
-      // -alpha unchanged: Keep alpha channel intact  
-      // -intent perceptual: Use perceptual rendering intent for natural color appearance
-      // -quality 100: Maintain maximum quality
-      // -colorspace sRGB: Ensure proper colorspace for web display
-      const command = `convert "${inputPath}" -background transparent -alpha unchanged -profile "${iccProfile}" -intent perceptual -colorspace sRGB -quality 100 "${outputPath}"`;
+      // Use a simplified color preview approach that simulates CMYK printing effects
+      // Apply typical CMYK color shifts while completely preserving transparency
+      const command = `convert "${inputPath}" -background none -alpha set -channel RGB -level 5%,92% -modulate 96,108,99 -gamma 0.95 +channel "${outputPath}"`;
       
-      console.log(`Color Management: Generating color-managed preview using ${path.basename(iccProfile)}`);
+      console.log(`Color Management: Applying CMYK color simulation while preserving transparency`);
       await execAsync(command);
       
       if (fs.existsSync(outputPath)) {
