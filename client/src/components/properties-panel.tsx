@@ -422,9 +422,9 @@ export default function PropertiesPanel({
               </div>
             </div>
 
-            {/* Garment Color Selection */}
+            {/* Extra Garment Colours */}
             <div>
-              <Label className="text-sm font-medium">Garment Color</Label>
+              <Label className="text-sm font-medium">Extra Garment Colours</Label>
               <div className="space-y-3 mt-2">
                 {/* Current Selection Display */}
                 {currentElement.garmentColor && (
@@ -458,7 +458,7 @@ export default function PropertiesPanel({
 
                 {!currentElement.garmentColor && (
                   <p className="text-xs text-gray-500">
-                    Select a garment color to visualize how this logo will look when printed
+                    Apply a different garment colour to each logo on canvas
                   </p>
                 )}
               </div>
