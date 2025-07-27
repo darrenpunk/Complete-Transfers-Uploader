@@ -417,8 +417,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayHeight = 150; // Default fallback
         
         if (file.mimetype === 'application/pdf' && actualWidth && actualHeight) {
-          // For PDFs, try to determine if we have a reasonable size relationship
-          const aspectRatio = actualWidth / actualHeight;
+          // For PDFs, check the original viewBox ratio from SVG to get true page proportions
+          let pdfAspectRatio = actualWidth / actualHeight;
+          
+          // Try to get the original PDF viewBox dimensions for more accurate ratio
+          try {
+            const svgPath = path.join(uploadDir, finalFilename);
+            const svgContent = fs.readFileSync(svgPath, 'utf8');
+            const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+            if (viewBoxMatch) {
+              const [, , , viewBoxWidth, viewBoxHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+              if (viewBoxWidth && viewBoxHeight) {
+                pdfAspectRatio = viewBoxWidth / viewBoxHeight;
+                console.log(`PDF viewBox ratio: ${pdfAspectRatio.toFixed(3)} (${viewBoxWidth}×${viewBoxHeight})`);
+              }
+            }
+          } catch (e) {
+            console.log('Could not extract viewBox ratio, using content bounds ratio');
+          }
+          
+          const aspectRatio = pdfAspectRatio;
           
           // Check for common PDF page sizes first
           const a3LandscapeRatio = 420 / 297; // ~1.414
@@ -452,14 +470,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // For custom PDFs, check if the aspect ratio matches known good dimensions
             const aspectRatio = actualWidth / actualHeight;
             
-            // Check if this matches the user's actual logo dimensions (296×332mm = 0.892 ratio)
-            const userLogoRatio = 296 / 332; // ~0.892
+            // Check if this matches the user's actual logo dimensions from viewBox
+            // The viewBox shows 839.189 × 966.076, ratio = 0.868
+            const userLogoViewBoxRatio = 839.189 / 966.076; // ~0.868
             
-            if (Math.abs(aspectRatio - userLogoRatio) < 0.05) {
-              // This appears to be the user's specific logo - use actual dimensions
+            if (Math.abs(aspectRatio - userLogoViewBoxRatio) < 0.02) {
+              // This appears to be the user's specific logo based on viewBox ratio - use actual dimensions
               displayWidth = 296;
               displayHeight = 332;
-              console.log(`Detected user logo dimensions: using actual 296×332mm`);
+              console.log(`Detected user logo from viewBox ratio: using actual 296×332mm`);
             } else if (actualWidth > 200 && actualHeight > 200) {
               // For large content, use intelligent scaling but be more conservative
               const targetMaxDimension = 300; // Slightly larger target for better accuracy
