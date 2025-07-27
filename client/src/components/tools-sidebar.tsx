@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import GarmentColorModal from "@/components/garment-color-modal";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
+import TShirtSwatch from "@/components/ui/tshirt-swatch";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
@@ -395,9 +396,10 @@ export default function ToolsSidebar({
                     {/* Current Selection Display */}
                     {project.garmentColor && (
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div 
-                          className="w-8 h-8 rounded-full border-2 border-gray-300"
-                          style={{ backgroundColor: project.garmentColor }}
+                        <TShirtSwatch
+                          color={project.garmentColor}
+                          size="md"
+                          selected={false}
                         />
                         <div className="text-sm">
                           <div className="font-medium text-gray-900">Selected Color</div>

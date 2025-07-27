@@ -8,6 +8,7 @@ import CMYKColorModal from "@/components/cmyk-color-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
+import TShirtSwatch from "@/components/ui/tshirt-swatch";
 
 interface GarmentColorModalProps {
   currentColor: string | null;
@@ -144,15 +145,14 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                 <TooltipProvider key={color.hex}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
-                        className={`w-12 h-12 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                          currentColor === color.hex
-                            ? "border-primary ring-2 ring-blue-200"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                        onClick={() => handleColorSelect(color.hex)}
-                      />
+                      <div>
+                        <TShirtSwatch
+                          color={color.hex}
+                          size="lg"
+                          selected={currentColor === color.hex}
+                          onClick={() => handleColorSelect(color.hex)}
+                        />
+                      </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs">
                       <div className="text-sm">
@@ -219,13 +219,10 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <div>
-                                      <button
-                                        className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-105 transition-transform ${
-                                          currentColor === color.hex
-                                            ? "border-primary ring-2 ring-blue-200"
-                                            : "border-gray-300 hover:border-gray-400"
-                                        }`}
-                                        style={{ backgroundColor: color.hex }}
+                                      <TShirtSwatch
+                                        color={color.hex}
+                                        size="md"
+                                        selected={currentColor === color.hex}
                                         onClick={() => handleColorSelect(color.hex)}
                                       />
                                     </div>

@@ -28,6 +28,7 @@ import TemplateSelectorModal from "./template-selector-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
+import TShirtSwatch from "@/components/ui/tshirt-swatch";
 
 // Professional color palette
 const quickColors = [
@@ -598,9 +599,10 @@ export default function PropertiesPanel({
                 {/* Current Selection Display */}
                 {currentElement.garmentColor && (
                   <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                    <div 
-                      className="w-6 h-6 rounded-full border-2 border-gray-300"
-                      style={{ backgroundColor: currentElement.garmentColor }}
+                    <TShirtSwatch
+                      color={currentElement.garmentColor}
+                      size="sm"
+                      selected={false}
                     />
                     <div className="text-sm">
                       <div className="font-medium text-gray-900">Selected Color</div>
