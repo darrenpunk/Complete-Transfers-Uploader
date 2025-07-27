@@ -63,6 +63,13 @@ export default function CanvasWorkspace({
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", project.id, "canvas-elements"]
       });
+      
+      // Save to history after successful update (with small delay to get updated state)
+      setTimeout(() => {
+        if (canvasElements.length > 0) {
+          saveToHistory(canvasElements);
+        }
+      }, 50);
     },
   });
 
@@ -97,11 +104,45 @@ export default function CanvasWorkspace({
   };
 
   const handleUndo = () => {
-    console.log('Undo - disabled for now to avoid issues');
+    if (historyIndex > 0) {
+      const previousState = history[historyIndex - 1];
+      setHistoryIndex(historyIndex - 1);
+      
+      // Apply the previous state to all canvas elements
+      previousState.forEach(historicalElement => {
+        updateElementMutation.mutate({
+          id: historicalElement.id,
+          updates: {
+            x: historicalElement.x,
+            y: historicalElement.y,
+            width: historicalElement.width,
+            height: historicalElement.height,
+            rotation: historicalElement.rotation
+          }
+        });
+      });
+    }
   };
 
   const handleRedo = () => {
-    console.log('Redo - disabled for now to avoid issues');
+    if (historyIndex < history.length - 1) {
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(historyIndex + 1);
+      
+      // Apply the next state to all canvas elements
+      nextState.forEach(historicalElement => {
+        updateElementMutation.mutate({
+          id: historicalElement.id,
+          updates: {
+            x: historicalElement.x,
+            y: historicalElement.y,
+            width: historicalElement.width,
+            height: historicalElement.height,
+            rotation: historicalElement.rotation
+          }
+        });
+      });
+    }
   };
 
   // Save to history when elements change (but avoid infinite loops)
@@ -110,6 +151,22 @@ export default function CanvasWorkspace({
       saveToHistory(canvasElements);
     }
   }, [canvasElements]);
+
+  // Add keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        handleUndo();
+      } else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        handleRedo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   // Color management now handled purely with CSS filters - no server processing needed
 
@@ -598,15 +655,18 @@ export default function CanvasWorkspace({
                         <div className="w-4 h-4 bg-primary border-2 border-white rounded-full" />
                       </div>
 
-                      {/* Delete Handle - only show for duplicated elements */}
-                      {canvasElements.filter(el => el.logoId === element.logoId).length > 1 && (
+                      {/* Delete Handle - show for all elements when selected */}
+                      {selectedElement?.id === element.id && (
                         <div 
                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteElementMutation.mutate(element.id);
+                            // Prevent multiple rapid clicks
+                            if (!deleteElementMutation.isPending) {
+                              deleteElementMutation.mutate(element.id);
+                            }
                           }}
-                          title="Delete this copy"
+                          title="Delete element"
                         >
                           <Trash2 className="w-3 h-3 text-white" />
                         </div>
