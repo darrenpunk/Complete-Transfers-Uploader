@@ -66,21 +66,7 @@ export default function CanvasWorkspace({
     },
   });
 
-  // Generate color-managed preview mutation
-  const generateColorManagedPreviewMutation = useMutation({
-    mutationFn: async ({ logoId, refresh = false }: { logoId: string; refresh?: boolean }) => {
-      const response = await apiRequest("POST", `/api/logos/${logoId}/color-managed-preview?refresh=${refresh}`);
-      return response.json();
-    },
-    onSuccess: (data, { logoId }) => {
-      if (data.colorManagedUrl) {
-        setColorManagedUrls(prev => ({
-          ...prev,
-          [logoId]: data.colorManagedUrl
-        }));
-      }
-    },
-  });
+  // No longer need server-side color management - using CSS filters instead
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 25, 200));
@@ -113,22 +99,11 @@ export default function CanvasWorkspace({
     }
   }, [canvasElements]);
 
-  // Generate color-managed previews when color management is enabled
-  useEffect(() => {
-    if (colorManagementEnabled && logos.length > 0) {
-      logos.forEach(logo => {
-        // Always regenerate with refresh=true to get the latest improved version
-        generateColorManagedPreviewMutation.mutate({ logoId: logo.id, refresh: true });
-      });
-    }
-  }, [colorManagementEnabled, logos]);
+  // Color management now handled purely with CSS filters - no server processing needed
 
-  // Function to get the appropriate image URL for display
+  // Function to get the image URL for display (now always uses original)
   const getImageUrl = (logo: Logo): string => {
-    if (colorManagementEnabled && colorManagedUrls[logo.id]) {
-      return colorManagedUrls[logo.id];
-    }
-    return logo.url;
+    return `/uploads/${logo.filename}`;
   };
 
   const handleElementClick = (element: CanvasElement, event: React.MouseEvent) => {
@@ -479,7 +454,13 @@ export default function CanvasWorkspace({
                           : getImageUrl(logo)}
                         alt={logo.originalName}
                         className="w-full h-full object-fill"
-                        style={{ background: 'transparent', backgroundColor: 'transparent' }}
+                        style={{ 
+                          background: 'transparent', 
+                          backgroundColor: 'transparent',
+                          filter: colorManagementEnabled 
+                            ? "brightness(0.92) contrast(1.08) saturate(1.12) hue-rotate(-2deg)" 
+                            : "none"
+                        }}
                         draggable={false}
                         onError={(e) => {
                           console.error('Failed to load image:', getImageUrl(logo));
