@@ -370,8 +370,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const rawHeight = maxY - minY;
         
         // Check if we're still getting massive bounds that suggest background contamination
-        // For text logos, the actual content should be much smaller than the canvas
-        if (rawWidth > 500 && rawHeight > 500) {
+        // Only apply center-focused filtering if bounds are really large (likely background contamination)
+        if (rawWidth > 700 && rawHeight > 700) {
           // Try to find a better estimate by looking at the coordinate distribution
           const centerX = (minX + maxX) / 2;
           const centerY = (minY + maxY) / 2;
@@ -398,9 +398,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
               const contentWidth = Math.max(100, Math.ceil(centerWidth + 60));
               const contentHeight = Math.max(50, Math.ceil(centerHeight + 40));
               
+              // Allow larger dimensions for real content - don't cap too aggressively
               return {
-                width: Math.min(contentWidth, 400),
-                height: Math.min(contentHeight, 300)
+                width: Math.min(contentWidth, 600), // Increased cap to allow larger real content
+                height: Math.min(contentHeight, 500) // Increased cap to allow larger real content
               };
             }
           }
@@ -416,9 +417,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const contentWidth = Math.max(100, Math.ceil(rawWidth + 60)); // More padding for text
         const contentHeight = Math.max(50, Math.ceil(rawHeight + 40));
         
-        // Apply more generous limits for text-based logos to maintain readability
-        const finalWidth = Math.min(contentWidth, 600); // Increased from 400
-        const finalHeight = Math.min(contentHeight, 400); // Increased from 300
+        // Apply generous limits for text-based logos to maintain readability - allow real content sizes
+        const finalWidth = Math.min(contentWidth, 700); // Allow larger real content
+        const finalHeight = Math.min(contentHeight, 600); // Allow larger real content
         
         console.log(`Text-aware content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
         
@@ -525,8 +526,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const contentHeight = Math.max(60, Math.ceil(filteredHeight + 30));
           
           return {
-            width: Math.min(contentWidth, 500),
-            height: Math.min(contentHeight, 400)
+            width: Math.min(contentWidth, 600), // Allow larger real content
+            height: Math.min(contentHeight, 500) // Allow larger real content
           };
         }
       }
