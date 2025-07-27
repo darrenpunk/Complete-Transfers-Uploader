@@ -109,6 +109,15 @@ This is a full-stack web application for uploading logo files and designing layo
 - ✅ Typography preflight checks show accurate font outlining status
 - ✅ Canvas elements display at proper sizes for design workflow
 
+**INTELLIGENT BOUNDING BOX SYSTEM** (July 27, 2025)
+- ✅ Text-aware calculation detects font glyph SVGs and applies specialized handling
+- ✅ Background element filtering excludes large rectangles and canvas-spanning paths
+- ✅ Coordinate filtering removes full-canvas coverage points (corner coordinates)
+- ✅ Oversized bounds detection (>700×1000) triggers conservative fallback sizing
+- ✅ Conservative text logo sizing (350×120) for readable logo placement
+- ✅ Font outlining recalculation updates bounding box after glyph conversion
+- ✅ Eliminated landscape/portrait orientation errors from background element inclusion
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

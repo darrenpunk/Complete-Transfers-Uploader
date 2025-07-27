@@ -336,10 +336,20 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           if (coords.length > 0) {
             // Filter out coordinates that span the entire canvas (likely backgrounds)
             const filteredCoords = coords.filter(coord => {
-              // Exclude coordinates that suggest full-canvas coverage
-              const isFullWidthPoint = coord.x <= 5 || coord.x >= 800;
-              const isFullHeightPoint = coord.y <= 5 || coord.y >= 800;
-              return !(isFullWidthPoint && isFullHeightPoint);
+              // Exclude coordinates that suggest full-canvas coverage for text logos
+              const isNearLeftEdge = coord.x <= 10;
+              const isNearRightEdge = coord.x >= 800; // For A3 and similar large canvases
+              const isNearTopEdge = coord.y <= 10;
+              const isNearBottomEdge = coord.y >= 1100; // For A3 height
+              
+              // Exclude if it's a corner coordinate (likely background rectangle)
+              const isCornerCoord = (isNearLeftEdge || isNearRightEdge) && (isNearTopEdge || isNearBottomEdge);
+              
+              // Also exclude extremely wide or tall spanning coordinates
+              const isFullWidthSpan = isNearLeftEdge && isNearRightEdge;
+              const isFullHeightSpan = isNearTopEdge && isNearBottomEdge;
+              
+              return !(isCornerCoord || isFullWidthSpan || isFullHeightSpan);
             });
             
             if (filteredCoords.length > 0) {
@@ -451,13 +461,22 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const rawWidth = maxX - minX;
     const rawHeight = maxY - minY;
     
+    // Check if we're still getting massive bounds (indicating background elements)
+    if (rawWidth > 700 || rawHeight > 1000) {
+      console.log(`Detected oversized bounds (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative logo sizing`);
+      return {
+        width: 300,
+        height: 200
+      };
+    }
+    
     // Add reasonable padding and ensure minimum viable size
     const contentWidth = Math.max(80, Math.ceil(rawWidth + 40)); // More generous padding
     const contentHeight = Math.max(60, Math.ceil(rawHeight + 30));
     
     // Apply maximum limits to prevent oversized logos but allow reasonable sizes
-    const finalWidth = Math.min(contentWidth, 600); // Increased from 500
-    const finalHeight = Math.min(contentHeight, 450); // Increased from 400
+    const finalWidth = Math.min(contentWidth, 500); // Back to 500 for better control
+    const finalHeight = Math.min(contentHeight, 400); // Back to 400 for better control
     
     console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
