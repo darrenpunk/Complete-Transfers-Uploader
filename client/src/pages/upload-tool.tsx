@@ -236,41 +236,10 @@ export default function UploadTool() {
         });
         console.log('Directly showing applique badges modal');
         
-        // Force modal to show immediately using DOM manipulation as backup
+        // Use setTimeout to prevent React batching issues
         setTimeout(() => {
-          const modalDiv = document.createElement('div');
-          modalDiv.id = 'applique-badges-modal-fallback';
-          modalDiv.className = 'fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center';
-          modalDiv.innerHTML = `
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-2xl border-4 border-green-500">
-              <h2 class="text-xl font-semibold mb-4 text-green-600">🎯 APPLIQUE BADGES FORM</h2>
-              <p class="mb-4">This is a temporary fallback version of the applique badges form.</p>
-              <button id="close-fallback-modal" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                Continue with Applique Badges
-              </button>
-            </div>
-          `;
-          document.body.appendChild(modalDiv);
-          
-          document.getElementById('close-fallback-modal')?.addEventListener('click', () => {
-            document.body.removeChild(modalDiv);
-            // Create project after form interaction
-            createProjectMutation.mutate({
-              name: "Untitled Project",
-              templateSize: templateId,
-              garmentColor: "#FFFFFF",
-              appliqueBadgesForm: {
-                embroideryFileOptions: [],
-                embroideryThreadOptions: [],
-                position: [],
-                graphicSize: "",
-                embroideredParts: ""
-              }
-            });
-          });
-        }, 100);
-        
-        setTriggerAppliqueBadgesModal(true);
+          setShowAppliqueBadgesModal(true);
+        }, 10);
       } else {
         console.log('Non-Custom Badges template, creating project directly');
         // Create project directly for other template types
@@ -601,33 +570,13 @@ export default function UploadTool() {
         windowHash: window.location.hash
       })}
       
-      {/* Force render modal if state is true */}
-      {showAppliqueBadgesModal && (
-        <div key="debug-modal" className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md border-4 border-red-500">
-            <h2 className="text-xl font-semibold mb-4 text-red-600">🔥 DEBUG: Modal State is TRUE</h2>
-            <p>The showAppliqueBadgesModal state is true. This confirms state management is working.</p>
-            <p className="mt-2 text-sm">State: {showAppliqueBadgesModal ? 'TRUE' : 'FALSE'}</p>
-            <button 
-              onClick={() => {
-                console.log('Debug modal close button clicked');
-                setShowAppliqueBadgesModal(false);
-              }}
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Close Test Modal
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Temporarily disabled AppliqueBadgesModal to test state management */}
-      {/* <AppliqueBadgesModal
+      {/* Applique Badges Modal - Now working with fixed state management */}
+      <AppliqueBadgesModal
         open={showAppliqueBadgesModal}
         onOpenChange={setShowAppliqueBadgesModal}
         onConfirm={handleAppliqueBadgesFormConfirm}
         isLoading={createProjectMutation.isPending}
-      /> */}
+      />
     </div>
   );
 }
