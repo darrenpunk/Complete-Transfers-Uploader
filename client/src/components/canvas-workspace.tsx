@@ -458,7 +458,7 @@ export default function CanvasWorkspace({
                           background: 'transparent', 
                           backgroundColor: 'transparent',
                           filter: colorManagementEnabled 
-                            ? "brightness(0.92) contrast(1.08) saturate(1.12) hue-rotate(-2deg)" 
+                            ? "brightness(0.85) contrast(1.02) saturate(0.75) hue-rotate(1deg)" 
                             : "none"
                         }}
                         draggable={false}
