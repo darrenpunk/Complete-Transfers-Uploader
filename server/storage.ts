@@ -98,6 +98,20 @@ export class MemStorage implements IStorage {
       { name: "applique_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Applique Badges" },
       { name: "applique_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Applique Badges" },
       { name: "applique_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Applique Badges" },
+      
+      // Reflective Transfers
+      { name: "reflective_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Reflective Transfers" },
+      
+      // Full Colour HD
+      { name: "full_colour_hd_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour HD" },
+      
+      // Zero Silicone Transfers
+      { name: "zero_silicone_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Zero Silicone Transfers" },
+      
+      // Sublimation Transfers
+      { name: "sublimation_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Sublimation Transfers" },
+      { name: "sublimation_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Sublimation Transfers" },
+      { name: "sublimation_mug", label: "Mug Sized (240×100mm)", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Sublimation Transfers" },
     ];
 
     standardSizes.forEach(size => {

@@ -64,6 +64,42 @@ const getTemplateGroupIcon = (group: string) => {
           className="h-10 w-10 object-contain filter sepia"
         />
       );
+    case "Reflective Transfers":
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Reflective Transfer" 
+          className="h-10 w-10 object-contain"
+          style={{ filter: "brightness(1.2) saturate(0.8)" }}
+        />
+      );
+    case "Full Colour HD":
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Full Colour HD" 
+          className="h-10 w-10 object-contain"
+          style={{ filter: "contrast(1.1) saturate(1.1)" }}
+        />
+      );
+    case "Zero Silicone Transfers":
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Zero Silicone Transfer" 
+          className="h-10 w-10 object-contain"
+          style={{ filter: "hue-rotate(20deg)" }}
+        />
+      );
+    case "Sublimation Transfers":
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Sublimation Transfer" 
+          className="h-10 w-10 object-contain"
+          style={{ filter: "hue-rotate(180deg) saturate(0.9)" }}
+        />
+      );
     default:
       return <span className="text-2xl">📐</span>;
   }

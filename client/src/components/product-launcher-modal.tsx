@@ -55,6 +55,38 @@ const productCategories = [
     icon: wovenBadgeIconPath,
     group: "Applique Badges",
     sepia: true
+  },
+  {
+    id: "reflective-transfers",
+    name: "Reflective Transfers",
+    description: "High-visibility reflective",
+    icon: fullColourIconPath,
+    group: "Reflective Transfers",
+    filter: "brightness(1.2) saturate(0.8)"
+  },
+  {
+    id: "full-colour-hd",
+    name: "Full Colour HD",
+    description: "High definition transfers",
+    icon: fullColourIconPath,
+    group: "Full Colour HD",
+    filter: "contrast(1.1) saturate(1.1)"
+  },
+  {
+    id: "zero-silicone",
+    name: "Zero Silicone Transfers",
+    description: "Silicone-free transfers",
+    icon: fullColourIconPath,
+    group: "Zero Silicone Transfers",
+    filter: "hue-rotate(20deg)"
+  },
+  {
+    id: "sublimation",
+    name: "Sublimation Transfers",
+    description: "Heat sublimation printing",
+    icon: fullColourIconPath,
+    group: "Sublimation Transfers",
+    filter: "hue-rotate(180deg) saturate(0.9)"
   }
 ];
 
@@ -103,6 +135,9 @@ export default function ProductLauncherModal({
                     } ${
                       product.sepia ? 'filter sepia' : ''
                     }`}
+                    style={{
+                      filter: product.filter || (product.grayscale ? 'grayscale(100%)' : product.sepia ? 'sepia(100%)' : 'none')
+                    }}
                   />
                 </div>
                 
