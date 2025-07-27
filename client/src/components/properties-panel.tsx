@@ -129,8 +129,6 @@ export default function PropertiesPanel({
   const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
-  const [projectName, setProjectName] = useState(project.name || "Untitled Project");
-  const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
   const currentElement = selectedElement 
@@ -188,17 +186,11 @@ export default function PropertiesPanel({
     }
   };
 
-  // Handle project name change
-  const handleProjectNameChange = (name: string) => {
-    setProjectName(name);
-    if (name.trim()) {
-      updateProjectMutation.mutate({ name: name.trim() });
-    }
-  };
 
 
 
-  const handlePropertyChange = (property: keyof CanvasElement, value: any, debounce = false) => {
+
+  const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
     if (!currentElement) return;
 
     console.log('Property change:', property, 'from', currentElement[property], 'to', value);
@@ -252,16 +244,7 @@ export default function PropertiesPanel({
       });
     };
 
-    if (debounce) {
-      // Clear existing timeout
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-      // Set new timeout
-      debounceRef.current = setTimeout(sendUpdate, 150);
-    } else {
-      sendUpdate();
-    }
+    sendUpdate();
   };
 
   const toggleVisibility = (element: CanvasElement) => {
@@ -452,32 +435,7 @@ export default function PropertiesPanel({
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
 
-      {/* Project Name */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Project Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <Label className="text-sm font-medium">Project Name</Label>
-            <Input
-              type="text"
-              value={projectName}
-              onChange={(e) => handleProjectNameChange(e.target.value)}
-              placeholder="Enter project name..."
-              className={`mt-1 ${(!projectName || projectName === 'Untitled Project') ? 'border-red-300 focus:border-red-500' : ''}`}
-            />
-            {(!projectName || projectName === 'Untitled Project') && (
-              <p className="text-xs text-red-600 mt-1">
-                Project name is required for PDF generation
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Logo Properties */}
       {currentElement && (
@@ -575,7 +533,7 @@ export default function PropertiesPanel({
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
                   value={[currentElement.rotation || 0]}
-                  onValueChange={([value]) => handlePropertyChange('rotation', value, true)}
+                  onValueChange={([value]) => handlePropertyChange('rotation', value)}
                   min={0}
                   max={360}
                   step={1}
