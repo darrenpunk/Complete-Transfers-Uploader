@@ -413,86 +413,91 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize,
     inkColor: string
   ) {
-    // Use Ghostscript to properly recolor the PDF while preserving vectors
+    // Use direct ImageMagick color replacement - simpler and more reliable
     const uploadDir = path.join(process.cwd(), "uploads");
     const execAsync = promisify(exec);
     
     try {
-      // Generate a temporary recolored PDF filename
-      const tempRecoloredPdfPath = path.join(uploadDir, `temp_vector_recolored_${Date.now()}.pdf`);
+      console.log(`Enhanced CMYK: Starting direct color replacement for ink color ${inkColor}`);
       
-      // Convert ink color to RGB values (0-1 range for PostScript)
-      const { r, g, b } = this.hexToRgb(inkColor);
-      const rVal = (r / 255).toFixed(3);
-      const gVal = (g / 255).toFixed(3);
-      const bVal = (b / 255).toFixed(3);
+      // Step 1: Convert PDF to high-quality PNG with transparency
+      const tempPngPath = path.join(uploadDir, `temp_high_res_${Date.now()}.png`);
+      await execAsync(`convert -density 300 -background transparent "${pdfPath}[0]" "${tempPngPath}"`);
       
-      // Use Ghostscript with proper PostScript syntax for color replacement
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -sOutputFile="${tempRecoloredPdfPath}" -c "/setgray { pop ${rVal} ${gVal} ${bVal} setrgbcolor } def /setrgbcolor { pop pop pop ${rVal} ${gVal} ${bVal} setrgbcolor } def /setcmykcolor { pop pop pop pop ${rVal} ${gVal} ${bVal} setrgbcolor } def" -f "${pdfPath}"`;
+      if (!fs.existsSync(tempPngPath)) {
+        throw new Error('PDF to PNG conversion failed');
+      }
       
-      console.log(`Enhanced CMYK: Creating vector-preserving recolored PDF for ink color ${inkColor}`);
-      console.log(`Enhanced CMYK: Ghostscript command: ${gsCommand}`);
+      // Step 2: Apply color replacement using ImageMagick's fuzz and opaque operations
+      const tempRecoloredPngPath = path.join(uploadDir, `temp_recolored_png_${Date.now()}.png`);
       
-      const result = await execAsync(gsCommand);
-      console.log(`Enhanced CMYK: Ghostscript stdout:`, result.stdout);
-      console.log(`Enhanced CMYK: Ghostscript stderr:`, result.stderr);
+      // Replace all non-white colors with the ink color using fuzz tolerance
+      await execAsync(`convert "${tempPngPath}" -fuzz 50% -fill "${inkColor}" +opaque white "${tempRecoloredPngPath}"`);
+      
+      if (!fs.existsSync(tempRecoloredPngPath)) {
+        throw new Error('Color replacement failed');
+      }
+      
+      // Step 3: Convert back to PDF
+      const tempRecoloredPdfPath = path.join(uploadDir, `temp_final_recolored_${Date.now()}.pdf`);
+      await execAsync(`convert "${tempRecoloredPngPath}" "${tempRecoloredPdfPath}"`);
       
       if (fs.existsSync(tempRecoloredPdfPath)) {
         const stats = fs.statSync(tempRecoloredPdfPath);
-        console.log(`Enhanced CMYK: Successfully created vector-preserving recolored PDF (${stats.size} bytes)`);
+        console.log(`Enhanced CMYK: Successfully created recolored PDF via ImageMagick (${stats.size} bytes)`);
         
-        // Test: Compare file sizes to see if recoloring actually happened
-        const originalStats = fs.statSync(pdfPath);
-        console.log(`Enhanced CMYK: Original PDF: ${originalStats.size} bytes, Recolored PDF: ${stats.size} bytes`);
-        
-        // Embed the recolored PDF while preserving vectors
+        // Embed the recolored PDF
         await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
         
-        // Keep temp file for debugging
-        console.log(`Enhanced CMYK: Temp recolored PDF saved as: ${tempRecoloredPdfPath}`);
-        // fs.unlinkSync(tempRecoloredPdfPath);
+        // Clean up temporary files
+        fs.unlinkSync(tempPngPath);
+        fs.unlinkSync(tempRecoloredPngPath);
+        fs.unlinkSync(tempRecoloredPdfPath);
+        
+        console.log(`Enhanced CMYK: Direct color replacement successful`);
       } else {
-        throw new Error('Ghostscript recoloring failed - no output file created');
+        throw new Error('PNG to PDF conversion failed');
       }
       
     } catch (error) {
-      console.error('Enhanced CMYK: Ghostscript recoloring failed, trying alternative approach:', error);
+      console.error('Enhanced CMYK: Direct color replacement failed:', error);
       
-      // Alternative: Use the existing SVG recoloring approach but with proper vector conversion
+      // Fallback: Try the SVG approach
       try {
-        const tempSvgPath = path.join(uploadDir, `temp_recolor_${Date.now()}.svg`);
-        const tempPdfPath = path.join(uploadDir, `temp_recolored_alt_${Date.now()}.pdf`);
+        const tempSvgPath = path.join(uploadDir, `temp_svg_fallback_${Date.now()}.svg`);
+        const tempPdfPath = path.join(uploadDir, `temp_svg_recolored_${Date.now()}.pdf`);
         
-        // Use higher density and better preservation settings for SVG conversion
-        await execAsync(`convert -density 600 -background transparent "${pdfPath}[0]" "${tempSvgPath}"`);
+        console.log(`Enhanced CMYK: Trying SVG fallback approach`);
+        
+        // Convert PDF to SVG
+        await execAsync(`convert -density 300 -background transparent "${pdfPath}[0]" "${tempSvgPath}"`);
         
         if (fs.existsSync(tempSvgPath)) {
-          // Read and recolor the SVG
+          // Read and recolor the SVG content
           let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
           svgContent = this.recolorSVGContent(svgContent, inkColor);
           fs.writeFileSync(tempSvgPath, svgContent);
           
-          // Convert recolored SVG back to PDF with vector preservation
-          await execAsync(`convert -density 600 -background transparent "${tempSvgPath}" "${tempPdfPath}"`);
+          // Convert back to PDF
+          await execAsync(`convert -density 300 "${tempSvgPath}" "${tempPdfPath}"`);
           
           if (fs.existsSync(tempPdfPath)) {
-            console.log(`Enhanced CMYK: Created recolored PDF via high-resolution SVG conversion`);
+            console.log(`Enhanced CMYK: SVG fallback successful`);
             await this.embedOriginalPDF(pdfDoc, page, element, tempPdfPath, templateSize);
             
             // Clean up
             fs.unlinkSync(tempSvgPath);
             fs.unlinkSync(tempPdfPath);
           } else {
-            throw new Error('High-resolution SVG to PDF conversion failed');
+            throw new Error('SVG to PDF conversion failed');
           }
         } else {
-          throw new Error('High-resolution PDF to SVG conversion failed');
+          throw new Error('PDF to SVG conversion failed');
         }
         
-      } catch (altError) {
-        console.error('Enhanced CMYK: Alternative recoloring approach failed:', altError);
-        // Final fallback: use original PDF without recoloring
-        console.log('Enhanced CMYK: Using original PDF without ink color modification');
+      } catch (svgError) {
+        console.error('Enhanced CMYK: SVG fallback also failed:', svgError);
+        console.log('Enhanced CMYK: Using original PDF without color modification');
         await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
       }
     }
