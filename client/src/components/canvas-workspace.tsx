@@ -27,7 +27,7 @@ export default function CanvasWorkspace({
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
-  const [colorManagementEnabled, setColorManagementEnabled] = useState(false);
+  const [colorManagementEnabled, setColorManagementEnabled] = useState(true);
   const [colorManagedUrls, setColorManagedUrls] = useState<Record<string, string>>({});
 
   // Set default zoom based on template size
