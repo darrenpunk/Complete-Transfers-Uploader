@@ -153,7 +153,8 @@ export class MemStorage implements IStorage {
       ...insertProject, 
       id, 
       status: insertProject.status || "draft",
-      createdAt: new Date().toISOString() 
+      createdAt: new Date().toISOString(),
+      inkColor: insertProject.inkColor || null
     };
     this.projects.set(id, project);
     return project;
@@ -191,7 +192,9 @@ export class MemStorage implements IStorage {
       originalFilename: insertLogo.originalFilename ?? null,
       originalMimeType: insertLogo.originalMimeType ?? null,
       originalUrl: insertLogo.originalUrl ?? null,
-      svgColors: insertLogo.svgColors || null
+      svgColors: insertLogo.svgColors || null,
+      svgFonts: insertLogo.svgFonts || null,
+      fontsOutlined: insertLogo.fontsOutlined || false
     };
     this.logos.set(id, logo);
     return logo;

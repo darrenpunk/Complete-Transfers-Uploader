@@ -9,6 +9,7 @@ import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProductLauncherModal from "@/components/product-launcher-modal";
+import InkColorModal from "@/components/ink-color-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
@@ -52,7 +53,7 @@ export default function UploadTool() {
 
   // Create new project
   const createProjectMutation = useMutation({
-    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string }) => {
+    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string }) => {
       const response = await apiRequest("POST", "/api/projects", projectData);
       return response.json();
     },
@@ -155,10 +156,13 @@ export default function UploadTool() {
       setHasInitialized(true); // Prevent reopening
       // Only require garment color for Full Colour Transfer Sizes
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
+      const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfer Sizes";
+      
       createProjectMutation.mutate({
         name: "Untitled Project",
         templateSize: templateId,
-        garmentColor: isFullColourTemplate ? "" : "#FFFFFF"
+        garmentColor: isFullColourTemplate ? "" : "#FFFFFF",
+        inkColor: isSingleColourTemplate ? "" : undefined
       });
     }
   };
@@ -196,6 +200,12 @@ export default function UploadTool() {
   const handleGarmentColorChange = (color: string) => {
     if (currentProject) {
       updateProjectMutation.mutate({ garmentColor: color });
+    }
+  };
+
+  const handleInkColorChange = (color: string) => {
+    if (currentProject) {
+      updateProjectMutation.mutate({ inkColor: color });
     }
   };
 
@@ -351,6 +361,7 @@ export default function UploadTool() {
           selectedElement={selectedElement}
           onTemplateChange={handleTemplateChange}
           onGarmentColorChange={handleGarmentColorChange}
+          onInkColorChange={handleInkColorChange}
         />
 
         {/* Main Canvas Area */}

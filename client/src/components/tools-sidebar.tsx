@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
+import InkColorModal from "@/components/ink-color-modal";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
@@ -30,6 +31,7 @@ interface ToolsSidebarProps {
   selectedElement: CanvasElement | null;
   onTemplateChange: (templateId: string) => void;
   onGarmentColorChange: (color: string) => void;
+  onInkColorChange: (color: string) => void;
 }
 
 // Professional color palette with complete specifications
@@ -95,7 +97,8 @@ export default function ToolsSidebar({
   canvasElements,
   selectedElement,
   onTemplateChange,
-  onGarmentColorChange
+  onGarmentColorChange,
+  onInkColorChange
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [logosCollapsed, setLogosCollapsed] = useState(false);
@@ -420,6 +423,81 @@ export default function ToolsSidebar({
                         >
                           <Palette className="w-4 h-4 mr-2" />
                           {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                        </Button>
+                      }
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        ) : null;
+      })()}
+
+      {/* Ink Color Selection - Only for Single Colour Transfer Sizes */}
+      {(() => {
+        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
+        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfer Sizes";
+        return isSingleColourTemplate ? (
+          <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+            <div className="border-b border-gray-200">
+              <CollapsibleTrigger asChild>
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
+                    <Palette className="w-5 h-5" />
+                    Ink Colour
+                    {!project.inkColor && (
+                      <span className="text-red-500 text-sm font-normal">*Required</span>
+                    )}
+                  </h3>
+                  {productSelectorCollapsed ? (
+                    <ChevronRight className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6">
+                  {!project.inkColor && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ Please select an ink color to continue
+                      </p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Your artwork will be recolored to match your ink selection
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {/* Current Selection Display */}
+                    {project.inkColor && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <TShirtSwatch
+                          color={project.inkColor}
+                          size="md"
+                          selected={false}
+                        />
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">Selected Ink</div>
+                          <div className="text-gray-600">{getColorName(project.inkColor)}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ink Color Modal Trigger */}
+                    <InkColorModal
+                      currentColor={project.inkColor || ""}
+                      onColorChange={onInkColorChange}
+                      autoOpen={!project.inkColor}
+                      trigger={
+                        <Button 
+                          variant={project.inkColor ? "outline" : "default"} 
+                          className="w-full"
+                        >
+                          <Palette className="w-4 h-4 mr-2" />
+                          {project.inkColor ? "Change Ink Color" : "Select Ink Color"}
                         </Button>
                       }
                     />
