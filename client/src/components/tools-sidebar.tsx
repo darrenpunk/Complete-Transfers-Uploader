@@ -96,6 +96,9 @@ export default function ToolsSidebar({
   onGarmentColorChange
 }: ToolsSidebarProps) {
   const { toast } = useToast();
+  const [logosCollapsed, setLogosCollapsed] = useState(true);
+  const [productSelectorCollapsed, setProductSelectorCollapsed] = useState(true);
+  const [preflightCollapsed, setPreflightCollapsed] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
   
@@ -255,8 +258,20 @@ export default function ToolsSidebar({
 
       {/* Uploaded Logos */}
       {logos.length > 0 && (
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Uploaded Logos</h3>
+        <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
+          <div className="border-b border-gray-200">
+            <CollapsibleTrigger asChild>
+              <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <h3 className="text-lg font-semibold text-gray-900">Uploaded Logos ({logos.length})</h3>
+                {logosCollapsed ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-6 pb-6">
           <div className="space-y-3">
             {logos.map((logo, index) => (
               <Card key={logo.id} className={index === 0 ? "border-2 border-primary" : ""}>
@@ -330,13 +345,28 @@ export default function ToolsSidebar({
               }}
             />
 
+              </div>
+              </div>
+            </CollapsibleContent>
           </div>
-        </div>
+        </Collapsible>
       )}
 
       {/* Product Selector */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Selector</h3>
+      <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+        <div className="border-b border-gray-200">
+          <CollapsibleTrigger asChild>
+            <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">Product Selector</h3>
+              {productSelectorCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-6 pb-6">
         <Button 
           variant="outline" 
           className="w-full"
@@ -347,14 +377,29 @@ export default function ToolsSidebar({
           <span className="mr-2">📐</span>
           Change Template Size
         </Button>
-        <p className="text-xs text-gray-500 mt-2">
-          Currently using template with different transfer sizes available
-        </p>
-      </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Currently using template with different transfer sizes available
+              </p>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
       {/* Pre-flight Check */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Pre-flight Check</h3>
+      <Collapsible open={!preflightCollapsed} onOpenChange={(open) => setPreflightCollapsed(!open)}>
+        <div className="border-b border-gray-200">
+          <CollapsibleTrigger asChild>
+            <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">Pre-flight Check</h3>
+              {preflightCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-6 pb-6">
         {(() => {
           if (!selectedElement) {
             return (
@@ -577,7 +622,10 @@ export default function ToolsSidebar({
             </div>
           );
         })()}
-      </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
 
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
       {(() => {

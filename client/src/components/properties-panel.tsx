@@ -82,8 +82,10 @@ export default function PropertiesPanel({
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
-  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
-  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
+  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(true);
+  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(true);
+  const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(true);
+  const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(true);
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
@@ -389,10 +391,18 @@ export default function PropertiesPanel({
       {/* Logo Properties */}
       {currentElement && (
         <Card className="rounded-none border-x-0 border-t-0">
-          <CardHeader>
-            <CardTitle className="text-lg">Logo Properties</CardTitle>
+          <CardHeader className="cursor-pointer" onClick={() => setPropertiesPanelCollapsed(!propertiesPanelCollapsed)}>
+            <CardTitle className="text-lg flex items-center justify-between">
+              <span>Logo Properties</span>
+              {propertiesPanelCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          {!propertiesPanelCollapsed && (
+            <CardContent className="space-y-4">
             {/* Position */}
             <div>
               <Label className="text-sm font-medium">Position</Label>
@@ -565,16 +575,35 @@ export default function PropertiesPanel({
               </div>
             </div>
           </CardContent>
+          )}
         </Card>
       )}
 
       {/* SVG Color Picker Panel */}
-      {currentElement && (
-        (() => {
-          const logo = logos.find(l => l.id === currentElement.logoId);
-          return logo ? <ColorPickerPanel selectedElement={currentElement} logo={logo} /> : null;
-        })()
-      )}
+      {currentElement && (() => {
+        const logo = logos.find(l => l.id === currentElement.logoId);
+        if (!logo) return null;
+        
+        return (
+          <Card className="rounded-none border-x-0 border-t-0">
+            <CardHeader className="cursor-pointer" onClick={() => setPreflightPanelCollapsed(!preflightPanelCollapsed)}>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>Color Analysis</span>
+                {preflightPanelCollapsed ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {!preflightPanelCollapsed && (
+              <CardContent>
+                <ColorPickerPanel selectedElement={currentElement} logo={logo} />
+              </CardContent>
+            )}
+          </Card>
+        );
+      })()}
 
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
