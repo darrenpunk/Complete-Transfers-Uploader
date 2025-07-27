@@ -82,6 +82,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Delete Button for Duplicates**: Added red trash icon on bounding box of duplicate elements, only appears when multiple copies of same logo exist on canvas
 ✓ **Embedded Pantone Detection System**: Replaced color matching database with authentic embedded Pantone swatch detection that finds actual Pantone information already present in uploaded PDF/SVG files
 ✓ **Enhanced Color Analysis Display**: "Edit Colours" section now shows detected colors with CMYK values and embedded Pantone swatches when present in source files
+✓ **Required Project Naming**: Added mandatory project name input field in properties panel with validation that prevents PDF generation until user provides a proper name
+✓ **Start Over Button**: Added prominent "Start Over" button in header to create new orders, resetting project state and navigating to template selection
 ✓ **CMYK Color Analysis Display**: Fixed color analysis to show proper CMYK values (C:0 M:87 Y:85 K:0) instead of RGB percentages, converting all detected colors automatically for print accuracy
 ✓ **Simplified Color Format Display**: Color analysis now shows simple "CMYK Vector" or "RGB Vector" format instead of listing all color values, with RGB to CMYK conversion option for non-CMYK files
 ✓ **Enhanced Cache Management**: Improved React Query cache invalidation and refetching after CMYK conversion to ensure immediate data refresh

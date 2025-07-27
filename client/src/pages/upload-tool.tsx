@@ -88,6 +88,9 @@ export default function UploadTool() {
   // Generate CMYK PDF with vector preservation
   const generatePDFMutation = useMutation({
     mutationFn: async () => {
+      if (!currentProject?.name || currentProject.name.trim() === '' || currentProject.name === 'Untitled Project') {
+        throw new Error('Please provide a project name before generating PDF');
+      }
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to generate PDF');
@@ -113,7 +116,7 @@ export default function UploadTool() {
     onError: (error) => {
       toast({
         title: "PDF Generation Failed",
-        description: "Unable to generate PDF. Please try again.",
+        description: error.message || "Unable to generate PDF. Please try again.",
         variant: "destructive",
       });
     },
@@ -143,7 +146,7 @@ export default function UploadTool() {
       // Only require garment color for Full Colour Transfer Sizes
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
       createProjectMutation.mutate({
-        name: `Project ${new Date().toLocaleDateString()}`,
+        name: "Untitled Project",
         templateSize: templateId,
         garmentColor: isFullColourTemplate ? "" : "#FFFFFF"
       });
@@ -374,7 +377,7 @@ export default function UploadTool() {
               <Button 
                 variant="outline"
                 onClick={() => generatePDFMutation.mutate()}
-                disabled={generatePDFMutation.isPending}
+                disabled={generatePDFMutation.isPending || !currentProject?.name || currentProject.name.trim() === '' || currentProject.name === 'Untitled Project'}
                 size="sm"
               >
                 <Download className="w-4 h-4 mr-2" />

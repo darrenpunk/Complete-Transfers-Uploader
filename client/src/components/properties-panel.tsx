@@ -126,12 +126,25 @@ export default function PropertiesPanel({
   const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(true);
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(true);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(true);
+  const [projectName, setProjectName] = useState(project.name || "Untitled Project");
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
   const currentElement = selectedElement 
     ? canvasElements.find(el => el.id === selectedElement.id) || selectedElement
     : null;
+
+  // Update project mutation
+  const updateProjectMutation = useMutation({
+    mutationFn: async (updates: Partial<Project>) => {
+      const response = await apiRequest("PATCH", `/api/projects/${project.id}`, updates);
+      return response.json();
+    },
+    onSuccess: (updatedProject) => {
+      // Update the project name in the parent component
+      queryClient.setQueryData(["/api/projects", project.id], updatedProject);
+    },
+  });
   
   console.log('PropertiesPanel - Selected element rotation:', currentElement?.rotation);
 
@@ -169,6 +182,14 @@ export default function PropertiesPanel({
         id: currentElement.id,
         updates: { garmentColor: color }
       });
+    }
+  };
+
+  // Handle project name change
+  const handleProjectNameChange = (name: string) => {
+    setProjectName(name);
+    if (name.trim()) {
+      updateProjectMutation.mutate({ name: name.trim() });
     }
   };
 
@@ -427,6 +448,33 @@ export default function PropertiesPanel({
 
   return (
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
+
+      {/* Project Name */}
+      <Card className="rounded-none border-x-0 border-t-0">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Project Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label className="text-sm font-medium">Project Name</Label>
+            <Input
+              type="text"
+              value={projectName}
+              onChange={(e) => handleProjectNameChange(e.target.value)}
+              placeholder="Enter project name..."
+              className={`mt-1 ${(!projectName || projectName === 'Untitled Project') ? 'border-red-300 focus:border-red-500' : ''}`}
+            />
+            {(!projectName || projectName === 'Untitled Project') && (
+              <p className="text-xs text-red-600 mt-1">
+                Project name is required for PDF generation
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Logo Properties */}
       {currentElement && (
