@@ -461,10 +461,32 @@ export default function ToolsSidebar({
             const svgFonts = logo.svgFonts as any;
             if (svgFonts && Array.isArray(svgFonts) && svgFonts.length > 0) {
               const hasOutlinedFonts = (logo as any).fontsOutlined === true;
+              const hasAlreadyOutlinedGlyphs = svgFonts.some(font => font.elementType === 'outlined-glyphs');
+              
+              let status = "pass";
+              let value = "Fonts Outlined";
+              
+              if (hasAlreadyOutlinedGlyphs && !hasOutlinedFonts) {
+                // PDF already contains outlined text (glyph paths)
+                status = "pass";
+                value = "Already Outlined (Vector Paths)";
+              } else if (hasOutlinedFonts) {
+                // Fonts have been manually outlined by our system
+                status = "pass";
+                value = "Fonts Outlined";
+              } else {
+                // Live text elements that need outlining
+                const liveTextCount = svgFonts.filter(font => font.elementType !== 'outlined-glyphs').length;
+                if (liveTextCount > 0) {
+                  status = "warning";
+                  value = `${liveTextCount} font(s) need outlining`;
+                }
+              }
+              
               checks.push({
                 name: "Typography",
-                status: hasOutlinedFonts ? "pass" : "warning",
-                value: hasOutlinedFonts ? "Fonts Outlined" : `${svgFonts.length} font(s) detected`
+                status,
+                value
               });
             }
           }
@@ -515,7 +537,7 @@ export default function ToolsSidebar({
                   {check.name === "Typography" && check.status === "warning" && (
                     <div className="ml-4 mt-2 space-y-2">
                       <div className="text-xs text-gray-600">
-                        Text elements detected. Outlining fonts ensures compatibility across all systems.
+                        Live text elements detected. Outlining fonts ensures compatibility across all printing systems.
                       </div>
                       <Button
                         size="sm"
@@ -526,6 +548,15 @@ export default function ToolsSidebar({
                       >
                         {convertingLogo === (logo?.id) ? "Outlining..." : "Outline Fonts"}
                       </Button>
+                    </div>
+                  )}
+                  
+                  {/* Already Outlined Info */}
+                  {check.name === "Typography" && check.value === "Already Outlined (Vector Paths)" && (
+                    <div className="ml-4 mt-2">
+                      <div className="text-xs text-gray-600">
+                        ✓ Text has been converted to vector paths in the original file. No outlining needed.
+                      </div>
                     </div>
                   )}
                 </div>

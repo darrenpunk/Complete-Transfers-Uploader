@@ -44,7 +44,7 @@ export function extractSVGFonts(svgPath: string): FontInfo[] {
     const fonts: FontInfo[] = [];
     let fontId = 0;
 
-    // Extract text elements
+    // Extract text elements (actual text that needs outlining)
     const textElements = svgContent.match(/<text[^>]*>.*?<\/text>/gi) || [];
     
     textElements.forEach((textElement, index) => {
@@ -85,6 +85,21 @@ export function extractSVGFonts(svgPath: string): FontInfo[] {
         });
       }
     });
+
+    // Check for glyph definitions (already outlined text)
+    const glyphElements = svgContent.match(/<g id="glyph-[^"]*"[^>]*>/gi) || [];
+    
+    if (glyphElements.length > 0) {
+      // This indicates text has already been converted to paths (outlined)
+      fonts.push({
+        fontFamily: 'Already Outlined',
+        fontSize: 'Various',
+        fontWeight: 'normal',
+        textContent: `${glyphElements.length} text elements already outlined as paths`,
+        elementType: 'outlined-glyphs',
+        selector: 'g[id^="glyph-"]'
+      });
+    }
 
     return fonts;
   } catch (error) {

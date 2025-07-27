@@ -331,7 +331,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               
               svgFonts = svgAnalysis.fonts;
-              fontsOutlined = false; // Initially fonts are not outlined
+              // Check if text is already outlined (glyph definitions)
+              const hasAlreadyOutlinedGlyphs = svgAnalysis.fonts.some(font => font.elementType === 'outlined-glyphs');
+              fontsOutlined = hasAlreadyOutlinedGlyphs; // Mark as outlined if glyphs detected
               
               console.log(`Extracted ${svgAnalysis.colors.length} colors from SVG:`, svgAnalysis.colors.map(c => `${c.originalColor} (${c.cmykColor})`));
               console.log(`Detected ${svgAnalysis.fonts.length} fonts:`, svgAnalysis.fonts.map(f => `${f.fontFamily} (${f.textContent.substring(0, 20)}...)`));
@@ -680,6 +682,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Color-managed URL check error:', error);
       res.status(500).json({ message: "Failed to check color-managed preview" });
+    }
+  });
+
+  // Re-analyze fonts in existing logos
+  app.post("/api/logos/:id/reanalyze-fonts", async (req, res) => {
+    try {
+      const logoId = req.params.id;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      const uploadDir = path.join(process.cwd(), "uploads");
+      const logoPath = path.join(uploadDir, logo.filename);
+      
+      if (!fs.existsSync(logoPath)) {
+        return res.status(404).json({ message: "Logo file not found" });
+      }
+
+      // Re-analyze the SVG/PDF for fonts
+      const svgAnalysis = analyzeSVG(logoPath);
+      const hasAlreadyOutlinedGlyphs = svgAnalysis.fonts.some(font => font.elementType === 'outlined-glyphs');
+      
+      const updatedData = {
+        svgFonts: svgAnalysis.fonts,
+        fontsOutlined: hasAlreadyOutlinedGlyphs,
+      };
+
+      const updatedLogo = await storage.updateLogo(logoId, updatedData);
+      
+      console.log(`Re-analyzed fonts for ${logo.filename}:`, {
+        fontsDetected: svgAnalysis.fonts.length,
+        alreadyOutlined: hasAlreadyOutlinedGlyphs,
+        fonts: svgAnalysis.fonts.map(f => `${f.fontFamily} (${f.elementType})`)
+      });
+      
+      res.json(updatedLogo);
+    } catch (error) {
+      console.error('Font re-analysis error:', error);
+      res.status(500).json({ message: "Failed to re-analyze fonts" });
     }
   });
 
