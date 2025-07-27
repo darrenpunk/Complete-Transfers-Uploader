@@ -104,6 +104,25 @@ export default function AppliqueBadgesModal({
     onOpenChange(false);
   };
 
+  // Debug: Show as a simple div if open is true
+  if (open) {
+    console.log('AppliqueBadgesModal - SHOULD BE VISIBLE NOW');
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto">
+          <h2 className="text-xl font-semibold mb-4">EMBROIDERY FILE OPTIONS (DEBUG MODE)</h2>
+          <p>This is a test to see if the modal state is working correctly.</p>
+          <button 
+            onClick={() => onOpenChange(false)}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Close Modal
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
