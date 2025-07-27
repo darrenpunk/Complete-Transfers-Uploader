@@ -85,14 +85,14 @@ export default function UploadTool() {
     },
   });
 
-  // Generate PDF with vector preservation
+  // Generate CMYK PDF with vector preservation
   const generatePDFMutation = useMutation({
-    mutationFn: async (colorSpace: string = 'auto') => {
-      const url = `/api/projects/${currentProject?.id}/generate-pdf${colorSpace !== 'auto' ? `?colorSpace=${colorSpace}` : ''}`;
+    mutationFn: async () => {
+      const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to generate PDF');
       const blob = await response.blob();
-      return { blob, filename: `${currentProject?.name}_${colorSpace}.pdf` };
+      return { blob, filename: `${currentProject?.name}_cmyk.pdf` };
     },
     onSuccess: ({ blob, filename }) => {
       // Create download link
@@ -106,8 +106,8 @@ export default function UploadTool() {
       document.body.removeChild(a);
       
       toast({
-        title: "PDF Generated",
-        description: "Production PDF downloaded with preserved vector graphics",
+        title: "CMYK PDF Generated",
+        description: "Professional CMYK PDF downloaded with preserved vector graphics",
       });
     },
     onError: (error) => {
@@ -350,26 +350,15 @@ export default function UploadTool() {
               Preview
             </Button>
             {currentStep >= 3 && (
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="outline"
-                  onClick={() => generatePDFMutation.mutate('rgb')}
-                  disabled={generatePDFMutation.isPending}
-                  size="sm"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  RGB PDF
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => generatePDFMutation.mutate('cmyk')}
-                  disabled={generatePDFMutation.isPending}
-                  size="sm"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  CMYK PDF
-                </Button>
-              </div>
+              <Button 
+                variant="outline"
+                onClick={() => generatePDFMutation.mutate()}
+                disabled={generatePDFMutation.isPending}
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Generate PDF
+              </Button>
             )}
             <Button onClick={handleNextStep} disabled={currentStep === 5}>
               {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
