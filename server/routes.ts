@@ -10,7 +10,7 @@ import { fromPath } from "pdf2pic";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
-import { extractSVGColors, applySVGColorChanges, analyzeSVG } from "./svg-color-utils";
+import { extractSVGColors, applySVGColorChanges, analyzeSVG, calculateSVGContentBounds } from "./svg-color-utils";
 import { outlineFonts } from "./font-outliner";
 import { ColorManagement } from "./color-management";
 import { standardizeRgbToCmyk } from "./color-standardization";
@@ -290,12 +290,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let actualWidth = null;
         let actualHeight = null;
         try {
-          // Use ImageMagick identify for all formats to get accurate dimensions
-          const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
-          const [w, h] = stdout.trim().split(' ').map(Number);
-          if (w && h) {
-            actualWidth = w;
-            actualHeight = h;
+          if (finalMimeType === 'image/svg+xml') {
+            // For SVG files, calculate actual content bounding box instead of viewBox
+            const svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
+            const bbox = calculateSVGContentBounds(svgContent);
+            if (bbox) {
+              actualWidth = bbox.width;
+              actualHeight = bbox.height;
+              console.log(`SVG content bounds: ${actualWidth}×${actualHeight} (was using viewBox dimensions)`);
+            } else {
+              // Fallback to viewBox if content bounds calculation fails
+              const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
+              const [w, h] = stdout.trim().split(' ').map(Number);
+              if (w && h) {
+                actualWidth = w;
+                actualHeight = h;
+              }
+            }
+          } else {
+            // Use ImageMagick identify for raster formats
+            const { stdout } = await execAsync(`identify -format "%w %h" "${path.join(uploadDir, finalFilename)}"`);
+            const [w, h] = stdout.trim().split(' ').map(Number);
+            if (w && h) {
+              actualWidth = w;
+              actualHeight = h;
+            }
           }
         } catch (error) {
           console.error('Failed to get image dimensions:', error);

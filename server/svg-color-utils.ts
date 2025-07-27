@@ -297,6 +297,112 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
+// Calculate actual content bounding box from SVG elements
+export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
+  try {
+    // Extract all elements with coordinates and dimensions
+    const elements = [];
+    
+    // Path elements - find bounding coordinates
+    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gi;
+    let pathMatch;
+    while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
+      const pathData = pathMatch[1];
+      const coords = extractPathCoordinates(pathData);
+      if (coords.length > 0) {
+        elements.push(...coords);
+      }
+    }
+    
+    // Rect elements
+    const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*>/gi;
+    let rectMatch;
+    while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
+      const x = parseFloat(rectMatch[1]);
+      const y = parseFloat(rectMatch[2]);
+      const width = parseFloat(rectMatch[3]);
+      const height = parseFloat(rectMatch[4]);
+      
+      if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+        elements.push({ x, y }, { x: x + width, y: y + height });
+      }
+    }
+    
+    // Circle elements
+    const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*>/gi;
+    let circleMatch;
+    while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
+      const cx = parseFloat(circleMatch[1]);
+      const cy = parseFloat(circleMatch[2]);
+      const r = parseFloat(circleMatch[3]);
+      
+      if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
+        elements.push(
+          { x: cx - r, y: cy - r },
+          { x: cx + r, y: cy + r }
+        );
+      }
+    }
+    
+    // Use elements (glyph references)
+    const useRegex = /<use[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*>/gi;
+    let useMatch;
+    while ((useMatch = useRegex.exec(svgContent)) !== null) {
+      const x = parseFloat(useMatch[1]);
+      const y = parseFloat(useMatch[2]);
+      
+      if (!isNaN(x) && !isNaN(y)) {
+        elements.push({ x, y });
+      }
+    }
+    
+    if (elements.length === 0) {
+      return null;
+    }
+    
+    // Calculate bounding box
+    const minX = Math.min(...elements.map(e => e.x));
+    const minY = Math.min(...elements.map(e => e.y));
+    const maxX = Math.max(...elements.map(e => e.x));
+    const maxY = Math.max(...elements.map(e => e.y));
+    
+    // Return content dimensions with some padding
+    const contentWidth = Math.ceil(maxX - minX + 20); // Add 20px padding
+    const contentHeight = Math.ceil(maxY - minY + 20);
+    
+    console.log(`Content bounds: ${minX},${minY} to ${maxX},${maxY} = ${contentWidth}×${contentHeight}`);
+    
+    return {
+      width: contentWidth,
+      height: contentHeight
+    };
+    
+  } catch (error) {
+    console.error('Error calculating SVG content bounds:', error);
+    return null;
+  }
+}
+
+// Extract coordinates from SVG path data
+function extractPathCoordinates(pathData: string): Array<{ x: number; y: number }> {
+  const coords = [];
+  
+  // Match all number pairs in path data (M, L, C, etc. commands with coordinates)
+  const numberRegex = /(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g;
+  let match;
+  
+  while ((match = numberRegex.exec(pathData)) !== null) {
+    const x = parseFloat(match[1]);
+    const y = parseFloat(match[2]);
+    
+    if (!isNaN(x) && !isNaN(y)) {
+      coords.push({ x, y });
+    }
+  }
+  
+  return coords;
+}
+
 export function applySVGColorChanges(svgPath: string, colorOverrides: Record<string, string>): string {
   try {
     let svgContent = fs.readFileSync(svgPath, 'utf8');

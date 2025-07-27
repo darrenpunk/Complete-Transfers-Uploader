@@ -89,7 +89,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Auto CMYK Detection**: Automatically detects CMYK PDFs during upload and marks them as converted, eliminating need for manual conversion button
 ✓ **Color Standardization System**: Intelligent color mapping that recognizes similar logo colors and standardizes them to identical CMYK values for consistent output across file variations
 ✓ **Critical Font Detection Fixes**: Corrected logic to properly distinguish between glyph references (live text needing outlining) vs already outlined paths (vector text)
-✓ **Accurate Bounding Box Calculation**: Fixed massive size issues by using actual logo content dimensions instead of full PDF page size (297×420mm error resolved)
+✓ **Accurate Bounding Box Calculation**: Fixed massive size issues by using actual logo content dimensions instead of full PDF page size (297×420mm error resolved) - regression fixed again with SVG content bounds calculation
 ✓ **Enhanced Typography Workflow**: Font analysis now correctly identifies `<use xlink:href="#glyph-">` elements as live text requiring outlining
 ✓ **Comprehensive Imposition Tool**: Added grid replication system for logos with customizable rows, columns, spacing, and canvas centering
 ✓ **Enhanced Alignment Tools**: Added "Select All" and "Center All" functions to align multiple elements as a group on canvas
