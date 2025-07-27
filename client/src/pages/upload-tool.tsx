@@ -277,6 +277,13 @@ export default function UploadTool() {
   // Debug: Log state changes
   useEffect(() => {
     console.log('showAppliqueBadgesModal state changed to:', showAppliqueBadgesModal);
+    if (showAppliqueBadgesModal) {
+      console.log('Modal should be visible now!');
+      // Check if component is unmounting/remounting
+      console.log('Current project:', currentProject?.id);
+      console.log('Current step:', currentStep);
+      console.log('Has initialized:', hasInitialized);
+    }
   }, [showAppliqueBadgesModal]);
 
   const handleTemplateChange = (templateId: string) => {
@@ -561,13 +568,17 @@ export default function UploadTool() {
       
       {/* Force render modal if state is true */}
       {showAppliqueBadgesModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md">
-            <h2 className="text-xl font-semibold mb-4">DEBUG: Modal State is TRUE</h2>
+        <div key="debug-modal" className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md border-4 border-red-500">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">🔥 DEBUG: Modal State is TRUE</h2>
             <p>The showAppliqueBadgesModal state is true. This confirms state management is working.</p>
+            <p className="mt-2 text-sm">State: {showAppliqueBadgesModal ? 'TRUE' : 'FALSE'}</p>
             <button 
-              onClick={() => setShowAppliqueBadgesModal(false)}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+              onClick={() => {
+                console.log('Debug modal close button clicked');
+                setShowAppliqueBadgesModal(false);
+              }}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
             >
               Close Test Modal
             </button>
