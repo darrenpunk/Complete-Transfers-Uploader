@@ -99,7 +99,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
             {!currentColor && <span className="text-red-500 text-sm font-normal">*Required</span>}
           </DialogTitle>
           <DialogDescription>
-            Choose an ink color for your Single Colour Transfer design. This will determine the color of your printed artwork.
+            Please select the colour of the ink that your graphics will be printed with. For single colour transfers the selection of this colour is important as this is what our print staff see when they process your job regardless if the colour you have set in your artwork file.
           </DialogDescription>
         </DialogHeader>
 

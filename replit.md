@@ -101,6 +101,9 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Duplicate Color Detection Cleanup**: Removed redundant color detection display from preflight checks since comprehensive color analysis is already available in the right sidebar Color Analysis panel
 ✓ **Two-Tier Template Launcher System**: Implemented ProductLauncherModal with product group grid layout followed by filtered TemplateSelectorModal for streamlined template selection workflow
 ✓ **T-Shirt Shaped Color Swatches**: Replaced all circular garment color swatches with professional t-shirt SVG shapes featuring realistic sleeves, curved neck opening, seam details, and proper proportions for enhanced visual recognition
+✓ **Authentic Pantone Ink Color System**: Implemented complete ink color selector using official 31-color Pantone chart with OT codes (OT 91 WHITE through OT 120 GOLD) for Single Colour Transfer templates
+✓ **Ink Drop/Splash Swatches**: Created custom SVG ink drop designs with realistic drips, splashes, and highlights to replace t-shirt shapes for ink color selection
+✓ **Professional Ink Selection Text**: Updated modal description to explain importance of ink color selection for print staff workflow and job processing accuracy
 
 ## Current Status (July 27, 2025)
 **CORE MILESTONE ACHIEVED**: Perfect CMYK PDF output with identical color values across all file types
