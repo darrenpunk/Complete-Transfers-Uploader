@@ -386,6 +386,13 @@ export default function ToolsSidebar({
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
+              // Debug: Log the color data for troubleshooting (remove after fix)
+              // console.log('Color Analysis Debug:', {
+              //   logoId: logo.id,
+              //   svgColors: svgColors,
+              //   hasConvertedColors: svgColors.some(color => color.converted)
+              // });
+              
               // Only show CMYK if explicitly converted (has converted flag)
               const hasConvertedColors = svgColors.some(color => color.converted);
               
