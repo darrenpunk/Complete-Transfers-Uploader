@@ -664,33 +664,7 @@ export default function ToolsSidebar({
                     </div>
                   )}
                   
-                  {/* Color Analysis with Pantone Detection */}
-                  {check.name === "Edit Colours" && logo && Array.isArray(logoSvgColors) && logoSvgColors.length > 0 && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      <div className="text-xs font-medium text-gray-700 mb-2">Detected Colors:</div>
-                      {logoSvgColors.slice(0, 5).map((color: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded border border-gray-300" 
-                              style={{ backgroundColor: color.originalColor.includes('rgb') ? color.originalColor : color.originalColor }}
-                            />
-                            <span className="font-mono text-xs">{color.cmykColor || 'Unknown'}</span>
-                          </div>
-                          {color.pantoneMatch && (
-                            <div className="text-xs text-blue-600 font-medium">
-                              {color.pantoneMatch}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {logoSvgColors.length > 5 && (
-                        <div className="text-xs text-gray-500">
-                          +{logoSvgColors.length - 5} more colors
-                        </div>
-                      )}
-                    </div>
-                  )}
+
                 </div>
               ))}
             </div>
