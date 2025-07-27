@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Palette } from "lucide-react";
+import { PaintBucket } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 
@@ -94,7 +94,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Palette className="w-5 h-5" />
+            <PaintBucket className="w-5 h-5" />
             Select Ink Color
             {!currentColor && <span className="text-red-500 text-sm font-normal">*Required</span>}
           </DialogTitle>
