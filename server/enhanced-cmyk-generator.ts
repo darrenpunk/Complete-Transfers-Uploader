@@ -431,10 +431,9 @@ export class EnhancedCMYKGenerator {
       // Step 2: Apply comprehensive color replacement 
       const tempRecoloredPngPath = path.join(uploadDir, `temp_recolored_png_${Date.now()}.png`);
       
-      // Create a binary mask where any non-transparent pixel becomes the ink color
-      // This approach catches all colors including light greens that are close to white
-      await execAsync(`convert "${tempPngPath}" -alpha extract -negate "${tempPngPath}_mask.png"`);
-      await execAsync(`convert -size $(identify -format "%wx%h" "${tempPngPath}") xc:"${inkColor}" "${tempPngPath}_mask.png" -alpha off -compose copy_opacity -composite "${tempRecoloredPngPath}"`);
+      // Use a simpler but more comprehensive approach - replace all colors with high fuzz tolerance
+      // but preserve transparency completely
+      await execAsync(`convert "${tempPngPath}" -fuzz 90% -fill "${inkColor}" +opaque "rgba(0,0,0,0)" "${tempRecoloredPngPath}"`);
       
       if (!fs.existsSync(tempRecoloredPngPath)) {
         throw new Error('Color replacement failed');
@@ -453,9 +452,6 @@ export class EnhancedCMYKGenerator {
         
         // Clean up temporary files
         fs.unlinkSync(tempPngPath);
-        if (fs.existsSync(`${tempPngPath}_mask.png`)) {
-          fs.unlinkSync(`${tempPngPath}_mask.png`);
-        }
         fs.unlinkSync(tempRecoloredPngPath);
         fs.unlinkSync(tempRecoloredPdfPath);
         
