@@ -534,7 +534,7 @@ export default function CanvasWorkspace({
                             ? `/uploads/${element.id}_modified.svg?t=${Date.now()}`
                             // Priority 2: Single Colour Transfer with ink color selected
                             : shouldRecolorForInk 
-                              ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`
+                              ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`
                               // Priority 3: Original image
                               : getImageUrl(logo)
                         }
