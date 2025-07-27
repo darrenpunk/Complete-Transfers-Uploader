@@ -4,7 +4,8 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef } from "pdf-lib";
+import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts } from "pdf-lib";
+import { manufacturerColors } from "@shared/garment-colors";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -15,6 +16,63 @@ export interface PDFGenerationData {
 }
 
 export class EnhancedCMYKGenerator {
+  // Professional color palette for matching
+  private quickColors = [
+    { name: "White", hex: "#FFFFFF" },
+    { name: "Black", hex: "#171816" },
+    { name: "Navy", hex: "#201C3A" },
+    { name: "Royal Blue", hex: "#221866" },
+    { name: "Kelly Green", hex: "#3C8A35" },
+    { name: "Red", hex: "#C02300" },
+    { name: "Yellow", hex: "#F0F42A" },
+    { name: "Purple", hex: "#4C0A6A" }
+  ];
+
+  // Function to get color name from hex value (server-side version)
+  private getColorName(hex: string): string {
+    // Check quick colors first
+    const quickColor = this.quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+    if (quickColor) {
+      return quickColor.name;
+    }
+
+    // Check manufacturer colors
+    for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
+      for (const group of colorGroups) {
+        const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+        if (manufacturerColor) {
+          return `${manufacturerColor.name} (${manufacturerColor.code})`;
+        }
+      }
+    }
+
+    // Convert hex to RGB for color analysis
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result) {
+      const r = parseInt(result[1], 16);
+      const g = parseInt(result[2], 16);
+      const b = parseInt(result[3], 16);
+      
+      // Determine the dominant color family
+      if (r > g && r > b) {
+        if (g > 100 && b < 50) return `Custom Orange`;
+        if (g < 100 && b < 100) return `Custom Red`;
+        if (g > 150 && b > 150) return `Custom Pink`;
+      } else if (g > r && g > b) {
+        if (r < 100 && b < 100) return `Custom Green`;
+        if (r > 150 && b < 100) return `Custom Yellow`;
+      } else if (b > r && b > g) {
+        if (r < 100 && g < 100) return `Custom Blue`;
+        if (r > 150 && g > 150) return `Custom Purple`;
+      } else if (r === g && g === b) {
+        if (r < 50) return `Custom Black`;
+        if (r > 200) return `Custom White`;
+        return `Custom Gray`;
+      }
+    }
+
+    return `Custom Color`;
+  }
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
@@ -96,6 +154,9 @@ export class EnhancedCMYKGenerator {
     const hasIndividualColors = canvasElements.some(element => element.garmentColor);
     
     if (hasIndividualColors) {
+      // Load font for text labels
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      
       // Multi-color visualization: show each logo on its own garment color background
       for (const element of canvasElements) {
         const logo = logoMap.get(element.logoId);
@@ -120,6 +181,36 @@ export class EnhancedCMYKGenerator {
           color: rgb(r / 255, g / 255, b / 255),
         });
         
+        // Add color label text below the logo
+        const colorName = this.getColorName(logoGarmentColor);
+        const fontSize = 8;
+        const textWidth = font.widthOfTextAtSize(colorName, fontSize);
+        const textX = x + (width - textWidth) / 2; // Center text horizontally
+        const textY = y - 15; // Position text below the colored rectangle
+        
+        // Choose text color based on background brightness
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        const textColor = brightness > 128 ? rgb(0, 0, 0) : rgb(1, 1, 1);
+        
+        // Draw white background for text readability
+        page2.drawRectangle({
+          x: textX - 4,
+          y: textY - 2,
+          width: textWidth + 8,
+          height: fontSize + 4,
+          color: rgb(1, 1, 1),
+          borderColor: rgb(0.8, 0.8, 0.8),
+          borderWidth: 0.5,
+        });
+        
+        page2.drawText(colorName, {
+          x: textX,
+          y: textY,
+          size: fontSize,
+          font: font,
+          color: rgb(0, 0, 0),
+        });
+        
         try {
           await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
         } catch (error) {
@@ -127,6 +218,9 @@ export class EnhancedCMYKGenerator {
         }
       }
     } else if (garmentColor) {
+      // Load font for text labels
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      
       // Single color visualization: all artwork on project garment color
       const { r, g, b } = this.hexToRgb(garmentColor);
       page2.drawRectangle({
@@ -135,6 +229,31 @@ export class EnhancedCMYKGenerator {
         width: pageWidth,
         height: pageHeight,
         color: rgb(r / 255, g / 255, b / 255),
+      });
+      
+      // Add color label in top-left corner
+      const colorName = this.getColorName(garmentColor);
+      const fontSize = 12;
+      const margin = 20;
+      
+      // Draw white background for text readability
+      const textWidth = font.widthOfTextAtSize(colorName, fontSize);
+      page2.drawRectangle({
+        x: margin - 4,
+        y: pageHeight - margin - fontSize - 2,
+        width: textWidth + 8,
+        height: fontSize + 4,
+        color: rgb(1, 1, 1),
+        borderColor: rgb(0.8, 0.8, 0.8),
+        borderWidth: 0.5,
+      });
+      
+      page2.drawText(`Garment Color: ${colorName}`, {
+        x: margin,
+        y: pageHeight - margin - fontSize,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0, 0),
       });
       
       // Process each canvas element for page 2
