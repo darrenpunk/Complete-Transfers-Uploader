@@ -103,8 +103,20 @@ function getCMYKFromColor(colorString: string): CMYKColor | null {
 
 export default function CMYKColorModal({ initialColor, onChange, label, currentColor, trigger, cmykValues }: CMYKColorModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const initialCMYK = cmykValues || getCMYKFromColor(currentColor) || getCMYKFromColor(initialColor) || { c: 0, m: 0, y: 0, k: 0 };
+  
+  // Determine which color to use for CMYK conversion - prefer currentColor if it's different from initialColor
+  const colorToConvert = (currentColor !== initialColor) ? currentColor : initialColor;
+  const initialCMYK = cmykValues || getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 };
   const [cmyk, setCmyk] = useState<CMYKColor>(initialCMYK);
+  
+  // Reset CMYK when modal opens to reflect current color
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      const freshCMYK = cmykValues || getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 };
+      setCmyk(freshCMYK);
+    }
+  };
 
   const handleCMYKChange = (channel: keyof CMYKColor, value: number) => {
     const newCMYK = { ...cmyk, [channel]: Math.max(0, Math.min(100, value)) };
@@ -113,6 +125,7 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
     // Convert CMYK back to RGB hex for the onChange callback
     const rgb = cmykToRgb(newCMYK);
     const hex = rgbToHex(rgb);
+    console.log('CMYK changed:', { newCMYK, rgb, hex, channel, value });
     onChange(hex);
   };
 
@@ -124,7 +137,7 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
   const previewColor = rgbToHex(previewRgb);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">

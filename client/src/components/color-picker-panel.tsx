@@ -95,11 +95,13 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   });
 
   const handleColorChange = (originalColor: string, newColor: string) => {
+    console.log('Color change requested:', { originalColor, newColor });
     const updatedOverrides = {
       ...colorOverrides,
       [originalColor]: newColor
     };
     setColorOverrides(updatedOverrides);
+    console.log('Updated color overrides:', updatedOverrides);
   };
 
   const handleApplyColors = () => {
@@ -131,26 +133,30 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
         {/* Color Grid - Same style as garment colors */}
         <div className="grid grid-cols-6 gap-2">
           {svgColors.map((colorInfo, index) => {
-            const currentColor = getDisplayColor(colorInfo.originalColor);
+            const hasOverride = !!colorOverrides[colorInfo.originalColor];
+            const currentColor = hasOverride ? colorOverrides[colorInfo.originalColor] : colorInfo.originalColor;
             const rgbPercent = parseRGBPercentage(colorInfo.originalColor);
-            let displayColor = colorInfo.originalColor;
             
-            // Convert RGB percentage to hex for display
+            // Convert original color to hex for display
+            let originalDisplayColor = colorInfo.originalColor;
             if (rgbPercent) {
-              displayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
+              originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             }
+            
+            // Use override color if exists, otherwise original display color
+            const displayColor = hasOverride ? currentColor : originalDisplayColor;
             
             return (
               <CMYKColorModal
                 key={`${colorInfo.originalColor}-${index}`}
-                initialColor={colorInfo.originalColor}
-                currentColor={getDisplayColor(colorInfo.originalColor)}
+                initialColor={originalDisplayColor}
+                currentColor={currentColor}
                 onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
                 label={`Color ${index + 1}`}
                 trigger={
                   <button
                     className={`w-10 h-10 rounded-full border-2 shadow-sm transition-all hover:scale-105 ${
-                      colorOverrides[colorInfo.originalColor]
+                      hasOverride
                         ? "border-primary ring-2 ring-blue-200"
                         : "border-gray-300 hover:border-gray-400"
                     }`}
@@ -175,7 +181,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
               </div>
               {color.pantoneMatch && (
                 <div className="text-xs text-purple-600 dark:text-purple-400">
-                  🎨 {color.pantoneMatch} ({Math.round((1 - color.pantoneDistance / 255) * 100)}% match)
+                  🎨 {color.pantoneMatch} ({Math.round((1 - (color.pantoneDistance || 0) / 255) * 100)}% match)
                 </div>
               )}
             </div>

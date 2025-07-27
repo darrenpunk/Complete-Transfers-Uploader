@@ -740,33 +740,37 @@ export function applySVGColorChanges(svgPath: string, colorOverrides: Record<str
   try {
     let svgContent = fs.readFileSync(svgPath, 'utf8');
     
+    console.log('Applying color overrides:', colorOverrides);
+    
     // Apply color overrides
     Object.entries(colorOverrides).forEach(([originalColor, newColor]) => {
-      // Replace fill attributes
-      svgContent = svgContent.replace(
-        new RegExp(`fill\\s*=\\s*["']${escapeRegExp(originalColor)}["']`, 'gi'),
-        `fill="${newColor}"`
-      );
+      console.log(`Replacing ${originalColor} with ${newColor}`);
       
-      // Replace stroke attributes
-      svgContent = svgContent.replace(
-        new RegExp(`stroke\\s*=\\s*["']${escapeRegExp(originalColor)}["']`, 'gi'),
-        `stroke="${newColor}"`
-      );
+      // Escape special regex characters in color strings
+      const escapedOriginal = escapeRegExp(originalColor);
       
-      // Replace style-based fills
-      svgContent = svgContent.replace(
-        new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapeRegExp(originalColor)}([^"';]*)`, 'gi'),
-        `$1${newColor}$2`
-      );
+      // Replace fill attributes (exact match)
+      const fillRegex = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+      svgContent = svgContent.replace(fillRegex, `fill="${newColor}"`);
       
-      // Replace style-based strokes
-      svgContent = svgContent.replace(
-        new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapeRegExp(originalColor)}([^"';]*)`, 'gi'),
-        `$1${newColor}$2`
-      );
+      // Replace stroke attributes (exact match)
+      const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+      svgContent = svgContent.replace(strokeRegex, `stroke="${newColor}"`);
+      
+      // Replace style-based fills (more careful regex)
+      const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleFillRegex, `$1${newColor}$2`);
+      
+      // Replace style-based strokes (more careful regex)
+      const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleStrokeRegex, `$1${newColor}$2`);
+      
+      // Also try to replace any CSS color definitions
+      const cssRegex = new RegExp(`(color\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(cssRegex, `$1${newColor}$2`);
     });
 
+    console.log('Color replacement complete');
     return svgContent;
   } catch (error) {
     console.error('Error applying SVG color changes:', error);
