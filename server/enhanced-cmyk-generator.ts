@@ -431,18 +431,28 @@ export class EnhancedCMYKGenerator {
       const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -sOutputFile="${tempRecoloredPdfPath}" -c "/setgray { pop ${rVal} ${gVal} ${bVal} setrgbcolor } def /setrgbcolor { pop pop pop ${rVal} ${gVal} ${bVal} setrgbcolor } def /setcmykcolor { pop pop pop pop ${rVal} ${gVal} ${bVal} setrgbcolor } def" -f "${pdfPath}"`;
       
       console.log(`Enhanced CMYK: Creating vector-preserving recolored PDF for ink color ${inkColor}`);
-      await execAsync(gsCommand);
+      console.log(`Enhanced CMYK: Ghostscript command: ${gsCommand}`);
+      
+      const result = await execAsync(gsCommand);
+      console.log(`Enhanced CMYK: Ghostscript stdout:`, result.stdout);
+      console.log(`Enhanced CMYK: Ghostscript stderr:`, result.stderr);
       
       if (fs.existsSync(tempRecoloredPdfPath)) {
-        console.log(`Enhanced CMYK: Successfully created vector-preserving recolored PDF`);
+        const stats = fs.statSync(tempRecoloredPdfPath);
+        console.log(`Enhanced CMYK: Successfully created vector-preserving recolored PDF (${stats.size} bytes)`);
+        
+        // Test: Compare file sizes to see if recoloring actually happened
+        const originalStats = fs.statSync(pdfPath);
+        console.log(`Enhanced CMYK: Original PDF: ${originalStats.size} bytes, Recolored PDF: ${stats.size} bytes`);
         
         // Embed the recolored PDF while preserving vectors
         await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
         
-        // Clean up temporary file
-        fs.unlinkSync(tempRecoloredPdfPath);
+        // Keep temp file for debugging
+        console.log(`Enhanced CMYK: Temp recolored PDF saved as: ${tempRecoloredPdfPath}`);
+        // fs.unlinkSync(tempRecoloredPdfPath);
       } else {
-        throw new Error('Ghostscript recoloring failed');
+        throw new Error('Ghostscript recoloring failed - no output file created');
       }
       
     } catch (error) {
