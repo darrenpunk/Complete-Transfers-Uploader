@@ -508,6 +508,78 @@ export default function ToolsSidebar({
           </Collapsible>
         ) : null;
       })()}
+
+      {/* Garment Color Selection - Also for Single Colour Transfer templates */}
+      {(() => {
+        const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
+        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfers";
+        return isSingleColourTemplate ? (
+          <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+            <div className="border-b border-gray-200">
+              <CollapsibleTrigger asChild>
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
+                    <Shirt className="w-5 h-5" />
+                    Garment Colour Preview
+                  </h3>
+                  {productSelectorCollapsed ? (
+                    <ChevronRight className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="px-6 pb-6">
+                  <div className="space-y-3">
+                    {/* Current Selection Display */}
+                    {project.garmentColor && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <TShirtSwatch
+                          color={project.garmentColor}
+                          size="md"
+                          selected={false}
+                        />
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">Preview Color</div>
+                          <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!project.garmentColor && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-700 font-medium">
+                          ℹ️ Optional garment color preview
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          See how your artwork looks on different garment colors
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Garment Color Modal Trigger */}
+                    <GarmentColorModal
+                      currentColor={project.garmentColor || ""}
+                      onColorChange={onGarmentColorChange}
+                      trigger={
+                        <Button 
+                          variant={project.garmentColor ? "outline" : "secondary"} 
+                          className="w-full"
+                        >
+                          <Palette className="w-4 h-4 mr-2" />
+                          {project.garmentColor ? "Change Preview Color" : "Select Preview Color"}
+                        </Button>
+                      }
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
+        ) : null;
+      })()}
+
       {/* Pre-flight Check */}
       <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
         <div className="border-b border-gray-200">
