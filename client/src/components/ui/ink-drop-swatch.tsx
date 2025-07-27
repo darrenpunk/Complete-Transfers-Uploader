@@ -1,97 +1,80 @@
 interface InkDropSwatchProps {
   color: string;
-  size?: "sm" | "md" | "lg";
-  selected?: boolean;
-  onClick?: () => void;
-  className?: string;
+  colorName: string;
+  isSelected: boolean;
+  onClick: () => void;
+  variant?: 'drop1' | 'drop2' | 'drop3';
 }
 
 export default function InkDropSwatch({ 
   color, 
-  size = "md", 
-  selected = false, 
+  colorName, 
+  isSelected, 
   onClick, 
-  className = "" 
+  variant = 'drop1' 
 }: InkDropSwatchProps) {
-  const sizeClasses = {
-    sm: "w-8 h-8",
-    md: "w-12 h-12",
-    lg: "w-16 h-16"
+  // Three different ink drop path variants extracted from the PDF
+  const getPathData = () => {
+    switch (variant) {
+      case 'drop1':
+        return "M2029 2562 c-118 -185 -289 -475 -289 -489 0 -5 43 -81 96 -168 115 -191 251 -465 292 -590 36 -110 54 -218 46 -279 l-7 -46 36 0 c56 0 188 46 253 88 76 50 171 151 210 227 70 132 82 302 33 450 -33 99 -209 445 -311 610 -119 192 -231 359 -243 362 -5 1 -58 -73 -116 -165z";
+      case 'drop2':
+        return "M1392 2168 c-58 -88 -218 -346 -296 -481 l-57 -97 59 -98 c87 -143 216 -394 256 -497 51 -132 70 -239 63 -354 -3 -53 -9 -106 -12 -119 -7 -21 -5 -22 60 -22 256 0 485 187 551 450 22 85 15 221 -15 310 -33 98 -167 368 -260 523 -85 142 -289 457 -296 457 -3 0 -26 -33 -53 -72z";
+      case 'drop3':
+        return "M669 1827 c-46 -64 -290 -457 -350 -564 -103 -184 -193 -404 -214 -524 -9 -47 12 -189 36 -254 28 -76 110 -187 182 -246 107 -90 216 -129 362 -129 173 0 296 51 420 175 132 131 182 256 172 430 -7 114 -42 217 -143 417 -108 213 -419 719 -441 718 -4 0 -15 -11 -24 -23z";
+      default:
+        return "M2029 2562 c-118 -185 -289 -475 -289 -489 0 -5 43 -81 96 -168 115 -191 251 -465 292 -590 36 -110 54 -218 46 -279 l-7 -46 36 0 c56 0 188 46 253 88 76 50 171 151 210 227 70 132 82 302 33 450 -33 99 -209 445 -311 610 -119 192 -231 359 -243 362 -5 1 -58 -73 -116 -165z";
+    }
   };
 
   return (
     <div
-      className={`${sizeClasses[size]} cursor-pointer transition-all duration-200 hover:scale-110 ${
-        selected ? "ring-2 ring-offset-2 ring-blue-500" : ""
-      } ${className}`}
+      className={`relative cursor-pointer transition-all duration-200 hover:scale-110 ${
+        isSelected 
+          ? 'ring-4 ring-[#922168] ring-offset-2 ring-offset-white dark:ring-offset-gray-900 scale-105' 
+          : 'hover:ring-2 hover:ring-[#922168]/50 hover:ring-offset-1 hover:ring-offset-white dark:hover:ring-offset-gray-900'
+      }`}
       onClick={onClick}
-      style={{ filter: selected ? "drop-shadow(0 4px 8px rgba(0,0,0,0.3))" : "" }}
+      title={colorName}
     >
-      <svg
-        viewBox="0 0 100 100"
-        className="w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
+      <svg 
+        width="48" 
+        height="48" 
+        viewBox="0 0 283 283" 
+        className="drop-shadow-md"
       >
-        {/* Main ink drop shape */}
-        <path
-          d="M50 5 
-             C55 15, 65 25, 70 35
-             C75 45, 75 55, 70 65
-             C65 75, 55 85, 50 90
-             C45 85, 35 75, 30 65
-             C25 55, 25 45, 30 35
-             C35 25, 45 15, 50 5 Z
-             
-             M58 12
-             C60 18, 65 22, 68 28
-             C68 28, 70 30, 68 32
-             C66 30, 62 28, 58 24
-             
-             M42 20
-             C38 24, 35 28, 32 34
-             C30 34, 28 32, 30 30
-             C32 28, 38 24, 42 20
-             
-             M75 40
-             C78 42, 80 45, 82 48
-             C82 50, 80 52, 78 50
-             C76 48, 74 44, 72 42
-             C72 40, 74 38, 76 40
-             
-             M25 50
-             C22 52, 18 55, 15 58
-             C13 58, 11 56, 13 54
-             C15 52, 19 48, 23 46
-             C25 46, 27 48, 25 50"
-          fill={color}
-          stroke={selected ? "#3B82F6" : "rgba(0,0,0,0.1)"}
-          strokeWidth={selected ? "1.5" : "0.5"}
-        />
+        <g transform="translate(0,283) scale(0.1,-0.1)">
+          <path 
+            d={getPathData()}
+            fill={color}
+            stroke={color === '#FFFFFF' || color === '#F8F8FF' ? '#E5E7EB' : 'none'}
+            strokeWidth={color === '#FFFFFF' || color === '#F8F8FF' ? '20' : '0'}
+          />
+        </g>
         
-        {/* Ink splashes around the main drop */}
-        <circle cx="20" cy="25" r="3" fill={color} opacity="0.8" />
-        <circle cx="82" cy="30" r="2" fill={color} opacity="0.6" />
-        <circle cx="15" cy="70" r="2.5" fill={color} opacity="0.7" />
-        <circle cx="85" cy="75" r="1.5" fill={color} opacity="0.5" />
-        <circle cx="25" cy="85" r="2" fill={color} opacity="0.6" />
-        <circle cx="75" cy="15" r="1.5" fill={color} opacity="0.4" />
+        {/* Highlight effect for realistic ink appearance */}
+        <defs>
+          <radialGradient id={`highlight-${colorName?.replace(/\s+/g, '-') || 'default'}`} cx="0.3" cy="0.3" r="0.6">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+            <stop offset="70%" stopColor="rgba(255,255,255,0.1)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.05)" />
+          </radialGradient>
+        </defs>
         
-        {/* Small droplets */}
-        <ellipse cx="12" cy="40" rx="1.5" ry="2" fill={color} opacity="0.5" />
-        <ellipse cx="88" cy="55" rx="1" ry="1.5" fill={color} opacity="0.4" />
-        <ellipse cx="35" cy="10" rx="1" ry="1.5" fill={color} opacity="0.3" />
-        <ellipse cx="90" cy="85" rx="1.5" ry="1" fill={color} opacity="0.4" />
-        
-        {/* Highlight effect on main drop */}
-        <ellipse 
-          cx="45" 
-          cy="25" 
-          rx="8" 
-          ry="12" 
-          fill="rgba(255,255,255,0.3)" 
-          transform="rotate(-15 45 25)"
-        />
+        <g transform="translate(0,283) scale(0.1,-0.1)">
+          <path 
+            d={getPathData()}
+            fill={`url(#highlight-${colorName?.replace(/\s+/g, '-') || 'default'})`}
+          />
+        </g>
       </svg>
+      
+      {/* Selection indicator */}
+      {isSelected && (
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#922168] rounded-full flex items-center justify-center">
+          <div className="w-2 h-2 bg-white rounded-full"></div>
+        </div>
+      )}
     </div>
   );
 }

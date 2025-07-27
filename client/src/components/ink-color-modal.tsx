@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PaintBucket } from "lucide-react";
+import { PaintBucket, Palette } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 
@@ -126,9 +126,10 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
                       <div>
                         <InkDropSwatch
                           color={color.hex}
-                          size="md"
-                          selected={currentColor === color.hex}
+                          colorName={color.name}
+                          isSelected={currentColor === color.hex}
                           onClick={() => handleColorSelect(color.hex)}
+                          variant={color.otCode === 'OT 91' ? 'drop1' : color.otCode === 'OT 100' ? 'drop2' : 'drop3'}
                         />
                       </div>
                     </TooltipTrigger>
