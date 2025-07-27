@@ -428,11 +428,13 @@ export class EnhancedCMYKGenerator {
         throw new Error('PDF to PNG conversion failed');
       }
       
-      // Step 2: Apply color replacement using ImageMagick's fuzz and opaque operations
+      // Step 2: Apply comprehensive color replacement 
       const tempRecoloredPngPath = path.join(uploadDir, `temp_recolored_png_${Date.now()}.png`);
       
-      // Replace all non-white colors with the ink color using fuzz tolerance
-      await execAsync(`convert "${tempPngPath}" -fuzz 50% -fill "${inkColor}" +opaque white "${tempRecoloredPngPath}"`);
+      // Create a binary mask where any non-transparent pixel becomes the ink color
+      // This approach catches all colors including light greens that are close to white
+      await execAsync(`convert "${tempPngPath}" -alpha extract -negate "${tempPngPath}_mask.png"`);
+      await execAsync(`convert -size $(identify -format "%wx%h" "${tempPngPath}") xc:"${inkColor}" "${tempPngPath}_mask.png" -alpha off -compose copy_opacity -composite "${tempRecoloredPngPath}"`);
       
       if (!fs.existsSync(tempRecoloredPngPath)) {
         throw new Error('Color replacement failed');
@@ -451,6 +453,9 @@ export class EnhancedCMYKGenerator {
         
         // Clean up temporary files
         fs.unlinkSync(tempPngPath);
+        if (fs.existsSync(`${tempPngPath}_mask.png`)) {
+          fs.unlinkSync(`${tempPngPath}_mask.png`);
+        }
         fs.unlinkSync(tempRecoloredPngPath);
         fs.unlinkSync(tempRecoloredPdfPath);
         
