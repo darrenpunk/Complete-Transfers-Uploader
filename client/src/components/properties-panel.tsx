@@ -653,6 +653,92 @@ export default function PropertiesPanel({
 
 
 
+      {/* Alignment Tools */}
+      <Card className="rounded-none border-x-0 border-t-0">
+        <CardHeader className="cursor-pointer" onClick={() => setAlignmentPanelCollapsed(!alignmentPanelCollapsed)}>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Move className="w-5 h-5" />
+              Alignment & Tools
+            </span>
+            {alignmentPanelCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {!alignmentPanelCollapsed && (
+          <CardContent>
+          <div className="grid grid-cols-3 gap-1 mb-4">
+            {/* Top row */}
+            <Button variant="outline" size="sm" title="Align Top Left" onClick={() => { alignLeft(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 left-0 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Top Center" onClick={() => { alignCenter(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Top Right" onClick={() => { alignRight(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-0 right-0 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            
+            {/* Middle row */}
+            <Button variant="outline" size="sm" title="Align Middle Left" onClick={() => { alignLeft(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Center" onClick={() => { alignCenter(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Middle Right" onClick={() => { alignRight(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            
+            {/* Bottom row */}
+            <Button variant="outline" size="sm" title="Align Bottom Left" onClick={() => { alignLeft(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 left-0 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Bottom Center" onClick={() => { alignCenter(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+            <Button variant="outline" size="sm" title="Align Bottom Right" onClick={() => { alignRight(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
+              <div className="w-5 h-5 border border-gray-400 relative">
+                <div className="absolute bottom-0 right-0 w-2 h-2 bg-gray-600"></div>
+              </div>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" onClick={selectAllElements}>
+              Select All
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => { alignCenter(); alignMiddle(); }}
+              disabled={canvasElements.length === 0}
+            >
+              Center All
+            </Button>
+          </div>
+          </CardContent>
+        )}
+      </Card>
+
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
         <CardHeader className="cursor-pointer" onClick={() => setLayersPanelCollapsed(!layersPanelCollapsed)}>
@@ -743,92 +829,6 @@ export default function PropertiesPanel({
                   })}
               </div>
             )}
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Alignment Tools */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader className="cursor-pointer" onClick={() => setAlignmentPanelCollapsed(!alignmentPanelCollapsed)}>
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Move className="w-5 h-5" />
-              Alignment & Tools
-            </span>
-            {alignmentPanelCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </CardTitle>
-        </CardHeader>
-        {!alignmentPanelCollapsed && (
-          <CardContent>
-          <div className="grid grid-cols-3 gap-1 mb-4">
-            {/* Top row */}
-            <Button variant="outline" size="sm" title="Align Top Left" onClick={() => { alignLeft(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 left-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Top Center" onClick={() => { alignCenter(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Top Right" onClick={() => { alignRight(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 right-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            
-            {/* Middle row */}
-            <Button variant="outline" size="sm" title="Align Middle Left" onClick={() => { alignLeft(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Center" onClick={() => { alignCenter(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Middle Right" onClick={() => { alignRight(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            
-            {/* Bottom row */}
-            <Button variant="outline" size="sm" title="Align Bottom Left" onClick={() => { alignLeft(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 left-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Bottom Center" onClick={() => { alignCenter(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Bottom Right" onClick={() => { alignRight(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 right-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={selectAllElements}>
-              Select All
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => { alignCenter(); alignMiddle(); }}
-              disabled={canvasElements.length === 0}
-            >
-              Center All
-            </Button>
-          </div>
           </CardContent>
         )}
       </Card>
