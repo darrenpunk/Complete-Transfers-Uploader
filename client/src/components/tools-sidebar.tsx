@@ -362,7 +362,7 @@ export default function ToolsSidebar({
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfer Sizes";
+        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfers";
         return isFullColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
