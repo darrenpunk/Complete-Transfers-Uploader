@@ -305,8 +305,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const svgPath = path.join(uploadDir, finalFilename);
             const colors = extractSVGColors(svgPath);
             if (colors.length > 0) {
-              svgColors = colors;
+              // Check if original PDF was CMYK colorspace
+              let isCmykPdf = false;
+              if (file.mimetype === 'application/pdf') {
+                try {
+                  const { stdout: colorspaceOutput } = await execAsync(`identify -format "%[colorspace]" "${file.path}"`);
+                  const colorspace = colorspaceOutput.trim().toLowerCase();
+                  console.log('Original PDF colorspace:', colorspace);
+                  isCmykPdf = colorspace.includes('cmyk');
+                } catch (colorspaceError) {
+                  console.warn('Could not determine PDF colorspace:', colorspaceError);
+                }
+              }
+              
+              // Mark colors as converted if original was CMYK
+              svgColors = colors.map(color => ({
+                ...color,
+                converted: isCmykPdf
+              }));
+              
               console.log(`Extracted ${colors.length} colors from SVG:`, colors.map(c => `${c.originalColor} (${c.cmykColor})`));
+              if (isCmykPdf) {
+                console.log('Original PDF was CMYK - auto-marking colors as converted');
+              }
             }
           } catch (error) {
             console.error('Failed to extract SVG colors:', error);
