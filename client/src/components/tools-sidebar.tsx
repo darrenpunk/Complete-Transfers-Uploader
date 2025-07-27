@@ -383,22 +383,16 @@ export default function ToolsSidebar({
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
-              // Check if any colors have been converted OR if all colors have CMYK equivalents
+              // Only show CMYK if explicitly converted (has converted flag)
               const hasConvertedColors = svgColors.some(color => color.converted);
-              const allColorsHaveCmyk = svgColors.every(color => color.cmykColor);
-              const hasUnconvertedRgbColors = svgColors.some(color => 
-                color.originalColor && color.originalColor.includes('rgb(') && !color.converted && !color.cmykColor
-              );
               
-              if (hasConvertedColors || allColorsHaveCmyk) {
+              if (hasConvertedColors) {
                 colorValue = `CMYK Vector (${svgColors.length} colors)`;
                 colorStatus = "pass";
-              } else if (hasUnconvertedRgbColors) {
+              } else {
+                // Default to RGB for unconverted files (even if they have auto-generated CMYK values)
                 colorValue = `RGB Vector (${svgColors.length} colors)`;
                 colorStatus = "warning";
-              } else {
-                colorValue = `CMYK Vector (${svgColors.length} colors)`;
-                colorStatus = "pass";
               }
             } else if (isVector) {
               // Vector files without detected colors (might be single color or grayscale)
@@ -449,9 +443,7 @@ export default function ToolsSidebar({
                              logoSvgColors.type === 'raster' && logoSvgColors.mode === 'RGB';
           
           // Check if vector has RGB colors that need conversion
-          const isRGBVector = logo && Array.isArray(logoSvgColors) && logoSvgColors.some(color => 
-            color.originalColor && color.originalColor.includes('rgb(') && !color.converted && !color.cmykColor
-          );
+          const isRGBVector = logo && Array.isArray(logoSvgColors) && !logoSvgColors.some(color => color.converted);
 
           return (
             <div className="space-y-3">
