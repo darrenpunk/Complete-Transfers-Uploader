@@ -1359,16 +1359,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const pngPath = path.join(uploadDir, pngFilename);
         
         try {
-          await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -sOutputFile="${pngPath}" "${path.join(uploadDir, filename)}"`);
+          // Try rsvg-convert first (better SVG support), fallback to Ghostscript
+          try {
+            await execAsync(`rsvg-convert -w 1000 -h 1000 -f png "${path.join(uploadDir, filename)}" -o "${pngPath}"`);
+          } catch (rsvgError) {
+            console.log('rsvg-convert failed, trying ImageMagick...');
+            await execAsync(`convert -density 300 -background transparent "${path.join(uploadDir, filename)}" "${pngPath}"`);
+          }
         } catch (error) {
           console.warn(`Failed to convert ${filename} to PNG:`, error);
+          // Create a placeholder PNG if conversion fails
+          const placeholderSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+            <rect width="100" height="100" fill="#f0f0f0" stroke="#ccc"/>
+            <text x="50" y="50" text-anchor="middle" dy="0.3em" font-family="Arial" font-size="12">Element</text>
+          </svg>`;
+          fs.writeFileSync(pngPath.replace('.png', '_placeholder.svg'), placeholderSvg);
+        }
+
+        // Check if PNG file was created successfully
+        let fileSize = 0;
+        let finalFilename = pngFilename;
+        let finalMimeType = 'image/png';
+        
+        if (fs.existsSync(pngPath)) {
+          fileSize = fs.statSync(pngPath).size;
+        } else {
+          // If PNG conversion failed, use the SVG file instead
+          const svgPath = path.join(uploadDir, filename);
+          if (fs.existsSync(svgPath)) {
+            fileSize = fs.statSync(svgPath).size;
+            finalFilename = filename;
+            finalMimeType = 'image/svg+xml';
+          }
         }
 
         const newLogo = await storage.createLogo({
-          filename: pngFilename,
+          filename: finalFilename,
           originalName: `${logo.originalName}_part_${i + 1}`,
-          mimeType: 'image/png',
-          fileSize: fs.statSync(pngPath).size,
+          mimeType: finalMimeType,
+          fileSize: fileSize,
           width: Math.round(element.bounds.width),
           height: Math.round(element.bounds.height),
           projectId: logo.projectId,

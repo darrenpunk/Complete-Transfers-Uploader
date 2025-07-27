@@ -217,16 +217,34 @@ export function createSeparateSVGFiles(elements: SVGElement[], originalFilename:
     const newFilename = `${originalFilename.replace('.svg', '')}_part_${index + 1}_${element.id}.svg`;
     const newPath = path.join(uploadDir, newFilename);
     
+    // Ensure bounds are valid
+    const width = Math.max(element.bounds.width, 50);
+    const height = Math.max(element.bounds.height, 50);
+    const viewBoxX = element.bounds.x || 0;
+    const viewBoxY = element.bounds.y || 0;
+    
+    // Clean the element content to ensure it's valid SVG
+    let cleanContent = element.content;
+    
+    // Remove any XML declarations or svg tags if they exist in the content
+    cleanContent = cleanContent.replace(/<\?xml[^>]*\?>/g, '');
+    cleanContent = cleanContent.replace(/<svg[^>]*>/g, '');
+    cleanContent = cleanContent.replace(/<\/svg>/g, '');
+    
     // Create a complete SVG file for each element
     const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
-     width="${element.bounds.width}" height="${element.bounds.height}" 
-     viewBox="${element.bounds.x} ${element.bounds.y} ${element.bounds.width} ${element.bounds.height}">
-  ${element.content}
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="${viewBoxX} ${viewBoxY} ${width} ${height}">
+  <defs></defs>
+  ${cleanContent}
 </svg>`;
     
-    fs.writeFileSync(newPath, svgContent);
-    filenames.push(newFilename);
+    try {
+      fs.writeFileSync(newPath, svgContent);
+      filenames.push(newFilename);
+      console.log(`Created ungrouped SVG: ${newFilename}`);
+    } catch (error) {
+      console.error(`Failed to create SVG file ${newFilename}:`, error);
+    }
   });
   
   return filenames;
