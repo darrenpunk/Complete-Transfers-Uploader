@@ -539,9 +539,14 @@ export default function UploadTool() {
       {/* Applique Badges Modal */}
       {console.log('Rendering AppliqueBadgesModal with:', { showAppliqueBadgesModal })}
       <AppliqueBadgesModal
-        open={showAppliqueBadgesModal}
+        open={showAppliqueBadgesModal || window.location.hash === '#test-modal'}
         onOpenChange={(open) => {
           console.log('AppliqueBadgesModal onOpenChange called with:', open);
+          if (window.location.hash === '#test-modal') {
+            // Don't close if we're testing
+            console.log('Test mode - not closing modal');
+            return;
+          }
           setShowAppliqueBadgesModal(open);
         }}
         onConfirm={handleAppliqueBadgesFormConfirm}
