@@ -266,8 +266,18 @@ export default function UploadTool() {
       console.log('useEffect: Triggering applique badges modal');
       setShowAppliqueBadgesModal(true);
       setTriggerAppliqueBadgesModal(false);
+      
+      // Force log the state after setting
+      setTimeout(() => {
+        console.log('Post-useEffect state check:', { showAppliqueBadgesModal });
+      }, 50);
     }
   }, [triggerAppliqueBadgesModal]);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('showAppliqueBadgesModal state changed to:', showAppliqueBadgesModal);
+  }, [showAppliqueBadgesModal]);
 
   const handleTemplateChange = (templateId: string) => {
     if (currentProject) {
