@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
+import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
@@ -101,6 +102,7 @@ export default function ToolsSidebar({
   const [preflightCollapsed, setPreflightCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
+  const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
   
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
@@ -429,41 +431,7 @@ export default function ToolsSidebar({
         ) : null;
       })()}
 
-      {/* Product Selector */}
-      <Collapsible open={!preflightCollapsed} onOpenChange={(open) => setPreflightCollapsed(!open)}>
-        <div className="border-b border-gray-200">
-          <CollapsibleTrigger asChild>
-            <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Product Selector
-              </h3>
-              {preflightCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="px-6 pb-6">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => {
-                  window.location.href = '/';
-                }}
-              >
-                <span className="mr-2">📐</span>
-                Change Template Size
-              </Button>
-              <p className="text-xs text-gray-500 mt-2">
-                Currently using template with different transfer sizes available
-              </p>
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
+
 
       {/* Pre-flight Check */}
       <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
@@ -709,6 +677,62 @@ export default function ToolsSidebar({
           </CollapsibleContent>
         </div>
       </Collapsible>
+
+      {/* Product Selector */}
+      <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
+        <div className="border-b border-gray-200">
+          <CollapsibleTrigger asChild>
+            <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Product Selector
+              </h3>
+              {productSelectorCollapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-6 pb-6">
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-sm">Current Template</div>
+                      <div className="text-xs text-gray-600">
+                        {(() => {
+                          const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+                          return currentTemplate ? currentTemplate.label : 'No template selected';
+                        })()}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTemplateSelectorModal(true)}
+                    >
+                      Change
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Select the appropriate template size for your transfer type and project requirements.
+                </p>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* Template Selector Modal */}
+      <TemplateSelectorModal
+        open={showTemplateSelectorModal}
+        templates={templateSizes}
+        onSelectTemplate={onTemplateChange}
+        onClose={() => setShowTemplateSelectorModal(false)}
+      />
     </div>
   );
 }

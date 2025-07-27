@@ -651,45 +651,7 @@ export default function PropertiesPanel({
         );
       })()}
 
-      {/* Product Selector */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader className="cursor-pointer" onClick={() => setShowTemplateSelectorModal(true)}>
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Product Selector
-            </span>
-            <ChevronRight className="w-4 h-4" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-sm">Current Template</div>
-                  <div className="text-xs text-gray-600">
-                    {(() => {
-                      const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
-                      return currentTemplate ? currentTemplate.label : 'No template selected';
-                    })()}
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowTemplateSelectorModal(true)}
-                >
-                  Change
-                </Button>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500">
-              Select the appropriate template size for your transfer type and project requirements.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
