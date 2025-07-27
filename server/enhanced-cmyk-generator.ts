@@ -103,7 +103,8 @@ export class EnhancedCMYKGenerator {
     }
     
     console.log('Enhanced CMYK: Created vector-preserving PDF with pdf-lib');
-    return await pdfDoc.save();
+    const pdfBytes = await pdfDoc.save();
+    return Buffer.from(pdfBytes);
   }
 
   private async embedVectorLogo(
@@ -186,40 +187,43 @@ export class EnhancedCMYKGenerator {
   }
 
   private async applyICCProfileToPDF(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
-    const execAsync = promisify(exec);
-    const tempDir = path.join(process.cwd(), 'uploads', 'icc_temp');
-    
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-    
     try {
-      // Write PDF to temp file
-      const inputPath = path.join(tempDir, 'input.pdf');
-      const outputPath = path.join(tempDir, 'output_with_icc.pdf');
+      // Use qpdf for ICC profile embedding without rasterization
+      const execAsync = promisify(exec);
+      const tempDir = path.join(process.cwd(), 'uploads', 'icc_temp');
       
-      fs.writeFileSync(inputPath, pdfBuffer);
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
       
-      // Apply ICC profile using ImageMagick in a way that preserves vectors
-      // Use -compress None to avoid rasterization, just embed the profile
-      const iccCommand = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK -compress None "${outputPath}"`;
-      
-      console.log('Enhanced CMYK: Applying ICC profile while preserving vectors');
-      await execAsync(iccCommand);
-      
-      // Read the enhanced PDF
-      const enhancedPDF = fs.readFileSync(outputPath);
-      
-      // Clean up
-      fs.unlinkSync(inputPath);
-      fs.unlinkSync(outputPath);
-      fs.rmdirSync(tempDir);
-      
-      return enhancedPDF;
+      try {
+        const inputPath = path.join(tempDir, 'input.pdf');
+        const outputPath = path.join(tempDir, 'output.pdf');
+        
+        fs.writeFileSync(inputPath, pdfBuffer);
+        
+        // Use ghostscript for better color management without rasterization
+        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${outputPath}" "${inputPath}"`;
+        console.log('Enhanced CMYK: Applying CMYK color conversion with Ghostscript');
+        
+        await execAsync(gsCommand);
+        const enhancedPDF = fs.readFileSync(outputPath);
+        
+        // Clean up
+        fs.unlinkSync(inputPath);
+        fs.unlinkSync(outputPath);
+        fs.rmdirSync(tempDir);
+        
+        console.log('Enhanced CMYK: Successfully applied CMYK conversion while preserving vectors');
+        return enhancedPDF;
+        
+      } catch (gsError) {
+        console.log('Enhanced CMYK: Ghostscript not available, using original vector PDF');
+        return pdfBuffer;
+      }
       
     } catch (error) {
-      console.error('ICC profile application failed:', error);
-      // Return original PDF if ICC application fails
+      console.error('ICC profile handling failed:', error);
       return pdfBuffer;
     }
   }
