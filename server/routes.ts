@@ -452,8 +452,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // For custom-sized PDFs, use a more intelligent scale calculation
             // If we detected proper content bounds, use a scale based on reasonable logo sizes
             if (actualWidth > 200 && actualHeight > 200) {
-              // Large content suggests we need better scaling - assume this should be around 200-400mm range
-              const targetMaxDimension = 350; // Target max dimension in mm for large logos
+              // Large content suggests we need better scaling - target around 250-300mm max for better canvas fit
+              const targetMaxDimension = 280; // Reduced from 350 for better canvas proportions
               const maxCurrentDimension = Math.max(actualWidth, actualHeight);
               const intelligentScale = targetMaxDimension / maxCurrentDimension;
               
