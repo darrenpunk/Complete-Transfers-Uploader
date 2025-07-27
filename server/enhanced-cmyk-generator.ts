@@ -113,7 +113,6 @@ export class EnhancedCMYKGenerator {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     // Check if this is a Single Colour Transfer template for recoloring
-    const storage = (global as any).storage;
     const project = await storage.getProject(projectId);
     const template = await storage.getTemplateSize(project?.templateSize);
     const isSingleColourTransfer = template?.group === 'Single Colour Transfers';
