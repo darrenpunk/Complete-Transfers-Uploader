@@ -383,10 +383,17 @@ export default function ToolsSidebar({
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
+              // Check if any colors have been converted OR if all colors have CMYK equivalents
+              const hasConvertedColors = svgColors.some(color => color.converted);
+              const allColorsHaveCmyk = svgColors.every(color => color.cmykColor);
               const hasUnconvertedRgbColors = svgColors.some(color => 
-                color.originalColor && color.originalColor.includes('rgb(') && !color.converted
+                color.originalColor && color.originalColor.includes('rgb(') && !color.converted && !color.cmykColor
               );
-              if (hasUnconvertedRgbColors) {
+              
+              if (hasConvertedColors || allColorsHaveCmyk) {
+                colorValue = `CMYK Vector (${svgColors.length} colors)`;
+                colorStatus = "pass";
+              } else if (hasUnconvertedRgbColors) {
                 colorValue = `RGB Vector (${svgColors.length} colors)`;
                 colorStatus = "warning";
               } else {
@@ -443,7 +450,7 @@ export default function ToolsSidebar({
           
           // Check if vector has RGB colors that need conversion
           const isRGBVector = logo && Array.isArray(logoSvgColors) && logoSvgColors.some(color => 
-            color.originalColor && color.originalColor.includes('rgb(') && !color.converted
+            color.originalColor && color.originalColor.includes('rgb(') && !color.converted && !color.cmykColor
           );
 
           return (
