@@ -89,8 +89,25 @@ function rgbToHex(rgb: { r: number; g: number; b: number }): string {
   return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
 }
 
+function parseRGBInteger(rgbString: string | undefined): { r: number; g: number; b: number } | null {
+  if (!rgbString) return null;
+  
+  const match = rgbString.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+  if (!match) return null;
+
+  return {
+    r: parseInt(match[1]),
+    g: parseInt(match[2]),
+    b: parseInt(match[3])
+  };
+}
+
 function getCMYKFromColor(colorString: string): CMYKColor | null {
-  // Try RGB percentage first
+  // Try RGB integer format first (most common)
+  const rgbInt = parseRGBInteger(colorString);
+  if (rgbInt) return rgbToCmyk(rgbInt);
+  
+  // Try RGB percentage format
   const rgbPercent = parseRGBPercentage(colorString);
   if (rgbPercent) return rgbToCmyk(rgbPercent);
   
