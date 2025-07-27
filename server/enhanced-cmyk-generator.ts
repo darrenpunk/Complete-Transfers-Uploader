@@ -427,15 +427,8 @@ export class EnhancedCMYKGenerator {
       const gVal = (g / 255).toFixed(3);
       const bVal = (b / 255).toFixed(3);
       
-      // Use Ghostscript with PostScript code to replace all colors with ink color
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -c "
-        /replaceColor { 
-          ${rVal} ${gVal} ${bVal} setrgbcolor 
-        } def
-        /DeviceRGB {} {replaceColor} bind /exec cvx 4 array astore cvx def
-        /DeviceCMYK {} {replaceColor} bind /exec cvx 4 array astore cvx def
-        /DeviceGray {} {replaceColor} bind /exec cvx 4 array astore cvx def
-      " -f "${pdfPath}" -sOutputFile="${tempRecoloredPdfPath}"`;
+      // Use Ghostscript with simpler color replacement approach
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dColorConversionStrategy=/RGB -dProcessColorModel=/DeviceRGB -c "<< /BeginPage { ${rVal} ${gVal} ${bVal} setrgbcolor } >> setpagedevice" -f "${pdfPath}" -o "${tempRecoloredPdfPath}"`;
       
       console.log(`Enhanced CMYK: Creating vector-preserving recolored PDF for ink color ${inkColor}`);
       await execAsync(gsCommand);
@@ -460,8 +453,8 @@ export class EnhancedCMYKGenerator {
         const tempSvgPath = path.join(uploadDir, `temp_recolor_${Date.now()}.svg`);
         const tempPdfPath = path.join(uploadDir, `temp_recolored_alt_${Date.now()}.pdf`);
         
-        // Convert PDF to SVG using pdf2svg (better vector preservation than ImageMagick)
-        await execAsync(`pdf2svg "${pdfPath}" "${tempSvgPath}"`);
+        // Convert PDF to SVG using ImageMagick (available tool)
+        await execAsync(`convert -density 300 "${pdfPath}[0]" "${tempSvgPath}"`);
         
         if (fs.existsSync(tempSvgPath)) {
           // Read and recolor the SVG
@@ -469,21 +462,21 @@ export class EnhancedCMYKGenerator {
           svgContent = this.recolorSVGContent(svgContent, inkColor);
           fs.writeFileSync(tempSvgPath, svgContent);
           
-          // Convert recolored SVG back to PDF using Inkscape (preserves vectors)
-          await execAsync(`inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${tempSvgPath}"`);
+          // Convert recolored SVG back to PDF using ImageMagick
+          await execAsync(`convert "${tempSvgPath}" "${tempPdfPath}"`);
           
           if (fs.existsSync(tempPdfPath)) {
-            console.log(`Enhanced CMYK: Created recolored PDF via SVG conversion`);
+            console.log(`Enhanced CMYK: Created recolored PDF via SVG conversion with ImageMagick`);
             await this.embedOriginalPDF(pdfDoc, page, element, tempPdfPath, templateSize);
             
             // Clean up
             fs.unlinkSync(tempSvgPath);
             fs.unlinkSync(tempPdfPath);
           } else {
-            throw new Error('Inkscape conversion failed');
+            throw new Error('ImageMagick SVG to PDF conversion failed');
           }
         } else {
-          throw new Error('pdf2svg conversion failed');
+          throw new Error('ImageMagick PDF to SVG conversion failed');
         }
         
       } catch (altError) {
