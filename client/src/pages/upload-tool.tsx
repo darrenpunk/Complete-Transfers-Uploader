@@ -234,7 +234,42 @@ export default function UploadTool() {
           templateId,
           garmentColor: "#FFFFFF"
         });
-        console.log('Setting triggerAppliqueBadgesModal to true');
+        console.log('Directly showing applique badges modal');
+        
+        // Force modal to show immediately using DOM manipulation as backup
+        setTimeout(() => {
+          const modalDiv = document.createElement('div');
+          modalDiv.id = 'applique-badges-modal-fallback';
+          modalDiv.className = 'fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center';
+          modalDiv.innerHTML = `
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-2xl border-4 border-green-500">
+              <h2 class="text-xl font-semibold mb-4 text-green-600">🎯 APPLIQUE BADGES FORM</h2>
+              <p class="mb-4">This is a temporary fallback version of the applique badges form.</p>
+              <button id="close-fallback-modal" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                Continue with Applique Badges
+              </button>
+            </div>
+          `;
+          document.body.appendChild(modalDiv);
+          
+          document.getElementById('close-fallback-modal')?.addEventListener('click', () => {
+            document.body.removeChild(modalDiv);
+            // Create project after form interaction
+            createProjectMutation.mutate({
+              name: "Untitled Project",
+              templateSize: templateId,
+              garmentColor: "#FFFFFF",
+              appliqueBadgesForm: {
+                embroideryFileOptions: [],
+                embroideryThreadOptions: [],
+                position: [],
+                graphicSize: "",
+                embroideredParts: ""
+              }
+            });
+          });
+        }, 100);
+        
         setTriggerAppliqueBadgesModal(true);
       } else {
         console.log('Non-Custom Badges template, creating project directly');
