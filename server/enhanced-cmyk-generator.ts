@@ -420,49 +420,43 @@ export class EnhancedCMYKGenerator {
     try {
       console.log(`Enhanced CMYK: Starting direct color replacement for ink color ${inkColor}`);
       
-      // Step 1: Convert PDF to high-quality PNG with transparency
-      const tempPngPath = path.join(uploadDir, `temp_high_res_${Date.now()}.png`);
-      await execAsync(`convert -density 300 -background transparent "${pdfPath}[0]" "${tempPngPath}"`);
+      // Use SVG-based recoloring to match canvas preview exactly
+      // Step 1: Convert PDF to SVG to preserve transparency
+      const tempSvgPath = path.join(uploadDir, `temp_svg_${Date.now()}.svg`);
+      await execAsync(`pdf2svg "${pdfPath}" "${tempSvgPath}" 1`);
       
-      if (!fs.existsSync(tempPngPath)) {
-        throw new Error('PDF to PNG conversion failed');
+      if (!fs.existsSync(tempSvgPath)) {
+        throw new Error('PDF to SVG conversion failed');
       }
       
-      // Step 2: Apply comprehensive color replacement 
-      const tempRecoloredPngPath = path.join(uploadDir, `temp_recolored_png_${Date.now()}.png`);
+      // Step 2: Apply SVG recoloring (same as canvas preview)
+      let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
+      svgContent = recolorSVG(svgContent, inkColor);
       
-      // Use a two-step approach: colorize all pixels to ink color, then apply original alpha
-      const tempColorizedPath = path.join(uploadDir, `temp_colorized_${Date.now()}.png`);
+      // Step 3: Save recolored SVG
+      const tempRecoloredSvgPath = path.join(uploadDir, `temp_recolored_svg_${Date.now()}.svg`);
+      fs.writeFileSync(tempRecoloredSvgPath, svgContent);
       
-      // Step 1: Create a solid color version  
-      await execAsync(`convert "${tempPngPath}" -fill "${inkColor}" -colorize 100% "${tempColorizedPath}"`);
-      
-      // Step 2: Apply the original alpha channel to preserve logo shape
-      await execAsync(`convert "${tempColorizedPath}" "${tempPngPath}" -alpha off -compose copy_opacity -composite "${tempRecoloredPngPath}"`);
-      
-      // Clean up intermediate file
-      if (fs.existsSync(tempColorizedPath)) {
-        fs.unlinkSync(tempColorizedPath);
-      }
-      
-      if (!fs.existsSync(tempRecoloredPngPath)) {
-        throw new Error('Color replacement failed');
-      }
-      
-      // Step 3: Convert back to PDF
+      // Step 4: Convert recolored SVG back to PDF
       const tempRecoloredPdfPath = path.join(uploadDir, `temp_final_recolored_${Date.now()}.pdf`);
-      await execAsync(`convert "${tempRecoloredPngPath}" "${tempRecoloredPdfPath}"`);
+      await execAsync(`rsvg-convert -f pdf -o "${tempRecoloredPdfPath}" "${tempRecoloredSvgPath}"`);
+      
+      // Clean up intermediate SVG files
+      if (fs.existsSync(tempSvgPath)) {
+        fs.unlinkSync(tempSvgPath);
+      }
+      if (fs.existsSync(tempRecoloredSvgPath)) {
+        fs.unlinkSync(tempRecoloredSvgPath);
+      }
       
       if (fs.existsSync(tempRecoloredPdfPath)) {
         const stats = fs.statSync(tempRecoloredPdfPath);
-        console.log(`Enhanced CMYK: Successfully created recolored PDF via ImageMagick (${stats.size} bytes)`);
+        console.log(`Enhanced CMYK: Successfully created recolored PDF via SVG method (${stats.size} bytes)`);
         
         // Embed the recolored PDF
         await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
         
         // Clean up temporary files
-        fs.unlinkSync(tempPngPath);
-        fs.unlinkSync(tempRecoloredPngPath);
         fs.unlinkSync(tempRecoloredPdfPath);
         
         console.log(`Enhanced CMYK: Direct color replacement successful`);
@@ -486,7 +480,7 @@ export class EnhancedCMYKGenerator {
         if (fs.existsSync(tempSvgPath)) {
           // Read and recolor the SVG content
           let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
-          svgContent = this.recolorSVGContent(svgContent, inkColor);
+          svgContent = recolorSVG(svgContent, inkColor);
           fs.writeFileSync(tempSvgPath, svgContent);
           
           // Convert back to PDF
