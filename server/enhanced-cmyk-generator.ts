@@ -431,9 +431,19 @@ export class EnhancedCMYKGenerator {
       // Step 2: Apply comprehensive color replacement 
       const tempRecoloredPngPath = path.join(uploadDir, `temp_recolored_png_${Date.now()}.png`);
       
-      // Use a simpler but more comprehensive approach - replace all colors with high fuzz tolerance
-      // but preserve transparency completely
-      await execAsync(`convert "${tempPngPath}" -fuzz 90% -fill "${inkColor}" +opaque "rgba(0,0,0,0)" "${tempRecoloredPngPath}"`);
+      // Use a two-step approach: colorize all pixels to ink color, then apply original alpha
+      const tempColorizedPath = path.join(uploadDir, `temp_colorized_${Date.now()}.png`);
+      
+      // Step 1: Create a solid color version  
+      await execAsync(`convert "${tempPngPath}" -fill "${inkColor}" -colorize 100% "${tempColorizedPath}"`);
+      
+      // Step 2: Apply the original alpha channel to preserve logo shape
+      await execAsync(`convert "${tempColorizedPath}" "${tempPngPath}" -alpha off -compose copy_opacity -composite "${tempRecoloredPngPath}"`);
+      
+      // Clean up intermediate file
+      if (fs.existsSync(tempColorizedPath)) {
+        fs.unlinkSync(tempColorizedPath);
+      }
       
       if (!fs.existsSync(tempRecoloredPngPath)) {
         throw new Error('Color replacement failed');
