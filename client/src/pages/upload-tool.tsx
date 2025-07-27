@@ -235,6 +235,11 @@ export default function UploadTool() {
         });
         console.log('Setting showAppliqueBadgesModal to true');
         setShowAppliqueBadgesModal(true);
+        
+        // Debug: Log state after setting
+        setTimeout(() => {
+          console.log('State check after 100ms:', { showAppliqueBadgesModal });
+        }, 100);
       } else {
         console.log('Non-Custom Badges template, creating project directly');
         // Create project directly for other template types
@@ -532,6 +537,7 @@ export default function UploadTool() {
       />
 
       {/* Applique Badges Modal */}
+      {console.log('Rendering AppliqueBadgesModal with:', { showAppliqueBadgesModal })}
       <AppliqueBadgesModal
         open={showAppliqueBadgesModal}
         onOpenChange={setShowAppliqueBadgesModal}
