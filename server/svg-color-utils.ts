@@ -327,10 +327,24 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
                             fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
                             fillColor.includes('100%, 100%, 100%');
         
-        if (!isBackground) {
+        // Also skip large background rectangles that cover most of the canvas
+        const isLargeBackground = pathData.includes('M 0 0') && 
+                                 (pathData.includes('L 700') || pathData.includes('L 839') || pathData.includes('L 624'));
+        
+        if (!isBackground && !isLargeBackground) {
           const coords = extractPathCoordinates(pathData);
           if (coords.length > 0) {
-            coloredElements.push(...coords);
+            // Filter out coordinates that span the entire canvas (likely backgrounds)
+            const filteredCoords = coords.filter(coord => {
+              // Exclude coordinates that suggest full-canvas coverage
+              const isFullWidthPoint = coord.x <= 5 || coord.x >= 800;
+              const isFullHeightPoint = coord.y <= 5 || coord.y >= 800;
+              return !(isFullWidthPoint && isFullHeightPoint);
+            });
+            
+            if (filteredCoords.length > 0) {
+              coloredElements.push(...filteredCoords);
+            }
           }
         }
       }
@@ -342,14 +356,27 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const maxX = Math.max(...coloredElements.map(e => e.x));
         const maxY = Math.max(...coloredElements.map(e => e.y));
         
-        const contentWidth = Math.max(50, Math.ceil((maxX - minX) + 40));
-        const contentHeight = Math.max(50, Math.ceil((maxY - minY) + 40));
+        const rawWidth = maxX - minX;
+        const rawHeight = maxY - minY;
         
-        // Apply reasonable limits for text-based logos
-        const finalWidth = Math.min(contentWidth, 400);
-        const finalHeight = Math.min(contentHeight, 300);
+        // Check if we're still getting massive bounds (indicating background elements)
+        if (rawWidth > 600 || rawHeight > 600) {
+          console.log(`Detected oversized bounds for text logo (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative text sizing`);
+          return {
+            width: 350,
+            height: 120
+          };
+        }
         
-        console.log(`Text-aware content bounds: ${minX},${minY} to ${maxX},${maxY} = ${finalWidth}×${finalHeight}`);
+        // For text/glyph SVGs, be more generous with the sizing since text can be more complex
+        const contentWidth = Math.max(100, Math.ceil(rawWidth + 60)); // More padding for text
+        const contentHeight = Math.max(50, Math.ceil(rawHeight + 40));
+        
+        // Apply more generous limits for text-based logos to maintain readability
+        const finalWidth = Math.min(contentWidth, 600); // Increased from 400
+        const finalHeight = Math.min(contentHeight, 400); // Increased from 300
+        
+        console.log(`Text-aware content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
         
         return {
           width: finalWidth,
@@ -357,11 +384,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         };
       }
       
-      // Fallback for text-heavy logos - use conservative dimensions
+      // Fallback for text-heavy logos - use more generous dimensions
       console.log('Text/glyph SVG with no colored paths found, using text logo fallback');
       return {
-        width: 250,  // Typical text logo width
-        height: 80   // Typical text logo height
+        width: 350,  // Increased from 250 for better text readability
+        height: 120  // Increased from 80 for better text readability
       };
     }
     
@@ -410,8 +437,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     if (coloredElements.length === 0) {
       console.log('No colored content elements found, using conservative fallback');
       return {
-        width: 300,  // Conservative estimate for typical logo
-        height: 200
+        width: 350,  // Increased from 300 for better logo visibility
+        height: 250  // Increased from 200 for better logo visibility
       };
     }
     
@@ -425,14 +452,14 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const rawHeight = maxY - minY;
     
     // Add reasonable padding and ensure minimum viable size
-    const contentWidth = Math.max(50, Math.ceil(rawWidth + 20));
-    const contentHeight = Math.max(50, Math.ceil(rawHeight + 20));
+    const contentWidth = Math.max(80, Math.ceil(rawWidth + 40)); // More generous padding
+    const contentHeight = Math.max(60, Math.ceil(rawHeight + 30));
     
-    // Apply maximum limits to prevent oversized logos
-    const finalWidth = Math.min(contentWidth, 500);
-    const finalHeight = Math.min(contentHeight, 400);
+    // Apply maximum limits to prevent oversized logos but allow reasonable sizes
+    const finalWidth = Math.min(contentWidth, 600); // Increased from 500
+    const finalHeight = Math.min(contentHeight, 450); // Increased from 400
     
-    console.log(`Content bounds: ${minX},${minY} to ${maxX},${maxY} = ${finalWidth}×${finalHeight} (colored content only)`);
+    console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
     return {
       width: finalWidth,
