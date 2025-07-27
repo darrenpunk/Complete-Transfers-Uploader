@@ -57,23 +57,23 @@ export class EnhancedCMYKGenerator {
       
       // Determine the dominant color family
       if (r > g && r > b) {
-        if (g > 100 && b < 50) return `Custom Orange`;
-        if (g < 100 && b < 100) return `Custom Red`;
-        if (g > 150 && b > 150) return `Custom Pink`;
+        if (g > 100 && b < 50) return `Orange`;
+        if (g < 100 && b < 100) return `Red`;
+        if (g > 150 && b > 150) return `Pink`;
       } else if (g > r && g > b) {
-        if (r < 100 && b < 100) return `Custom Green`;
-        if (r > 150 && b < 100) return `Custom Yellow`;
+        if (r < 100 && b < 100) return `Green`;
+        if (r > 150 && b < 100) return `Yellow`;
       } else if (b > r && b > g) {
-        if (r < 100 && g < 100) return `Custom Blue`;
-        if (r > 150 && g > 150) return `Custom Purple`;
+        if (r < 100 && g < 100) return `Blue`;
+        if (r > 150 && g > 150) return `Purple`;
       } else if (r === g && g === b) {
-        if (r < 50) return `Custom Black`;
-        if (r > 200) return `Custom White`;
-        return `Custom Gray`;
+        if (r < 50) return `Black`;
+        if (r > 200) return `White`;
+        return `Gray`;
       }
     }
 
-    return `Custom Color`;
+    return hex;
   }
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
