@@ -386,22 +386,17 @@ export default function ToolsSidebar({
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
-              // Debug: Log the color data for troubleshooting (remove after fix)
-              // console.log('Color Analysis Debug:', {
-              //   logoId: logo.id,
-              //   svgColors: svgColors,
-              //   hasConvertedColors: svgColors.some(color => color.converted)
-              // });
+              // Color detection logic
               
               // Only show CMYK if explicitly converted (has converted flag)
               const hasConvertedColors = svgColors.some(color => color.converted);
               
               if (hasConvertedColors) {
-                colorValue = `CMYK Vector (${svgColors.length} colors)`;
+                colorValue = `CMYK Vector`;
                 colorStatus = "pass";
               } else {
                 // Default to RGB for unconverted files (even if they have auto-generated CMYK values)
-                colorValue = `RGB Vector (${svgColors.length} colors)`;
+                colorValue = `RGB Vector`;
                 colorStatus = "warning";
               }
             } else if (isVector) {
