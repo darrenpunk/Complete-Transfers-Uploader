@@ -24,6 +24,7 @@ import ColorPickerPanel from "./color-picker-panel";
 import CMYKColorModal from "./cmyk-color-modal";
 import GarmentColorModal from "./garment-color-modal";
 import ImpositionModal from "./imposition-modal";
+import TemplateSelectorModal from "./template-selector-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
@@ -82,10 +83,11 @@ export default function PropertiesPanel({
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
-  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(true);
-  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(true);
-  const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(true);
-  const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(true);
+  const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
+  const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
+  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
+  const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
+  const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
@@ -554,6 +556,16 @@ export default function PropertiesPanel({
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setShowTemplateSelectorModal(true)}
+                  className="w-full"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Product Selector
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => duplicateLogoMutation.mutate(currentElement.id)}
                   disabled={duplicateLogoMutation.isPending}
                   className="w-full"
@@ -573,7 +585,7 @@ export default function PropertiesPanel({
                 </Button>
                 
                 <p className="text-xs text-gray-500 mt-1">
-                  Duplicate logo or replicate across the canvas
+                  Change template, duplicate logo or replicate across the canvas
                 </p>
               </div>
             </div>
@@ -811,6 +823,17 @@ export default function PropertiesPanel({
           template={templateSizes.find(t => t.id === project.templateSize)!}
         />
       )}
+
+      {/* Template Selector Modal */}
+      <TemplateSelectorModal
+        open={showTemplateSelectorModal}
+        templates={templateSizes}
+        onSelectTemplate={(templateId) => {
+          onTemplateChange(templateId);
+          setShowTemplateSelectorModal(false);
+        }}
+        onClose={() => setShowTemplateSelectorModal(false)}
+      />
     </div>
   );
 }

@@ -96,9 +96,9 @@ export default function ToolsSidebar({
   onGarmentColorChange
 }: ToolsSidebarProps) {
   const { toast } = useToast();
-  const [logosCollapsed, setLogosCollapsed] = useState(true);
-  const [productSelectorCollapsed, setProductSelectorCollapsed] = useState(true);
-  const [preflightCollapsed, setPreflightCollapsed] = useState(true);
+  const [logosCollapsed, setLogosCollapsed] = useState(false);
+  const [productSelectorCollapsed, setProductSelectorCollapsed] = useState(false);
+  const [preflightCollapsed, setPreflightCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
   
