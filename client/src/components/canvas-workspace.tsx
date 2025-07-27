@@ -490,6 +490,12 @@ export default function CanvasWorkspace({
               if (!logo || !element.isVisible) return null;
 
               const isSelected = selectedElement?.id === element.id;
+              
+              // Debug: Log color overrides for this element
+              if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+                console.log(`Element ${element.id} has color overrides:`, element.colorOverrides);
+              }
+              
               // Convert mm to pixels for display (using template's pixel ratio)
               const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
               const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
@@ -519,7 +525,7 @@ export default function CanvasWorkspace({
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                          ? `/uploads/${element.id}_modified.svg` 
+                          ? `/uploads/${element.id}_modified.svg?t=${Date.now()}` 
                           : getImageUrl(logo)}
                         alt={logo.originalName}
                         className="w-full h-full object-fill"
@@ -531,6 +537,11 @@ export default function CanvasWorkspace({
                             : "none"
                         }}
                         draggable={false}
+                        onLoad={() => {
+                          console.log('Image loaded:', element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                            ? `/uploads/${element.id}_modified.svg` 
+                            : getImageUrl(logo));
+                        }}
                         onError={(e) => {
                           console.error('Failed to load image:', getImageUrl(logo));
                           // Show fallback icon if image fails to load

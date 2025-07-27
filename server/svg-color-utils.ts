@@ -746,28 +746,61 @@ export function applySVGColorChanges(svgPath: string, colorOverrides: Record<str
     Object.entries(colorOverrides).forEach(([originalColor, newColor]) => {
       console.log(`Replacing ${originalColor} with ${newColor}`);
       
-      // Escape special regex characters in color strings
+      // Convert rgb(r, g, b) format to percentage format for SVG matching
+      let percentageFormat = originalColor;
+      const rgbMatch = originalColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (rgbMatch) {
+        const r = parseInt(rgbMatch[1]);
+        const g = parseInt(rgbMatch[2]);
+        const b = parseInt(rgbMatch[3]);
+        // Convert to percentage format used in SVG
+        const rPercent = (r / 255 * 100).toFixed(6);
+        const gPercent = (g / 255 * 100).toFixed(6);
+        const bPercent = (b / 255 * 100).toFixed(6);
+        percentageFormat = `rgb(${rPercent}%, ${gPercent}%, ${bPercent}%)`;
+        console.log(`Converted ${originalColor} to percentage format: ${percentageFormat}`);
+      }
+      
+      // Escape special regex characters
       const escapedOriginal = escapeRegExp(originalColor);
+      const escapedPercentage = escapeRegExp(percentageFormat);
       
-      // Replace fill attributes (exact match)
-      const fillRegex = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-      svgContent = svgContent.replace(fillRegex, `fill="${newColor}"`);
+      // Replace fill attributes with both formats
+      let replacementCount = 0;
       
-      // Replace stroke attributes (exact match)
-      const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-      svgContent = svgContent.replace(strokeRegex, `stroke="${newColor}"`);
+      // Try integer format first
+      const fillRegex1 = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+      const beforeReplace1 = svgContent;
+      svgContent = svgContent.replace(fillRegex1, `fill="${newColor}"`);
+      if (svgContent !== beforeReplace1) {
+        replacementCount++;
+        console.log('Replaced integer format fill');
+      }
       
-      // Replace style-based fills (more careful regex)
-      const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleFillRegex, `$1${newColor}$2`);
+      // Try percentage format
+      const fillRegex2 = new RegExp(`fill\\s*=\\s*["']${escapedPercentage}["']`, 'gi');
+      const beforeReplace2 = svgContent;
+      svgContent = svgContent.replace(fillRegex2, `fill="${newColor}"`);
+      if (svgContent !== beforeReplace2) {
+        replacementCount++;
+        console.log('Replaced percentage format fill');
+      }
       
-      // Replace style-based strokes (more careful regex)
-      const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleStrokeRegex, `$1${newColor}$2`);
+      // Replace stroke attributes with both formats
+      const strokeRegex1 = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+      svgContent = svgContent.replace(strokeRegex1, `stroke="${newColor}"`);
       
-      // Also try to replace any CSS color definitions
-      const cssRegex = new RegExp(`(color\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(cssRegex, `$1${newColor}$2`);
+      const strokeRegex2 = new RegExp(`stroke\\s*=\\s*["']${escapedPercentage}["']`, 'gi');
+      svgContent = svgContent.replace(strokeRegex2, `stroke="${newColor}"`);
+      
+      // Replace style-based fills
+      const styleFillRegex1 = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleFillRegex1, `$1${newColor}$2`);
+      
+      const styleFillRegex2 = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedPercentage}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleFillRegex2, `$1${newColor}$2`);
+      
+      console.log(`Total replacements made: ${replacementCount}`);
     });
 
     console.log('Color replacement complete');
