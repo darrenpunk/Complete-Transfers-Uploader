@@ -382,16 +382,17 @@ export default function ToolsSidebar({
             let colorValue = "Unknown";
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
-              // Vector files with detected SVG colors - show actual color values and CMYK
-              const colorsDisplay = svgColors.map(color => {
-                if (color.cmykColor) {
-                  return color.cmykColor;
-                } else if (color.originalColor) {
-                  return color.originalColor;
-                }
-                return "Unknown";
-              }).join(", ");
-              colorValue = `${svgColors.length} colors: ${colorsDisplay}`;
+              // Vector files with detected SVG colors - show format and count
+              const hasRgbColors = svgColors.some(color => 
+                color.originalColor && color.originalColor.includes('rgb(') && !color.cmykColor
+              );
+              if (hasRgbColors) {
+                colorValue = `RGB Vector (${svgColors.length} colors)`;
+                colorStatus = "warning";
+              } else {
+                colorValue = `CMYK Vector (${svgColors.length} colors)`;
+                colorStatus = "pass";
+              }
             } else if (isVector) {
               // Vector files without detected colors (might be single color or grayscale)
               colorValue = "Vector (Monochrome)";
@@ -439,6 +440,11 @@ export default function ToolsSidebar({
           const logoSvgColors = logo?.svgColors as any;
           const isRGBImage = logo && logoSvgColors && typeof logoSvgColors === 'object' && 
                              logoSvgColors.type === 'raster' && logoSvgColors.mode === 'RGB';
+          
+          // Check if vector has RGB colors that need conversion
+          const isRGBVector = logo && Array.isArray(logoSvgColors) && logoSvgColors.some(color => 
+            color.originalColor && color.originalColor.includes('rgb(') && !color.cmykColor
+          );
 
           return (
             <div className="space-y-3">
@@ -461,7 +467,7 @@ export default function ToolsSidebar({
                   </div>
                   
                   {/* RGB to CMYK Conversion Option */}
-                  {check.name === "Color Analysis" && isRGBImage && (
+                  {check.name === "Color Analysis" && (isRGBImage || isRGBVector) && (
                     <div className="ml-4 mt-2">
                       <Button
                         size="sm"
