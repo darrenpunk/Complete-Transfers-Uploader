@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { Palette } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import TShirtSwatch from "@/components/ui/tshirt-swatch";
+import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 
 interface InkColorModalProps {
   currentColor: string | null;
@@ -124,7 +124,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
-                        <TShirtSwatch
+                        <InkDropSwatch
                           color={color.hex}
                           size="md"
                           selected={currentColor === color.hex}
