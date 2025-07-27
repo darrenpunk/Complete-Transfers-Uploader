@@ -567,16 +567,40 @@ export class EnhancedCMYKGenerator {
     mimeType: string,
     templateSize: TemplateSize
   ) {
-    const imageBytes = fs.readFileSync(imagePath);
-    
+    let imageBytes: Buffer;
     let image;
-    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-      image = await pdfDoc.embedJpg(imageBytes);
-    } else if (mimeType.includes('png')) {
-      image = await pdfDoc.embedPng(imageBytes);
+    
+    if (mimeType.includes('svg')) {
+      // Convert SVG to PNG for embedding
+      const execAsync = promisify(exec);
+      const pngPath = imagePath.replace('.svg', '.png');
+      
+      try {
+        // Use ImageMagick to convert SVG to PNG with transparency
+        await execAsync(`magick -background transparent -density 300 "${imagePath}" "${pngPath}"`);
+        imageBytes = fs.readFileSync(pngPath);
+        image = await pdfDoc.embedPng(imageBytes);
+        console.log(`Enhanced CMYK: Converted SVG to PNG for embedding: ${path.basename(imagePath)}`);
+        
+        // Clean up the temporary PNG file
+        if (fs.existsSync(pngPath)) {
+          fs.unlinkSync(pngPath);
+        }
+      } catch (error) {
+        console.error(`Failed to convert SVG to PNG: ${error}`);
+        return;
+      }
     } else {
-      console.warn(`Unsupported image type: ${mimeType}`);
-      return;
+      imageBytes = fs.readFileSync(imagePath);
+      
+      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+        image = await pdfDoc.embedJpg(imageBytes);
+      } else if (mimeType.includes('png')) {
+        image = await pdfDoc.embedPng(imageBytes);
+      } else {
+        console.warn(`Unsupported image type: ${mimeType}`);
+        return;
+      }
     }
     
     // Calculate position (flip Y coordinate for PDF)
