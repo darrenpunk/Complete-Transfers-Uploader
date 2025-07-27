@@ -542,18 +542,32 @@ export default function UploadTool() {
       />
 
       {/* Applique Badges Modal */}
-      {console.log('Rendering AppliqueBadgesModal with:', { showAppliqueBadgesModal })}
+      {console.log('About to render AppliqueBadgesModal with state:', { 
+        showAppliqueBadgesModal, 
+        triggerAppliqueBadgesModal,
+        pendingTemplateData,
+        windowHash: window.location.hash
+      })}
+      
+      {/* Force render modal if state is true */}
+      {showAppliqueBadgesModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md">
+            <h2 className="text-xl font-semibold mb-4">DEBUG: Modal State is TRUE</h2>
+            <p>The showAppliqueBadgesModal state is true. This confirms state management is working.</p>
+            <button 
+              onClick={() => setShowAppliqueBadgesModal(false)}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Close Test Modal
+            </button>
+          </div>
+        </div>
+      )}
+      
       <AppliqueBadgesModal
-        open={showAppliqueBadgesModal || window.location.hash === '#test-modal'}
-        onOpenChange={(open) => {
-          console.log('AppliqueBadgesModal onOpenChange called with:', open);
-          if (window.location.hash === '#test-modal') {
-            // Don't close if we're testing
-            console.log('Test mode - not closing modal');
-            return;
-          }
-          setShowAppliqueBadgesModal(open);
-        }}
+        open={showAppliqueBadgesModal}
+        onOpenChange={setShowAppliqueBadgesModal}
         onConfirm={handleAppliqueBadgesFormConfirm}
         isLoading={createProjectMutation.isPending}
       />
