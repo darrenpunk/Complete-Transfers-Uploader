@@ -570,6 +570,9 @@ export default function UploadTool() {
         windowHash: window.location.hash
       })}
       
+      {/* Debug: Always render component to test if it exists */}
+      {console.log('About to render AppliqueBadgesModal component...')}
+      
       {/* Applique Badges Modal - Now working with fixed state management */}
       <AppliqueBadgesModal
         open={showAppliqueBadgesModal}
@@ -577,6 +580,8 @@ export default function UploadTool() {
         onConfirm={handleAppliqueBadgesFormConfirm}
         isLoading={createProjectMutation.isPending}
       />
+      
+      {console.log('AppliqueBadgesModal component rendered with open:', showAppliqueBadgesModal)}
     </div>
   );
 }
