@@ -14,6 +14,7 @@ import { extractSVGColors, applySVGColorChanges, analyzeSVG } from "./svg-color-
 import { outlineFonts } from "./font-outliner";
 import { ColorManagement } from "./color-management";
 import { standardizeRgbToCmyk } from "./color-standardization";
+import { setupImpositionRoutes } from "./imposition-routes";
 
 const execAsync = promisify(exec);
 
@@ -987,6 +988,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate PDF" });
     }
   });
+
+  // Setup imposition routes
+  setupImpositionRoutes(app, storage);
 
   const httpServer = createServer(app);
   return httpServer;

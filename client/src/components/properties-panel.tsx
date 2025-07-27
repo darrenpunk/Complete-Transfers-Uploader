@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -23,6 +23,7 @@ import {
 import ColorPickerPanel from "./color-picker-panel";
 import CMYKColorModal from "./cmyk-color-modal";
 import GarmentColorModal from "./garment-color-modal";
+import ImpositionModal from "./imposition-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
@@ -80,6 +81,7 @@ export default function PropertiesPanel({
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
+  const [showImpositionModal, setShowImpositionModal] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
   
   // Get the current element data from canvasElements to ensure it's up-to-date
@@ -466,10 +468,10 @@ export default function PropertiesPanel({
 
             <Separator />
 
-            {/* Duplicate Logo Button */}
+            {/* Actions */}
             <div>
               <Label className="text-sm font-medium">Actions</Label>
-              <div className="mt-2">
+              <div className="space-y-2 mt-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -480,8 +482,19 @@ export default function PropertiesPanel({
                   <Copy className="w-4 h-4 mr-2" />
                   {duplicateLogoMutation.isPending ? "Duplicating..." : "Duplicate Logo"}
                 </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowImpositionModal(true)}
+                  className="w-full"
+                >
+                  <Grid className="w-4 h-4 mr-2" />
+                  Imposition Tool
+                </Button>
+                
                 <p className="text-xs text-gray-500 mt-1">
-                  Create a copy of this logo positioned nearby
+                  Duplicate logo or replicate across the canvas
                 </p>
               </div>
             </div>
@@ -635,6 +648,16 @@ export default function PropertiesPanel({
         label="Select Garment Color"
         currentColor={currentElement?.garmentColor || "#FFFFFF"}
       />
+
+      {/* Imposition Modal */}
+      {currentElement && (
+        <ImpositionModal
+          open={showImpositionModal}
+          onOpenChange={setShowImpositionModal}
+          selectedElement={currentElement}
+          template={templateSizes.find(t => t.id === project.templateSize)!}
+        />
+      )}
     </div>
   );
 }
