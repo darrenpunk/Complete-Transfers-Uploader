@@ -8,6 +8,7 @@ import ToolsSidebar from "@/components/tools-sidebar";
 import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
+import ProductLauncherModal from "@/components/product-launcher-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
@@ -22,6 +23,8 @@ export default function UploadTool() {
   const [selectedElement, setSelectedElement] = useState<CanvasElement | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showProductLauncher, setShowProductLauncher] = useState(false);
+  const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
 
   // Fetch template sizes
@@ -130,12 +133,19 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject && !hasInitialized) {
-      // Show template selector modal on launch for new projects (only once)
-      console.log('Showing template selector modal', { templateSizesLength: templateSizes.length, currentProject });
-      setShowTemplateSelector(true);
+      // Show product launcher modal on launch for new projects (only once)
+      console.log('Showing product launcher modal', { templateSizesLength: templateSizes.length, currentProject });
+      setShowProductLauncher(true);
       setHasInitialized(true);
     }
   }, [id, templateSizes, currentProject, hasInitialized]);
+
+  // Handle product selection from launcher modal
+  const handleProductSelect = (group: string) => {
+    setSelectedProductGroup(group);
+    setShowProductLauncher(false);
+    setShowTemplateSelector(true);
+  };
 
   // Handle template selection from modal
   const handleTemplateSelect = (templateId: string) => {
@@ -196,6 +206,7 @@ export default function UploadTool() {
     setSelectedElement(null);
     setCurrentStep(1);
     setHasInitialized(false);
+    setSelectedProductGroup("");
     
     // Navigate to home to start fresh
     navigate("/");
@@ -265,12 +276,20 @@ export default function UploadTool() {
           <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
         </div>
         
+        {/* Product Launcher Modal */}
+        <ProductLauncherModal
+          open={showProductLauncher}
+          onClose={() => setShowProductLauncher(false)}
+          onSelectProduct={handleProductSelect}
+        />
+        
         {/* Template Selector Modal */}
         <TemplateSelectorModal
           open={showTemplateSelector}
-          templates={templateSizes}
+          templates={templateSizes.filter(t => !selectedProductGroup || t.group === selectedProductGroup)}
           onSelectTemplate={handleTemplateSelect}
           onClose={() => setShowTemplateSelector(false)}
+          selectedGroup={selectedProductGroup}
         />
       </div>
     );

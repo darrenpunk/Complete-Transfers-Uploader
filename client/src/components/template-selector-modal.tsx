@@ -74,13 +74,15 @@ interface TemplateSelectorModalProps {
   templates: TemplateSize[];
   onSelectTemplate: (templateId: string) => void;
   onClose: () => void;
+  selectedGroup?: string;
 }
 
 export default function TemplateSelectorModal({
   open,
   templates,
   onSelectTemplate,
-  onClose
+  onClose,
+  selectedGroup
 }: TemplateSelectorModalProps) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["Full Colour Transfer Sizes"]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
@@ -121,10 +123,13 @@ export default function TemplateSelectorModal({
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            Select Your Template Size
+            {selectedGroup ? `${selectedGroup} - Select Template Size` : "Select Your Template Size"}
           </DialogTitle>
           <DialogDescription className="text-center text-gray-600">
-            Choose a template that matches your project requirements. Different templates are optimized for specific print types.
+            {selectedGroup 
+              ? `Choose the specific template size for your ${selectedGroup.toLowerCase()}.`
+              : "Choose a template that matches your project requirements. Different templates are optimized for specific print types."
+            }
           </DialogDescription>
         </DialogHeader>
 
