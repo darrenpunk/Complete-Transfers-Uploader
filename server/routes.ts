@@ -12,6 +12,7 @@ import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
 import { extractSVGColors, applySVGColorChanges } from "./svg-color-utils";
 import { ColorManagement } from "./color-management";
+import { standardizeRgbToCmyk } from "./color-standardization";
 
 const execAsync = promisify(exec);
 
@@ -509,17 +510,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const g = parseInt(rgbMatch[2]); 
               const b = parseInt(rgbMatch[3]);
               
-              // Standardized RGB to CMYK conversion
-              const rPercent = r / 255;
-              const gPercent = g / 255;
-              const bPercent = b / 255;
-              
-              const k = 1 - Math.max(rPercent, gPercent, bPercent);
-              const c = k === 1 ? 0 : (1 - rPercent - k) / (1 - k);
-              const m = k === 1 ? 0 : (1 - gPercent - k) / (1 - k);
-              const y = k === 1 ? 0 : (1 - bPercent - k) / (1 - k);
-              
-              cmykColor = `C:${Math.round(c * 100)} M:${Math.round(m * 100)} Y:${Math.round(y * 100)} K:${Math.round(k * 100)}`;
+              // Use standardized conversion for consistent results across similar logos
+              cmykColor = standardizeRgbToCmyk(r, g, b);
             }
             
             return {

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { standardizeRgbToCmyk } from './color-standardization';
 
 export interface SVGColorInfo {
   id: string;
@@ -70,11 +71,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const r = parseInt(rgbMatch[1]);
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
-        const cmyk = rgbToCmyk(r, g, b);
+        
+        // Use standardized conversion for consistent results
+        const cmykColor = standardizeRgbToCmyk(r, g, b);
         
         return {
           display: rgbColor,
-          cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`
+          cmyk: cmykColor
         };
       }
       
@@ -84,11 +87,13 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-        const cmyk = rgbToCmyk(r, g, b);
+        
+        // Use standardized conversion for consistent results
+        const cmykColor = standardizeRgbToCmyk(r, g, b);
         
         return {
           display: `rgb(${r}, ${g}, ${b})`,
-          cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`
+          cmyk: cmykColor
         };
       }
       
