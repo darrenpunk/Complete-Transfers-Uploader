@@ -413,67 +413,85 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize,
     inkColor: string
   ) {
-    // Use pdf-lib to create a recolored PDF while preserving all vector data
+    // Use Ghostscript to properly recolor the PDF while preserving vectors
     const uploadDir = path.join(process.cwd(), "uploads");
+    const execAsync = promisify(exec);
     
     try {
-      // Read the original PDF
-      const originalPdfBytes = fs.readFileSync(pdfPath);
-      const originalPdf = await PDFDocument.load(originalPdfBytes);
+      // Generate a temporary recolored PDF filename
+      const tempRecoloredPdfPath = path.join(uploadDir, `temp_vector_recolored_${Date.now()}.pdf`);
       
-      // Get the first page
-      const originalPages = originalPdf.getPages();
-      if (originalPages.length === 0) {
-        throw new Error('PDF has no pages');
+      // Convert ink color to RGB values (0-1 range for PostScript)
+      const { r, g, b } = this.hexToRgb(inkColor);
+      const rVal = (r / 255).toFixed(3);
+      const gVal = (g / 255).toFixed(3);
+      const bVal = (b / 255).toFixed(3);
+      
+      // Use Ghostscript with PostScript code to replace all colors with ink color
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -c "
+        /replaceColor { 
+          ${rVal} ${gVal} ${bVal} setrgbcolor 
+        } def
+        /DeviceRGB {} {replaceColor} bind /exec cvx 4 array astore cvx def
+        /DeviceCMYK {} {replaceColor} bind /exec cvx 4 array astore cvx def
+        /DeviceGray {} {replaceColor} bind /exec cvx 4 array astore cvx def
+      " -f "${pdfPath}" -sOutputFile="${tempRecoloredPdfPath}"`;
+      
+      console.log(`Enhanced CMYK: Creating vector-preserving recolored PDF for ink color ${inkColor}`);
+      await execAsync(gsCommand);
+      
+      if (fs.existsSync(tempRecoloredPdfPath)) {
+        console.log(`Enhanced CMYK: Successfully created vector-preserving recolored PDF`);
+        
+        // Embed the recolored PDF while preserving vectors
+        await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
+        
+        // Clean up temporary file
+        fs.unlinkSync(tempRecoloredPdfPath);
+      } else {
+        throw new Error('Ghostscript recoloring failed');
       }
       
-      // Create a new PDF for recoloring
-      const recoloredPdf = await PDFDocument.create();
-      const recoloredPage = recoloredPdf.addPage([originalPages[0].getWidth(), originalPages[0].getHeight()]);
-      
-      // Convert ink color to RGB
-      const { r, g, b } = this.hexToRgb(inkColor);
-      const inkRgb = rgb(r / 255, g / 255, b / 255);
-      
-      // Draw the original page content first
-      const embeddedOriginalPage = await recoloredPdf.embedPage(originalPages[0]);
-      
-      // Create a colored overlay to simulate ink color effect
-      recoloredPage.drawPage(embeddedOriginalPage, {
-        x: 0,
-        y: 0,
-        width: originalPages[0].getWidth(),
-        height: originalPages[0].getHeight(),
-      });
-      
-      // Apply ink color overlay with multiply blend effect (simulated)
-      recoloredPage.drawRectangle({
-        x: 0,
-        y: 0,
-        width: originalPages[0].getWidth(),
-        height: originalPages[0].getHeight(),
-        color: inkRgb,
-        opacity: 0.8, // Adjust opacity to simulate ink blend
-      });
-      
-      // Save the recolored PDF to a temporary file
-      const tempRecoloredPdfPath = path.join(uploadDir, `temp_vector_recolored_${Date.now()}.pdf`);
-      const recoloredPdfBytes = await recoloredPdf.save();
-      fs.writeFileSync(tempRecoloredPdfPath, recoloredPdfBytes);
-      
-      console.log(`Enhanced CMYK: Created vector-preserving recolored PDF with pdf-lib for ink color ${inkColor}`);
-      
-      // Embed the recolored PDF while preserving vectors
-      await this.embedOriginalPDF(pdfDoc, page, element, tempRecoloredPdfPath, templateSize);
-      
-      // Clean up temporary file
-      fs.unlinkSync(tempRecoloredPdfPath);
-      
     } catch (error) {
-      console.error('Enhanced CMYK: Failed to create vector-preserving recolored PDF:', error);
-      // Fallback to original PDF without recoloring
-      console.log('Enhanced CMYK: Falling back to original PDF without ink color');
-      await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+      console.error('Enhanced CMYK: Ghostscript recoloring failed, trying alternative approach:', error);
+      
+      // Alternative: Use the existing SVG recoloring approach but with proper vector conversion
+      try {
+        const tempSvgPath = path.join(uploadDir, `temp_recolor_${Date.now()}.svg`);
+        const tempPdfPath = path.join(uploadDir, `temp_recolored_alt_${Date.now()}.pdf`);
+        
+        // Convert PDF to SVG using pdf2svg (better vector preservation than ImageMagick)
+        await execAsync(`pdf2svg "${pdfPath}" "${tempSvgPath}"`);
+        
+        if (fs.existsSync(tempSvgPath)) {
+          // Read and recolor the SVG
+          let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
+          svgContent = this.recolorSVGContent(svgContent, inkColor);
+          fs.writeFileSync(tempSvgPath, svgContent);
+          
+          // Convert recolored SVG back to PDF using Inkscape (preserves vectors)
+          await execAsync(`inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${tempSvgPath}"`);
+          
+          if (fs.existsSync(tempPdfPath)) {
+            console.log(`Enhanced CMYK: Created recolored PDF via SVG conversion`);
+            await this.embedOriginalPDF(pdfDoc, page, element, tempPdfPath, templateSize);
+            
+            // Clean up
+            fs.unlinkSync(tempSvgPath);
+            fs.unlinkSync(tempPdfPath);
+          } else {
+            throw new Error('Inkscape conversion failed');
+          }
+        } else {
+          throw new Error('pdf2svg conversion failed');
+        }
+        
+      } catch (altError) {
+        console.error('Enhanced CMYK: Alternative recoloring approach failed:', altError);
+        // Final fallback: use original PDF without recoloring
+        console.log('Enhanced CMYK: Using original PDF without ink color modification');
+        await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+      }
     }
   }
 
