@@ -111,6 +111,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Vector Preservation System**: Implemented complete vector-preserving PDF generation that maintains all vector data throughout the ink color recoloring process using pdf-lib page embedding with color overlay techniques
 ✓ **Increased File Upload Limits**: Raised maximum file upload size to 100MB on both server and client to handle large PDF artwork files
 ✓ **Project Naming Modal**: Implemented popup dialog for project naming when users click "Generate PDF" or "Continue" button, ensuring proper file naming with validation and error handling
+✓ **Canvas Origin Positioning**: Modified logo upload positioning to place all files at x:0 and y:0 coordinates instead of staggered offset positioning
 
 
 ## Current Status (July 27, 2025)

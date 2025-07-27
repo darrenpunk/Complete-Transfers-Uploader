@@ -626,8 +626,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const canvasElementData = {
           projectId: req.params.projectId,
           logoId: logo.id,
-          x: 50 + (logos.length - 1) * 20,
-          y: 50 + (logos.length - 1) * 20,
+          x: 0,
+          y: 0,
           width: displayWidth,
           height: displayHeight,
           rotation: 0,
