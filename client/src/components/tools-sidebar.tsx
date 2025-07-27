@@ -257,7 +257,6 @@ export default function ToolsSidebar({
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-
       {/* Uploaded Logos */}
       {logos.length > 0 && (
         <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
@@ -356,7 +355,6 @@ export default function ToolsSidebar({
           </div>
         </Collapsible>
       )}
-
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
@@ -366,7 +364,7 @@ export default function ToolsSidebar({
             <div className="border-b border-gray-200">
               <CollapsibleTrigger asChild>
                 <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
                     <Shirt className="w-5 h-5" />
                     Main Garment Colour
                     {!project.garmentColor && (
@@ -430,9 +428,6 @@ export default function ToolsSidebar({
           </Collapsible>
         ) : null;
       })()}
-
-
-
       {/* Pre-flight Check */}
       <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
         <div className="border-b border-gray-200">
@@ -705,7 +700,6 @@ export default function ToolsSidebar({
           </CollapsibleContent>
         </div>
       </Collapsible>
-
       {/* Product Selector */}
       <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
         <div className="border-b border-gray-200">
@@ -753,7 +747,6 @@ export default function ToolsSidebar({
           </CollapsibleContent>
         </div>
       </Collapsible>
-
       {/* Template Selector Modal */}
       <TemplateSelectorModal
         open={showTemplateSelectorModal}
