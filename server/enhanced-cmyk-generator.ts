@@ -19,12 +19,20 @@ export class EnhancedCMYKGenerator {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     try {
-      // ICC profile path
-      const iccProfilePath = path.join(process.cwd(), 'server', 'fogra51.icc');
-      const useICC = fs.existsSync(iccProfilePath);
+      // Use uploaded ICC profile from attached_assets
+      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+      
+      let iccProfilePath = uploadedICCPath;
+      let useICC = fs.existsSync(uploadedICCPath);
+      
+      if (!useICC) {
+        iccProfilePath = fallbackICCPath;
+        useICC = fs.existsSync(fallbackICCPath);
+      }
       
       console.log(useICC ? 
-        'Enhanced CMYK: Using FOGRA51 ICC profile with vector preservation' : 
+        `Enhanced CMYK: Using uploaded ICC profile (${path.basename(iccProfilePath)}) with vector preservation` : 
         'Enhanced CMYK: Creating CMYK PDF with vector preservation (no ICC)'
       );
       
@@ -34,7 +42,7 @@ export class EnhancedCMYKGenerator {
       if (useICC) {
         // Apply ICC profile to the vector PDF using ImageMagick without rasterizing
         const enhancedPDF = await this.applyICCProfileToPDF(vectorPDF, iccProfilePath);
-        console.log('Enhanced CMYK: Successfully applied ICC profile while preserving vectors');
+        console.log(`Enhanced CMYK: Successfully applied uploaded ICC profile (${path.basename(iccProfilePath)}) while preserving vectors`);
         return enhancedPDF;
       } else {
         console.log('Enhanced CMYK: Vector PDF created without ICC profile');
@@ -202,9 +210,9 @@ export class EnhancedCMYKGenerator {
         
         fs.writeFileSync(inputPath, pdfBuffer);
         
-        // Use ghostscript for better color management without rasterization
-        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${outputPath}" "${inputPath}"`;
-        console.log('Enhanced CMYK: Applying CMYK color conversion with Ghostscript');
+        // Use ghostscript with uploaded ICC profile for professional color management
+        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputFile="${outputPath}" "${inputPath}"`;
+        console.log(`Enhanced CMYK: Applying CMYK color conversion with uploaded ICC profile: ${path.basename(iccProfilePath)}`);
         
         await execAsync(gsCommand);
         const enhancedPDF = fs.readFileSync(outputPath);
