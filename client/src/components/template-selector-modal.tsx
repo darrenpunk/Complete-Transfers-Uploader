@@ -120,10 +120,7 @@ export default function TemplateSelectorModal({
   onClose,
   selectedGroup
 }: TemplateSelectorModalProps) {
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(["Full Colour Transfer Sizes"]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-
-  // Group templates by category
+  // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
     const group = template.group || "Other";
     if (!groups[group]) {
@@ -132,6 +129,10 @@ export default function TemplateSelectorModal({
     groups[group].push(template);
     return groups;
   }, {} as Record<string, TemplateSize[]>);
+
+  // Initialize all groups as expanded by default to reduce clicks
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(() => Object.keys(groupedTemplates));
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev =>
