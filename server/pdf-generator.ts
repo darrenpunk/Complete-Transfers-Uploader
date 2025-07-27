@@ -12,6 +12,7 @@ export interface PDFGenerationData {
   canvasElements: CanvasElement[];
   logos: Logo[];
   garmentColor?: string;
+  appliqueBadgesForm?: any;
 }
 
 export class PDFGenerator {

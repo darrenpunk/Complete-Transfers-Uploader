@@ -1284,7 +1284,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           templateSize,
           canvasElements,
           logos,
-          garmentColor: project.garmentColor
+          garmentColor: project.garmentColor,
+          appliqueBadgesForm: project.appliqueBadgesForm
         });
       } else if (colorSpace === 'cmyk' || (colorSpace === 'auto' && hasCMYKLogos)) {
         console.log('Enhanced CMYK PDF generation requested with ICC profile support');
@@ -1295,7 +1296,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           templateSize,
           canvasElements,
           logos,
-          garmentColor: project.garmentColor
+          garmentColor: project.garmentColor,
+          appliqueBadgesForm: project.appliqueBadgesForm
         });
         console.log('Generated enhanced CMYK PDF with vector preservation and ICC profile');
       } else {
@@ -1305,7 +1307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           templateSize,
           canvasElements,
           logos,
-          garmentColor: project.garmentColor
+          garmentColor: project.garmentColor,
+          appliqueBadgesForm: project.appliqueBadgesForm
         });
       }
 

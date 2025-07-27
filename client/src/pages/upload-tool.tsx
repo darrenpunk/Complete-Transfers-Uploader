@@ -11,6 +11,7 @@ import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProductLauncherModal from "@/components/product-launcher-modal";
 import InkColorModal from "@/components/ink-color-modal";
 import ProjectNameModal from "@/components/project-name-modal";
+import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
@@ -29,7 +30,9 @@ export default function UploadTool() {
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
+  const [showAppliqueBadgesModal, setShowAppliqueBadgesModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
+  const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -56,7 +59,7 @@ export default function UploadTool() {
 
   // Create new project
   const createProjectMutation = useMutation({
-    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string }) => {
+    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string; appliqueBadgesForm?: any }) => {
       const response = await apiRequest("POST", "/api/projects", projectData);
       return response.json();
     },
@@ -215,16 +218,27 @@ export default function UploadTool() {
     if (selectedTemplate) {
       setShowTemplateSelector(false);
       setHasInitialized(true); // Prevent reopening
-      // Only require garment color for Full Colour Transfers
+      
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers";
       const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfers";
+      const isCustomBadgesTemplate = selectedTemplate.group === "Custom Badges";
       
-      createProjectMutation.mutate({
-        name: "Untitled Project",
-        templateSize: templateId,
-        garmentColor: isFullColourTemplate ? "" : "#FFFFFF",
-        inkColor: isSingleColourTemplate ? "" : undefined
-      });
+      // If Custom Badges template, show the applique badges modal first
+      if (isCustomBadgesTemplate) {
+        setPendingTemplateData({
+          templateId,
+          garmentColor: "#FFFFFF"
+        });
+        setShowAppliqueBadgesModal(true);
+      } else {
+        // Create project directly for other template types
+        createProjectMutation.mutate({
+          name: "Untitled Project",
+          templateSize: templateId,
+          garmentColor: isFullColourTemplate ? "" : "#FFFFFF",
+          inkColor: isSingleColourTemplate ? "" : undefined
+        });
+      }
     }
   };
 
@@ -268,6 +282,21 @@ export default function UploadTool() {
     if (currentProject) {
       updateProjectMutation.mutate({ inkColor: color });
     }
+  };
+
+  // Handle applique badges form submission
+  const handleAppliqueBadgesFormConfirm = (formData: any) => {
+    if (pendingTemplateData) {
+      createProjectMutation.mutate({
+        name: "Untitled Project",
+        templateSize: pendingTemplateData.templateId,
+        garmentColor: pendingTemplateData.garmentColor,
+        inkColor: pendingTemplateData.inkColor,
+        appliqueBadgesForm: formData
+      });
+      setPendingTemplateData(null);
+    }
+    setShowAppliqueBadgesModal(false);
   };
 
   // Start over handler - creates a new project
@@ -494,6 +523,14 @@ export default function UploadTool() {
             ? "Please provide a name for your project. This will be used for the PDF filename."
             : "Please provide a name for your project before continuing."
         }
+      />
+
+      {/* Applique Badges Modal */}
+      <AppliqueBadgesModal
+        open={showAppliqueBadgesModal}
+        onOpenChange={setShowAppliqueBadgesModal}
+        onConfirm={handleAppliqueBadgesFormConfirm}
+        isLoading={createProjectMutation.isPending}
       />
     </div>
   );

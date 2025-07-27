@@ -15,6 +15,7 @@ export interface PDFGenerationData {
   canvasElements: CanvasElement[];
   logos: Logo[];
   garmentColor?: string;
+  appliqueBadgesForm?: any;
 }
 
 export class EnhancedCMYKGenerator {
@@ -77,6 +78,191 @@ export class EnhancedCMYKGenerator {
 
     return hex;
   }
+
+  // Render applique badges form data on PDF page
+  private async renderAppliqueBadgesForm(
+    page: any, 
+    formData: any, 
+    pdfDoc: PDFDocument, 
+    pageWidth: number, 
+    pageHeight: number
+  ): Promise<void> {
+    try {
+      // Load fonts
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      
+      // Form layout constants
+      const margin = 40;
+      const lineHeight = 16;
+      const sectionSpacing = 20;
+      let currentY = pageHeight - margin - 60; // Start below any existing content
+      
+      // Background for form
+      page.drawRectangle({
+        x: margin,
+        y: currentY - 400,
+        width: pageWidth - (margin * 2),
+        height: 380,
+        color: rgb(0.98, 0.98, 0.98),
+        borderColor: rgb(0.8, 0.8, 0.8),
+        borderWidth: 1,
+      });
+      
+      // Title
+      page.drawText('EMBROIDERY FILE OPTIONS', {
+        x: margin + 10,
+        y: currentY - 20,
+        size: 14,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      currentY -= 40;
+      
+      // Embroidery File Options
+      if (formData.embroideryFileOptions && formData.embroideryFileOptions.length > 0) {
+        page.drawText('Embroidery File Options:', {
+          x: margin + 10,
+          y: currentY,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight;
+        
+        formData.embroideryFileOptions.forEach((option: string) => {
+          page.drawText(`• ${option}`, {
+            x: margin + 20,
+            y: currentY,
+            size: 10,
+            font: regularFont,
+            color: rgb(0, 0, 0),
+          });
+          currentY -= lineHeight;
+        });
+        currentY -= sectionSpacing;
+      }
+      
+      // Embroidery Thread Options
+      if (formData.embroideryThreadOptions && formData.embroideryThreadOptions.length > 0) {
+        page.drawText('Embroidery Thread Options:', {
+          x: margin + 10,
+          y: currentY,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight;
+        
+        formData.embroideryThreadOptions.forEach((option: string) => {
+          page.drawText(`• ${option}`, {
+            x: margin + 20,
+            y: currentY,
+            size: 10,
+            font: regularFont,
+            color: rgb(0, 0, 0),
+          });
+          currentY -= lineHeight;
+        });
+        currentY -= sectionSpacing;
+      }
+      
+      // Position
+      if (formData.position && formData.position.length > 0) {
+        page.drawText('Position:', {
+          x: margin + 10,
+          y: currentY,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight;
+        
+        const positionText = formData.position.join(', ');
+        page.drawText(positionText, {
+          x: margin + 20,
+          y: currentY,
+          size: 10,
+          font: regularFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight + sectionSpacing;
+      }
+      
+      // Graphic Size
+      if (formData.graphicSize) {
+        page.drawText('Graphic Size:', {
+          x: margin + 10,
+          y: currentY,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight;
+        
+        page.drawText(formData.graphicSize, {
+          x: margin + 20,
+          y: currentY,
+          size: 10,
+          font: regularFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight + sectionSpacing;
+      }
+      
+      // Embroidered Parts
+      if (formData.embroideredParts) {
+        page.drawText('Embroidered Parts:', {
+          x: margin + 10,
+          y: currentY,
+          size: 11,
+          font: boldFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= lineHeight;
+        
+        // Word wrap for longer text
+        const words = formData.embroideredParts.split(' ');
+        let currentLine = '';
+        const maxWidth = pageWidth - margin - 40;
+        
+        words.forEach((word: string) => {
+          const testLine = currentLine + word + ' ';
+          const testWidth = regularFont.widthOfTextAtSize(testLine, 10);
+          
+          if (testWidth > maxWidth && currentLine !== '') {
+            page.drawText(currentLine.trim(), {
+              x: margin + 20,
+              y: currentY,
+              size: 10,
+              font: regularFont,
+              color: rgb(0, 0, 0),
+            });
+            currentY -= lineHeight;
+            currentLine = word + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        });
+        
+        if (currentLine.trim() !== '') {
+          page.drawText(currentLine.trim(), {
+            x: margin + 20,
+            y: currentY,
+            size: 10,
+            font: regularFont,
+            color: rgb(0, 0, 0),
+          });
+        }
+      }
+      
+      console.log('Enhanced CMYK: Successfully rendered applique badges form on page 2');
+      
+    } catch (error) {
+      console.error('Failed to render applique badges form:', error);
+    }
+  }
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
@@ -112,7 +298,7 @@ export class EnhancedCMYKGenerator {
   }
 
   private async createVectorPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
-    const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
+    const { projectId, templateSize, canvasElements, logos, garmentColor, appliqueBadgesForm } = data;
     
     // Check if this is a Single Colour Transfer template for recoloring
     const project = await storage.getProject(projectId);
@@ -293,6 +479,11 @@ export class EnhancedCMYKGenerator {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
       }
+    }
+
+    // Add applique badges form to page 2 if present
+    if (appliqueBadgesForm) {
+      await this.renderAppliqueBadgesForm(page2, appliqueBadgesForm, pdfDoc, pageWidth, pageHeight);
     }
     
     // Embed ICC profile directly into PDF using pdf-lib
