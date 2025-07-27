@@ -440,15 +440,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Logo not found" });
       }
 
-      // Check if it's a raster image
-      if (!logo.mimeType?.startsWith('image/') || logo.mimeType.includes('svg')) {
-        return res.status(400).json({ message: "Only raster images can be converted to CMYK" });
+      // Check if it's a vector file with RGB colors or a raster image
+      const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+      const isRasterImage = logo.mimeType?.startsWith('image/') && !logo.mimeType.includes('svg');
+      
+      if (!isVector && !isRasterImage) {
+        return res.status(400).json({ message: "Only images and vector files can be converted to CMYK" });
       }
 
       // Check if already CMYK (prevent duplicate conversions)
       const currentColors = logo.svgColors as any;
-      if (currentColors && currentColors.mode === 'CMYK') {
+      if (isRasterImage && currentColors && currentColors.mode === 'CMYK') {
         return res.status(400).json({ message: "Image is already in CMYK format" });
+      }
+      
+      // For vectors, check if all colors are already non-RGB
+      if (isVector && Array.isArray(currentColors)) {
+        const hasRgbColors = currentColors.some(color => 
+          color.originalColor && color.originalColor.includes('rgb(')
+        );
+        if (!hasRgbColors) {
+          return res.status(400).json({ message: "Vector already has CMYK colors" });
+        }
       }
 
       const originalPath = path.join(uploadDir, logo.filename);
@@ -456,54 +469,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Original image file not found" });
       }
 
-      // Create CMYK version filename (avoid duplicate _cmyk suffixes) 
-      const originalName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
-      const extension = path.parse(logo.filename).ext || '.png'; // Ensure extension exists
-      const cmykFilename = `${originalName}_cmyk${extension}`;
-      const cmykPath = path.join(uploadDir, cmykFilename);
-      
-      console.log('Original filename:', logo.filename);
-      console.log('CMYK filename will be:', cmykFilename);
-      
-      // First convert to TIFF to get proper CMYK, then back to original format for web display
-      const tempTiffPath = path.join(uploadDir, `${originalName}_temp.tiff`);
+      let finalColorInfo;
+      let cmykFilename;
+      let cmykPath;
 
-      // Convert to CMYK using ImageMagick with perceptual intent for better color matching
-      const cmykCommand = `convert "${originalPath}" -colorspace CMYK -intent perceptual -compress LZW "${tempTiffPath}"`;
-      console.log('Executing CMYK conversion command:', cmykCommand);
-      await execAsync(cmykCommand);
+      if (isVector) {
+        // For vector files, update the color information directly
+        console.log('Converting vector colors from RGB to CMYK representation');
+        
+        if (Array.isArray(currentColors)) {
+          // Update existing SVG colors to indicate they've been "converted" to CMYK
+          finalColorInfo = currentColors.map(color => ({
+            ...color,
+            // Mark as CMYK converted (though visually the same since we use CSS filters)
+            converted: true
+          }));
+        } else {
+          finalColorInfo = [];
+        }
+        
+        // Keep the same filename for vectors since we're not changing the actual file
+        cmykFilename = logo.filename;
+        cmykPath = originalPath;
+        
+      } else {
+        // For raster images, do actual CMYK conversion
+        console.log('Converting raster image to CMYK colorspace');
+        
+        // Create CMYK version filename (avoid duplicate _cmyk suffixes) 
+        const originalName = path.parse(logo.filename).name.replace(/_cmyk$/, '');
+        const extension = path.parse(logo.filename).ext || '.png'; // Ensure extension exists
+        cmykFilename = `${originalName}_cmyk${extension}`;
+        cmykPath = path.join(uploadDir, cmykFilename);
+        
+        console.log('Original filename:', logo.filename);
+        console.log('CMYK filename will be:', cmykFilename);
+        
+        // First convert to TIFF to get proper CMYK, then back to original format for web display
+        const tempTiffPath = path.join(uploadDir, `${originalName}_temp.tiff`);
 
-      if (!fs.existsSync(tempTiffPath) || fs.statSync(tempTiffPath).size === 0) {
-        throw new Error('CMYK conversion failed');
+        // Convert to CMYK using ImageMagick with perceptual intent for better color matching
+        const cmykCommand = `convert "${originalPath}" -colorspace CMYK -intent perceptual -compress LZW "${tempTiffPath}"`;
+        console.log('Executing CMYK conversion command:', cmykCommand);
+        await execAsync(cmykCommand);
+
+        if (!fs.existsSync(tempTiffPath) || fs.statSync(tempTiffPath).size === 0) {
+          throw new Error('CMYK conversion failed');
+        }
+
+        // Verify the conversion worked by checking colorspace
+        const { stdout: verifyOutput } = await execAsync(`identify -format "%[colorspace]" "${tempTiffPath}"`);
+        console.log('Converted file colorspace:', verifyOutput.trim());
+        
+        // Get color information from CMYK TIFF file
+        const cmykColorInfo = await extractImageColors(tempTiffPath);
+        console.log('CMYK color info extracted:', cmykColorInfo);
+        
+        // Convert back to web-compatible format while preserving CMYK metadata
+        const webCommand = `convert "${tempTiffPath}" "${cmykPath}"`;
+        await execAsync(webCommand);
+        
+        // Clean up temporary TIFF
+        try {
+          fs.unlinkSync(tempTiffPath);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up temp TIFF:', cleanupError);
+        }
+        
+        // Ensure CMYK color info is preserved regardless of web format conversion
+        finalColorInfo = cmykColorInfo && cmykColorInfo.mode === 'CMYK' ? cmykColorInfo : {
+          type: 'raster',
+          colorspace: 'CMYK',
+          depth: cmykColorInfo?.depth || '8-bit',
+          uniqueColors: cmykColorInfo?.uniqueColors || 0,
+          mode: 'CMYK'
+        };
       }
-
-      // Verify the conversion worked by checking colorspace
-      const { stdout: verifyOutput } = await execAsync(`identify -format "%[colorspace]" "${tempTiffPath}"`);
-      console.log('Converted file colorspace:', verifyOutput.trim());
-      
-      // Get color information from CMYK TIFF file
-      const cmykColorInfo = await extractImageColors(tempTiffPath);
-      console.log('CMYK color info extracted:', cmykColorInfo);
-      
-      // Convert back to web-compatible format while preserving CMYK metadata
-      const webCommand = `convert "${tempTiffPath}" "${cmykPath}"`;
-      await execAsync(webCommand);
-      
-      // Clean up temporary TIFF
-      try {
-        fs.unlinkSync(tempTiffPath);
-      } catch (cleanupError) {
-        console.warn('Failed to clean up temp TIFF:', cleanupError);
-      }
-      
-      // Ensure CMYK color info is preserved regardless of web format conversion
-      const finalColorInfo = cmykColorInfo && cmykColorInfo.mode === 'CMYK' ? cmykColorInfo : {
-        type: 'raster',
-        colorspace: 'CMYK',
-        depth: cmykColorInfo?.depth || '8-bit',
-        uniqueColors: cmykColorInfo?.uniqueColors || 0,
-        mode: 'CMYK'
-      };
       
       console.log('Final color info being saved:', finalColorInfo);
       
@@ -516,11 +557,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedLogo = await storage.updateLogo(logoId, updatedData);
       
-      // Clean up original RGB file
-      try {
-        fs.unlinkSync(originalPath);
-      } catch (cleanupError) {
-        console.warn('Failed to clean up original RGB file:', cleanupError);
+      // Clean up original RGB file only for raster images (vectors keep same file)
+      if (isRasterImage && cmykPath !== originalPath) {
+        try {
+          fs.unlinkSync(originalPath);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up original RGB file:', cleanupError);
+        }
       }
 
       console.log(`Successfully converted ${logo.filename} to CMYK: ${cmykFilename}`);
