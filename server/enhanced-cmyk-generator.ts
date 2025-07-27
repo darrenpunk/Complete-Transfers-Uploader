@@ -94,26 +94,26 @@ export class EnhancedCMYKGenerator {
       
       // Form layout constants
       const margin = 40;
-      const lineHeight = 16;
-      const sectionSpacing = 20;
+      const lineHeight = 24; // Increased from 16
+      const sectionSpacing = 30; // Increased from 20
       let currentY = pageHeight - margin - 60; // Start below any existing content
       
-      // Background for form
+      // Background for form (make it taller)
       page.drawRectangle({
         x: margin,
-        y: currentY - 400,
+        y: currentY - 500, // Increased height
         width: pageWidth - (margin * 2),
-        height: 380,
+        height: 480, // Increased height
         color: rgb(0.98, 0.98, 0.98),
         borderColor: rgb(0.8, 0.8, 0.8),
         borderWidth: 1,
       });
       
-      // Title
+      // Title (bigger font)
       page.drawText('EMBROIDERY FILE OPTIONS', {
         x: margin + 10,
-        y: currentY - 20,
-        size: 14,
+        y: currentY - 25,
+        size: 18, // Increased from 14
         font: boldFont,
         color: rgb(0, 0, 0),
       });
@@ -125,7 +125,7 @@ export class EnhancedCMYKGenerator {
         page.drawText('Embroidery File Options:', {
           x: margin + 10,
           y: currentY,
-          size: 11,
+          size: 14, // Increased from 11
           font: boldFont,
           color: rgb(0, 0, 0),
         });
@@ -135,7 +135,7 @@ export class EnhancedCMYKGenerator {
           page.drawText(`• ${option}`, {
             x: margin + 20,
             y: currentY,
-            size: 10,
+            size: 12, // Increased from 10
             font: regularFont,
             color: rgb(0, 0, 0),
           });
@@ -149,7 +149,7 @@ export class EnhancedCMYKGenerator {
         page.drawText('Embroidery Thread Options:', {
           x: margin + 10,
           y: currentY,
-          size: 11,
+          size: 14, // Increased from 11
           font: boldFont,
           color: rgb(0, 0, 0),
         });
@@ -159,7 +159,7 @@ export class EnhancedCMYKGenerator {
           page.drawText(`• ${option}`, {
             x: margin + 20,
             y: currentY,
-            size: 10,
+            size: 12, // Increased from 10
             font: regularFont,
             color: rgb(0, 0, 0),
           });
@@ -173,7 +173,7 @@ export class EnhancedCMYKGenerator {
         page.drawText('Position:', {
           x: margin + 10,
           y: currentY,
-          size: 11,
+          size: 14, // Increased from 11
           font: boldFont,
           color: rgb(0, 0, 0),
         });
@@ -183,7 +183,7 @@ export class EnhancedCMYKGenerator {
         page.drawText(positionText, {
           x: margin + 20,
           y: currentY,
-          size: 10,
+          size: 12, // Increased from 10
           font: regularFont,
           color: rgb(0, 0, 0),
         });
@@ -195,7 +195,7 @@ export class EnhancedCMYKGenerator {
         page.drawText('Graphic Size:', {
           x: margin + 10,
           y: currentY,
-          size: 11,
+          size: 14, // Increased from 11
           font: boldFont,
           color: rgb(0, 0, 0),
         });
@@ -204,7 +204,7 @@ export class EnhancedCMYKGenerator {
         page.drawText(formData.graphicSize, {
           x: margin + 20,
           y: currentY,
-          size: 10,
+          size: 12, // Increased from 10
           font: regularFont,
           color: rgb(0, 0, 0),
         });
@@ -216,7 +216,7 @@ export class EnhancedCMYKGenerator {
         page.drawText('Embroidered Parts:', {
           x: margin + 10,
           y: currentY,
-          size: 11,
+          size: 14, // Increased from 11
           font: boldFont,
           color: rgb(0, 0, 0),
         });
@@ -229,13 +229,13 @@ export class EnhancedCMYKGenerator {
         
         words.forEach((word: string) => {
           const testLine = currentLine + word + ' ';
-          const testWidth = regularFont.widthOfTextAtSize(testLine, 10);
+          const testWidth = regularFont.widthOfTextAtSize(testLine, 12);
           
           if (testWidth > maxWidth && currentLine !== '') {
             page.drawText(currentLine.trim(), {
               x: margin + 20,
               y: currentY,
-              size: 10,
+              size: 12, // Increased from 10
               font: regularFont,
               color: rgb(0, 0, 0),
             });
@@ -250,7 +250,7 @@ export class EnhancedCMYKGenerator {
           page.drawText(currentLine.trim(), {
             x: margin + 20,
             y: currentY,
-            size: 10,
+            size: 12, // Increased from 10
             font: regularFont,
             color: rgb(0, 0, 0),
           });
