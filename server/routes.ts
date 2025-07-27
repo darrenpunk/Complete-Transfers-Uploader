@@ -1255,6 +1255,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Handle real-time ink color recoloring for canvas display
+  app.get("/uploads/:filename", async (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const inkColor = req.query.inkColor as string;
+      const shouldRecolor = req.query.recolor === 'true';
+      
+      const uploadDir = path.join(process.cwd(), "uploads");
+      const originalPath = path.join(uploadDir, filename);
+      
+      // If no recoloring requested or file doesn't exist, serve original
+      if (!shouldRecolor || !inkColor || !fs.existsSync(originalPath)) {
+        return res.sendFile(originalPath);
+      }
+      
+      // Generate recolored version for canvas display
+      const recoloredPath = path.join(uploadDir, `${filename}_ink_${inkColor.replace('#', '')}_canvas.svg`);
+      
+      // Check if recolored version already exists and is recent
+      if (fs.existsSync(recoloredPath)) {
+        const originalStat = fs.statSync(originalPath);
+        const recoloredStat = fs.statSync(recoloredPath);
+        
+        // If recolored version is newer than original, use it
+        if (recoloredStat.mtime > originalStat.mtime) {
+          return res.sendFile(recoloredPath);
+        }
+      }
+      
+      // Generate new recolored version
+      console.log(`Generating ink-recolored canvas version: ${filename} -> ${inkColor}`);
+      
+      // Read original SVG content
+      const svgContent = fs.readFileSync(originalPath, 'utf8');
+      
+      // Apply ink color recoloring using the same function as PDF generation
+      const { recolorSVG } = await import('./svg-recolor');
+      const recoloredSVG = recolorSVG(svgContent, inkColor);
+      
+      // Save recolored version for caching
+      fs.writeFileSync(recoloredPath, recoloredSVG);
+      
+      // Serve recolored SVG
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.send(recoloredSVG);
+      
+    } catch (error) {
+      console.error('Error serving ink-recolored image:', error);
+      // Fallback to serving original file
+      const uploadDir = path.join(process.cwd(), "uploads");
+      const originalPath = path.join(uploadDir, req.params.filename);
+      if (fs.existsSync(originalPath)) {
+        res.sendFile(originalPath);
+      } else {
+        res.status(404).send('File not found');
+      }
+    }
+  });
+
   // Setup imposition routes
   setupImpositionRoutes(app, storage);
 

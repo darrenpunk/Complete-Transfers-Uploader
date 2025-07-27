@@ -491,6 +491,10 @@ export default function CanvasWorkspace({
 
               const isSelected = selectedElement?.id === element.id;
               
+              // Check if this is a Single Colour Transfer template requiring ink color recoloring
+              const isSingleColourTemplate = template?.group === "Single Colour Transfers";
+              const shouldRecolorForInk = isSingleColourTemplate && project.inkColor;
+              
               // Debug: Log color overrides for this element
               if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
                 console.log(`Element ${element.id} has color overrides:`, element.colorOverrides);
@@ -524,9 +528,16 @@ export default function CanvasWorkspace({
                   <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
-                        src={element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                          ? `/uploads/${element.id}_modified.svg?t=${Date.now()}` 
-                          : getImageUrl(logo)}
+                        src={
+                          // Priority 1: Element has individual color overrides
+                          element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                            ? `/uploads/${element.id}_modified.svg?t=${Date.now()}`
+                            // Priority 2: Single Colour Transfer with ink color selected
+                            : shouldRecolorForInk 
+                              ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`
+                              // Priority 3: Original image
+                              : getImageUrl(logo)
+                        }
                         alt={logo.originalName}
                         className="w-full h-full object-fill"
                         style={{ 
@@ -538,9 +549,12 @@ export default function CanvasWorkspace({
                         }}
                         draggable={false}
                         onLoad={() => {
-                          console.log('Image loaded:', element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                            ? `/uploads/${element.id}_modified.svg` 
-                            : getImageUrl(logo));
+                          const imageUrl = element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                            ? `/uploads/${element.id}_modified.svg`
+                            : shouldRecolorForInk 
+                              ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
+                              : getImageUrl(logo);
+                          console.log('Image loaded:', imageUrl);
                         }}
                         onError={(e) => {
                           console.error('Failed to load image:', getImageUrl(logo));
