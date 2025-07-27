@@ -15,6 +15,9 @@ import { outlineFonts } from "./font-outliner";
 import { ColorManagement } from "./color-management";
 import { standardizeRgbToCmyk } from "./color-standardization";
 import { setupImpositionRoutes } from "./imposition-routes";
+import { ungroupSVG, createSeparateSVGFiles, SVGElement } from "./svg-ungroup";
+import { EnhancedCMYKGenerator } from "./enhanced-cmyk-generator";
+import { recolorSVG } from "./svg-recolor";
 
 const execAsync = promisify(exec);
 
@@ -1315,6 +1318,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({ message: "Failed to generate PDF" });
+    }
+  });
+
+  // Ungroup logo route - split grouped graphics into individual elements
+  app.post("/api/logos/:logoId/ungroup", async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      // Check if logo has an SVG file
+      const svgPath = path.join(uploadsDir, `${logo.filename.replace(/\.[^/.]+$/, "")}.svg`);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(400).json({ message: "SVG file not found for ungrouping" });
+      }
+
+      // Read and parse SVG content
+      const svgContent = fs.readFileSync(svgPath, 'utf-8');
+      const elements = ungroupSVG(svgContent);
+      
+      if (elements.length <= 1) {
+        return res.status(400).json({ message: "No groupings found to ungroup" });
+      }
+
+      // Create separate SVG files for each element
+      const newFilenames = createSeparateSVGFiles(elements, logo.filename, uploadsDir);
+      
+      // Create new logo entries for each ungrouped element
+      const newLogos = [];
+      for (let i = 0; i < newFilenames.length; i++) {
+        const element = elements[i];
+        const filename = newFilenames[i];
+        
+        // Convert each SVG to PNG for display
+        const pngFilename = filename.replace('.svg', '.png');
+        const pngPath = path.join(uploadsDir, pngFilename);
+        
+        try {
+          await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -sOutputFile="${pngPath}" "${path.join(uploadsDir, filename)}"`);
+        } catch (error) {
+          console.warn(`Failed to convert ${filename} to PNG:`, error);
+        }
+
+        const newLogo = await storage.createLogo({
+          filename: pngFilename,
+          originalName: `${logo.originalName}_part_${i + 1}`,
+          mimeType: 'image/png',
+          fileSize: fs.statSync(pngPath).size,
+          width: Math.round(element.bounds.width),
+          height: Math.round(element.bounds.height),
+          projectId: logo.projectId,
+          uploadedAt: new Date(),
+          colors: [], // Will be analyzed separately if needed
+          fonts: [],
+          converted: false
+        });
+        
+        newLogos.push(newLogo);
+      }
+      
+      res.json({
+        message: `Successfully ungrouped into ${newLogos.length} elements`,
+        originalLogo: logo,
+        newLogos: newLogos,
+        elements: elements
+      });
+      
+    } catch (error) {
+      console.error("Error ungrouping logo:", error);
+      res.status(500).json({ message: "Failed to ungroup logo" });
     }
   });
 
