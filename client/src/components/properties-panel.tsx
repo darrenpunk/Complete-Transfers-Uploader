@@ -59,8 +59,44 @@ function getColorName(hex: string): string {
     }
   }
 
-  // If no match found, return hex as fallback
-  return hex;
+  // Convert hex to RGB for color analysis
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result) {
+      return {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      };
+    }
+    return null;
+  };
+
+  // Generate descriptive color name for custom colors
+  const rgb = hexToRgb(hex);
+  if (rgb) {
+    const { r, g, b } = rgb;
+    
+    // Determine the dominant color family
+    if (r > g && r > b) {
+      if (g > 100 && b < 50) return `Custom Orange (${hex})`;
+      if (g < 100 && b < 100) return `Custom Red (${hex})`;
+      if (g > 150 && b > 150) return `Custom Pink (${hex})`;
+    } else if (g > r && g > b) {
+      if (r < 100 && b < 100) return `Custom Green (${hex})`;
+      if (r > 150 && b < 100) return `Custom Yellow (${hex})`;
+    } else if (b > r && b > g) {
+      if (r < 100 && g < 100) return `Custom Blue (${hex})`;
+      if (r > 150 && g > 150) return `Custom Purple (${hex})`;
+    } else if (r === g && g === b) {
+      if (r < 50) return `Custom Black (${hex})`;
+      if (r > 200) return `Custom White (${hex})`;
+      return `Custom Gray (${hex})`;
+    }
+  }
+
+  // If no pattern found, return a generic custom color label
+  return `Custom Color (${hex})`;
 }
 
 interface PropertiesPanelProps {
