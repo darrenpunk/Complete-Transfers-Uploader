@@ -38,27 +38,25 @@ const TShirtSwatch: React.FC<TShirtSwatchProps> = ({
       style={{ filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))' }}
     >
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 24 24"
         className="w-full h-full"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* T-shirt shape */}
+        {/* Main t-shirt body */}
         <path
-          d="M25 30 L15 25 L15 45 L25 40 L25 85 L75 85 L75 40 L85 45 L85 25 L75 30 L75 20 L65 15 L35 15 L25 20 Z"
+          d="M8 4h8v2h2l2 3v3l-2 1v9H6v-9l-2-1V9l2-3h2V4z"
           fill={color}
-          stroke="#e5e7eb"
-          strokeWidth="1"
+          stroke="#9ca3af"
+          strokeWidth="0.8"
+          strokeLinejoin="round"
         />
         
-        {/* Neck opening */}
-        <ellipse
-          cx="50"
-          cy="22"
-          rx="8"
-          ry="6"
+        {/* Neck opening - rounded rectangle */}
+        <path
+          d="M10 4c0-1 1-2 2-2s2 1 2 2v1h-4V4z"
           fill="white"
-          stroke="#e5e7eb"
+          stroke="#9ca3af"
           strokeWidth="0.5"
         />
       </svg>
