@@ -117,6 +117,9 @@ This is a full-stack web application for uploading logo files and designing layo
 - ✅ Conservative text logo sizing (350×120) for readable logo placement
 - ✅ Font outlining recalculation updates bounding box after glyph conversion
 - ✅ Eliminated landscape/portrait orientation errors from background element inclusion
+- ✅ Intelligent PDF Scaling System: Replaced fixed 300 DPI conversion with smart scale calculation for custom-sized PDFs - detects A3/A4 page sizes or applies intelligent scaling for large content (targeting 350mm max dimension)
+- ✅ Enhanced Bounding Box Thresholds: Raised filtering thresholds to 700×700 pixels and increased size caps to 600×500 for better real content preservation
+- ✅ Custom PDF Size Detection: Added A4 format detection and intelligent scaling for non-standard PDF sizes to maintain proper logo proportions
 
 ## User Preferences
 

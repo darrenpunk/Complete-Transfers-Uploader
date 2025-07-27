@@ -413,17 +413,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         logos.push(logo);
 
         // Create canvas element for the logo using actual dimensions scaled to mm
-        // For 300 DPI images (our ImageMagick conversion), use 0.08466667 mm per pixel
-        const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
-        let displayWidth = actualWidth ? Math.round(actualWidth * scaleFactor) : 200;
-        let displayHeight = actualHeight ? Math.round(actualHeight * scaleFactor) : 150;
+        let displayWidth = 200;  // Default fallback
+        let displayHeight = 150; // Default fallback
         
-        // For A3 PDFs, ensure we match A3 dimensions (297x420mm)
         if (file.mimetype === 'application/pdf' && actualWidth && actualHeight) {
-          // Check if this looks like an A3 ratio
+          // For PDFs, try to determine if we have a reasonable size relationship
           const aspectRatio = actualWidth / actualHeight;
-          const a3LandscapeRatio = 420 / 297; // ~1.414 A3 landscape ratio (wider than tall)
-          const a3PortraitRatio = 297 / 420;   // ~0.707 A3 portrait ratio (taller than wide)
+          
+          // Check for common PDF page sizes first
+          const a3LandscapeRatio = 420 / 297; // ~1.414
+          const a3PortraitRatio = 297 / 420;   // ~0.707
+          const a4LandscapeRatio = 297 / 210;  // ~1.414
+          const a4PortraitRatio = 210 / 297;   // ~0.707
           
           console.log(`PDF aspect ratio: ${aspectRatio.toFixed(3)}, A3 landscape: ${a3LandscapeRatio.toFixed(3)}, A3 portrait: ${a3PortraitRatio.toFixed(3)}`);
           
@@ -437,9 +438,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
             displayWidth = 297;
             displayHeight = 420;
             console.log('Detected A3 portrait');
+          } else if (Math.abs(aspectRatio - a4LandscapeRatio) < 0.05) {
+            // Landscape A4
+            displayWidth = 297;
+            displayHeight = 210;
+            console.log('Detected A4 landscape');
+          } else if (Math.abs(aspectRatio - a4PortraitRatio) < 0.05) {
+            // Portrait A4
+            displayWidth = 210;
+            displayHeight = 297;
+            console.log('Detected A4 portrait');
           } else {
-            console.log('PDF does not match A3 ratio, using scale factor');
+            // For custom-sized PDFs, use a more intelligent scale calculation
+            // If we detected proper content bounds, use a scale based on reasonable logo sizes
+            if (actualWidth > 200 && actualHeight > 200) {
+              // Large content suggests we need better scaling - assume this should be around 200-400mm range
+              const targetMaxDimension = 350; // Target max dimension in mm for large logos
+              const maxCurrentDimension = Math.max(actualWidth, actualHeight);
+              const intelligentScale = targetMaxDimension / maxCurrentDimension;
+              
+              displayWidth = Math.round(actualWidth * intelligentScale);
+              displayHeight = Math.round(actualHeight * intelligentScale);
+              
+              console.log(`Using intelligent scale ${intelligentScale.toFixed(3)} for custom PDF: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
+            } else {
+              // Smaller content, use conservative 300 DPI scale
+              const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
+              displayWidth = Math.round(actualWidth * scaleFactor);
+              displayHeight = Math.round(actualHeight * scaleFactor);
+              console.log('Using 300 DPI scale factor for small content');
+            }
           }
+        } else if (actualWidth && actualHeight) {
+          // For non-PDF images, use 300 DPI scale
+          const scaleFactor = 0.08466667;
+          displayWidth = Math.round(actualWidth * scaleFactor);
+          displayHeight = Math.round(actualHeight * scaleFactor);
         }
         
         const canvasElementData = {
