@@ -7,7 +7,7 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
 import { manufacturerColors } from "@shared/garment-colors";
@@ -262,7 +262,10 @@ export default function ToolsSidebar({
           <div className="border-b border-gray-200">
             <CollapsibleTrigger asChild>
               <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
-                <h3 className="text-lg font-semibold text-gray-900">Uploaded Logos ({logos.length})</h3>
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Image className="w-5 h-5" />
+                  Uploaded Logos ({logos.length})
+                </h3>
                 {logosCollapsed ? (
                   <ChevronRight className="w-4 h-4" />
                 ) : (
@@ -431,7 +434,10 @@ export default function ToolsSidebar({
         <div className="border-b border-gray-200">
           <CollapsibleTrigger asChild>
             <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900">Product Selector</h3>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Product Selector
+              </h3>
               {preflightCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
               ) : (
@@ -464,7 +470,10 @@ export default function ToolsSidebar({
         <div className="border-b border-gray-200">
           <CollapsibleTrigger asChild>
             <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
-              <h3 className="text-lg font-semibold text-gray-900">Pre-flight Check</h3>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5" />
+                Pre-flight Check
+              </h3>
               {logosCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
               ) : (

@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -393,7 +393,10 @@ export default function PropertiesPanel({
         <Card className="rounded-none border-x-0 border-t-0">
           <CardHeader className="cursor-pointer" onClick={() => setPropertiesPanelCollapsed(!propertiesPanelCollapsed)}>
             <CardTitle className="text-lg flex items-center justify-between">
-              <span>Logo Properties</span>
+              <span className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Logo Properties
+              </span>
               {propertiesPanelCollapsed ? (
                 <ChevronRight className="w-4 h-4" />
               ) : (
@@ -588,7 +591,10 @@ export default function PropertiesPanel({
           <Card className="rounded-none border-x-0 border-t-0">
             <CardHeader className="cursor-pointer" onClick={() => setPreflightPanelCollapsed(!preflightPanelCollapsed)}>
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Color Analysis</span>
+                <span className="flex items-center gap-2">
+                  <PaletteIcon className="w-5 h-5" />
+                  Color Analysis
+                </span>
                 {preflightPanelCollapsed ? (
                   <ChevronRight className="w-4 h-4" />
                 ) : (
@@ -609,7 +615,10 @@ export default function PropertiesPanel({
       <Card className="rounded-none border-x-0 border-t-0">
         <CardHeader className="cursor-pointer" onClick={() => setLayersPanelCollapsed(!layersPanelCollapsed)}>
           <CardTitle className="text-lg flex items-center justify-between">
-            <span>Layers ({canvasElements.length})</span>
+            <span className="flex items-center gap-2">
+              <Layers className="w-5 h-5" />
+              Layers ({canvasElements.length})
+            </span>
             {layersPanelCollapsed ? (
               <ChevronRight className="w-4 h-4" />
             ) : (
@@ -700,7 +709,10 @@ export default function PropertiesPanel({
       <Card className="rounded-none border-x-0 border-t-0">
         <CardHeader className="cursor-pointer" onClick={() => setAlignmentPanelCollapsed(!alignmentPanelCollapsed)}>
           <CardTitle className="text-lg flex items-center justify-between">
-            <span>Alignment</span>
+            <span className="flex items-center gap-2">
+              <Move className="w-5 h-5" />
+              Alignment & Tools
+            </span>
             {alignmentPanelCollapsed ? (
               <ChevronRight className="w-4 h-4" />
             ) : (
