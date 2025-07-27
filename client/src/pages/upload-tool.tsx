@@ -575,12 +575,13 @@ export default function UploadTool() {
         </div>
       )}
       
-      <AppliqueBadgesModal
+      {/* Temporarily disabled AppliqueBadgesModal to test state management */}
+      {/* <AppliqueBadgesModal
         open={showAppliqueBadgesModal}
         onOpenChange={setShowAppliqueBadgesModal}
         onConfirm={handleAppliqueBadgesFormConfirm}
         isLoading={createProjectMutation.isPending}
-      />
+      /> */}
     </div>
   );
 }
