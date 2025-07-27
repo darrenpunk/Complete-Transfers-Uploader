@@ -384,7 +384,7 @@ export default function ToolsSidebar({
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
               // Vector files with detected SVG colors - show format and count
               const hasRgbColors = svgColors.some(color => 
-                color.originalColor && color.originalColor.includes('rgb(') && !color.cmykColor
+                color.originalColor && color.originalColor.includes('rgb(')
               );
               if (hasRgbColors) {
                 colorValue = `RGB Vector (${svgColors.length} colors)`;
@@ -443,7 +443,7 @@ export default function ToolsSidebar({
           
           // Check if vector has RGB colors that need conversion
           const isRGBVector = logo && Array.isArray(logoSvgColors) && logoSvgColors.some(color => 
-            color.originalColor && color.originalColor.includes('rgb(') && !color.cmykColor
+            color.originalColor && color.originalColor.includes('rgb(')
           );
 
           return (
