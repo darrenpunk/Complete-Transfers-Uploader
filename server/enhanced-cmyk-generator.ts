@@ -367,7 +367,9 @@ export class EnhancedCMYKGenerator {
     const uploadDir = path.join(process.cwd(), "uploads");
     
     // Check for color overrides first (for ALL templates)
-    const hasColorOverrides = element.colorOverrides && Object.keys(element.colorOverrides).length > 0;
+    const hasColorOverrides = element.colorOverrides && 
+      typeof element.colorOverrides === 'object' && 
+      Object.keys(element.colorOverrides).length > 0;
     
     if (hasColorOverrides) {
       console.log(`Enhanced CMYK: Applying color overrides for ${logo.originalName}:`, element.colorOverrides);
@@ -384,8 +386,12 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Generated and using color-modified SVG: ${logo.originalName}`);
           await this.embedImageFile(pdfDoc, page, element, modifiedSvgPath, 'image/svg+xml', templateSize);
           return;
+        } else {
+          console.log(`Enhanced CMYK: Failed to generate modified SVG, falling back to original for: ${logo.originalName}`);
         }
       }
+    } else {
+      console.log(`Enhanced CMYK: No color overrides detected for ${logo.originalName}, using original graphics`);
     }
     
     // For Single Colour Transfer templates, check for recolored SVG
@@ -412,17 +418,20 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
           await this.embedRecoloredPDF(pdfDoc, page, element, originalPdfPath, templateSize, inkColor);
         } else {
+          console.log(`Enhanced CMYK: Using original PDF without color changes for: ${logo.originalName}`);
           await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
         }
         return;
       }
     }
     
-    // Fallback to processed image
+    // Fallback to processed image (original graphics without modifications)
     const logoPath = path.join(uploadDir, logo.filename);
     if (fs.existsSync(logoPath)) {
-      console.log(`Enhanced CMYK: Embedding processed image: ${logo.originalName}`);
+      console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
       await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
+    } else {
+      console.log(`Enhanced CMYK: No suitable file found for: ${logo.originalName}`);
     }
   }
 
