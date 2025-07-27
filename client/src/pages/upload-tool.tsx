@@ -33,6 +33,7 @@ export default function UploadTool() {
   const [showAppliqueBadgesModal, setShowAppliqueBadgesModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
   const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
+  const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -228,18 +229,13 @@ export default function UploadTool() {
       
       // If Custom Badges or Applique Badges template, show the applique badges modal first
       if (isCustomBadgesTemplate) {
-        console.log('Custom/Applique Badges template detected, showing form modal');
+        console.log('Custom/Applique Badges template detected, triggering form modal');
         setPendingTemplateData({
           templateId,
           garmentColor: "#FFFFFF"
         });
-        console.log('Setting showAppliqueBadgesModal to true');
-        setShowAppliqueBadgesModal(true);
-        
-        // Debug: Log state after setting
-        setTimeout(() => {
-          console.log('State check after 100ms:', { showAppliqueBadgesModal });
-        }, 100);
+        console.log('Setting triggerAppliqueBadgesModal to true');
+        setTriggerAppliqueBadgesModal(true);
       } else {
         console.log('Non-Custom Badges template, creating project directly');
         // Create project directly for other template types
@@ -263,6 +259,15 @@ export default function UploadTool() {
       }
     }
   }, [currentProject, logos.length]);
+
+  // Handle applique badges modal trigger
+  useEffect(() => {
+    if (triggerAppliqueBadgesModal) {
+      console.log('useEffect: Triggering applique badges modal');
+      setShowAppliqueBadgesModal(true);
+      setTriggerAppliqueBadgesModal(false);
+    }
+  }, [triggerAppliqueBadgesModal]);
 
   const handleTemplateChange = (templateId: string) => {
     if (currentProject) {
