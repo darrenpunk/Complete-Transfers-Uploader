@@ -1027,9 +1027,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Color changes only supported for SVG files" });
       }
 
+      // Map standardized colors to original formats from SVG analysis
+      let originalFormatOverrides: Record<string, string> = {};
+      
+      const svgColors = logo.svgColors as any[];
+      if (svgColors && Array.isArray(svgColors)) {
+        Object.entries(colorOverrides).forEach(([standardizedColor, newColor]) => {
+          // Find the matching color in the SVG analysis
+          const colorInfo = svgColors.find((c: any) => c.originalColor === standardizedColor);
+          if (colorInfo && colorInfo.originalFormat) {
+            originalFormatOverrides[colorInfo.originalFormat as string] = newColor as string;
+            console.log(`Using original format: ${colorInfo.originalFormat} -> ${newColor}`);
+          } else {
+            // Fallback to standardized color if original format not found
+            originalFormatOverrides[standardizedColor as string] = newColor as string;
+            console.log(`Using standardized format: ${standardizedColor} -> ${newColor}`);
+          }
+        });
+      } else {
+        // Fallback if no SVG color analysis available
+        originalFormatOverrides = colorOverrides;
+      }
+
       // Apply color changes to create a modified SVG
       const originalSvgPath = path.join(uploadDir, logo.filename);
-      const modifiedSvgContent = applySVGColorChanges(originalSvgPath, colorOverrides);
+      const modifiedSvgContent = applySVGColorChanges(originalSvgPath, originalFormatOverrides);
       
       if (!modifiedSvgContent) {
         return res.status(500).json({ message: "Failed to apply color changes" });
