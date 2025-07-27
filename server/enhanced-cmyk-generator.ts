@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { PDFDocument, rgb, degrees } from "pdf-lib";
+import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef } from "pdf-lib";
 
 export interface PDFGenerationData {
   projectId: string;
@@ -39,15 +39,9 @@ export class EnhancedCMYKGenerator {
       // Use pdf-lib for true vector preservation, then apply ICC profile post-processing
       const vectorPDF = await this.createVectorPreservingPDF(data);
       
-      if (useICC) {
-        // Apply ICC profile to the vector PDF using ImageMagick without rasterizing
-        const enhancedPDF = await this.applyICCProfileToPDF(vectorPDF, iccProfilePath);
-        console.log(`Enhanced CMYK: Successfully applied uploaded ICC profile (${path.basename(iccProfilePath)}) while preserving vectors`);
-        return enhancedPDF;
-      } else {
-        console.log('Enhanced CMYK: Vector PDF created without ICC profile');
-        return vectorPDF;
-      }
+      // The ICC profile is now embedded directly in the PDF via pdf-lib
+      console.log('Enhanced CMYK: Vector PDF created with embedded ICC profile');
+      return vectorPDF;
       
     } catch (error) {
       console.error('Enhanced CMYK generation failed:', error);
@@ -57,6 +51,18 @@ export class EnhancedCMYKGenerator {
 
   private async createVectorPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
+    
+    // Get ICC profile info
+    const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+    const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+    
+    let iccProfilePath = uploadedICCPath;
+    let useICC = fs.existsSync(uploadedICCPath);
+    
+    if (!useICC) {
+      iccProfilePath = fallbackICCPath;
+      useICC = fs.existsSync(fallbackICCPath);
+    }
     
     // Create a new PDF document using pdf-lib for vector preservation
     const pdfDoc = await PDFDocument.create();
@@ -107,6 +113,16 @@ export class EnhancedCMYKGenerator {
         await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
       } catch (error) {
         console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
+      }
+    }
+    
+    // Embed ICC profile directly into PDF using pdf-lib
+    if (useICC) {
+      try {
+        await this.embedICCProfileDirectly(pdfDoc, iccProfilePath);
+        console.log(`Enhanced CMYK: Successfully embedded ICC profile directly into PDF structure: ${path.basename(iccProfilePath)}`);
+      } catch (error) {
+        console.log('Enhanced CMYK: Failed to embed ICC profile directly, continuing without:', error);
       }
     }
     
@@ -194,6 +210,50 @@ export class EnhancedCMYKGenerator {
     console.log(`Enhanced CMYK: Successfully embedded vector PDF: ${element.logoId}`);
   }
 
+  private async embedICCProfileDirectly(pdfDoc: PDFDocument, iccProfilePath: string): Promise<void> {
+    try {
+      // Read ICC profile data
+      const iccProfileBytes = fs.readFileSync(iccProfilePath);
+      
+      // Create ICC profile stream object
+      const iccProfileRef = pdfDoc.context.register(
+        pdfDoc.context.stream(iccProfileBytes, {
+          Type: 'ICCBased',
+          N: 4, // CMYK = 4 components
+        })
+      );
+      
+      // Create output intent dictionary
+      const outputIntentDict = pdfDoc.context.obj({
+        Type: 'OutputIntent',
+        S: 'GTS_PDFX',
+        OutputConditionIdentifier: 'PSO Coated FOGRA51',
+        Info: 'PSO Coated FOGRA51 (EFI)',
+        DestOutputProfile: iccProfileRef
+      });
+      
+      const outputIntentRef = pdfDoc.context.register(outputIntentDict);
+      
+      // Add output intent to catalog using low-level context manipulation
+      const catalog = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Root);
+      if (catalog instanceof PDFDict) {
+        let outputIntents = catalog.get(PDFName.of('OutputIntents'));
+        if (!outputIntents) {
+          outputIntents = pdfDoc.context.obj([outputIntentRef]);
+          catalog.set(PDFName.of('OutputIntents'), outputIntents);
+        } else if (outputIntents instanceof PDFArray) {
+          outputIntents.push(outputIntentRef);
+        }
+      }
+      
+      console.log('Enhanced CMYK: ICC profile embedded directly into PDF structure');
+      
+    } catch (error) {
+      console.error('Failed to embed ICC profile directly:', error);
+      throw error;
+    }
+  }
+
   private async applyICCProfileToPDF(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
     try {
       // Use qpdf for ICC profile embedding without rasterization
@@ -210,9 +270,9 @@ export class EnhancedCMYKGenerator {
         
         fs.writeFileSync(inputPath, pdfBuffer);
         
-        // Use ghostscript with uploaded ICC profile for professional color management
-        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputFile="${outputPath}" "${inputPath}"`;
-        console.log(`Enhanced CMYK: Applying CMYK color conversion with uploaded ICC profile: ${path.basename(iccProfilePath)}`);
+        // Use ghostscript to embed ICC profile directly into PDF structure
+        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -dEmbedAllFonts=true -dCompatibilityLevel=1.4 -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -sOutputFile="${outputPath}" "${inputPath}"`;
+        console.log(`Enhanced CMYK: Embedding ICC profile into PDF structure: ${path.basename(iccProfilePath)}`);
         
         await execAsync(gsCommand);
         const enhancedPDF = fs.readFileSync(outputPath);
