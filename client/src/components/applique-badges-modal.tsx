@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,10 @@ export default function AppliqueBadgesModal({
   isLoading = false
 }: AppliqueBadgesModalProps) {
   console.log('AppliqueBadgesModal render:', { open, isLoading });
+  
+  useEffect(() => {
+    console.log('AppliqueBadgesModal open state changed:', open);
+  }, [open]);
   const [formData, setFormData] = useState<AppliqueBadgesFormData>({
     embroideryFileOptions: [],
     embroideryThreadOptions: [],
