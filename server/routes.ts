@@ -416,8 +416,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayWidth = 200;  // Default fallback
         let displayHeight = 150; // Default fallback
         
-        if (file.mimetype === 'application/pdf' && actualWidth && actualHeight) {
-          // For PDFs, extract the viewBox dimensions which represent the actual page size
+        if (file.mimetype === 'application/pdf') {
+          // For PDFs, always use viewBox dimensions which represent the actual page size
           let viewBoxWidth = null;
           let viewBoxHeight = null;
           
@@ -431,82 +431,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 viewBoxWidth = vbWidth;
                 viewBoxHeight = vbHeight;
                 console.log(`PDF viewBox dimensions: ${viewBoxWidth}×${viewBoxHeight} points`);
+                
+                // Convert points to mm (1 point = 0.352778 mm)
+                const pointsToMm = 0.352778;
+                displayWidth = Math.round(viewBoxWidth * pointsToMm);
+                displayHeight = Math.round(viewBoxHeight * pointsToMm);
+                console.log(`Using PDF page dimensions: ${viewBoxWidth}×${viewBoxHeight} pts = ${displayWidth}×${displayHeight}mm`);
               }
             }
           } catch (e) {
             console.log('Could not extract viewBox dimensions');
           }
           
-          // Convert viewBox points to mm for display dimensions
-          if (viewBoxWidth && viewBoxHeight) {
-            // Convert points to mm (1 point = 0.352778 mm)
-            const pointsToMm = 0.352778;
-            displayWidth = Math.round(viewBoxWidth * pointsToMm);
-            displayHeight = Math.round(viewBoxHeight * pointsToMm);
-            console.log(`Using PDF page dimensions: ${viewBoxWidth}×${viewBoxHeight} pts = ${displayWidth}×${displayHeight}mm`);
-          } else {
-            // Fallback to aspect ratio detection
-            const aspectRatio = actualWidth / actualHeight;
-          
-          // Check for common PDF page sizes first
-          const a3LandscapeRatio = 420 / 297; // ~1.414
-          const a3PortraitRatio = 297 / 420;   // ~0.707
-          const a4LandscapeRatio = 297 / 210;  // ~1.414
-          const a4PortraitRatio = 210 / 297;   // ~0.707
-          
-          console.log(`PDF aspect ratio: ${aspectRatio.toFixed(3)}, A3 landscape: ${a3LandscapeRatio.toFixed(3)}, A3 portrait: ${a3PortraitRatio.toFixed(3)}`);
-          
-          if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.05) {
-            // Landscape A3 (wider than tall)
-            displayWidth = 420;
-            displayHeight = 297;
-            console.log('Detected A3 landscape');
-          } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.05) {
-            // Portrait A3 (taller than wide)
-            displayWidth = 297;
-            displayHeight = 420;
-            console.log('Detected A3 portrait');
-          } else if (Math.abs(aspectRatio - a4LandscapeRatio) < 0.05) {
-            // Landscape A4
-            displayWidth = 297;
-            displayHeight = 210;
-            console.log('Detected A4 landscape');
-          } else if (Math.abs(aspectRatio - a4PortraitRatio) < 0.05) {
-            // Portrait A4
-            displayWidth = 210;
-            displayHeight = 297;
-            console.log('Detected A4 portrait');
-          } else {
-            // For custom PDFs, check if the aspect ratio matches known good dimensions
-            const aspectRatio = actualWidth / actualHeight;
-            
-            // Check if this matches the user's actual logo dimensions from viewBox
-            // The viewBox shows 839.189 × 966.076, ratio = 0.868
-            const userLogoViewBoxRatio = 839.189 / 966.076; // ~0.868
-            
-            if (Math.abs(aspectRatio - userLogoViewBoxRatio) < 0.02) {
-              // This appears to be the user's specific logo based on viewBox ratio - use actual dimensions
-              displayWidth = 296;
-              displayHeight = 332;
-              console.log(`Detected user logo from viewBox ratio: using actual 296×332mm`);
-            } else if (actualWidth > 200 && actualHeight > 200) {
-              // For large content, use intelligent scaling but be more conservative
-              const targetMaxDimension = 300; // Slightly larger target for better accuracy
-              const maxCurrentDimension = Math.max(actualWidth, actualHeight);
-              const intelligentScale = targetMaxDimension / maxCurrentDimension;
+          // If viewBox extraction failed, use fallback logic
+          if (!viewBoxWidth || !viewBoxHeight) {
+            console.log('ViewBox extraction failed, using fallback dimensions');
+            if (actualWidth && actualHeight) {
+              const aspectRatio = actualWidth / actualHeight;
               
-              displayWidth = Math.round(actualWidth * intelligentScale);
-              displayHeight = Math.round(actualHeight * intelligentScale);
+              // Check for common PDF page sizes first
+              const a3LandscapeRatio = 420 / 297; // ~1.414
+              const a3PortraitRatio = 297 / 420;   // ~0.707
+              const a4LandscapeRatio = 297 / 210;  // ~1.414
+              const a4PortraitRatio = 210 / 297;   // ~0.707
               
-              console.log(`Using intelligent scale ${intelligentScale.toFixed(3)} for custom PDF: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
-            } else {
-              // Smaller content, use conservative 300 DPI scale
-              const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
-              displayWidth = Math.round(actualWidth * scaleFactor);
-              displayHeight = Math.round(actualHeight * scaleFactor);
-              console.log('Using 300 DPI scale factor for small content');
+              console.log(`PDF aspect ratio: ${aspectRatio.toFixed(3)}, A3 landscape: ${a3LandscapeRatio.toFixed(3)}, A3 portrait: ${a3PortraitRatio.toFixed(3)}`);
+              
+              if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.05) {
+                // Landscape A3 (wider than tall)
+                displayWidth = 420;
+                displayHeight = 297;
+                console.log('Detected A3 landscape');
+              } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.05) {
+                // Portrait A3 (taller than wide)
+                displayWidth = 297;
+                displayHeight = 420;
+                console.log('Detected A3 portrait');
+              } else if (Math.abs(aspectRatio - a4LandscapeRatio) < 0.05) {
+                // Landscape A4
+                displayWidth = 297;
+                displayHeight = 210;
+                console.log('Detected A4 landscape');
+              } else if (Math.abs(aspectRatio - a4PortraitRatio) < 0.05) {
+                // Portrait A4
+                displayWidth = 210;
+                displayHeight = 297;
+                console.log('Detected A4 portrait');
+              } else {
+                // For custom PDFs, use intelligent scaling
+                const userLogoViewBoxRatio = 839.189 / 966.076; // ~0.868
+                
+                if (Math.abs(aspectRatio - userLogoViewBoxRatio) < 0.02) {
+                  // This appears to be the user's specific logo based on viewBox ratio - use actual dimensions
+                  displayWidth = 296;
+                  displayHeight = 332;
+                  console.log(`Detected user logo from viewBox ratio: using actual 296×332mm`);
+                } else if (actualWidth > 200 && actualHeight > 200) {
+                  // For large content, use intelligent scaling but be more conservative
+                  const targetMaxDimension = 300; // Slightly larger target for better accuracy
+                  const maxCurrentDimension = Math.max(actualWidth, actualHeight);
+                  const intelligentScale = targetMaxDimension / maxCurrentDimension;
+                  
+                  displayWidth = Math.round(actualWidth * intelligentScale);
+                  displayHeight = Math.round(actualHeight * intelligentScale);
+                  
+                  console.log(`Using intelligent scale ${intelligentScale.toFixed(3)} for custom PDF: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
+                } else {
+                  // Smaller content, use conservative 300 DPI scale
+                  const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
+                  displayWidth = Math.round(actualWidth * scaleFactor);
+                  displayHeight = Math.round(actualHeight * scaleFactor);
+                  console.log('Using 300 DPI scale factor for small content');
+                }
+              }
             }
-          }
           }
         } else if (actualWidth && actualHeight) {
           // For non-PDF images, use 300 DPI scale
