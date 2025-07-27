@@ -6,7 +6,7 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
   app.post("/api/canvas-elements/:id/imposition", async (req, res) => {
     try {
       const elementId = req.params.id;
-      const { rows, columns, horizontalSpacing, verticalSpacing } = req.body;
+      const { rows, columns, horizontalSpacing, verticalSpacing, centerOnCanvas } = req.body;
 
       // Validate inputs
       if (!rows || !columns || rows < 1 || columns < 1 || rows > 20 || columns > 20) {
@@ -21,6 +21,39 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
 
       const createdElements = [];
       
+      // Calculate grid dimensions
+      const totalGridWidth = (columns * originalElement.width) + ((columns - 1) * (horizontalSpacing || 0));
+      const totalGridHeight = (rows * originalElement.height) + ((rows - 1) * (verticalSpacing || 0));
+      
+      // Calculate starting position (top-left of grid)
+      let startX = originalElement.x;
+      let startY = originalElement.y;
+      
+      if (centerOnCanvas) {
+        // Get template size for centering
+        const project = await storage.getProject(originalElement.projectId);
+        const templateSize = project ? await storage.getTemplateSize(project.templateSize) : null;
+        
+        if (templateSize) {
+          startX = (templateSize.width - totalGridWidth) / 2;
+          startY = (templateSize.height - totalGridHeight) / 2;
+          
+          // Update original element position if centering
+          await storage.updateCanvasElement(originalElement.id, {
+            x: startX,
+            y: startY,
+            width: originalElement.width,
+            height: originalElement.height,
+            rotation: originalElement.rotation,
+            zIndex: originalElement.zIndex,
+            isVisible: originalElement.isVisible,
+            isLocked: originalElement.isLocked,
+            colorOverrides: originalElement.colorOverrides,
+            garmentColor: originalElement.garmentColor || null
+          });
+        }
+      }
+      
       // Create grid of duplicates
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < columns; col++) {
@@ -33,8 +66,8 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
           const newElement = await storage.createCanvasElement({
             projectId: originalElement.projectId,
             logoId: originalElement.logoId,
-            x: originalElement.x + xOffset,
-            y: originalElement.y + yOffset,
+            x: startX + xOffset,
+            y: startY + yOffset,
             width: originalElement.width,
             height: originalElement.height,
             rotation: originalElement.rotation,

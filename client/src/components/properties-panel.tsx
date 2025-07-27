@@ -256,6 +256,57 @@ export default function PropertiesPanel({
     handlePropertyChange('y', Math.round(bottomY));
   };
 
+  // Select all elements function
+  const selectAllElements = () => {
+    // We can't actually multi-select in the UI yet, but we can center all elements
+    console.log('Selecting all elements');
+    // For now, this just triggers center all
+    centerAllElements();
+  };
+
+  // Center all elements function
+  const centerAllElements = () => {
+    if (canvasElements.length === 0) return;
+    
+    console.log('Centering all elements');
+    
+    // Calculate bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasElements.forEach(element => {
+      minX = Math.min(minX, element.x);
+      minY = Math.min(minY, element.y);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
+    });
+    
+    const groupWidth = maxX - minX;
+    const groupHeight = maxY - minY;
+    
+    // Calculate offset to center the group
+    const templateWidth = 297; // A3 width in mm
+    const templateHeight = 420; // A3 height in mm
+    
+    const targetCenterX = templateWidth / 2;
+    const targetCenterY = templateHeight / 2;
+    const currentCenterX = minX + groupWidth / 2;
+    const currentCenterY = minY + groupHeight / 2;
+    
+    const offsetX = targetCenterX - currentCenterX;
+    const offsetY = targetCenterY - currentCenterY;
+    
+    // Apply offset to all elements
+    canvasElements.forEach(element => {
+      updateElementMutation.mutate({
+        id: element.id,
+        updates: {
+          x: Math.round(element.x + offsetX),
+          y: Math.round(element.y + offsetY)
+        }
+      });
+    });
+  };
+
   // Dynamic pre-flight check results based on current project data
   const preflightChecks = useMemo(() => {
     if (!currentElement) return [];
@@ -628,11 +679,16 @@ export default function PropertiesPanel({
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm">
-              Distribute H
+            <Button variant="outline" size="sm" onClick={selectAllElements}>
+              Select All
             </Button>
-            <Button variant="outline" size="sm">
-              Distribute V
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => { alignCenter(); alignMiddle(); }}
+              disabled={canvasElements.length === 0}
+            >
+              Center All
             </Button>
           </div>
         </CardContent>

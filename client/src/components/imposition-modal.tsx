@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Grid, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,6 +33,7 @@ export default function ImpositionModal({
   const [columns, setColumns] = useState(2);
   const [horizontalSpacing, setHorizontalSpacing] = useState(10);
   const [verticalSpacing, setVerticalSpacing] = useState(10);
+  const [centerOnCanvas, setCenterOnCanvas] = useState(true);
 
   // Create imposition mutation
   const createImpositionMutation = useMutation({
@@ -41,12 +43,14 @@ export default function ImpositionModal({
       columns: number;
       horizontalSpacing: number;
       verticalSpacing: number;
+      centerOnCanvas: boolean;
     }) => {
       const response = await apiRequest("POST", `/api/canvas-elements/${params.elementId}/imposition`, {
         rows: params.rows,
         columns: params.columns,
         horizontalSpacing: params.horizontalSpacing,
-        verticalSpacing: params.verticalSpacing
+        verticalSpacing: params.verticalSpacing,
+        centerOnCanvas: params.centerOnCanvas
       });
       return response.json();
     },
@@ -108,7 +112,8 @@ export default function ImpositionModal({
       rows,
       columns,
       horizontalSpacing,
-      verticalSpacing
+      verticalSpacing,
+      centerOnCanvas
     });
   };
 
@@ -180,6 +185,18 @@ export default function ImpositionModal({
                   className="mt-1"
                 />
               </div>
+            </div>
+
+            {/* Centering Option */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="centerOnCanvas"
+                checked={centerOnCanvas}
+                onCheckedChange={(checked) => setCenterOnCanvas(checked === true)}
+              />
+              <Label htmlFor="centerOnCanvas" className="text-sm font-medium">
+                Center grid on canvas
+              </Label>
             </div>
           </div>
 
