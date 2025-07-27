@@ -10,7 +10,7 @@ import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Eye, ArrowLeft, ArrowRight, Download } from "lucide-react";
+import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 export default function UploadTool() {
@@ -186,6 +186,23 @@ export default function UploadTool() {
     }
   };
 
+  // Start over handler - creates a new project
+  const handleStartOver = () => {
+    // Reset state
+    setCurrentProject(null);
+    setSelectedElement(null);
+    setCurrentStep(1);
+    setHasInitialized(false);
+    
+    // Navigate to home to start fresh
+    navigate("/");
+    
+    toast({
+      title: "Starting over",
+      description: "Creating a new order...",
+    });
+  };
+
   const handleNextStep = () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
@@ -283,6 +300,10 @@ export default function UploadTool() {
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
+            <Button variant="outline" onClick={handleStartOver}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Start Over
+            </Button>
             <Button>
               <Save className="w-4 h-4 mr-2" />
               Save Progress
