@@ -426,7 +426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
             if (viewBoxMatch) {
-              const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+              const viewBoxParts = viewBoxMatch[1].split(/\s+/).map(Number);
+              const vbWidth = viewBoxParts[2];   // width is 3rd element (index 2)
+              const vbHeight = viewBoxParts[3];  // height is 4th element (index 3)
               if (vbWidth && vbHeight) {
                 viewBoxWidth = vbWidth;
                 viewBoxHeight = vbHeight;
