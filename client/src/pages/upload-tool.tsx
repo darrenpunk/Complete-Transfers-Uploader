@@ -216,21 +216,27 @@ export default function UploadTool() {
   const handleTemplateSelect = (templateId: string) => {
     const selectedTemplate = templateSizes.find(t => t.id === templateId);
     if (selectedTemplate) {
+      console.log('Template selected:', { templateId, selectedTemplate, group: selectedTemplate.group });
       setShowTemplateSelector(false);
       setHasInitialized(true); // Prevent reopening
       
       const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers";
       const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfers";
-      const isCustomBadgesTemplate = selectedTemplate.group === "Custom Badges";
+      const isCustomBadgesTemplate = selectedTemplate.group === "Custom Badges" || selectedTemplate.group === "Applique Badges";
       
-      // If Custom Badges template, show the applique badges modal first
+      console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, actualGroup: selectedTemplate.group });
+      
+      // If Custom Badges or Applique Badges template, show the applique badges modal first
       if (isCustomBadgesTemplate) {
+        console.log('Custom/Applique Badges template detected, showing form modal');
         setPendingTemplateData({
           templateId,
           garmentColor: "#FFFFFF"
         });
+        console.log('Setting showAppliqueBadgesModal to true');
         setShowAppliqueBadgesModal(true);
       } else {
+        console.log('Non-Custom Badges template, creating project directly');
         // Create project directly for other template types
         createProjectMutation.mutate({
           name: "Untitled Project",

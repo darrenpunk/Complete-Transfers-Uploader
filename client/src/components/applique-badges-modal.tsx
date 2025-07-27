@@ -35,6 +35,7 @@ export default function AppliqueBadgesModal({
   onConfirm,
   isLoading = false
 }: AppliqueBadgesModalProps) {
+  console.log('AppliqueBadgesModal render:', { open, isLoading });
   const [formData, setFormData] = useState<AppliqueBadgesFormData>({
     embroideryFileOptions: [],
     embroideryThreadOptions: [],
