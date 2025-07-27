@@ -54,7 +54,7 @@ const inkColors = [
 
 function getColorName(hex: string): string {
   const color = inkColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
-  return color ? `${color.otCode} - ${color.name}` : hex;
+  return color ? `${color.otCode} ${color.name}` : hex;
 }
 
 export default function InkColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: InkColorModalProps) {
@@ -135,14 +135,13 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs">
                       <div className="text-sm">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-3 mb-2">
                           <div 
-                            className="w-6 h-6 border border-gray-300 rounded-sm shadow-sm"
+                            className="w-10 h-10 border border-gray-300 rounded-sm shadow-sm"
                             style={{ backgroundColor: color.hex }}
                           />
                           <div>
-                            <div className="font-semibold text-gray-900">{color.otCode}</div>
-                            <div className="text-xs text-gray-600">{color.name}</div>
+                            <div className="font-semibold text-gray-900">{color.otCode} {color.name}</div>
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
