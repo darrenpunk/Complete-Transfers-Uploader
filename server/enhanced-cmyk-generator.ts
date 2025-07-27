@@ -92,71 +92,47 @@ export class EnhancedCMYKGenerator {
       const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
       const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
       
-      // Dynamic form layout constants - ensure everything fits
-      const margin = 30; // Reduced margin for more space
-      const lineHeight = 18; // Optimized line height
-      const sectionSpacing = 15; // Reduced section spacing
-      const titleSize = 16; // Reduced title size
-      const headerSize = 12; // Reduced header size
-      const bodySize = 10; // Reduced body size
+      // Ultra-compact form layout to fit everything on page
+      const margin = 20; // Minimal margin
+      const lineHeight = 14; // Compact line height
+      const sectionSpacing = 8; // Minimal section spacing
+      const titleSize = 12; // Compact title size
+      const headerSize = 10; // Compact header size
+      const bodySize = 8; // Compact body size
       
-      let currentY = pageHeight - margin - 30; // Start position
-      const formStartY = currentY;
+      // Calculate available space more precisely
+      const availableHeight = pageHeight - (margin * 2);
+      const formWidth = pageWidth - (margin * 2);
       
-      // Calculate total content height needed
-      let estimatedHeight = 60; // Title and padding
+      // Start from top of available space
+      let currentY = pageHeight - margin - 20;
       
-      // Add height for each section
-      if (formData.embroideryFileOptions?.length > 0) {
-        estimatedHeight += headerSize + lineHeight + (formData.embroideryFileOptions.length * lineHeight) + sectionSpacing;
-      }
-      if (formData.embroideryThreadOptions?.length > 0) {
-        estimatedHeight += headerSize + lineHeight + (formData.embroideryThreadOptions.length * lineHeight) + sectionSpacing;
-      }
-      if (formData.position?.length > 0) {
-        estimatedHeight += headerSize + lineHeight + lineHeight + sectionSpacing;
-      }
-      if (formData.graphicSize) {
-        estimatedHeight += headerSize + lineHeight + lineHeight + sectionSpacing;
-      }
-      if (formData.embroideredParts) {
-        // Estimate word wrap lines
-        const words = formData.embroideredParts.split(' ');
-        const wordsPerLine = Math.floor((pageWidth - margin - 60) / 40); // Rough estimate
-        const lines = Math.ceil(words.length / wordsPerLine);
-        estimatedHeight += headerSize + lineHeight + (lines * lineHeight) + sectionSpacing;
-      }
-      
-      // Ensure form fits on page
-      const availableHeight = pageHeight - (margin * 2) - 60;
-      const finalHeight = Math.min(estimatedHeight, availableHeight);
-      
-      // Background for form - dynamic height
+      // Background for form - fill available space
       page.drawRectangle({
         x: margin,
         y: margin,
-        width: pageWidth - (margin * 2),
-        height: finalHeight,
+        width: formWidth,
+        height: availableHeight - 40,
         color: rgb(0.98, 0.98, 0.98),
         borderColor: rgb(0.8, 0.8, 0.8),
         borderWidth: 1,
       });
       
-      // Title
+      // Compact title
       page.drawText('APPLIQUE BADGES SPECIFICATIONS', {
-        x: margin + 10,
-        y: currentY - 20,
+        x: margin + 5,
+        y: currentY,
         size: titleSize,
         font: boldFont,
         color: rgb(0, 0, 0),
       });
       
-      currentY -= 40;
+      currentY -= 25;
       
       // Embroidery File Options
       if (formData.embroideryFileOptions && formData.embroideryFileOptions.length > 0) {
         page.drawText('Embroidery File Options:', {
-          x: margin + 10,
+          x: margin + 5,
           y: currentY,
           size: headerSize,
           font: boldFont,
@@ -166,7 +142,7 @@ export class EnhancedCMYKGenerator {
         
         formData.embroideryFileOptions.forEach((option: string) => {
           page.drawText(`• ${option}`, {
-            x: margin + 20,
+            x: margin + 15,
             y: currentY,
             size: bodySize,
             font: regularFont,
@@ -180,7 +156,7 @@ export class EnhancedCMYKGenerator {
       // Embroidery Thread Options
       if (formData.embroideryThreadOptions && formData.embroideryThreadOptions.length > 0) {
         page.drawText('Embroidery Thread Options:', {
-          x: margin + 10,
+          x: margin + 5,
           y: currentY,
           size: headerSize,
           font: boldFont,
@@ -190,7 +166,7 @@ export class EnhancedCMYKGenerator {
         
         formData.embroideryThreadOptions.forEach((option: string) => {
           page.drawText(`• ${option}`, {
-            x: margin + 20,
+            x: margin + 15,
             y: currentY,
             size: bodySize,
             font: regularFont,
@@ -204,7 +180,7 @@ export class EnhancedCMYKGenerator {
       // Position
       if (formData.position && formData.position.length > 0) {
         page.drawText('Position:', {
-          x: margin + 10,
+          x: margin + 5,
           y: currentY,
           size: headerSize,
           font: boldFont,
@@ -214,7 +190,7 @@ export class EnhancedCMYKGenerator {
         
         const positionText = formData.position.join(', ');
         page.drawText(positionText, {
-          x: margin + 20,
+          x: margin + 15,
           y: currentY,
           size: bodySize,
           font: regularFont,
@@ -226,7 +202,7 @@ export class EnhancedCMYKGenerator {
       // Graphic Size
       if (formData.graphicSize) {
         page.drawText('Graphic Size:', {
-          x: margin + 10,
+          x: margin + 5,
           y: currentY,
           size: headerSize,
           font: boldFont,
@@ -235,7 +211,7 @@ export class EnhancedCMYKGenerator {
         currentY -= lineHeight;
         
         page.drawText(formData.graphicSize, {
-          x: margin + 20,
+          x: margin + 15,
           y: currentY,
           size: bodySize,
           font: regularFont,
@@ -247,7 +223,7 @@ export class EnhancedCMYKGenerator {
       // Embroidered Parts
       if (formData.embroideredParts) {
         page.drawText('Embroidered Parts:', {
-          x: margin + 10,
+          x: margin + 5,
           y: currentY,
           size: headerSize,
           font: boldFont,
@@ -255,10 +231,10 @@ export class EnhancedCMYKGenerator {
         });
         currentY -= lineHeight;
         
-        // Word wrap for longer text
+        // Word wrap for longer text with compact layout
         const words = formData.embroideredParts.split(' ');
         let currentLine = '';
-        const maxWidth = pageWidth - margin - 60;
+        const maxWidth = formWidth - 40; // Use form width for better calculation
         
         words.forEach((word: string) => {
           const testLine = currentLine + word + ' ';
@@ -266,7 +242,7 @@ export class EnhancedCMYKGenerator {
           
           if (testWidth > maxWidth && currentLine !== '') {
             page.drawText(currentLine.trim(), {
-              x: margin + 20,
+              x: margin + 15,
               y: currentY,
               size: bodySize,
               font: regularFont,
@@ -281,7 +257,7 @@ export class EnhancedCMYKGenerator {
         
         if (currentLine.trim() !== '') {
           page.drawText(currentLine.trim(), {
-            x: margin + 20,
+            x: margin + 15,
             y: currentY,
             size: bodySize,
             font: regularFont,
