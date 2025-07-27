@@ -536,6 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/logos/:id/color-managed-preview", async (req, res) => {
     try {
       const logoId = req.params.id;
+      const refresh = req.query.refresh === 'true'; // Allow forced refresh
       const logo = await storage.getLogo(logoId);
       
       if (!logo) {
@@ -545,6 +546,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const originalPath = path.join(uploadDir, logo.filename);
       if (!fs.existsSync(originalPath)) {
         return res.status(404).json({ message: "Logo file not found" });
+      }
+
+      // Clean up existing color-managed file if refresh is requested
+      if (refresh) {
+        await ColorManagement.cleanupColorManagedFiles(logoId);
       }
 
       // Generate color-managed preview

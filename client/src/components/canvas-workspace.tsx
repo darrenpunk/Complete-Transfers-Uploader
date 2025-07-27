@@ -68,11 +68,11 @@ export default function CanvasWorkspace({
 
   // Generate color-managed preview mutation
   const generateColorManagedPreviewMutation = useMutation({
-    mutationFn: async (logoId: string) => {
-      const response = await apiRequest("POST", `/api/logos/${logoId}/color-managed-preview`);
+    mutationFn: async ({ logoId, refresh = false }: { logoId: string; refresh?: boolean }) => {
+      const response = await apiRequest("POST", `/api/logos/${logoId}/color-managed-preview?refresh=${refresh}`);
       return response.json();
     },
-    onSuccess: (data, logoId) => {
+    onSuccess: (data, { logoId }) => {
       if (data.colorManagedUrl) {
         setColorManagedUrls(prev => ({
           ...prev,
@@ -117,10 +117,8 @@ export default function CanvasWorkspace({
   useEffect(() => {
     if (colorManagementEnabled && logos.length > 0) {
       logos.forEach(logo => {
-        // Only generate if we don't already have a color-managed version
-        if (!colorManagedUrls[logo.id]) {
-          generateColorManagedPreviewMutation.mutate(logo.id);
-        }
+        // Always regenerate with refresh=true to get the latest improved version
+        generateColorManagedPreviewMutation.mutate({ logoId: logo.id, refresh: true });
       });
     }
   }, [colorManagementEnabled, logos]);

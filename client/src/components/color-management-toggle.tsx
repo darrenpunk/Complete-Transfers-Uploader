@@ -20,7 +20,7 @@ export default function ColorManagementToggle({
       <div className="flex-1">
         <div className="text-sm font-medium">Color Management</div>
         <div className="text-xs text-muted-foreground">
-          Preview with {iccProfileName} ICC profile
+          Print preview with {iccProfileName}
         </div>
       </div>
       <Button
