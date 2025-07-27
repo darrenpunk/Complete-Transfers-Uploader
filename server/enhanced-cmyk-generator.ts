@@ -112,6 +112,13 @@ export class EnhancedCMYKGenerator {
   private async createVectorPreservingPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
+    // Check if this is a Single Colour Transfer template for recoloring
+    const storage = (global as any).storage;
+    const project = await storage.getProject(projectId);
+    const template = await storage.getTemplateSize(project?.templateSize);
+    const isSingleColourTransfer = template?.group === 'Single Colour Transfer Sizes';
+    const inkColor = project?.inkColor;
+    
     // Get ICC profile info
     const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
     const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
@@ -143,7 +150,7 @@ export class EnhancedCMYKGenerator {
       if (!logo || !element.isVisible) continue;
       
       try {
-        await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize);
+        await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize, isSingleColourTransfer, inkColor);
       } catch (error) {
         console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
       }
@@ -217,7 +224,7 @@ export class EnhancedCMYKGenerator {
         });
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -268,7 +275,7 @@ export class EnhancedCMYKGenerator {
         if (!logo || !element.isVisible) continue;
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -280,7 +287,7 @@ export class EnhancedCMYKGenerator {
         if (!logo || !element.isVisible) continue;
         
         try {
-          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize);
+          await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor);
         } catch (error) {
           console.error(`Failed to embed vector logo ${logo.originalName}:`, error);
         }
@@ -307,16 +314,33 @@ export class EnhancedCMYKGenerator {
     page: ReturnType<PDFDocument['addPage']>,
     element: CanvasElement,
     logo: Logo,
-    templateSize: TemplateSize
+    templateSize: TemplateSize,
+    isSingleColourTransfer?: boolean,
+    inkColor?: string
   ) {
     const uploadDir = path.join(process.cwd(), "uploads");
+    
+    // For Single Colour Transfer templates, check for recolored SVG first
+    if (isSingleColourTransfer && inkColor) {
+      const recoloredSvgPath = path.join(uploadDir, `recolored_${logo.filename.replace(/\.[^.]+$/, '.svg')}`);
+      if (fs.existsSync(recoloredSvgPath)) {
+        console.log(`Enhanced CMYK: Using recolored SVG for Single Colour Transfer: ${logo.originalName} with ink color ${inkColor}`);
+        await this.embedImageFile(pdfDoc, page, element, recoloredSvgPath, 'image/svg+xml', templateSize);
+        return;
+      }
+    }
     
     // Check if we have original PDF for vector preservation
     if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
       const originalPdfPath = path.join(uploadDir, logo.originalFilename);
       if (fs.existsSync(originalPdfPath)) {
         console.log(`Enhanced CMYK: Embedding original PDF vectors: ${logo.originalName}`);
-        await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
+        if (isSingleColourTransfer && inkColor) {
+          console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
+          await this.embedRecoloredPDF(pdfDoc, page, element, originalPdfPath, templateSize, inkColor);
+        } else {
+          await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
+        }
         return;
       }
     }
@@ -379,6 +403,61 @@ export class EnhancedCMYKGenerator {
     });
     
     console.log(`Enhanced CMYK: Successfully embedded vector PDF: ${element.logoId}`);
+  }
+
+  private async embedRecoloredPDF(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    pdfPath: string,
+    templateSize: TemplateSize,
+    inkColor: string
+  ) {
+    // For Single Colour Transfer, we need to first convert the PDF to SVG, recolor it, then embed
+    const uploadDir = path.join(process.cwd(), "uploads");
+    const execAsync = promisify(exec);
+    
+    try {
+      // Generate a temporary recolored SVG filename
+      const tempSvgPath = path.join(uploadDir, `temp_recolored_${Date.now()}.svg`);
+      
+      // Convert PDF to SVG using ImageMagick
+      const convertCommand = `convert -density 300 "${pdfPath}[0]" -background transparent "${tempSvgPath}"`;
+      await execAsync(convertCommand);
+      
+      if (fs.existsSync(tempSvgPath)) {
+        // Read the SVG content
+        let svgContent = fs.readFileSync(tempSvgPath, 'utf8');
+        
+        // Apply ink color recoloring to the SVG content
+        svgContent = this.recolorSVGContent(svgContent, inkColor);
+        
+        // Write the recolored SVG
+        fs.writeFileSync(tempSvgPath, svgContent);
+        
+        console.log(`Enhanced CMYK: Created recolored PDF conversion for ink color ${inkColor}`);
+        
+        // Embed the recolored SVG
+        await this.embedImageFile(pdfDoc, page, element, tempSvgPath, 'image/svg+xml', templateSize);
+        
+        // Clean up temporary file
+        fs.unlinkSync(tempSvgPath);
+      } else {
+        // Fallback to original PDF if conversion failed
+        console.log('Enhanced CMYK: PDF to SVG conversion failed, using original PDF');
+        await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+      }
+    } catch (error) {
+      console.error('Enhanced CMYK: Failed to create recolored PDF:', error);
+      // Fallback to original PDF
+      await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+    }
+  }
+
+  private recolorSVGContent(svgContent: string, inkColor: string): string {
+    // Apply the same recoloring logic used in the frontend
+    const { recolorSVG } = require('./svg-recolor');
+    return recolorSVG(svgContent, inkColor);
   }
 
   private async embedICCProfileDirectly(pdfDoc: PDFDocument, iccProfilePath: string): Promise<void> {

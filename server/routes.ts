@@ -238,11 +238,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if this is a Single Colour Transfer template
       const templateSizes = await storage.getTemplateSizes();
-      const template = templateSizes.find(t => t.name === project.templateSize);
+      const template = templateSizes.find(t => t.id === project.templateSize);
       const isSingleColourTransfer = template?.group === 'Single Colour Transfer Sizes';
       const shouldRecolor = isSingleColourTransfer && project.inkColor;
       
-      console.log(`Project template: ${template?.group}, ink color: ${project.inkColor}, should recolor: ${shouldRecolor}`);
+      console.log(`Project templateSize ID: "${project.templateSize}"`);
+      console.log(`Found template:`, template ? `${template.name} (${template.group})` : 'NOT FOUND');
+      console.log(`Is Single Colour Transfer: ${isSingleColourTransfer}, ink color: ${project.inkColor}, should recolor: ${shouldRecolor}`);
 
       const logos = [];
       for (const file of files) {
