@@ -462,25 +462,29 @@ export default function ToolsSidebar({
             if (svgFonts && Array.isArray(svgFonts) && svgFonts.length > 0) {
               const hasOutlinedFonts = (logo as any).fontsOutlined === true;
               const hasAlreadyOutlinedGlyphs = svgFonts.some(font => font.elementType === 'outlined-glyphs');
+              const hasGlyphReferences = svgFonts.some(font => font.elementType === 'glyph-references');
+              const hasLiveText = svgFonts.some(font => font.elementType === 'text' || font.elementType === 'tspan');
               
               let status = "pass";
               let value = "Fonts Outlined";
               
-              if (hasAlreadyOutlinedGlyphs && !hasOutlinedFonts) {
-                // PDF already contains outlined text (glyph paths)
+              if (hasAlreadyOutlinedGlyphs && !hasGlyphReferences && !hasLiveText) {
+                // PDF already contains outlined text (glyph paths with no references)
                 status = "pass";
                 value = "Already Outlined (Vector Paths)";
               } else if (hasOutlinedFonts) {
                 // Fonts have been manually outlined by our system
                 status = "pass";
                 value = "Fonts Outlined";
-              } else {
+              } else if (hasGlyphReferences || hasLiveText) {
                 // Live text elements that need outlining
-                const liveTextCount = svgFonts.filter(font => font.elementType !== 'outlined-glyphs').length;
-                if (liveTextCount > 0) {
-                  status = "warning";
-                  value = `${liveTextCount} font(s) need outlining`;
-                }
+                const needsOutliningCount = svgFonts.filter(font => 
+                  font.elementType === 'glyph-references' || 
+                  font.elementType === 'text' || 
+                  font.elementType === 'tspan'
+                ).length;
+                status = "warning";
+                value = `${needsOutliningCount} font(s) need outlining`;
               }
               
               checks.push({

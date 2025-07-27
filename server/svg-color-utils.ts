@@ -86,16 +86,32 @@ export function extractSVGFonts(svgPath: string): FontInfo[] {
       }
     });
 
-    // Check for glyph definitions (already outlined text)
-    const glyphElements = svgContent.match(/<g id="glyph-[^"]*"[^>]*>/gi) || [];
+    // Check for glyph references (live text using font glyphs)
+    const glyphUseElements = svgContent.match(/<use[^>]*xlink:href\s*=\s*["']#glyph-[^"']*["'][^>]*>/gi) || [];
     
-    if (glyphElements.length > 0) {
-      // This indicates text has already been converted to paths (outlined)
+    if (glyphUseElements.length > 0) {
+      // This indicates live text that references glyph definitions (needs outlining)
+      fonts.push({
+        fontFamily: 'Referenced Glyphs',
+        fontSize: 'Various',
+        fontWeight: 'normal',
+        textContent: `${glyphUseElements.length} text elements using glyph references`,
+        elementType: 'glyph-references',
+        selector: 'use[xlink:href^="#glyph-"]'
+      });
+    }
+
+    // Check for already outlined text (paths without glyph references)
+    const glyphDefinitions = svgContent.match(/<g id="glyph-[^"]*"[^>]*>/gi) || [];
+    const hasGlyphReferences = glyphUseElements.length > 0;
+    
+    if (glyphDefinitions.length > 0 && !hasGlyphReferences) {
+      // Glyph definitions exist but no references = already outlined
       fonts.push({
         fontFamily: 'Already Outlined',
         fontSize: 'Various',
         fontWeight: 'normal',
-        textContent: `${glyphElements.length} text elements already outlined as paths`,
+        textContent: `${glyphDefinitions.length} text elements already outlined as paths`,
         elementType: 'outlined-glyphs',
         selector: 'g[id^="glyph-"]'
       });

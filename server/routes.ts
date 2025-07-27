@@ -331,9 +331,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }));
               
               svgFonts = svgAnalysis.fonts;
-              // Check if text is already outlined (glyph definitions)
+              // Check if text is already outlined (glyph definitions without references)
               const hasAlreadyOutlinedGlyphs = svgAnalysis.fonts.some(font => font.elementType === 'outlined-glyphs');
-              fontsOutlined = hasAlreadyOutlinedGlyphs; // Mark as outlined if glyphs detected
+              const hasLiveText = svgAnalysis.fonts.some(font => 
+                font.elementType === 'glyph-references' || 
+                font.elementType === 'text' || 
+                font.elementType === 'tspan'
+              );
+              fontsOutlined = hasAlreadyOutlinedGlyphs && !hasLiveText; // Only outlined if no live text
               
               console.log(`Extracted ${svgAnalysis.colors.length} colors from SVG:`, svgAnalysis.colors.map(c => `${c.originalColor} (${c.cmykColor})`));
               console.log(`Detected ${svgAnalysis.fonts.length} fonts:`, svgAnalysis.fonts.map(f => `${f.fontFamily} (${f.textContent.substring(0, 20)}...)`));
@@ -704,18 +709,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Re-analyze the SVG/PDF for fonts
       const svgAnalysis = analyzeSVG(logoPath);
+      // Check if text is already outlined (glyph definitions without references)
       const hasAlreadyOutlinedGlyphs = svgAnalysis.fonts.some(font => font.elementType === 'outlined-glyphs');
+      const hasLiveText = svgAnalysis.fonts.some(font => 
+        font.elementType === 'glyph-references' || 
+        font.elementType === 'text' || 
+        font.elementType === 'tspan'
+      );
+      const fontsOutlined = hasAlreadyOutlinedGlyphs && !hasLiveText; // Only outlined if no live text
       
       const updatedData = {
         svgFonts: svgAnalysis.fonts,
-        fontsOutlined: hasAlreadyOutlinedGlyphs,
+        fontsOutlined,
       };
 
       const updatedLogo = await storage.updateLogo(logoId, updatedData);
       
       console.log(`Re-analyzed fonts for ${logo.filename}:`, {
         fontsDetected: svgAnalysis.fonts.length,
-        alreadyOutlined: hasAlreadyOutlinedGlyphs,
+        alreadyOutlined: fontsOutlined,
+        hasLiveText,
         fonts: svgAnalysis.fonts.map(f => `${f.fontFamily} (${f.elementType})`)
       });
       
