@@ -62,6 +62,7 @@ export const templateSizes = pgTable("template_sizes", {
   pixelWidth: integer("pixel_width").notNull(), // at 72 DPI
   pixelHeight: integer("pixel_height").notNull(), // at 72 DPI
   group: text("group").notNull(), // template group category
+  description: text("description"), // product description
 });
 
 // Insert schemas

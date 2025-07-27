@@ -33,7 +33,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Forced Garment Color Selection**: Mandatory color selection with validation warnings and disabled states until color chosen
 ✓ **CMYK popup color picker**: Professional modal dialog with full C/M/Y/K sliders, gradients, and numeric inputs for precise print control
 ✓ **Added horizontal workflow progress**: Clean progress bar at top showing all 5 steps (Upload → Design → Pre-flight → Generate → Attach)
-✓ **Template grouping with DTF support**: Added "Full Colour Transfer Sizes", "Single Colour Transfer Sizes", "DTF Transfer Sizes", "UV DTF Transfers", "Woven Badges", and "Applique Badges" groups with custom icons
+✓ **Template grouping with DTF support**: Added "Full Colour Transfers", "Single Colour Transfers", "DTF - Digital Film Transfers", "UV DTF", "Custom Badges", and "Applique Badges" groups with custom icons
 ✓ **Smart zoom for large templates**: 1000×550mm DTF template automatically displays at 25% zoom for better overview
 ✓ **Multi-tier PDF conversion**: Ghostscript primary, ImageMagick fallback system preserving colors and alpha transparency
 ✓ **Collapsible template interface**: Template categories now use accordion interface with expand/collapse functionality and template counts
@@ -104,6 +104,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Authentic Pantone Ink Color System**: Implemented complete ink color selector using official 31-color Pantone chart with OT codes (OT 91 WHITE through OT 120 GOLD) for Single Colour Transfer templates
 ✓ **Ink Drop/Splash Swatches**: Created custom SVG ink drop designs with realistic drips, splashes, and highlights to replace t-shirt shapes for ink color selection
 ✓ **Professional Ink Selection Text**: Updated modal description to explain importance of ink color selection for print staff workflow and job processing accuracy
+✓ **Updated Product Descriptions**: Aligned all product categories with official specifications - Full Colour Transfers, Single Colour Transfers, DTF Digital Film Transfers, UV DTF Hard Surface Transfers, Reflective Transfers, ZERO Single Colour Transfers, Sublimation Transfers, and Custom Badges with accurate professional descriptions
 
 ## Current Status (July 27, 2025)
 **CORE MILESTONE ACHIEVED**: Perfect CMYK PDF output with identical color values across all file types

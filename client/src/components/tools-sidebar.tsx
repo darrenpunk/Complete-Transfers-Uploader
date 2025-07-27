@@ -434,10 +434,10 @@ export default function ToolsSidebar({
         ) : null;
       })()}
 
-      {/* Ink Color Selection - Only for Single Colour Transfer Sizes */}
+      {/* Ink Color Selection - Only for Single Colour Transfers */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfer Sizes";
+        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfers";
         return isSingleColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">

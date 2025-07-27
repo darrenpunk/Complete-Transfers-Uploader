@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this is a Single Colour Transfer template
       const templateSizes = await storage.getTemplateSizes();
       const template = templateSizes.find(t => t.id === project.templateSize);
-      const isSingleColourTransfer = template?.group === 'Single Colour Transfer Sizes';
+      const isSingleColourTransfer = template?.group === 'Single Colour Transfers';
       const shouldRecolor = isSingleColourTransfer && project.inkColor;
       
       console.log(`Project templateSize ID: "${project.templateSize}"`);

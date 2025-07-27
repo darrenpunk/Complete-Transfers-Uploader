@@ -116,7 +116,7 @@ export class EnhancedCMYKGenerator {
     const storage = (global as any).storage;
     const project = await storage.getProject(projectId);
     const template = await storage.getTemplateSize(project?.templateSize);
-    const isSingleColourTransfer = template?.group === 'Single Colour Transfer Sizes';
+    const isSingleColourTransfer = template?.group === 'Single Colour Transfers';
     const inkColor = project?.inkColor;
     
     // Get ICC profile info

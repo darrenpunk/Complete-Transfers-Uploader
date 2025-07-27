@@ -154,9 +154,9 @@ export default function UploadTool() {
     if (selectedTemplate) {
       setShowTemplateSelector(false);
       setHasInitialized(true); // Prevent reopening
-      // Only require garment color for Full Colour Transfer Sizes
-      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfer Sizes";
-      const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfer Sizes";
+      // Only require garment color for Full Colour Transfers
+      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers";
+      const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfers";
       
       createProjectMutation.mutate({
         name: "Untitled Project",

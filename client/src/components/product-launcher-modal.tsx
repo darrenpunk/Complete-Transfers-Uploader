@@ -15,43 +15,43 @@ const productCategories = [
   {
     id: "full-colour",
     name: "Full Colour Transfers",
-    description: "High-quality digital transfers",
+    description: "Full-Colour screen printed heat applied transfers",
     icon: fullColourIconPath,
-    group: "Full Colour Transfer Sizes"
+    group: "Full Colour Transfers"
   },
   {
     id: "single-colour", 
     name: "Single Colour Transfers",
-    description: "One color vinyl transfers",
+    description: "Screen printed using our off-the-shelf colour range",
     icon: fullColourIconPath,
-    group: "Single Colour Transfer Sizes",
+    group: "Single Colour Transfers",
     grayscale: true
   },
   {
     id: "dtf",
-    name: "DTF Transfers", 
-    description: "Direct-to-film printing",
+    name: "DTF - Digital Film Transfers", 
+    description: "Small order digital heat transfers",
     icon: dtfIconPath,
-    group: "DTF Transfer Sizes"
+    group: "DTF - Digital Film Transfers"
   },
   {
     id: "uv-dtf",
-    name: "UV DTF Transfers",
-    description: "UV-resistant transfers",
+    name: "UV DTF",
+    description: "Hard Surface Transfers",
     icon: uvdtfIconPath,
-    group: "UV DTF Transfers"
+    group: "UV DTF"
   },
   {
     id: "woven-badges",
-    name: "Woven Badges",
-    description: "Premium woven patches",
+    name: "Custom Badges",
+    description: "Polyester textile woven badges",
     icon: wovenBadgeIconPath,
-    group: "Woven Badges"
+    group: "Custom Badges"
   },
   {
     id: "applique-badges",
     name: "Applique Badges", 
-    description: "Embroidered patches",
+    description: "Fabric applique badges",
     icon: wovenBadgeIconPath,
     group: "Applique Badges",
     sepia: true
@@ -59,18 +59,26 @@ const productCategories = [
   {
     id: "reflective-transfers",
     name: "Reflective Transfers",
-    description: "High-visibility reflective",
+    description: "Our silver reflective helps enhance the visibility of the wearer at night",
     icon: fullColourIconPath,
     group: "Reflective Transfers",
     filter: "brightness(1.2) saturate(0.8)"
   },
   {
-    id: "full-colour-hd",
-    name: "Full Colour HD",
-    description: "High definition transfers",
+    id: "zero-single-colour",
+    name: "ZERO Single Colour Transfers",
+    description: "Zero inks are super stretchy and do not bleed!",
     icon: fullColourIconPath,
-    group: "Full Colour HD",
+    group: "ZERO Single Colour Transfers",
     filter: "contrast(1.1) saturate(1.1)"
+  },
+  {
+    id: "sublimation-transfers",
+    name: "Sublimation Transfers",
+    description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester",
+    icon: fullColourIconPath,
+    group: "Sublimation Transfers",
+    filter: "hue-rotate(180deg) saturate(1.2)"
   },
   {
     id: "zero-silicone",

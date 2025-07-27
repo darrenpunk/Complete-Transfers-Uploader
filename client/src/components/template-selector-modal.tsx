@@ -24,7 +24,7 @@ const getTemplateGroupIcon = (group: string) => {
           className="h-10 w-10 object-contain"
         />
       );
-    case "Single Colour Transfer Sizes":
+    case "Single Colour Transfers":
       return (
         <img 
           src={fullColourIconPath} 
