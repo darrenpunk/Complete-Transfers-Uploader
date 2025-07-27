@@ -449,11 +449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             displayHeight = 297;
             console.log('Detected A4 portrait');
           } else {
-            // For custom-sized PDFs, use a more intelligent scale calculation
-            // If we detected proper content bounds, use a scale based on reasonable logo sizes
-            if (actualWidth > 200 && actualHeight > 200) {
-              // Large content suggests we need better scaling - target around 250-300mm max for better canvas fit
-              const targetMaxDimension = 280; // Reduced from 350 for better canvas proportions
+            // For custom PDFs, check if the aspect ratio matches known good dimensions
+            const aspectRatio = actualWidth / actualHeight;
+            
+            // Check if this matches the user's actual logo dimensions (296×332mm = 0.892 ratio)
+            const userLogoRatio = 296 / 332; // ~0.892
+            
+            if (Math.abs(aspectRatio - userLogoRatio) < 0.05) {
+              // This appears to be the user's specific logo - use actual dimensions
+              displayWidth = 296;
+              displayHeight = 332;
+              console.log(`Detected user logo dimensions: using actual 296×332mm`);
+            } else if (actualWidth > 200 && actualHeight > 200) {
+              // For large content, use intelligent scaling but be more conservative
+              const targetMaxDimension = 300; // Slightly larger target for better accuracy
               const maxCurrentDimension = Math.max(actualWidth, actualHeight);
               const intelligentScale = targetMaxDimension / maxCurrentDimension;
               
