@@ -79,6 +79,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Lightweight Performance**: Browser-based color management eliminates server processing and provides immediate visual feedback
 ✓ **Color Management Default Enabled**: Print preview mode now enabled by default for immediate CMYK color accuracy visualization
 ✓ **Calibrated Filter Values**: Fine-tuned CSS filter parameters (brightness: 0.96, contrast: 1.05, saturate: 0.90) to match Illustrator CMYK preview
+✓ **Delete Button for Duplicates**: Added red trash icon on bounding box of duplicate elements, only appears when multiple copies of same logo exist on canvas
 
 ## User Preferences
 

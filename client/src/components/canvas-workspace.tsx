@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
 
 interface CanvasWorkspaceProps {
@@ -67,6 +67,18 @@ export default function CanvasWorkspace({
   });
 
   // No longer need server-side color management - using CSS filters instead
+
+  // Delete element mutation
+  const deleteElementMutation = useMutation({
+    mutationFn: async (elementId: string) => {
+      const response = await apiRequest("DELETE", `/api/canvas-elements/${elementId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+      onElementSelect(null); // Deselect the deleted element
+    },
+  });
 
   const handleZoomIn = () => {
     setZoom(Math.min(zoom + 25, 200));
@@ -585,6 +597,20 @@ export default function CanvasWorkspace({
                         <div className="w-1 h-4 bg-primary" />
                         <div className="w-4 h-4 bg-primary border-2 border-white rounded-full" />
                       </div>
+
+                      {/* Delete Handle - only show for duplicated elements */}
+                      {canvasElements.filter(el => el.logoId === element.logoId).length > 1 && (
+                        <div 
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteElementMutation.mutate(element.id);
+                          }}
+                          title="Delete this copy"
+                        >
+                          <Trash2 className="w-3 h-3 text-white" />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
