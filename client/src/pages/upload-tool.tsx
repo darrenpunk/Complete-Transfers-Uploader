@@ -540,7 +540,10 @@ export default function UploadTool() {
       {console.log('Rendering AppliqueBadgesModal with:', { showAppliqueBadgesModal })}
       <AppliqueBadgesModal
         open={showAppliqueBadgesModal}
-        onOpenChange={setShowAppliqueBadgesModal}
+        onOpenChange={(open) => {
+          console.log('AppliqueBadgesModal onOpenChange called with:', open);
+          setShowAppliqueBadgesModal(open);
+        }}
         onConfirm={handleAppliqueBadgesFormConfirm}
         isLoading={createProjectMutation.isPending}
       />
