@@ -244,11 +244,22 @@ export default function ToolsSidebar({
                         </div>
                       </div>
                     </div>
-                    {index === 0 ? (
-                      <div className="text-xs text-primary bg-blue-50 px-2 py-1 rounded">Active</div>
-                    ) : (
-                      <button className="text-xs text-gray-500 hover:text-primary">Select</button>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {index === 0 ? (
+                        <div className="text-xs text-primary bg-blue-50 px-2 py-1 rounded">Active</div>
+                      ) : (
+                        <button className="text-xs text-gray-500 hover:text-primary">Select</button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteLogoMutation.mutate(logo.id)}
+                        className="text-red-600 hover:text-red-700 h-6 w-6 p-0"
+                        disabled={deleteLogoMutation.isPending}
+                      >
+                        ×
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -289,34 +300,7 @@ export default function ToolsSidebar({
                 }
               }}
             />
-            
-            {/* Logo List with Delete Option */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Uploaded Logos</h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {logos.map((logo) => (
-                  <div key={logo.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                      <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center flex-shrink-0 text-xs">
-                        {logo.mimeType?.startsWith('image/') ? '🖼️' : '📄'}
-                      </div>
-                      <span className="truncate text-xs" title={logo.originalName}>
-                        {logo.originalName}
-                      </span>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteLogoMutation.mutate(logo.id)}
-                      className="text-red-600 hover:text-red-700 h-6 w-6 p-0 flex-shrink-0"
-                      disabled={deleteLogoMutation.isPending}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
       )}
