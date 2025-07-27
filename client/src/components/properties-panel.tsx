@@ -505,6 +505,48 @@ export default function PropertiesPanel({
               </div>
             </div>
 
+            {/* Individual Logo Garment Color */}
+            <div>
+              <Label className="text-sm font-medium">Logo Garment Color</Label>
+              <div className="space-y-3 mt-2">
+                {/* Current Selection Display */}
+                {currentElement.garmentColor && (
+                  <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-gray-300"
+                      style={{ backgroundColor: currentElement.garmentColor }}
+                    />
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900">Selected Color</div>
+                      <div className="text-gray-600">{getColorName(currentElement.garmentColor)}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Garment Color Modal Trigger */}
+                <GarmentColorModal
+                  currentColor={currentElement.garmentColor || ""}
+                  onColorChange={handleGarmentColorChange}
+                  trigger={
+                    <Button 
+                      variant={currentElement.garmentColor ? "outline" : "default"} 
+                      className="w-full"
+                      size="sm"
+                    >
+                      <Palette className="w-4 h-4 mr-2" />
+                      {currentElement.garmentColor ? "Change Garment Color" : "Select Garment Color"}
+                    </Button>
+                  }
+                />
+
+                {!currentElement.garmentColor && (
+                  <p className="text-xs text-gray-500">
+                    Apply a different garment colour to this specific logo
+                  </p>
+                )}
+              </div>
+            </div>
+
             <Separator />
 
             {/* Actions */}
