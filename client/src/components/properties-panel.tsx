@@ -556,16 +556,6 @@ export default function PropertiesPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowTemplateSelectorModal(true)}
-                  className="w-full"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Product Selector
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => duplicateLogoMutation.mutate(currentElement.id)}
                   disabled={duplicateLogoMutation.isPending}
                   className="w-full"
@@ -585,7 +575,7 @@ export default function PropertiesPanel({
                 </Button>
                 
                 <p className="text-xs text-gray-500 mt-1">
-                  Change template, duplicate logo or replicate across the canvas
+                  Duplicate logo or replicate across the canvas
                 </p>
               </div>
             </div>
@@ -622,6 +612,30 @@ export default function PropertiesPanel({
           </Card>
         );
       })()}
+
+      {/* Product Selector */}
+      <Card className="rounded-none border-x-0 border-t-0">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Product Selector
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowTemplateSelectorModal(true)}
+            className="w-full"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Change Template Size
+          </Button>
+          <p className="text-xs text-gray-500 mt-2">
+            Select a different template size for your project
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
