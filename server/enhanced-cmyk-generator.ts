@@ -773,9 +773,9 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize
   ) {
     if (mimeType.includes('svg')) {
-      // For SVG files, we should not rasterize them. Skip this method
-      // and use direct PDF vector embedding instead
-      console.log(`Enhanced CMYK: Skipping SVG embedding to preserve vectors: ${path.basename(imagePath)}`);
+      // Convert SVG to PDF and embed as vector
+      console.log(`Enhanced CMYK: Converting SVG to PDF vectors: ${path.basename(imagePath)}`);
+      await this.embedSVGAsPDF(pdfDoc, page, element, imagePath, templateSize);
       return;
     }
     
@@ -805,6 +805,68 @@ export class EnhancedCMYKGenerator {
       height: height,
       rotate: degrees(element.rotation || 0),
     });
+  }
+
+  private async embedSVGAsPDF(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    svgPath: string,
+    templateSize: TemplateSize
+  ) {
+    try {
+      // Convert SVG to PDF using rsvg-convert
+      const tempPdfPath = svgPath.replace('.svg', '_temp.pdf');
+      
+      const command = `rsvg-convert --format=pdf --output="${tempPdfPath}" "${svgPath}"`;
+      await new Promise<void>((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Enhanced CMYK: SVG to PDF conversion failed:`, error);
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
+
+      // Check if the temp PDF was created
+      if (fs.existsSync(tempPdfPath)) {
+        // Load and embed the converted PDF
+        const pdfBytes = fs.readFileSync(tempPdfPath);
+        const convertedPdf = await PDFDocument.load(pdfBytes);
+        
+        const pages = convertedPdf.getPages();
+        if (pages.length > 0) {
+          const embeddedPage = await pdfDoc.embedPage(pages[0]);
+          
+          // Calculate position (flip Y coordinate for PDF)
+          const x = element.x * 2.834645669;
+          const y = (templateSize.height - element.y - element.height) * 2.834645669;
+          const width = element.width * 2.834645669;
+          const height = element.height * 2.834645669;
+          
+          // Draw the embedded page
+          page.drawPage(embeddedPage, {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            rotate: degrees(element.rotation || 0),
+          });
+          
+          console.log(`Enhanced CMYK: Successfully embedded SVG as PDF vectors: ${path.basename(svgPath)}`);
+        }
+        
+        // Clean up temp file
+        fs.unlinkSync(tempPdfPath);
+      } else {
+        console.error(`Enhanced CMYK: Failed to create temp PDF from SVG: ${svgPath}`);
+      }
+    } catch (error) {
+      console.error(`Enhanced CMYK: Error converting SVG to PDF:`, error);
+      // Fallback to skipping this element
+    }
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } {
