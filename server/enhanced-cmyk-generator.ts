@@ -661,26 +661,42 @@ export class EnhancedCMYKGenerator {
       top: firstPage.getHeight(),
     });
     
-    // Calculate position and scale (convert mm to points)
-    const x = element.x * 2.834645669;
-    const y = (templateSize.height - element.y - element.height) * 2.834645669;
-    const targetWidth = element.width * 2.834645669;
-    const targetHeight = element.height * 2.834645669;
+    // Convert mm to points (1 mm = 2.834645669 points)
+    const mmToPoints = 2.834645669;
     
-    // Get original page dimensions
+    // Calculate position in points
+    const x = element.x * mmToPoints;
+    const y = (templateSize.height - element.y - element.height) * mmToPoints;
+    
+    // Calculate target size in points
+    const targetWidth = element.width * mmToPoints;
+    const targetHeight = element.height * mmToPoints;
+    
+    // Get original page dimensions in points
     const { width: origWidth, height: origHeight } = embeddedPage.size();
     
-    // Calculate scale maintaining aspect ratio
+    console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
+    console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
+    
+    // Calculate scale to fit target dimensions
     const scaleX = targetWidth / origWidth;
     const scaleY = targetHeight / origHeight;
     const scale = Math.min(scaleX, scaleY);
+    
+    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
+    
+    // Calculate final rendered dimensions
+    const finalWidth = origWidth * scale;
+    const finalHeight = origHeight * scale;
+    
+    console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
     
     // Draw the embedded page with vectors preserved
     page.drawPage(embeddedPage, {
       x: x,
       y: y,
-      width: origWidth * scale,
-      height: origHeight * scale,
+      width: finalWidth,
+      height: finalHeight,
       rotate: degrees(element.rotation || 0),
     });
     
