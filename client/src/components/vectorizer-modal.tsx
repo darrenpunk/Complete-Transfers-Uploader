@@ -710,11 +710,18 @@ export function VectorizerModal({
                           }}
                         >
                           <button
-                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
-                            onClick={() => {
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent triggering the highlight click
                               const currentSvg = coloredSvg || vectorSvg;
                               const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
                               setColoredSvg(updatedSvg);
+                              
+                              // Clear highlighting if this color was highlighted
+                              if (highlightedColor === colorItem.color) {
+                                setHighlightedColor(null);
+                                setHighlightedSvg(null);
+                              }
                               
                               // Update detected colors
                               const newColors = detectColorsInSvg(updatedSvg);
@@ -725,8 +732,9 @@ export function VectorizerModal({
                                 description: `Removed ${colorItem.color} from the image.`,
                               });
                             }}
+                            title="Delete this color"
                           >
-                            <Trash2 className="h-3 w-3 text-white" />
+                            <Trash2 className="h-2.5 w-2.5" />
                           </button>
                         </div>
                         <div className="text-[10px] text-gray-500 text-center leading-tight">{colorItem.count}</div>
