@@ -78,7 +78,13 @@ export function VectorizerModal({
 
   const handleApproveVector = () => {
     const svgToDownload = coloredSvg || vectorSvg;
+    console.log('handleApproveVector called', { 
+      hasColoredSvg: !!coloredSvg, 
+      hasVectorSvg: !!vectorSvg,
+      svgLength: svgToDownload?.length 
+    });
     if (svgToDownload) {
+      console.log('Calling onVectorDownload');
       onVectorDownload(svgToDownload);
       onClose();
     }
