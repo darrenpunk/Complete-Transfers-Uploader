@@ -941,7 +941,7 @@ export function VectorizerModal({
                 {/* Original - Only show in comparison mode */}
                 {viewMode === 'comparison' && (
                   <div className="flex flex-col overflow-hidden">
-                    <h3 className="font-semibold mb-2 text-center">Original Image</h3>
+                    <h3 className="font-semibold mb-2 text-center">Original RGB Image</h3>
                     <div 
                       className={`flex-1 border rounded-lg overflow-auto ${
                         showGrid ? 'transparency-grid' : 'bg-white'
@@ -975,7 +975,7 @@ export function VectorizerModal({
                 {/* Vectorized Preview */}
                 <div className="flex flex-col overflow-hidden">
                   <h3 className="font-semibold mb-2 text-center">
-                    {viewMode === 'comparison' ? 'Vectorized Result' : 'Vector Preview'}
+                    {viewMode === 'comparison' ? 'Vectorised CMYK Result' : 'Vector Preview'}
                   </h3>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
