@@ -175,16 +175,19 @@ export default function CanvasWorkspace({
     console.log('Template dimensions:', { width: template.width, height: template.height });
     console.log('Safe area:', { safeWidth, safeHeight });
 
-    // Find the bounding box of all elements
+    // Find the bounding box of all visible elements
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const visibleElements = canvasElements.filter(element => element.isVisible);
     
-    canvasElements.forEach(element => {
-      if (element.isVisible) {
-        minX = Math.min(minX, element.x);
-        minY = Math.min(minY, element.y);
-        maxX = Math.max(maxX, element.x + element.width);
-        maxY = Math.max(maxY, element.y + element.height);
-      }
+    console.log('Visible elements:', visibleElements.map(el => ({
+      id: el.id, x: el.x, y: el.y, width: el.width, height: el.height
+    })));
+    
+    visibleElements.forEach(element => {
+      minX = Math.min(minX, element.x);
+      minY = Math.min(minY, element.y);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
     });
 
     console.log('Content bounds:', { minX, minY, maxX, maxY });
@@ -227,15 +230,19 @@ export default function CanvasWorkspace({
     console.log('Updates to apply:', updates);
 
     try {
-      // Batch update all elements
-      await Promise.all(
-        updates.map(({ id, updates }) => 
-          apiRequest("PATCH", `/api/canvas-elements/${id}`, updates)
-        )
-      );
+      // Batch update all elements sequentially to avoid race conditions
+      for (const { id, updates: elementUpdates } of updates) {
+        await updateElementMutation.mutateAsync({
+          id,
+          updates: elementUpdates
+        });
+        console.log(`Updated element ${id}:`, elementUpdates);
+      }
       
-      // Invalidate cache to refresh UI
-      await queryClient.invalidateQueries({ 
+      console.log('All elements updated, refreshing canvas...');
+      
+      // Force refresh of canvas elements
+      queryClient.invalidateQueries({ 
         queryKey: [`/api/projects/${project.id}/canvas-elements`] 
       });
       
