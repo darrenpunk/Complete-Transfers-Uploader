@@ -8,6 +8,8 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2 } from "lucide-react";
+import { RasterWarningModal } from "./raster-warning-modal";
+import { VectorizerModal } from "./vectorizer-modal";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
 import InkColorModal from "@/components/ink-color-modal";
@@ -107,6 +109,9 @@ export default function ToolsSidebar({
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
+  const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
+  const [showRasterWarning, setShowRasterWarning] = useState(false);
+  const [showVectorizer, setShowVectorizer] = useState(false);
   
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
@@ -114,6 +119,82 @@ export default function ToolsSidebar({
         ? prev.filter(name => name !== groupName)
         : [...prev, groupName]
     );
+  };
+
+  // Helper function to detect raster files
+  const isRasterFile = (file: File): boolean => {
+    return file.type === 'image/png' || file.type === 'image/jpeg';
+  };
+
+  // Handle raster file uploads
+  const handleFilesSelected = (files: File[]) => {
+    const rasterFiles = files.filter(isRasterFile);
+    const vectorFiles = files.filter(file => !isRasterFile(file));
+    
+    // Process vector files immediately
+    if (vectorFiles.length > 0) {
+      uploadLogosMutation.mutate(vectorFiles);
+    }
+    
+    // Handle raster files one by one with warning modal
+    if (rasterFiles.length > 0) {
+      const firstRasterFile = rasterFiles[0];
+      setPendingRasterFile({ file: firstRasterFile, fileName: firstRasterFile.name });
+      setShowRasterWarning(true);
+    }
+  };
+
+  // Raster warning modal handlers
+  const handlePhotographicApprove = () => {
+    if (pendingRasterFile) {
+      uploadLogosMutation.mutate([pendingRasterFile.file]);
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorizeWithAI = () => {
+    if (pendingRasterFile) {
+      setShowRasterWarning(false);
+      setShowVectorizer(true);
+    }
+  };
+
+  const handleVectorizeWithService = () => {
+    if (pendingRasterFile) {
+      // Create vectorization placeholder - this would add a charge to the order
+      // For now, we'll just show a toast message
+      toast({
+        title: "Vectorization Service Requested",
+        description: "A vectorization charge has been added to your order. You can upload your logo after service completion.",
+      });
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorDownload = (vectorSvg: string) => {
+    if (pendingRasterFile) {
+      // Convert SVG string to File object
+      const svgBlob = new Blob([vectorSvg], { type: 'image/svg+xml' });
+      const svgFile = new File([svgBlob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg') || 'vectorized.svg', {
+        type: 'image/svg+xml'
+      });
+      
+      uploadLogosMutation.mutate([svgFile]);
+      setPendingRasterFile(null);
+      setShowVectorizer(false);
+    }
+  };
+
+  const handleCloseRasterWarning = () => {
+    setPendingRasterFile(null);
+    setShowRasterWarning(false);
+  };
+
+  const handleCloseVectorizer = () => {
+    setPendingRasterFile(null);
+    setShowVectorizer(false);
   };
 
   // RGB to CMYK conversion handler
@@ -347,7 +428,7 @@ export default function ToolsSidebar({
               onChange={(e) => {
                 const files = Array.from(e.target.files || []);
                 if (files.length > 0) {
-                  uploadLogosMutation.mutate(files);
+                  handleFilesSelected(files);
                   e.target.value = '';
                 }
               }}
@@ -880,6 +961,29 @@ export default function ToolsSidebar({
         onSelectTemplate={onTemplateChange}
         onClose={() => setShowTemplateSelectorModal(false)}
       />
+
+      {/* Raster Warning Modal */}
+      {pendingRasterFile && (
+        <RasterWarningModal
+          open={showRasterWarning}
+          onClose={handleCloseRasterWarning}
+          fileName={pendingRasterFile.fileName}
+          onPhotographicApprove={handlePhotographicApprove}
+          onVectorizeWithAI={handleVectorizeWithAI}
+          onVectorizeWithService={handleVectorizeWithService}
+        />
+      )}
+
+      {/* Vectorizer Modal */}
+      {pendingRasterFile && (
+        <VectorizerModal
+          open={showVectorizer}
+          onClose={handleCloseVectorizer}
+          fileName={pendingRasterFile.fileName}
+          imageFile={pendingRasterFile.file}
+          onVectorDownload={handleVectorDownload}
+        />
+      )}
     </div>
   );
 }

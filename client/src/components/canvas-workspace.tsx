@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
+import { RasterWarningModal } from "./raster-warning-modal";
+import { VectorizerModal } from "./vectorizer-modal";
 
 // Import garment color utilities from shared module
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
@@ -119,6 +121,9 @@ export default function CanvasWorkspace({
   const [zoom, setZoom] = useState(100);
   const [colorManagementEnabled, setColorManagementEnabled] = useState(true);
   const [colorManagedUrls, setColorManagedUrls] = useState<Record<string, string>>({});
+  const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
+  const [showRasterWarning, setShowRasterWarning] = useState(false);
+  const [showVectorizer, setShowVectorizer] = useState(false);
 
   // Set default zoom based on template size
   useEffect(() => {
@@ -233,6 +238,77 @@ export default function CanvasWorkspace({
         });
       });
     }
+  };
+
+  // Helper function to detect raster files
+  const isRasterFile = (file: File): boolean => {
+    return file.type === 'image/png' || file.type === 'image/jpeg';
+  };
+
+  // Handle file uploads with raster detection
+  const handleCanvasFileUpload = (files: File[]) => {
+    const rasterFiles = files.filter(isRasterFile);
+    const vectorFiles = files.filter(file => !isRasterFile(file));
+    
+    // Process vector files immediately
+    if (vectorFiles.length > 0 && onLogoUpload) {
+      onLogoUpload(vectorFiles);
+    }
+    
+    // Handle raster files one by one with warning modal
+    if (rasterFiles.length > 0) {
+      const firstRasterFile = rasterFiles[0];
+      setPendingRasterFile({ file: firstRasterFile, fileName: firstRasterFile.name });
+      setShowRasterWarning(true);
+    }
+  };
+
+  // Raster warning modal handlers
+  const handlePhotographicApprove = () => {
+    if (pendingRasterFile && onLogoUpload) {
+      onLogoUpload([pendingRasterFile.file]);
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorizeWithAI = () => {
+    if (pendingRasterFile) {
+      setShowRasterWarning(false);
+      setShowVectorizer(true);
+    }
+  };
+
+  const handleVectorizeWithService = () => {
+    if (pendingRasterFile) {
+      // Show message about vectorization service
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorDownload = (vectorSvg: string) => {
+    if (pendingRasterFile && onLogoUpload) {
+      // Convert SVG string to File object
+      const svgBlob = new Blob([vectorSvg], { type: 'image/svg+xml' });
+      const svgFile = new File([svgBlob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg') || 'vectorized.svg', {
+        type: 'image/svg+xml'
+      });
+      
+      onLogoUpload([svgFile]);
+      setPendingRasterFile(null);
+      setShowVectorizer(false);
+    }
+  };
+
+  const handleCloseRasterWarning = () => {
+    setPendingRasterFile(null);
+    setShowRasterWarning(false);
+  };
+
+  const handleCloseVectorizer = () => {
+    setPendingRasterFile(null);
+    setShowVectorizer(false);
   };
 
   const handleFitToBounds = async () => {
@@ -534,8 +610,8 @@ export default function CanvasWorkspace({
                 className="hidden"
                 onChange={(e) => {
                   const files = Array.from(e.target.files || []);
-                  if (files.length > 0 && onLogoUpload) {
-                    onLogoUpload(files);
+                  if (files.length > 0) {
+                    handleCanvasFileUpload(files);
                     e.target.value = '';
                   }
                 }}
@@ -1010,6 +1086,29 @@ export default function CanvasWorkspace({
           </div>
         </div>
       </div>
+
+      {/* Raster Warning Modal */}
+      {pendingRasterFile && (
+        <RasterWarningModal
+          open={showRasterWarning}
+          onClose={handleCloseRasterWarning}
+          fileName={pendingRasterFile.fileName}
+          onPhotographicApprove={handlePhotographicApprove}
+          onVectorizeWithAI={handleVectorizeWithAI}
+          onVectorizeWithService={handleVectorizeWithService}
+        />
+      )}
+
+      {/* Vectorizer Modal */}
+      {pendingRasterFile && (
+        <VectorizerModal
+          open={showVectorizer}
+          onClose={handleCloseVectorizer}
+          fileName={pendingRasterFile.fileName}
+          imageFile={pendingRasterFile.file}
+          onVectorDownload={handleVectorDownload}
+        />
+      )}
     </div>
   );
 }

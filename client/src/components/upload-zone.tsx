@@ -4,23 +4,51 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Upload, FileImage, X, AlertCircle } from "lucide-react";
+import { RasterWarningModal } from "./raster-warning-modal";
+import { VectorizerModal } from "./vectorizer-modal";
 
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void;
+  onVectorizationPlaceholder: (fileName: string) => void;
   isUploading: boolean;
   uploadProgress?: number;
 }
 
-export default function UploadZone({ onFilesSelected, isUploading, uploadProgress = 0 }: UploadZoneProps) {
+interface PendingRasterFile {
+  file: File;
+  fileName: string;
+}
+
+export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder, isUploading, uploadProgress = 0 }: UploadZoneProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [pendingRasterFile, setPendingRasterFile] = useState<PendingRasterFile | null>(null);
+  const [showRasterWarning, setShowRasterWarning] = useState(false);
+  const [showVectorizer, setShowVectorizer] = useState(false);
+
+  const isRasterFile = (file: File): boolean => {
+    return file.type === 'image/png' || file.type === 'image/jpeg';
+  };
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (rejectedFiles.length > 0) {
-      // Handle rejected files
       console.warn("Some files were rejected:", rejectedFiles);
     }
     
-    setSelectedFiles(prev => [...prev, ...acceptedFiles]);
+    // Check for raster files and handle them separately
+    const rasterFiles = acceptedFiles.filter(isRasterFile);
+    const vectorFiles = acceptedFiles.filter(file => !isRasterFile(file));
+    
+    // Add vector files immediately
+    if (vectorFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...vectorFiles]);
+    }
+    
+    // Handle raster files one by one with warning modal
+    if (rasterFiles.length > 0) {
+      const firstRasterFile = rasterFiles[0];
+      setPendingRasterFile({ file: firstRasterFile, fileName: firstRasterFile.name });
+      setShowRasterWarning(true);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -50,6 +78,52 @@ export default function UploadZone({ onFilesSelected, isUploading, uploadProgres
       onFilesSelected(selectedFiles);
       setSelectedFiles([]);
     }
+  };
+
+  // Raster warning modal handlers
+  const handlePhotographicApprove = () => {
+    if (pendingRasterFile) {
+      setSelectedFiles(prev => [...prev, pendingRasterFile.file]);
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorizeWithAI = () => {
+    if (pendingRasterFile) {
+      setShowRasterWarning(false);
+      setShowVectorizer(true);
+    }
+  };
+
+  const handleVectorizeWithService = () => {
+    if (pendingRasterFile) {
+      onVectorizationPlaceholder(pendingRasterFile.fileName);
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorDownload = (vectorSvg: string) => {
+    // Convert SVG string to File object
+    const svgBlob = new Blob([vectorSvg], { type: 'image/svg+xml' });
+    const svgFile = new File([svgBlob], pendingRasterFile?.fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg') || 'vectorized.svg', {
+      type: 'image/svg+xml'
+    });
+    
+    setSelectedFiles(prev => [...prev, svgFile]);
+    setPendingRasterFile(null);
+    setShowVectorizer(false);
+  };
+
+  const handleCloseRasterWarning = () => {
+    setPendingRasterFile(null);
+    setShowRasterWarning(false);
+  };
+
+  const handleCloseVectorizer = () => {
+    setPendingRasterFile(null);
+    setShowVectorizer(false);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -169,6 +243,29 @@ export default function UploadZone({ onFilesSelected, isUploading, uploadProgres
           </div>
         </CardContent>
       </Card>
+
+      {/* Raster Warning Modal */}
+      {pendingRasterFile && (
+        <RasterWarningModal
+          open={showRasterWarning}
+          onClose={handleCloseRasterWarning}
+          fileName={pendingRasterFile.fileName}
+          onPhotographicApprove={handlePhotographicApprove}
+          onVectorizeWithAI={handleVectorizeWithAI}
+          onVectorizeWithService={handleVectorizeWithService}
+        />
+      )}
+
+      {/* Vectorizer Modal */}
+      {pendingRasterFile && (
+        <VectorizerModal
+          open={showVectorizer}
+          onClose={handleCloseVectorizer}
+          fileName={pendingRasterFile.fileName}
+          imageFile={pendingRasterFile.file}
+          onVectorDownload={handleVectorDownload}
+        />
+      )}
     </div>
   );
 }

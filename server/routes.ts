@@ -1364,6 +1364,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Vectorizer.ai API endpoint for AI-powered vectorization
+  app.post("/api/vectorize", upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      // Check if API credentials are available
+      const apiId = process.env.VECTORIZER_API_ID;
+      const apiSecret = process.env.VECTORIZER_API_SECRET;
+      
+      if (!apiId || !apiSecret) {
+        return res.status(500).json({ 
+          error: "Vectorizer.ai API credentials not configured. Please contact support to enable AI vectorization." 
+        });
+      }
+
+      console.log('Processing vectorization request for:', req.file.originalname);
+
+      // Create FormData for vectorizer.ai API
+      const FormData = require('form-data');
+      const formData = new FormData();
+      
+      // Add the image file
+      formData.append('image', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype
+      });
+
+      // Add vectorization options
+      formData.append('output_format', 'svg');
+      formData.append('output_group_by', 'color');
+      formData.append('output_curves_only', 'false');
+      formData.append('processing_dpi', '300');
+
+      // Make request to vectorizer.ai API with Basic Auth
+      const fetch = require('node-fetch');
+      const auth = Buffer.from(`${apiId}:${apiSecret}`).toString('base64');
+      
+      const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          ...formData.getHeaders()
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Vectorizer.ai API error:', response.status, errorText);
+        return res.status(500).json({ 
+          error: `Vectorization failed: ${response.status} ${response.statusText}` 
+        });
+      }
+
+      // Get the SVG result
+      const svgContent = await response.text();
+      
+      console.log('Vectorization successful, SVG length:', svgContent.length);
+      
+      res.json({ 
+        svg: svgContent,
+        message: "Vectorization completed successfully"
+      });
+
+    } catch (error) {
+      console.error('Vectorization error:', error);
+      res.status(500).json({ 
+        error: "Vectorization failed due to server error" 
+      });
+    }
+  });
+
   // Setup imposition routes
   setupImpositionRoutes(app, storage);
 
