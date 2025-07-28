@@ -296,6 +296,7 @@ export default function CanvasWorkspace({
   };
 
   const handleVectorDownload = (vectorSvg: string) => {
+    console.log('handleVectorDownload called', { hasPendingRasterFile: !!pendingRasterFile, hasOnLogoUpload: !!onLogoUpload });
     if (pendingRasterFile && onLogoUpload) {
       // Convert SVG string to File object
       const svgBlob = new Blob([vectorSvg], { type: 'image/svg+xml' });
@@ -303,6 +304,7 @@ export default function CanvasWorkspace({
         type: 'image/svg+xml'
       });
       
+      console.log('Uploading vectorized SVG:', svgFile.name, svgFile.type, svgFile.size);
       onLogoUpload([svgFile]);
       setPendingRasterFile(null);
       setShowVectorizer(false);

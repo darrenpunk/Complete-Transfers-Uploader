@@ -395,6 +395,7 @@ export default function UploadTool() {
 
   // Upload logos handler for canvas toolbar with progress tracking
   const handleFilesUpload = (files: File[]) => {
+    console.log('handleFilesUpload called with files:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     if (!currentProject) return;
     
     setIsUploading(true);
