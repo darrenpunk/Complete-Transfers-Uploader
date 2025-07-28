@@ -634,10 +634,7 @@ export function VectorizerModal({
 
   // Function to apply color adjustments to SVG
   const applyColorAdjustment = (color: string, adjustments: {saturation: number, cyan: number, magenta: number, yellow: number, black: number}) => {
-    const rgb = hexToRgb(color);
-    if (!rgb) return color;
-
-    // Apply CMYK adjustments
+    // Apply CMYK adjustments first
     const newRgb = cmykToRgb(adjustments.cyan, adjustments.magenta, adjustments.yellow, adjustments.black);
     
     // Apply saturation adjustment
@@ -653,6 +650,67 @@ export function VectorizerModal({
       Math.max(0, Math.min(255, finalG)),
       Math.max(0, Math.min(255, finalB))
     );
+  };
+
+  // Function to replace a specific color in SVG with a new color
+  const replaceColorInSvg = (svg: string, oldColor: string, newColor: string): string => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    
+    const normalizedOldColor = oldColor.toLowerCase().trim();
+    let replacedCount = 0;
+    
+    // Replace fill colors
+    const elementsWithFill = doc.querySelectorAll('*[fill]');
+    elementsWithFill.forEach(el => {
+      const fill = el.getAttribute('fill')?.toLowerCase().trim();
+      if (!fill || fill === 'none') return;
+      
+      let shouldReplace = false;
+      
+      // Direct hex match
+      if (fill === normalizedOldColor) {
+        shouldReplace = true;
+      }
+      // RGB format match
+      else if (fill.startsWith('rgb')) {
+        const normalizedRgb = normalizeRgbToHex(fill);
+        if (normalizedRgb === normalizedOldColor) {
+          shouldReplace = true;
+        }
+      }
+      
+      if (shouldReplace) {
+        el.setAttribute('fill', newColor);
+        replacedCount++;
+      }
+    });
+    
+    // Replace stroke colors
+    const elementsWithStroke = doc.querySelectorAll('*[stroke]');
+    elementsWithStroke.forEach(el => {
+      const stroke = el.getAttribute('stroke')?.toLowerCase().trim();
+      if (!stroke || stroke === 'none') return;
+      
+      let shouldReplace = false;
+      
+      if (stroke === normalizedOldColor) {
+        shouldReplace = true;
+      } else if (stroke.startsWith('rgb')) {
+        const normalizedRgb = normalizeRgbToHex(stroke);
+        if (normalizedRgb === normalizedOldColor) {
+          shouldReplace = true;
+        }
+      }
+      
+      if (shouldReplace) {
+        el.setAttribute('stroke', newColor);
+      }
+    });
+    
+    console.log(`Replaced ${replacedCount} instances of ${oldColor} with ${newColor}`);
+    
+    return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
   // Function to undo the last deletion only
@@ -1025,11 +1083,12 @@ export function VectorizerModal({
                             const currentSvg = coloredSvg || vectorSvg;
                             if (currentSvg) {
                               const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                              const updatedSvg = currentSvg.replace(
-                                new RegExp(highlightedColor.replace('#', '#'), 'gi'),
-                                adjustedColor
-                              );
+                              const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
                               setColoredSvg(updatedSvg);
+                              
+                              // Update detected colors to reflect the change
+                              const newColors = detectColorsInSvg(updatedSvg);
+                              setDetectedColors(newColors);
                             }
                           }}
                         />
@@ -1050,11 +1109,11 @@ export function VectorizerModal({
                               const currentSvg = coloredSvg || vectorSvg;
                               if (currentSvg) {
                                 const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = currentSvg.replace(
-                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
-                                  adjustedColor
-                                );
+                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
                                 setColoredSvg(updatedSvg);
+                                
+                                const newColors = detectColorsInSvg(updatedSvg);
+                                setDetectedColors(newColors);
                               }
                             }}
                           />
@@ -1074,11 +1133,11 @@ export function VectorizerModal({
                               const currentSvg = coloredSvg || vectorSvg;
                               if (currentSvg) {
                                 const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = currentSvg.replace(
-                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
-                                  adjustedColor
-                                );
+                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
                                 setColoredSvg(updatedSvg);
+                                
+                                const newColors = detectColorsInSvg(updatedSvg);
+                                setDetectedColors(newColors);
                               }
                             }}
                           />
@@ -1098,11 +1157,11 @@ export function VectorizerModal({
                               const currentSvg = coloredSvg || vectorSvg;
                               if (currentSvg) {
                                 const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = currentSvg.replace(
-                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
-                                  adjustedColor
-                                );
+                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
                                 setColoredSvg(updatedSvg);
+                                
+                                const newColors = detectColorsInSvg(updatedSvg);
+                                setDetectedColors(newColors);
                               }
                             }}
                           />
@@ -1122,11 +1181,11 @@ export function VectorizerModal({
                               const currentSvg = coloredSvg || vectorSvg;
                               if (currentSvg) {
                                 const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = currentSvg.replace(
-                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
-                                  adjustedColor
-                                );
+                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
                                 setColoredSvg(updatedSvg);
+                                
+                                const newColors = detectColorsInSvg(updatedSvg);
+                                setDetectedColors(newColors);
                               }
                             }}
                           />
