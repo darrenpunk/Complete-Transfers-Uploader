@@ -282,6 +282,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               try {
                 let svgContent = fs.readFileSync(svgPath, 'utf8');
                 
+                // Calculate content bounds first
+                const initialBbox = calculateSVGContentBounds(svgContent);
+                if (initialBbox && initialBbox.hasColoredContent) {
+                  console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)}`);
+                }
+                
                 // SELECTIVE white background removal - only remove obvious page backgrounds
                 console.log('Original SVG first 500 chars:', svgContent.substring(0, 500));
                 
@@ -323,25 +329,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
                 
-                // Now calculate content bounds BEFORE modifying the SVG
-                const bbox = calculateSVGContentBounds(svgContent);
-                if (bbox && bbox.hasColoredContent && bbox.minX !== undefined) {
-                  console.log(`SVG cropping to content: ${bbox.minX.toFixed(1)},${bbox.minY.toFixed(1)} ${bbox.width.toFixed(1)}×${bbox.height.toFixed(1)}`);
+                // Apply content bounds cropping after background removal
+                const finalBbox = calculateSVGContentBounds(svgContent);
+                if (finalBbox && finalBbox.hasColoredContent && finalBbox.minX !== undefined) {
+                  console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${finalBbox.width.toFixed(1)}×${finalBbox.height.toFixed(1)}`);
                   
                   // Update SVG viewBox to crop to content bounds
                   svgContent = svgContent.replace(
                     /viewBox="[^"]*"/,
-                    `viewBox="${bbox.minX} ${bbox.minY} ${bbox.width} ${bbox.height}"`
+                    `viewBox="${finalBbox.minX} ${finalBbox.minY} ${finalBbox.width} ${finalBbox.height}"`
                   );
                   
                   // Also update width and height attributes to match content
                   svgContent = svgContent.replace(
                     /width="[^"]*"/,
-                    `width="${bbox.width}"`
+                    `width="${finalBbox.width}"`
                   );
                   svgContent = svgContent.replace(
                     /height="[^"]*"/,
-                    `height="${bbox.height}"`
+                    `height="${finalBbox.height}"`
                   );
                 }
                 
@@ -357,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 console.log('Processed SVG first 500 chars:', svgContent.substring(0, 500));
                 
                 fs.writeFileSync(svgPath, svgContent);
-                console.log('Removed white backgrounds from SVG');
+                console.log('Updated SVG with content bounds cropping');
               } catch (postProcessError) {
                 console.error('SVG post-processing failed:', postProcessError);
               }
