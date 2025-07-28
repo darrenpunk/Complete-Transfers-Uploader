@@ -123,6 +123,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Content-Based Bounding Boxes**: Fixed bounding box calculation to use actual logo content bounds instead of full PDF page dimensions, with improved scaling factor (0.35) for accurate logo sizing on canvas
 ✓ **Multi-Color PDF Preview**: Enhanced PDF preview modal to display individual garment color assignments in grid layout, matching main canvas behavior for accurate multi-color visualization
 ✓ **Content-Based Bounding Box System**: Implemented server-side content bounds calculation that extracts actual logo coordinates from SVG files, excluding full PDF page backgrounds, and uses raw content dimensions for canvas element sizing - resulting in tight bounding boxes around logos instead of full page areas (247.2×131.5 actual vs 288×162 padded dimensions)
+✓ **SVG ViewBox Cropping**: Enhanced PDF-to-SVG conversion to automatically crop viewBox to actual content bounds, eliminating whitespace and ensuring logos fill their bounding boxes completely - viewBox updated from full page (0 0 283.465 198.425) to content area (18.125 33.449219 247.215 131.527)
 
 
 ## Current Status (July 27, 2025)
