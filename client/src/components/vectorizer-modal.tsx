@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface VectorizerModalProps {
@@ -26,6 +26,9 @@ export function VectorizerModal({
   const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
   const [zoom, setZoom] = useState<number>(100); // Zoom percentage
   const [showGrid, setShowGrid] = useState<boolean>(true); // Show transparency grid
+  const [showPalette, setShowPalette] = useState<boolean>(false); // Show color palette
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [coloredSvg, setColoredSvg] = useState<string | null>(null);
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -61,7 +64,9 @@ export function VectorizerModal({
       }
       
       const result = await response.json();
+      console.log('Received SVG:', result.svg?.substring(0, 200) + '...');
       setVectorSvg(result.svg);
+      setColoredSvg(result.svg); // Initialize colored SVG
       setIsProcessing(false);
 
     } catch (err) {
@@ -71,8 +76,8 @@ export function VectorizerModal({
   };
 
   const handleApproveVector = () => {
-    if (vectorSvg) {
-      onVectorDownload(vectorSvg);
+    if (coloredSvg || vectorSvg) {
+      onVectorDownload(coloredSvg || vectorSvg);
       onClose();
     }
   };
@@ -95,6 +100,14 @@ export function VectorizerModal({
                 title="Toggle transparency grid"
               >
                 <Grid className={`h-4 w-4 ${showGrid ? 'text-primary' : ''}`} />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowPalette(!showPalette)}
+                title="Toggle color palette"
+              >
+                <Palette className={`h-4 w-4 ${showPalette ? 'text-primary' : ''}`} />
               </Button>
             </div>
           </div>
@@ -172,6 +185,36 @@ export function VectorizerModal({
                 </Button>
               </div>
 
+              {/* Color Palette */}
+              {showPalette && vectorSvg && (
+                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
+                  <span className="text-sm font-medium">Color Presets:</span>
+                  <div className="flex gap-2">
+                    {['#000000', '#FFFFFF', '#5B9BD5', '#ED7D31', '#70AD47', '#FFC000'].map((color) => (
+                      <button
+                        key={color}
+                        className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary' : 'border-gray-300'}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          const newSvg = vectorSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
+                          setColoredSvg(newSvg);
+                        }}
+                      />
+                    ))}
+                    <button
+                      className="px-3 py-1 text-sm border rounded"
+                      onClick={() => {
+                        setSelectedColor(null);
+                        setColoredSvg(vectorSvg);
+                      }}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
                 {/* Original */}
                 <div className="flex flex-col overflow-hidden">
@@ -207,7 +250,7 @@ export function VectorizerModal({
                       showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'
                     }`}
                   >
-                    {vectorSvg ? (
+                    {(coloredSvg || vectorSvg) ? (
                       <div 
                         className="p-8 flex items-center justify-center min-h-full"
                         style={{ 
@@ -217,8 +260,9 @@ export function VectorizerModal({
                         }}
                       >
                         <div 
-                          className="vector-preview-wrapper max-w-none"
-                          dangerouslySetInnerHTML={{ __html: vectorSvg }}
+                          className="vector-preview-wrapper"
+                          style={{ width: 'auto', height: 'auto' }}
+                          dangerouslySetInnerHTML={{ __html: coloredSvg || vectorSvg }}
                         />
                       </div>
                     ) : (
