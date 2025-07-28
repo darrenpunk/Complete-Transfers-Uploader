@@ -983,10 +983,10 @@ export function VectorizerModal({
                           className="max-w-none"
                           style={{ 
                             imageRendering: zoom > 200 ? 'pixelated' : 'auto',
-                            maxWidth: '400px',
-                            maxHeight: '400px',
-                            width: 'auto',
-                            height: 'auto'
+                            width: '300px',
+                            height: '300px',
+                            objectFit: 'contain',
+                            backgroundColor: 'white'
                           }}
                         />
                       </div>
@@ -1016,23 +1016,30 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper border border-gray-300"
                           style={{ 
-                            maxWidth: '400px',
-                            maxHeight: '400px',
-                            minWidth: '200px',
-                            minHeight: '200px',
-                            width: 'auto',
-                            height: 'auto',
+                            width: '300px',
+                            height: '300px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: 'white'
+                            backgroundColor: 'white',
+                            overflow: 'hidden'
                           }}
-                          dangerouslySetInnerHTML={{ __html: highlightedSvg || coloredSvg || vectorSvg || '' }}
-                        />
-                        {/* Debug info */}
-                        <div className="absolute top-2 right-2 text-xs bg-black text-white p-2 rounded">
-                          {vectorSvg ? `SVG: ${vectorSvg.length} chars` : 'No SVG'} | 
-                          Zoom: {zoom}%
+                        >
+                          <div 
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            dangerouslySetInnerHTML={{ 
+                              __html: (highlightedSvg || coloredSvg || vectorSvg || '').replace(
+                                /<svg([^>]*)>/,
+                                '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
+                              )
+                            }}
+                          />
                         </div>
                       </div>
                     ) : (
