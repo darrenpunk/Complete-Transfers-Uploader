@@ -1023,21 +1023,24 @@ export function VectorizerModal({
                         >
                           {(() => {
                             const svgContent = highlightedSvg || coloredSvg || vectorSvg || '';
-                            const svgWithStyle = svgContent.replace(
-                              /<svg([^>]*)>/,
-                              '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
-                            );
+                            if (!svgContent) return null;
+                            
+                            // Create a data URL from the SVG to force re-render
+                            const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+                            const svgUrl = URL.createObjectURL(svgBlob);
+                            
                             return (
-                              <div 
-                                key={`svg-${svgRevision}-${svgContent.length}`}
+                              <img 
+                                key={`svg-img-${svgRevision}-${Date.now()}`}
+                                src={svgUrl}
+                                alt="Vectorized Result"
                                 style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
+                                  maxWidth: '100%',
+                                  maxHeight: '100%',
+                                  width: 'auto',
+                                  height: 'auto'
                                 }}
-                                dangerouslySetInnerHTML={{ __html: svgWithStyle }}
+                                onLoad={() => URL.revokeObjectURL(svgUrl)}
                               />
                             );
                           })()}
