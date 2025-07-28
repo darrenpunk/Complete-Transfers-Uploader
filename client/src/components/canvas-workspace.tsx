@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
@@ -124,6 +124,11 @@ export default function CanvasWorkspace({
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
+
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log('Canvas state update:', { showVectorizer, hasPendingRasterFile: !!pendingRasterFile });
+  }, [showVectorizer, pendingRasterFile]);
 
   // Set default zoom based on template size
   useEffect(() => {
@@ -272,19 +277,15 @@ export default function CanvasWorkspace({
     }
   };
 
-  const handleVectorizeWithAI = () => {
+  const handleVectorizeWithAI = useCallback(() => {
     console.log('handleVectorizeWithAI called', { pendingRasterFile: !!pendingRasterFile, showVectorizer });
     if (pendingRasterFile) {
       console.log('Setting vectorizer modal to true');
-      // Don't clear pendingRasterFile here - we need it for the vectorizer modal
+      // Important: Close warning modal first, then open vectorizer
       setShowRasterWarning(false);
-      // Use setTimeout to ensure state updates in the correct order
-      setTimeout(() => {
-        setShowVectorizer(true);
-        console.log('Vectorizer modal should now be open');
-      }, 100);
+      setShowVectorizer(true);
     }
-  };
+  }, [pendingRasterFile]);
 
   const handleVectorizeWithService = () => {
     if (pendingRasterFile) {
@@ -309,7 +310,10 @@ export default function CanvasWorkspace({
   };
 
   const handleCloseRasterWarning = () => {
-    setPendingRasterFile(null);
+    // Don't clear pendingRasterFile here if vectorizer is going to open
+    if (!showVectorizer) {
+      setPendingRasterFile(null);
+    }
     setShowRasterWarning(false);
   };
 
