@@ -24,6 +24,9 @@ export function VectorizerModal({
   const [error, setError] = useState<string | null>(null);
   const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
 
+  // Debug logging
+  console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
+
   useEffect(() => {
     if (open && imageFile) {
       processVectorization();

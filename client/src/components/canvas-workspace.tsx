@@ -273,7 +273,9 @@ export default function CanvasWorkspace({
   };
 
   const handleVectorizeWithAI = () => {
+    console.log('handleVectorizeWithAI called', { pendingRasterFile: !!pendingRasterFile });
     if (pendingRasterFile) {
+      console.log('Setting vectorizer modal to true');
       setShowRasterWarning(false);
       setShowVectorizer(true);
     }
