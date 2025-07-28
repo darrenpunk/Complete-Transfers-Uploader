@@ -864,8 +864,13 @@ export default function CanvasWorkspace({
 
             {/* Canvas Elements */}
             {canvasElements.map((element) => {
-              const logo = logos.find(l => l.id === element.logoId);
-              if (!logo || !element.isVisible) return null;
+              if (!element.isVisible) return null;
+              
+              // For logo elements, find the associated logo
+              const logo = element.logoId ? logos.find(l => l.id === element.logoId) : null;
+              
+              // Skip logo elements without associated logo
+              if (element.elementType === 'logo' && !logo) return null;
 
               const isSelected = selectedElement?.id === element.id;
               
@@ -902,9 +907,10 @@ export default function CanvasWorkspace({
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
-                  {/* Logo Content */}
+                  {/* Element Content */}
                   <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
-                    {logo.mimeType?.startsWith('image/') ? (
+                    {/* Logo Elements */}
+                    {element.elementType === 'logo' && logo && logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={
                           // Priority 1: Element has individual color overrides
@@ -984,6 +990,63 @@ export default function CanvasWorkspace({
                           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                         </svg>
                         <span className="text-xs text-center break-all">{logo.originalName}</span>
+                      </div>
+                    )}
+
+                    {/* Text Elements */}
+                    {element.elementType === 'text' && (
+                      <div 
+                        className="w-full h-full flex items-center justify-center" 
+                        style={{
+                          fontSize: `${element.fontSize || 24}px`,
+                          fontFamily: element.fontFamily || 'Arial',
+                          fontWeight: element.fontWeight || 'normal',
+                          color: element.color || '#000000',
+                          textAlign: element.textAlign as any || 'center'
+                        }}
+                      >
+                        {element.text || 'Text'}
+                      </div>
+                    )}
+
+                    {/* Shape Elements */}
+                    {element.elementType === 'shape' && (
+                      <div className="w-full h-full flex items-center justify-center">
+                        {element.shapeType === 'rectangle' && (
+                          <div 
+                            className="w-full h-full" 
+                            style={{
+                              backgroundColor: element.color || '#000000',
+                              borderRadius: element.borderRadius || 0
+                            }}
+                          />
+                        )}
+                        {element.shapeType === 'circle' && (
+                          <div 
+                            className="w-full h-full rounded-full" 
+                            style={{
+                              backgroundColor: element.color || '#000000'
+                            }}
+                          />
+                        )}
+                        {element.shapeType === 'triangle' && (
+                          <div 
+                            className="w-full h-full flex items-center justify-center"
+                            style={{
+                              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+                              backgroundColor: element.color || '#000000'
+                            }}
+                          />
+                        )}
+                        {element.shapeType === 'star' && (
+                          <div 
+                            className="w-full h-full flex items-center justify-center"
+                            style={{
+                              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+                              backgroundColor: element.color || '#000000'
+                            }}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

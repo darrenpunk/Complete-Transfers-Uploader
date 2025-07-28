@@ -42,7 +42,8 @@ export const logos = pgTable("logos", {
 export const canvasElements = pgTable("canvas_elements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id").notNull(),
-  logoId: varchar("logo_id").notNull(),
+  logoId: varchar("logo_id"), // Optional for text/shape elements
+  elementType: text("element_type").notNull().default("logo"), // logo, text, rectangle, circle, line
   x: real("x").notNull().default(0),
   y: real("y").notNull().default(0),
   width: real("width").notNull(),
@@ -53,6 +54,19 @@ export const canvasElements = pgTable("canvas_elements", {
   isLocked: boolean("is_locked").notNull().default(false),
   colorOverrides: jsonb("color_overrides"), // Store SVG color changes as JSON
   garmentColor: text("garment_color"), // Individual garment color per logo
+  // Text element properties
+  textContent: text("text_content"), // Text content for text elements
+  fontSize: real("font_size").default(16), // Font size in points
+  fontFamily: text("font_family").default("Arial"), // Font family
+  textColor: text("text_color").default("#000000"), // Text color
+  textAlign: text("text_align").default("left"), // left, center, right
+  fontWeight: text("font_weight").default("normal"), // normal, bold
+  fontStyle: text("font_style").default("normal"), // normal, italic
+  // Shape element properties
+  fillColor: text("fill_color").default("#000000"), // Fill color for shapes
+  strokeColor: text("stroke_color"), // Stroke color for shapes
+  strokeWidth: real("stroke_width").default(1), // Stroke width for shapes
+  opacity: real("opacity").default(1), // Element opacity
 });
 
 export const templateSizes = pgTable("template_sizes", {

@@ -7,9 +7,10 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2 } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
+import { TextDialog } from "./text-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
 import InkColorModal from "@/components/ink-color-modal";
@@ -34,6 +35,8 @@ interface ToolsSidebarProps {
   onTemplateChange: (templateId: string) => void;
   onGarmentColorChange: (color: string) => void;
   onInkColorChange: (color: string) => void;
+  onAddTextElement?: (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => void;
+  onAddShapeElement?: (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => void;
 }
 
 // Professional color palette with complete specifications
@@ -112,6 +115,10 @@ export default function ToolsSidebar({
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(true);
+  const [designToolsOpen, setDesignToolsOpen] = useState(true);
+  const [showTextDialog, setShowTextDialog] = useState(false);
+  const [selectedDesignColor, setSelectedDesignColor] = useState("#000000");
   
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 
@@ -195,6 +202,25 @@ export default function ToolsSidebar({
   const handleCloseVectorizer = () => {
     setPendingRasterFile(null);
     setShowVectorizer(false);
+  };
+
+  // Design tools handlers
+  const handleAddShape = (type: 'rectangle' | 'circle' | 'line') => {
+    if (onAddShapeElement) {
+      onAddShapeElement({
+        type,
+        fillColor: selectedDesignColor,
+        strokeColor: selectedDesignColor,
+        strokeWidth: 2
+      });
+    }
+  };
+
+  const handleAddText = (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
+    if (onAddTextElement) {
+      onAddTextElement(textData);
+      setShowTextDialog(false);
+    }
   };
 
   // RGB to CMYK conversion handler
@@ -435,6 +461,89 @@ export default function ToolsSidebar({
             />
 
               </div>
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      )}
+
+      {/* Design Tools Section */}
+      {currentStep === 2 && (
+        <Collapsible open={designToolsOpen} onOpenChange={setDesignToolsOpen}>
+          <div className="border-b border-gray-200">
+            <CollapsibleTrigger asChild>
+              <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
+                  <Palette className="w-5 h-5" />
+                  Design Tools
+                </h3>
+                {designToolsOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-6 pb-6 space-y-4">
+                
+                {/* Text Tool */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Add Text</h4>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setShowTextDialog(true)}
+                  >
+                    <Type className="w-4 h-4 mr-2" />
+                    Add Text Element
+                  </Button>
+                </div>
+
+                {/* Shape Tools */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Add Shapes</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleAddShape('rectangle')}
+                    >
+                      <Square className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleAddShape('circle')}
+                    >
+                      <Circle className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleAddShape('line')}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Colors */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Quick Colors</h4>
+                  <div className="grid grid-cols-6 gap-1">
+                    {quickColors.slice(0, 12).map((color) => (
+                      <button
+                        key={color.hex}
+                        className="w-8 h-8 rounded border border-gray-300 hover:scale-110 transition-transform"
+                        style={{ backgroundColor: color.hex }}
+                        onClick={() => setSelectedDesignColor(color.hex)}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
               </div>
             </CollapsibleContent>
           </div>
@@ -984,6 +1093,14 @@ export default function ToolsSidebar({
           onVectorDownload={handleVectorDownload}
         />
       )}
+
+      {/* Text Dialog */}
+      <TextDialog
+        open={showTextDialog}
+        onOpenChange={setShowTextDialog}
+        onAddText={handleAddText}
+        initialColor={selectedDesignColor}
+      />
     </div>
   );
 }

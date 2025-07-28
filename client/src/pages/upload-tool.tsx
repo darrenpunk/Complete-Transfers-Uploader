@@ -354,6 +354,64 @@ export default function UploadTool() {
     }
   };
 
+  // Create text element mutation
+  const createTextElementMutation = useMutation({
+    mutationFn: async (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
+      const response = await apiRequest("POST", `/api/projects/${currentProject?.id}/text-elements`, textData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "canvas-elements"] });
+      toast({
+        title: "Text Added",
+        description: "Text element has been added to your design.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add text element. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create shape element mutation
+  const createShapeElementMutation = useMutation({
+    mutationFn: async (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => {
+      const response = await apiRequest("POST", `/api/projects/${currentProject?.id}/shape-elements`, shapeData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "canvas-elements"] });
+      toast({
+        title: "Shape Added",
+        description: "Shape element has been added to your design.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add shape element. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle adding text element
+  const handleAddTextElement = (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
+    if (currentProject) {
+      createTextElementMutation.mutate(textData);
+    }
+  };
+
+  // Handle adding shape element
+  const handleAddShapeElement = (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => {
+    if (currentProject) {
+      createShapeElementMutation.mutate(shapeData);
+    }
+  };
+
   // Handle applique badges form submission
   const handleAppliqueBadgesFormConfirm = (formData: any) => {
     if (pendingTemplateData) {
@@ -575,6 +633,8 @@ export default function UploadTool() {
           onTemplateChange={handleTemplateChange}
           onGarmentColorChange={handleGarmentColorChange}
           onInkColorChange={handleInkColorChange}
+          onAddTextElement={handleAddTextElement}
+          onAddShapeElement={handleAddShapeElement}
         />
 
         {/* Main Canvas Area */}

@@ -1234,6 +1234,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Canvas element not found" });
       }
 
+      if (!element.logoId) {
+        return res.status(400).json({ message: "Canvas element does not have an associated logo" });
+      }
+
       const logo = await storage.getLogo(element.logoId);
       if (!logo) {
         return res.status(404).json({ message: "Logo not found" });
@@ -1292,6 +1296,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error updating SVG colors:', error);
       res.status(500).json({ message: "Failed to update colors" });
+    }
+  });
+
+  // Create text element
+  app.post("/api/projects/:projectId/text-elements", async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const { text, fontSize, fontFamily, color } = req.body;
+
+      // Validate input
+      if (!text || !fontSize || !fontFamily || !color) {
+        return res.status(400).json({ message: "Missing required text element data" });
+      }
+
+      // Create text element on canvas
+      const canvasElementData = {
+        projectId,
+        logoId: null, // Text elements don't have associated logos
+        elementType: 'text' as const,
+        x: 50, // Default position
+        y: 50, // Default position
+        width: Math.max(text.length * fontSize * 0.6, 100), // Estimated width
+        height: fontSize * 1.2, // Estimated height
+        rotation: 0,
+        zIndex: 1000, // High z-index for text elements
+        isVisible: true,
+        isLocked: false,
+        colorOverrides: null,
+        // Text-specific properties
+        textContent: text,
+        fontSize,
+        fontFamily,
+        textColor: color
+      };
+
+      const element = await storage.createCanvasElement(canvasElementData);
+      res.status(201).json(element);
+    } catch (error) {
+      console.error('Error creating text element:', error);
+      res.status(500).json({ message: "Failed to create text element" });
+    }
+  });
+
+  // Create shape element
+  app.post("/api/projects/:projectId/shape-elements", async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const { type, fillColor, strokeColor, strokeWidth } = req.body;
+
+      // Validate input
+      if (!type || !fillColor || !strokeColor || strokeWidth === undefined) {
+        return res.status(400).json({ message: "Missing required shape element data" });
+      }
+
+      // Set default dimensions based on shape type
+      let width = 100;
+      let height = 100;
+      
+      if (type === 'line') {
+        width = 150;
+        height = strokeWidth;
+      } else if (type === 'rectangle') {
+        width = 120;
+        height = 80;
+      }
+
+      // Create shape element on canvas
+      const canvasElementData = {
+        projectId,
+        logoId: null, // Shape elements don't have associated logos
+        elementType: 'shape' as const,
+        x: 50, // Default position
+        y: 50, // Default position
+        width,
+        height,
+        rotation: 0,
+        zIndex: 999, // High z-index for shape elements
+        isVisible: true,
+        isLocked: false,
+        colorOverrides: null,
+        // Shape-specific properties
+        shapeType: type,
+        fillColor,
+        strokeColor,
+        strokeWidth
+      };
+
+      const element = await storage.createCanvasElement(canvasElementData);
+      res.status(201).json(element);
+    } catch (error) {
+      console.error('Error creating shape element:', error);
+      res.status(500).json({ message: "Failed to create shape element" });
     }
   });
 
