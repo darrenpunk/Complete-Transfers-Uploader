@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { TemplateSize } from "@shared/schema";
 
@@ -130,27 +127,9 @@ export default function TemplateSelectorModal({
     return groups;
   }, {} as Record<string, TemplateSize[]>);
 
-  // Initialize all groups as expanded by default to reduce clicks
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(() => Object.keys(groupedTemplates));
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
-
-  const toggleGroup = (groupName: string) => {
-    setExpandedGroups(prev =>
-      prev.includes(groupName)
-        ? prev.filter(g => g !== groupName)
-        : [...prev, groupName]
-    );
-  };
-
   const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplate(templateId);
-  };
-
-  const handleContinue = () => {
-    if (selectedTemplate) {
-      onSelectTemplate(selectedTemplate);
-      onClose();
-    }
+    onSelectTemplate(templateId);
+    onClose();
   };
 
   console.log('TemplateSelectorModal render', { open, templatesLength: templates.length });
@@ -173,88 +152,51 @@ export default function TemplateSelectorModal({
         <div className="flex-1 overflow-auto space-y-4 pr-2">
           {Object.entries(groupedTemplates).map(([groupName, groupTemplates]) => (
             <Card key={groupName} className="border-2">
-              <Collapsible
-                open={expandedGroups.includes(groupName)}
-                onOpenChange={() => toggleGroup(groupName)}
-              >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-between p-4 h-auto hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0">{getTemplateGroupIcon(groupName)}</div>
-                      <div className="text-left">
-                        <div className="font-semibold text-lg">{groupName}</div>
-                        <div className="text-sm text-gray-500">
-                          {groupTemplates.length} template{groupTemplates.length !== 1 ? 's' : ''} available
-                        </div>
-                      </div>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">{getTemplateGroupIcon(groupName)}</div>
+                  <div>
+                    <div className="font-semibold text-lg">{groupName}</div>
+                    <div className="text-sm text-gray-500">
+                      {groupTemplates.length} template{groupTemplates.length !== 1 ? 's' : ''} available
                     </div>
-                    {expandedGroups.includes(groupName) ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5" />
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
+                  </div>
+                </div>
+              </CardHeader>
 
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {groupTemplates.map((template) => (
-                        <Button
-                          key={template.id}
-                          variant={selectedTemplate === template.id ? "default" : "outline"}
-                          className={`h-auto p-3 flex flex-col items-center justify-center space-y-2 ${
-                            selectedTemplate === template.id
-                              ? "ring-2 ring-blue-500 bg-blue-600 text-white"
-                              : "hover:bg-gray-50"
-                          }`}
-                          onClick={() => handleTemplateSelect(template.id)}
-                        >
-                          <div className="font-semibold">{template.label}</div>
-                          <div className="text-xs opacity-75">
-                            {template.width}×{template.height}mm
-                          </div>
-                          {template.name === "dtf_1000x550" && (
-                            <Badge variant="secondary" className="text-xs">
-                              Large Format
-                            </Badge>
-                          )}
-                        </Button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
+              <CardContent className="pt-0">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {groupTemplates.map((template) => (
+                      <Button
+                        key={template.id}
+                        variant="outline"
+                        className="h-auto p-3 flex flex-col items-center justify-center space-y-2 hover:bg-gray-50 hover:border-blue-500 transition-colors"
+                        onClick={() => handleTemplateSelect(template.id)}
+                      >
+                        <div className="font-semibold">{template.label}</div>
+                        <div className="text-xs opacity-75">
+                          {template.width}×{template.height}mm
+                        </div>
+                        {template.name === "dtf_1000x550" && (
+                          <Badge variant="secondary" className="text-xs">
+                            Large Format
+                          </Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div className="text-sm text-gray-500">
-            {selectedTemplate ? (
-              <>Selected: {templates.find(t => t.id === selectedTemplate)?.label}</>
-            ) : (
-              "Please select a template to continue"
-            )}
-          </div>
-          <div className="space-x-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleContinue}
-              disabled={!selectedTemplate}
-              className="min-w-[120px]"
-            >
-              Continue
-            </Button>
-          </div>
+        <div className="flex justify-center pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
