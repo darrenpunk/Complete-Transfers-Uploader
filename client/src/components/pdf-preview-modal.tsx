@@ -61,7 +61,8 @@ export default function PDFPreviewModal({
   const totalLogos = logos.length;
   const hasLowResLogos = logos.some(logo => {
     const colorInfo = logo.svgColors as any;
-    return colorInfo && colorInfo.resolution && colorInfo.resolution < 300;
+    // Check if it's a raster image with low resolution
+    return colorInfo && colorInfo.resolution && colorInfo.resolution < 300 && colorInfo.type === 'raster';
   });
   const hasFonts = logos.some(logo => {
     const colorInfo = logo.svgColors as any;
@@ -69,7 +70,8 @@ export default function PDFPreviewModal({
   });
   const hasUnconvertedColors = logos.some(logo => {
     const colorInfo = logo.svgColors as any;
-    return colorInfo && !colorInfo.converted;
+    // Check if colors are converted to CMYK (converted flag or mode is CMYK)
+    return colorInfo && !colorInfo.converted && colorInfo.mode !== 'CMYK';
   });
 
   const preflightItems = [
@@ -82,7 +84,7 @@ export default function PDFPreviewModal({
     {
       icon: Eye,
       label: "Image Quality", 
-      value: hasLowResLogos ? "Low resolution detected" : "High quality vectors",
+      value: hasLowResLogos ? "Low resolution detected" : "Vector graphics",
       status: hasLowResLogos ? "warning" : "success"
     },
     {
@@ -94,8 +96,21 @@ export default function PDFPreviewModal({
     {
       icon: Palette,
       label: "Color Space",
-      value: hasUnconvertedColors ? "RGB colors detected" : "CMYK ready",
-      status: hasUnconvertedColors ? "warning" : "success"
+      value: (() => {
+        // Check if any logos have CMYK colors or are converted
+        const hasCMYKLogos = logos.some(logo => {
+          const colorInfo = logo.svgColors as any;
+          return colorInfo && (colorInfo.converted || colorInfo.mode === 'CMYK');
+        });
+        return hasCMYKLogos ? "CMYK ready" : "RGB colors detected";
+      })(),
+      status: (() => {
+        const hasCMYKLogos = logos.some(logo => {
+          const colorInfo = logo.svgColors as any;
+          return colorInfo && (colorInfo.converted || colorInfo.mode === 'CMYK');
+        });
+        return hasCMYKLogos ? "success" : "warning";
+      })()
     }
   ];
 
