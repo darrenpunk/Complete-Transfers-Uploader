@@ -1361,20 +1361,26 @@ export function VectorizerModal({
                         onClick={() => {
                           const currentSvg = coloredSvg || vectorSvg;
                           if (currentSvg) {
-                            // Clear highlighting immediately for instant visual feedback
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
-                            
+                            // Save current state for undo
                             setDeletionHistory(prev => [...prev, {
                               svg: currentSvg,
                               colors: [...detectedColors]
                             }]);
                             
+                            // Remove white color and update states immediately
                             const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
-                            setColoredSvg(updatedSvg);
-                            
                             const newColors = detectColorsInSvg(updatedSvg);
+                            
+                            // Clear all highlighting and update states in batch for immediate visual feedback
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            setColoredSvg(updatedSvg);
                             setDetectedColors(newColors);
+                            
+                            // Force immediate re-render by using setTimeout
+                            setTimeout(() => {
+                              setColoredSvg(updatedSvg);
+                            }, 0);
                             
                             toast({
                               title: "White Removed",
@@ -1400,10 +1406,7 @@ export function VectorizerModal({
                         onClick={() => {
                           const currentSvg = coloredSvg || vectorSvg;
                           if (currentSvg) {
-                            // Clear highlighting immediately for instant visual feedback
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
-                            
+                            // Save current state for undo
                             setDeletionHistory(prev => [...prev, {
                               svg: currentSvg,
                               colors: [...detectedColors]
@@ -1435,10 +1438,18 @@ export function VectorizerModal({
                               totalRemoved++;
                             });
                             
-                            setColoredSvg(updatedSvg);
-                            
                             const newColors = detectColorsInSvg(updatedSvg);
+                            
+                            // Clear all highlighting and update states in batch for immediate visual feedback
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            setColoredSvg(updatedSvg);
                             setDetectedColors(newColors);
+                            
+                            // Force immediate re-render by using setTimeout
+                            setTimeout(() => {
+                              setColoredSvg(updatedSvg);
+                            }, 0);
                             
                             toast({
                               title: "White Colors Removed",
