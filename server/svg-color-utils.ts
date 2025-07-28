@@ -459,9 +459,96 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
+// Specialized function for calculating bounds of vectorized SVG files from AI services
+function calculateVectorizedSVGBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
+  try {
+    const allCoordinates = [];
+    
+    // Extract coordinates from path elements with fill colors (skip stroke-only elements)
+    const fillPathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
+    let pathMatch;
+    while ((pathMatch = fillPathRegex.exec(svgContent)) !== null) {
+      const fillColor = pathMatch[1];
+      const pathData = pathMatch[2];
+      
+      // Only include paths with actual fill colors (not "none")
+      if (fillColor && fillColor !== 'none' && fillColor !== 'transparent') {
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          allCoordinates.push(...coords);
+        }
+      }
+    }
+    
+    // Also check for stroke-only paths that might contain content
+    const strokePathRegex = /<path[^>]*stroke="none"[^>]*d="([^"]*)"[^>]*>/gi;
+    let strokeMatch;
+    while ((strokeMatch = strokePathRegex.exec(svgContent)) !== null) {
+      const pathData = strokeMatch[1];
+      const coords = extractPathCoordinates(pathData);
+      if (coords.length > 0) {
+        allCoordinates.push(...coords);
+      }
+    }
+    
+    if (allCoordinates.length === 0) {
+      console.log('No content coordinates found in vectorized SVG, using fallback');
+      return {
+        width: 200,
+        height: 200
+      };
+    }
+    
+    // Calculate actual content bounds
+    const minX = Math.min(...allCoordinates.map(c => c.x));
+    const minY = Math.min(...allCoordinates.map(c => c.y));
+    const maxX = Math.max(...allCoordinates.map(c => c.x));
+    const maxY = Math.max(...allCoordinates.map(c => c.y));
+    
+    const rawWidth = maxX - minX;
+    const rawHeight = maxY - minY;
+    
+    // Add reasonable padding for tight bounds
+    const paddedWidth = Math.max(100, Math.ceil(rawWidth * 1.1)); // 10% padding
+    const paddedHeight = Math.max(80, Math.ceil(rawHeight * 1.1)); // 10% padding
+    
+    // Apply reasonable size limits for logos
+    const finalWidth = Math.min(paddedWidth, 400);
+    const finalHeight = Math.min(paddedHeight, 400);
+    
+    console.log(`Vectorized SVG bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (content: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
+    
+    return {
+      width: finalWidth,
+      height: finalHeight,
+      minX,
+      minY,
+      maxX,
+      maxY
+    };
+    
+  } catch (error) {
+    console.error('Error calculating vectorized SVG bounds:', error);
+    return {
+      width: 200,
+      height: 200
+    };
+  }
+}
+
 // Calculate actual content bounding box from SVG elements, excluding obvious backgrounds and font definitions
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
+    // Check if this is a vectorized SVG (has vector-effect attribute and large viewBox)
+    const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"');
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    const hasLargeViewBox = viewBoxMatch && viewBoxMatch[1].split(' ').some(val => parseFloat(val) > 1000);
+    
+    if (isVectorizedSVG && hasLargeViewBox) {
+      console.log('Detected vectorized SVG with large viewBox, using optimized content bounds calculation');
+      return calculateVectorizedSVGBounds(svgContent);
+    }
+
     // Check if this SVG has glyph references (text) that might be inflating the bounding box
     const hasGlyphRefs = svgContent.includes('<use') && svgContent.includes('xlink:href="#glyph-');
     const hasGlyphDefs = svgContent.includes('<g id="glyph-');
