@@ -1397,6 +1397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Add vectorization options
+      formData.append('mode', 'test'); // Use test mode for API testing
       formData.append('output_format', 'svg');
       formData.append('output_group_by', 'color');
       formData.append('output_curves_only', 'false');
