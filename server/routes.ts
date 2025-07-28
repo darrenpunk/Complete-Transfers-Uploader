@@ -1508,7 +1508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Add vectorization options based on the provided screenshot settings
-      formData.append('mode', 'test'); // Use test mode for API testing
+      formData.append('mode', 'production'); // Use production mode for live API
       
       // File Format
       formData.append('output_format', 'svg');
