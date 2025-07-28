@@ -417,8 +417,13 @@ export default function CanvasWorkspace({
 
   // Color management now handled purely with CSS filters - no server processing needed
 
-  // Function to get the image URL for display (now always uses original)
+  // Function to get the image URL for display
   const getImageUrl = (logo: Logo): string => {
+    // For PDF files, use the SVG conversion
+    if (logo.mimeType === 'application/pdf') {
+      return `/uploads/${logo.filename}.svg`;
+    }
+    // For other image files, use original
     return `/uploads/${logo.filename}`;
   };
 
@@ -910,7 +915,7 @@ export default function CanvasWorkspace({
                   {/* Element Content */}
                   <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {/* Logo Elements */}
-                    {element.elementType === 'logo' && logo && logo.mimeType?.startsWith('image/') ? (
+                    {element.elementType === 'logo' && logo ? (
                       <img
                         src={
                           // Priority 1: Element has individual color overrides

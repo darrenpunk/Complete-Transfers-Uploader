@@ -1350,16 +1350,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required shape element data" });
       }
 
-      // Set default dimensions based on shape type
-      let width = 100;
-      let height = 100;
+      // Set default dimensions in millimeters based on shape type
+      let width = 50; // 50mm = reasonable rectangle width
+      let height = 30; // 30mm = reasonable rectangle height
       
       if (type === 'line') {
-        width = 150;
-        height = strokeWidth;
+        width = 80; // 80mm line
+        height = strokeWidth * 0.5; // Scale stroke width to mm
       } else if (type === 'rectangle') {
-        width = 120;
-        height = 80;
+        width = 50; // 50mm rectangle
+        height = 30; // 30mm rectangle
+      } else if (type === 'circle') {
+        width = 40; // 40mm diameter circle
+        height = 40; // 40mm diameter circle
       }
 
       // Create shape element on canvas
@@ -1367,8 +1370,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         projectId,
         logoId: null, // Shape elements don't have associated logos
         elementType: 'shape' as const,
-        x: 50, // Default position
-        y: 50, // Default position
+        x: 150, // Centered position (A3 is 297mm wide, so ~150mm is center)
+        y: 210, // Centered position (A3 is 420mm tall, so ~210mm is center)
         width,
         height,
         rotation: 0,
