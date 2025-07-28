@@ -425,29 +425,54 @@ export function VectorizerModal({
     // Sort colors by usage (highest first)
     const sortedColors = [...originalDetectedColors].sort((a, b) => b.count - a.count);
     
-    // Keep the top 3-4 most used colors as main colors
-    const mainColors = sortedColors.slice(0, 4);
-    const mainColorSet = new Set(mainColors.map(c => c.color.toLowerCase()));
+    // More aggressive approach: Keep only top 2 colors as absolute main colors
+    const absoluteMainColors = sortedColors.slice(0, 2);
     
-    // Find colors to remove: similar colors to main ones or very low usage
-    const colorsToRemove: string[] = [];
+    // Group remaining colors by similarity and keep only the strongest from each group
+    const colorGroups: Array<{representative: typeof sortedColors[0], similar: typeof sortedColors}> = [];
     
-    sortedColors.forEach(color => {
-      if (mainColorSet.has(color.color.toLowerCase())) return; // Keep main colors
+    // Process each color after the top 2
+    sortedColors.slice(2).forEach(color => {
+      // Check if this color is similar to any existing group representative
+      let foundGroup = false;
       
-      // Check if this color is very similar to any main color (likely edge artifacts)
-      const isSimilarToMain = mainColors.some(mainColor => {
-        const distance = colorDistance(color.color, mainColor.color);
-        return distance < 50; // Colors within 50 units are considered similar
-      });
+      for (const group of colorGroups) {
+        const distance = colorDistance(color.color, group.representative.color);
+        if (distance < 80) { // More aggressive grouping - colors within 80 units
+          group.similar.push(color);
+          // Replace representative if this color has higher usage
+          if (color.count > group.representative.count) {
+            group.representative = color;
+          }
+          foundGroup = true;
+          break;
+        }
+      }
       
-      // Remove if: similar to main color OR very low usage (less than 5% of top color)
-      const isLowUsage = color.count < (sortedColors[0].count * 0.05);
-      
-      if (isSimilarToMain || isLowUsage) {
-        colorsToRemove.push(color.color);
+      // If no similar group found, create new group
+      if (!foundGroup) {
+        colorGroups.push({
+          representative: color,
+          similar: [color]
+        });
       }
     });
+    
+    // Keep top 2 absolute colors + top 1-2 group representatives
+    const finalMainColors = [
+      ...absoluteMainColors,
+      ...colorGroups
+        .sort((a, b) => b.representative.count - a.representative.count)
+        .slice(0, 2) // Keep only top 2 groups
+        .map(g => g.representative)
+    ];
+    
+    const mainColorSet = new Set(finalMainColors.map(c => c.color.toLowerCase()));
+    
+    // Remove everything not in final main colors
+    const colorsToRemove = sortedColors
+      .filter(color => !mainColorSet.has(color.color.toLowerCase()))
+      .map(c => c.color);
     
     // Always preserve white if it exists (important for text/details)
     const whiteIndex = colorsToRemove.findIndex(c => 
@@ -481,8 +506,8 @@ export function VectorizerModal({
     const keptColors = originalDetectedColors.length - colorsToRemove.length;
     
     toast({
-      title: "Colors Optimized",
-      description: `Removed ${colorsToRemove.length} edge artifacts and similar colors (${keptColors} main colors kept)`,
+      title: "Colors Simplified",
+      description: `Reduced to ${finalMainColors.length} main colors (removed ${colorsToRemove.length} similar variations)`,
     });
   };
 
