@@ -8,11 +8,11 @@ import { Upload, FileImage, X, AlertCircle } from "lucide-react";
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void;
   isUploading: boolean;
+  uploadProgress?: number;
 }
 
-export default function UploadZone({ onFilesSelected, isUploading }: UploadZoneProps) {
+export default function UploadZone({ onFilesSelected, isUploading, uploadProgress = 0 }: UploadZoneProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     if (rejectedFiles.length > 0) {
@@ -136,9 +136,16 @@ export default function UploadZone({ onFilesSelected, isUploading }: UploadZoneP
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
+              <Upload className="w-5 h-5 text-blue-500 animate-pulse" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 mb-1">Uploading files...</p>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-gray-900">Uploading files...</p>
+                  <span className="text-sm text-gray-600">{uploadProgress}%</span>
+                </div>
                 <Progress value={uploadProgress} className="h-2" />
+                <p className="text-xs text-gray-500 mt-1">
+                  Processing and analyzing your logos for print quality
+                </p>
               </div>
             </div>
           </CardContent>

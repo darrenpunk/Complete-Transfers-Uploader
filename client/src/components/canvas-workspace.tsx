@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
 
@@ -85,6 +86,8 @@ interface CanvasWorkspaceProps {
   selectedElement: CanvasElement | null;
   onElementSelect: (element: CanvasElement | null) => void;
   onLogoUpload?: (files: File[]) => void;
+  isUploading?: boolean;
+  uploadProgress?: number;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -108,7 +111,9 @@ export default function CanvasWorkspace({
   canvasElements,
   selectedElement,
   onElementSelect,
-  onLogoUpload
+  onLogoUpload,
+  isUploading = false,
+  uploadProgress = 0
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
@@ -535,15 +540,24 @@ export default function CanvasWorkspace({
                   }
                 }}
               />
-              <Button 
-                variant="default" 
-                size="sm"
-                disabled={!project.garmentColor}
-                onClick={() => document.getElementById('canvas-upload-input')?.click()}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Logos
-              </Button>
+              <div className="flex flex-col">
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  disabled={!project.garmentColor || isUploading}
+                  onClick={() => document.getElementById('canvas-upload-input')?.click()}
+                >
+                  <Upload className={`w-4 h-4 mr-2 ${isUploading ? 'animate-pulse' : ''}`} />
+                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Upload Logos'}
+                </Button>
+                
+                {/* Upload Progress Bar */}
+                {isUploading && (
+                  <div className="mt-1 w-32">
+                    <Progress value={uploadProgress} className="h-1" />
+                  </div>
+                )}
+              </div>
               
               {/* Logo Count Display */}
               {logos && logos.length > 0 && (

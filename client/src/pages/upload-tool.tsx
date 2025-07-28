@@ -389,43 +389,80 @@ export default function UploadTool() {
 
 
 
-  // Upload logos handler for canvas toolbar
+  // Upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Upload logos handler for canvas toolbar with progress tracking
   const handleFilesUpload = (files: File[]) => {
     if (!currentProject) return;
+    
+    setIsUploading(true);
+    setUploadProgress(0);
     
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
     
-    fetch(`/api/projects/${currentProject.id}/logos`, {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => {
-        if (!response.ok) throw new Error('Upload failed');
-        return response.json();
-      })
-      .then((newLogos) => {
-        // Update logos cache directly
-        queryClient.setQueryData(
-          ["/api/projects", currentProject.id, "logos"],
-          (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
-        );
-        
-        // Invalidate canvas elements to fetch new ones
-        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-        
+    // Create XMLHttpRequest for progress tracking
+    const xhr = new XMLHttpRequest();
+    
+    // Track upload progress
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    });
+    
+    // Handle completion
+    xhr.addEventListener('load', () => {
+      setIsUploading(false);
+      if (xhr.status === 200) {
+        try {
+          const newLogos = JSON.parse(xhr.responseText);
+          
+          // Update logos cache directly
+          queryClient.setQueryData(
+            ["/api/projects", currentProject.id, "logos"],
+            (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+          );
+          
+          // Invalidate canvas elements to fetch new ones
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+          
+          toast({
+            title: "Success",
+            description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Failed to process upload response.",
+            variant: "destructive",
+          });
+        }
+      } else {
         toast({
-          title: "Success",
-          description: "Logos uploaded successfully!",
-        });
-      })
-      .catch(() => {
-        toast({
-          title: "Error",
+          title: "Error", 
           description: "Failed to upload logos. Please try again.",
           variant: "destructive",
         });
+      }
+    });
+    
+    // Handle errors
+    xhr.addEventListener('error', () => {
+      setIsUploading(false);
+      toast({
+        title: "Error",
+        description: "Upload failed. Please check your connection and try again.",
+        variant: "destructive",
       });
+    });
+    
+    // Send the request
+    xhr.open('POST', `/api/projects/${currentProject.id}/logos`);
+    xhr.send(formData);
   };
 
   if (!currentProject) {
@@ -531,6 +568,8 @@ export default function UploadTool() {
           selectedElement={selectedElement}
           onElementSelect={setSelectedElement}
           onLogoUpload={handleFilesUpload}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
         />
 
         {/* Right Properties Panel */}
