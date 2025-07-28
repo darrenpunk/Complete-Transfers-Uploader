@@ -153,6 +153,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Fixed Vectorizer Display Issues**: Resolved layout problems where vector results and background removal buttons were not visible despite successful API responses - fixed modal sizing, flex constraints, and sidebar positioning for proper content display
 ✓ **Perfect Image Scale Matching**: Fixed scaling mismatch between original and vectorized images by setting both containers to identical 400×400px dimensions with proper object-fit and SVG scaling for accurate side-by-side comparison
 ✓ **Enhanced Zoom Range**: Increased maximum zoom from 400% to 800% with default starting zoom of 125% for detailed vectorization quality inspection
+✓ **Fixed Live White Removal Updates**: Resolved issue where "Remove White" and "Remove All White" buttons weren't updating preview immediately by clearing highlight states first for instant visual feedback
 
 
 ## Current Status (July 28, 2025)

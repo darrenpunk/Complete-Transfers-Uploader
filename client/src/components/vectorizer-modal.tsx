@@ -1383,6 +1383,10 @@ export function VectorizerModal({
                         onClick={() => {
                           const currentSvg = coloredSvg || vectorSvg;
                           if (currentSvg) {
+                            // Clear highlighting immediately for instant visual feedback
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
                             setDeletionHistory(prev => [...prev, {
                               svg: currentSvg,
                               colors: [...detectedColors]
@@ -1390,9 +1394,6 @@ export function VectorizerModal({
                             
                             const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
                             setColoredSvg(updatedSvg);
-                            
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
                             
                             const newColors = detectColorsInSvg(updatedSvg);
                             setDetectedColors(newColors);
@@ -1421,6 +1422,10 @@ export function VectorizerModal({
                         onClick={() => {
                           const currentSvg = coloredSvg || vectorSvg;
                           if (currentSvg) {
+                            // Clear highlighting immediately for instant visual feedback
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
                             setDeletionHistory(prev => [...prev, {
                               svg: currentSvg,
                               colors: [...detectedColors]
@@ -1453,8 +1458,6 @@ export function VectorizerModal({
                             });
                             
                             setColoredSvg(updatedSvg);
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
                             
                             const newColors = detectColorsInSvg(updatedSvg);
                             setDetectedColors(newColors);
