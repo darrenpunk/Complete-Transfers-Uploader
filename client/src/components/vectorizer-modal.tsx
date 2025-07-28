@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -754,32 +755,46 @@ export function VectorizerModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
-        <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setViewMode(viewMode === 'comparison' ? 'preview' : 'comparison')}
-                title={viewMode === 'comparison' ? 'Switch to preview mode' : 'Switch to comparison mode'}
-              >
-                {viewMode === 'comparison' ? <Eye className="h-4 w-4" /> : <Columns2 className="h-4 w-4" />}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowGrid(!showGrid)}
-                title="Toggle transparency grid"
-              >
-                <Grid className={`h-4 w-4 ${showGrid ? 'text-primary' : ''}`} />
-              </Button>
+    <TooltipProvider>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
+          <DialogHeader className="flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setViewMode(viewMode === 'comparison' ? 'preview' : 'comparison')}
+                    >
+                      {viewMode === 'comparison' ? <Eye className="h-4 w-4" /> : <Columns2 className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{viewMode === 'comparison' ? 'Switch to preview mode' : 'Switch to side-by-side comparison'}</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowGrid(!showGrid)}
+                    >
+                      <Grid className={`h-4 w-4 ${showGrid ? 'text-primary' : ''}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Toggle transparency grid to see transparent areas</p>
+                  </TooltipContent>
+                </Tooltip>
 
+              </div>
             </div>
-          </div>
-        </DialogHeader>
+          </DialogHeader>
         
         <div className="flex-1 overflow-hidden flex">
           {/* Main Content Area */}
@@ -819,56 +834,96 @@ export function VectorizerModal({
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Zoom Controls */}
               <div className="flex items-center justify-center gap-4 mb-4 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setZoom(Math.max(25, zoom - 25))}
-                  disabled={zoom <= 25}
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setZoom(Math.max(25, zoom - 25))}
+                      disabled={zoom <= 25}
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Zoom out (min 25%)</p>
+                  </TooltipContent>
+                </Tooltip>
+                
                 <div className="flex items-center gap-2 min-w-[200px]">
-                  <Slider
-                    value={[zoom]}
-                    onValueChange={(value) => setZoom(value[0])}
-                    min={25}
-                    max={400}
-                    step={25}
-                    className="flex-1"
-                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex-1">
+                        <Slider
+                          value={[zoom]}
+                          onValueChange={(value) => setZoom(value[0])}
+                          min={25}
+                          max={400}
+                          step={25}
+                          className="flex-1"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Adjust zoom level (25% - 400%)</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <span className="text-sm font-medium w-12">{zoom}%</span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setZoom(Math.min(400, zoom + 25))}
-                  disabled={zoom >= 400}
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setZoom(100)}
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setZoom(Math.min(400, zoom + 25))}
+                      disabled={zoom >= 400}
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Zoom in (max 400%)</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setZoom(100)}
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Reset to 100% zoom</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               {/* Detected Colors Button */}
               {vectorSvg && detectedColors.length > 0 && (
                 <div className="mb-3 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowPalette(!showPalette)}
-                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    {showPalette ? 'Hide' : 'Show'} Colors ({detectedColors.length})
-                    {highlightedColor && (
-                      <span className="ml-2 text-red-400 font-semibold">• Highlighting {highlightedColor}</span>
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowPalette(!showPalette)}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                      >
+                        <Palette className="w-4 h-4 mr-2" />
+                        {showPalette ? 'Hide' : 'Show'} Colors ({detectedColors.length})
+                        {highlightedColor && (
+                          <span className="ml-2 text-red-400 font-semibold">• Highlighting {highlightedColor}</span>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Toggle color management panel to edit, remove, or highlight colors</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               )}
 
@@ -947,7 +1002,7 @@ export function VectorizerModal({
               {/* Instructions */}
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mt-4 flex-shrink-0">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Tip:</strong> Use the zoom controls to inspect details. The transparency grid helps you see which parts of the image have been made transparent.
+                  <strong>How to use:</strong> Use zoom controls to inspect details. Click color swatches to highlight or delete colors. Use "Reduce" to simplify the color palette automatically. Hover over buttons for more information.
                 </p>
               </div>
             </div>
@@ -961,10 +1016,17 @@ export function VectorizerModal({
               
               <div className="flex gap-3">
                 {vectorSvg && (
-                  <Button onClick={handleApproveVector} className="bg-green-600 hover:bg-green-700">
-                    <Download className="h-4 w-4 mr-2" />
-                    Approve & Download (${cost.toFixed(2)})
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button onClick={handleApproveVector} className="bg-green-600 hover:bg-green-700">
+                        <Download className="h-4 w-4 mr-2" />
+                        Approve & Download (${cost.toFixed(2)})
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Approve vectorization and add to canvas - charges ${cost.toFixed(2)} to your order</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -1205,145 +1267,180 @@ export function VectorizerModal({
               {/* Quick Actions */}
               <div className="border-t border-gray-700 pt-4 mt-4">
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={reduceColors}
-                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                    disabled={originalDetectedColors.length === 0}
-                  >
-                    <Wand2 className="w-3 h-3 mr-1" />
-                    Reduce
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={undoLastDeletion}
-                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                    disabled={deletionHistory.length === 0}
-                  >
-                    ↶ Undo
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={reduceColors}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                        disabled={originalDetectedColors.length === 0}
+                      >
+                        <Wand2 className="w-3 h-3 mr-1" />
+                        Reduce
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Automatically reduce to main logo colors only</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={undoLastDeletion}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                        disabled={deletionHistory.length === 0}
+                      >
+                        ↶ Undo
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Undo the last color deletion</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 
                 {/* White Color Management */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const currentSvg = coloredSvg || vectorSvg;
-                      if (currentSvg) {
-                        setDeletionHistory(prev => [...prev, {
-                          svg: currentSvg,
-                          colors: [...detectedColors]
-                        }]);
-                        
-                        const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
-                        setColoredSvg(updatedSvg);
-                        
-                        setHighlightedColor(null);
-                        setHighlightedSvg(null);
-                        
-                        const newColors = detectColorsInSvg(updatedSvg);
-                        setDetectedColors(newColors);
-                        
-                        toast({
-                          title: "White Removed",
-                          description: "Removed white color from the image.",
-                        });
-                      }
-                    }}
-                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                    disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
-                  >
-                    Remove White
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const currentSvg = coloredSvg || vectorSvg;
-                      if (currentSvg) {
-                        setDeletionHistory(prev => [...prev, {
-                          svg: currentSvg,
-                          colors: [...detectedColors]
-                        }]);
-                        
-                        let updatedSvg = currentSvg;
-                        let totalRemoved = 0;
-                        
-                        // Only remove colors that are actually detected as white variations
-                        const whiteVariations = detectedColors
-                          .filter(colorItem => {
-                            const color = colorItem.color.toLowerCase();
-                            // Check for white variations
-                            return color === '#ffffff' || 
-                                   color === '#fefefe' || 
-                                   color === '#fdfdfd' || 
-                                   color === '#fcfcfc' || 
-                                   color === '#fbfbfb' ||
-                                   color === 'white' ||
-                                   color === 'rgb(255,255,255)' ||
-                                   color === 'rgb(100%,100%,100%)';
-                          })
-                          .map(colorItem => colorItem.color);
-                        
-                        console.log('Removing white variations:', whiteVariations);
-                        
-                        whiteVariations.forEach(whiteColor => {
-                          updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
-                          totalRemoved++;
-                        });
-                        
-                        setColoredSvg(updatedSvg);
-                        setHighlightedColor(null);
-                        setHighlightedSvg(null);
-                        
-                        const newColors = detectColorsInSvg(updatedSvg);
-                        setDetectedColors(newColors);
-                        
-                        toast({
-                          title: "White Colors Removed",
-                          description: `Removed ${totalRemoved} white color variations.`,
-                        });
-                      }
-                    }}
-                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                    disabled={!detectedColors.some(c => {
-                      const color = c.color.toLowerCase();
-                      return color === '#ffffff' || color === '#fefefe' || color === '#fdfdfd' || 
-                             color === '#fcfcfc' || color === '#fbfbfb' || color === 'white';
-                    })}
-                  >
-                    Remove All White
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          if (currentSvg) {
+                            setDeletionHistory(prev => [...prev, {
+                              svg: currentSvg,
+                              colors: [...detectedColors]
+                            }]);
+                            
+                            const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
+                            setColoredSvg(updatedSvg);
+                            
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
+                            const newColors = detectColorsInSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            
+                            toast({
+                              title: "White Removed",
+                              description: "Removed white color from the image.",
+                            });
+                          }
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                        disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
+                      >
+                        Remove White
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove pure white color from the vectorized image</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          if (currentSvg) {
+                            setDeletionHistory(prev => [...prev, {
+                              svg: currentSvg,
+                              colors: [...detectedColors]
+                            }]);
+                            
+                            let updatedSvg = currentSvg;
+                            let totalRemoved = 0;
+                            
+                            // Only remove colors that are actually detected as white variations
+                            const whiteVariations = detectedColors
+                              .filter(colorItem => {
+                                const color = colorItem.color.toLowerCase();
+                                // Check for white variations
+                                return color === '#ffffff' || 
+                                       color === '#fefefe' || 
+                                       color === '#fdfdfd' || 
+                                       color === '#fcfcfc' || 
+                                       color === '#fbfbfb' ||
+                                       color === 'white' ||
+                                       color === 'rgb(255,255,255)' ||
+                                       color === 'rgb(100%,100%,100%)';
+                              })
+                              .map(colorItem => colorItem.color);
+                            
+                            console.log('Removing white variations:', whiteVariations);
+                            
+                            whiteVariations.forEach(whiteColor => {
+                              updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
+                              totalRemoved++;
+                            });
+                            
+                            setColoredSvg(updatedSvg);
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
+                            const newColors = detectColorsInSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            
+                            toast({
+                              title: "White Colors Removed",
+                              description: `Removed ${totalRemoved} white color variations.`,
+                            });
+                          }
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                        disabled={!detectedColors.some(c => {
+                          const color = c.color.toLowerCase();
+                          return color === '#ffffff' || color === '#fefefe' || color === '#fdfdfd' || 
+                                 color === '#fcfcfc' || color === '#fbfbfb' || color === 'white';
+                        })}
+                      >
+                        Remove All White
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove all white and off-white variations from the image</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setColoredSvg(vectorSvg);
-                    setHighlightedColor(null);
-                    setHighlightedSvg(null);
-                    setDeletionHistory([]);
-                    const colors = detectColorsInSvg(vectorSvg);
-                    setDetectedColors(colors);
-                    setOriginalDetectedColors(colors);
-                  }}
-                  className="w-full border-gray-600 text-gray-100 hover:bg-gray-700"
-                >
-                  Reset All
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setColoredSvg(vectorSvg);
+                        setHighlightedColor(null);
+                        setHighlightedSvg(null);
+                        setDeletionHistory([]);
+                        const colors = detectColorsInSvg(vectorSvg);
+                        setDetectedColors(colors);
+                        setOriginalDetectedColors(colors);
+                      }}
+                      className="w-full border-gray-600 text-gray-100 hover:bg-gray-700"
+                    >
+                      Reset All
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Reset to original vectorized image and restore all colors</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           )}
 
         </div>
       </DialogContent>
-      
-
     </Dialog>
+    </TooltipProvider>
   );
 }
