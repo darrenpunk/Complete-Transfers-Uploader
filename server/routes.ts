@@ -520,107 +520,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const logo = await storage.createLogo(validatedData);
         logos.push(logo);
 
-        // Create canvas element for the logo using actual dimensions scaled to mm
+        // Create canvas element for the logo using actual content dimensions scaled to mm
         let displayWidth = 200;  // Default fallback
         let displayHeight = 150; // Default fallback
         
-        if (file.mimetype === 'application/pdf') {
-          // For PDFs, always use viewBox dimensions which represent the actual page size
-          let viewBoxWidth = null;
-          let viewBoxHeight = null;
+        if (actualWidth && actualHeight) {
+          // For all files (including PDFs), use the actual content bounds calculated above
+          // This ensures bounding boxes are tight around the content, not the full page
           
-          try {
-            const svgPath = path.join(uploadDir, finalFilename);
-            const svgContent = fs.readFileSync(svgPath, 'utf8');
-            const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-            if (viewBoxMatch) {
-              const viewBoxParts = viewBoxMatch[1].split(/\s+/).map(Number);
-              const vbWidth = viewBoxParts[2];   // width is 3rd element (index 2)
-              const vbHeight = viewBoxParts[3];  // height is 4th element (index 3)
-              if (vbWidth && vbHeight) {
-                viewBoxWidth = vbWidth;
-                viewBoxHeight = vbHeight;
-                console.log(`PDF viewBox dimensions: ${viewBoxWidth}×${viewBoxHeight} points`);
-                
-                // Convert points to mm (1 point = 0.352778 mm)
-                const pointsToMm = 0.352778;
-                displayWidth = Math.round(viewBoxWidth * pointsToMm);
-                displayHeight = Math.round(viewBoxHeight * pointsToMm);
-                console.log(`Using PDF page dimensions: ${viewBoxWidth}×${viewBoxHeight} pts = ${displayWidth}×${displayHeight}mm`);
-              }
+          if (file.mimetype === 'application/pdf') {
+            // For PDFs, actualWidth/actualHeight now contain content bounds from calculateSVGContentBounds
+            // Apply intelligent scaling based on content size
+            console.log(`Using PDF content bounds: ${actualWidth}×${actualHeight} pixels`);
+            
+            if (actualWidth > 500 || actualHeight > 500) {
+              // Large content - scale down intelligently 
+              const targetMaxDimension = 350;
+              const maxCurrentDimension = Math.max(actualWidth, actualHeight);
+              const intelligentScale = targetMaxDimension / maxCurrentDimension;
+              
+              displayWidth = Math.round(actualWidth * intelligentScale * 0.08466667); // Convert to mm
+              displayHeight = Math.round(actualHeight * intelligentScale * 0.08466667);
+              
+              console.log(`Large PDF content scaled: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
+            } else {
+              // Reasonable size content - use direct conversion with 300 DPI equivalent 
+              const scaleFactor = 0.08466667; // Convert pixels to mm (25.4mm / 300px)
+              displayWidth = Math.round(actualWidth * scaleFactor);
+              displayHeight = Math.round(actualHeight * scaleFactor);
+              
+              console.log(`PDF content dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
             }
-          } catch (e) {
-            console.log('Could not extract viewBox dimensions');
+          } else {
+            // For non-PDF images, use 300 DPI scale
+            const scaleFactor = 0.08466667;
+            displayWidth = Math.round(actualWidth * scaleFactor);
+            displayHeight = Math.round(actualHeight * scaleFactor);
+            console.log(`Image dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
           }
-          
-          // If viewBox extraction failed, use fallback logic
-          if (!viewBoxWidth || !viewBoxHeight) {
-            console.log('ViewBox extraction failed, using fallback dimensions');
-            if (actualWidth && actualHeight) {
-              const aspectRatio = actualWidth / actualHeight;
-              
-              // Check for common PDF page sizes first
-              const a3LandscapeRatio = 420 / 297; // ~1.414
-              const a3PortraitRatio = 297 / 420;   // ~0.707
-              const a4LandscapeRatio = 297 / 210;  // ~1.414
-              const a4PortraitRatio = 210 / 297;   // ~0.707
-              
-              console.log(`PDF aspect ratio: ${aspectRatio.toFixed(3)}, A3 landscape: ${a3LandscapeRatio.toFixed(3)}, A3 portrait: ${a3PortraitRatio.toFixed(3)}`);
-              
-              if (Math.abs(aspectRatio - a3LandscapeRatio) < 0.05) {
-                // Landscape A3 (wider than tall)
-                displayWidth = 420;
-                displayHeight = 297;
-                console.log('Detected A3 landscape');
-              } else if (Math.abs(aspectRatio - a3PortraitRatio) < 0.05) {
-                // Portrait A3 (taller than wide)
-                displayWidth = 297;
-                displayHeight = 420;
-                console.log('Detected A3 portrait');
-              } else if (Math.abs(aspectRatio - a4LandscapeRatio) < 0.05) {
-                // Landscape A4
-                displayWidth = 297;
-                displayHeight = 210;
-                console.log('Detected A4 landscape');
-              } else if (Math.abs(aspectRatio - a4PortraitRatio) < 0.05) {
-                // Portrait A4
-                displayWidth = 210;
-                displayHeight = 297;
-                console.log('Detected A4 portrait');
-              } else {
-                // For custom PDFs, use intelligent scaling
-                const userLogoViewBoxRatio = 839.189 / 966.076; // ~0.868
-                
-                if (Math.abs(aspectRatio - userLogoViewBoxRatio) < 0.02) {
-                  // This appears to be the user's specific logo based on viewBox ratio - use actual dimensions
-                  displayWidth = 296;
-                  displayHeight = 332;
-                  console.log(`Detected user logo from viewBox ratio: using actual 296×332mm`);
-                } else if (actualWidth > 200 && actualHeight > 200) {
-                  // For large content, use intelligent scaling but be more conservative
-                  const targetMaxDimension = 300; // Slightly larger target for better accuracy
-                  const maxCurrentDimension = Math.max(actualWidth, actualHeight);
-                  const intelligentScale = targetMaxDimension / maxCurrentDimension;
-                  
-                  displayWidth = Math.round(actualWidth * intelligentScale);
-                  displayHeight = Math.round(actualHeight * intelligentScale);
-                  
-                  console.log(`Using intelligent scale ${intelligentScale.toFixed(3)} for custom PDF: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
-                } else {
-                  // Smaller content, use conservative 300 DPI scale
-                  const scaleFactor = 0.08466667; // Convert 300 DPI pixels to mm (25.4mm / 300px)
-                  displayWidth = Math.round(actualWidth * scaleFactor);
-                  displayHeight = Math.round(actualHeight * scaleFactor);
-                  console.log('Using 300 DPI scale factor for small content');
-                }
-              }
-            }
-          }
-        } else if (actualWidth && actualHeight) {
-          // For non-PDF images, use 300 DPI scale
-          const scaleFactor = 0.08466667;
-          displayWidth = Math.round(actualWidth * scaleFactor);
-          displayHeight = Math.round(actualHeight * scaleFactor);
+        } else {
+          console.log('No content dimensions available, using fallback size');
         }
         
         const canvasElementData = {
