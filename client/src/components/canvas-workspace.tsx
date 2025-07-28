@@ -276,9 +276,13 @@ export default function CanvasWorkspace({
     console.log('handleVectorizeWithAI called', { pendingRasterFile: !!pendingRasterFile, showVectorizer });
     if (pendingRasterFile) {
       console.log('Setting vectorizer modal to true');
+      // Don't clear pendingRasterFile here - we need it for the vectorizer modal
       setShowRasterWarning(false);
-      setShowVectorizer(true);
-      console.log('State after setting:', { showVectorizer: true, pendingRasterFile: pendingRasterFile.fileName });
+      // Use setTimeout to ensure state updates in the correct order
+      setTimeout(() => {
+        setShowVectorizer(true);
+        console.log('Vectorizer modal should now be open');
+      }, 100);
     }
   };
 
@@ -1103,13 +1107,15 @@ export default function CanvasWorkspace({
       )}
 
       {/* Vectorizer Modal */}
-      <VectorizerModal
-        open={showVectorizer && !!pendingRasterFile}
-        onClose={handleCloseVectorizer}
-        fileName={pendingRasterFile?.fileName || ''}
-        imageFile={pendingRasterFile?.file || new File([], '')}
-        onVectorDownload={handleVectorDownload}
-      />
+      {pendingRasterFile && (
+        <VectorizerModal
+          open={showVectorizer}
+          onClose={handleCloseVectorizer}
+          fileName={pendingRasterFile.fileName}
+          imageFile={pendingRasterFile.file}
+          onVectorDownload={handleVectorDownload}
+        />
+      )}
     </div>
   );
 }

@@ -28,6 +28,7 @@ export function VectorizerModal({
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
 
   useEffect(() => {
+    console.log('VectorizerModal useEffect:', { open, hasImageFile: !!imageFile, fileName });
     if (open && imageFile) {
       processVectorization();
     }
