@@ -30,7 +30,7 @@ export function VectorizerModal({
   const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
   const [zoom, setZoom] = useState<number>(125); // Zoom percentage
   const [showGrid, setShowGrid] = useState<boolean>(true); // Show transparency grid
-  const [showPalette, setShowPalette] = useState<boolean>(false); // Show color palette
+
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [coloredSvg, setColoredSvg] = useState<string | null>(null);
   const [detectedColors, setDetectedColors] = useState<{color: string, count: number}[]>([]);
@@ -91,7 +91,7 @@ export function VectorizerModal({
       setDetectedColors(colors);
       setOriginalDetectedColors(colors); // Store original for undo
       
-      setShowPalette(true); // Show palette when vector is ready
+      // Color palette always visible now
       setIsProcessing(false);
 
     } catch (err) {
@@ -935,29 +935,7 @@ export function VectorizerModal({
                 </Tooltip>
               </div>
 
-              {/* Detected Colors Button */}
-              {vectorSvg && detectedColors.length > 0 && (
-                <div className="mb-3 flex-shrink-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowPalette(!showPalette)}
-                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                      >
-                        <Palette className="w-4 h-4 mr-2" />
-                        {showPalette ? 'Hide' : 'Show'} Colors ({detectedColors.length})
-                        {highlightedColor && (
-                          <span className="ml-2 text-red-400 font-semibold">• Highlighting {highlightedColor}</span>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Toggle color management panel to edit, remove, or highlight colors</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              )}
+
 
               <div className={`flex-1 ${viewMode === 'comparison' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'flex flex-col'} overflow-hidden`}>
                 {/* Original - Only show in comparison mode */}
