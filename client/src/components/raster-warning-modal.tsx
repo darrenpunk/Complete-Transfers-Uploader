@@ -52,8 +52,17 @@ export function RasterWarningModal({
         
         <div className="space-y-6">
           <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-            <p className="text-sm text-orange-800 dark:text-orange-200">
-              This file is a raster image (PNG/JPEG). For best print quality, vector files (SVG/PDF) are recommended. 
+            <p className="text-sm text-orange-800 dark:text-orange-200 mb-3">
+              This file is a raster image (PNG/JPEG). For best print quality, vector files (SVG/PDF) are recommended.
+            </p>
+            <div className="bg-white/50 dark:bg-gray-800/50 rounded p-3 border-l-4 border-orange-400">
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <strong>Our transfers look their very best when the artwork is a vector.</strong> They will look sharp and have clean lines. 
+                We want our customers to receive the best quality transfers possible... and your customers, we are sure, will also want the best quality image on their garments! 
+                To ensure fine details and your image prints sharply and at the highest quality, make sure that your graphics are vectors where possible.
+              </p>
+            </div>
+            <p className="text-sm text-orange-800 dark:text-orange-200 mt-3">
               Please choose how you'd like to proceed:
             </p>
           </div>
