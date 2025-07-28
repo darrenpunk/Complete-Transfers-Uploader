@@ -44,15 +44,7 @@ export function VectorizerModal({
   // Removed floating color window - using inline palette instead
 
   // Debug logging
-  console.log('VectorizerModal render:', { 
-    open, 
-    fileName, 
-    hasImageFile: !!imageFile,
-    hasVectorSvg: !!vectorSvg,
-    vectorSvgLength: vectorSvg?.length,
-    detectedColorsCount: detectedColors.length,
-    showsSidebar: !!(vectorSvg && detectedColors.length > 0)
-  });
+  console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
 
   useEffect(() => {
     console.log('VectorizerModal useEffect:', { open, hasImageFile: !!imageFile, fileName });
@@ -1022,24 +1014,18 @@ export function VectorizerModal({
                         }}
                       >
                         <div 
-                          className="vector-preview-wrapper border-2 border-green-500"
+                          className="vector-preview-wrapper"
                           style={{ 
                             maxWidth: '400px',
                             maxHeight: '400px',
-                            width: '400px',
-                            height: '400px',
+                            width: 'auto',
+                            height: 'auto',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            backgroundColor: 'rgba(255,0,0,0.1)'
+                            justifyContent: 'center'
                           }}
                           dangerouslySetInnerHTML={{ __html: highlightedSvg || coloredSvg || vectorSvg || '' }}
                         />
-                        {/* Debug info */}
-                        <div className="absolute top-2 left-2 text-xs text-green-400 bg-green-900 p-2 rounded z-50">
-                          SVG: {vectorSvg ? `${vectorSvg.length} chars` : 'none'} | 
-                          Colors: {detectedColors.length}
-                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -1088,17 +1074,12 @@ export function VectorizerModal({
 
           {/* Right Sidebar - Color Management */}
           {vectorSvg && detectedColors.length > 0 && (
-            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0 bg-blue-900 border-2 border-blue-500">
+            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-5 h-5 text-gray-100" />
                 <h3 className="font-semibold text-gray-100">
                   Detected Colors ({detectedColors.length})
                 </h3>
-              </div>
-              
-              {/* Debug indicator for sidebar */}
-              <div className="bg-blue-600 text-white p-2 rounded mb-4 text-xs">
-                ✅ SIDEBAR VISIBLE - Colors: {detectedColors.length} | SVG: {vectorSvg ? 'YES' : 'NO'}
               </div>
               
               {highlightedColor && (
