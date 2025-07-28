@@ -1384,18 +1384,14 @@ export function VectorizerModal({
                             console.log('After white removal:', updatedSvg.substring(0, 200));
                             console.log('SVG length changed from', currentSvg.length, 'to', updatedSvg.length);
                             
-                            // Clear all highlighting and update states in batch for immediate visual feedback
+                            // Clear all highlighting first
                             setHighlightedColor(null);
                             setHighlightedSvg(null);
-                            // Force new reference to trigger re-render
-                            setColoredSvg(null);
                             
-                            // Use requestAnimationFrame for guaranteed re-render
-                            requestAnimationFrame(() => {
-                              setColoredSvg(updatedSvg);
-                              setDetectedColors(newColors);
-                              setSvgRevision(prev => prev + 1); // Force re-render
-                            });
+                            // Update immediately like individual color deletion does
+                            setColoredSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            setSvgRevision(prev => prev + 1); // Force re-render
                             
                             toast({
                               title: "White Removed",
@@ -1459,18 +1455,14 @@ export function VectorizerModal({
                             console.log('Remove all white - After:', updatedSvg.substring(0, 200));
                             console.log('Remove all white - SVG length changed from', currentSvg.length, 'to', updatedSvg.length);
                             
-                            // Clear all highlighting and update states in batch for immediate visual feedback
+                            // Clear all highlighting first
                             setHighlightedColor(null);
                             setHighlightedSvg(null);
-                            // Force new reference to trigger re-render
-                            setColoredSvg(null);
                             
-                            // Use requestAnimationFrame for guaranteed re-render
-                            requestAnimationFrame(() => {
-                              setColoredSvg(updatedSvg);
-                              setDetectedColors(newColors);
-                              setSvgRevision(prev => prev + 1); // Force re-render
-                            });
+                            // Update immediately like individual color deletion does
+                            setColoredSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            setSvgRevision(prev => prev + 1); // Force re-render
                             
                             toast({
                               title: "White Colors Removed",
