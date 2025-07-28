@@ -74,6 +74,22 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   background: transparent !important;
 }
 
+/* Resizable modal styles */
+.resize {
+  resize: both;
+  overflow: auto;
+}
+
+/* Floating color window styles */
+.floating-color-window {
+  resize: both;
+  overflow: hidden;
+  min-width: 280px;
+  min-height: 200px;
+  max-width: 90vw;
+  max-height: 80vh;
+}
+
 /* Template selection styling in dark mode */
 .template-card {
   background: hsl(240, 5%, 8%);
