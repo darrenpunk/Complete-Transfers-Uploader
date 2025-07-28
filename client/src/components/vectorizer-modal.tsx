@@ -801,13 +801,15 @@ export function VectorizerModal({
               )}
             </div>
           </div>
+
         </div>
       </DialogContent>
       
-      {/* Floating Color Window */}
+      {/* Floating Color Window - Outside Dialog */}
       {showColorWindow && vectorSvg && detectedColors.length > 0 && (
         <div 
-          className="fixed top-20 right-6 w-80 max-h-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 flex flex-col floating-color-window"
+          className="fixed top-20 right-6 w-80 max-h-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col floating-color-window"
+          style={{ zIndex: 9999 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
