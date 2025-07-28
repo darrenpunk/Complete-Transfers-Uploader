@@ -138,11 +138,26 @@ export function VectorizerModal({
                   <h3 className="font-semibold mb-2">Vectorized Result</h3>
                   <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
                     {vectorSvg ? (
-                      <div className="text-center py-8">
-                        <p className="text-green-600 mb-4">✓ Vectorization Complete</p>
-                        <p className="text-sm text-muted-foreground">
-                          Vector result ready for download
-                        </p>
+                      <div 
+                        className="vector-preview-container"
+                        style={{ 
+                          maxHeight: '300px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <div 
+                          style={{ 
+                            width: '100%', 
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          dangerouslySetInnerHTML={{ __html: vectorSvg }}
+                        />
                       </div>
                     ) : (
                       <div className="text-center py-8">

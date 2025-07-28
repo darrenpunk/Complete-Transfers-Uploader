@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Vectorizer preview SVG styling */
+.vector-preview-container svg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
 /* Force transparent backgrounds for SVG elements everywhere */
 svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   background: transparent !important;
