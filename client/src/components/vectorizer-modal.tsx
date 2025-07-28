@@ -38,6 +38,7 @@ export function VectorizerModal({
   const [highlightedSvg, setHighlightedSvg] = useState<string | null>(null);
   const [deletionHistory, setDeletionHistory] = useState<{svg: string, colors: {color: string, count: number}[]}[]>([]);
   const [viewMode, setViewMode] = useState<'comparison' | 'preview'>('comparison');
+  const [colorAdjustments, setColorAdjustments] = useState<{[color: string]: {saturation: number, cyan: number, magenta: number, yellow: number, black: number}}>({});
   // Removed floating color window - using inline palette instead
 
   // Debug logging
@@ -548,6 +549,77 @@ export function VectorizerModal({
     });
   };
 
+  // Helper function to convert hex to RGB
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  };
+
+  // Helper function to convert RGB to hex
+  const rgbToHex = (r: number, g: number, b: number) => {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  };
+
+  // Helper function to convert RGB to CMYK
+  const rgbToCmyk = (r: number, g: number, b: number) => {
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
+    
+    const k = 1 - Math.max(rNorm, gNorm, bNorm);
+    const c = k === 1 ? 0 : (1 - rNorm - k) / (1 - k);
+    const m = k === 1 ? 0 : (1 - gNorm - k) / (1 - k);
+    const y = k === 1 ? 0 : (1 - bNorm - k) / (1 - k);
+    
+    return {
+      c: Math.round(c * 100),
+      m: Math.round(m * 100),
+      y: Math.round(y * 100),
+      k: Math.round(k * 100)
+    };
+  };
+
+  // Helper function to convert CMYK to RGB
+  const cmykToRgb = (c: number, m: number, y: number, k: number) => {
+    const cNorm = c / 100;
+    const mNorm = m / 100;
+    const yNorm = y / 100;
+    const kNorm = k / 100;
+    
+    const r = Math.round(255 * (1 - cNorm) * (1 - kNorm));
+    const g = Math.round(255 * (1 - mNorm) * (1 - kNorm));
+    const b = Math.round(255 * (1 - yNorm) * (1 - kNorm));
+    
+    return { r, g, b };
+  };
+
+  // Function to apply color adjustments to SVG
+  const applyColorAdjustment = (color: string, adjustments: {saturation: number, cyan: number, magenta: number, yellow: number, black: number}) => {
+    const rgb = hexToRgb(color);
+    if (!rgb) return color;
+
+    // Apply CMYK adjustments
+    const newRgb = cmykToRgb(adjustments.cyan, adjustments.magenta, adjustments.yellow, adjustments.black);
+    
+    // Apply saturation adjustment
+    const saturationFactor = adjustments.saturation / 100;
+    const gray = 0.2989 * newRgb.r + 0.5870 * newRgb.g + 0.1140 * newRgb.b;
+    
+    const finalR = Math.round(gray + saturationFactor * (newRgb.r - gray));
+    const finalG = Math.round(gray + saturationFactor * (newRgb.g - gray));
+    const finalB = Math.round(gray + saturationFactor * (newRgb.b - gray));
+    
+    return rgbToHex(
+      Math.max(0, Math.min(255, finalR)),
+      Math.max(0, Math.min(255, finalG)),
+      Math.max(0, Math.min(255, finalB))
+    );
+  };
+
   // Function to undo the last deletion only
   const undoLastDeletion = () => {
     if (deletionHistory.length === 0) {
@@ -860,10 +932,9 @@ export function VectorizerModal({
                             const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
                             setColoredSvg(updatedSvg);
                             
-                            if (highlightedColor === colorItem.color) {
-                              setHighlightedColor(null);
-                              setHighlightedSvg(null);
-                            }
+                            // Always clear highlighting when a color is removed
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
                             
                             const newColors = detectColorsInSvg(updatedSvg);
                             setDetectedColors(newColors);
@@ -884,6 +955,153 @@ export function VectorizerModal({
                 </div>
               </div>
               
+              {/* Color Adjustment Sliders - Only show when a color is highlighted */}
+              {highlightedColor && (() => {
+                const rgb = hexToRgb(highlightedColor);
+                const currentCmyk = rgb ? rgbToCmyk(rgb.r, rgb.g, rgb.b) : { c: 0, m: 0, y: 0, k: 0 };
+                const currentAdjustments = colorAdjustments[highlightedColor] || {
+                  saturation: 100,
+                  cyan: currentCmyk.c,
+                  magenta: currentCmyk.m,
+                  yellow: currentCmyk.y,
+                  black: currentCmyk.k
+                };
+
+                return (
+                  <div className="border-t border-gray-700 pt-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-100 mb-3">Adjust Selected Color</h4>
+                    <div className="text-xs text-gray-400 mb-3">
+                      Current: {highlightedColor} (C:{currentCmyk.c} M:{currentCmyk.m} Y:{currentCmyk.y} K:{currentCmyk.k})
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-300 mb-1 block">Saturation: {currentAdjustments.saturation}%</label>
+                        <Slider
+                          value={[currentAdjustments.saturation]}
+                          max={200}
+                          min={0}
+                          step={5}
+                          className="w-full"
+                          onValueChange={(value) => {
+                            const newAdjustments = { ...currentAdjustments, saturation: value[0] };
+                            setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                            
+                            // Apply the adjustment to the SVG
+                            const currentSvg = coloredSvg || vectorSvg;
+                            if (currentSvg) {
+                              const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
+                              const updatedSvg = currentSvg.replace(
+                                new RegExp(highlightedColor.replace('#', '#'), 'gi'),
+                                adjustedColor
+                              );
+                              setColoredSvg(updatedSvg);
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="text-gray-300 mb-1 block">C: {currentAdjustments.cyan}%</label>
+                          <Slider
+                            value={[currentAdjustments.cyan]}
+                            max={100}
+                            min={0}
+                            step={1}
+                            className="w-full"
+                            onValueChange={(value) => {
+                              const newAdjustments = { ...currentAdjustments, cyan: value[0] };
+                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
+                                const updatedSvg = currentSvg.replace(
+                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
+                                  adjustedColor
+                                );
+                                setColoredSvg(updatedSvg);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-gray-300 mb-1 block">M: {currentAdjustments.magenta}%</label>
+                          <Slider
+                            value={[currentAdjustments.magenta]}
+                            max={100}
+                            min={0}
+                            step={1}
+                            className="w-full"
+                            onValueChange={(value) => {
+                              const newAdjustments = { ...currentAdjustments, magenta: value[0] };
+                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
+                                const updatedSvg = currentSvg.replace(
+                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
+                                  adjustedColor
+                                );
+                                setColoredSvg(updatedSvg);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-gray-300 mb-1 block">Y: {currentAdjustments.yellow}%</label>
+                          <Slider
+                            value={[currentAdjustments.yellow]}
+                            max={100}
+                            min={0}
+                            step={1}
+                            className="w-full"
+                            onValueChange={(value) => {
+                              const newAdjustments = { ...currentAdjustments, yellow: value[0] };
+                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
+                                const updatedSvg = currentSvg.replace(
+                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
+                                  adjustedColor
+                                );
+                                setColoredSvg(updatedSvg);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-gray-300 mb-1 block">K: {currentAdjustments.black}%</label>
+                          <Slider
+                            value={[currentAdjustments.black]}
+                            max={100}
+                            min={0}
+                            step={1}
+                            className="w-full"
+                            onValueChange={(value) => {
+                              const newAdjustments = { ...currentAdjustments, black: value[0] };
+                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
+                                const updatedSvg = currentSvg.replace(
+                                  new RegExp(highlightedColor.replace('#', '#'), 'gi'),
+                                  adjustedColor
+                                );
+                                setColoredSvg(updatedSvg);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Quick Actions */}
               <div className="border-t border-gray-700 pt-4 mt-4">
                 <div className="grid grid-cols-2 gap-2 mb-3">
@@ -907,6 +1125,77 @@ export function VectorizerModal({
                     ↶ Undo
                   </Button>
                 </div>
+                
+                {/* White Color Management */}
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentSvg = coloredSvg || vectorSvg;
+                      if (currentSvg) {
+                        setDeletionHistory(prev => [...prev, {
+                          svg: currentSvg,
+                          colors: [...detectedColors]
+                        }]);
+                        
+                        const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
+                        setColoredSvg(updatedSvg);
+                        
+                        setHighlightedColor(null);
+                        setHighlightedSvg(null);
+                        
+                        const newColors = detectColorsInSvg(updatedSvg);
+                        setDetectedColors(newColors);
+                        
+                        toast({
+                          title: "White Removed",
+                          description: "Removed white color from the image.",
+                        });
+                      }
+                    }}
+                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                    disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
+                  >
+                    Remove White
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentSvg = coloredSvg || vectorSvg;
+                      if (currentSvg) {
+                        setDeletionHistory(prev => [...prev, {
+                          svg: currentSvg,
+                          colors: [...detectedColors]
+                        }]);
+                        
+                        let updatedSvg = currentSvg;
+                        const whiteColors = ['#ffffff', '#fefefe', '#fdfdfd', '#fcfcfc', '#fbfbfb'];
+                        
+                        whiteColors.forEach(whiteColor => {
+                          updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
+                        });
+                        
+                        setColoredSvg(updatedSvg);
+                        setHighlightedColor(null);
+                        setHighlightedSvg(null);
+                        
+                        const newColors = detectColorsInSvg(updatedSvg);
+                        setDetectedColors(newColors);
+                        
+                        toast({
+                          title: "White Colors Removed",
+                          description: "Removed all white and near-white colors.",
+                        });
+                      }
+                    }}
+                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                  >
+                    Remove All White
+                  </Button>
+                </div>
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -917,6 +1206,7 @@ export function VectorizerModal({
                     setDeletionHistory([]);
                     const colors = detectColorsInSvg(vectorSvg);
                     setDetectedColors(colors);
+                    setOriginalDetectedColors(colors);
                   }}
                   className="w-full border-gray-600 text-gray-100 hover:bg-gray-700"
                 >
