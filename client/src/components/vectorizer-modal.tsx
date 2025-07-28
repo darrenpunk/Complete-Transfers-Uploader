@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +42,7 @@ export function VectorizerModal({
   const [colorAdjustments, setColorAdjustments] = useState<{[color: string]: {saturation: number, cyan: number, magenta: number, yellow: number, black: number}}>({});
   const [originalColorMap, setOriginalColorMap] = useState<{[originalColor: string]: string}>({});
   const [svgRevision, setSvgRevision] = useState(0); // Force re-render counter
+  const svgContainerRef = useRef<HTMLDivElement>(null); // Direct DOM reference
   // Removed floating color window - using inline palette instead
 
   // Debug logging
@@ -53,6 +54,23 @@ export function VectorizerModal({
       processVectorization();
     }
   }, [open, imageFile]);
+
+  // Direct DOM update when SVG changes
+  useEffect(() => {
+    if (svgContainerRef.current) {
+      const currentSvg = highlightedSvg || coloredSvg || vectorSvg || '';
+      if (currentSvg) {
+        const modifiedSvg = currentSvg.replace(
+          /<svg([^>]*)>/,
+          '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
+        );
+        svgContainerRef.current.innerHTML = modifiedSvg;
+        console.log('Direct DOM update with SVG length:', currentSvg.length);
+      }
+    }
+  }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision]);
+
+
 
   const processVectorization = async () => {
     setIsProcessing(true);
@@ -1021,29 +1039,16 @@ export function VectorizerModal({
                             overflow: 'hidden'
                           }}
                         >
-                          {(() => {
-                            const svgContent = highlightedSvg || coloredSvg || vectorSvg || '';
-                            if (!svgContent) return null;
-                            
-                            // Create a data URL from the SVG to force re-render
-                            const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-                            const svgUrl = URL.createObjectURL(svgBlob);
-                            
-                            return (
-                              <img 
-                                key={`svg-img-${svgRevision}-${Date.now()}`}
-                                src={svgUrl}
-                                alt="Vectorized Result"
-                                style={{
-                                  maxWidth: '100%',
-                                  maxHeight: '100%',
-                                  width: 'auto',
-                                  height: 'auto'
-                                }}
-                                onLoad={() => URL.revokeObjectURL(svgUrl)}
-                              />
-                            );
-                          })()}
+                          <div 
+                            ref={svgContainerRef}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          />
                         </div>
                       </div>
                     ) : (
