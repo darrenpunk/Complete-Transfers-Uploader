@@ -6,59 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
 
-// Garment color utilities
-const quickColors = [
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Black", hex: "#171816" },
-  { name: "Kelly Green", hex: "#3C8A35" }
-];
-
-const manufacturerColors = {
-  Gildan: [
-    {
-      name: "Basic Colors",
-      colors: [
-        { name: "White", hex: "#FFFFFF", code: "G000" },
-        { name: "Natural", hex: "#F5F1E8", code: "G102" },
-        { name: "Black", hex: "#171816", code: "G000" },
-        { name: "Ash Grey", hex: "#C8C8C8", code: "G018" },
-        { name: "Dark Heather", hex: "#3C4142", code: "G180" },
-        { name: "Sport Grey", hex: "#8C8C8C", code: "G080" },
-        { name: "Safety Green", hex: "#C4D632", code: "G225" },
-        { name: "Safety Orange", hex: "#FF6600", code: "G226" },
-        { name: "Safety Pink", hex: "#FF69B4", code: "G227" }
-      ]
-    }
-  ],
-  "Fruit of the Loom": [
-    {
-      name: "Essential Colors",
-      colors: [
-        { name: "White", hex: "#FFFFFF", code: "F000" },
-        { name: "Black", hex: "#000000", code: "F036" },
-        { name: "Navy", hex: "#1F2937", code: "F072" },
-        { name: "Red", hex: "#DC2626", code: "F040" },
-        { name: "Royal Blue", hex: "#1D4ED8", code: "F072" },
-        { name: "Kelly Green", hex: "#16A34A", code: "F052" }
-      ]
-    }
-  ]
-};
+// Import garment color utilities from shared module
+import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
 
 function getColorName(hex: string): string {
-  // Check quick colors first
-  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
-  if (quickColor) {
-    return quickColor.name;
+  // Check Gildan colors
+  for (const group of gildanColors) {
+    const gildanColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+    if (gildanColor) {
+      return `${gildanColor.name} (${gildanColor.code})`;
+    }
   }
 
-  // Check manufacturer colors
-  for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
-    for (const group of colorGroups) {
-      const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
-      if (manufacturerColor) {
-        return `${manufacturerColor.name} (${manufacturerColor.code})`;
-      }
+  // Check Fruit of the Loom colors
+  for (const group of fruitOfTheLoomColors) {
+    const fotlColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+    if (fotlColor) {
+      return `${fotlColor.name} (${fotlColor.code})`;
     }
   }
 
