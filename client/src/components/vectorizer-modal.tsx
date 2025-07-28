@@ -39,6 +39,7 @@ export function VectorizerModal({
   const [deletionHistory, setDeletionHistory] = useState<{svg: string, colors: {color: string, count: number}[]}[]>([]);
   const [viewMode, setViewMode] = useState<'comparison' | 'preview'>('comparison');
   const [colorAdjustments, setColorAdjustments] = useState<{[color: string]: {saturation: number, cyan: number, magenta: number, yellow: number, black: number}}>({});
+  const [originalColorMap, setOriginalColorMap] = useState<{[originalColor: string]: string}>({});
   // Removed floating color window - using inline palette instead
 
   // Debug logging
@@ -652,63 +653,68 @@ export function VectorizerModal({
     );
   };
 
-  // Function to replace a specific color in SVG with a new color
-  const replaceColorInSvg = (svg: string, oldColor: string, newColor: string): string => {
+  // Function to apply all color adjustments to the original SVG
+  const applyAllColorAdjustments = (originalSvg: string, adjustments: {[color: string]: any}): string => {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    const doc = parser.parseFromString(originalSvg, 'image/svg+xml');
     
-    const normalizedOldColor = oldColor.toLowerCase().trim();
-    let replacedCount = 0;
+    let totalReplacements = 0;
     
-    // Replace fill colors
-    const elementsWithFill = doc.querySelectorAll('*[fill]');
-    elementsWithFill.forEach(el => {
-      const fill = el.getAttribute('fill')?.toLowerCase().trim();
-      if (!fill || fill === 'none') return;
+    // Apply adjustments for each original color
+    Object.entries(adjustments).forEach(([originalColor, colorAdjustment]) => {
+      const adjustedColor = applyColorAdjustment(originalColor, colorAdjustment);
+      const normalizedOriginalColor = originalColor.toLowerCase().trim();
       
-      let shouldReplace = false;
-      
-      // Direct hex match
-      if (fill === normalizedOldColor) {
-        shouldReplace = true;
-      }
-      // RGB format match
-      else if (fill.startsWith('rgb')) {
-        const normalizedRgb = normalizeRgbToHex(fill);
-        if (normalizedRgb === normalizedOldColor) {
+      // Replace fill colors
+      const elementsWithFill = doc.querySelectorAll('*[fill]');
+      elementsWithFill.forEach(el => {
+        const fill = el.getAttribute('fill')?.toLowerCase().trim();
+        if (!fill || fill === 'none') return;
+        
+        let shouldReplace = false;
+        
+        // Direct hex match
+        if (fill === normalizedOriginalColor) {
           shouldReplace = true;
         }
-      }
-      
-      if (shouldReplace) {
-        el.setAttribute('fill', newColor);
-        replacedCount++;
-      }
-    });
-    
-    // Replace stroke colors
-    const elementsWithStroke = doc.querySelectorAll('*[stroke]');
-    elementsWithStroke.forEach(el => {
-      const stroke = el.getAttribute('stroke')?.toLowerCase().trim();
-      if (!stroke || stroke === 'none') return;
-      
-      let shouldReplace = false;
-      
-      if (stroke === normalizedOldColor) {
-        shouldReplace = true;
-      } else if (stroke.startsWith('rgb')) {
-        const normalizedRgb = normalizeRgbToHex(stroke);
-        if (normalizedRgb === normalizedOldColor) {
-          shouldReplace = true;
+        // RGB format match
+        else if (fill.startsWith('rgb')) {
+          const normalizedRgb = normalizeRgbToHex(fill);
+          if (normalizedRgb === normalizedOriginalColor) {
+            shouldReplace = true;
+          }
         }
-      }
+        
+        if (shouldReplace) {
+          el.setAttribute('fill', adjustedColor);
+          totalReplacements++;
+        }
+      });
       
-      if (shouldReplace) {
-        el.setAttribute('stroke', newColor);
-      }
+      // Replace stroke colors
+      const elementsWithStroke = doc.querySelectorAll('*[stroke]');
+      elementsWithStroke.forEach(el => {
+        const stroke = el.getAttribute('stroke')?.toLowerCase().trim();
+        if (!stroke || stroke === 'none') return;
+        
+        let shouldReplace = false;
+        
+        if (stroke === normalizedOriginalColor) {
+          shouldReplace = true;
+        } else if (stroke.startsWith('rgb')) {
+          const normalizedRgb = normalizeRgbToHex(stroke);
+          if (normalizedRgb === normalizedOriginalColor) {
+            shouldReplace = true;
+          }
+        }
+        
+        if (shouldReplace) {
+          el.setAttribute('stroke', adjustedColor);
+        }
+      });
     });
     
-    console.log(`Replaced ${replacedCount} instances of ${oldColor} with ${newColor}`);
+    console.log(`Applied color adjustments: ${totalReplacements} total replacements`);
     
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
@@ -1077,13 +1083,13 @@ export function VectorizerModal({
                           className="w-full"
                           onValueChange={(value) => {
                             const newAdjustments = { ...currentAdjustments, saturation: value[0] };
-                            setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                            const updatedColorAdjustments = { ...colorAdjustments, [highlightedColor]: newAdjustments };
+                            setColorAdjustments(updatedColorAdjustments);
                             
-                            // Apply the adjustment to the SVG
-                            const currentSvg = coloredSvg || vectorSvg;
-                            if (currentSvg) {
-                              const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                              const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
+                            // Apply all adjustments to the original SVG
+                            const originalSvg = vectorSvg;
+                            if (originalSvg) {
+                              const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                               setColoredSvg(updatedSvg);
                               
                               // Update detected colors to reflect the change
@@ -1104,12 +1110,12 @@ export function VectorizerModal({
                             className="w-full"
                             onValueChange={(value) => {
                               const newAdjustments = { ...currentAdjustments, cyan: value[0] };
-                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              const updatedColorAdjustments = { ...colorAdjustments, [highlightedColor]: newAdjustments };
+                              setColorAdjustments(updatedColorAdjustments);
                               
-                              const currentSvg = coloredSvg || vectorSvg;
-                              if (currentSvg) {
-                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
+                              const originalSvg = vectorSvg;
+                              if (originalSvg) {
+                                const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
@@ -1128,12 +1134,12 @@ export function VectorizerModal({
                             className="w-full"
                             onValueChange={(value) => {
                               const newAdjustments = { ...currentAdjustments, magenta: value[0] };
-                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              const updatedColorAdjustments = { ...colorAdjustments, [highlightedColor]: newAdjustments };
+                              setColorAdjustments(updatedColorAdjustments);
                               
-                              const currentSvg = coloredSvg || vectorSvg;
-                              if (currentSvg) {
-                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
+                              const originalSvg = vectorSvg;
+                              if (originalSvg) {
+                                const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
@@ -1152,12 +1158,12 @@ export function VectorizerModal({
                             className="w-full"
                             onValueChange={(value) => {
                               const newAdjustments = { ...currentAdjustments, yellow: value[0] };
-                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              const updatedColorAdjustments = { ...colorAdjustments, [highlightedColor]: newAdjustments };
+                              setColorAdjustments(updatedColorAdjustments);
                               
-                              const currentSvg = coloredSvg || vectorSvg;
-                              if (currentSvg) {
-                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
+                              const originalSvg = vectorSvg;
+                              if (originalSvg) {
+                                const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
@@ -1176,12 +1182,12 @@ export function VectorizerModal({
                             className="w-full"
                             onValueChange={(value) => {
                               const newAdjustments = { ...currentAdjustments, black: value[0] };
-                              setColorAdjustments(prev => ({ ...prev, [highlightedColor]: newAdjustments }));
+                              const updatedColorAdjustments = { ...colorAdjustments, [highlightedColor]: newAdjustments };
+                              setColorAdjustments(updatedColorAdjustments);
                               
-                              const currentSvg = coloredSvg || vectorSvg;
-                              if (currentSvg) {
-                                const adjustedColor = applyColorAdjustment(highlightedColor, newAdjustments);
-                                const updatedSvg = replaceColorInSvg(currentSvg, highlightedColor, adjustedColor);
+                              const originalSvg = vectorSvg;
+                              if (originalSvg) {
+                                const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
