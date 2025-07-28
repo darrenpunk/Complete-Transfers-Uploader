@@ -576,16 +576,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             console.log(`Using raw PDF content bounds: ${rawContentWidth.toFixed(1)}×${rawContentHeight.toFixed(1)} pixels`);
             
-            if (rawContentWidth > 500 || rawContentHeight > 500) {
-              // Large content - scale down intelligently 
-              const targetMaxDimension = 350;
-              const maxCurrentDimension = Math.max(rawContentWidth, rawContentHeight);
-              const intelligentScale = targetMaxDimension / maxCurrentDimension;
-              
-              displayWidth = Math.round(rawContentWidth * intelligentScale * 0.08466667); // Convert to mm
-              displayHeight = Math.round(rawContentHeight * intelligentScale * 0.08466667);
-              
-              console.log(`Large PDF content scaled: ${rawContentWidth.toFixed(1)}×${rawContentHeight.toFixed(1)} -> ${displayWidth}×${displayHeight}mm`);
+            // Convert pixels to mm at 72 DPI (PDF standard)
+            // 1 inch = 25.4mm, 72 pixels = 1 inch, so 1 pixel = 25.4/72 mm = 0.352778 mm
+            const pixelToMm = 0.352778;
+            
+            // Check if this is likely an A3 or other large format document
+            const estimatedWidthMm = rawContentWidth * pixelToMm;
+            const estimatedHeightMm = rawContentHeight * pixelToMm;
+            
+            console.log(`Estimated dimensions: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm`);
+            
+            // If the estimated size is reasonable for actual artwork (not a mistake), use it
+            if (estimatedWidthMm > 50 && estimatedWidthMm < 500 && estimatedHeightMm > 50 && estimatedHeightMm < 500) {
+              displayWidth = Math.round(estimatedWidthMm);
+              displayHeight = Math.round(estimatedHeightMm);
+              console.log(`Using actual PDF dimensions: ${displayWidth}×${displayHeight}mm`);
             } else {
               // For PDF content bounds, use a more appropriate scaling factor
               // Content bounds are in SVG units, roughly equivalent to points
@@ -604,16 +609,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Fallback for PDFs without content bounds data
             console.log(`Using padded PDF content bounds: ${actualWidth}×${actualHeight} pixels`);
             
-            if (actualWidth > 500 || actualHeight > 500) {
-              // Large content - scale down intelligently 
-              const targetMaxDimension = 350;
-              const maxCurrentDimension = Math.max(actualWidth, actualHeight);
-              const intelligentScale = targetMaxDimension / maxCurrentDimension;
-              
-              displayWidth = Math.round(actualWidth * intelligentScale * 0.08466667); // Convert to mm
-              displayHeight = Math.round(actualHeight * intelligentScale * 0.08466667);
-              
-              console.log(`Large PDF content scaled: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
+            // Convert pixels to mm at 72 DPI (PDF standard)
+            const pixelToMm = 0.352778;
+            const estimatedWidthMm = actualWidth * pixelToMm;
+            const estimatedHeightMm = actualHeight * pixelToMm;
+            
+            console.log(`Estimated dimensions: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm`);
+            
+            // If the estimated size is reasonable for actual artwork, use it
+            if (estimatedWidthMm > 50 && estimatedWidthMm < 500 && estimatedHeightMm > 50 && estimatedHeightMm < 500) {
+              displayWidth = Math.round(estimatedWidthMm);
+              displayHeight = Math.round(estimatedHeightMm);
+              console.log(`Using actual PDF dimensions: ${displayWidth}×${displayHeight}mm`);
             } else {
               // For PDF content bounds, use a more appropriate scaling factor
               const scaleFactor = 0.35; // Adjusted scale for PDF content bounds
