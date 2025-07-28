@@ -460,7 +460,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
 }
 
 // Calculate actual content bounding box from SVG elements, excluding obvious backgrounds and font definitions
-export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
+export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
     // Check if this SVG has glyph references (text) that might be inflating the bounding box
     const hasGlyphRefs = svgContent.includes('<use') && svgContent.includes('xlink:href="#glyph-');
@@ -587,7 +587,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         
         return {
           width: finalWidth,
-          height: finalHeight
+          height: finalHeight,
+          minX,
+          minY,
+          maxX,
+          maxY
         };
       }
       
@@ -713,7 +717,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     return {
       width: finalWidth,
-      height: finalHeight
+      height: finalHeight,
+      minX,
+      minY,
+      maxX,
+      maxY
     };
     
   } catch (error) {

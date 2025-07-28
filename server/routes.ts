@@ -394,9 +394,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
-        // Get dimensions from the final display file (SVG/PNG)
+        // Get dimensions from the final display file (SVG/PNG) and content bounds
         let actualWidth = null;
         let actualHeight = null;
+        let contentBounds = null;
         try {
           if (finalMimeType === 'image/svg+xml') {
             // For SVG files, calculate actual content bounding box instead of viewBox
@@ -405,6 +406,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (bbox) {
               actualWidth = bbox.width;
               actualHeight = bbox.height;
+              // Store content bounds coordinates for frontend cropping
+              if (bbox.minX !== undefined && bbox.minY !== undefined && bbox.maxX !== undefined && bbox.maxY !== undefined) {
+                contentBounds = {
+                  minX: bbox.minX,
+                  minY: bbox.minY,
+                  maxX: bbox.maxX,
+                  maxY: bbox.maxY
+                };
+              }
               console.log(`SVG content bounds: ${actualWidth}×${actualHeight} (was using viewBox dimensions)`);
             } else {
               // Fallback to viewBox if content bounds calculation fails
@@ -514,6 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           svgColors: svgColors,
           svgFonts: svgFonts,
           fontsOutlined: fontsOutlined,
+          contentBounds: contentBounds, // Store content coordinates for proper cropping
         };
 
         const validatedData = insertLogoSchema.parse(logoData);

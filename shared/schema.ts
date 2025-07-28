@@ -36,6 +36,7 @@ export const logos = pgTable("logos", {
   svgColors: jsonb("svg_colors"), // Store detected SVG colors for color manipulation
   svgFonts: jsonb("svg_fonts"), // Store detected SVG fonts for font analysis
   fontsOutlined: boolean("fonts_outlined").default(false), // Track if fonts have been outlined
+  contentBounds: jsonb("content_bounds"), // Store actual content boundaries for proper cropping {minX, minY, maxX, maxY}
 });
 
 export const canvasElements = pgTable("canvas_elements", {
