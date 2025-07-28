@@ -310,22 +310,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   return match;
                 });
                 
-                // Only remove paths that are clearly full-page backgrounds (very specific criteria)
+                // DISABLE white path removal entirely to preserve white text content
+                // Only remove paths that are clearly full-page backgrounds (VERY restrictive)
                 const pathRegex = /<path[^>]*>/g;
                 let pathMatch;
                 while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
                   const pathElement = pathMatch[0];
-                  // Only remove paths that start at origin, go to full canvas corners, AND are white
+                  // Only remove paths that start at origin, go to EXACT full canvas corners, AND are white AND have specific simple shapes
                   const startsAtOrigin = pathElement.includes('M 0 0');
-                  const goesToFullCorners = (pathElement.includes('L 624.703125 0') && pathElement.includes('L 624.703125 587.646')) ||
-                                          (pathElement.includes('L 841.89 0') && pathElement.includes('L 841.89 1190.55'));
+                  const goesToExactCorners = (pathElement.includes('L 624.703125 0') && pathElement.includes('L 624.703125 587.646') && pathElement.includes('L 0 587.646') && pathElement.includes('Z')) ||
+                                           (pathElement.includes('L 841.89 0') && pathElement.includes('L 841.89 1190.55') && pathElement.includes('L 0 1190.55') && pathElement.includes('Z'));
                   const isWhiteFill = pathElement.includes('fill="white"') || 
                                     pathElement.includes('fill="rgb(100%, 100%, 100%)"') ||
                                     pathElement.includes('fill="#ffffff"');
+                  const isSimpleRectangle = pathElement.includes('Z') && !pathElement.includes('C') && !pathElement.includes('Q'); // No curves
                   
-                  if (startsAtOrigin && goesToFullCorners && isWhiteFill) {
-                    console.log('Removing full-page background path:', pathElement.substring(0, 100) + '...');
+                  // Only remove if ALL criteria match: origin start + exact corners + white + simple rectangle
+                  if (startsAtOrigin && goesToExactCorners && isWhiteFill && isSimpleRectangle) {
+                    console.log('Removing confirmed full-page background path:', pathElement.substring(0, 100) + '...');
                     svgContent = svgContent.replace(pathElement, '');
+                  } else if (isWhiteFill && (startsAtOrigin || goesToExactCorners)) {
+                    console.log('PRESERVING potential white content path (not exact background match):', pathElement.substring(0, 100) + '...');
                   }
                 }
                 
