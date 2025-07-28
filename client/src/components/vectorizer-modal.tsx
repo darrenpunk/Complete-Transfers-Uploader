@@ -32,6 +32,7 @@ export function VectorizerModal({
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [coloredSvg, setColoredSvg] = useState<string | null>(null);
   const [detectedColors, setDetectedColors] = useState<{color: string, count: number}[]>([]);
+  const [originalDetectedColors, setOriginalDetectedColors] = useState<{color: string, count: number}[]>([]);
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -78,6 +79,7 @@ export function VectorizerModal({
       const colors = detectColorsInSvg(result.svg);
       console.log('Detected colors:', colors);
       setDetectedColors(colors);
+      setOriginalDetectedColors(colors); // Store original for undo
       
       setShowPalette(true); // Show palette when vector is ready
       setIsProcessing(false);
@@ -304,7 +306,7 @@ export function VectorizerModal({
         } else if (el.tagName === 'path') {
           // Get the path data to check if it's a background
           const d = el.getAttribute('d') || '';
-          const index = allPaths.indexOf(el);
+          const index = allPaths.indexOf(el as SVGPathElement);
           
           // Check if path is at canvas edge (background paths usually start at edges)
           const touchesTopEdge = d.match(/[ML]\s*\d+\.?\d*\s+0\.0+/) || d.match(/^M\s*\d+\.?\d*\s+0[\s,]/);
@@ -391,6 +393,42 @@ export function VectorizerModal({
     });
     
     return new XMLSerializer().serializeToString(doc.documentElement);
+  };
+
+  // Function to reduce colors to main logo colors (top 5-8 colors by usage)
+  const reduceColors = () => {
+    if (originalDetectedColors.length === 0) return;
+    
+    // Keep only the top 6 colors (excluding white if it's a background color)
+    const mainColors = originalDetectedColors
+      .filter(color => {
+        // Filter out white/near-white background colors with high counts
+        if (color.color === '#ffffff' || color.color === '#FFFFFF' || color.color === 'white') {
+          // Keep white only if it's not the most dominant color (likely background)
+          return color.count < originalDetectedColors[0].count * 0.8;
+        }
+        return true;
+      })
+      .slice(0, 6); // Keep top 6 main colors
+    
+    setDetectedColors(mainColors);
+    
+    toast({
+      title: "Colors Reduced",
+      description: `Simplified to ${mainColors.length} main logo colors`,
+    });
+  };
+
+  // Function to restore original detected colors
+  const undoColorChanges = () => {
+    setDetectedColors(originalDetectedColors);
+    setColoredSvg(null); // Reset any color modifications
+    setSelectedColor(null);
+    
+    toast({
+      title: "Colors Restored",
+      description: "Reverted to original color palette",
+    });
   };
 
   const handleRetry = () => {
@@ -612,6 +650,25 @@ export function VectorizerModal({
                         className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
                       >
                         Remove All Black
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={reduceColors}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
+                        disabled={originalDetectedColors.length === 0}
+                      >
+                        <Wand2 className="w-3 h-3 mr-1" />
+                        Reduce Colors
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={undoColorChanges}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
+                        disabled={originalDetectedColors.length === 0}
+                      >
+                        ↶ Undo
                       </Button>
                     </div>
                   </div>
