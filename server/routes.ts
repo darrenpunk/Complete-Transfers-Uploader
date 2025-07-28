@@ -539,10 +539,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // For all files (including PDFs), use the actual content bounds calculated above
           // This ensures bounding boxes are tight around the content, not the full page
           
-          if (file.mimetype === 'application/pdf') {
-            // For PDFs, actualWidth/actualHeight now contain content bounds from calculateSVGContentBounds
-            // Apply intelligent scaling based on content size
-            console.log(`Using PDF content bounds: ${actualWidth}×${actualHeight} pixels`);
+          if (file.mimetype === 'application/pdf' && contentBounds) {
+            // For PDFs with content bounds, use the raw content size for tight bounding boxes
+            const rawContentWidth = contentBounds.maxX - contentBounds.minX;
+            const rawContentHeight = contentBounds.maxY - contentBounds.minY;
+            
+            console.log(`Using raw PDF content bounds: ${rawContentWidth.toFixed(1)}×${rawContentHeight.toFixed(1)} pixels`);
+            
+            if (rawContentWidth > 500 || rawContentHeight > 500) {
+              // Large content - scale down intelligently 
+              const targetMaxDimension = 350;
+              const maxCurrentDimension = Math.max(rawContentWidth, rawContentHeight);
+              const intelligentScale = targetMaxDimension / maxCurrentDimension;
+              
+              displayWidth = Math.round(rawContentWidth * intelligentScale * 0.08466667); // Convert to mm
+              displayHeight = Math.round(rawContentHeight * intelligentScale * 0.08466667);
+              
+              console.log(`Large PDF content scaled: ${rawContentWidth.toFixed(1)}×${rawContentHeight.toFixed(1)} -> ${displayWidth}×${displayHeight}mm`);
+            } else {
+              // For PDF content bounds, use a more appropriate scaling factor
+              // Content bounds are in SVG units, roughly equivalent to points
+              // 1 point = 0.352778 mm, but we need to account for the conversion scale
+              const scaleFactor = 0.35; // Adjusted scale for PDF content bounds
+              displayWidth = Math.round(rawContentWidth * scaleFactor);
+              displayHeight = Math.round(rawContentHeight * scaleFactor);
+              
+              // Ensure minimum reasonable size
+              if (displayWidth < 50) displayWidth = 100;
+              if (displayHeight < 30) displayHeight = 70;
+              
+              console.log(`PDF raw content dimensions: ${rawContentWidth.toFixed(1)}×${rawContentHeight.toFixed(1)} SVG units -> ${displayWidth}×${displayHeight}mm`);
+            }
+          } else if (file.mimetype === 'application/pdf') {
+            // Fallback for PDFs without content bounds data
+            console.log(`Using padded PDF content bounds: ${actualWidth}×${actualHeight} pixels`);
             
             if (actualWidth > 500 || actualHeight > 500) {
               // Large content - scale down intelligently 
@@ -556,8 +586,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`Large PDF content scaled: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
             } else {
               // For PDF content bounds, use a more appropriate scaling factor
-              // Content bounds are in SVG units, roughly equivalent to points
-              // 1 point = 0.352778 mm, but we need to account for the conversion scale
               const scaleFactor = 0.35; // Adjusted scale for PDF content bounds
               displayWidth = Math.round(actualWidth * scaleFactor);
               displayHeight = Math.round(actualHeight * scaleFactor);
