@@ -1510,8 +1510,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this is a preview request (don't consume credits)
       const isPreview = req.body.preview === 'true' || req.query.preview === 'true';
       
-      // Add vectorization options based on the provided screenshot settings
-      formData.append('mode', isPreview ? 'test' : 'production'); // Use test mode for previews to avoid consuming credits
+      // Add vectorization options - only add mode for production (credits consumed)
+      // Omitting mode parameter for previews gives clean results without consuming credits
+      if (!isPreview) {
+        formData.append('mode', 'production'); // Only use production mode when consuming credits
+      }
       
       // File Format
       formData.append('output_format', 'svg');
