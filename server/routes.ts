@@ -1390,8 +1390,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const FormData = (await import('form-data')).default;
       const formData = new FormData();
       
+      // Read the file from disk since multer uses disk storage
+      const filePath = req.file.path;
+      const fileStream = fs.createReadStream(filePath);
+      
       // Add the image file
-      formData.append('image', req.file.buffer, {
+      formData.append('image', fileStream, {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
@@ -1429,6 +1433,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
+      // Clean up the temporary file
+      if (req.file && req.file.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up temporary file:', cleanupError);
+        }
+      }
+      
       res.json({ 
         svg: svgContent,
         message: "Vectorization completed successfully"
@@ -1436,6 +1449,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('Vectorization error:', error);
+      
+      // Clean up the temporary file on error
+      if (req.file && req.file.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.warn('Failed to clean up temporary file:', cleanupError);
+        }
+      }
+      
       res.status(500).json({ 
         error: "Vectorization failed due to server error" 
       });
