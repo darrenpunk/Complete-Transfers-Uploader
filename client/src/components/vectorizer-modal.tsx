@@ -1014,18 +1014,26 @@ export function VectorizerModal({
                         }}
                       >
                         <div 
-                          className="vector-preview-wrapper"
+                          className="vector-preview-wrapper border border-gray-300"
                           style={{ 
                             maxWidth: '400px',
                             maxHeight: '400px',
+                            minWidth: '200px',
+                            minHeight: '200px',
                             width: 'auto',
                             height: 'auto',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            backgroundColor: 'white'
                           }}
                           dangerouslySetInnerHTML={{ __html: highlightedSvg || coloredSvg || vectorSvg || '' }}
                         />
+                        {/* Debug info */}
+                        <div className="absolute top-2 right-2 text-xs bg-black text-white p-2 rounded">
+                          {vectorSvg ? `SVG: ${vectorSvg.length} chars` : 'No SVG'} | 
+                          Zoom: {zoom}%
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full">
