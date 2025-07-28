@@ -6,6 +6,102 @@ import { Button } from "@/components/ui/button";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
 
+// Garment color utilities
+const quickColors = [
+  { name: "White", hex: "#FFFFFF" },
+  { name: "Black", hex: "#171816" },
+  { name: "Kelly Green", hex: "#3C8A35" }
+];
+
+const manufacturerColors = {
+  Gildan: [
+    {
+      name: "Basic Colors",
+      colors: [
+        { name: "White", hex: "#FFFFFF", code: "G000" },
+        { name: "Natural", hex: "#F5F1E8", code: "G102" },
+        { name: "Black", hex: "#171816", code: "G000" },
+        { name: "Ash Grey", hex: "#C8C8C8", code: "G018" },
+        { name: "Dark Heather", hex: "#3C4142", code: "G180" },
+        { name: "Sport Grey", hex: "#8C8C8C", code: "G080" },
+        { name: "Safety Green", hex: "#C4D632", code: "G225" },
+        { name: "Safety Orange", hex: "#FF6600", code: "G226" },
+        { name: "Safety Pink", hex: "#FF69B4", code: "G227" }
+      ]
+    }
+  ],
+  "Fruit of the Loom": [
+    {
+      name: "Essential Colors",
+      colors: [
+        { name: "White", hex: "#FFFFFF", code: "F000" },
+        { name: "Black", hex: "#000000", code: "F036" },
+        { name: "Navy", hex: "#1F2937", code: "F072" },
+        { name: "Red", hex: "#DC2626", code: "F040" },
+        { name: "Royal Blue", hex: "#1D4ED8", code: "F072" },
+        { name: "Kelly Green", hex: "#16A34A", code: "F052" }
+      ]
+    }
+  ]
+};
+
+function getColorName(hex: string): string {
+  // Check quick colors first
+  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (quickColor) {
+    return quickColor.name;
+  }
+
+  // Check manufacturer colors
+  for (const [manufacturerName, colorGroups] of Object.entries(manufacturerColors)) {
+    for (const group of colorGroups) {
+      const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+      if (manufacturerColor) {
+        return `${manufacturerColor.name} (${manufacturerColor.code})`;
+      }
+    }
+  }
+
+  // Convert hex to RGB for color analysis
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (result) {
+      return {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      };
+    }
+    return null;
+  };
+
+  // Generate descriptive color name for unmatched colors
+  const rgb = hexToRgb(hex);
+  if (rgb) {
+    const { r, g, b } = rgb;
+    
+    // Determine the dominant color family
+    if (r > g && r > b) {
+      if (g > 100 && b < 50) return `Orange`;
+      if (g < 100 && b < 100) return `Red`;
+      if (g > 150 && b > 150) return `Pink`;
+    } else if (g > r && g > b) {
+      if (r < 100 && b < 100) return `Green`;
+      if (r > 150 && b < 100) return `Yellow`;
+    } else if (b > r && b > g) {
+      if (r < 100 && g < 100) return `Blue`;
+      if (r > 150 && g > 150) return `Purple`;
+    } else if (r === g && g === b) {
+      if (r < 50) return `Black`;
+      if (r > 200) return `White`;
+      return `Gray`;
+    }
+  }
+
+  // If no pattern found, return hex code
+  return hex;
+}
+
 interface CanvasWorkspaceProps {
   project: Project;
   template?: TemplateSize;
@@ -915,7 +1011,7 @@ export default function CanvasWorkspace({
 
             {/* Canvas Info */}
             <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
-              {template.label} ({template.width}×{template.height}mm) • {project.garmentColor} Background
+              {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Background
               {colorManagementEnabled && (
                 <span className="ml-2 px-1 bg-primary text-primary-foreground rounded text-xs">
                   ICC Preview
