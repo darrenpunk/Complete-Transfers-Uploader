@@ -1507,11 +1507,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contentType: req.file.mimetype
       });
 
-      // Add vectorization options
+      // Add vectorization options based on the provided screenshot settings
       formData.append('mode', 'test'); // Use test mode for API testing
+      
+      // File Format
       formData.append('output_format', 'svg');
+      
+      // SVG Options
+      formData.append('svg_version', '1.1');
+      formData.append('svg_adobe_compatibility_mode', 'true');
+      
+      // Shape Stacking
+      formData.append('shape_stacking_mode', 'stacked');
+      
+      // Allowed Curve Types
+      formData.append('curve_fitting_lines', 'true');
+      formData.append('curve_fitting_cubic_bezier_curves', 'true');
+      
+      // Gap Filler
+      formData.append('gap_filler_enabled', 'true');
+      formData.append('gap_filler_non_scaling_stroke', 'true');
+      formData.append('gap_filler_stroke_width', '2.0');
+      
+      // Stroke Style
+      formData.append('stroke_style_non_scaling_stroke', 'true');
+      formData.append('stroke_style_stroke_width', '1.0');
+      
+      // Group By
       formData.append('output_group_by', 'color');
-      formData.append('output_curves_only', 'false');
+      
+      // Line Fit Tolerance
+      formData.append('line_fit_tolerance', 'medium');
+      
+      // Draw Style
+      formData.append('draw_style', 'fill');
+      
+      // Processing DPI
       formData.append('processing_dpi', '300');
 
       // Make request to vectorization API with Basic Auth
