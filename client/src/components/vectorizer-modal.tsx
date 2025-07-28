@@ -248,6 +248,14 @@ export function VectorizerModal({
       const allWhiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"], *[fill="rgb(255, 255, 255)"]');
       console.log('Found white elements:', allWhiteElements.length);
       
+      // Debug: Log details about white paths
+      allWhiteElements.forEach((el, idx) => {
+        if (el.tagName === 'path' && idx < 5) {
+          const d = el.getAttribute('d') || '';
+          console.log(`White path ${idx}: d="${d.substring(0, 100)}..."`);
+        }
+      });
+      
       // Analyze the SVG structure to find the actual content bounds
       const nonWhiteElements = doc.querySelectorAll('*[fill]:not([fill="#ffffff"]):not([fill="#FFFFFF"]):not([fill="white"]):not([fill="rgb(255,255,255)"]):not([fill="rgb(100%,100%,100%)"]):not([fill="rgb(255, 255, 255)"]):not([fill="none"])');
       
@@ -256,20 +264,16 @@ export function VectorizerModal({
       let hasContent = false;
       
       // Calculate the bounding box of non-white content
-      nonWhiteElements.forEach(el => {
-        if (el.tagName === 'rect') {
-          const x = parseFloat(el.getAttribute('x') || '0');
-          const y = parseFloat(el.getAttribute('y') || '0');
-          const width = parseFloat(el.getAttribute('width') || '0');
-          const height = parseFloat(el.getAttribute('height') || '0');
-          
-          contentMinX = Math.min(contentMinX, x);
-          contentMinY = Math.min(contentMinY, y);
-          contentMaxX = Math.max(contentMaxX, x + width);
-          contentMaxY = Math.max(contentMaxY, y + height);
-          hasContent = true;
-        }
-      });
+      // For vectorizer.ai SVGs, most elements are paths, not rects
+      if (nonWhiteElements.length > 0) {
+        hasContent = true;
+        // Use a simpler approach - assume content is in the center 80% of the canvas
+        const margin = svgWidth * 0.1;
+        contentMinX = margin;
+        contentMinY = margin;
+        contentMaxX = svgWidth - margin;
+        contentMaxY = svgHeight - margin;
+      }
       
       // Add some padding around content
       const padding = Math.min(svgWidth, svgHeight) * 0.05;
@@ -280,8 +284,10 @@ export function VectorizerModal({
       
       console.log('Content bounds:', {contentMinX, contentMinY, contentMaxX, contentMaxY});
       
-      // Remove white elements that are outside the content bounds or very large
+      // Remove white elements - for vectorizer.ai, white backgrounds are usually early paths
       let removedCount = 0;
+      const allPaths = Array.from(doc.querySelectorAll('path'));
+      
       allWhiteElements.forEach(el => {
         let shouldRemove = false;
         
@@ -295,19 +301,23 @@ export function VectorizerModal({
           if (width >= svgWidth * 0.9 && height >= svgHeight * 0.9) {
             shouldRemove = true;
           }
-          // Or if it's completely outside content bounds
-          else if (hasContent && (x + width < contentMinX || x > contentMaxX || 
-                                 y + height < contentMinY || y > contentMaxY)) {
-            shouldRemove = true;
-          }
         } else if (el.tagName === 'path') {
-          // For paths, check if it's one of the first elements (often background)
-          const allPaths = Array.from(doc.querySelectorAll('path'));
+          // Get the path data to check if it's a background
+          const d = el.getAttribute('d') || '';
           const index = allPaths.indexOf(el);
           
-          // Remove early white paths that are likely backgrounds
-          if (index >= 0 && index < 5 && allPaths.length > 10) {
+          // Check if path is at canvas edge (background paths usually start at edges)
+          const touchesTopEdge = d.match(/[ML]\s*\d+\.?\d*\s+0\.0+/) || d.match(/^M\s*\d+\.?\d*\s+0[\s,]/);
+          const touchesLeftEdge = d.match(/[ML]\s*0\.0+\s+\d+/) || d.match(/^M\s*0[\s,]+\d+/);
+          const touchesRightEdge = d.match(new RegExp(`[ML]\\s*${svgWidth}\\.?0*\\s+\\d+`));
+          const touchesBottomEdge = d.match(new RegExp(`[ML]\\s*\\d+\\.?\\d*\\s+${svgHeight}\\.?0*`));
+          
+          const touchesEdge = touchesTopEdge || touchesLeftEdge || touchesRightEdge || touchesBottomEdge;
+          
+          // Remove if it's white and clearly at the edge
+          if (touchesEdge) {
             shouldRemove = true;
+            console.log('Removing white edge path at index:', index);
           }
         }
         
