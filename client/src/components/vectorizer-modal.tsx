@@ -474,11 +474,11 @@ export function VectorizerModal({
 
               {/* Color Editor */}
               {showPalette && vectorSvg && detectedColors.length > 0 && (
-                <div className="mb-4 p-4 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-100">Detected Colors ({detectedColors.length}):</span>
+                <div className="mb-3 p-3 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-100">Detected Colors ({detectedColors.length}):</span>
                     <button
-                      className="text-xs px-2 py-1 border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
+                      className="text-xs px-2 py-0.5 border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
                       onClick={() => {
                         setColoredSvg(vectorSvg);
                         const colors = detectColorsInSvg(vectorSvg);
@@ -488,16 +488,16 @@ export function VectorizerModal({
                       Reset All
                     </button>
                   </div>
-                  <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto vectorizer-color-grid">
+                  <div className="grid grid-cols-10 gap-1 max-h-24 overflow-y-auto vectorizer-color-grid p-1">
                     {detectedColors.map((colorItem, index) => (
                       <div key={index} className="relative group">
                         <div
-                          className="w-12 h-12 rounded border-2 border-gray-600 cursor-pointer hover:border-gray-400 transition-all"
+                          className="w-8 h-8 rounded border border-gray-600 cursor-pointer hover:border-gray-400 transition-all"
                           style={{ backgroundColor: colorItem.color }}
                           title={`${colorItem.color} (${colorItem.count} elements)`}
                         >
                           <button
-                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
                             onClick={() => {
                               const currentSvg = coloredSvg || vectorSvg;
                               const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
@@ -513,17 +513,17 @@ export function VectorizerModal({
                               });
                             }}
                           >
-                            <div className="text-white font-bold text-xl">×</div>
+                            <div className="text-white font-bold text-sm">×</div>
                           </button>
                         </div>
-                        <div className="text-xs text-gray-400 text-center mt-1">{colorItem.count}</div>
+                        <div className="text-[10px] text-gray-500 text-center leading-tight">{colorItem.count}</div>
                       </div>
                     ))}
                   </div>
                   
                   {/* Quick Actions */}
-                  <div className="mt-3 pt-3 border-t border-gray-700">
-                    <div className="flex gap-2">
+                  <div className="mt-2 pt-2 border-t border-gray-700">
+                    <div className="flex gap-1 flex-wrap">
                       <Button
                         variant="outline"
                         size="sm"
