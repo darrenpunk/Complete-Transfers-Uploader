@@ -484,10 +484,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const fillColor = pathMatch[1];
         const pathData = pathMatch[2];
         
-        // Skip white, transparent, or background colors
-        const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
-                            fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
-                            fillColor.includes('100%, 100%, 100%');
+        // Skip only transparent/none colors - KEEP white content for text elements
+        const isBackground = fillColor === 'none' || fillColor === 'transparent';
         
         // Also skip large background rectangles that cover most of the canvas
         const isLargeBackground = pathData.includes('M 0 0') && 
@@ -614,10 +612,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const fillColor = pathMatch[1];
       const pathData = pathMatch[2];
       
-      // Skip white, transparent, or background colors
-      const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
-                          fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
-                          fillColor.includes('100%, 100%, 100%');
+      // Skip only transparent/none colors - KEEP white content for text elements
+      const isBackground = fillColor === 'none' || fillColor === 'transparent';
       
       if (!isBackground) {
         const coords = extractPathCoordinates(pathData);
@@ -634,9 +630,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const fillColor = styleMatch[1].trim();
       const pathData = styleMatch[2];
       
-      const isBackground = fillColor === 'white' || fillColor === '#ffffff' || 
-                          fillColor === 'rgb(100%, 100%, 100%)' || fillColor === 'none' ||
-                          fillColor.includes('100%, 100%, 100%');
+      // Skip only transparent/none colors - KEEP white content for text elements
+      const isBackground = fillColor === 'none' || fillColor === 'transparent';
       
       if (!isBackground) {
         const coords = extractPathCoordinates(pathData);
