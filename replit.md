@@ -124,6 +124,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Multi-Color PDF Preview**: Enhanced PDF preview modal to display individual garment color assignments in grid layout, matching main canvas behavior for accurate multi-color visualization
 ✓ **Content-Based Bounding Box System**: Implemented server-side content bounds calculation that extracts actual logo coordinates from SVG files, excluding full PDF page backgrounds, and uses raw content dimensions for canvas element sizing - resulting in tight bounding boxes around logos instead of full page areas (247.2×131.5 actual vs 288×162 padded dimensions)
 ✓ **SVG ViewBox Cropping**: Enhanced PDF-to-SVG conversion to automatically crop viewBox to actual content bounds, eliminating whitespace and ensuring logos fill their bounding boxes completely - viewBox updated from full page (0 0 283.465 198.425) to content area (18.125 33.449219 247.215 131.527)
+✓ **Large Format PDF Support**: Fixed A3 and large artwork scaling - increased oversized bounds threshold from 700×700 to 1200×1200 pixels, implemented proper PDF pixel-to-mm conversion at 72 DPI (1 pixel = 0.352778mm), ensuring A3 artwork (297×420mm) imports at actual size instead of being reduced to 22×30mm
 
 
 ## Current Status (July 27, 2025)
