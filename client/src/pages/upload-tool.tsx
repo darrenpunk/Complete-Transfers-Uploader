@@ -98,16 +98,31 @@ export default function UploadTool() {
 
   // Generate CMYK PDF with vector preservation
   const generatePDFMutation = useMutation({
-    mutationFn: async (projectName?: string) => {
-      const name = projectName || currentProject?.name;
+    mutationFn: async (projectData?: string | { name: string; quantity: number }) => {
+      let name: string;
+      let quantity: number = 1;
+      
+      if (typeof projectData === 'string') {
+        name = projectData;
+      } else if (projectData && typeof projectData === 'object') {
+        name = projectData.name;
+        quantity = projectData.quantity;
+      } else {
+        name = currentProject?.name || '';
+      }
+      
       if (!name || name.trim() === '' || name === 'Untitled Project') {
         throw new Error('Please provide a project name before generating PDF');
       }
+      
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to generate PDF');
       const blob = await response.blob();
-      return { blob, filename: `${name}_cmyk.pdf` };
+      
+      // Create filename with quantity
+      const filename = `${name}_qty${quantity}_cmyk.pdf`;
+      return { blob, filename };
     },
     onSuccess: ({ blob, filename }) => {
       // Create download link
@@ -153,7 +168,7 @@ export default function UploadTool() {
 
       // Execute the pending action
       if (pendingAction === 'pdf') {
-        generatePDFMutation.mutate(projectData.name);
+        generatePDFMutation.mutate({ name: projectData.name, quantity: projectData.quantity });
       } else if (pendingAction === 'continue') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
       }
@@ -181,7 +196,8 @@ export default function UploadTool() {
       setPendingAction('pdf');
       setShowProjectNameModal(true);
     } else {
-      generatePDFMutation.mutate(currentProject?.name);
+      // Use default quantity of 1 when not going through modal
+      generatePDFMutation.mutate({ name: currentProject?.name || '', quantity: 1 });
     }
   };
 
