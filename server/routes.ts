@@ -644,11 +644,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('No content dimensions available, using fallback size');
         }
         
+        // Get template size for centering (project already retrieved earlier)
+        const templateSize = await storage.getTemplateSize(project.templateSize);
+        if (!templateSize) {
+          throw new Error('Template size not found');
+        }
+        
+        // Calculate centered position
+        const centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
+        const centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
+        
+        console.log(`Centering logo on ${templateSize.width}×${templateSize.height}mm template: ${centerX.toFixed(1)},${centerY.toFixed(1)}`);
+        
         const canvasElementData = {
           projectId: req.params.projectId,
           logoId: logo.id,
-          x: 0,
-          y: 0,
+          x: centerX,
+          y: centerY,
           width: displayWidth,
           height: displayHeight,
           rotation: 0,
