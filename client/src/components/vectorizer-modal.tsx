@@ -59,13 +59,30 @@ export function VectorizerModal({
   useEffect(() => {
     if (svgContainerRef.current) {
       const currentSvg = highlightedSvg || coloredSvg || vectorSvg || '';
+      
+      // Clear container first
+      svgContainerRef.current.innerHTML = '';
+      
       if (currentSvg) {
-        const modifiedSvg = currentSvg.replace(
-          /<svg([^>]*)>/,
-          '<svg$1 style="max-width: 100%; max-height: 100%; width: auto; height: auto;">'
-        );
-        svgContainerRef.current.innerHTML = modifiedSvg;
-        console.log('Direct DOM update with SVG length:', currentSvg.length);
+        // Add a small delay to ensure state has settled
+        setTimeout(() => {
+          if (svgContainerRef.current) {
+            // Create a new img element with data URL
+            const blob = new Blob([currentSvg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
+            img.onload = () => URL.revokeObjectURL(url);
+            
+            svgContainerRef.current.appendChild(img);
+            console.log('Direct DOM update with SVG length:', currentSvg.length);
+          }
+        }, 50); // Small delay to ensure React state has settled
       }
     }
   }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision]);
@@ -1020,6 +1037,7 @@ export function VectorizerModal({
                   >
                     {(highlightedSvg || coloredSvg || vectorSvg) ? (
                       <div 
+                        key={`preview-wrapper-${(highlightedSvg || coloredSvg || vectorSvg || '').length}-${svgRevision}`}
                         className="p-8 flex items-center justify-center min-h-full"
                         style={{ 
                           transform: `scale(${zoom / 100})`,
@@ -1164,6 +1182,12 @@ export function VectorizerModal({
                             const newColors = detectColorsInSvg(updatedSvg);
                             setDetectedColors(newColors);
                             setSvgRevision(prev => prev + 1); // Force re-render
+                            
+                            // Force complete refresh
+                            setVectorSvg(null);
+                            setTimeout(() => {
+                              setVectorSvg(vectorSvg);
+                            }, 10);
                             
                             toast({
                               title: "Color Removed",
