@@ -5,6 +5,7 @@ import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
@@ -613,6 +614,7 @@ export default function CanvasWorkspace({
   const canvasHeight = template.pixelHeight * (zoom / 100);
 
   return (
+    <TooltipProvider>
     <div className="flex-1 flex flex-col">
       {/* Garment Color Required Warning */}
       {!project.garmentColor && (
@@ -643,15 +645,22 @@ export default function CanvasWorkspace({
                 }}
               />
               <div className="flex flex-col">
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  disabled={!project.garmentColor || isUploading}
-                  onClick={() => document.getElementById('canvas-upload-input')?.click()}
-                >
-                  <Upload className={`w-4 h-4 mr-2 ${isUploading ? 'animate-pulse' : ''}`} />
-                  {isUploading ? `Uploading... ${uploadProgress}%` : 'Upload Logos'}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      disabled={!project.garmentColor || isUploading}
+                      onClick={() => document.getElementById('canvas-upload-input')?.click()}
+                    >
+                      <Upload className={`w-4 h-4 mr-2 ${isUploading ? 'animate-pulse' : ''}`} />
+                      {isUploading ? `Uploading... ${uploadProgress}%` : 'Upload Logos'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upload PDF, SVG, PNG, or JPEG files to add logos to your design</p>
+                  </TooltipContent>
+                </Tooltip>
                 
                 {/* Upload Progress Bar */}
                 {isUploading && (
@@ -690,35 +699,63 @@ export default function CanvasWorkspace({
             {/* Zoom Controls */}
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Zoom:</span>
-              <Button variant="outline" size="sm" onClick={handleZoomOut}>
-                <Minus className="w-4 h-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={handleZoomOut}>
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Zoom out (25% minimum)</p>
+                </TooltipContent>
+              </Tooltip>
               <span className="text-sm font-medium min-w-[60px] text-center">{zoom}%</span>
-              <Button variant="outline" size="sm" onClick={handleZoomIn}>
-                <Plus className="w-4 h-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={handleZoomIn}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Zoom in (200% maximum)</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             <div className="h-6 w-px bg-gray-300"></div>
             
             {/* Grid and Guide Controls */}
             <div className="flex items-center space-x-2">
-              <Button
-                variant={showGrid ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowGrid(!showGrid)}
-              >
-                <Grid3X3 className="w-4 h-4 mr-1" />
-                Grid
-              </Button>
-              <Button
-                variant={showGuides ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowGuides(!showGuides)}
-              >
-                <AlignCenter className="w-4 h-4 mr-1" />
-                Guides
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showGrid ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowGrid(!showGrid)}
+                  >
+                    <Grid3X3 className="w-4 h-4 mr-1" />
+                    Grid
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle grid overlay for precise alignment</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showGuides ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowGuides(!showGuides)}
+                  >
+                    <AlignCenter className="w-4 h-4 mr-1" />
+                    Guides
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle alignment guides for positioning elements</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="h-6 w-px bg-gray-300"></div>
@@ -734,29 +771,49 @@ export default function CanvasWorkspace({
             {template && canvasElements.length > 0 && (
               <>
                 <div className="h-6 w-px bg-gray-300"></div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleFitToBounds}
-                  title="Scale all content to fit within safety margins"
-                >
-                  <Maximize2 className="w-4 h-4 mr-1" />
-                  Fit to Bounds
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFitToBounds}
+                    >
+                      <Maximize2 className="w-4 h-4 mr-1" />
+                      Fit to Bounds
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Scale and center all content to fit within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
               </>
             )}
           </div>
           
           {/* Right section - Undo/Redo */}
           <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={handleUndo} disabled={historyIndex <= 0}>
-              <Undo className="w-4 h-4 mr-1" />
-              Undo
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
-              <Redo className="w-4 h-4 mr-1" />
-              Redo
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={handleUndo} disabled={historyIndex <= 0}>
+                  <Undo className="w-4 h-4 mr-1" />
+                  Undo
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Undo last action (Ctrl+Z)</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+                  <Redo className="w-4 h-4 mr-1" />
+                  Redo
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Redo last undone action (Ctrl+Y)</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -1131,5 +1188,6 @@ export default function CanvasWorkspace({
         />
       )}
     </div>
+    </TooltipProvider>
   );
 }

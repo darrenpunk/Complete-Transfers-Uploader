@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon, Type, Square, Circle, Minus } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon, Type, Square, Circle, Minus, Package } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -423,9 +423,30 @@ export default function PropertiesPanel({
   }, [currentElement, logos]);
 
   return (
+    <TooltipProvider>
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
 
-
+      {/* Product Selector Button at top of properties panel */}
+      <div className="p-6 border-b border-gray-200">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              onClick={() => setShowTemplateSelectorModal(true)}
+              className="w-full"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              Product Selector
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Change your design to a different product type (DTF, UV DTF, Single Colour, etc.)</p>
+          </TooltipContent>
+        </Tooltip>
+        <p className="text-xs text-gray-500 mt-2">
+          Choose a different product template for your design
+        </p>
+      </div>
 
       {/* Logo Properties */}
       {currentElement && (
@@ -591,26 +612,40 @@ export default function PropertiesPanel({
             <div>
               <Label className="text-sm font-medium">Actions</Label>
               <div className="space-y-2 mt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => duplicateLogoMutation.mutate(currentElement.id)}
-                  disabled={duplicateLogoMutation.isPending}
-                  className="w-full"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  {duplicateLogoMutation.isPending ? "Duplicating..." : "Duplicate Logo"}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => duplicateLogoMutation.mutate(currentElement.id)}
+                      disabled={duplicateLogoMutation.isPending}
+                      className="w-full"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      {duplicateLogoMutation.isPending ? "Duplicating..." : "Duplicate Logo"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Create a copy of this logo that you can position independently</p>
+                  </TooltipContent>
+                </Tooltip>
                 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowImpositionModal(true)}
-                  className="w-full"
-                >
-                  <Grid className="w-4 h-4 mr-2" />
-                  Imposition Tool
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowImpositionModal(true)}
+                      className="w-full"
+                    >
+                      <Grid className="w-4 h-4 mr-2" />
+                      Imposition Tool
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Create multiple copies of this logo in a grid layout</p>
+                  </TooltipContent>
+                </Tooltip>
                 
                 <p className="text-xs text-gray-500 mt-1">
                   Duplicate or replicate logos for multi-placement designs
@@ -709,36 +744,50 @@ export default function PropertiesPanel({
                           </div>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleVisibility(element);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            {element.isVisible ? (
-                              <Eye className="w-3 h-3" />
-                            ) : (
-                              <EyeOff className="w-3 h-3 text-gray-400" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleLock(element);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            {element.isLocked ? (
-                              <Lock className="w-3 h-3" />
-                            ) : (
-                              <Unlock className="w-3 h-3" />
-                            )}
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleVisibility(element);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                {element.isVisible ? (
+                                  <Eye className="w-3 h-3" />
+                                ) : (
+                                  <EyeOff className="w-3 h-3 text-gray-400" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{element.isVisible ? "Hide logo" : "Show logo"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleLock(element);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                {element.isLocked ? (
+                                  <Lock className="w-3 h-3" />
+                                ) : (
+                                  <Unlock className="w-3 h-3" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{element.isLocked ? "Unlock logo (allow editing)" : "Lock logo (prevent changes)"}</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       </div>
                     );
@@ -887,23 +936,30 @@ export default function PropertiesPanel({
               
               {/* Quick Actions */}
               <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={canvasElements.length === 0}
-                  onClick={() => {
-                    canvasElements.forEach(element => {
-                      const x = (297 - element.width) / 2; // A3 center
-                      const y = (420 - element.height) / 2;
-                      if (onAlignElement) {
-                        onAlignElement(element.id, { x: Math.round(x), y: Math.round(y) });
-                      }
-                    });
-                  }}
-                  className="w-full"
-                >
-                  Center All Elements
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={canvasElements.length === 0}
+                      onClick={() => {
+                        canvasElements.forEach(element => {
+                          const x = (297 - element.width) / 2; // A3 center
+                          const y = (420 - element.height) / 2;
+                          if (onAlignElement) {
+                            onAlignElement(element.id, { x: Math.round(x), y: Math.round(y) });
+                          }
+                        });
+                      }}
+                      className="w-full"
+                    >
+                      Center All Elements
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center all logos on the canvas at once</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </CardContent>
@@ -930,14 +986,21 @@ export default function PropertiesPanel({
             {/* Text Tool */}
             <div className="mb-4">
               <Label className="text-sm font-medium mb-2 block">Add Text</Label>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start mb-2"
-                onClick={() => setShowTextDialog(true)}
-              >
-                <Type className="w-4 h-4 mr-2" />
-                Add Text Element
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start mb-2"
+                    onClick={() => setShowTextDialog(true)}
+                  >
+                    <Type className="w-4 h-4 mr-2" />
+                    Add Text Element
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add custom text to your design with font selection and color options</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             {/* Shape Tools */}
@@ -1035,5 +1098,6 @@ export default function PropertiesPanel({
         initialColor={selectedDesignColor}
       />
     </div>
+    </TooltipProvider>
   );
 }
