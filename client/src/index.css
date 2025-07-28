@@ -305,3 +305,26 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
 .vectorizer-color-palette .text-gray-900 {
   color: #ffffff !important;
 }
+
+/* Color grid in vectorizer */
+.vectorizer-color-grid {
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a4a #1a1a1a;
+}
+
+.vectorizer-color-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vectorizer-color-grid::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.vectorizer-color-grid::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+.vectorizer-color-grid::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}

@@ -31,6 +31,7 @@ export function VectorizerModal({
   const [showPalette, setShowPalette] = useState<boolean>(false); // Show color palette
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [coloredSvg, setColoredSvg] = useState<string | null>(null);
+  const [detectedColors, setDetectedColors] = useState<{color: string, count: number}[]>([]);
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -72,6 +73,12 @@ export function VectorizerModal({
       console.log('SVG contains viewBox:', result.svg?.includes('viewBox'));
       setVectorSvg(result.svg);
       setColoredSvg(null); // Don't initialize colored SVG
+      
+      // Detect colors in the SVG
+      const colors = detectColorsInSvg(result.svg);
+      console.log('Detected colors:', colors);
+      setDetectedColors(colors);
+      
       setShowPalette(true); // Show palette when vector is ready
       setIsProcessing(false);
 
@@ -93,6 +100,133 @@ export function VectorizerModal({
       onVectorDownload(svgToDownload);
       onClose();
     }
+  };
+
+  // Function to detect all colors in SVG
+  const detectColorsInSvg = (svg: string): {color: string, count: number}[] => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    const colorMap = new Map<string, number>();
+    
+    // Find all elements with fill attribute
+    const elementsWithFill = doc.querySelectorAll('*[fill]');
+    elementsWithFill.forEach(el => {
+      const fill = el.getAttribute('fill');
+      if (fill && fill !== 'none' && !fill.startsWith('url(')) {
+        // Normalize color format
+        let normalizedColor = fill.toLowerCase();
+        
+        // Convert rgb to hex if needed
+        if (normalizedColor.startsWith('rgb')) {
+          const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+          if (match) {
+            let r, g, b;
+            if (match[1].includes('%')) {
+              r = Math.round(parseFloat(match[1]) * 2.55);
+              g = Math.round(parseFloat(match[2]) * 2.55);
+              b = Math.round(parseFloat(match[3]) * 2.55);
+            } else {
+              r = parseInt(match[1]);
+              g = parseInt(match[2]);
+              b = parseInt(match[3]);
+            }
+            normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+          }
+        }
+        
+        colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+      }
+    });
+    
+    // Find all elements with stroke attribute
+    const elementsWithStroke = doc.querySelectorAll('*[stroke]');
+    elementsWithStroke.forEach(el => {
+      const stroke = el.getAttribute('stroke');
+      if (stroke && stroke !== 'none' && !stroke.startsWith('url(')) {
+        let normalizedColor = stroke.toLowerCase();
+        
+        // Convert rgb to hex if needed
+        if (normalizedColor.startsWith('rgb')) {
+          const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+          if (match) {
+            let r, g, b;
+            if (match[1].includes('%')) {
+              r = Math.round(parseFloat(match[1]) * 2.55);
+              g = Math.round(parseFloat(match[2]) * 2.55);
+              b = Math.round(parseFloat(match[3]) * 2.55);
+            } else {
+              r = parseInt(match[1]);
+              g = parseInt(match[2]);
+              b = parseInt(match[3]);
+            }
+            normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+          }
+        }
+        
+        colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+      }
+    });
+    
+    // Convert map to array and sort by count
+    return Array.from(colorMap.entries())
+      .map(([color, count]) => ({color, count}))
+      .sort((a, b) => b.count - a.count);
+  };
+
+  // Function to remove specific color from SVG
+  const removeColorFromSvg = (svg: string, colorToRemove: string): string => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    
+    // Normalize the color to remove
+    const normalizedColorToRemove = colorToRemove.toLowerCase();
+    
+    // Remove elements with matching fill
+    const elementsWithFill = doc.querySelectorAll('*[fill]');
+    elementsWithFill.forEach(el => {
+      const fill = el.getAttribute('fill')?.toLowerCase();
+      if (fill === normalizedColorToRemove || 
+          (fill?.startsWith('rgb') && normalizeRgbToHex(fill) === normalizedColorToRemove)) {
+        // If it's a shape, remove it completely
+        if (['rect', 'path', 'circle', 'ellipse', 'polygon'].includes(el.tagName.toLowerCase())) {
+          el.remove();
+        } else {
+          // Otherwise just make it transparent
+          el.setAttribute('fill', 'none');
+        }
+      }
+    });
+    
+    // Remove elements with matching stroke
+    const elementsWithStroke = doc.querySelectorAll('*[stroke]');
+    elementsWithStroke.forEach(el => {
+      const stroke = el.getAttribute('stroke')?.toLowerCase();
+      if (stroke === normalizedColorToRemove || 
+          (stroke?.startsWith('rgb') && normalizeRgbToHex(stroke) === normalizedColorToRemove)) {
+        el.setAttribute('stroke', 'none');
+      }
+    });
+    
+    return new XMLSerializer().serializeToString(doc.documentElement);
+  };
+
+  // Helper function to normalize RGB to hex
+  const normalizeRgbToHex = (rgb: string): string => {
+    const match = rgb.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+    if (match) {
+      let r, g, b;
+      if (match[1].includes('%')) {
+        r = Math.round(parseFloat(match[1]) * 2.55);
+        g = Math.round(parseFloat(match[2]) * 2.55);
+        b = Math.round(parseFloat(match[3]) * 2.55);
+      } else {
+        r = parseInt(match[1]);
+        g = parseInt(match[2]);
+        b = parseInt(match[3]);
+      }
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    }
+    return rgb;
   };
 
   // Function to remove white from SVG
@@ -269,53 +403,101 @@ export function VectorizerModal({
                 </Button>
               </div>
 
-              {/* Color Palette */}
-              {showPalette && vectorSvg && (
-                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
-                  <span className="text-sm font-medium text-gray-100">Color Presets:</span>
-                  <div className="flex gap-2">
-                    {['#000000', '#FFFFFF', '#5B9BD5', '#ED7D31', '#70AD47', '#FFC000'].map((color) => (
-                      <button
-                        key={color}
-                        className={`w-8 h-8 rounded-full border-2 ${selectedColor === color ? 'border-primary' : 'border-gray-300'}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => {
-                          setSelectedColor(color);
-                          const newSvg = applyColorToSvg(vectorSvg, color);
-                          setColoredSvg(newSvg);
-                        }}
-                      />
-                    ))}
+              {/* Color Editor */}
+              {showPalette && vectorSvg && detectedColors.length > 0 && (
+                <div className="mb-4 p-4 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-100">Detected Colors ({detectedColors.length}):</span>
                     <button
-                      className="px-3 py-1 text-sm border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
+                      className="text-xs px-2 py-1 border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
                       onClick={() => {
-                        setSelectedColor(null);
                         setColoredSvg(vectorSvg);
+                        const colors = detectColorsInSvg(vectorSvg);
+                        setDetectedColors(colors);
                       }}
                     >
-                      Reset
+                      Reset All
                     </button>
-                    
-                    {/* Remove White Background Button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const currentSvg = coloredSvg || vectorSvg;
-                        const cleanedSvg = removeWhiteFromSvg(currentSvg);
-                        setColoredSvg(cleanedSvg);
-                        toast({
-                          title: "White Background Removed",
-                          description: "White elements have been removed from the vector image.",
-                        });
-                      }}
-                      className="ml-4 border-gray-600 text-gray-100 hover:bg-gray-700"
-                    >
-                      <div className="w-4 h-4 bg-white border border-gray-400 mr-2 relative">
-                        <div className="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-lg leading-none">×</div>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto vectorizer-color-grid">
+                    {detectedColors.map((colorItem, index) => (
+                      <div key={index} className="relative group">
+                        <div
+                          className="w-12 h-12 rounded border-2 border-gray-600 cursor-pointer hover:border-gray-400 transition-all"
+                          style={{ backgroundColor: colorItem.color }}
+                          title={`${colorItem.color} (${colorItem.count} elements)`}
+                        >
+                          <button
+                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              const currentSvg = coloredSvg || vectorSvg;
+                              const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                              setColoredSvg(updatedSvg);
+                              
+                              // Update detected colors
+                              const newColors = detectColorsInSvg(updatedSvg);
+                              setDetectedColors(newColors);
+                              
+                              toast({
+                                title: "Color Removed",
+                                description: `Removed ${colorItem.color} from the image.`,
+                              });
+                            }}
+                          >
+                            <div className="text-white font-bold text-xl">×</div>
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-400 text-center mt-1">{colorItem.count}</div>
                       </div>
-                      Remove White
-                    </Button>
+                    ))}
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="mt-3 pt-3 border-t border-gray-700">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          const cleanedSvg = removeWhiteFromSvg(currentSvg);
+                          setColoredSvg(cleanedSvg);
+                          
+                          // Update detected colors
+                          const newColors = detectColorsInSvg(cleanedSvg);
+                          setDetectedColors(newColors);
+                          
+                          toast({
+                            title: "White Removed",
+                            description: "All white and near-white colors have been removed.",
+                          });
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
+                      >
+                        Remove All White
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          const cleanedSvg = removeColorFromSvg(currentSvg, '#000000');
+                          setColoredSvg(cleanedSvg);
+                          
+                          // Update detected colors
+                          const newColors = detectColorsInSvg(cleanedSvg);
+                          setDetectedColors(newColors);
+                          
+                          toast({
+                            title: "Black Removed",
+                            description: "All black colors have been removed.",
+                          });
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
+                      >
+                        Remove All Black
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
