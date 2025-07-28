@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2 } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
 
 interface CanvasWorkspaceProps {
@@ -157,6 +157,64 @@ export default function CanvasWorkspace({
         });
       });
     }
+  };
+
+  const handleFitToBounds = () => {
+    if (!template || canvasElements.length === 0) return;
+
+    // Calculate safety margins (3mm on each side)
+    const marginMm = 3;
+    const safeWidth = template.width - (marginMm * 2);
+    const safeHeight = template.height - (marginMm * 2);
+
+    // Find the bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasElements.forEach(element => {
+      if (element.isVisible) {
+        minX = Math.min(minX, element.x);
+        minY = Math.min(minY, element.y);
+        maxX = Math.max(maxX, element.x + element.width);
+        maxY = Math.max(maxY, element.y + element.height);
+      }
+    });
+
+    if (minX === Infinity || minY === Infinity) return;
+
+    // Calculate current content dimensions
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+
+    // Calculate scale factor to fit within safe bounds
+    const scaleX = safeWidth / contentWidth;
+    const scaleY = safeHeight / contentHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+
+    // Calculate offset to center content within safe bounds
+    const scaledWidth = contentWidth * scale;
+    const scaledHeight = contentHeight * scale;
+    const offsetX = marginMm + (safeWidth - scaledWidth) / 2 - minX * scale;
+    const offsetY = marginMm + (safeHeight - scaledHeight) / 2 - minY * scale;
+
+    // Update all elements with new positions and sizes
+    const updates = canvasElements.map(element => ({
+      id: element.id,
+      updates: {
+        x: element.x * scale + offsetX,
+        y: element.y * scale + offsetY,
+        width: element.width * scale,
+        height: element.height * scale
+      }
+    }));
+
+    // Batch update all elements
+    Promise.all(
+      updates.map(({ id, updates }) => 
+        apiRequest("PATCH", `/api/canvas-elements/${id}`, updates)
+      )
+    ).then(() => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${project.id}/canvas-elements`] });
+    });
   };
 
   // Save to history when elements change (but avoid infinite loops)
@@ -450,6 +508,22 @@ export default function CanvasWorkspace({
               onToggle={setColorManagementEnabled}
               iccProfileName="PSO Coated FOGRA51 (EFI)"
             />
+
+            {/* Fit to Bounds Button for A3 */}
+            {template?.id === 'template-A3' && canvasElements.length > 0 && (
+              <>
+                <div className="h-6 w-px bg-gray-300"></div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFitToBounds}
+                  title="Scale all content to fit within safety margins"
+                >
+                  <Maximize2 className="w-4 h-4 mr-1" />
+                  Fit to Bounds
+                </Button>
+              </>
+            )}
           </div>
           
           {/* Right section - Undo/Redo */}
