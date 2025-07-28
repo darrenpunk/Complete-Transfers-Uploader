@@ -930,7 +930,11 @@ export default function CanvasWorkspace({
                             : shouldRecolorForInk 
                               ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`
                               // Priority 3: Original image
-                              : getImageUrl(logo)
+                              : (() => {
+                                  const url = getImageUrl(logo);
+                                  console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
+                                  return url;
+                                })()
                         }
                         alt={logo.originalName}
                         className="w-full h-full"
@@ -951,16 +955,12 @@ export default function CanvasWorkspace({
                             : shouldRecolorForInk 
                               ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
                               : getImageUrl(logo);
-                          console.log('Image loaded:', imageUrl);
-                          console.log('Logo dimensions:', { width: logo.width, height: logo.height });
-                          console.log('Element dimensions:', { width: element.width, height: element.height });
-                          console.log('Canvas display dimensions:', { elementWidth, elementHeight });
-                          if (hasValidContentBounds(logo)) {
-                            console.log('Content bounds:', logo.contentBounds);
-                            if (logo.width && logo.contentBounds) {
-                              console.log('Scale factor:', logo.width / (logo.contentBounds.maxX - logo.contentBounds.minX));
-                            }
-                          }
+                          console.log('✅ Image loaded successfully:', imageUrl);
+                          console.log('Logo details:', { 
+                            filename: logo.filename, 
+                            mimeType: logo.mimeType,
+                            originalName: logo.originalName
+                          });
                         }}
                         onError={(e) => {
                           console.error('Failed to load image:', logo ? getImageUrl(logo) : 'unknown');
