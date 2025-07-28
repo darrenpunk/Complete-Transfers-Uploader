@@ -1011,7 +1011,7 @@ export default function CanvasWorkspace({
 
             {/* Canvas Info */}
             <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
-              {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Background
+              {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
               {colorManagementEnabled && (
                 <span className="ml-2 px-1 bg-primary text-primary-foreground rounded text-xs">
                   ICC Preview
