@@ -395,46 +395,72 @@ export function VectorizerModal({
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
-  // Function to reduce colors to main logo colors (more conservative approach)
+  // Function to reduce colors to main logo colors (intelligent color grouping)
   const reduceColors = () => {
     if (originalDetectedColors.length === 0 || !vectorSvg) return;
     
-    // Calculate total color usage
-    const totalUsage = originalDetectedColors.reduce((sum, color) => sum + color.count, 0);
+    // Helper function to convert hex to RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
     
-    // Only remove colors that represent less than 2% of total usage (very minor colors)
-    const minUsageThreshold = Math.max(1, Math.floor(totalUsage * 0.02));
-    
-    // Get colors to remove (only very minor ones)
-    const colorsToRemove = originalDetectedColors
-      .filter(color => {
-        // Remove only if usage is below threshold AND it's not white (preserve white details)
-        return color.count < minUsageThreshold && 
-               color.color.toLowerCase() !== '#ffffff' && 
-               color.color.toLowerCase() !== 'white';
-      })
-      .map(c => c.color);
-    
-    // If no minor colors found, try a slightly less conservative approach
-    if (colorsToRemove.length === 0) {
-      // Remove only single-use colors (count = 1) except white
-      const singleUseColors = originalDetectedColors
-        .filter(color => 
-          color.count === 1 && 
-          color.color.toLowerCase() !== '#ffffff' && 
-          color.color.toLowerCase() !== 'white'
-        )
-        .map(c => c.color);
+    // Helper function to calculate color distance
+    const colorDistance = (color1: string, color2: string) => {
+      const rgb1 = hexToRgb(color1);
+      const rgb2 = hexToRgb(color2);
+      if (!rgb1 || !rgb2) return 999;
       
-      if (singleUseColors.length > 0) {
-        colorsToRemove.push(...singleUseColors);
+      return Math.sqrt(
+        Math.pow(rgb1.r - rgb2.r, 2) +
+        Math.pow(rgb1.g - rgb2.g, 2) +
+        Math.pow(rgb1.b - rgb2.b, 2)
+      );
+    };
+    
+    // Sort colors by usage (highest first)
+    const sortedColors = [...originalDetectedColors].sort((a, b) => b.count - a.count);
+    
+    // Keep the top 3-4 most used colors as main colors
+    const mainColors = sortedColors.slice(0, 4);
+    const mainColorSet = new Set(mainColors.map(c => c.color.toLowerCase()));
+    
+    // Find colors to remove: similar colors to main ones or very low usage
+    const colorsToRemove: string[] = [];
+    
+    sortedColors.forEach(color => {
+      if (mainColorSet.has(color.color.toLowerCase())) return; // Keep main colors
+      
+      // Check if this color is very similar to any main color (likely edge artifacts)
+      const isSimilarToMain = mainColors.some(mainColor => {
+        const distance = colorDistance(color.color, mainColor.color);
+        return distance < 50; // Colors within 50 units are considered similar
+      });
+      
+      // Remove if: similar to main color OR very low usage (less than 5% of top color)
+      const isLowUsage = color.count < (sortedColors[0].count * 0.05);
+      
+      if (isSimilarToMain || isLowUsage) {
+        colorsToRemove.push(color.color);
       }
+    });
+    
+    // Always preserve white if it exists (important for text/details)
+    const whiteIndex = colorsToRemove.findIndex(c => 
+      c.toLowerCase() === '#ffffff' || c.toLowerCase() === 'white'
+    );
+    if (whiteIndex !== -1) {
+      colorsToRemove.splice(whiteIndex, 1);
     }
     
     if (colorsToRemove.length === 0) {
       toast({
-        title: "No Minor Colors Found",
-        description: "Logo already has an optimal color palette",
+        title: "No Redundant Colors Found",
+        description: "Logo already has a clean color palette",
       });
       return;
     }
@@ -455,8 +481,8 @@ export function VectorizerModal({
     const keptColors = originalDetectedColors.length - colorsToRemove.length;
     
     toast({
-      title: "Minor Colors Removed",
-      description: `Removed ${colorsToRemove.length} minor colors (${keptColors} main colors preserved)`,
+      title: "Colors Optimized",
+      description: `Removed ${colorsToRemove.length} edge artifacts and similar colors (${keptColors} main colors kept)`,
     });
   };
 
