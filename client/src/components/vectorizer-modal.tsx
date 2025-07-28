@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2 } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -440,9 +440,10 @@ export function VectorizerModal({
       });
       
       // Also keep white/light colors regardless of similarity (important for text)
+      const rgb = hexToRgb(color.color);
       const isWhiteOrLight = color.color.toLowerCase() === '#ffffff' || 
                             color.color.toLowerCase() === 'white' ||
-                            hexToRgb(color.color)?.r > 200; // Light colors
+                            (rgb && rgb.r > 200); // Light colors
       
       if (isDistinctColor || isWhiteOrLight) {
         finalMainColors.push(color);
@@ -646,7 +647,7 @@ export function VectorizerModal({
                           title={`${colorItem.color} (${colorItem.count} elements)`}
                         >
                           <button
-                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
                             onClick={() => {
                               const currentSvg = coloredSvg || vectorSvg;
                               const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
@@ -662,7 +663,7 @@ export function VectorizerModal({
                               });
                             }}
                           >
-                            <div className="text-white font-bold text-sm">×</div>
+                            <Trash2 className="h-3 w-3 text-white" />
                           </button>
                         </div>
                         <div className="text-[10px] text-gray-500 text-center leading-tight">{colorItem.count}</div>
