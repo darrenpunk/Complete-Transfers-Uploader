@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, AlertCircle } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface VectorizerModalProps {
@@ -23,6 +24,8 @@ export function VectorizerModal({
   const [vectorSvg, setVectorSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
+  const [zoom, setZoom] = useState<number>(100); // Zoom percentage
+  const [showGrid, setShowGrid] = useState<boolean>(true); // Show transparency grid
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -80,14 +83,26 @@ export function VectorizerModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowGrid(!showGrid)}
+                title="Toggle transparency grid"
+              >
+                <Grid className={`h-4 w-4 ${showGrid ? 'text-primary' : ''}`} />
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {/* Cost Information */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 flex-shrink-0">
             <p className="text-sm text-blue-800 dark:text-blue-200">
               <strong>Vectorization Cost:</strong> ${cost.toFixed(2)} will be added to your order if you approve the result.
             </p>
@@ -118,51 +133,100 @@ export function VectorizerModal({
 
           {/* Preview State */}
           {previewUrl && !isProcessing && !error && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Zoom Controls */}
+              <div className="flex items-center justify-center gap-4 mb-4 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setZoom(Math.max(25, zoom - 25))}
+                  disabled={zoom <= 25}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-2 min-w-[200px]">
+                  <Slider
+                    value={[zoom]}
+                    onValueChange={(value) => setZoom(value[0])}
+                    min={25}
+                    max={400}
+                    step={25}
+                    className="flex-1"
+                  />
+                  <span className="text-sm font-medium w-12">{zoom}%</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setZoom(Math.min(400, zoom + 25))}
+                  disabled={zoom >= 400}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setZoom(100)}
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
                 {/* Original */}
-                <div>
-                  <h3 className="font-semibold mb-2">Original Raster</h3>
-                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
-                    <img 
-                      src={previewUrl} 
-                      alt="Original" 
-                      className="max-w-full h-auto mx-auto"
-                      style={{ maxHeight: '300px' }}
-                    />
+                <div className="flex flex-col overflow-hidden">
+                  <h3 className="font-semibold mb-2 text-center">Original Image</h3>
+                  <div 
+                    className={`flex-1 border rounded-lg overflow-auto ${
+                      showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'
+                    }`}
+                  >
+                    <div 
+                      className="p-8 flex items-center justify-center min-h-full"
+                      style={{ 
+                        transform: `scale(${zoom / 100})`,
+                        transformOrigin: 'center',
+                        transition: 'transform 0.2s ease'
+                      }}
+                    >
+                      <img 
+                        src={previewUrl} 
+                        alt="Original" 
+                        className="max-w-none"
+                        style={{ imageRendering: zoom > 200 ? 'pixelated' : 'auto' }}
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Vectorized Preview */}
-                <div>
-                  <h3 className="font-semibold mb-2">Vectorized Result</h3>
-                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+                <div className="flex flex-col overflow-hidden">
+                  <h3 className="font-semibold mb-2 text-center">Vectorizer.AI Result</h3>
+                  <div 
+                    className={`flex-1 border rounded-lg overflow-auto ${
+                      showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'
+                    }`}
+                  >
                     {vectorSvg ? (
                       <div 
-                        className="vector-preview-container"
+                        className="p-8 flex items-center justify-center min-h-full"
                         style={{ 
-                          maxHeight: '300px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden'
+                          transform: `scale(${zoom / 100})`,
+                          transformOrigin: 'center',
+                          transition: 'transform 0.2s ease'
                         }}
                       >
                         <div 
-                          style={{ 
-                            width: '100%', 
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
+                          className="vector-preview-wrapper max-w-none"
                           dangerouslySetInnerHTML={{ __html: vectorSvg }}
                         />
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                        <p className="text-sm">Generating vector...</p>
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                          <p className="text-sm">Generating vector...</p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -170,17 +234,16 @@ export function VectorizerModal({
               </div>
 
               {/* Instructions */}
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mt-4 flex-shrink-0">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Instructions:</strong> Use the vectorizer.ai window to upload your file and adjust settings. 
-                  When satisfied with the preview, download the SVG and return here to approve the result.
+                  <strong>Tip:</strong> Use the zoom controls to inspect details. The transparency grid helps you see which parts of the image have been made transparent.
                 </p>
               </div>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex justify-between items-center pt-4 mt-4 border-t flex-shrink-0">
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
