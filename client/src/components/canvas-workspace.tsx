@@ -920,6 +920,16 @@ export default function CanvasWorkspace({
                   {/* Element Content */}
                   <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {/* Logo Elements */}
+                    {(() => {
+                      console.log('🔍 Element debug:', {
+                        elementType: element.elementType,
+                        logoId: element.logoId,
+                        logoExists: !!logo,
+                        logoFilename: logo?.filename,
+                        logoMimeType: logo?.mimeType
+                      });
+                      return null;
+                    })()}
                     {element.elementType === 'logo' && logo ? (
                       <img
                         src={
