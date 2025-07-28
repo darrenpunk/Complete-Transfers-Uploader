@@ -229,52 +229,86 @@ export function VectorizerModal({
     return rgb;
   };
 
-  // Function to remove white from SVG
-  const removeWhiteFromSvg = (svg: string) => {
+  // Function to remove white backgrounds intelligently
+  const removeWhiteFromSvg = (svg: string, mode: 'background' | 'all' = 'background') => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     
-    // Remove elements with white fill
-    const whiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"]');
-    whiteElements.forEach(el => {
-      // Check if this is a background rectangle covering the entire viewBox
-      if (el.tagName === 'rect' || el.tagName === 'path') {
-        el.remove();
-      } else {
-        // For other elements, make them transparent
-        el.setAttribute('fill', 'none');
-      }
-    });
+    // Get the SVG's viewBox dimensions
+    const svgElement = doc.querySelector('svg');
+    const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
+    const svgWidth = viewBox[2];
+    const svgHeight = viewBox[3];
     
-    // Also check for near-white colors
-    const allElements = doc.querySelectorAll('*[fill]');
-    allElements.forEach(el => {
-      const fill = el.getAttribute('fill');
-      if (fill && fill.startsWith('rgb')) {
-        // Parse RGB values
-        const match = fill.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
-        if (match) {
-          let r, g, b;
-          if (match[1].includes('%')) {
-            r = parseFloat(match[1]) * 2.55;
-            g = parseFloat(match[2]) * 2.55;
-            b = parseFloat(match[3]) * 2.55;
-          } else {
-            r = parseInt(match[1]);
-            g = parseInt(match[2]);
-            b = parseInt(match[3]);
-          }
-          // If all values are above 250, consider it white
-          if (r > 250 && g > 250 && b > 250) {
-            if (el.tagName === 'rect' || el.tagName === 'path') {
-              el.remove();
+    if (mode === 'background') {
+      // Smart mode: Only remove white backgrounds
+      const whiteRects = doc.querySelectorAll('rect[fill="#ffffff"], rect[fill="#FFFFFF"], rect[fill="white"], rect[fill="rgb(255,255,255)"], rect[fill="rgb(100%,100%,100%)"]');
+      
+      // Find the largest white rectangle
+      let largestArea = 0;
+      let largestRect: Element | null = null;
+      
+      whiteRects.forEach(rect => {
+        const width = parseFloat(rect.getAttribute('width') || '0');
+        const height = parseFloat(rect.getAttribute('height') || '0');
+        const x = parseFloat(rect.getAttribute('x') || '0');
+        const y = parseFloat(rect.getAttribute('y') || '0');
+        const area = width * height;
+        
+        // Check if this rectangle is likely a background
+        const coversCanvas = width >= svgWidth * 0.8 && height >= svgHeight * 0.8;
+        const nearTopLeft = x <= svgWidth * 0.1 && y <= svgHeight * 0.1;
+        
+        if (area > largestArea && coversCanvas && nearTopLeft) {
+          largestArea = area;
+          largestRect = rect;
+        }
+      });
+      
+      // Remove only the background rectangle
+      if (largestRect) {
+        (largestRect as Element).remove();
+      }
+      
+    } else {
+      // Aggressive mode: Remove ALL white elements
+      const whiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"]');
+      whiteElements.forEach(el => {
+        if (el.tagName === 'rect' || el.tagName === 'path') {
+          el.remove();
+        } else {
+          el.setAttribute('fill', 'none');
+        }
+      });
+      
+      // Also check for near-white colors
+      const allElements = doc.querySelectorAll('*[fill]');
+      allElements.forEach(el => {
+        const fill = el.getAttribute('fill');
+        if (fill && fill.startsWith('rgb')) {
+          const match = fill.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+          if (match) {
+            let r, g, b;
+            if (match[1].includes('%')) {
+              r = parseFloat(match[1]) * 2.55;
+              g = parseFloat(match[2]) * 2.55;
+              b = parseFloat(match[3]) * 2.55;
             } else {
-              el.setAttribute('fill', 'none');
+              r = parseInt(match[1]);
+              g = parseInt(match[2]);
+              b = parseInt(match[3]);
+            }
+            if (r > 250 && g > 250 && b > 250) {
+              if (el.tagName === 'rect' || el.tagName === 'path') {
+                el.remove();
+              } else {
+                el.setAttribute('fill', 'none');
+              }
             }
           }
         }
-      }
-    });
+      });
+    }
     
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
@@ -460,7 +494,7 @@ export function VectorizerModal({
                         size="sm"
                         onClick={() => {
                           const currentSvg = coloredSvg || vectorSvg;
-                          const cleanedSvg = removeWhiteFromSvg(currentSvg);
+                          const cleanedSvg = removeWhiteFromSvg(currentSvg, 'background');
                           setColoredSvg(cleanedSvg);
                           
                           // Update detected colors
@@ -468,13 +502,34 @@ export function VectorizerModal({
                           setDetectedColors(newColors);
                           
                           toast({
-                            title: "White Removed",
-                            description: "All white and near-white colors have been removed.",
+                            title: "White Background Removed",
+                            description: "White background removed while preserving white content.",
                           });
                         }}
                         className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
                       >
-                        Remove All White
+                        Remove White Background
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          const cleanedSvg = removeWhiteFromSvg(currentSvg, 'all');
+                          setColoredSvg(cleanedSvg);
+                          
+                          // Update detected colors
+                          const newColors = detectColorsInSvg(cleanedSvg);
+                          setDetectedColors(newColors);
+                          
+                          toast({
+                            title: "All White Removed",
+                            description: "All white elements have been removed.",
+                          });
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
+                      >
+                        Remove ALL White
                       </Button>
                       <Button
                         variant="outline"
