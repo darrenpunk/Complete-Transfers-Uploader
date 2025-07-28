@@ -131,9 +131,7 @@ export default function ProjectNameModal({
               <MessageSquare className="w-4 h-4" />
               Comments
             </Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              Artwork Comments Box: This area is for artwork related comments ONLY, and will only be seen at the time of processing artwork. All other requests must be sent by replying to the email confirmation that you will receive after the order is placed.
-            </div>
+            
             <Textarea
               id="comments"
               value={comments}
