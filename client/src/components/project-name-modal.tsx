@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -10,13 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, AlertCircle } from "lucide-react";
+import { FileText, AlertCircle, MessageSquare, Hash } from "lucide-react";
 
 interface ProjectNameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentName?: string;
-  onConfirm: (projectName: string) => void;
+  onConfirm: (projectData: { name: string; comments: string; quantity: number }) => void;
   isGeneratingPDF?: boolean;
   title?: string;
   description?: string;
@@ -29,9 +30,11 @@ export default function ProjectNameModal({
   onConfirm,
   isGeneratingPDF = false,
   title = "Name Your Project",
-  description = "Please provide a name for your project before continuing. This will be used for the PDF filename."
+  description = "Please provide project details before continuing. This information will be used for the PDF filename and Odoo integration."
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
+  const [comments, setComments] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [hasError, setHasError] = useState(false);
 
   const handleConfirm = () => {
@@ -42,14 +45,31 @@ export default function ProjectNameModal({
       return;
     }
 
+    if (quantity < 1) {
+      setHasError(true);
+      return;
+    }
+
     setHasError(false);
-    onConfirm(trimmedName);
+    onConfirm({
+      name: trimmedName,
+      comments: comments.trim(),
+      quantity: quantity
+    });
     onOpenChange(false);
   };
 
   const handleInputChange = (value: string) => {
     setProjectName(value);
-    if (hasError && value.trim() && value.trim() !== 'Untitled Project') {
+    if (hasError && value.trim() && value.trim() !== 'Untitled Project' && quantity >= 1) {
+      setHasError(false);
+    }
+  };
+
+  const handleQuantityChange = (value: string) => {
+    const num = parseInt(value) || 1;
+    setQuantity(Math.max(1, num));
+    if (hasError && projectName.trim() && projectName.trim() !== 'Untitled Project' && num >= 1) {
       setHasError(false);
     }
   };
@@ -62,7 +82,7 @@ export default function ProjectNameModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -85,16 +105,54 @@ export default function ProjectNameModal({
               className={hasError ? "border-red-300 focus:border-red-500" : ""}
               autoFocus
             />
-            {hasError && (
-              <div className="flex items-center gap-2 text-sm text-red-600">
-                <AlertCircle className="w-4 h-4" />
-                Please enter a valid project name
-              </div>
-            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quantity" className="flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              Quantity of Transfers Required
+            </Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => handleQuantityChange(e.target.value)}
+              placeholder="1"
+              className={hasError ? "border-red-300 focus:border-red-500" : ""}
+            />
+            <div className="text-xs text-muted-foreground">
+              This quantity will be added to the Odoo webcart
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="comments" className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Comments
+            </Label>
+            <div className="text-sm text-muted-foreground mb-2">
+              These comments will be added to the comments section of our Odoo sales order
+            </div>
+            <Textarea
+              id="comments"
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder="Enter any special instructions or comments..."
+              rows={3}
+              className="resize-none"
+            />
           </div>
           
+          {hasError && (
+            <div className="flex items-center gap-2 text-sm text-red-600">
+              <AlertCircle className="w-4 h-4" />
+              Please enter a valid project name and quantity (minimum 1)
+            </div>
+          )}
+          
           <div className="text-xs text-muted-foreground">
-            This name will be used for the PDF filename and project identification.
+            Project name will be used for PDF filename and project identification.
           </div>
         </div>
 

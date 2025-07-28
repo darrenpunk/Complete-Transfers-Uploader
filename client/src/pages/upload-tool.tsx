@@ -135,17 +135,25 @@ export default function UploadTool() {
   });
 
   // Handle project naming confirmation
-  const handleProjectNameConfirm = async (projectName: string) => {
+  const handleProjectNameConfirm = async (projectData: { name: string; comments: string; quantity: number }) => {
     try {
       // Update project name if needed
-      if (currentProject && currentProject.name !== projectName) {
-        const updatedProject = await updateProjectMutation.mutateAsync({ name: projectName });
+      if (currentProject && currentProject.name !== projectData.name) {
+        const updatedProject = await updateProjectMutation.mutateAsync({ name: projectData.name });
         setCurrentProject(updatedProject);
       }
 
+      // Store the project data (comments and quantity) for future use with Odoo integration
+      // For now, we'll log this data but it can be stored in project metadata later
+      console.log('Project data for Odoo integration:', {
+        name: projectData.name,
+        comments: projectData.comments,
+        quantity: projectData.quantity
+      });
+
       // Execute the pending action
       if (pendingAction === 'pdf') {
-        generatePDFMutation.mutate(projectName);
+        generatePDFMutation.mutate(projectData.name);
       } else if (pendingAction === 'continue') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
       }
@@ -571,12 +579,6 @@ export default function UploadTool() {
       />
 
       {/* Applique Badges Modal */}
-      {console.log('About to render AppliqueBadgesModal with state:', { 
-        showAppliqueBadgesModal, 
-        triggerAppliqueBadgesModal,
-        pendingTemplateData,
-        windowHash: window.location.hash
-      })}
       
 
     </div>

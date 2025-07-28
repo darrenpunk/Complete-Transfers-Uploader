@@ -115,6 +115,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Streamlined Properties Panel**: Removed project details section from right sidebar, focusing on logo properties and workflow tools
 ✓ **Applique Badges Embroidery Form**: Implemented specialized form modal for Custom Badges templates with comprehensive embroidery file options, thread types, positioning, sizing, and embroidered parts specifications that automatically launches after template selection and embeds form data on the second page of PDF output
 ✓ **Enhanced PDF Form Readability**: Increased all applique form font sizes from 10-14pt to 12-16pt with improved line spacing (20pt) for professional print readability
+✓ **Project Comments & Quantity Fields**: Added comments section and quantity input to project naming modal for Odoo integration - comments added to sales order, quantity to webcart
+✓ **Ultra-Compact PDF Form Layout**: Redesigned applique badges form with minimal margins (20px) and optimized font sizes (8-12pt) to ensure all content fits properly within page boundaries
 
 
 ## Current Status (July 27, 2025)
