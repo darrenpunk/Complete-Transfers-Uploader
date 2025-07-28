@@ -498,6 +498,49 @@ export default function CanvasWorkspace({
               </div>
             )}
 
+            {/* 3mm Safety Margin for A3 Template */}
+            {template?.id === 'template-A3' && (
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Calculate 3mm margin in pixels */}
+                {(() => {
+                  const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+                  const marginInPixels = 3 * mmToPixelRatio * (zoom / 100); // 3mm margin
+                  
+                  return (
+                    <>
+                      {/* Top margin line */}
+                      <div 
+                        className="absolute left-0 right-0 h-px bg-red-400 opacity-60"
+                        style={{ top: marginInPixels }}
+                      />
+                      {/* Bottom margin line */}
+                      <div 
+                        className="absolute left-0 right-0 h-px bg-red-400 opacity-60"
+                        style={{ bottom: marginInPixels }}
+                      />
+                      {/* Left margin line */}
+                      <div 
+                        className="absolute top-0 bottom-0 w-px bg-red-400 opacity-60"
+                        style={{ left: marginInPixels }}
+                      />
+                      {/* Right margin line */}
+                      <div 
+                        className="absolute top-0 bottom-0 w-px bg-red-400 opacity-60"
+                        style={{ right: marginInPixels }}
+                      />
+                      {/* Corner indicators for clarity */}
+                      <div 
+                        className="absolute text-xs text-red-400 opacity-60"
+                        style={{ top: marginInPixels + 4, left: marginInPixels + 4 }}
+                      >
+                        3mm
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* Canvas Elements */}
             {canvasElements.map((element) => {
               const logo = logos.find(l => l.id === element.logoId);
