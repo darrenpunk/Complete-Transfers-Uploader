@@ -160,28 +160,16 @@ export default function CanvasWorkspace({
   };
 
   const handleFitToBounds = async () => {
-    console.log('Fit to Bounds clicked', { template, canvasElementsLength: canvasElements.length });
-    
-    if (!template || canvasElements.length === 0) {
-      console.log('Early return: no template or elements');
-      return;
-    }
+    if (!template || canvasElements.length === 0) return;
 
     // Calculate safety margins (3mm on each side)
     const marginMm = 3;
     const safeWidth = template.width - (marginMm * 2);
     const safeHeight = template.height - (marginMm * 2);
 
-    console.log('Template dimensions:', { width: template.width, height: template.height });
-    console.log('Safe area:', { safeWidth, safeHeight });
-
     // Find the bounding box of all visible elements
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     const visibleElements = canvasElements.filter(element => element.isVisible);
-    
-    console.log('Visible elements:', visibleElements.map(el => ({
-      id: el.id, x: el.x, y: el.y, width: el.width, height: el.height
-    })));
     
     visibleElements.forEach(element => {
       minX = Math.min(minX, element.x);
@@ -190,12 +178,7 @@ export default function CanvasWorkspace({
       maxY = Math.max(maxY, element.y + element.height);
     });
 
-    console.log('Content bounds:', { minX, minY, maxX, maxY });
-
-    if (minX === Infinity || minY === Infinity) {
-      console.log('No visible elements found');
-      return;
-    }
+    if (minX === Infinity || minY === Infinity) return;
 
     // Calculate current content dimensions
     const contentWidth = maxX - minX;
@@ -206,15 +189,11 @@ export default function CanvasWorkspace({
     const scaleY = safeHeight / contentHeight;
     const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
 
-    console.log('Scale calculation:', { scaleX, scaleY, finalScale: scale });
-
     // Calculate offset to center content within safe bounds
     const scaledWidth = contentWidth * scale;
     const scaledHeight = contentHeight * scale;
     const offsetX = marginMm + (safeWidth - scaledWidth) / 2 - minX * scale;
     const offsetY = marginMm + (safeHeight - scaledHeight) / 2 - minY * scale;
-
-    console.log('Offset calculation:', { offsetX, offsetY });
 
     // Update all elements with new positions and sizes
     const updates = canvasElements.map(element => ({
@@ -227,8 +206,6 @@ export default function CanvasWorkspace({
       }
     }));
 
-    console.log('Updates to apply:', updates);
-
     try {
       // Batch update all elements sequentially to avoid race conditions
       for (const { id, updates: elementUpdates } of updates) {
@@ -236,17 +213,12 @@ export default function CanvasWorkspace({
           id,
           updates: elementUpdates
         });
-        console.log(`Updated element ${id}:`, elementUpdates);
       }
-      
-      console.log('All elements updated, refreshing canvas...');
       
       // Force refresh of canvas elements
       queryClient.invalidateQueries({ 
         queryKey: [`/api/projects/${project.id}/canvas-elements`] 
       });
-      
-      console.log('Fit to bounds completed successfully');
     } catch (error) {
       console.error('Error updating elements:', error);
     }
