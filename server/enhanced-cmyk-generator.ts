@@ -604,8 +604,18 @@ export class EnhancedCMYKGenerator {
       }
     }
     
-    // Check if we have original PDF for vector preservation
-    if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+    // Check if fonts have been outlined - if so, use the outlined SVG instead of original PDF
+    if (logo.fontsOutlined && logo.mimeType === 'image/svg+xml') {
+      const outlinedSvgPath = path.join(uploadDir, logo.filename);
+      if (fs.existsSync(outlinedSvgPath)) {
+        console.log(`Enhanced CMYK: Using outlined SVG instead of original PDF for: ${logo.originalName}`);
+        await this.embedImageFile(pdfDoc, page, element, outlinedSvgPath, 'image/svg+xml', templateSize);
+        return;
+      }
+    }
+    
+    // Check if we have original PDF for vector preservation (only if fonts are not outlined)
+    if (logo.originalFilename && logo.originalMimeType === 'application/pdf' && !logo.fontsOutlined) {
       const originalPdfPath = path.join(uploadDir, logo.originalFilename);
       if (fs.existsSync(originalPdfPath)) {
         console.log(`Enhanced CMYK: Embedding original PDF vectors: ${logo.originalName}`);
@@ -1007,11 +1017,14 @@ export class EnhancedCMYKGenerator {
       return;
     }
     
-    // Calculate position (flip Y coordinate for PDF)
-    const x = element.x * 2.834645669;
-    const y = (templateSize.height - element.y - element.height) * 2.834645669;
-    const width = element.width * 2.834645669;
-    const height = element.height * 2.834645669;
+    // Convert mm to points (1 mm = 2.834645669 points)
+    const mmToPoints = 2.834645669;
+    
+    // Calculate position in points (flip Y coordinate for PDF)
+    const x = element.x * mmToPoints;
+    const y = (templateSize.height - element.y - element.height) * mmToPoints;
+    const width = element.width * mmToPoints;
+    const height = element.height * mmToPoints;
     
     // Draw the image
     page.drawImage(image, {
@@ -1056,11 +1069,14 @@ export class EnhancedCMYKGenerator {
         if (pages.length > 0) {
           const embeddedPage = await pdfDoc.embedPage(pages[0]);
           
-          // Calculate position (flip Y coordinate for PDF)
-          const x = element.x * 2.834645669;
-          const y = (templateSize.height - element.y - element.height) * 2.834645669;
-          const width = element.width * 2.834645669;
-          const height = element.height * 2.834645669;
+          // Convert mm to points (1 mm = 2.834645669 points)
+          const mmToPoints = 2.834645669;
+          
+          // Calculate position in points (flip Y coordinate for PDF)
+          const x = element.x * mmToPoints;
+          const y = (templateSize.height - element.y - element.height) * mmToPoints;
+          const width = element.width * mmToPoints;
+          const height = element.height * mmToPoints;
           
           // Draw the embedded page
           page.drawPage(embeddedPage, {
