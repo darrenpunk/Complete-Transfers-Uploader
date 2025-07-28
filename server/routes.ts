@@ -1375,7 +1375,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const apiId = process.env.VECTORIZER_API_ID;
       const apiSecret = process.env.VECTORIZER_API_SECRET;
       
+      console.log('Environment check - API ID exists:', !!apiId, 'API Secret exists:', !!apiSecret);
+      
       if (!apiId || !apiSecret) {
+        console.error('Missing vectorizer credentials - API ID:', !!apiId, 'API Secret:', !!apiSecret);
         return res.status(500).json({ 
           error: "Vectorizer.ai API credentials not configured. Please contact support to enable AI vectorization." 
         });
