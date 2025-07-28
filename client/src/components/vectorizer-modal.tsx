@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface VectorizerModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ export function VectorizerModal({
   imageFile,
   onVectorDownload
 }: VectorizerModalProps) {
+  const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [vectorSvg, setVectorSvg] = useState<string | null>(null);
@@ -88,6 +90,56 @@ export function VectorizerModal({
       onVectorDownload(svgToDownload);
       onClose();
     }
+  };
+
+  // Function to remove white from SVG
+  const removeWhiteFromSvg = (svg: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    
+    // Remove elements with white fill
+    const whiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"]');
+    whiteElements.forEach(el => {
+      // Check if this is a background rectangle covering the entire viewBox
+      if (el.tagName === 'rect' || el.tagName === 'path') {
+        el.remove();
+      } else {
+        // For other elements, make them transparent
+        el.setAttribute('fill', 'none');
+      }
+    });
+    
+    // Also check for near-white colors
+    const allElements = doc.querySelectorAll('*[fill]');
+    allElements.forEach(el => {
+      const fill = el.getAttribute('fill');
+      if (fill && fill.startsWith('rgb')) {
+        // Parse RGB values
+        const match = fill.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+        if (match) {
+          let r, g, b;
+          if (match[1].includes('%')) {
+            r = parseFloat(match[1]) * 2.55;
+            g = parseFloat(match[2]) * 2.55;
+            b = parseFloat(match[3]) * 2.55;
+          } else {
+            r = parseInt(match[1]);
+            g = parseInt(match[2]);
+            b = parseInt(match[3]);
+          }
+          // If all values are above 250, consider it white
+          if (r > 250 && g > 250 && b > 250) {
+            if (el.tagName === 'rect' || el.tagName === 'path') {
+              el.remove();
+            } else {
+              el.setAttribute('fill', 'none');
+            }
+          }
+        }
+      }
+    });
+    
+    return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
   // Function to apply color to SVG
@@ -240,6 +292,27 @@ export function VectorizerModal({
                     >
                       Reset
                     </button>
+                    
+                    {/* Remove White Background Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const currentSvg = coloredSvg || vectorSvg;
+                        const cleanedSvg = removeWhiteFromSvg(currentSvg);
+                        setColoredSvg(cleanedSvg);
+                        toast({
+                          title: "White Background Removed",
+                          description: "White elements have been removed from the vector image.",
+                        });
+                      }}
+                      className="ml-4"
+                    >
+                      <div className="w-4 h-4 bg-white border border-gray-400 mr-2 relative">
+                        <div className="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-lg leading-none">×</div>
+                      </div>
+                      Remove White
+                    </Button>
                   </div>
                 </div>
               )}
