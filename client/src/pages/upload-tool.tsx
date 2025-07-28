@@ -417,7 +417,7 @@ export default function UploadTool() {
     // Handle completion
     xhr.addEventListener('load', () => {
       setIsUploading(false);
-      if (xhr.status === 200) {
+      if (xhr.status === 200 || xhr.status === 201) {
         try {
           const newLogos = JSON.parse(xhr.responseText);
           
@@ -435,6 +435,8 @@ export default function UploadTool() {
             description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
           });
         } catch (error) {
+          console.error('Upload response parsing error:', error);
+          console.log('Response text:', xhr.responseText);
           toast({
             title: "Error",
             description: "Failed to process upload response.",
@@ -442,9 +444,11 @@ export default function UploadTool() {
           });
         }
       } else {
+        console.error('Upload failed with status:', xhr.status);
+        console.log('Response text:', xhr.responseText);
         toast({
           title: "Error", 
-          description: "Failed to upload logos. Please try again.",
+          description: `Upload failed (${xhr.status}). Please try again.`,
           variant: "destructive",
         });
       }
@@ -453,6 +457,7 @@ export default function UploadTool() {
     // Handle errors
     xhr.addEventListener('error', () => {
       setIsUploading(false);
+      console.error('XMLHttpRequest error event triggered');
       toast({
         title: "Error",
         description: "Upload failed. Please check your connection and try again.",
@@ -460,8 +465,20 @@ export default function UploadTool() {
       });
     });
     
+    // Handle timeout
+    xhr.addEventListener('timeout', () => {
+      setIsUploading(false);
+      console.error('XMLHttpRequest timeout');
+      toast({
+        title: "Timeout",
+        description: "Upload timed out. Please try again with smaller files.",
+        variant: "destructive",
+      });
+    });
+    
     // Send the request
     xhr.open('POST', `/api/projects/${currentProject.id}/logos`);
+    xhr.timeout = 120000; // 2 minute timeout for large files
     xhr.send(formData);
   };
 

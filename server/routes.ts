@@ -284,8 +284,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // Calculate content bounds first
                 const initialBbox = calculateSVGContentBounds(svgContent);
-                if (initialBbox && initialBbox.hasColoredContent) {
-                  console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)}`);
+                if (initialBbox && initialBbox.minX !== undefined && initialBbox.minY !== undefined && initialBbox.maxX !== undefined && initialBbox.maxY !== undefined) {
+                  console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)} (colored content only, raw: ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)})`);
                 }
                 
                 // SELECTIVE white background removal - only remove obvious page backgrounds
@@ -332,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Apply content bounds cropping after background removal
                 const finalBbox = calculateSVGContentBounds(svgContent);
                 console.log('Final bbox result:', finalBbox);
-                if (finalBbox && finalBbox.minX !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
+                if (finalBbox && finalBbox.minX !== undefined && finalBbox.minY !== undefined && finalBbox.maxX !== undefined && finalBbox.maxY !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
                   // Use raw content dimensions for tight cropping
                   const rawWidth = finalBbox.maxX - finalBbox.minX;
                   const rawHeight = finalBbox.maxY - finalBbox.minY;
