@@ -323,6 +323,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
                 
+                // Now calculate content bounds BEFORE modifying the SVG
+                const bbox = calculateSVGContentBounds(svgContent);
+                if (bbox && bbox.hasColoredContent && bbox.minX !== undefined) {
+                  console.log(`SVG cropping to content: ${bbox.minX.toFixed(1)},${bbox.minY.toFixed(1)} ${bbox.width.toFixed(1)}×${bbox.height.toFixed(1)}`);
+                  
+                  // Update SVG viewBox to crop to content bounds
+                  svgContent = svgContent.replace(
+                    /viewBox="[^"]*"/,
+                    `viewBox="${bbox.minX} ${bbox.minY} ${bbox.width} ${bbox.height}"`
+                  );
+                  
+                  // Also update width and height attributes to match content
+                  svgContent = svgContent.replace(
+                    /width="[^"]*"/,
+                    `width="${bbox.width}"`
+                  );
+                  svgContent = svgContent.replace(
+                    /height="[^"]*"/,
+                    `height="${bbox.height}"`
+                  );
+                }
+                
                 // Force SVG background transparency only
                 svgContent = svgContent.replace('<svg', '<svg style="background:transparent !important"');
                 
