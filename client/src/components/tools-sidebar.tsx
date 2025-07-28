@@ -103,7 +103,9 @@ export default function ToolsSidebar({
   selectedElement,
   onTemplateChange,
   onGarmentColorChange,
-  onInkColorChange
+  onInkColorChange,
+  onAddTextElement,
+  onAddShapeElement
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [logosCollapsed, setLogosCollapsed] = useState(false);

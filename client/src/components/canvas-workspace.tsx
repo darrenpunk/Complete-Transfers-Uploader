@@ -876,7 +876,7 @@ export default function CanvasWorkspace({
               
               // Check if this is a Single Colour Transfer template requiring ink color recoloring
               const isSingleColourTemplate = template?.group === "Single Colour Transfers";
-              const shouldRecolorForInk = isSingleColourTemplate && project.inkColor;
+              const shouldRecolorForInk = isSingleColourTemplate && project.inkColor && logo;
               
               // Debug: Log color overrides for this element
               if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
@@ -953,12 +953,12 @@ export default function CanvasWorkspace({
                           }
                         }}
                         onError={(e) => {
-                          console.error('Failed to load image:', getImageUrl(logo));
+                          console.error('Failed to load image:', logo ? getImageUrl(logo) : 'unknown');
                           // Show fallback icon if image fails to load
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
                           const parent = target.parentElement;
-                          if (parent) {
+                          if (parent && logo) {
                             parent.innerHTML = `
                               <div class="flex flex-col items-center justify-center text-gray-500 p-2">
                                 <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
@@ -970,7 +970,7 @@ export default function CanvasWorkspace({
                           }
                         }}
                       />
-                    ) : logo.mimeType === 'application/pdf' ? (
+                    ) : logo && logo.mimeType === 'application/pdf' ? (
                       <div className="flex flex-col items-center justify-center text-red-600 p-2 bg-red-50 border border-red-200 rounded">
                         <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -989,7 +989,7 @@ export default function CanvasWorkspace({
                         <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-xs text-center break-all">{logo.originalName}</span>
+                        <span className="text-xs text-center break-all">{logo?.originalName || 'Unknown'}</span>
                       </div>
                     )}
 
@@ -1001,52 +1001,23 @@ export default function CanvasWorkspace({
                           fontSize: `${element.fontSize || 24}px`,
                           fontFamily: element.fontFamily || 'Arial',
                           fontWeight: element.fontWeight || 'normal',
-                          color: element.color || '#000000',
+                          color: element.textColor || '#000000',
                           textAlign: element.textAlign as any || 'center'
                         }}
                       >
-                        {element.text || 'Text'}
+                        {element.textContent || 'Text'}
                       </div>
                     )}
 
                     {/* Shape Elements */}
                     {element.elementType === 'shape' && (
                       <div className="w-full h-full flex items-center justify-center">
-                        {element.shapeType === 'rectangle' && (
-                          <div 
-                            className="w-full h-full" 
-                            style={{
-                              backgroundColor: element.color || '#000000',
-                              borderRadius: element.borderRadius || 0
-                            }}
-                          />
-                        )}
-                        {element.shapeType === 'circle' && (
-                          <div 
-                            className="w-full h-full rounded-full" 
-                            style={{
-                              backgroundColor: element.color || '#000000'
-                            }}
-                          />
-                        )}
-                        {element.shapeType === 'triangle' && (
-                          <div 
-                            className="w-full h-full flex items-center justify-center"
-                            style={{
-                              clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                              backgroundColor: element.color || '#000000'
-                            }}
-                          />
-                        )}
-                        {element.shapeType === 'star' && (
-                          <div 
-                            className="w-full h-full flex items-center justify-center"
-                            style={{
-                              clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                              backgroundColor: element.color || '#000000'
-                            }}
-                          />
-                        )}
+                        <div 
+                          className="w-full h-full" 
+                          style={{
+                            backgroundColor: element.fillColor || '#000000'
+                          }}
+                        />
                       </div>
                     )}
                   </div>
