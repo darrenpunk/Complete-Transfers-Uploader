@@ -890,14 +890,14 @@ export function VectorizerModal({
                           value={[zoom]}
                           onValueChange={(value) => setZoom(value[0])}
                           min={25}
-                          max={400}
+                          max={800}
                           step={25}
                           className="flex-1"
                         />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Adjust zoom level (25% - 400%)</p>
+                      <p>Adjust zoom level (25% - 800%)</p>
                     </TooltipContent>
                   </Tooltip>
                   <span className="text-sm font-medium w-12">{zoom}%</span>
@@ -908,14 +908,14 @@ export function VectorizerModal({
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setZoom(Math.min(400, zoom + 25))}
-                      disabled={zoom >= 400}
+                      onClick={() => setZoom(Math.min(800, zoom + 25))}
+                      disabled={zoom >= 800}
                     >
                       <ZoomIn className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Zoom in (max 400%)</p>
+                    <p>Zoom in (max 800%)</p>
                   </TooltipContent>
                 </Tooltip>
                 
