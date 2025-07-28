@@ -425,47 +425,42 @@ export function VectorizerModal({
     // Sort colors by usage (highest first)
     const sortedColors = [...originalDetectedColors].sort((a, b) => b.count - a.count);
     
-    // More aggressive approach: Keep only top 2 colors as absolute main colors
-    const absoluteMainColors = sortedColors.slice(0, 2);
+    // Start with top 5 most used colors as potential keepers
+    const potentialMainColors = sortedColors.slice(0, 5);
+    const finalMainColors: typeof sortedColors = [];
     
-    // Group remaining colors by similarity and keep only the strongest from each group
-    const colorGroups: Array<{representative: typeof sortedColors[0], similar: typeof sortedColors}> = [];
+    // Always keep the top color (most used)
+    finalMainColors.push(potentialMainColors[0]);
     
-    // Process each color after the top 2
-    sortedColors.slice(2).forEach(color => {
-      // Check if this color is similar to any existing group representative
-      let foundGroup = false;
+    // For remaining potential colors, only keep if they're significantly different
+    potentialMainColors.slice(1).forEach(color => {
+      const isDistinctColor = finalMainColors.every(existingColor => {
+        const distance = colorDistance(color.color, existingColor.color);
+        return distance > 60; // Must be at least 60 units different
+      });
       
-      for (const group of colorGroups) {
-        const distance = colorDistance(color.color, group.representative.color);
-        if (distance < 80) { // More aggressive grouping - colors within 80 units
-          group.similar.push(color);
-          // Replace representative if this color has higher usage
-          if (color.count > group.representative.count) {
-            group.representative = color;
-          }
-          foundGroup = true;
-          break;
-        }
-      }
+      // Also keep white/light colors regardless of similarity (important for text)
+      const isWhiteOrLight = color.color.toLowerCase() === '#ffffff' || 
+                            color.color.toLowerCase() === 'white' ||
+                            hexToRgb(color.color)?.r > 200; // Light colors
       
-      // If no similar group found, create new group
-      if (!foundGroup) {
-        colorGroups.push({
-          representative: color,
-          similar: [color]
-        });
+      if (isDistinctColor || isWhiteOrLight) {
+        finalMainColors.push(color);
       }
     });
     
-    // Keep top 2 absolute colors + top 1-2 group representatives
-    const finalMainColors = [
-      ...absoluteMainColors,
-      ...colorGroups
-        .sort((a, b) => b.representative.count - a.representative.count)
-        .slice(0, 2) // Keep only top 2 groups
-        .map(g => g.representative)
-    ];
+    // Also check remaining colors for any high-contrast distinct colors we might have missed
+    sortedColors.slice(5).forEach(color => {
+      const isVeryDistinct = finalMainColors.every(existingColor => {
+        const distance = colorDistance(color.color, existingColor.color);
+        return distance > 100; // Very different colors (like magenta vs green)
+      });
+      
+      // Only add if very distinct AND has reasonable usage
+      if (isVeryDistinct && color.count >= 2 && finalMainColors.length < 6) {
+        finalMainColors.push(color);
+      }
+    });
     
     const mainColorSet = new Set(finalMainColors.map(c => c.color.toLowerCase()));
     
