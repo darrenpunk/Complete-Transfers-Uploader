@@ -147,7 +147,15 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const upload = multer({
-  dest: uploadDir,
+  storage: multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => {
+      // Generate unique filename with proper extension
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    }
+  }),
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit
   },
@@ -267,11 +275,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               // Check if pdf2svg is available
               await execAsync('which pdf2svg');
-              svgCommand = `pdf2svg "${file.path}" "${svgPath}"`;
+              svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
               console.log('Using pdf2svg for conversion');
             } catch {
               // Fallback to ImageMagick SVG conversion
-              svgCommand = `convert -density 300 -background none "${file.path}[0]" "${svgPath}"`;
+              svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
               console.log('Using ImageMagick for SVG conversion');
             }
             
@@ -392,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const pngPath = path.join(uploadDir, pngFilename);
               
               // Ghostscript command with color profile preservation
-              const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dUseCropBox -sOutputFile="${pngPath}" "${file.path}"`;
+              const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dUseCropBox -sOutputFile="${pngPath}" "${path.join(uploadDir, file.filename)}"`;
               await execAsync(gsCommand);
               
               if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -412,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const pngFilename = `${file.filename}.png`;
                 const pngPath = path.join(uploadDir, pngFilename);
                 
-                const basicCommand = `convert -density 300 "${file.path}[0]" "${pngPath}"`;
+                const basicCommand = `convert -density 300 "${path.join(uploadDir, file.filename)}[0]" "${pngPath}"`;
                 await execAsync(basicCommand);
                 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -1391,7 +1399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const formData = new FormData();
       
       // Read the file from disk since multer uses disk storage
-      const filePath = req.file.path;
+      const filePath = path.join(uploadDir, req.file.filename);
       const fileStream = fs.createReadStream(filePath);
       
       // Add the image file
@@ -1434,9 +1442,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
       // Clean up the temporary file
-      if (req.file && req.file.path) {
+      if (req.file && req.file.filename) {
         try {
-          fs.unlinkSync(req.file.path);
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
         } catch (cleanupError) {
           console.warn('Failed to clean up temporary file:', cleanupError);
         }
@@ -1451,9 +1459,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Vectorization error:', error);
       
       // Clean up the temporary file on error
-      if (req.file && req.file.path) {
+      if (req.file && req.file.filename) {
         try {
-          fs.unlinkSync(req.file.path);
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
         } catch (cleanupError) {
           console.warn('Failed to clean up temporary file:', cleanupError);
         }
