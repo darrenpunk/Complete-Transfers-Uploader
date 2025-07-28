@@ -187,34 +187,69 @@ export function VectorizerModal({
     const parser = new DOMParser();
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     
-    // Normalize the color to remove
-    const normalizedColorToRemove = colorToRemove.toLowerCase();
+    // Normalize the color to remove (ensure lowercase and consistent format)
+    const normalizedColorToRemove = colorToRemove.toLowerCase().trim();
+    
+    console.log('Removing color:', normalizedColorToRemove);
+    
+    let removedCount = 0;
     
     // Remove elements with matching fill
     const elementsWithFill = doc.querySelectorAll('*[fill]');
     elementsWithFill.forEach(el => {
-      const fill = el.getAttribute('fill')?.toLowerCase();
-      if (fill === normalizedColorToRemove || 
-          (fill?.startsWith('rgb') && normalizeRgbToHex(fill) === normalizedColorToRemove)) {
-        // If it's a shape, remove it completely
-        if (['rect', 'path', 'circle', 'ellipse', 'polygon'].includes(el.tagName.toLowerCase())) {
+      const fill = el.getAttribute('fill')?.toLowerCase().trim();
+      if (!fill || fill === 'none') return;
+      
+      let shouldRemove = false;
+      
+      // Direct hex match
+      if (fill === normalizedColorToRemove) {
+        shouldRemove = true;
+      }
+      // RGB format match
+      else if (fill.startsWith('rgb')) {
+        const normalizedRgb = normalizeRgbToHex(fill);
+        if (normalizedRgb === normalizedColorToRemove) {
+          shouldRemove = true;
+        }
+      }
+      
+      if (shouldRemove) {
+        console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
+        // Always remove the element completely for shape elements
+        if (['rect', 'path', 'circle', 'ellipse', 'polygon', 'g'].includes(el.tagName.toLowerCase())) {
           el.remove();
+          removedCount++;
         } else {
-          // Otherwise just make it transparent
+          // For other elements, just make fill transparent
           el.setAttribute('fill', 'none');
         }
       }
     });
     
-    // Remove elements with matching stroke
+    // Handle stroke separately (usually we don't want to remove stroke)
     const elementsWithStroke = doc.querySelectorAll('*[stroke]');
     elementsWithStroke.forEach(el => {
-      const stroke = el.getAttribute('stroke')?.toLowerCase();
-      if (stroke === normalizedColorToRemove || 
-          (stroke?.startsWith('rgb') && normalizeRgbToHex(stroke) === normalizedColorToRemove)) {
+      const stroke = el.getAttribute('stroke')?.toLowerCase().trim();
+      if (!stroke || stroke === 'none') return;
+      
+      let shouldRemove = false;
+      
+      if (stroke === normalizedColorToRemove) {
+        shouldRemove = true;
+      } else if (stroke.startsWith('rgb')) {
+        const normalizedRgb = normalizeRgbToHex(stroke);
+        if (normalizedRgb === normalizedColorToRemove) {
+          shouldRemove = true;
+        }
+      }
+      
+      if (shouldRemove) {
         el.setAttribute('stroke', 'none');
       }
     });
+    
+    console.log(`Removed ${removedCount} elements with color ${normalizedColorToRemove}`);
     
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
@@ -1171,10 +1206,29 @@ export function VectorizerModal({
                         }]);
                         
                         let updatedSvg = currentSvg;
-                        const whiteColors = ['#ffffff', '#fefefe', '#fdfdfd', '#fcfcfc', '#fbfbfb'];
+                        let totalRemoved = 0;
                         
-                        whiteColors.forEach(whiteColor => {
+                        // Only remove colors that are actually detected as white variations
+                        const whiteVariations = detectedColors
+                          .filter(colorItem => {
+                            const color = colorItem.color.toLowerCase();
+                            // Check for white variations
+                            return color === '#ffffff' || 
+                                   color === '#fefefe' || 
+                                   color === '#fdfdfd' || 
+                                   color === '#fcfcfc' || 
+                                   color === '#fbfbfb' ||
+                                   color === 'white' ||
+                                   color === 'rgb(255,255,255)' ||
+                                   color === 'rgb(100%,100%,100%)';
+                          })
+                          .map(colorItem => colorItem.color);
+                        
+                        console.log('Removing white variations:', whiteVariations);
+                        
+                        whiteVariations.forEach(whiteColor => {
                           updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
+                          totalRemoved++;
                         });
                         
                         setColoredSvg(updatedSvg);
@@ -1186,11 +1240,16 @@ export function VectorizerModal({
                         
                         toast({
                           title: "White Colors Removed",
-                          description: "Removed all white and near-white colors.",
+                          description: `Removed ${totalRemoved} white color variations.`,
                         });
                       }
                     }}
                     className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                    disabled={!detectedColors.some(c => {
+                      const color = c.color.toLowerCase();
+                      return color === '#ffffff' || color === '#fefefe' || color === '#fdfdfd' || 
+                             color === '#fcfcfc' || color === '#fbfbfb' || color === 'white';
+                    })}
                   >
                     Remove All White
                   </Button>
