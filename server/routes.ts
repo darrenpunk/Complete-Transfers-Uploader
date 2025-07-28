@@ -1387,7 +1387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Processing vectorization request for:', req.file.originalname);
 
       // Create FormData for vectorizer.ai API
-      const FormData = require('form-data');
+      const FormData = (await import('form-data')).default;
       const formData = new FormData();
       
       // Add the image file
@@ -1403,7 +1403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       formData.append('processing_dpi', '300');
 
       // Make request to vectorizer.ai API with Basic Auth
-      const fetch = require('node-fetch');
+      const fetch = (await import('node-fetch')).default;
       const auth = Buffer.from(`${apiId}:${apiSecret}`).toString('base64');
       
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
