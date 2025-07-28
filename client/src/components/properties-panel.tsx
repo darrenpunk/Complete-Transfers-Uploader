@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon, Type, Square, Circle, Minus, Package } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -28,7 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
-import { TextDialog } from "./text-dialog";
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Professional color palette
@@ -110,8 +110,6 @@ interface PropertiesPanelProps {
   project: Project;
   templateSizes: TemplateSize[];
   onTemplateChange: (templateId: string) => void;
-  onAddTextElement?: (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => void;
-  onAddShapeElement?: (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => void;
   onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
   onCenterAllElements?: () => void;
 }
@@ -123,8 +121,6 @@ export default function PropertiesPanel({
   project,
   templateSizes,
   onTemplateChange,
-  onAddTextElement,
-  onAddShapeElement,
   onAlignElement,
   onCenterAllElements
 }: PropertiesPanelProps) {
@@ -136,9 +132,7 @@ export default function PropertiesPanel({
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
   const [alignmentToolsCollapsed, setAlignmentToolsCollapsed] = useState(false);
-  const [designToolsCollapsed, setDesignToolsCollapsed] = useState(false);
-  const [showTextDialog, setShowTextDialog] = useState(false);
-  const [selectedDesignColor, setSelectedDesignColor] = useState("#000000");
+
 
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
@@ -162,24 +156,7 @@ export default function PropertiesPanel({
   
   console.log('PropertiesPanel - Selected element rotation:', currentElement?.rotation);
 
-  // Design tools handlers
-  const handleAddShape = (type: 'rectangle' | 'circle' | 'line') => {
-    if (onAddShapeElement) {
-      onAddShapeElement({
-        type,
-        fillColor: selectedDesignColor,
-        strokeColor: selectedDesignColor,
-        strokeWidth: 2
-      });
-    }
-  };
 
-  const handleAddText = (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
-    if (onAddTextElement) {
-      onAddTextElement(textData);
-      setShowTextDialog(false);
-    }
-  };
 
   // Alignment handlers
   const handleAlign = (alignment: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right') => {
@@ -966,97 +943,7 @@ export default function PropertiesPanel({
         )}
       </Card>
 
-      {/* Design Tools Section */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader className="cursor-pointer" onClick={() => setDesignToolsCollapsed(!designToolsCollapsed)}>
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Design Tools
-            </span>
-            {designToolsCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </CardTitle>
-        </CardHeader>
-        {!designToolsCollapsed && (
-          <CardContent>
-            {/* Text Tool */}
-            <div className="mb-4">
-              <Label className="text-sm font-medium mb-2 block">Add Text</Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start mb-2"
-                    onClick={() => setShowTextDialog(true)}
-                  >
-                    <Type className="w-4 h-4 mr-2" />
-                    Add Text Element
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add custom text to your design with font selection and color options</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
 
-            {/* Shape Tools */}
-            <div className="mb-4">
-              <Label className="text-sm font-medium mb-2 block">Add Shapes</Label>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleAddShape('rectangle')}
-                  title="Add Rectangle"
-                >
-                  <Square className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleAddShape('circle')}
-                  title="Add Circle"
-                >
-                  <Circle className="w-4 h-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleAddShape('line')}
-                  title="Add Line"
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Quick Colors */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Quick Colors</Label>
-              <div className="grid grid-cols-6 gap-1">
-                {quickColors.slice(0, 12).map((color) => (
-                  <button
-                    key={color.hex}
-                    className={`w-8 h-8 rounded border-2 hover:scale-110 transition-transform ${
-                      selectedDesignColor === color.hex ? 'border-blue-500' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => setSelectedDesignColor(color.hex)}
-                    title={color.name}
-                  />
-                ))}
-              </div>
-              <div className="mt-2 text-xs text-gray-600">
-                Selected: {quickColors.find(c => c.hex === selectedDesignColor)?.name || selectedDesignColor}
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
 
       {/* CMYK Color Modal */}
       <CMYKColorModal
@@ -1090,13 +977,7 @@ export default function PropertiesPanel({
         onClose={() => setShowTemplateSelectorModal(false)}
       />
 
-      {/* Text Dialog */}
-      <TextDialog
-        open={showTextDialog}
-        onOpenChange={setShowTextDialog}
-        onAddText={handleAddText}
-        initialColor={selectedDesignColor}
-      />
+
     </div>
     </TooltipProvider>
   );

@@ -35,8 +35,6 @@ interface ToolsSidebarProps {
   onTemplateChange: (templateId: string) => void;
   onGarmentColorChange: (color: string) => void;
   onInkColorChange: (color: string) => void;
-  onAddTextElement?: (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => void;
-  onAddShapeElement?: (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => void;
   onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
   onCenterAllElements?: () => void;
 }
@@ -106,8 +104,6 @@ export default function ToolsSidebar({
   onTemplateChange,
   onGarmentColorChange,
   onInkColorChange,
-  onAddTextElement,
-  onAddShapeElement,
   onAlignElement,
   onCenterAllElements
 }: ToolsSidebarProps) {
