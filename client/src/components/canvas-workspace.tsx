@@ -396,6 +396,33 @@ export default function CanvasWorkspace({
     };
   }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom, updateElementMutation]);
 
+  // Calculate optimal zoom level to fit template within workspace
+  const calculateOptimalZoom = (template: TemplateSize) => {
+    // Conservative workspace dimensions for different template sizes
+    const maxWorkspaceWidth = 800; // Available canvas area width
+    const maxWorkspaceHeight = 600; // Available canvas area height
+    
+    // Calculate scale factors for width and height
+    const scaleX = maxWorkspaceWidth / template.pixelWidth;
+    const scaleY = maxWorkspaceHeight / template.pixelHeight;
+    
+    // Use the smaller scale factor to ensure template fits within bounds
+    const optimalScale = Math.min(scaleX, scaleY);
+    
+    // Convert to percentage and cap between 50% and 150% for usability
+    const optimalZoom = Math.min(Math.max(optimalScale * 100, 50), 150);
+    
+    return Math.round(optimalZoom);
+  };
+
+  // Auto-adjust zoom when template changes
+  useEffect(() => {
+    if (template) {
+      const optimalZoom = calculateOptimalZoom(template);
+      setZoom(optimalZoom);
+    }
+  }, [template?.id]);
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center">
