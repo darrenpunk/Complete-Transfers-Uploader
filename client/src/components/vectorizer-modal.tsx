@@ -66,7 +66,8 @@ export function VectorizerModal({
       const result = await response.json();
       console.log('Received SVG:', result.svg?.substring(0, 200) + '...');
       setVectorSvg(result.svg);
-      setColoredSvg(result.svg); // Initialize colored SVG
+      setColoredSvg(null); // Don't initialize colored SVG
+      setShowPalette(true); // Show palette when vector is ready
       setIsProcessing(false);
 
     } catch (err) {
@@ -76,10 +77,32 @@ export function VectorizerModal({
   };
 
   const handleApproveVector = () => {
-    if (coloredSvg || vectorSvg) {
-      onVectorDownload(coloredSvg || vectorSvg);
+    const svgToDownload = coloredSvg || vectorSvg;
+    if (svgToDownload) {
+      onVectorDownload(svgToDownload);
       onClose();
     }
+  };
+
+  // Function to apply color to SVG
+  const applyColorToSvg = (svg: string, color: string) => {
+    // Parse the SVG and update all fill attributes except for 'none'
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    
+    // Find all elements with fill attribute
+    const elements = doc.querySelectorAll('*[fill]:not([fill="none"])');
+    elements.forEach(el => {
+      el.setAttribute('fill', color);
+    });
+    
+    // Also update stroke for outlined elements
+    const strokeElements = doc.querySelectorAll('*[stroke]:not([stroke="none"])');
+    strokeElements.forEach(el => {
+      el.setAttribute('stroke', color);
+    });
+    
+    return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
   const handleRetry = () => {
@@ -88,7 +111,7 @@ export function VectorizerModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col bg-white dark:bg-white">
+      <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col !bg-white">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-gray-900">AI Vectorization: {fileName}</DialogTitle>
@@ -197,7 +220,7 @@ export function VectorizerModal({
                         style={{ backgroundColor: color }}
                         onClick={() => {
                           setSelectedColor(color);
-                          const newSvg = vectorSvg.replace(/fill="[^"]*"/g, `fill="${color}"`);
+                          const newSvg = applyColorToSvg(vectorSvg, color);
                           setColoredSvg(newSvg);
                         }}
                       />
@@ -262,7 +285,7 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper"
                           style={{ width: 'auto', height: 'auto' }}
-                          dangerouslySetInnerHTML={{ __html: coloredSvg || vectorSvg }}
+                          dangerouslySetInnerHTML={{ __html: coloredSvg || vectorSvg || '' }}
                         />
                       </div>
                     ) : (

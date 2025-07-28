@@ -17,6 +17,29 @@
   height: auto;
 }
 
+/* Force white background on vectorizer modal */
+[role="dialog"][data-state="open"] {
+  background-color: white !important;
+}
+
+[role="dialog"][data-state="open"] > * {
+  background-color: white !important;
+}
+
+/* Ensure proper SVG display in vectorizer */
+.vector-preview-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override dark mode for vectorizer modal */
+.dark [role="dialog"][data-state="open"],
+.dark [role="dialog"][data-state="open"] > * {
+  background-color: white !important;
+  color: #1f2937 !important;
+}
+
 /* Transparency grid background */
 .transparency-grid {
   background-image: 
