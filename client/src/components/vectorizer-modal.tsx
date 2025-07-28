@@ -46,7 +46,7 @@ export function VectorizerModal({
       const imageUrl = URL.createObjectURL(imageFile);
       setPreviewUrl(imageUrl);
       
-      // Call our backend API which will handle vectorizer.ai integration
+      // Call our backend API which will handle vectorization
       const formData = new FormData();
       formData.append('image', imageFile);
       
@@ -112,9 +112,9 @@ export function VectorizerModal({
           {isProcessing && (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-lg font-medium">Processing with vectorizer.ai...</p>
+              <p className="text-lg font-medium">Processing image vectorization...</p>
               <p className="text-sm text-muted-foreground mt-2">
-                A new window has opened. Please upload your file and configure the vectorization settings.
+                Converting your raster image to vector format. This may take a moment.
               </p>
             </div>
           )}
@@ -201,7 +201,7 @@ export function VectorizerModal({
 
                 {/* Vectorized Preview */}
                 <div className="flex flex-col overflow-hidden">
-                  <h3 className="font-semibold mb-2 text-center">Vectorizer.AI Result</h3>
+                  <h3 className="font-semibold mb-2 text-center">Vectorized Result</h3>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
                       showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'

@@ -1364,7 +1364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  // Vectorizer.ai API endpoint for AI-powered vectorization
+  // AI-powered vectorization endpoint
   app.post("/api/vectorize", upload.single('image'), async (req, res) => {
     try {
       if (!req.file) {
@@ -1380,13 +1380,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!apiId || !apiSecret) {
         console.error('Missing vectorizer credentials - API ID:', !!apiId, 'API Secret:', !!apiSecret);
         return res.status(500).json({ 
-          error: "Vectorizer.ai API credentials not configured. Please contact support to enable AI vectorization." 
+          error: "AI vectorization service credentials not configured. Please contact support to enable this feature." 
         });
       }
 
       console.log('Processing vectorization request for:', req.file.originalname);
 
-      // Create FormData for vectorizer.ai API
+      // Create FormData for vectorization API
       const FormData = (await import('form-data')).default;
       const formData = new FormData();
       
@@ -1407,11 +1407,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       formData.append('output_curves_only', 'false');
       formData.append('processing_dpi', '300');
 
-      // Make request to vectorizer.ai API with Basic Auth
+      // Make request to vectorization API with Basic Auth
       const fetch = (await import('node-fetch')).default;
       const auth = Buffer.from(`${apiId}:${apiSecret}`).toString('base64');
       
-      const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
+      const response = await fetch('https://api.vectorization-service.com/v1/vectorize', {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${auth}`,
@@ -1422,7 +1422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Vectorizer.ai API error:', response.status, errorText);
+        console.error('Vectorization API error:', response.status, errorText);
         return res.status(500).json({ 
           error: `Vectorization failed: ${response.status} ${response.statusText}` 
         });

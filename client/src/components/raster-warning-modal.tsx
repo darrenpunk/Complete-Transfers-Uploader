@@ -102,7 +102,7 @@ export function RasterWarningModal({
                   <h3 className="font-semibold text-lg mb-2">AI Vectorization</h3>
                   <p className="text-muted-foreground text-sm mb-4">
                     This is a logo or simple graphic that can be automatically converted to vector format.
-                    Uses vectorizer.ai for instant conversion with preview.
+                    Uses AI-powered vectorization for instant conversion with preview.
                   </p>
                   <Button 
                     onClick={() => handleOptionSelect('ai-vectorize')}
