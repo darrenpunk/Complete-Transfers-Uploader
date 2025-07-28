@@ -147,6 +147,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Streamlined Template Selection UX**: Removed collapsible accordion functionality and continue button from template selector - all templates now display expanded by default and clicking any template directly launches it, reducing user clicks from 3 to 1
 ✓ **Comprehensive Vectorizer Tooltips**: Added informative tooltips throughout the vectorizer tool interface including zoom controls, color management buttons, view mode toggles, and action buttons with clear explanations of functionality and usage guidance
 ✓ **Credit-Protected Vectorization System**: Implemented two-step process where initial preview uses test mode (free) and credits are only consumed when user approves final production-quality vector, preventing unnecessary API charges
+✓ **Fixed Live Preview Color Updates**: Resolved issue where color adjustment sliders updated swatches but not live preview by clearing highlighting when adjustments are made, ensuring real-time visual feedback
 
 
 ## Current Status (July 28, 2025)

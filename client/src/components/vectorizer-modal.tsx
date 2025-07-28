@@ -1186,6 +1186,9 @@ export function VectorizerModal({
                               const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                               setColoredSvg(updatedSvg);
                               
+                              // Clear highlighting so adjusted colors show in preview
+                              setHighlightedSvg(null);
+                              
                               // Update detected colors to reflect the change
                               const newColors = detectColorsInSvg(updatedSvg);
                               setDetectedColors(newColors);
@@ -1212,6 +1215,9 @@ export function VectorizerModal({
                                 const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
+                                // Clear highlighting so adjusted colors show in preview
+                                setHighlightedSvg(null);
+                                
                                 const newColors = detectColorsInSvg(updatedSvg);
                                 setDetectedColors(newColors);
                               }
@@ -1235,6 +1241,9 @@ export function VectorizerModal({
                               if (originalSvg) {
                                 const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
+                                
+                                // Clear highlighting so adjusted colors show in preview
+                                setHighlightedSvg(null);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
                                 setDetectedColors(newColors);
@@ -1260,6 +1269,9 @@ export function VectorizerModal({
                                 const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
                                 
+                                // Clear highlighting so adjusted colors show in preview
+                                setHighlightedSvg(null);
+                                
                                 const newColors = detectColorsInSvg(updatedSvg);
                                 setDetectedColors(newColors);
                               }
@@ -1283,6 +1295,9 @@ export function VectorizerModal({
                               if (originalSvg) {
                                 const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
                                 setColoredSvg(updatedSvg);
+                                
+                                // Clear highlighting so adjusted colors show in preview
+                                setHighlightedSvg(null);
                                 
                                 const newColors = detectColorsInSvg(updatedSvg);
                                 setDetectedColors(newColors);
