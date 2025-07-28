@@ -605,25 +605,20 @@ export function VectorizerModal({
               >
                 <Grid className={`h-4 w-4 ${showGrid ? 'text-primary' : ''}`} />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowPalette(!showPalette)}
-                title="Toggle color palette"
-              >
-                <Palette className={`h-4 w-4 ${showPalette ? 'text-primary' : ''}`} />
-              </Button>
+
             </div>
           </div>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Cost Information */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
-            <p className="text-sm text-blue-800">
-              <strong>Vectorization Cost:</strong> ${cost.toFixed(2)} will be added to your order if you approve the result.
-            </p>
-          </div>
+        <div className="flex-1 overflow-hidden flex">
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-hidden flex flex-col pr-4">
+            {/* Cost Information */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
+              <p className="text-sm text-blue-800">
+                <strong>Vectorization Cost:</strong> ${cost.toFixed(2)} will be added to your order if you approve the result.
+              </p>
+            </div>
 
           {/* Processing State */}
           {isProcessing && (
@@ -787,21 +782,149 @@ export function VectorizerModal({
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-4 mt-4 border-t flex-shrink-0">
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            
-            <div className="flex gap-3">
-              {vectorSvg && (
-                <Button onClick={handleApproveVector} className="bg-green-600 hover:bg-green-700">
-                  <Download className="h-4 w-4 mr-2" />
-                  Approve & Download (${cost.toFixed(2)})
-                </Button>
-              )}
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-4 mt-4 border-t flex-shrink-0">
+              <Button variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+              
+              <div className="flex gap-3">
+                {vectorSvg && (
+                  <Button onClick={handleApproveVector} className="bg-green-600 hover:bg-green-700">
+                    <Download className="h-4 w-4 mr-2" />
+                    Approve & Download (${cost.toFixed(2)})
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Right Sidebar - Color Management */}
+          {vectorSvg && detectedColors.length > 0 && (
+            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden">
+              <div className="flex items-center gap-2 mb-4">
+                <Palette className="w-5 h-5 text-gray-100" />
+                <h3 className="font-semibold text-gray-100">
+                  Detected Colors ({detectedColors.length})
+                </h3>
+              </div>
+              
+              {highlightedColor && (
+                <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-red-400 font-medium">
+                    Highlighting: {highlightedColor}
+                  </p>
+                </div>
+              )}
+
+              {/* Color Grid */}
+              <div className="flex-1 overflow-auto">
+                <div className="grid grid-cols-6 gap-2 mb-4">
+                  {detectedColors.map((colorItem, index) => (
+                    <div key={index} className="relative group flex flex-col items-center">
+                      <div
+                        className={`w-10 h-10 rounded border cursor-pointer hover:border-gray-400 transition-all relative ${
+                          highlightedColor === colorItem.color 
+                            ? 'border-red-500 border-2 shadow-lg' 
+                            : 'border-gray-600'
+                        }`}
+                        style={{ backgroundColor: colorItem.color }}
+                        title={`${colorItem.color} (${colorItem.count} elements) - Click to highlight`}
+                        onClick={() => {
+                          if (highlightedColor === colorItem.color) {
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                          } else {
+                            setHighlightedColor(colorItem.color);
+                            const currentSvg = coloredSvg || vectorSvg;
+                            if (currentSvg) {
+                              const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
+                              setHighlightedSvg(highlighted);
+                            }
+                          }
+                        }}
+                      >
+                        <button
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            
+                            const currentSvg = coloredSvg || vectorSvg;
+                            if (currentSvg) {
+                              setDeletionHistory(prev => [...prev, {
+                                svg: currentSvg,
+                                colors: [...detectedColors]
+                              }]);
+                            }
+                            
+                            const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                            setColoredSvg(updatedSvg);
+                            
+                            if (highlightedColor === colorItem.color) {
+                              setHighlightedColor(null);
+                              setHighlightedSvg(null);
+                            }
+                            
+                            const newColors = detectColorsInSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            
+                            toast({
+                              title: "Color Removed",
+                              description: `Removed ${colorItem.color} from the image.`,
+                            });
+                          }}
+                          title="Delete this color"
+                        >
+                          <Trash2 className="h-2 w-2" />
+                        </button>
+                      </div>
+                      <div className="text-[10px] text-gray-400 text-center leading-tight mt-1">{colorItem.count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="border-t border-gray-700 pt-4 mt-4">
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={reduceColors}
+                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                    disabled={originalDetectedColors.length === 0}
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    Reduce
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={undoLastDeletion}
+                    className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                    disabled={deletionHistory.length === 0}
+                  >
+                    ↶ Undo
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setColoredSvg(vectorSvg);
+                    setHighlightedColor(null);
+                    setHighlightedSvg(null);
+                    setDeletionHistory([]);
+                    const colors = detectColorsInSvg(vectorSvg);
+                    setDetectedColors(colors);
+                  }}
+                  className="w-full border-gray-600 text-gray-100 hover:bg-gray-700"
+                >
+                  Reset All
+                </Button>
+              </div>
+            </div>
+          )}
 
         </div>
       </DialogContent>
