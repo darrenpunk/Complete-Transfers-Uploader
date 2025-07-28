@@ -310,11 +310,14 @@ export default function CanvasWorkspace({
   };
 
   const handleCloseRasterWarning = () => {
-    // Don't clear pendingRasterFile here if vectorizer is going to open
-    if (!showVectorizer) {
-      setPendingRasterFile(null);
-    }
+    // Only clear pendingRasterFile if we're truly closing (not transitioning to vectorizer)
     setShowRasterWarning(false);
+    // Give time for the vectorizer modal to open before clearing the file
+    setTimeout(() => {
+      if (!showVectorizer) {
+        setPendingRasterFile(null);
+      }
+    }, 100);
   };
 
   const handleCloseVectorizer = () => {

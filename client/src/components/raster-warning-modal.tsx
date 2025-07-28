@@ -28,16 +28,17 @@ export function RasterWarningModal({
     switch (option) {
       case 'photographic':
         onPhotographicApprove();
+        onClose();
         break;
       case 'ai-vectorize':
         onVectorizeWithAI();
+        // Don't call onClose() here - let the parent component handle modal transitions
         break;
       case 'service-vectorize':
         onVectorizeWithService();
+        onClose();
         break;
     }
-    
-    onClose();
   };
 
   return (
