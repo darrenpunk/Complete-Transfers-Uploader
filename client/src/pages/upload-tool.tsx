@@ -398,6 +398,17 @@ export default function UploadTool() {
     },
   });
 
+  // Update canvas element mutation
+  const updateElementMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<CanvasElement> }) => {
+      const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "canvas-elements"] });
+    },
+  });
+
   // Handle adding text element
   const handleAddTextElement = (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
     if (currentProject) {
@@ -410,6 +421,57 @@ export default function UploadTool() {
     if (currentProject) {
       createShapeElementMutation.mutate(shapeData);
     }
+  };
+
+  // Handle element alignment
+  const handleAlignElement = (elementId: string, alignment: { x?: number; y?: number }) => {
+    if (!currentProject) return;
+    
+    updateElementMutation.mutate({
+      id: elementId,
+      updates: alignment
+    });
+  };
+
+  // Handle center all elements
+  const handleCenterAllElements = () => {
+    if (!currentProject || !canvasElements || canvasElements.length === 0) return;
+    
+    // Calculate bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasElements.forEach(element => {
+      minX = Math.min(minX, element.x);
+      minY = Math.min(minY, element.y);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
+    });
+    
+    const groupWidth = maxX - minX;
+    const groupHeight = maxY - minY;
+    
+    // Calculate offset to center the group
+    const templateWidth = 297; // A3 width in mm
+    const templateHeight = 420; // A3 height in mm
+    
+    const targetCenterX = templateWidth / 2;
+    const targetCenterY = templateHeight / 2;
+    const currentCenterX = minX + groupWidth / 2;
+    const currentCenterY = minY + groupHeight / 2;
+    
+    const offsetX = targetCenterX - currentCenterX;
+    const offsetY = targetCenterY - currentCenterY;
+    
+    // Apply offset to all elements
+    canvasElements.forEach(element => {
+      updateElementMutation.mutate({
+        id: element.id,
+        updates: {
+          x: Math.round(element.x + offsetX),
+          y: Math.round(element.y + offsetY)
+        }
+      });
+    });
   };
 
   // Handle applique badges form submission
@@ -635,6 +697,8 @@ export default function UploadTool() {
           onInkColorChange={handleInkColorChange}
           onAddTextElement={handleAddTextElement}
           onAddShapeElement={handleAddShapeElement}
+          onAlignElement={handleAlignElement}
+          onCenterAllElements={handleCenterAllElements}
         />
 
         {/* Main Canvas Area */}

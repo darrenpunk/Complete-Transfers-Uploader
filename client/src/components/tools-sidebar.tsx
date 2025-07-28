@@ -7,7 +7,7 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus, Move } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 import { TextDialog } from "./text-dialog";
@@ -37,6 +37,8 @@ interface ToolsSidebarProps {
   onInkColorChange: (color: string) => void;
   onAddTextElement?: (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => void;
   onAddShapeElement?: (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => void;
+  onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
+  onCenterAllElements?: () => void;
 }
 
 // Professional color palette with complete specifications
@@ -105,7 +107,9 @@ export default function ToolsSidebar({
   onGarmentColorChange,
   onInkColorChange,
   onAddTextElement,
-  onAddShapeElement
+  onAddShapeElement,
+  onAlignElement,
+  onCenterAllElements
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [logosCollapsed, setLogosCollapsed] = useState(false);
@@ -223,6 +227,59 @@ export default function ToolsSidebar({
       onAddTextElement(textData);
       setShowTextDialog(false);
     }
+  };
+
+  // Alignment handlers
+  const handleAlign = (alignment: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right') => {
+    if (!selectedElement || !onAlignElement) return;
+    
+    // Template dimensions (A3 in mm)
+    const templateWidth = 297;
+    const templateHeight = 420;
+    
+    let x = selectedElement.x;
+    let y = selectedElement.y;
+    
+    switch (alignment) {
+      case 'top-left':
+        x = 0;
+        y = 0;
+        break;
+      case 'top-center':
+        x = (templateWidth - selectedElement.width) / 2;
+        y = 0;
+        break;
+      case 'top-right':
+        x = templateWidth - selectedElement.width;
+        y = 0;
+        break;
+      case 'middle-left':
+        x = 0;
+        y = (templateHeight - selectedElement.height) / 2;
+        break;
+      case 'center':
+        x = (templateWidth - selectedElement.width) / 2;
+        y = (templateHeight - selectedElement.height) / 2;
+        break;
+      case 'middle-right':
+        x = templateWidth - selectedElement.width;
+        y = (templateHeight - selectedElement.height) / 2;
+        break;
+      case 'bottom-left':
+        x = 0;
+        y = templateHeight - selectedElement.height;
+        break;
+      case 'bottom-center':
+        x = (templateWidth - selectedElement.width) / 2;
+        y = templateHeight - selectedElement.height;
+        break;
+      case 'bottom-right':
+        x = templateWidth - selectedElement.width;
+        y = templateHeight - selectedElement.height;
+        break;
+    }
+    
+    onAlignElement(selectedElement.id, { x: Math.round(x), y: Math.round(y) });
   };
 
   // RGB to CMYK conversion handler
@@ -463,6 +520,184 @@ export default function ToolsSidebar({
             />
 
               </div>
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      )}
+
+      {/* Alignment Tools Section */}
+      {currentStep === 2 && (
+        <Collapsible open={layersOpen} onOpenChange={setLayersOpen}>
+          <div className="border-b border-gray-200">
+            <CollapsibleTrigger asChild>
+              <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
+                  <Layers className="w-5 h-5" />
+                  Alignment Tools
+                </h3>
+                {layersOpen ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-6 pb-6 space-y-4">
+                
+                {/* Alignment Grid */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Alignment</h4>
+                  <div className="grid grid-cols-3 gap-1 mb-4">
+                    {/* Top row */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Top Left" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('top-left')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-0 left-0 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Top Center" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('top-center')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Top Right" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('top-right')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-0 right-0 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    
+                    {/* Middle row */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Middle Left" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('middle-left')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Center" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('center')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Middle Right" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('middle-right')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    
+                    {/* Bottom row */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Bottom Left" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('bottom-left')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute bottom-0 left-0 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Bottom Center" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('bottom-center')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Align Bottom Right" 
+                      disabled={!selectedElement} 
+                      className="h-8 p-1"
+                      onClick={() => handleAlign('bottom-right')}
+                    >
+                      <div className="w-5 h-5 border border-gray-400 relative">
+                        <div className="absolute bottom-0 right-0 w-2 h-2 bg-gray-600"></div>
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Multi-Element Actions */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Multi-Element</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled={canvasElements.length === 0}
+                      onClick={() => {
+                        // For now, just center all elements since multi-select isn't implemented
+                        if (onCenterAllElements) {
+                          onCenterAllElements();
+                        }
+                      }}
+                    >
+                      Select All
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      disabled={canvasElements.length === 0}
+                      onClick={() => {
+                        if (onCenterAllElements) {
+                          onCenterAllElements();
+                        }
+                      }}
+                    >
+                      Center All
+                    </Button>
+                  </div>
+                </div>
+
               </div>
             </CollapsibleContent>
           </div>

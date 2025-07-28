@@ -126,7 +126,7 @@ export default function PropertiesPanel({
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
-  const [alignmentPanelCollapsed, setAlignmentPanelCollapsed] = useState(false);
+
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
   
@@ -261,102 +261,7 @@ export default function PropertiesPanel({
     });
   };
 
-  // Alignment functions
-  const alignLeft = () => {
-    if (!currentElement) return;
-    console.log('Aligning left');
-    handlePropertyChange('x', 0);
-  };
 
-  const alignCenter = () => {
-    if (!currentElement) return;
-    console.log('Aligning center horizontally');
-    // Get template from the first element's project (we need template size)
-    const templateWidth = 297; // A3 width in mm - should get from template
-    const centerX = (templateWidth - currentElement.width) / 2;
-    handlePropertyChange('x', Math.round(centerX));
-  };
-
-  const alignRight = () => {
-    if (!currentElement) return;
-    console.log('Aligning right');
-    const templateWidth = 297; // A3 width in mm - should get from template
-    const rightX = templateWidth - currentElement.width;
-    handlePropertyChange('x', Math.round(rightX));
-  };
-
-  const alignTop = () => {
-    if (!currentElement) return;
-    console.log('Aligning top');
-    handlePropertyChange('y', 0);
-  };
-
-  const alignMiddle = () => {
-    if (!currentElement) return;
-    console.log('Aligning middle vertically');
-    const templateHeight = 420; // A3 height in mm - should get from template
-    const middleY = (templateHeight - currentElement.height) / 2;
-    handlePropertyChange('y', Math.round(middleY));
-  };
-
-  const alignBottom = () => {
-    if (!currentElement) return;
-    console.log('Aligning bottom');
-    const templateHeight = 420; // A3 height in mm - should get from template
-    const bottomY = templateHeight - currentElement.height;
-    handlePropertyChange('y', Math.round(bottomY));
-  };
-
-  // Select all elements function
-  const selectAllElements = () => {
-    // We can't actually multi-select in the UI yet, but we can center all elements
-    console.log('Selecting all elements');
-    // For now, this just triggers center all
-    centerAllElements();
-  };
-
-  // Center all elements function
-  const centerAllElements = () => {
-    if (canvasElements.length === 0) return;
-    
-    console.log('Centering all elements');
-    
-    // Calculate bounding box of all elements
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    canvasElements.forEach(element => {
-      minX = Math.min(minX, element.x);
-      minY = Math.min(minY, element.y);
-      maxX = Math.max(maxX, element.x + element.width);
-      maxY = Math.max(maxY, element.y + element.height);
-    });
-    
-    const groupWidth = maxX - minX;
-    const groupHeight = maxY - minY;
-    
-    // Calculate offset to center the group
-    const templateWidth = 297; // A3 width in mm
-    const templateHeight = 420; // A3 height in mm
-    
-    const targetCenterX = templateWidth / 2;
-    const targetCenterY = templateHeight / 2;
-    const currentCenterX = minX + groupWidth / 2;
-    const currentCenterY = minY + groupHeight / 2;
-    
-    const offsetX = targetCenterX - currentCenterX;
-    const offsetY = targetCenterY - currentCenterY;
-    
-    // Apply offset to all elements
-    canvasElements.forEach(element => {
-      updateElementMutation.mutate({
-        id: element.id,
-        updates: {
-          x: Math.round(element.x + offsetX),
-          y: Math.round(element.y + offsetY)
-        }
-      });
-    });
-  };
 
   // Dynamic pre-flight check results based on current project data
   const preflightChecks = useMemo(() => {
@@ -663,91 +568,7 @@ export default function PropertiesPanel({
 
 
 
-      {/* Alignment Tools */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader className="cursor-pointer" onClick={() => setAlignmentPanelCollapsed(!alignmentPanelCollapsed)}>
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Move className="w-5 h-5" />
-              Alignment & Tools
-            </span>
-            {alignmentPanelCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </CardTitle>
-        </CardHeader>
-        {!alignmentPanelCollapsed && (
-          <CardContent>
-          <div className="grid grid-cols-3 gap-1 mb-4">
-            {/* Top row */}
-            <Button variant="outline" size="sm" title="Align Top Left" onClick={() => { alignLeft(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 left-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Top Center" onClick={() => { alignCenter(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Top Right" onClick={() => { alignRight(); alignTop(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-0 right-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            
-            {/* Middle row */}
-            <Button variant="outline" size="sm" title="Align Middle Left" onClick={() => { alignLeft(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Center" onClick={() => { alignCenter(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Middle Right" onClick={() => { alignRight(); alignMiddle(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            
-            {/* Bottom row */}
-            <Button variant="outline" size="sm" title="Align Bottom Left" onClick={() => { alignLeft(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 left-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Bottom Center" onClick={() => { alignCenter(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-            <Button variant="outline" size="sm" title="Align Bottom Right" onClick={() => { alignRight(); alignBottom(); }} disabled={!selectedElement} className="h-8 p-1">
-              <div className="w-5 h-5 border border-gray-400 relative">
-                <div className="absolute bottom-0 right-0 w-2 h-2 bg-gray-600"></div>
-              </div>
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={selectAllElements}>
-              Select All
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => { alignCenter(); alignMiddle(); }}
-              disabled={canvasElements.length === 0}
-            >
-              Center All
-            </Button>
-          </div>
-          </CardContent>
-        )}
-      </Card>
+
 
       {/* Layer Management */}
       <Card className="rounded-none border-x-0 border-t-0">
