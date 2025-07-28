@@ -10,6 +10,17 @@ import ColorManagementToggle from "./color-management-toggle";
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
 
 function getColorName(hex: string): string {
+  // Check quick Hi-Viz colors first (from garment color selector)
+  const hiVizColors = [
+    { name: "Hi Viz", hex: "#D2E31D" },
+    { name: "Hi Viz Orange", hex: "#D98F17" }
+  ];
+  
+  const hiVizColor = hiVizColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (hiVizColor) {
+    return hiVizColor.name;
+  }
+
   // Check Gildan colors
   for (const group of gildanColors) {
     const gildanColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
