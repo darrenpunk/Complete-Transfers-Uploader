@@ -33,6 +33,8 @@ export function VectorizerModal({
   const [coloredSvg, setColoredSvg] = useState<string | null>(null);
   const [detectedColors, setDetectedColors] = useState<{color: string, count: number}[]>([]);
   const [originalDetectedColors, setOriginalDetectedColors] = useState<{color: string, count: number}[]>([]);
+  const [highlightedColor, setHighlightedColor] = useState<string | null>(null);
+  const [highlightedSvg, setHighlightedSvg] = useState<string | null>(null);
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -395,6 +397,41 @@ export function VectorizerModal({
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
+  // Function to highlight a specific color in the SVG
+  const highlightColorInSvg = (svgString: string, targetColor: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    
+    // Find all elements with fill or stroke attributes
+    const allElements = doc.querySelectorAll('*');
+    
+    allElements.forEach(element => {
+      const fill = element.getAttribute('fill');
+      const stroke = element.getAttribute('stroke');
+      
+      if (fill && fill !== 'none') {
+        if (fill.toLowerCase() === targetColor.toLowerCase()) {
+          // Highlight the target color with a bright outline
+          element.setAttribute('stroke', '#ff0000');
+          element.setAttribute('stroke-width', '2');
+          element.setAttribute('stroke-dasharray', '3,3');
+        } else {
+          // Dim other colors
+          element.setAttribute('opacity', '0.3');
+        }
+      }
+      
+      if (stroke && stroke !== 'none' && stroke.toLowerCase() === targetColor.toLowerCase()) {
+        // Highlight target stroke color
+        element.setAttribute('stroke', '#ff0000');
+        element.setAttribute('stroke-width', '3');
+        element.setAttribute('stroke-dasharray', '3,3');
+      }
+    });
+    
+    return new XMLSerializer().serializeToString(doc.documentElement);
+  };
+
   // Function to reduce colors to main logo colors (intelligent color grouping)
   const reduceColors = () => {
     if (originalDetectedColors.length === 0 || !vectorSvg) return;
@@ -626,11 +663,18 @@ export function VectorizerModal({
               {showPalette && vectorSvg && detectedColors.length > 0 && (
                 <div className="mb-3 p-3 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-100">Detected Colors ({detectedColors.length}):</span>
+                    <span className="text-xs font-medium text-gray-100">
+                      Detected Colors ({detectedColors.length}):
+                      {highlightedColor && (
+                        <span className="ml-2 text-red-400 font-semibold">Highlighting {highlightedColor}</span>
+                      )}
+                    </span>
                     <button
                       className="text-xs px-2 py-0.5 border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
                       onClick={() => {
                         setColoredSvg(vectorSvg);
+                        setHighlightedColor(null);
+                        setHighlightedSvg(null);
                         const colors = detectColorsInSvg(vectorSvg);
                         setDetectedColors(colors);
                       }}
@@ -642,9 +686,28 @@ export function VectorizerModal({
                     {detectedColors.map((colorItem, index) => (
                       <div key={index} className="relative group">
                         <div
-                          className="w-8 h-8 rounded border border-gray-600 cursor-pointer hover:border-gray-400 transition-all"
+                          className={`w-8 h-8 rounded border cursor-pointer hover:border-gray-400 transition-all ${
+                            highlightedColor === colorItem.color 
+                              ? 'border-red-500 border-2 shadow-lg' 
+                              : 'border-gray-600'
+                          }`}
                           style={{ backgroundColor: colorItem.color }}
-                          title={`${colorItem.color} (${colorItem.count} elements)`}
+                          title={`${colorItem.color} (${colorItem.count} elements) - Click to highlight`}
+                          onClick={() => {
+                            if (highlightedColor === colorItem.color) {
+                              // If clicking the same color, unhighlight it
+                              setHighlightedColor(null);
+                              setHighlightedSvg(null);
+                            } else {
+                              // Highlight the clicked color
+                              setHighlightedColor(colorItem.color);
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
+                                setHighlightedSvg(highlighted);
+                              }
+                            }
+                          }}
                         >
                           <button
                             className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded"
@@ -798,7 +861,7 @@ export function VectorizerModal({
                       showGrid ? 'transparency-grid' : 'bg-white'
                     }`}
                   >
-                    {(coloredSvg || vectorSvg) ? (
+                    {(highlightedSvg || coloredSvg || vectorSvg) ? (
                       <div 
                         className="p-8 flex items-center justify-center min-h-full"
                         style={{ 
@@ -816,7 +879,7 @@ export function VectorizerModal({
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}
-                          dangerouslySetInnerHTML={{ __html: coloredSvg || vectorSvg || '' }}
+                          dangerouslySetInnerHTML={{ __html: highlightedSvg || coloredSvg || vectorSvg || '' }}
                         />
                       </div>
                     ) : (
