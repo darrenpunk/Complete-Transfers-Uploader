@@ -644,7 +644,7 @@ export default function PropertiesPanel({
             <CardHeader className="cursor-pointer" onClick={() => setPreflightPanelCollapsed(!preflightPanelCollapsed)}>
               <CardTitle className="text-lg flex items-center justify-between">
                 <span className="flex items-center gap-2">
-                  <PaletteIcon className="w-5 h-5" />
+                  <Palette className="w-5 h-5" />
                   Color Analysis
                 </span>
                 {preflightPanelCollapsed ? (
