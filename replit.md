@@ -120,6 +120,8 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Updated Comments Section Text**: Modified project naming modal to use specific artwork-only comment instructions for Odoo integration workflow
 ✓ **Quantity-Based PDF Filenames**: Enhanced PDF filename generation to include quantity (e.g., "ProjectName_qty100_cmyk.pdf") for improved file organization and workflow tracking
 ✓ **PDF Preview & Approval Modal**: Implemented comprehensive 2-page PDF preview with design approval checkbox, copyright confirmation checkbox, and preflight summary sidebar before project naming - ensures customer approval and legal compliance
+✓ **Content-Based Bounding Boxes**: Fixed bounding box calculation to use actual logo content bounds instead of full PDF page dimensions, with improved scaling factor (0.35) for accurate logo sizing on canvas
+✓ **Multi-Color PDF Preview**: Enhanced PDF preview modal to display individual garment color assignments in grid layout, matching main canvas behavior for accurate multi-color visualization
 
 
 ## Current Status (July 27, 2025)

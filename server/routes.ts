@@ -544,12 +544,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               console.log(`Large PDF content scaled: ${actualWidth}×${actualHeight} -> ${displayWidth}×${displayHeight}mm`);
             } else {
-              // Reasonable size content - use direct conversion with 300 DPI equivalent 
-              const scaleFactor = 0.08466667; // Convert pixels to mm (25.4mm / 300px)
+              // For PDF content bounds, use a more appropriate scaling factor
+              // Content bounds are in SVG units, roughly equivalent to points
+              // 1 point = 0.352778 mm, but we need to account for the conversion scale
+              const scaleFactor = 0.35; // Adjusted scale for PDF content bounds
               displayWidth = Math.round(actualWidth * scaleFactor);
               displayHeight = Math.round(actualHeight * scaleFactor);
               
-              console.log(`PDF content dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
+              // Ensure minimum reasonable size
+              if (displayWidth < 50) displayWidth = 100;
+              if (displayHeight < 30) displayHeight = 70;
+              
+              console.log(`PDF content dimensions: ${actualWidth}×${actualHeight} SVG units -> ${displayWidth}×${displayHeight}mm`);
             }
           } else {
             // For non-PDF images, use 300 DPI scale
