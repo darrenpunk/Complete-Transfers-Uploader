@@ -516,8 +516,8 @@ export default function CanvasWorkspace({
               iccProfileName="PSO Coated FOGRA51 (EFI)"
             />
 
-            {/* Fit to Bounds Button for A3 */}
-            {template?.id === 'template-A3' && canvasElements.length > 0 && (
+            {/* Fit to Bounds Button for All Templates */}
+            {template && canvasElements.length > 0 && (
               <>
                 <div className="h-6 w-px bg-gray-300"></div>
                 <Button
@@ -549,8 +549,8 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 p-8 overflow-auto" style={{ backgroundColor: '#606060' }}>
-        {/* A3 Template Warning */}
-        {template?.id === 'template-A3' && (
+        {/* Safety Zone Warning for All Templates */}
+        {template && (
           <div className="mb-4 mx-auto max-w-2xl">
             <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-start space-x-3">
               <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -558,7 +558,7 @@ export default function CanvasWorkspace({
               </svg>
               <div>
                 <p className="text-sm font-medium text-amber-800">
-                  A3 Safety Zone Active
+                  Print Safety Zone Active
                 </p>
                 <p className="text-sm text-amber-700">
                   Keep all artwork within the red guide lines (3mm from edges) to prevent clipping during production. 
@@ -598,8 +598,8 @@ export default function CanvasWorkspace({
               </div>
             )}
 
-            {/* 3mm Safety Margin for A3 Template */}
-            {template?.id === 'template-A3' && (
+            {/* 3mm Safety Margin for All Templates */}
+            {template && (
               <div className="absolute inset-0 pointer-events-none">
                 {/* Calculate 3mm margin in pixels */}
                 {(() => {
