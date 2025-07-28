@@ -117,32 +117,108 @@ export default function PDFPreviewModal({
           <div className="flex-1 space-y-4">
             <h3 className="text-lg font-semibold">PDF Preview</h3>
             
-            {/* Page 1 Preview */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">Page 1 - Artwork Layout</h4>
-              <div className="border rounded-lg p-4 bg-muted/20 min-h-[300px] flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <FileText className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm">Artwork preview will be displayed here</p>
-                  <p className="text-xs mt-1">Template: {template?.name} ({template?.width}×{template?.height}mm)</p>
+            {/* Two pages side by side */}
+            <div className="flex gap-4 h-full">
+              {/* Page 1 Preview */}
+              <div className="flex-1 space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Page 1 - Artwork Layout</h4>
+                <div className="border rounded-lg bg-white p-4 h-[500px] flex items-center justify-center relative overflow-hidden">
+                  {/* Canvas preview background */}
+                  <div 
+                    className="absolute inset-4 border-2 border-dashed border-gray-300 rounded"
+                    style={{
+                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                    }}
+                  >
+                    {/* Template background */}
+                    <div className="w-full h-full bg-gray-50 relative">
+                      {/* Render positioned logos */}
+                      {canvasElements.map((element) => {
+                        const logo = logos.find(l => l.id === element.logoId);
+                        if (!logo) return null;
+                        
+                        return (
+                          <div
+                            key={element.id}
+                            className="absolute"
+                            style={{
+                              left: `${(element.x / (template?.width || 297)) * 100}%`,
+                              top: `${(element.y / (template?.height || 420)) * 100}%`,
+                              width: `${(element.width / (template?.width || 297)) * 100}%`,
+                              height: `${(element.height / (template?.height || 420)) * 100}%`,
+                              transform: `rotate(${element.rotation || 0}deg)`,
+                              opacity: element.opacity || 1,
+                            }}
+                          >
+                            <img
+                              src={`/uploads/${logo.filename}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-white px-2 py-1 rounded">
+                    {template?.name} ({template?.width}×{template?.height}mm)
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Page 2 Preview */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">Page 2 - Garment Background</h4>
-              <div className="border rounded-lg p-4 bg-muted/20 min-h-[200px] flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <FileText className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">Garment color preview</p>
+              {/* Page 2 Preview */}
+              <div className="flex-1 space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Page 2 - Garment Background</h4>
+                <div className="border rounded-lg p-4 h-[500px] flex items-center justify-center relative"
+                     style={{ backgroundColor: project?.garmentColor || '#f5f5f5' }}>
+                  {/* Garment background with artwork overlay */}
+                  <div 
+                    className="border-2 border-dashed border-gray-400 rounded opacity-60"
+                    style={{
+                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                      width: '80%',
+                      maxWidth: '300px'
+                    }}
+                  >
+                    {/* Render positioned logos on garment color */}
+                    <div className="w-full h-full relative">
+                      {canvasElements.map((element) => {
+                        const logo = logos.find(l => l.id === element.logoId);
+                        if (!logo) return null;
+                        
+                        return (
+                          <div
+                            key={element.id}
+                            className="absolute"
+                            style={{
+                              left: `${(element.x / (template?.width || 297)) * 100}%`,
+                              top: `${(element.y / (template?.height || 420)) * 100}%`,
+                              width: `${(element.width / (template?.width || 297)) * 100}%`,
+                              height: `${(element.height / (template?.height || 420)) * 100}%`,
+                              transform: `rotate(${element.rotation || 0}deg)`,
+                              opacity: (element.opacity || 1) * 0.8,
+                            }}
+                          >
+                            <img
+                              src={`/uploads/${logo.filename}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
                   {project?.garmentColor && (
-                    <div className="mt-2 flex items-center justify-center gap-2">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-2 text-xs text-white bg-black/50 px-2 py-1 rounded">
                       <div 
-                        className="w-4 h-4 rounded border"
+                        className="w-3 h-3 rounded border border-white"
                         style={{ backgroundColor: project.garmentColor }}
                       />
-                      <span className="text-xs">{project.garmentColor}</span>
+                      Garment Color
                     </div>
                   )}
                 </div>
