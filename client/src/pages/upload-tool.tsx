@@ -12,6 +12,7 @@ import ProductLauncherModal from "@/components/product-launcher-modal";
 import InkColorModal from "@/components/ink-color-modal";
 import ProjectNameModal from "@/components/project-name-modal";
 import AppliqueBadgesModal from "@/components/applique-badges-modal";
+import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw } from "lucide-react";
@@ -30,6 +31,7 @@ export default function UploadTool() {
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
+  const [showPDFPreviewModal, setShowPDFPreviewModal] = useState(false);
   const [showAppliqueBadgesModal, setShowAppliqueBadgesModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
   const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
@@ -190,8 +192,8 @@ export default function UploadTool() {
            currentProject.name === 'Untitled Project';
   };
 
-  // Handle Generate PDF button click
-  const handleGeneratePDF = () => {
+  // Handle PDF preview approval
+  const handlePDFPreviewApproval = () => {
     if (needsProjectName(currentProject)) {
       setPendingAction('pdf');
       setShowProjectNameModal(true);
@@ -201,11 +203,18 @@ export default function UploadTool() {
     }
   };
 
+  // Handle Generate PDF button click
+  const handleGeneratePDF = () => {
+    // Always show PDF preview first
+    setPendingAction('pdf');
+    setShowPDFPreviewModal(true);
+  };
+
   // Handle Continue button click  
   const handleNextStep = () => {
     if (currentStep >= 3 && needsProjectName(currentProject)) {
       setPendingAction('continue');
-      setShowProjectNameModal(true);
+      setShowPDFPreviewModal(true);
     } else {
       setCurrentStep(prev => Math.min(prev + 1, 5));
     }
@@ -577,6 +586,17 @@ export default function UploadTool() {
         templates={templateSizes}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
+      />
+
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        open={showPDFPreviewModal}
+        onOpenChange={setShowPDFPreviewModal}
+        onApprove={handlePDFPreviewApproval}
+        project={currentProject}
+        logos={logos}
+        canvasElements={canvasElements}
+        template={currentTemplate}
       />
 
       {/* Project Name Modal */}
