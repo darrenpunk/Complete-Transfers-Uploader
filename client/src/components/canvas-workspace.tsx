@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema";
+import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2 } from "lucide-react";
 import ColorManagementToggle from "./color-management-toggle";
@@ -14,6 +14,20 @@ interface CanvasWorkspaceProps {
   selectedElement: CanvasElement | null;
   onElementSelect: (element: CanvasElement | null) => void;
   onLogoUpload?: (files: File[]) => void;
+}
+
+// Helper function to check if logo has valid content bounds
+function hasValidContentBounds(logo: Logo): logo is Logo & { contentBounds: ContentBounds } {
+  return logo.contentBounds != null && 
+         typeof logo.contentBounds === 'object' &&
+         'minX' in logo.contentBounds &&
+         'minY' in logo.contentBounds &&
+         'maxX' in logo.contentBounds &&
+         'maxY' in logo.contentBounds &&
+         typeof logo.contentBounds.minX === 'number' &&
+         typeof logo.contentBounds.minY === 'number' &&
+         typeof logo.contentBounds.maxX === 'number' &&
+         typeof logo.contentBounds.maxY === 'number';
 }
 
 export default function CanvasWorkspace({
@@ -527,53 +541,73 @@ export default function CanvasWorkspace({
                   {/* Logo Content */}
                   <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {logo.mimeType?.startsWith('image/') ? (
-                      <img
-                        src={
-                          // Priority 1: Element has individual color overrides
-                          element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                            ? `/uploads/${element.id}_modified.svg?t=${Date.now()}`
-                            // Priority 2: Single Colour Transfer with ink color selected
-                            : shouldRecolorForInk 
-                              ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`
-                              // Priority 3: Original image
-                              : getImageUrl(logo)
-                        }
-                        alt={logo.originalName}
-                        className="w-full h-full object-fill"
-                        style={{ 
-                          background: 'transparent', 
-                          backgroundColor: 'transparent',
-                          filter: colorManagementEnabled 
-                            ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
-                            : "none"
-                        }}
-                        draggable={false}
-                        onLoad={() => {
-                          const imageUrl = element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                            ? `/uploads/${element.id}_modified.svg`
-                            : shouldRecolorForInk 
-                              ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
-                              : getImageUrl(logo);
-                          console.log('Image loaded:', imageUrl);
-                        }}
-                        onError={(e) => {
-                          console.error('Failed to load image:', getImageUrl(logo));
-                          // Show fallback icon if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `
-                              <div class="flex flex-col items-center justify-center text-gray-500 p-2">
-                                <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                </svg>
-                                <span class="text-xs">${logo.originalName}</span>
-                              </div>
-                            `;
+                      <div className="w-full h-full relative overflow-hidden">
+                        <img
+                          src={
+                            // Priority 1: Element has individual color overrides
+                            element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                              ? `/uploads/${element.id}_modified.svg?t=${Date.now()}`
+                              // Priority 2: Single Colour Transfer with ink color selected
+                              : shouldRecolorForInk 
+                                ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`
+                                // Priority 3: Original image
+                                : getImageUrl(logo)
                           }
-                        }}
-                      />
+                          alt={logo.originalName}
+                          className="absolute top-0 left-0"
+                          style={{ 
+                            background: 'transparent', 
+                            backgroundColor: 'transparent',
+                            filter: colorManagementEnabled 
+                              ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
+                              : "none",
+                            // Apply content bounds cropping if available (for PDFs converted to SVG)
+                            ...(hasValidContentBounds(logo) && logo.mimeType === 'image/svg+xml' && logo.width && logo.height ? {
+                              // Use CSS clip-path for cleaner cropping
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'none',
+                              clipPath: `inset(${logo.contentBounds.minY}px ${logo.width - logo.contentBounds.maxX}px ${logo.height - logo.contentBounds.maxY}px ${logo.contentBounds.minX}px)`,
+                              transform: `scale(${elementWidth / (logo.contentBounds.maxX - logo.contentBounds.minX)}, ${elementHeight / (logo.contentBounds.maxY - logo.contentBounds.minY)})`,
+                              transformOrigin: `${logo.contentBounds.minX}px ${logo.contentBounds.minY}px`
+                            } : {
+                              // Default scaling for images without content bounds
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'fill'
+                            })
+                          }}
+                          draggable={false}
+                          onLoad={() => {
+                            const imageUrl = element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                              ? `/uploads/${element.id}_modified.svg`
+                              : shouldRecolorForInk 
+                                ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
+                                : getImageUrl(logo);
+                            console.log('Image loaded:', imageUrl);
+                            if (hasValidContentBounds(logo)) {
+                              console.log('Content bounds applied:', logo.contentBounds);
+                            }
+                          }}
+                          onError={(e) => {
+                            console.error('Failed to load image:', getImageUrl(logo));
+                            // Show fallback icon if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="flex flex-col items-center justify-center text-gray-500 p-2">
+                                  <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                  </svg>
+                                  <span class="text-xs">${logo.originalName}</span>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      </div>
                     ) : logo.mimeType === 'application/pdf' ? (
                       <div className="flex flex-col items-center justify-center text-red-600 p-2 bg-red-50 border border-red-200 rounded">
                         <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 24 24">

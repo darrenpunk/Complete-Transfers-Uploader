@@ -107,3 +107,11 @@ export type TemplateSize = typeof templateSizes.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertProjectSchema>;
+
+// Content bounds type definition
+export type ContentBounds = {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+};
