@@ -67,6 +67,9 @@ export function VectorizerModal({
       
       const result = await response.json();
       console.log('Received SVG:', result.svg?.substring(0, 200) + '...');
+      console.log('Full SVG length:', result.svg?.length);
+      console.log('SVG contains svg tag:', result.svg?.includes('<svg'));
+      console.log('SVG contains viewBox:', result.svg?.includes('viewBox'));
       setVectorSvg(result.svg);
       setColoredSvg(null); // Don't initialize colored SVG
       setShowPalette(true); // Show palette when vector is ready
@@ -268,8 +271,8 @@ export function VectorizerModal({
 
               {/* Color Palette */}
               {showPalette && vectorSvg && (
-                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-100 rounded-lg flex-shrink-0">
-                  <span className="text-sm font-medium text-gray-900">Color Presets:</span>
+                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-800 rounded-lg flex-shrink-0 vectorizer-color-palette">
+                  <span className="text-sm font-medium text-gray-100">Color Presets:</span>
                   <div className="flex gap-2">
                     {['#000000', '#FFFFFF', '#5B9BD5', '#ED7D31', '#70AD47', '#FFC000'].map((color) => (
                       <button
@@ -284,7 +287,7 @@ export function VectorizerModal({
                       />
                     ))}
                     <button
-                      className="px-3 py-1 text-sm border rounded"
+                      className="px-3 py-1 text-sm border border-gray-600 text-gray-100 hover:bg-gray-700 rounded"
                       onClick={() => {
                         setSelectedColor(null);
                         setColoredSvg(vectorSvg);
@@ -306,7 +309,7 @@ export function VectorizerModal({
                           description: "White elements have been removed from the vector image.",
                         });
                       }}
-                      className="ml-4"
+                      className="ml-4 border-gray-600 text-gray-100 hover:bg-gray-700"
                     >
                       <div className="w-4 h-4 bg-white border border-gray-400 mr-2 relative">
                         <div className="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-lg leading-none">×</div>
@@ -363,7 +366,13 @@ export function VectorizerModal({
                       >
                         <div 
                           className="vector-preview-wrapper"
-                          style={{ width: 'auto', height: 'auto' }}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                           dangerouslySetInnerHTML={{ __html: coloredSvg || vectorSvg || '' }}
                         />
                       </div>

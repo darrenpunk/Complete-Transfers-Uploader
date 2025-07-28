@@ -279,3 +279,29 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   border-radius: 50%;
   box-shadow: 0 0 0 2px hsl(207, 90%, 95%);
 }
+
+/* Vector preview wrapper styles */
+.vector-preview-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vector-preview-wrapper svg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  display: block;
+}
+
+/* Vectorizer modal dark color palette */
+.vectorizer-color-palette {
+  background-color: #1a1a1a !important;
+}
+
+.vectorizer-color-palette .text-gray-900 {
+  color: #ffffff !important;
+}

@@ -137,6 +137,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **White Background Vectorizer Preview Windows**: Changed only the preview areas in vectorizer modal to have white backgrounds while preserving dark theme for the rest of the application
 ✓ **Vectorizer File Upload Fix**: Fixed vectorized SVG files not appearing on canvas by updating multer configuration to preserve file extensions and handle file paths correctly
 ✓ **White Background Removal for Vectorizer**: Added "Remove White" button in vectorizer modal color palette allowing customers to remove white backgrounds from vectorized JPEGs - intelligently removes white rectangles and paths while preserving white design elements
+✓ **Darkened Vectorizer Color Palette**: Changed color palette background from light gray to dark gray (#1a1a1a) with improved contrast for buttons and text, matching the application's dark theme aesthetic
 
 
 ## Current Status (July 28, 2025)
