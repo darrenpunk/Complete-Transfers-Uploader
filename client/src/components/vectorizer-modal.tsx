@@ -241,69 +241,83 @@ export function VectorizerModal({
     const svgHeight = viewBox[3];
     
     if (mode === 'background') {
-      // Smart mode: Only remove white backgrounds
-      // First, let's see what the SVG structure looks like
+      // Smart mode: Remove ALL white background elements at once
       console.log('SVG viewBox:', svgWidth, 'x', svgHeight);
-      console.log('Total elements in SVG:', doc.querySelectorAll('*').length);
       
-      // Check all elements, not just rects, as vectorizer might use paths
+      // Find all white elements
       const allWhiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"], *[fill="rgb(255, 255, 255)"]');
       console.log('Found white elements:', allWhiteElements.length);
       
-      // Collect white elements with size info
-      const whiteElements: Array<{element: Element, area: number, isBackground: boolean}> = [];
+      // Analyze the SVG structure to find the actual content bounds
+      const nonWhiteElements = doc.querySelectorAll('*[fill]:not([fill="#ffffff"]):not([fill="#FFFFFF"]):not([fill="white"]):not([fill="rgb(255,255,255)"]):not([fill="rgb(100%,100%,100%)"]):not([fill="rgb(255, 255, 255)"]):not([fill="none"])');
       
-      allWhiteElements.forEach(el => {
-        let area = 0;
-        let isBackground = false;
-        
+      let contentMinX = Infinity, contentMinY = Infinity;
+      let contentMaxX = -Infinity, contentMaxY = -Infinity;
+      let hasContent = false;
+      
+      // Calculate the bounding box of non-white content
+      nonWhiteElements.forEach(el => {
         if (el.tagName === 'rect') {
-          const width = parseFloat(el.getAttribute('width') || '0');
-          const height = parseFloat(el.getAttribute('height') || '0');
           const x = parseFloat(el.getAttribute('x') || '0');
           const y = parseFloat(el.getAttribute('y') || '0');
-          area = width * height;
+          const width = parseFloat(el.getAttribute('width') || '0');
+          const height = parseFloat(el.getAttribute('height') || '0');
           
-          // Check if it covers most of the canvas
-          const coversCanvas = width >= svgWidth * 0.7 && height >= svgHeight * 0.7;
-          const nearTopLeft = x <= svgWidth * 0.2 && y <= svgHeight * 0.2;
-          isBackground = coversCanvas && nearTopLeft;
+          contentMinX = Math.min(contentMinX, x);
+          contentMinY = Math.min(contentMinY, y);
+          contentMaxX = Math.max(contentMaxX, x + width);
+          contentMaxY = Math.max(contentMaxY, y + height);
+          hasContent = true;
+        }
+      });
+      
+      // Add some padding around content
+      const padding = Math.min(svgWidth, svgHeight) * 0.05;
+      contentMinX -= padding;
+      contentMinY -= padding;
+      contentMaxX += padding;
+      contentMaxY += padding;
+      
+      console.log('Content bounds:', {contentMinX, contentMinY, contentMaxX, contentMaxY});
+      
+      // Remove white elements that are outside the content bounds or very large
+      let removedCount = 0;
+      allWhiteElements.forEach(el => {
+        let shouldRemove = false;
+        
+        if (el.tagName === 'rect') {
+          const x = parseFloat(el.getAttribute('x') || '0');
+          const y = parseFloat(el.getAttribute('y') || '0');
+          const width = parseFloat(el.getAttribute('width') || '0');
+          const height = parseFloat(el.getAttribute('height') || '0');
+          
+          // Remove if it's a full-canvas rectangle
+          if (width >= svgWidth * 0.9 && height >= svgHeight * 0.9) {
+            shouldRemove = true;
+          }
+          // Or if it's completely outside content bounds
+          else if (hasContent && (x + width < contentMinX || x > contentMaxX || 
+                                 y + height < contentMinY || y > contentMaxY)) {
+            shouldRemove = true;
+          }
         } else if (el.tagName === 'path') {
-          // For paths, check if it's the first or second element (often backgrounds)
-          const index = Array.from(el.parentNode?.children || []).indexOf(el);
-          if (index >= 0 && index < 3) {
-            // Assume early paths might be backgrounds
-            isBackground = true;
-            area = svgWidth * svgHeight; // Estimate
+          // For paths, check if it's one of the first elements (often background)
+          const allPaths = Array.from(doc.querySelectorAll('path'));
+          const index = allPaths.indexOf(el);
+          
+          // Remove early white paths that are likely backgrounds
+          if (index >= 0 && index < 5 && allPaths.length > 10) {
+            shouldRemove = true;
           }
         }
         
-        if (area > 0 || isBackground) {
-          whiteElements.push({element: el, area, isBackground});
+        if (shouldRemove) {
+          el.remove();
+          removedCount++;
         }
       });
       
-      // Sort by area and background likelihood
-      whiteElements.sort((a, b) => {
-        if (a.isBackground && !b.isBackground) return -1;
-        if (!a.isBackground && b.isBackground) return 1;
-        return b.area - a.area;
-      });
-      
-      // Remove the most likely background element
-      if (whiteElements.length > 0 && whiteElements[0].isBackground) {
-        whiteElements[0].element.remove();
-        console.log('Removed white background element:', whiteElements[0].element.tagName);
-      } else if (whiteElements.length > 0) {
-        // If no clear background found, log what we found
-        console.log('Found white elements but none identified as background:', whiteElements.map(w => ({
-          tag: w.element.tagName,
-          area: w.area,
-          isBackground: w.isBackground
-        })));
-      } else {
-        console.log('No white elements found in SVG');
-      }
+      console.log(`Removed ${removedCount} white background elements`);
       
     } else {
       // Aggressive mode: Remove ALL white elements
