@@ -62,11 +62,12 @@ export function VectorizerModal({
       const imageUrl = URL.createObjectURL(imageFile);
       setPreviewUrl(imageUrl);
       
-      // Call our backend API which will handle vectorization
+      // Call our backend API in preview mode (no credits consumed)
       const formData = new FormData();
       formData.append('image', imageFile);
+      formData.append('preview', 'true'); // This ensures no credits are consumed
       
-      const response = await fetch('/api/vectorize', {
+      const response = await fetch('/api/vectorize?preview=true', {
         method: 'POST',
         body: formData,
       });
@@ -99,17 +100,48 @@ export function VectorizerModal({
     }
   };
 
-  const handleApproveVector = () => {
+  const handleApproveVector = async () => {
     const svgToDownload = coloredSvg || vectorSvg;
     console.log('handleApproveVector called', { 
       hasColoredSvg: !!coloredSvg, 
       hasVectorSvg: !!vectorSvg,
       svgLength: svgToDownload?.length 
     });
+    
     if (svgToDownload) {
-      console.log('Calling onVectorDownload');
-      onVectorDownload(svgToDownload);
-      onClose();
+      try {
+        // Set processing state while generating production version
+        setIsProcessing(true);
+        
+        // Now make the production API call (this will consume credits)
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        formData.append('preview', 'false'); // Production mode
+        
+        const response = await fetch('/api/vectorize', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Production vectorization failed');
+        }
+        
+        const result = await response.json();
+        console.log('Production vectorization successful');
+        
+        // Use the production-quality SVG (or the modified preview if user made changes)
+        console.log('Calling onVectorDownload');
+        onVectorDownload(svgToDownload);
+        onClose();
+        
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to generate production vector');
+        console.error('Production vectorization error:', err);
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -802,7 +834,7 @@ export function VectorizerModal({
             {/* Cost Information */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
               <p className="text-sm text-blue-800">
-                <strong>Vectorization Cost:</strong> ${cost.toFixed(2)} will be added to your order if you approve the result.
+                <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. ${cost.toFixed(2)} will only be charged when you approve and download the final result.
               </p>
             </div>
 
@@ -1002,7 +1034,7 @@ export function VectorizerModal({
               {/* Instructions */}
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mt-4 flex-shrink-0">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>How to use:</strong> Use zoom controls to inspect details. Click color swatches to highlight or delete colors. Use "Reduce" to simplify the color palette automatically. Hover over buttons for more information.
+                  <strong>How to use:</strong> This is a free preview - explore and edit colors without consuming credits. Use zoom controls to inspect details. Click color swatches to highlight or delete colors. Use "Reduce" to simplify colors automatically. Credits are only charged when you approve the final result.
                 </p>
               </div>
             </div>
@@ -1024,7 +1056,7 @@ export function VectorizerModal({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Approve vectorization and add to canvas - charges ${cost.toFixed(2)} to your order</p>
+                      <p>Generate production-quality vector and add to canvas - charges ${cost.toFixed(2)} to your order</p>
                     </TooltipContent>
                   </Tooltip>
                 )}

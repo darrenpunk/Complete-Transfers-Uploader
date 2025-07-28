@@ -1507,8 +1507,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contentType: req.file.mimetype
       });
 
+      // Check if this is a preview request (don't consume credits)
+      const isPreview = req.body.preview === 'true' || req.query.preview === 'true';
+      
       // Add vectorization options based on the provided screenshot settings
-      formData.append('mode', 'production'); // Use production mode for live API
+      formData.append('mode', isPreview ? 'test' : 'production'); // Use test mode for previews to avoid consuming credits
       
       // File Format
       formData.append('output_format', 'svg');
