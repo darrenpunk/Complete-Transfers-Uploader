@@ -88,10 +88,10 @@ export function VectorizerModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col bg-white dark:bg-white">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
+            <DialogTitle className="text-gray-900">AI Vectorization: {fileName}</DialogTitle>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -115,8 +115,8 @@ export function VectorizerModal({
         
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Cost Information */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 flex-shrink-0">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
+            <p className="text-sm text-blue-800">
               <strong>Vectorization Cost:</strong> ${cost.toFixed(2)} will be added to your order if you approve the result.
             </p>
           </div>
@@ -187,8 +187,8 @@ export function VectorizerModal({
 
               {/* Color Palette */}
               {showPalette && vectorSvg && (
-                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg flex-shrink-0">
-                  <span className="text-sm font-medium">Color Presets:</span>
+                <div className="flex items-center gap-4 mb-4 p-4 bg-gray-100 rounded-lg flex-shrink-0">
+                  <span className="text-sm font-medium text-gray-900">Color Presets:</span>
                   <div className="flex gap-2">
                     {['#000000', '#FFFFFF', '#5B9BD5', '#ED7D31', '#70AD47', '#FFC000'].map((color) => (
                       <button
@@ -218,10 +218,10 @@ export function VectorizerModal({
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
                 {/* Original */}
                 <div className="flex flex-col overflow-hidden">
-                  <h3 className="font-semibold mb-2 text-center">Original Image</h3>
+                  <h3 className="font-semibold mb-2 text-center text-gray-900">Original Image</h3>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
-                      showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'
+                      showGrid ? 'transparency-grid' : 'bg-gray-50'
                     }`}
                   >
                     <div 
@@ -244,10 +244,10 @@ export function VectorizerModal({
 
                 {/* Vectorized Preview */}
                 <div className="flex flex-col overflow-hidden">
-                  <h3 className="font-semibold mb-2 text-center">Vectorized Result</h3>
+                  <h3 className="font-semibold mb-2 text-center text-gray-900">Vectorized Result</h3>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
-                      showGrid ? 'transparency-grid' : 'bg-gray-50 dark:bg-gray-900'
+                      showGrid ? 'transparency-grid' : 'bg-gray-50'
                     }`}
                   >
                     {(coloredSvg || vectorSvg) ? (

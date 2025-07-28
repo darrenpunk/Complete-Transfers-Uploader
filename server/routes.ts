@@ -1411,7 +1411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fetch = (await import('node-fetch')).default;
       const auth = Buffer.from(`${apiId}:${apiSecret}`).toString('base64');
       
-      const response = await fetch('https://api.vectorization-service.com/v1/vectorize', {
+      const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${auth}`,
