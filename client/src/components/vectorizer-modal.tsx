@@ -1004,6 +1004,7 @@ export function VectorizerModal({
                           }}
                         >
                           <div 
+                            key={`svg-preview-${(highlightedSvg || coloredSvg || vectorSvg || '').length}-${detectedColors.length}`}
                             style={{
                               width: '100%',
                               height: '100%',
@@ -1371,16 +1372,21 @@ export function VectorizerModal({
                             const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
                             const newColors = detectColorsInSvg(updatedSvg);
                             
+                            console.log('Before white removal:', currentSvg.substring(0, 200));
+                            console.log('After white removal:', updatedSvg.substring(0, 200));
+                            console.log('SVG length changed from', currentSvg.length, 'to', updatedSvg.length);
+                            
                             // Clear all highlighting and update states in batch for immediate visual feedback
                             setHighlightedColor(null);
                             setHighlightedSvg(null);
-                            setColoredSvg(updatedSvg);
-                            setDetectedColors(newColors);
+                            // Force new reference to trigger re-render
+                            setColoredSvg(null);
                             
-                            // Force immediate re-render by using setTimeout
-                            setTimeout(() => {
+                            // Use requestAnimationFrame for guaranteed re-render
+                            requestAnimationFrame(() => {
                               setColoredSvg(updatedSvg);
-                            }, 0);
+                              setDetectedColors(newColors);
+                            });
                             
                             toast({
                               title: "White Removed",
@@ -1440,16 +1446,21 @@ export function VectorizerModal({
                             
                             const newColors = detectColorsInSvg(updatedSvg);
                             
+                            console.log('Remove all white - Before:', currentSvg.substring(0, 200));
+                            console.log('Remove all white - After:', updatedSvg.substring(0, 200));
+                            console.log('Remove all white - SVG length changed from', currentSvg.length, 'to', updatedSvg.length);
+                            
                             // Clear all highlighting and update states in batch for immediate visual feedback
                             setHighlightedColor(null);
                             setHighlightedSvg(null);
-                            setColoredSvg(updatedSvg);
-                            setDetectedColors(newColors);
+                            // Force new reference to trigger re-render
+                            setColoredSvg(null);
                             
-                            // Force immediate re-render by using setTimeout
-                            setTimeout(() => {
+                            // Use requestAnimationFrame for guaranteed re-render
+                            requestAnimationFrame(() => {
                               setColoredSvg(updatedSvg);
-                            }, 0);
+                              setDetectedColors(newColors);
+                            });
                             
                             toast({
                               title: "White Colors Removed",
