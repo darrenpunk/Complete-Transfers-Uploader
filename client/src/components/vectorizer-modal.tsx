@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2 } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,7 @@ export function VectorizerModal({
   const [originalColorMap, setOriginalColorMap] = useState<{[originalColor: string]: string}>({});
   const [svgRevision, setSvgRevision] = useState(0); // Force re-render counter
   const svgContainerRef = useRef<HTMLDivElement>(null); // Direct DOM reference
+  const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
   // Removed floating color window - using inline palette instead
 
   // Debug logging
@@ -55,7 +56,7 @@ export function VectorizerModal({
     }
   }, [open, imageFile]);
 
-  // Direct DOM update when SVG changes
+  // Direct DOM update when SVG changes with click interaction
   useEffect(() => {
     if (svgContainerRef.current) {
       const currentSvg = highlightedSvg || coloredSvg || vectorSvg || '';
@@ -67,25 +68,62 @@ export function VectorizerModal({
         // Add a small delay to ensure state has settled
         setTimeout(() => {
           if (svgContainerRef.current) {
-            // Create a new img element with data URL
-            const blob = new Blob([currentSvg], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
+            // Create interactive SVG element instead of img
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = currentSvg;
+            const svgElement = tempDiv.querySelector('svg');
             
-            const img = document.createElement('img');
-            img.src = url;
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-            img.style.width = 'auto';
-            img.style.height = 'auto';
-            img.onload = () => URL.revokeObjectURL(url);
-            
-            svgContainerRef.current.appendChild(img);
-            console.log('Direct DOM update with SVG length:', currentSvg.length);
+            if (svgElement) {
+              // Style the SVG
+              svgElement.style.maxWidth = '100%';
+              svgElement.style.maxHeight = '100%';
+              svgElement.style.width = 'auto';
+              svgElement.style.height = 'auto';
+              svgElement.style.cursor = 'crosshair';
+              
+              // Add click event listener to detect color clicks
+              const handleSvgClick = (event: Event) => {
+                const target = event.target as SVGElement;
+                if (target && (target.tagName === 'path' || target.tagName === 'ellipse' || target.tagName === 'rect' || target.tagName === 'circle')) {
+                  const fill = target.getAttribute('fill');
+                  const stroke = target.getAttribute('stroke');
+                  const clickedColor = fill || stroke;
+                  
+                  if (clickedColor && clickedColor !== 'none') {
+                    console.log('Color clicked in SVG:', clickedColor);
+                    setSelectedColor(clickedColor);
+                    
+                    // Toggle lock status for this color
+                    setLockedColors(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(clickedColor)) {
+                        newSet.delete(clickedColor);
+                        toast({
+                          title: "Color Unlocked",
+                          description: `Unlocked color ${clickedColor}`,
+                        });
+                      } else {
+                        newSet.add(clickedColor);
+                        toast({
+                          title: "Color Locked",
+                          description: `Locked color ${clickedColor}`,
+                        });
+                      }
+                      return newSet;
+                    });
+                  }
+                }
+              };
+              
+              svgElement.addEventListener('click', handleSvgClick);
+              svgContainerRef.current.appendChild(svgElement);
+              console.log('Direct DOM update with interactive SVG length:', currentSvg.length);
+            }
           }
         }, 50); // Small delay to ensure React state has settled
       }
     }
-  }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision]);
+  }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision, toast]);
 
 
 
@@ -1030,6 +1068,12 @@ export function VectorizerModal({
                   <h3 className="font-semibold mb-2 text-center">
                     {viewMode === 'comparison' ? 'Vectorised CMYK Result' : 'Vector Preview'}
                   </h3>
+                  
+                  {/* Click instruction banner */}
+                  <div className="text-xs text-center text-gray-600 mb-2 py-1 px-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <Lock className="w-3 h-3 inline mr-1 text-yellow-600" />
+                    Click any color in preview to lock/unlock it
+                  </div>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
                       showGrid ? 'transparency-grid' : 'bg-white'
@@ -1117,11 +1161,22 @@ export function VectorizerModal({
           {/* Right Sidebar - Color Management */}
           {vectorSvg && detectedColors.length > 0 && (
             <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-2">
                 <Palette className="w-5 h-5 text-gray-100" />
                 <h3 className="font-semibold text-gray-100">
                   Detected Colors ({detectedColors.length})
                 </h3>
+              </div>
+              
+              {/* Instructions for color locking */}
+              <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-800 rounded border border-gray-700">
+                <div className="flex items-center gap-1 mb-1">
+                  <Lock className="w-3 h-3 text-yellow-500" />
+                  <span>Click colors in preview to lock/unlock them</span>
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  Locked colors (yellow border) are protected from deletion
+                </div>
               </div>
               
               {highlightedColor && (
@@ -1141,10 +1196,12 @@ export function VectorizerModal({
                         className={`w-10 h-10 rounded border cursor-pointer hover:border-gray-400 transition-all relative ${
                           highlightedColor === colorItem.color 
                             ? 'border-red-500 border-2 shadow-lg' 
-                            : 'border-gray-600'
+                            : lockedColors.has(colorItem.color) 
+                              ? 'border-yellow-500 border-2'
+                              : 'border-gray-600'
                         }`}
                         style={{ backgroundColor: colorItem.color }}
-                        title={`${colorItem.color} (${colorItem.count} elements) - Click to highlight`}
+                        title={`${colorItem.color} (${colorItem.count} elements) ${lockedColors.has(colorItem.color) ? '- LOCKED' : '- Click in preview to lock/unlock'}`}
                         onClick={() => {
                           if (highlightedColor === colorItem.color) {
                             setHighlightedColor(null);
@@ -1159,45 +1216,55 @@ export function VectorizerModal({
                           }
                         }}
                       >
-                        <button
-                          className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            
-                            const currentSvg = coloredSvg || vectorSvg;
-                            if (currentSvg) {
-                              setDeletionHistory(prev => [...prev, {
-                                svg: currentSvg,
-                                colors: [...detectedColors]
-                              }]);
-                            }
-                            
-                            const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
-                            setColoredSvg(updatedSvg);
-                            
-                            // Always clear highlighting when a color is removed
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
-                            
-                            const newColors = detectColorsInSvg(updatedSvg);
-                            setDetectedColors(newColors);
-                            setSvgRevision(prev => prev + 1); // Force re-render
-                            
-                            // Force complete refresh
-                            setVectorSvg(null);
-                            setTimeout(() => {
-                              setVectorSvg(vectorSvg);
-                            }, 10);
-                            
-                            toast({
-                              title: "Color Removed",
-                              description: `Removed ${colorItem.color} from the image.`,
-                            });
-                          }}
-                          title="Delete this color"
-                        >
-                          <Trash2 className="h-2 w-2" />
-                        </button>
+                        {/* Lock indicator - always visible when locked */}
+                        {lockedColors.has(colorItem.color) && (
+                          <div className="absolute -top-1 -left-1 w-4 h-4 bg-yellow-500 text-black rounded-full flex items-center justify-center shadow-md z-10">
+                            <Lock className="h-2 w-2" />
+                          </div>
+                        )}
+                        
+                        {/* Delete button - hidden for locked colors */}
+                        {!lockedColors.has(colorItem.color) && (
+                          <button
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                setDeletionHistory(prev => [...prev, {
+                                  svg: currentSvg,
+                                  colors: [...detectedColors]
+                                }]);
+                              }
+                              
+                              const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                              setColoredSvg(updatedSvg);
+                              
+                              // Always clear highlighting when a color is removed
+                              setHighlightedColor(null);
+                              setHighlightedSvg(null);
+                              
+                              const newColors = detectColorsInSvg(updatedSvg);
+                              setDetectedColors(newColors);
+                              setSvgRevision(prev => prev + 1); // Force re-render
+                              
+                              // Force complete refresh
+                              setVectorSvg(null);
+                              setTimeout(() => {
+                                setVectorSvg(vectorSvg);
+                              }, 10);
+                              
+                              toast({
+                                title: "Color Removed",
+                                description: `Removed ${colorItem.color} from the image.`,
+                              });
+                            }}
+                            title="Delete this color"
+                          >
+                            <Trash2 className="h-2 w-2" />
+                          </button>
+                        )}
                       </div>
                       <div className="text-[10px] text-gray-400 text-center leading-tight mt-1">{colorItem.count}</div>
                     </div>
@@ -1486,6 +1553,69 @@ export function VectorizerModal({
                   </Tooltip>
                 </div>
                 
+                {/* Delete Unlocked Colors Button */}
+                {lockedColors.size > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          if (currentSvg) {
+                            // Save current state for undo
+                            setDeletionHistory(prev => [...prev, {
+                              svg: currentSvg,
+                              colors: [...detectedColors]
+                            }]);
+                            
+                            // Find all unlocked colors
+                            const unlockedColors = detectedColors
+                              .filter(colorItem => !lockedColors.has(colorItem.color))
+                              .map(colorItem => colorItem.color);
+                            
+                            console.log('Removing unlocked colors:', unlockedColors);
+                            console.log('Keeping locked colors:', Array.from(lockedColors));
+                            
+                            let updatedSvg = currentSvg;
+                            let totalRemoved = 0;
+                            
+                            // Remove each unlocked color
+                            unlockedColors.forEach(color => {
+                              updatedSvg = removeColorFromSvg(updatedSvg, color);
+                              totalRemoved++;
+                            });
+                            
+                            const newColors = detectColorsInSvg(updatedSvg);
+                            
+                            // Clear all highlighting first
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
+                            // Update immediately
+                            setColoredSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            setSvgRevision(prev => prev + 1); // Force re-render
+                            
+                            toast({
+                              title: "Unlocked Colors Removed",
+                              description: `Removed ${totalRemoved} unlocked colors, kept ${lockedColors.size} locked colors.`,
+                            });
+                          }
+                        }}
+                        className="w-full border-red-600 text-red-100 hover:bg-red-700 mb-3"
+                        disabled={lockedColors.size === 0 || detectedColors.every(c => lockedColors.has(c.color))}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Unlocked Colors ({detectedColors.filter(c => !lockedColors.has(c.color)).length})
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove all colors that are not locked, keeping only the locked colors</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -1496,6 +1626,7 @@ export function VectorizerModal({
                         setHighlightedColor(null);
                         setHighlightedSvg(null);
                         setDeletionHistory([]);
+                        setLockedColors(new Set()); // Clear locked colors on reset
                         const colors = detectColorsInSvg(vectorSvg);
                         setDetectedColors(colors);
                         setOriginalDetectedColors(colors);
