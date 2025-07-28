@@ -205,9 +205,14 @@ export function VectorizerModal({
         const result = await response.json();
         console.log('Production vectorization successful');
         
-        // Use the production-quality SVG (or the modified preview if user made changes)
-        console.log('Calling onVectorDownload');
-        onVectorDownload(svgToDownload);
+        // Use the production-quality normalized SVG from the API response
+        // If user made color changes, we need to apply them to the production SVG
+        const finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
+        console.log('Calling onVectorDownload with', { 
+          usedModifiedVersion: svgToDownload !== vectorSvg,
+          finalSvgLength: finalSvg?.length 
+        });
+        onVectorDownload(finalSvg);
         onClose();
         
       } catch (err) {

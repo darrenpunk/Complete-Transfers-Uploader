@@ -10,7 +10,7 @@ import { fromPath } from "pdf2pic";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { pdfGenerator } from "./pdf-generator";
-import { extractSVGColors, applySVGColorChanges, analyzeSVG, calculateSVGContentBounds } from "./svg-color-utils";
+import { extractSVGColors, applySVGColorChanges, analyzeSVG, calculateSVGContentBounds, normalizeVectorizedSVG } from "./svg-color-utils";
 import { outlineFonts } from "./font-outliner";
 import { ColorManagement } from "./color-management";
 import { standardizeRgbToCmyk } from "./color-standardization";
@@ -444,7 +444,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           if (finalMimeType === 'image/svg+xml') {
             // For SVG files, calculate actual content bounding box instead of viewBox
-            const svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
+            let svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
+            
+            // Apply normalization to fix Illustrator distortion issues (vectorized SVGs)
+            const normalizedSvgContent = normalizeVectorizedSVG(svgContent);
+            if (normalizedSvgContent !== svgContent) {
+              console.log('Applied SVG coordinate normalization for better Illustrator compatibility');
+              fs.writeFileSync(path.join(uploadDir, finalFilename), normalizedSvgContent);
+              svgContent = normalizedSvgContent;
+            }
+            
             const bbox = calculateSVGContentBounds(svgContent);
             if (bbox) {
               actualWidth = bbox.width;
@@ -1573,9 +1582,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the SVG result
-      const svgContent = await response.text();
+      let svgContent = await response.text();
       
       console.log('Vectorization successful, SVG length:', svgContent.length);
+      
+      // Normalize the SVG coordinates to fix Illustrator distortion issues
+      svgContent = normalizeVectorizedSVG(svgContent);
       
       // Clean up the temporary file
       if (req.file && req.file.filename) {

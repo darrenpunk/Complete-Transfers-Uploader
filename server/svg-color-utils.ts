@@ -459,6 +459,88 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
+// Normalize vectorized SVG coordinates to fix Illustrator distortion issues
+export function normalizeVectorizedSVG(svgContent: string): string {
+  try {
+    // Check if this is a vectorized SVG that needs normalization
+    const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"');
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    const hasLargeViewBox = viewBoxMatch && viewBoxMatch[1].split(' ').some(val => parseFloat(val) > 1000);
+    
+    if (!isVectorizedSVG || !hasLargeViewBox) {
+      return svgContent; // No normalization needed
+    }
+    
+    console.log('Normalizing vectorized SVG coordinates for better Illustrator compatibility');
+    
+    // Calculate content bounds first
+    const bounds = calculateVectorizedSVGBounds(svgContent);
+    if (!bounds || bounds.minX === undefined || bounds.minY === undefined) {
+      return svgContent; // Can't normalize without bounds
+    }
+    
+    const { minX, minY, width, height } = bounds;
+    
+    // Create normalized SVG with proper viewBox and repositioned elements
+    let normalizedSvg = svgContent;
+    
+    // Update viewBox to match content bounds starting from origin
+    const newViewBox = `viewBox="0 0 ${width} ${height}"`;
+    normalizedSvg = normalizedSvg.replace(/viewBox="[^"]*"/, newViewBox);
+    
+    // Update width and height attributes
+    normalizedSvg = normalizedSvg.replace(/width="[^"]*"/, `width="${width}"`);
+    normalizedSvg = normalizedSvg.replace(/height="[^"]*"/, `height="${height}"`);
+    
+    // Translate all path coordinates to start from origin
+    const offsetX = -minX;
+    const offsetY = -minY;
+    
+    // Transform path data by offsetting coordinates
+    normalizedSvg = normalizedSvg.replace(/<path[^>]*d="([^"]*)"[^>]*>/g, (match, pathData) => {
+      const normalizedPathData = offsetPathCoordinates(pathData, offsetX, offsetY);
+      return match.replace(pathData, normalizedPathData);
+    });
+    
+    console.log(`SVG normalized: offset by ${offsetX.toFixed(1)}, ${offsetY.toFixed(1)} to fit ${width}×${height} viewBox`);
+    
+    return normalizedSvg;
+    
+  } catch (error) {
+    console.error('Error normalizing vectorized SVG:', error);
+    return svgContent; // Return original on error
+  }
+}
+
+// Helper function to offset all coordinates in a path data string
+function offsetPathCoordinates(pathData: string, offsetX: number, offsetY: number): string {
+  try {
+    // Replace all coordinate pairs in the path data
+    return pathData.replace(/([ML])\s*([\d.-]+)\s*([\d.-]+)/g, (match, command, x, y) => {
+      const newX = parseFloat(x) + offsetX;
+      const newY = parseFloat(y) + offsetY;
+      return `${command} ${newX.toFixed(2)} ${newY.toFixed(2)}`;
+    }).replace(/([QC])\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)/g, (match, command, x1, y1, x2, y2) => {
+      const newX1 = parseFloat(x1) + offsetX;
+      const newY1 = parseFloat(y1) + offsetY;
+      const newX2 = parseFloat(x2) + offsetX;
+      const newY2 = parseFloat(y2) + offsetY;
+      return `${command} ${newX1.toFixed(2)} ${newY1.toFixed(2)} ${newX2.toFixed(2)} ${newY2.toFixed(2)}`;
+    }).replace(/([QC])\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)\s*([\d.-]+)/g, (match, command, x1, y1, x2, y2, x3, y3) => {
+      const newX1 = parseFloat(x1) + offsetX;
+      const newY1 = parseFloat(y1) + offsetY;
+      const newX2 = parseFloat(x2) + offsetX;
+      const newY2 = parseFloat(y2) + offsetY;
+      const newX3 = parseFloat(x3) + offsetX;
+      const newY3 = parseFloat(y3) + offsetY;
+      return `${command} ${newX1.toFixed(2)} ${newY1.toFixed(2)} ${newX2.toFixed(2)} ${newY2.toFixed(2)} ${newX3.toFixed(2)} ${newY3.toFixed(2)}`;
+    });
+  } catch (error) {
+    console.error('Error offsetting path coordinates:', error);
+    return pathData; // Return original on error
+  }
+}
+
 // Specialized function for calculating bounds of vectorized SVG files from AI services
 function calculateVectorizedSVGBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
