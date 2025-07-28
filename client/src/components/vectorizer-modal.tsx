@@ -28,7 +28,7 @@ export function VectorizerModal({
   const [vectorSvg, setVectorSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
-  const [zoom, setZoom] = useState<number>(100); // Zoom percentage
+  const [zoom, setZoom] = useState<number>(125); // Zoom percentage
   const [showGrid, setShowGrid] = useState<boolean>(true); // Show transparency grid
   const [showPalette, setShowPalette] = useState<boolean>(false); // Show color palette
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -983,8 +983,8 @@ export function VectorizerModal({
                           className="max-w-none"
                           style={{ 
                             imageRendering: zoom > 200 ? 'pixelated' : 'auto',
-                            width: '300px',
-                            height: '300px',
+                            width: '400px',
+                            height: '400px',
                             objectFit: 'contain',
                             backgroundColor: 'white'
                           }}
@@ -1016,8 +1016,8 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper border border-gray-300"
                           style={{ 
-                            width: '300px',
-                            height: '300px',
+                            width: '400px',
+                            height: '400px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
