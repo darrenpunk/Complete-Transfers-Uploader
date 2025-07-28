@@ -1017,7 +1017,7 @@ export function VectorizerModal({
                             width: '400px',
                             height: '400px',
                             objectFit: 'contain',
-                            backgroundColor: 'white'
+                            backgroundColor: showGrid ? 'transparent' : '#f0f0f0'
                           }}
                         />
                       </div>
@@ -1053,7 +1053,7 @@ export function VectorizerModal({
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: 'white',
+                            backgroundColor: showGrid ? 'transparent' : '#f0f0f0',
                             overflow: 'hidden'
                           }}
                         >
