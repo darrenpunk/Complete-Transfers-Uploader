@@ -1006,28 +1006,59 @@ export default function CanvasWorkspace({
                     {/* Text Elements */}
                     {element.elementType === 'text' && (
                       <div 
-                        className="w-full h-full flex items-center justify-center" 
+                        className="w-full h-full flex items-center justify-center overflow-hidden" 
                         style={{
-                          fontSize: `${element.fontSize || 24}px`,
+                          fontSize: `${Math.max((element.fontSize || 24) * (zoom / 100), 8)}px`,
                           fontFamily: element.fontFamily || 'Arial',
                           fontWeight: element.fontWeight || 'normal',
                           color: element.textColor || '#000000',
-                          textAlign: element.textAlign as any || 'center'
+                          textAlign: element.textAlign as any || 'center',
+                          lineHeight: '1.2',
+                          wordWrap: 'break-word',
+                          hyphens: 'auto'
                         }}
                       >
-                        {element.textContent || 'Text'}
+                        <span className="select-none pointer-events-none">
+                          {element.textContent || 'Your Text Here'}
+                        </span>
                       </div>
                     )}
 
                     {/* Shape Elements */}
-                    {element.elementType === 'shape' && (
+                    {element.elementType === 'shape' && element.shapeType && (
                       <div className="w-full h-full flex items-center justify-center">
-                        <div 
-                          className="w-full h-full" 
-                          style={{
-                            backgroundColor: element.fillColor || '#000000'
-                          }}
-                        />
+                        {element.shapeType === 'rectangle' && (
+                          <div 
+                            className="w-full h-full" 
+                            style={{
+                              backgroundColor: element.fillColor || '#000000',
+                              border: element.strokeWidth ? `${element.strokeWidth}px solid ${element.strokeColor || '#000000'}` : 'none'
+                            }}
+                          />
+                        )}
+                        {element.shapeType === 'circle' && (
+                          <div 
+                            className="w-full h-full rounded-full" 
+                            style={{
+                              backgroundColor: element.fillColor || '#000000',
+                              border: element.strokeWidth ? `${element.strokeWidth}px solid ${element.strokeColor || '#000000'}` : 'none'
+                            }}
+                          />
+                        )}
+                        {element.shapeType === 'line' && (
+                          <div 
+                            className="w-full flex items-center justify-center"
+                            style={{ height: element.strokeWidth || 2 }}
+                          >
+                            <div 
+                              className="w-full" 
+                              style={{
+                                height: element.strokeWidth || 2,
+                                backgroundColor: element.strokeColor || element.fillColor || '#000000'
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
