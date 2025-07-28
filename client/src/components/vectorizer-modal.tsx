@@ -38,7 +38,7 @@ export function VectorizerModal({
   const [highlightedSvg, setHighlightedSvg] = useState<string | null>(null);
   const [deletionHistory, setDeletionHistory] = useState<{svg: string, colors: {color: string, count: number}[]}[]>([]);
   const [viewMode, setViewMode] = useState<'comparison' | 'preview'>('comparison');
-  const [showColorWindow, setShowColorWindow] = useState(false);
+  // Removed floating color window - using inline palette instead
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -608,10 +608,10 @@ export function VectorizerModal({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setShowColorWindow(!showColorWindow)}
-                title="Open color palette window"
+                onClick={() => setShowPalette(!showPalette)}
+                title="Toggle color palette"
               >
-                <Palette className={`h-4 w-4 ${showColorWindow ? 'text-primary' : ''}`} />
+                <Palette className={`h-4 w-4 ${showPalette ? 'text-primary' : ''}`} />
               </Button>
             </div>
           </div>
@@ -694,11 +694,11 @@ export function VectorizerModal({
                 <div className="mb-3 flex-shrink-0">
                   <Button
                     variant="outline"
-                    onClick={() => setShowColorWindow(true)}
+                    onClick={() => setShowPalette(!showPalette)}
                     className="border-gray-600 text-gray-100 hover:bg-gray-700"
                   >
                     <Palette className="w-4 h-4 mr-2" />
-                    Detected Colors ({detectedColors.length})
+                    {showPalette ? 'Hide' : 'Show'} Colors ({detectedColors.length})
                     {highlightedColor && (
                       <span className="ml-2 text-red-400 font-semibold">• Highlighting {highlightedColor}</span>
                     )}
@@ -806,141 +806,7 @@ export function VectorizerModal({
         </div>
       </DialogContent>
       
-      {/* Floating Color Window using React Portal */}
-      {showColorWindow && vectorSvg && detectedColors.length > 0 && createPortal(
-        <div 
-          className="fixed top-20 right-6 w-80 max-h-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col floating-color-window"
-          style={{ zIndex: 9999 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800">
-            <div className="flex items-center gap-2">
-              <Palette className="w-4 h-4 text-gray-100" />
-              <span className="text-sm font-medium text-gray-100">
-                Detected Colors ({detectedColors.length})
-                {highlightedColor && (
-                  <span className="ml-2 text-red-400 text-xs">• {highlightedColor}</span>
-                )}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowColorWindow(false)}
-              className="text-gray-400 hover:text-gray-100 text-lg leading-none"
-            >
-              ×
-            </button>
-          </div>
-          
-          {/* Color Grid */}
-          <div className="flex-1 p-2 overflow-auto">
-            <div className="grid grid-cols-8 gap-1">
-              {detectedColors.map((colorItem, index) => (
-                <div key={index} className="relative group flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded border cursor-pointer hover:border-gray-400 transition-all relative ${
-                      highlightedColor === colorItem.color 
-                        ? 'border-red-500 border-2 shadow-lg' 
-                        : 'border-gray-600'
-                    }`}
-                    style={{ backgroundColor: colorItem.color }}
-                    title={`${colorItem.color} (${colorItem.count} elements) - Click to highlight`}
-                    onClick={() => {
-                      if (highlightedColor === colorItem.color) {
-                        setHighlightedColor(null);
-                        setHighlightedSvg(null);
-                      } else {
-                        setHighlightedColor(colorItem.color);
-                        const currentSvg = coloredSvg || vectorSvg;
-                        if (currentSvg) {
-                          const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
-                          setHighlightedSvg(highlighted);
-                        }
-                      }
-                    }}
-                  >
-                    <button
-                      className="absolute -top-1 -right-1 w-3 h-3 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        
-                        const currentSvg = coloredSvg || vectorSvg;
-                        if (currentSvg) {
-                          setDeletionHistory(prev => [...prev, {
-                            svg: currentSvg,
-                            colors: [...detectedColors]
-                          }]);
-                        }
-                        
-                        const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
-                        setColoredSvg(updatedSvg);
-                        
-                        if (highlightedColor === colorItem.color) {
-                          setHighlightedColor(null);
-                          setHighlightedSvg(null);
-                        }
-                        
-                        const newColors = detectColorsInSvg(updatedSvg);
-                        setDetectedColors(newColors);
-                        
-                        toast({
-                          title: "Color Removed",
-                          description: `Removed ${colorItem.color} from the image.`,
-                        });
-                      }}
-                      title="Delete this color"
-                    >
-                      <Trash2 className="h-1.5 w-1.5" />
-                    </button>
-                  </div>
-                  <div className="text-[8px] text-gray-400 text-center leading-tight mt-0.5">{colorItem.count}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Quick Actions */}
-          <div className="border-t border-gray-700 p-2">
-            <div className="flex gap-1 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={reduceColors}
-                className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs h-7"
-                disabled={originalDetectedColors.length === 0}
-              >
-                <Wand2 className="w-2.5 h-2.5 mr-1" />
-                Reduce
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={undoLastDeletion}
-                className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs h-7"
-                disabled={deletionHistory.length === 0}
-              >
-                ↶ Undo
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setColoredSvg(vectorSvg);
-                  setHighlightedColor(null);
-                  setHighlightedSvg(null);
-                  setDeletionHistory([]);
-                  const colors = detectColorsInSvg(vectorSvg);
-                  setDetectedColors(colors);
-                }}
-                className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs h-7"
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+
     </Dialog>
   );
 }
