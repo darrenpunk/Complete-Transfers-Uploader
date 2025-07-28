@@ -397,9 +397,9 @@ export function VectorizerModal({
 
   // Function to reduce colors to main logo colors (top 5-8 colors by usage)
   const reduceColors = () => {
-    if (originalDetectedColors.length === 0) return;
+    if (originalDetectedColors.length === 0 || !vectorSvg) return;
     
-    // Keep only the top 6 colors (excluding white if it's a background color)
+    // Determine main colors to keep (top 6, excluding potential background whites)
     const mainColors = originalDetectedColors
       .filter(color => {
         // Filter out white/near-white background colors with high counts
@@ -411,11 +411,28 @@ export function VectorizerModal({
       })
       .slice(0, 6); // Keep top 6 main colors
     
-    setDetectedColors(mainColors);
+    // Get colors to remove (everything not in main colors)
+    const colorsToKeep = new Set(mainColors.map(c => c.color.toLowerCase()));
+    const colorsToRemove = originalDetectedColors
+      .filter(color => !colorsToKeep.has(color.color.toLowerCase()))
+      .map(c => c.color);
+    
+    // Start with current SVG (could be modified) or original
+    let modifiedSvg = coloredSvg || vectorSvg;
+    
+    // Remove each unwanted color from the SVG
+    colorsToRemove.forEach(colorToRemove => {
+      modifiedSvg = removeColorFromSvg(modifiedSvg, colorToRemove);
+    });
+    
+    // Update the SVG and detected colors
+    setColoredSvg(modifiedSvg);
+    const newColors = detectColorsInSvg(modifiedSvg);
+    setDetectedColors(newColors);
     
     toast({
       title: "Colors Reduced",
-      description: `Simplified to ${mainColors.length} main logo colors`,
+      description: `Removed ${colorsToRemove.length} minor colors, keeping ${mainColors.length} main logo colors`,
     });
   };
 
