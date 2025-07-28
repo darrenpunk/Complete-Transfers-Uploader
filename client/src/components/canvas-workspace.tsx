@@ -926,11 +926,12 @@ export default function CanvasWorkspace({
                         logoId: element.logoId,
                         logoExists: !!logo,
                         logoFilename: logo?.filename,
-                        logoMimeType: logo?.mimeType
+                        logoMimeType: logo?.mimeType,
+                        fullElement: element
                       });
                       return null;
                     })()}
-                    {element.elementType === 'logo' && logo ? (
+                    {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
                       <img
                         src={
                           // Priority 1: Element has individual color overrides
