@@ -421,6 +421,11 @@ export default function CanvasWorkspace({
   const getImageUrl = (logo: Logo): string => {
     // For PDF files, use the SVG conversion
     if (logo.mimeType === 'application/pdf') {
+      // Check if filename already ends with .svg (for processed files)
+      if (logo.filename.endsWith('.svg')) {
+        return `/uploads/${logo.filename}`;
+      }
+      // Otherwise, append .svg to the PDF filename
       return `/uploads/${logo.filename}.svg`;
     }
     // For other image files, use original
