@@ -149,6 +149,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Credit-Protected Vectorization System**: Implemented two-step process where initial preview uses test mode (free) and credits are only consumed when user approves final production-quality vector, preventing unnecessary API charges
 ✓ **Fixed Live Preview Color Updates**: Resolved issue where color adjustment sliders updated swatches but not live preview by clearing highlighting when adjustments are made, ensuring real-time visual feedback
 ✓ **Eliminated Vectorizer Watermarks**: Fixed watermark issue by removing 'mode: test' parameter for previews - API now returns clean images without "VECTORIZER.AI TEST IMAGE" watermarks while maintaining free preview functionality
+✓ **Synchronized Image Scaling**: Original and vectorized images now display at identical scales with matching 400px constraints, making side-by-side comparison accurate for quality assessment
 
 
 ## Current Status (July 28, 2025)

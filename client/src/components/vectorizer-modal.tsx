@@ -981,7 +981,13 @@ export function VectorizerModal({
                           src={previewUrl} 
                           alt="Original" 
                           className="max-w-none"
-                          style={{ imageRendering: zoom > 200 ? 'pixelated' : 'auto' }}
+                          style={{ 
+                            imageRendering: zoom > 200 ? 'pixelated' : 'auto',
+                            maxWidth: '400px',
+                            maxHeight: '400px',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
                         />
                       </div>
                     </div>
@@ -1010,8 +1016,10 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper"
                           style={{ 
-                            width: '100%', 
-                            height: '100%',
+                            maxWidth: '400px',
+                            maxHeight: '400px',
+                            width: 'auto',
+                            height: 'auto',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
