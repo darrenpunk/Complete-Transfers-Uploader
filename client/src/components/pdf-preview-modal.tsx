@@ -97,17 +97,34 @@ export default function PDFPreviewModal({
       icon: Palette,
       label: "Color Space",
       value: (() => {
-        // Check if any logos have CMYK colors or are converted
+        // Use same logic as tools sidebar preflight check - only show CMYK if explicitly converted
         const hasCMYKLogos = logos.some(logo => {
-          const colorInfo = logo.svgColors as any;
-          return colorInfo && (colorInfo.converted || colorInfo.mode === 'CMYK');
+          const svgColors = logo.svgColors as any;
+          const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+          
+          if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
+            // Only show CMYK if explicitly converted (has converted flag)
+            return svgColors.some(color => color.converted);
+          } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
+            // For raster images, check the mode
+            return svgColors.mode === 'CMYK';
+          }
+          return false;
         });
         return hasCMYKLogos ? "CMYK ready" : "RGB colors detected";
       })(),
       status: (() => {
+        // Use same logic as tools sidebar preflight check
         const hasCMYKLogos = logos.some(logo => {
-          const colorInfo = logo.svgColors as any;
-          return colorInfo && (colorInfo.converted || colorInfo.mode === 'CMYK');
+          const svgColors = logo.svgColors as any;
+          const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+          
+          if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
+            return svgColors.some(color => color.converted);
+          } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
+            return svgColors.mode === 'CMYK';
+          }
+          return false;
         });
         return hasCMYKLogos ? "success" : "warning";
       })()
