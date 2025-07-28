@@ -44,7 +44,15 @@ export function VectorizerModal({
   // Removed floating color window - using inline palette instead
 
   // Debug logging
-  console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
+  console.log('VectorizerModal render:', { 
+    open, 
+    fileName, 
+    hasImageFile: !!imageFile,
+    hasVectorSvg: !!vectorSvg,
+    vectorSvgLength: vectorSvg?.length,
+    detectedColorsCount: detectedColors.length,
+    showsSidebar: !!(vectorSvg && detectedColors.length > 0)
+  });
 
   useEffect(() => {
     console.log('VectorizerModal useEffect:', { open, hasImageFile: !!imageFile, fileName });
@@ -828,9 +836,9 @@ export function VectorizerModal({
             </div>
           </DialogHeader>
         
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-hidden flex max-h-[80vh]">
           {/* Main Content Area */}
-          <div className="flex-1 overflow-hidden flex flex-col pr-4">
+          <div className="flex-1 overflow-hidden flex flex-col pr-4 min-w-0">
             {/* Cost Information */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
               <p className="text-sm text-blue-800">
@@ -1014,18 +1022,24 @@ export function VectorizerModal({
                         }}
                       >
                         <div 
-                          className="vector-preview-wrapper"
+                          className="vector-preview-wrapper border-2 border-green-500"
                           style={{ 
                             maxWidth: '400px',
                             maxHeight: '400px',
-                            width: 'auto',
-                            height: 'auto',
+                            width: '400px',
+                            height: '400px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(255,0,0,0.1)'
                           }}
                           dangerouslySetInnerHTML={{ __html: highlightedSvg || coloredSvg || vectorSvg || '' }}
                         />
+                        {/* Debug info */}
+                        <div className="absolute top-2 left-2 text-xs text-green-400 bg-green-900 p-2 rounded z-50">
+                          SVG: {vectorSvg ? `${vectorSvg.length} chars` : 'none'} | 
+                          Colors: {detectedColors.length}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full">
@@ -1074,12 +1088,17 @@ export function VectorizerModal({
 
           {/* Right Sidebar - Color Management */}
           {vectorSvg && detectedColors.length > 0 && (
-            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden">
+            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0 bg-blue-900 border-2 border-blue-500">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-5 h-5 text-gray-100" />
                 <h3 className="font-semibold text-gray-100">
                   Detected Colors ({detectedColors.length})
                 </h3>
+              </div>
+              
+              {/* Debug indicator for sidebar */}
+              <div className="bg-blue-600 text-white p-2 rounded mb-4 text-xs">
+                ✅ SIDEBAR VISIBLE - Colors: {detectedColors.length} | SVG: {vectorSvg ? 'YES' : 'NO'}
               </div>
               
               {highlightedColor && (
