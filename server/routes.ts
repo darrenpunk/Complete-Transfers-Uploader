@@ -331,24 +331,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // Apply content bounds cropping after background removal
                 const finalBbox = calculateSVGContentBounds(svgContent);
+                console.log('Final bbox result:', finalBbox);
                 if (finalBbox && finalBbox.hasColoredContent && finalBbox.minX !== undefined) {
                   console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${finalBbox.width.toFixed(1)}×${finalBbox.height.toFixed(1)}`);
                   
                   // Update SVG viewBox to crop to content bounds
-                  svgContent = svgContent.replace(
-                    /viewBox="[^"]*"/,
-                    `viewBox="${finalBbox.minX} ${finalBbox.minY} ${finalBbox.width} ${finalBbox.height}"`
-                  );
+                  const newViewBox = `viewBox="${finalBbox.minX} ${finalBbox.minY} ${finalBbox.width} ${finalBbox.height}"`;
+                  const newWidth = `width="${finalBbox.width}"`;
+                  const newHeight = `height="${finalBbox.height}"`;
                   
-                  // Also update width and height attributes to match content
-                  svgContent = svgContent.replace(
-                    /width="[^"]*"/,
-                    `width="${finalBbox.width}"`
-                  );
-                  svgContent = svgContent.replace(
-                    /height="[^"]*"/,
-                    `height="${finalBbox.height}"`
-                  );
+                  svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                  svgContent = svgContent.replace(/width="[^"]*"/, newWidth);
+                  svgContent = svgContent.replace(/height="[^"]*"/, newHeight);
+                  
+                  console.log('SVG updated with new viewBox:', newViewBox);
+                } else {
+                  console.log('SVG cropping skipped - no valid content bounds found');
                 }
                 
                 // Force SVG background transparency only
