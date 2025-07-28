@@ -533,7 +533,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         
         // Check if we're still getting massive bounds that suggest background contamination
         // Only apply center-focused filtering if bounds are really large (likely background contamination)
-        if (rawWidth > 700 && rawHeight > 700) {
+        // A3 size at 283 DPI is 838×1190 pixels, so increase threshold to handle real A3 artwork
+        if (rawWidth > 1200 && rawHeight > 1200) {
           // Try to find a better estimate by looking at the coordinate distribution
           const centerX = (minX + maxX) / 2;
           const centerY = (minY + maxY) / 2;
@@ -663,7 +664,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const rawHeight = maxY - minY;
     
     // Check if we're still getting massive bounds (indicating background elements)
-    if (rawWidth > 700 || rawHeight > 1000) {
+    // A3 size at 283 DPI is 838×1190 pixels, so increase threshold
+    if (rawWidth > 1200 || rawHeight > 1200) {
       // Try to find a better estimate by looking at coordinate clustering
       const centerX = (minX + maxX) / 2;
       const centerY = (minY + maxY) / 2;
