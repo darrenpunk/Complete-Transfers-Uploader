@@ -395,27 +395,49 @@ export function VectorizerModal({
     return new XMLSerializer().serializeToString(doc.documentElement);
   };
 
-  // Function to reduce colors to main logo colors (top 5-8 colors by usage)
+  // Function to reduce colors to main logo colors (more conservative approach)
   const reduceColors = () => {
     if (originalDetectedColors.length === 0 || !vectorSvg) return;
     
-    // Determine main colors to keep (top 6, excluding potential background whites)
-    const mainColors = originalDetectedColors
-      .filter(color => {
-        // Filter out white/near-white background colors with high counts
-        if (color.color === '#ffffff' || color.color === '#FFFFFF' || color.color === 'white') {
-          // Keep white only if it's not the most dominant color (likely background)
-          return color.count < originalDetectedColors[0].count * 0.8;
-        }
-        return true;
-      })
-      .slice(0, 6); // Keep top 6 main colors
+    // Calculate total color usage
+    const totalUsage = originalDetectedColors.reduce((sum, color) => sum + color.count, 0);
     
-    // Get colors to remove (everything not in main colors)
-    const colorsToKeep = new Set(mainColors.map(c => c.color.toLowerCase()));
+    // Only remove colors that represent less than 2% of total usage (very minor colors)
+    const minUsageThreshold = Math.max(1, Math.floor(totalUsage * 0.02));
+    
+    // Get colors to remove (only very minor ones)
     const colorsToRemove = originalDetectedColors
-      .filter(color => !colorsToKeep.has(color.color.toLowerCase()))
+      .filter(color => {
+        // Remove only if usage is below threshold AND it's not white (preserve white details)
+        return color.count < minUsageThreshold && 
+               color.color.toLowerCase() !== '#ffffff' && 
+               color.color.toLowerCase() !== 'white';
+      })
       .map(c => c.color);
+    
+    // If no minor colors found, try a slightly less conservative approach
+    if (colorsToRemove.length === 0) {
+      // Remove only single-use colors (count = 1) except white
+      const singleUseColors = originalDetectedColors
+        .filter(color => 
+          color.count === 1 && 
+          color.color.toLowerCase() !== '#ffffff' && 
+          color.color.toLowerCase() !== 'white'
+        )
+        .map(c => c.color);
+      
+      if (singleUseColors.length > 0) {
+        colorsToRemove.push(...singleUseColors);
+      }
+    }
+    
+    if (colorsToRemove.length === 0) {
+      toast({
+        title: "No Minor Colors Found",
+        description: "Logo already has an optimal color palette",
+      });
+      return;
+    }
     
     // Start with current SVG (could be modified) or original
     let modifiedSvg = coloredSvg || vectorSvg;
@@ -430,9 +452,11 @@ export function VectorizerModal({
     const newColors = detectColorsInSvg(modifiedSvg);
     setDetectedColors(newColors);
     
+    const keptColors = originalDetectedColors.length - colorsToRemove.length;
+    
     toast({
-      title: "Colors Reduced",
-      description: `Removed ${colorsToRemove.length} minor colors, keeping ${mainColors.length} main logo colors`,
+      title: "Minor Colors Removed",
+      description: `Removed ${colorsToRemove.length} minor colors (${keptColors} main colors preserved)`,
     });
   };
 
