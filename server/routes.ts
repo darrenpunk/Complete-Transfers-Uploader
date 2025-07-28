@@ -332,13 +332,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Apply content bounds cropping after background removal
                 const finalBbox = calculateSVGContentBounds(svgContent);
                 console.log('Final bbox result:', finalBbox);
-                if (finalBbox && finalBbox.hasColoredContent && finalBbox.minX !== undefined) {
-                  console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${finalBbox.width.toFixed(1)}×${finalBbox.height.toFixed(1)}`);
+                if (finalBbox && finalBbox.minX !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
+                  // Use raw content dimensions for tight cropping
+                  const rawWidth = finalBbox.maxX - finalBbox.minX;
+                  const rawHeight = finalBbox.maxY - finalBbox.minY;
+                  
+                  console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
                   
                   // Update SVG viewBox to crop to content bounds
-                  const newViewBox = `viewBox="${finalBbox.minX} ${finalBbox.minY} ${finalBbox.width} ${finalBbox.height}"`;
-                  const newWidth = `width="${finalBbox.width}"`;
-                  const newHeight = `height="${finalBbox.height}"`;
+                  const newViewBox = `viewBox="${finalBbox.minX} ${finalBbox.minY} ${rawWidth} ${rawHeight}"`;
+                  const newWidth = `width="${rawWidth}"`;
+                  const newHeight = `height="${rawHeight}"`;
                   
                   svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
                   svgContent = svgContent.replace(/width="[^"]*"/, newWidth);
