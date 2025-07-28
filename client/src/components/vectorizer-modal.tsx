@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 
 interface VectorizerModalProps {
@@ -805,8 +806,8 @@ export function VectorizerModal({
         </div>
       </DialogContent>
       
-      {/* Floating Color Window - Outside Dialog with Portal */}
-      {showColorWindow && vectorSvg && detectedColors.length > 0 && (
+      {/* Floating Color Window using React Portal */}
+      {showColorWindow && vectorSvg && detectedColors.length > 0 && createPortal(
         <div 
           className="fixed top-20 right-6 w-80 max-h-96 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col floating-color-window"
           style={{ zIndex: 9999 }}
@@ -937,7 +938,8 @@ export function VectorizerModal({
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </Dialog>
   );
