@@ -561,21 +561,10 @@ export default function CanvasWorkspace({
                             filter: colorManagementEnabled 
                               ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
                               : "none",
-                            // Apply content bounds cropping if available (for PDFs converted to SVG)
-                            ...(hasValidContentBounds(logo) && logo.mimeType === 'image/svg+xml' && logo.width && logo.height ? {
-                              // Use CSS clip-path for cleaner cropping
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'none',
-                              clipPath: `inset(${logo.contentBounds.minY}px ${logo.width - logo.contentBounds.maxX}px ${logo.height - logo.contentBounds.maxY}px ${logo.contentBounds.minX}px)`,
-                              transform: `scale(${elementWidth / (logo.contentBounds.maxX - logo.contentBounds.minX)}, ${elementHeight / (logo.contentBounds.maxY - logo.contentBounds.minY)})`,
-                              transformOrigin: `${logo.contentBounds.minX}px ${logo.contentBounds.minY}px`
-                            } : {
-                              // Default scaling for images without content bounds
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'fill'
-                            })
+                            // Default image scaling
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'fill'
                           }}
                           draggable={false}
                           onLoad={() => {
@@ -585,6 +574,9 @@ export default function CanvasWorkspace({
                                 ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
                                 : getImageUrl(logo);
                             console.log('Image loaded:', imageUrl);
+                            console.log('Logo dimensions:', { width: logo.width, height: logo.height });
+                            console.log('Element dimensions:', { width: element.width, height: element.height });
+                            console.log('Canvas display dimensions:', { elementWidth, elementHeight });
                             if (hasValidContentBounds(logo)) {
                               console.log('Content bounds applied:', logo.contentBounds);
                             }
