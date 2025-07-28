@@ -539,7 +539,7 @@ export default function CanvasWorkspace({
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Logo Content */}
-                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
+                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
                     {logo.mimeType?.startsWith('image/') ? (
                       <img
                         src={
@@ -560,15 +560,9 @@ export default function CanvasWorkspace({
                           filter: colorManagementEnabled 
                             ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
                             : "none",
-                          // Scale image based on content bounds if available
-                          ...(hasValidContentBounds(logo) && logo.width && logo.height ? {
-                            // Calculate scale to fit content bounds into element size
-                            transform: `scale(${logo.width / (logo.contentBounds.maxX - logo.contentBounds.minX)})`,
-                            transformOrigin: 'center',
-                            objectFit: 'none'
-                          } : {
-                            objectFit: 'fill'
-                          })
+                          objectFit: 'contain',
+                          width: '100%',
+                          height: '100%'
                         }}
                         draggable={false}
                         onLoad={() => {
