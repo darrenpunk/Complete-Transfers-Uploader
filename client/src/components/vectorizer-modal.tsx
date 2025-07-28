@@ -35,6 +35,7 @@ export function VectorizerModal({
   const [originalDetectedColors, setOriginalDetectedColors] = useState<{color: string, count: number}[]>([]);
   const [highlightedColor, setHighlightedColor] = useState<string | null>(null);
   const [highlightedSvg, setHighlightedSvg] = useState<string | null>(null);
+  const [deletionHistory, setDeletionHistory] = useState<{svg: string, colors: {color: string, count: number}[]}[]>([]);
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
@@ -544,15 +545,33 @@ export function VectorizerModal({
     });
   };
 
-  // Function to restore original detected colors
-  const undoColorChanges = () => {
-    setDetectedColors(originalDetectedColors);
-    setColoredSvg(null); // Reset any color modifications
-    setSelectedColor(null);
+  // Function to undo the last deletion only
+  const undoLastDeletion = () => {
+    if (deletionHistory.length === 0) {
+      toast({
+        title: "Nothing to Undo",
+        description: "No color deletions to reverse.",
+      });
+      return;
+    }
+    
+    // Get the last state from history
+    const lastState = deletionHistory[deletionHistory.length - 1];
+    
+    // Restore the SVG and colors to that state
+    setColoredSvg(lastState.svg);
+    setDetectedColors(lastState.colors);
+    
+    // Remove this state from history
+    setDeletionHistory(prev => prev.slice(0, -1));
+    
+    // Clear highlighting
+    setHighlightedColor(null);
+    setHighlightedSvg(null);
     
     toast({
-      title: "Colors Restored",
-      description: "Reverted to original color palette",
+      title: "Last Deletion Undone",
+      description: "Restored the last deleted color.",
     });
   };
 
@@ -675,6 +694,7 @@ export function VectorizerModal({
                         setColoredSvg(vectorSvg);
                         setHighlightedColor(null);
                         setHighlightedSvg(null);
+                        setDeletionHistory([]); // Clear deletion history
                         const colors = detectColorsInSvg(vectorSvg);
                         setDetectedColors(colors);
                       }}
@@ -682,11 +702,11 @@ export function VectorizerModal({
                       Reset All
                     </button>
                   </div>
-                  <div className="grid grid-cols-10 gap-1 max-h-24 overflow-y-auto vectorizer-color-grid p-1">
+                  <div className="grid grid-cols-12 gap-2 max-h-24 overflow-y-auto vectorizer-color-grid p-2">
                     {detectedColors.map((colorItem, index) => (
-                      <div key={index} className="relative group">
+                      <div key={index} className="relative group flex flex-col items-center">
                         <div
-                          className={`w-8 h-8 rounded border cursor-pointer hover:border-gray-400 transition-all ${
+                          className={`w-6 h-6 rounded border cursor-pointer hover:border-gray-400 transition-all relative ${
                             highlightedColor === colorItem.color 
                               ? 'border-red-500 border-2 shadow-lg' 
                               : 'border-gray-600'
@@ -710,10 +730,19 @@ export function VectorizerModal({
                           }}
                         >
                           <button
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                            className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
                             onClick={(e) => {
                               e.stopPropagation(); // Prevent triggering the highlight click
+                              
+                              // Save current state to history before deletion
                               const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                setDeletionHistory(prev => [...prev, {
+                                  svg: currentSvg,
+                                  colors: [...detectedColors]
+                                }]);
+                              }
+                              
                               const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
                               setColoredSvg(updatedSvg);
                               
@@ -734,10 +763,10 @@ export function VectorizerModal({
                             }}
                             title="Delete this color"
                           >
-                            <Trash2 className="h-2.5 w-2.5" />
+                            <Trash2 className="h-2 w-2" />
                           </button>
                         </div>
-                        <div className="text-[10px] text-gray-500 text-center leading-tight">{colorItem.count}</div>
+                        <div className="text-[9px] text-gray-500 text-center leading-tight mt-0.5">{colorItem.count}</div>
                       </div>
                     ))}
                   </div>
@@ -823,9 +852,9 @@ export function VectorizerModal({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={undoColorChanges}
+                        onClick={undoLastDeletion}
                         className="border-gray-600 text-gray-100 hover:bg-gray-700 text-xs"
-                        disabled={originalDetectedColors.length === 0}
+                        disabled={deletionHistory.length === 0}
                       >
                         ↶ Undo
                       </Button>
