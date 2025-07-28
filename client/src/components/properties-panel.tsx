@@ -10,15 +10,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Palette as PaletteIcon, Type, Square, Circle, Minus } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
   AlignRight,
   AlignStartVertical,
   AlignCenterVertical,
-  AlignEndVertical,
-  Square
+  AlignEndVertical
 } from "lucide-react";
 import ColorPickerPanel from "./color-picker-panel";
 import CMYKColorModal from "./cmyk-color-modal";
@@ -29,6 +28,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
+import { TextDialog } from "./text-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Professional color palette
 const quickColors = [
@@ -109,6 +110,10 @@ interface PropertiesPanelProps {
   project: Project;
   templateSizes: TemplateSize[];
   onTemplateChange: (templateId: string) => void;
+  onAddTextElement?: (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => void;
+  onAddShapeElement?: (shapeData: { type: 'rectangle' | 'circle' | 'line'; fillColor: string; strokeColor: string; strokeWidth: number }) => void;
+  onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
+  onCenterAllElements?: () => void;
 }
 
 export default function PropertiesPanel({
@@ -117,7 +122,11 @@ export default function PropertiesPanel({
   logos,
   project,
   templateSizes,
-  onTemplateChange
+  onTemplateChange,
+  onAddTextElement,
+  onAddShapeElement,
+  onAlignElement,
+  onCenterAllElements
 }: PropertiesPanelProps) {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
@@ -126,6 +135,10 @@ export default function PropertiesPanel({
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
+  const [alignmentToolsCollapsed, setAlignmentToolsCollapsed] = useState(false);
+  const [designToolsCollapsed, setDesignToolsCollapsed] = useState(false);
+  const [showTextDialog, setShowTextDialog] = useState(false);
+  const [selectedDesignColor, setSelectedDesignColor] = useState("#000000");
 
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
@@ -148,6 +161,78 @@ export default function PropertiesPanel({
   });
   
   console.log('PropertiesPanel - Selected element rotation:', currentElement?.rotation);
+
+  // Design tools handlers
+  const handleAddShape = (type: 'rectangle' | 'circle' | 'line') => {
+    if (onAddShapeElement) {
+      onAddShapeElement({
+        type,
+        fillColor: selectedDesignColor,
+        strokeColor: selectedDesignColor,
+        strokeWidth: 2
+      });
+    }
+  };
+
+  const handleAddText = (textData: { text: string; fontSize: number; fontFamily: string; color: string }) => {
+    if (onAddTextElement) {
+      onAddTextElement(textData);
+      setShowTextDialog(false);
+    }
+  };
+
+  // Alignment handlers
+  const handleAlign = (alignment: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right') => {
+    if (!currentElement || !onAlignElement) return;
+    
+    // Template dimensions (A3 in mm)
+    const templateWidth = 297;
+    const templateHeight = 420;
+    
+    let x = currentElement.x;
+    let y = currentElement.y;
+    
+    switch (alignment) {
+      case 'top-left':
+        x = 0;
+        y = 0;
+        break;
+      case 'top-center':
+        x = (templateWidth - currentElement.width) / 2;
+        y = 0;
+        break;
+      case 'top-right':
+        x = templateWidth - currentElement.width;
+        y = 0;
+        break;
+      case 'middle-left':
+        x = 0;
+        y = (templateHeight - currentElement.height) / 2;
+        break;
+      case 'center':
+        x = (templateWidth - currentElement.width) / 2;
+        y = (templateHeight - currentElement.height) / 2;
+        break;
+      case 'middle-right':
+        x = templateWidth - currentElement.width;
+        y = (templateHeight - currentElement.height) / 2;
+        break;
+      case 'bottom-left':
+        x = 0;
+        y = templateHeight - currentElement.height;
+        break;
+      case 'bottom-center':
+        x = (templateWidth - currentElement.width) / 2;
+        y = templateHeight - currentElement.height;
+        break;
+      case 'bottom-right':
+        x = templateWidth - currentElement.width;
+        y = templateHeight - currentElement.height;
+        break;
+    }
+    
+    onAlignElement(currentElement.id, { x: Math.round(x), y: Math.round(y) });
+  };
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -664,6 +749,252 @@ export default function PropertiesPanel({
         )}
       </Card>
 
+      {/* Alignment Tools Section */}
+      <Card className="rounded-none border-x-0 border-t-0">
+        <CardHeader className="cursor-pointer" onClick={() => setAlignmentToolsCollapsed(!alignmentToolsCollapsed)}>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Move className="w-5 h-5" />
+              Alignment Tools
+            </span>
+            {alignmentToolsCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {!alignmentToolsCollapsed && (
+          <CardContent>
+            {/* Alignment Grid */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Alignment</Label>
+              <div className="grid grid-cols-3 gap-1 mb-4">
+                {/* Top row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 left-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                
+                {/* Middle row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Middle Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('middle-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Middle Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('middle-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                
+                {/* Bottom row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 left-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={canvasElements.length === 0}
+                  onClick={() => {
+                    canvasElements.forEach(element => {
+                      const x = (297 - element.width) / 2; // A3 center
+                      const y = (420 - element.height) / 2;
+                      if (onAlignElement) {
+                        onAlignElement(element.id, { x: Math.round(x), y: Math.round(y) });
+                      }
+                    });
+                  }}
+                  className="w-full"
+                >
+                  Center All Elements
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Design Tools Section */}
+      <Card className="rounded-none border-x-0 border-t-0">
+        <CardHeader className="cursor-pointer" onClick={() => setDesignToolsCollapsed(!designToolsCollapsed)}>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Palette className="w-5 h-5" />
+              Design Tools
+            </span>
+            {designToolsCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {!designToolsCollapsed && (
+          <CardContent>
+            {/* Text Tool */}
+            <div className="mb-4">
+              <Label className="text-sm font-medium mb-2 block">Add Text</Label>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start mb-2"
+                onClick={() => setShowTextDialog(true)}
+              >
+                <Type className="w-4 h-4 mr-2" />
+                Add Text Element
+              </Button>
+            </div>
+
+            {/* Shape Tools */}
+            <div className="mb-4">
+              <Label className="text-sm font-medium mb-2 block">Add Shapes</Label>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddShape('rectangle')}
+                  title="Add Rectangle"
+                >
+                  <Square className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddShape('circle')}
+                  title="Add Circle"
+                >
+                  <Circle className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddShape('line')}
+                  title="Add Line"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Colors */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Quick Colors</Label>
+              <div className="grid grid-cols-6 gap-1">
+                {quickColors.slice(0, 12).map((color) => (
+                  <button
+                    key={color.hex}
+                    className={`w-8 h-8 rounded border-2 hover:scale-110 transition-transform ${
+                      selectedDesignColor === color.hex ? 'border-blue-500' : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color.hex }}
+                    onClick={() => setSelectedDesignColor(color.hex)}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+              <div className="mt-2 text-xs text-gray-600">
+                Selected: {quickColors.find(c => c.hex === selectedDesignColor)?.name || selectedDesignColor}
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
       {/* CMYK Color Modal */}
       <CMYKColorModal
         initialColor={currentElement?.garmentColor || "#FFFFFF"}
@@ -694,6 +1025,14 @@ export default function PropertiesPanel({
           setShowTemplateSelectorModal(false);
         }}
         onClose={() => setShowTemplateSelectorModal(false)}
+      />
+
+      {/* Text Dialog */}
+      <TextDialog
+        open={showTextDialog}
+        onOpenChange={setShowTextDialog}
+        onAddText={handleAddText}
+        initialColor={selectedDesignColor}
       />
     </div>
   );

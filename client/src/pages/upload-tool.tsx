@@ -722,6 +722,10 @@ export default function UploadTool() {
           project={currentProject}
           templateSizes={templateSizes}
           onTemplateChange={handleTemplateChange}
+          onAddTextElement={handleAddTextElement}
+          onAddShapeElement={handleAddShapeElement}
+          onAlignElement={handleAlignElement}
+          onCenterAllElements={handleCenterAllElements}
         />
       </div>
 
