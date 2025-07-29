@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package, RotateCw } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -551,7 +551,29 @@ export default function PropertiesPanel({
 
             {/* Rotation */}
             <div>
-              <Label className="text-sm font-medium">Rotation</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Rotation</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const currentRotation = currentElement.rotation || 0;
+                        const newRotation = (currentRotation + 90) % 360;
+                        handlePropertyChange('rotation', newRotation);
+                      }}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <RotateCw className="w-3 h-3 mr-1" />
+                      90°
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Rotate artwork by 90 degrees clockwise</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
                   value={[currentElement.rotation || 0]}
