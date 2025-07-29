@@ -141,6 +141,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Fixed Percentage Display**: Corrected oversized warning modal to show scaling reduction percentage (e.g., "-25%") rather than final size percentage for clearer customer understanding
 ✓ **Rotation Guidance**: Enhanced oversized warning modal to suggest trying 90° rotation first for landscape/portrait artwork before scaling, providing better workflow guidance
 ✓ **Enhanced Rotate Button**: Added "Try Rotate 90°" button directly in oversized warning modal for immediate rotation access, plus improved toolbar button text for better visibility
+✓ **Auto-Center After Rotation**: Enhanced rotate function to automatically center artwork on template after 90° rotation for optimal positioning
 ✓ **Complete AI Vectorization System**: Integrated AI-powered vectorization API with comprehensive raster file detection across all upload interfaces, providing three workflow options (photographic approval, AI vectorization, professional service) with real-time processing and error handling
 ✓ **Professional Vector Education**: Added detailed explanation text in raster warning modal explaining why vector graphics produce superior transfer quality with sharp lines and clean details for customer satisfaction
 ✓ **AI Vectorization Integration Complete**: Successfully configured API credentials (production mode) with proper environment variable loading via dotenv, ES6 dynamic imports for FormData and node-fetch, and full modal transition workflow

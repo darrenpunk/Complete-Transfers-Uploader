@@ -691,16 +691,24 @@ export default function CanvasWorkspace({
     setShowOversizedWarning(false);
   };
 
-  // Function to rotate selected element by 90 degrees
+  // Function to rotate selected element by 90 degrees and center it
   const rotateBy90 = () => {
-    if (!selectedElement) return;
+    if (!selectedElement || !template) return;
     
     const currentRotation = selectedElement.rotation || 0;
     const newRotation = (currentRotation + 90) % 360;
     
+    // Calculate center position on template
+    const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
+    const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
+    
     updateElementMutation.mutate({
       id: selectedElement.id,
-      updates: { rotation: newRotation }
+      updates: { 
+        rotation: newRotation,
+        x: centerX,
+        y: centerY
+      }
     });
   };
 
