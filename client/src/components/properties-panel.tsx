@@ -385,18 +385,6 @@ export default function PropertiesPanel({
     const templateWidth = currentTemplate?.width || 297; // Default to A4 if template not found
     const templateHeight = currentTemplate?.height || 210;
     
-    // Debug logging
-    console.log('Position check:', {
-      elementX: currentElement.x,
-      elementY: currentElement.y,
-      elementWidth: currentElement.width,
-      elementHeight: currentElement.height,
-      templateWidth,
-      templateHeight,
-      rightEdge: currentElement.x + currentElement.width,
-      bottomEdge: currentElement.y + currentElement.height
-    });
-    
     const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
                           currentElement.x + currentElement.width <= templateWidth && 
                           currentElement.y + currentElement.height <= templateHeight;
