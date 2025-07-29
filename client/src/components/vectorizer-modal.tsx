@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ export function VectorizerModal({
   const [svgRevision, setSvgRevision] = useState(0); // Force re-render counter
   const svgContainerRef = useRef<HTMLDivElement>(null); // Direct DOM reference
   const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
+  const [showHelp, setShowHelp] = useState(false); // Show help dialog
   
   // Removed size editor state - users will resize on canvas
 
@@ -1022,6 +1023,21 @@ export function VectorizerModal({
                     <p>Toggle transparency grid to see transparent areas</p>
                   </TooltipContent>
                 </Tooltip>
+                
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowHelp(true)}
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Learn how to use the vectorizer</p>
+                  </TooltipContent>
+                </Tooltip>
 
               </div>
             </div>
@@ -1762,6 +1778,136 @@ export function VectorizerModal({
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* Help Dialog */}
+    <Dialog open={showHelp} onOpenChange={setShowHelp}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl">AI Vectorization Help Guide</DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-6 text-sm">
+          {/* Introduction */}
+          <div>
+            <h3 className="font-semibold text-lg mb-2">What is AI Vectorization?</h3>
+            <p className="text-muted-foreground">
+              AI Vectorization converts your raster images (JPG, PNG, etc.) into scalable vector graphics (SVG). 
+              This process creates sharp, clean lines that can be scaled to any size without losing quality - 
+              perfect for professional transfers and printing.
+            </p>
+          </div>
+
+          {/* Main Features */}
+          <div>
+            <h3 className="font-semibold text-lg mb-2">Key Features</h3>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <Columns2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">View Modes</h4>
+                  <p className="text-muted-foreground">Toggle between side-by-side comparison and full preview mode to see the vectorization results.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <Grid className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Transparency Grid</h4>
+                  <p className="text-muted-foreground">Shows a checkerboard pattern to clearly see transparent areas in your image.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <ZoomIn className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Zoom Controls</h4>
+                  <p className="text-muted-foreground">Zoom in up to 800% to inspect fine details and ensure quality.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Color Management */}
+          <div>
+            <h3 className="font-semibold text-lg mb-2">Color Management</h3>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <Lock className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Color Locking</h4>
+                  <p className="text-muted-foreground">Click any color in the preview to lock/unlock it. Locked colors (shown with yellow border) are protected from deletion.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <Trash2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Color Removal</h4>
+                  <p className="text-muted-foreground">
+                    • Hover over color swatches and click the trash icon to delete individual colors<br/>
+                    • Use "Remove White" to eliminate white backgrounds<br/>
+                    • Use "Delete Unlocked Colors" to remove all non-protected colors at once
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <div className="flex-shrink-0">
+                  <Palette className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Color Adjustment</h4>
+                  <p className="text-muted-foreground">Fine-tune colors using CMYK sliders (Cyan, Magenta, Yellow, Black) and Saturation controls.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Workflow Tips */}
+          <div>
+            <h3 className="font-semibold text-lg mb-2">Recommended Workflow</h3>
+            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+              <li>Wait for the AI to process your image (free preview mode)</li>
+              <li>Click colors in the preview to lock the ones you want to keep</li>
+              <li>Use "Delete Unlocked Colors" to remove all unwanted colors at once</li>
+              <li>Fine-tune remaining colors with CMYK sliders if needed</li>
+              <li>Check the result at high zoom to ensure quality</li>
+              <li>Click "Approve & Upload" to finalize ($2.50 charge)</li>
+            </ol>
+          </div>
+
+          {/* Important Notes */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-lg mb-2">Important Notes</h3>
+            <ul className="list-disc list-inside space-y-1 text-blue-800">
+              <li>Preview mode is completely free - no credits are used</li>
+              <li>$2.50 is only charged when you approve and download the final result</li>
+              <li>All color edits and adjustments are applied to the final download</li>
+              <li>The vectorized file will be automatically sized on the canvas after upload</li>
+              <li>Use the "Undo" button to reverse the last color deletion</li>
+              <li>Use "Reset All" to start over with the original vectorized image</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="flex justify-end mt-6">
+          <Button onClick={() => setShowHelp(false)}>
+            Got it, thanks!
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    
     </TooltipProvider>
   );
 }
