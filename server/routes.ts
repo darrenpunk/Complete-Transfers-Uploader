@@ -446,13 +446,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // For SVG files, calculate actual content bounding box instead of viewBox
             let svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
             
-            // Fix aspect ratio issues for vectorized SVGs
-            const normalizedSvgContent = normalizeVectorizedSVG(svgContent);
-            if (normalizedSvgContent !== svgContent) {
-              console.log('Fixed SVG aspect ratio for Illustrator compatibility');
-              fs.writeFileSync(path.join(uploadDir, finalFilename), normalizedSvgContent);
-              svgContent = normalizedSvgContent;
-            }
+            // Skip normalization when Adobe compatibility mode is enabled
+            // const normalizedSvgContent = normalizeVectorizedSVG(svgContent);
+            // if (normalizedSvgContent !== svgContent) {
+            //   console.log('Fixed SVG aspect ratio for Illustrator compatibility');
+            //   fs.writeFileSync(path.join(uploadDir, finalFilename), normalizedSvgContent);
+            //   svgContent = normalizedSvgContent;
+            // }
             
             const bbox = calculateSVGContentBounds(svgContent);
             if (bbox) {
@@ -1541,8 +1541,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // SVG Options
       formData.append('svg_version', '1.1');
-      // Disable Adobe compatibility mode as per user settings
-      formData.append('svg_adobe_compatibility_mode', 'false');
+      // Enable Adobe compatibility mode for proper Illustrator support
+      formData.append('svg_adobe_compatibility_mode', 'true');
       
       // Shape Stacking - Stack shapes on top of each other
       formData.append('shape_stacking_mode', 'stack_on_top');
