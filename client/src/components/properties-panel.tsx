@@ -246,15 +246,20 @@ export default function PropertiesPanel({
         queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], context.previousElements);
       }
     },
-    onSuccess: (updatedElement) => {
-      // Force invalidation to ensure UI updates
-      queryClient.invalidateQueries({
+    onSuccess: async (updatedElement) => {
+      // Force immediate refetch of canvas elements to update UI
+      await queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
-      // Also invalidate the specific element to force refresh
-      queryClient.refetchQueries({
-        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
-      });
+      
+      // Also force React to re-render by updating the query data directly
+      const currentData = queryClient.getQueryData<CanvasElement[]>(["/api/projects", currentElement?.projectId, "canvas-elements"]);
+      if (currentData) {
+        const updatedData = currentData.map(el => 
+          el.id === updatedElement.id ? updatedElement : el
+        );
+        queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], updatedData);
+      }
     },
   });
 
@@ -562,6 +567,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
+                    key={`width-${currentElement?.id}-${currentElement?.width}`}
                     value={currentElement?.width || 0}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
@@ -574,6 +580,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
+                    key={`height-${currentElement?.id}-${currentElement?.height}`}
                     value={currentElement?.height || 0}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm"
