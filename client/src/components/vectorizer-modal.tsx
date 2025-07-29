@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, Link, Unlink, Ruler } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -48,62 +48,12 @@ export function VectorizerModal({
   const svgContainerRef = useRef<HTMLDivElement>(null); // Direct DOM reference
   const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
   
-  // Size editor state
-  const [customWidth, setCustomWidth] = useState<number>(100);
-  const [customHeight, setCustomHeight] = useState<number>(100);
-  const [sizeUnit, setSizeUnit] = useState<'mm' | 'px' | 'in'>('mm');
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState<boolean>(true);
-  const [originalAspectRatio, setOriginalAspectRatio] = useState<number>(1);
-  // Removed floating color window - using inline palette instead
+  // Removed size editor state - users will resize on canvas
 
   // Debug logging
   console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
 
-  // Initialize size editor with SVG dimensions
-  const initializeSizeEditor = (svg: string) => {
-    try {
-      // Extract viewBox from SVG to get original dimensions
-      const viewBoxMatch = svg.match(/viewBox="([^"]+)"/);
-      if (viewBoxMatch) {
-        const [, , width, height] = viewBoxMatch[1].split(' ').map(parseFloat);
-        if (width && height) {
-          // Convert from SVG units to mm (assuming 96 DPI default)
-          const widthMm = Math.round(width * 0.264583); // 1px = 0.264583mm at 96 DPI
-          const heightMm = Math.round(height * 0.264583);
-          
-          setCustomWidth(widthMm);
-          setCustomHeight(heightMm);
-          setOriginalAspectRatio(width / height);
-          
-          console.log(`Initialized size editor: ${widthMm}×${heightMm}mm (from ${width}×${height}px)`);
-        }
-      }
-    } catch (error) {
-      console.error('Error initializing size editor:', error);
-      // Fallback to default values
-      setCustomWidth(100);
-      setCustomHeight(100);
-      setOriginalAspectRatio(1);
-    }
-  };
-
-  // Handle width change with aspect ratio maintenance
-  const handleWidthChange = (newWidth: number) => {
-    setCustomWidth(newWidth);
-    if (maintainAspectRatio && originalAspectRatio) {
-      setCustomHeight(Math.round(newWidth / originalAspectRatio));
-    }
-  };
-
-  // Handle height change with aspect ratio maintenance
-  const handleHeightChange = (newHeight: number) => {
-    setCustomHeight(newHeight);
-    if (maintainAspectRatio && originalAspectRatio) {
-      setCustomWidth(Math.round(newHeight * originalAspectRatio));
-    }
-  };
-
-  // Apply custom dimensions to SVG
+  // Removed sizing functions - users will resize on canvas
 
 
   useEffect(() => {
@@ -305,8 +255,7 @@ export function VectorizerModal({
       setVectorSvg(fixedSvg);
       setColoredSvg(null); // Don't initialize colored SVG
       
-      // Initialize size editor with SVG dimensions
-      initializeSizeEditor(fixedSvg);
+      // No size editor - users will resize on canvas
       
       // Detect colors in the SVG
       const colors = detectColorsInSvg(fixedSvg);
@@ -323,68 +272,7 @@ export function VectorizerModal({
     }
   };
 
-  const fixSvgDimensionsForIllustrator = (svg: string): string => {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svg, 'image/svg+xml');
-      const svgEl = doc.querySelector('svg');
-      
-      if (svgEl) {
-        // Remove width and height attributes entirely
-        // This allows Illustrator to use the viewBox for sizing
-        svgEl.removeAttribute('width');
-        svgEl.removeAttribute('height');
-        
-        const viewBox = svgEl.getAttribute('viewBox');
-        console.log(`Removed width/height attributes for Illustrator compatibility. ViewBox: ${viewBox}`);
-      }
-      
-      return new XMLSerializer().serializeToString(doc.documentElement);
-    } catch (error) {
-      console.error('Error fixing SVG dimensions:', error);
-      return svg;
-    }
-  };
-
-  const applySizingToSvg = (svg: string): string => {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svg, 'image/svg+xml');
-      const svgEl = doc.querySelector('svg');
-      
-      if (svgEl) {
-        // Convert custom dimensions to pixels (assuming 72 DPI for SVG)
-        let widthPx = customWidth;
-        let heightPx = customHeight;
-        
-        if (sizeUnit === 'mm') {
-          // Convert mm to pixels at 72 DPI (1 inch = 25.4mm = 72px)
-          widthPx = customWidth * 72 / 25.4;
-          heightPx = customHeight * 72 / 25.4;
-        } else if (sizeUnit === 'inch') {
-          // Convert inches to pixels at 72 DPI
-          widthPx = customWidth * 72;
-          heightPx = customHeight * 72;
-        }
-        
-        // Update SVG dimensions
-        svgEl.setAttribute('width', `${widthPx}`);
-        svgEl.setAttribute('height', `${heightPx}`);
-        
-        // Keep the viewBox as is to maintain the aspect ratio
-        const viewBox = svgEl.getAttribute('viewBox');
-        if (!viewBox) {
-          svgEl.setAttribute('viewBox', `0 0 ${widthPx} ${heightPx}`);
-        }
-        
-        return new XMLSerializer().serializeToString(doc.documentElement);
-      }
-    } catch (error) {
-      console.error('Error applying sizing to SVG:', error);
-    }
-    
-    return svg;
-  };
+  // Removed sizing functions - users will resize on canvas
 
   const handleApproveVector = async () => {
     const svgToDownload = coloredSvg || vectorSvg;
@@ -417,20 +305,15 @@ export function VectorizerModal({
         const result = await response.json();
         console.log('Production vectorization successful');
         
-        // Use the production-quality normalized SVG from the API response
+        // Use the production-quality SVG from the API response
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
         
-        // Apply custom sizing to the final SVG
-        finalSvg = applySizingToSvg(finalSvg);
-        
-        // Note: We're NOT applying the dimension fix here because it conflicts
-        // with user's custom sizing. The user's custom dimensions should be preserved.
+        // No custom sizing - users will resize on canvas
         
         console.log('Calling onVectorDownload with', { 
           usedModifiedVersion: svgToDownload !== vectorSvg,
-          finalSvgLength: finalSvg?.length,
-          customDimensions: `${customWidth}×${customHeight}${sizeUnit}`
+          finalSvgLength: finalSvg?.length
         });
         onVectorDownload(finalSvg);
         onClose();
@@ -1383,92 +1266,9 @@ export function VectorizerModal({
             </div>
           </div>
 
-          {/* Right Sidebar - Size Editor and Color Management */}
+          {/* Right Sidebar - Color Management Only */}
           {vectorSvg && (
             <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0">
-              {/* Size Editor Section */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Ruler className="w-5 h-5 text-gray-100" />
-                  <h3 className="font-semibold text-gray-100">Output Size</h3>
-                </div>
-                
-                <div className="space-y-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
-                  {/* Unit Selector */}
-                  <div>
-                    <Label className="text-xs text-gray-300 mb-1">Unit</Label>
-                    <Select value={sizeUnit} onValueChange={(value: 'mm' | 'px' | 'in') => setSizeUnit(value)}>
-                      <SelectTrigger className="w-full bg-gray-700 border-gray-600 text-gray-100">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mm">Millimeters (mm)</SelectItem>
-                        <SelectItem value="px">Pixels (px)</SelectItem>
-                        <SelectItem value="in">Inches (in)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Dimensions Input */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs text-gray-300 mb-1">Width</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={customWidth}
-                        onChange={(e) => handleWidthChange(parseInt(e.target.value) || 1)}
-                        className="bg-gray-700 border-gray-600 text-gray-100"
-                        placeholder="Width"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-300 mb-1">Height</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={customHeight}
-                        onChange={(e) => handleHeightChange(parseInt(e.target.value) || 1)}
-                        className="bg-gray-700 border-gray-600 text-gray-100"
-                        placeholder="Height"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Aspect Ratio Lock */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMaintainAspectRatio(!maintainAspectRatio)}
-                      className={`flex items-center gap-1 ${
-                        maintainAspectRatio 
-                          ? 'bg-blue-600 border-blue-500 text-white' 
-                          : 'bg-gray-700 border-gray-600 text-gray-300'
-                      }`}
-                    >
-                      {maintainAspectRatio ? <Link className="w-3 h-3" /> : <Unlink className="w-3 h-3" />}
-                      <span className="text-xs">
-                        {maintainAspectRatio ? 'Locked' : 'Free'}
-                      </span>
-                    </Button>
-                    <span className="text-xs text-gray-400">
-                      Aspect ratio: {maintainAspectRatio ? 'locked' : 'free'}
-                    </span>
-                  </div>
-                  
-                  {/* Current Size Display */}
-                  <div className="text-xs text-gray-400 bg-gray-900 p-2 rounded">
-                    Output: {customWidth}×{customHeight}{sizeUnit}
-                    {sizeUnit === 'mm' && (
-                      <span className="block">
-                        ({Math.round(customWidth * 11.811)}×{Math.round(customHeight * 11.811)}px at 300 DPI)
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               {/* Color Management Section */}
               {detectedColors.length > 0 && (
                 <>
