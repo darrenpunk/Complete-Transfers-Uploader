@@ -1541,10 +1541,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // SVG Options
       formData.append('svg_version', '1.1');
-      formData.append('svg_adobe_compatibility_mode', 'true');
+      // Disable Adobe compatibility mode as per user settings
+      formData.append('svg_adobe_compatibility_mode', 'false');
       
-      // Shape Stacking
-      formData.append('shape_stacking_mode', 'stacked');
+      // Shape Stacking - Stack shapes on top of each other
+      formData.append('shape_stacking_mode', 'stack_on_top');
       
       // Allowed Curve Types
       formData.append('curve_fitting_lines', 'true');
@@ -1565,7 +1566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Line Fit Tolerance
       formData.append('line_fit_tolerance', 'medium');
       
-      // Draw Style
+      // Draw Style - Fill shapes (not stroke)
       formData.append('draw_style', 'fill');
       
       // Processing DPI
