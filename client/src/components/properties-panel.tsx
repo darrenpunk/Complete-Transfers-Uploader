@@ -651,7 +651,7 @@ export default function PropertiesPanel({
                   onClick={() => handlePropertyChange('rotation', 0)}
                   className="h-8"
                 >
-                  0° Portrait
+                  Normal
                 </Button>
                 <Button
                   variant={currentElement.rotation === 90 ? "default" : "outline"}
@@ -659,7 +659,7 @@ export default function PropertiesPanel({
                   onClick={() => handlePropertyChange('rotation', 90)}
                   className="h-8"
                 >
-                  90° Landscape
+                  Rotated
                 </Button>
               </div>
             </div>
