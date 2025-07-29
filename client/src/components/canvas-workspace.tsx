@@ -718,7 +718,10 @@ export default function CanvasWorkspace({
 
   // Function to rotate selected element by 90 degrees and center it
   const rotateBy90 = () => {
-    if (!selectedElement || !template) return;
+    if (!selectedElement || !template) {
+      console.log('❌ Cannot rotate: missing element or template', { selectedElement: !!selectedElement, template: !!template });
+      return;
+    }
     
     const currentRotation = selectedElement.rotation || 0;
     const newRotation = (currentRotation + 90) % 360;
@@ -727,11 +730,14 @@ export default function CanvasWorkspace({
     const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
     const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
     
-    console.log('Rotating and centering:', {
+    console.log('🔄 Rotating and centering:', {
+      elementId: selectedElement.id,
+      currentPosition: `${selectedElement.x},${selectedElement.y}`,
       elementSize: `${selectedElement.width}×${selectedElement.height}px`,
       templateSize: `${template.pixelWidth}×${template.pixelHeight}px`,
+      currentRotation,
       newRotation,
-      centerPosition: `${centerX},${centerY}`
+      newCenterPosition: `${centerX},${centerY}`
     });
     
     updateElementMutation.mutate({
@@ -746,16 +752,21 @@ export default function CanvasWorkspace({
 
   // Function to center selected element without rotation
   const centerLogo = () => {
-    if (!selectedElement || !template) return;
+    if (!selectedElement || !template) {
+      console.log('❌ Cannot center: missing element or template', { selectedElement: !!selectedElement, template: !!template });
+      return;
+    }
     
     // Calculate center position on template
     const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
     const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
     
-    console.log('Centering logo:', {
+    console.log('🎯 Centering logo:', {
+      elementId: selectedElement.id,
+      currentPosition: `${selectedElement.x},${selectedElement.y}`,
       elementSize: `${selectedElement.width}×${selectedElement.height}px`,
       templateSize: `${template.pixelWidth}×${template.pixelHeight}px`,
-      centerPosition: `${centerX},${centerY}`
+      newCenterPosition: `${centerX},${centerY}`
     });
     
     updateElementMutation.mutate({
@@ -1397,11 +1408,23 @@ export default function CanvasWorkspace({
                   {oversizedElements.length > 0 && (
                     <Button
                       onClick={() => {
+                        console.log('🔄 Try Rotate 90° clicked', { 
+                          oversizedElements: oversizedElements.length,
+                          selectedElement: selectedElement?.id || 'none',
+                          firstOversized: oversizedElements[0]?.id || 'none'
+                        });
+                        
                         // Select the first oversized element if none is selected
-                        if (!selectedElement && oversizedElements[0]) {
-                          onElementSelect(oversizedElements[0]);
+                        const targetElement = selectedElement || oversizedElements[0];
+                        if (targetElement) {
+                          console.log('🎯 Selecting and rotating element:', targetElement.id);
+                          onElementSelect(targetElement);
+                          
+                          // Use setTimeout to ensure element selection happens first
+                          setTimeout(() => {
+                            rotateBy90();
+                          }, 100);
                         }
-                        rotateBy90();
                         setShowOversizedWarning(false);
                       }}
                       variant="secondary"
