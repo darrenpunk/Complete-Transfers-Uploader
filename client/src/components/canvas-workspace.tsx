@@ -1308,7 +1308,8 @@ export default function CanvasWorkspace({
                   The logo will be scaled down by <strong>{100 - requiredScaling}%</strong> to fit within the safe print area.
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                  <strong>Recommendation:</strong> Reconfigure your artwork before uploading to avoid quality loss from scaling, 
+                  <strong>Try first:</strong> If your artwork is landscape/portrait, try rotating it by 90° to see if it fits better. 
+                  Otherwise, reconfigure your artwork before uploading to avoid quality loss from scaling, 
                   or use the "Fit to Bounds" button to automatically scale the logo.
                 </p>
                 <div className="flex space-x-3">
