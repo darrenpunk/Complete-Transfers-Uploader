@@ -153,7 +153,14 @@ export default function PropertiesPanel({
     },
   });
   
-  console.log('PropertiesPanel - Selected element rotation:', currentElement?.rotation);
+  console.log('PropertiesPanel - Current element dimensions:', {
+    id: currentElement?.id,
+    rotation: currentElement?.rotation,
+    width: currentElement?.width,
+    height: currentElement?.height,
+    elementFromProps: selectedElement ? `${selectedElement.width}×${selectedElement.height}` : 'none',
+    elementFromCache: currentElement ? `${currentElement.width}×${currentElement.height}` : 'none'
+  });
 
 
 
@@ -557,6 +564,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
+                    key={`width-${currentElement.id}-${currentElement.width}`}
                     value={currentElement.width}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
@@ -569,6 +577,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
+                    key={`height-${currentElement.id}-${currentElement.height}`}
                     value={currentElement.height}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
