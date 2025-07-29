@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,8 @@ export function VectorizerModal({
   const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
   const [showHelp, setShowHelp] = useState(false); // Show help dialog
   const [deletedColors, setDeletedColors] = useState<Set<string>>(new Set()); // Track deleted colors
+  const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
+  const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
   
   // Removed size editor state - users will resize on canvas
 
@@ -1340,13 +1342,26 @@ export function VectorizerModal({
               
               {detectedColors.length > 0 && (
                 <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-800 rounded border border-gray-700">
-                  <div className="flex items-center gap-1 mb-1">
-                    <Lock className="w-3 h-3 text-yellow-500" />
-                    <span>Click colors in preview to lock/unlock them</span>
-                  </div>
-                  <div className="text-[10px] text-gray-500">
-                    Locked colors (yellow border) are protected from deletion
-                  </div>
+                  {isEyedropperActive ? (
+                    <div className="flex items-center gap-1">
+                      <Pipette className="w-3 h-3 text-blue-500" />
+                      <span className="text-blue-400">
+                        {eyedropperColor 
+                          ? `Click any color to change it to ${eyedropperColor}`
+                          : 'Click a color to pick it'}
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1 mb-1">
+                        <Lock className="w-3 h-3 text-yellow-500" />
+                        <span>Click colors in preview to lock/unlock them</span>
+                      </div>
+                      <div className="text-[10px] text-gray-500">
+                        Locked colors (yellow border) are protected from deletion
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
               
@@ -1365,24 +1380,79 @@ export function VectorizerModal({
                     <div key={index} className="relative group flex flex-col items-center">
                       <div
                         className={`w-10 h-10 rounded border cursor-pointer hover:border-gray-400 transition-all relative ${
-                          highlightedColor === colorItem.color 
+                          isEyedropperActive && eyedropperColor === colorItem.color
+                            ? 'border-blue-500 border-2 shadow-lg ring-2 ring-blue-400/50'
+                            : highlightedColor === colorItem.color 
                             ? 'border-red-500 border-2 shadow-lg' 
                             : lockedColors.has(colorItem.color) 
                               ? 'border-yellow-500 border-2'
                               : 'border-gray-600'
-                        }`}
+                        } ${isEyedropperActive ? 'cursor-crosshair' : ''}`}
                         style={{ backgroundColor: colorItem.color }}
-                        title={`${colorItem.color} (${colorItem.count} elements) ${lockedColors.has(colorItem.color) ? '- LOCKED' : '- Click in preview to lock/unlock'}`}
+                        title={
+                          isEyedropperActive 
+                            ? (eyedropperColor === colorItem.color 
+                              ? 'Selected color - Click another color to apply it' 
+                              : eyedropperColor 
+                                ? `Click to change this color to ${eyedropperColor}` 
+                                : 'Click to pick this color')
+                            : `${colorItem.color} (${colorItem.count} elements) ${lockedColors.has(colorItem.color) ? '- LOCKED' : '- Click in preview to lock/unlock'}`
+                        }
                         onClick={() => {
-                          if (highlightedColor === colorItem.color) {
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
+                          if (isEyedropperActive) {
+                            if (!eyedropperColor) {
+                              // First click - pick the color
+                              setEyedropperColor(colorItem.color);
+                              toast({
+                                title: "Color Picked",
+                                description: `Picked ${colorItem.color}. Now click another color to apply it.`,
+                              });
+                            } else if (eyedropperColor !== colorItem.color) {
+                              // Second click - apply the color
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                // Save state for undo
+                                setDeletionHistory(prev => [...prev, {
+                                  svg: currentSvg,
+                                  colors: [...detectedColors]
+                                }]);
+                                
+                                // Replace the target color with the picked color
+                                const updatedSvg = currentSvg.replace(
+                                  new RegExp(`fill="${colorItem.color}"`, 'gi'),
+                                  `fill="${eyedropperColor}"`
+                                ).replace(
+                                  new RegExp(`stroke="${colorItem.color}"`, 'gi'),
+                                  `stroke="${eyedropperColor}"`
+                                );
+                                
+                                setColoredSvg(updatedSvg);
+                                const newColors = detectColorsInSvg(updatedSvg);
+                                setDetectedColors(newColors);
+                                setSvgRevision(prev => prev + 1);
+                                
+                                toast({
+                                  title: "Color Applied",
+                                  description: `Changed ${colorItem.color} to ${eyedropperColor}`,
+                                });
+                                
+                                // Reset eyedropper
+                                setIsEyedropperActive(false);
+                                setEyedropperColor(null);
+                              }
+                            }
                           } else {
-                            setHighlightedColor(colorItem.color);
-                            const currentSvg = coloredSvg || vectorSvg;
-                            if (currentSvg) {
-                              const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
-                              setHighlightedSvg(highlighted);
+                            // Normal highlight functionality
+                            if (highlightedColor === colorItem.color) {
+                              setHighlightedColor(null);
+                              setHighlightedSvg(null);
+                            } else {
+                              setHighlightedColor(colorItem.color);
+                              const currentSvg = coloredSvg || vectorSvg;
+                              if (currentSvg) {
+                                const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
+                                setHighlightedSvg(highlighted);
+                              }
                             }
                           }
                         }}
@@ -1604,6 +1674,43 @@ export function VectorizerModal({
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Undo the last color deletion</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                
+                {/* Eyedropper Tool */}
+                <div className="mb-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isEyedropperActive ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setIsEyedropperActive(!isEyedropperActive);
+                          if (!isEyedropperActive) {
+                            setEyedropperColor(null);
+                            toast({
+                              title: "Eyedropper Mode",
+                              description: "Click a color below to pick it, then click another color to apply it.",
+                            });
+                          }
+                        }}
+                        className={`w-full ${
+                          isEyedropperActive 
+                            ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600" 
+                            : "border-gray-600 text-gray-100 hover:bg-gray-700"
+                        }`}
+                      >
+                        <Pipette className="w-4 h-4 mr-2" />
+                        {isEyedropperActive 
+                          ? (eyedropperColor 
+                            ? `Apply ${eyedropperColor}` 
+                            : "Pick a Color") 
+                          : "Eyedropper"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Use eyedropper to copy colors from one element to another</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
