@@ -428,11 +428,12 @@ export function VectorizerModal({
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
         
-        // Fix SVG dimensions to match viewBox for Illustrator compatibility
-        finalSvg = fixSvgDimensionsForIllustrator(finalSvg);
-        
-        // Apply custom sizing to the final SVG
+        // Apply custom sizing to the final SVG first
         finalSvg = applySizingToSvg(finalSvg);
+        
+        // Then fix SVG dimensions to match viewBox for Illustrator compatibility
+        // This must be done AFTER sizing to ensure the final dimensions match
+        finalSvg = fixSvgDimensionsForIllustrator(finalSvg);
         
         console.log('Calling onVectorDownload with', { 
           usedModifiedVersion: svgToDownload !== vectorSvg,
