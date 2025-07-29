@@ -906,14 +906,27 @@ export default function CanvasWorkspace({
               
               // Convert mm to pixels for display (using template's pixel ratio)
               const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+              
+              // Always use the database dimensions directly - they're already swapped by the backend
               const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
               const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
               const elementX = element.x * mmToPixelRatio * (zoom / 100);
               const elementY = element.y * mmToPixelRatio * (zoom / 100);
+              
+              // Debug: Log element dimensions when selected
+              if (isSelected) {
+                console.log(`Canvas element ${element.id} dimensions:`, {
+                  dbWidth: element.width,
+                  dbHeight: element.height,
+                  pixelWidth: elementWidth,
+                  pixelHeight: elementHeight,
+                  rotation: element.rotation
+                });
+              }
 
               return (
                 <div
-                  key={element.id}
+                  key={`${element.id}-${element.width}-${element.height}-${element.rotation}`}
                   className={`absolute cursor-move ${
                     isSelected ? 'border-2 border-primary bg-blue-50 bg-opacity-50' : 'border border-gray-300 hover:border-gray-400'
                   }`}
@@ -922,14 +935,21 @@ export default function CanvasWorkspace({
                     top: elementY,
                     width: elementWidth,
                     height: elementHeight,
-                    transform: `rotate(${element.rotation}deg)`,
                     zIndex: element.zIndex
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content */}
-                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
+                  <div 
+                    className="w-full h-full flex items-center justify-center border border-gray-200 rounded" 
+                    style={{ 
+                      background: 'transparent', 
+                      backgroundColor: 'transparent',
+                      transform: `rotate(${element.rotation}deg)`,
+                      transformOrigin: 'center'
+                    }}
+                  >
                     {/* Logo Elements */}
 
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
