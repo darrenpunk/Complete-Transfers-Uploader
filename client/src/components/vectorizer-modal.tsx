@@ -48,6 +48,7 @@ export function VectorizerModal({
   const svgContainerRef = useRef<HTMLDivElement>(null); // Direct DOM reference
   const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
   const [showHelp, setShowHelp] = useState(false); // Show help dialog
+  const [deletedColors, setDeletedColors] = useState<Set<string>>(new Set()); // Track deleted colors
   
   // Removed size editor state - users will resize on canvas
 
@@ -875,10 +876,10 @@ export function VectorizerModal({
     );
   };
 
-  // Function to apply all color adjustments to the original SVG
-  const applyAllColorAdjustments = (originalSvg: string, adjustments: {[color: string]: any}): string => {
+  // Function to apply all color adjustments to the provided SVG
+  const applyAllColorAdjustments = (baseSvg: string, adjustments: {[color: string]: any}): string => {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(originalSvg, 'image/svg+xml');
+    const doc = parser.parseFromString(baseSvg, 'image/svg+xml');
     
     let totalReplacements = 0;
     
@@ -943,15 +944,40 @@ export function VectorizerModal({
 
   // Helper function to apply color adjustments and update all states
   const updateColoredSvgWithAdjustments = (updatedColorAdjustments: typeof colorAdjustments) => {
+    // Start from the original vectorSvg to apply adjustments
     const originalSvg = vectorSvg;
     if (originalSvg) {
-      const updatedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
-      setColoredSvg(updatedSvg);
+      // First apply all color adjustments to the original
+      const adjustedSvg = applyAllColorAdjustments(originalSvg, updatedColorAdjustments);
+      
+      // Then apply any deletions that were made
+      let finalSvg = adjustedSvg;
+      if (coloredSvg && deletedColors.size > 0) {
+        // Apply deletions to the adjusted SVG
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(adjustedSvg, 'image/svg+xml');
+        
+        deletedColors.forEach(deletedColor => {
+          const normalizedColor = deletedColor.toLowerCase();
+          
+          // Remove fill elements
+          const elementsWithFill = doc.querySelectorAll(`*[fill="${normalizedColor}"]`);
+          elementsWithFill.forEach(el => el.remove());
+          
+          // Remove stroke elements
+          const elementsWithStroke = doc.querySelectorAll(`*[stroke="${normalizedColor}"]`);
+          elementsWithStroke.forEach(el => el.remove());
+        });
+        
+        finalSvg = new XMLSerializer().serializeToString(doc.documentElement);
+      }
+      
+      setColoredSvg(finalSvg);
       
       // Clear highlighting so adjusted colors show in preview
       setHighlightedSvg(null);
       
-      const newColors = detectColorsInSvg(updatedSvg);
+      const newColors = detectColorsInSvg(finalSvg);
       setDetectedColors(newColors);
       setSvgRevision(prev => prev + 1); // Force re-render
     }
@@ -977,6 +1003,9 @@ export function VectorizerModal({
     
     // Remove this state from history
     setDeletionHistory(prev => prev.slice(0, -1));
+    
+    // Clear deleted colors tracking since we're restoring
+    setDeletedColors(new Set());
     
     // Clear highlighting
     setHighlightedColor(null);
@@ -1383,6 +1412,9 @@ export function VectorizerModal({
                               const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
                               setColoredSvg(updatedSvg);
                               
+                              // Track deleted color
+                              setDeletedColors(prev => new Set([...prev, colorItem.color.toLowerCase()]));
+                              
                               // Always clear highlighting when a color is removed
                               setHighlightedColor(null);
                               setHighlightedSvg(null);
@@ -1607,6 +1639,7 @@ export function VectorizerModal({
                             // Update immediately like individual color deletion does
                             setColoredSvg(updatedSvg);
                             setDetectedColors(newColors);
+                            setDeletedColors(prev => new Set([...prev, '#ffffff']));
                             setSvgRevision(prev => prev + 1); // Force re-render
                             
                             toast({
@@ -1662,6 +1695,7 @@ export function VectorizerModal({
                             
                             whiteVariations.forEach(whiteColor => {
                               updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
+                              setDeletedColors(prev => new Set([...prev, whiteColor.toLowerCase()]));
                               totalRemoved++;
                             });
                             
@@ -1732,6 +1766,7 @@ export function VectorizerModal({
                             // Remove each unlocked color
                             unlockedColors.forEach(color => {
                               updatedSvg = removeColorFromSvg(updatedSvg, color);
+                              setDeletedColors(prev => new Set([...prev, color.toLowerCase()]));
                               totalRemoved++;
                             });
                             
@@ -1774,6 +1809,7 @@ export function VectorizerModal({
                         setColoredSvg(vectorSvg);
                         setHighlightedColor(null);
                         setHighlightedSvg(null);
+                        setDeletedColors(new Set());
                         setDeletionHistory([]);
                         setLockedColors(new Set()); // Clear locked colors on reset
                         const colors = detectColorsInSvg(vectorSvg);
