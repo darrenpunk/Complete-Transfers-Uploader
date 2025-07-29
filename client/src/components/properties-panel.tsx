@@ -128,11 +128,6 @@ export default function PropertiesPanel({
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
-  const [forceUpdate, setForceUpdate] = useState(0);
-  const [displayWidth, setDisplayWidth] = useState<number | undefined>(undefined);
-  const [displayHeight, setDisplayHeight] = useState<number | undefined>(undefined);
-  const widthInputRef = useRef<HTMLInputElement>(null);
-  const heightInputRef = useRef<HTMLInputElement>(null);
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
@@ -159,33 +154,7 @@ export default function PropertiesPanel({
     },
   });
   
-  // Get the actual values to use in the inputs - always prefer cache
-  const cachedElement = selectedElement 
-    ? canvasElements.find(el => el.id === selectedElement.id)
-    : null;
-  
-  const actualWidth = cachedElement?.width ?? currentElement?.width ?? 0;
-  const actualHeight = cachedElement?.height ?? currentElement?.height ?? 0;
-  
-  // Update display values when actual dimensions change
-  useEffect(() => {
-    setDisplayWidth(actualWidth || undefined);
-    setDisplayHeight(actualHeight || undefined);
-  }, [actualWidth, actualHeight]);
 
-  console.log('PropertiesPanel - Current element dimensions:', {
-    id: currentElement?.id,
-    rotation: currentElement?.rotation,
-    width: currentElement?.width,
-    height: currentElement?.height,
-    elementFromProps: selectedElement ? `${selectedElement.width}×${selectedElement.height}` : 'none',
-    elementFromCache: currentElement ? `${currentElement.width}×${currentElement.height}` : 'none',
-    actualWidth,
-    actualHeight,
-    displayWidth,
-    displayHeight,
-    forceUpdate
-  });
 
 
 
@@ -282,8 +251,6 @@ export default function PropertiesPanel({
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
-      // Force component re-render to update input fields
-      setForceUpdate(prev => prev + 1);
     },
   });
 
@@ -586,20 +553,14 @@ export default function PropertiesPanel({
             {/* Size */}
             <div>
               <Label className="text-sm font-medium">Size</Label>
-              {/* Show actual dimensions as a workaround for input sync issue */}
-              <div className="text-xs text-muted-foreground mb-1">
-                Current: {actualWidth} × {actualHeight} mm
-              </div>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
-                  <input
-                    ref={widthInputRef}
+                  <Input
                     type="number"
-                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}-${Date.now()}`}
-                    value={actualWidth || ''}
+                    value={currentElement.width}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-sm"
                     step="1"
                     min="1"
                     max="297"
@@ -607,13 +568,11 @@ export default function PropertiesPanel({
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
-                  <input
-                    ref={heightInputRef}
+                  <Input
                     type="number"
-                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}-${Date.now()}`}
-                    value={actualHeight || ''}
+                    value={currentElement.height}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-sm"
                     step="1"
                     min="1"
                     max="420"
@@ -634,39 +593,7 @@ export default function PropertiesPanel({
 
             {/* Rotation */}
             <div>
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Rotation</Label>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const currentRotation = currentElement.rotation || 0;
-                        // Cycle through standard rotations: 0° → 90° → 180° → 270° → 0°
-                        let newRotation;
-                        if (currentRotation >= 0 && currentRotation < 90) {
-                          newRotation = 90;
-                        } else if (currentRotation >= 90 && currentRotation < 180) {
-                          newRotation = 180;
-                        } else if (currentRotation >= 180 && currentRotation < 270) {
-                          newRotation = 270;
-                        } else {
-                          newRotation = 0;
-                        }
-                        handlePropertyChange('rotation', newRotation);
-                      }}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <RotateCw className="w-3 h-3 mr-1" />
-                      90°
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Rotate artwork by 90 degrees clockwise</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <Label className="text-sm font-medium">Rotation</Label>
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
                   value={[currentElement.rotation || 0]}
