@@ -133,6 +133,10 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Full Colour HD Product**: Added new "Full Colour HD" product with A3 and A4 templates, high-definition visual filter effect, and garment color selection support matching Full Colour workflow
 ✓ **Transfer Size Template Renaming**: Replaced all "business_card" references with "Transfer Size" throughout the system - updated template IDs from "template-business-card" to "template-transfer-size" across all product groups
 ✓ **Enhanced Canvas Zoom Calculation**: Updated optimal zoom algorithm to account for safety zone warning label positioned 3mm above template - ensures both template and warning are fully visible in viewport with proper spacing
+✓ **Removed Safety Zone Label**: Eliminated redundant print safety zone warning label since center template warnings already exist
+✓ **Oversized Logo Detection System**: Implemented automatic detection of logos that extend beyond 3mm safety margins with real-time monitoring
+✓ **Fit to Bounds Functionality**: Added popup warning modal with "Fit to Bounds" button that calculates required scaling percentage and automatically scales/centers oversized logos within safety margins
+✓ **Professional Scaling Recommendations**: Modal advises customers to reconfigure artwork before upload to avoid quality loss from scaling down
 ✓ **Complete AI Vectorization System**: Integrated AI-powered vectorization API with comprehensive raster file detection across all upload interfaces, providing three workflow options (photographic approval, AI vectorization, professional service) with real-time processing and error handling
 ✓ **Professional Vector Education**: Added detailed explanation text in raster warning modal explaining why vector graphics produce superior transfer quality with sharp lines and clean details for customer satisfaction
 ✓ **AI Vectorization Integration Complete**: Successfully configured API credentials (production mode) with proper environment variable loading via dotenv, ES6 dynamic imports for FormData and node-fetch, and full modal transition workflow

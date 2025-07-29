@@ -142,6 +142,9 @@ export default function CanvasWorkspace({
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showOversizedWarning, setShowOversizedWarning] = useState(false);
+  const [oversizedElements, setOversizedElements] = useState<CanvasElement[]>([]);
+  const [requiredScaling, setRequiredScaling] = useState<number>(100);
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -571,26 +574,17 @@ export default function CanvasWorkspace({
     // Account for padding (8px * 2), toolbar height (~80px), and some margin
     const workspaceElement = canvasRef.current?.parentElement;
     const maxWorkspaceWidth = (workspaceElement?.clientWidth || window.innerWidth * 0.6) - 64; // 64px for padding
-    
-    // Account for safety zone warning label height (~80px) + 3mm spacing + extra margin
-    const safetyLabelHeight = 80; // Height of the safety zone warning
-    const mmToPixelRatio = template.pixelWidth / template.width;
-    const spacingAboveTemplate = 3 * mmToPixelRatio; // 3mm in pixels at 100% zoom
-    const extraMargin = 40; // Additional margin for better visibility
-    
-    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100 - safetyLabelHeight - extraMargin); // 140px header, 80px toolbar, 100px bottom bar, safety label
+    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100); // 140px header, 80px toolbar, 100px bottom bar
     
     // Calculate scale factors for width and height
     const scaleX = maxWorkspaceWidth / template.pixelWidth;
-    // For height, we need to account for the label and spacing
-    const totalHeightNeeded = template.pixelHeight + spacingAboveTemplate + safetyLabelHeight;
-    const scaleY = maxWorkspaceHeight / totalHeightNeeded;
+    const scaleY = maxWorkspaceHeight / template.pixelHeight;
     
-    // Use the smaller scale factor to ensure template and label fit within bounds
+    // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage - allow wider range from 10% to 400%
-    const optimalZoom = Math.min(Math.max(optimalScale * 100, 10), 400);
+    // Convert to percentage - allow wider range from 25% to 400%
+    const optimalZoom = Math.min(Math.max(optimalScale * 100, 25), 400);
     
     return Math.round(optimalZoom);
   };
@@ -605,6 +599,97 @@ export default function CanvasWorkspace({
       }, 100);
     }
   }, [template?.id]);
+
+  // Check for oversized elements when canvas elements change
+  useEffect(() => {
+    if (template && canvasElements.length > 0) {
+      checkForOversizedElements();
+    }
+  }, [canvasElements, template]);
+
+  // Function to check if elements are outside the safety bounds (3mm from edges)
+  const checkForOversizedElements = () => {
+    if (!template) return;
+
+    const safetyMargin = 3; // 3mm safety margin
+    const mmToPixelRatio = template.pixelWidth / template.width;
+    const safetyMarginPixels = safetyMargin * mmToPixelRatio;
+    
+    const safeWidth = template.pixelWidth - (2 * safetyMarginPixels);
+    const safeHeight = template.pixelHeight - (2 * safetyMarginPixels);
+    
+    const oversized = canvasElements.filter(element => {
+      const elementRight = element.x + element.width;
+      const elementBottom = element.y + element.height;
+      
+      return (
+        element.x < safetyMarginPixels ||
+        element.y < safetyMarginPixels ||
+        elementRight > template.pixelWidth - safetyMarginPixels ||
+        elementBottom > template.pixelHeight - safetyMarginPixels ||
+        element.width > safeWidth ||
+        element.height > safeHeight
+      );
+    });
+
+    if (oversized.length > 0) {
+      setOversizedElements(oversized);
+      
+      // Calculate required scaling to fit all elements within bounds
+      let maxScaleNeeded = 1;
+      oversized.forEach(element => {
+        const scaleX = safeWidth / element.width;
+        const scaleY = safeHeight / element.height;
+        const scaleNeeded = Math.min(scaleX, scaleY);
+        if (scaleNeeded < maxScaleNeeded) {
+          maxScaleNeeded = scaleNeeded;
+        }
+      });
+      
+      setRequiredScaling(Math.round(maxScaleNeeded * 100));
+      setShowOversizedWarning(true);
+    } else {
+      setOversizedElements([]);
+      setShowOversizedWarning(false);
+    }
+  };
+
+  // Function to fit all content to bounds
+  const fitToBounds = () => {
+    if (!template || oversizedElements.length === 0) return;
+
+    const safetyMargin = 3; // 3mm safety margin
+    const mmToPixelRatio = template.pixelWidth / template.width;
+    const safetyMarginPixels = safetyMargin * mmToPixelRatio;
+    
+    const safeWidth = template.pixelWidth - (2 * safetyMarginPixels);
+    const safeHeight = template.pixelHeight - (2 * safetyMarginPixels);
+    
+    // Calculate scaling factor
+    const scaleFactor = requiredScaling / 100;
+    
+    // Scale and center all elements
+    canvasElements.forEach(element => {
+      const newWidth = Math.round(element.width * scaleFactor);
+      const newHeight = Math.round(element.height * scaleFactor);
+      
+      // Center the scaled element
+      const newX = Math.round(safetyMarginPixels + (safeWidth - newWidth) / 2);
+      const newY = Math.round(safetyMarginPixels + (safeHeight - newHeight) / 2);
+      
+      updateElementMutation.mutate({
+        id: element.id,
+        updates: {
+          width: newWidth,
+          height: newHeight,
+          x: newX,
+          y: newY
+        }
+      });
+    });
+
+    setShowOversizedWarning(false);
+  };
 
   if (!template) {
     return (
@@ -826,31 +911,7 @@ export default function CanvasWorkspace({
       <div className="flex-1 p-8 overflow-auto" style={{ backgroundColor: '#606060' }}>
         <div className="flex items-center justify-center min-h-full" style={{ padding: '100px 0' }}>
           <div className="relative">
-            {/* Safety Zone Warning - positioned 3mm above template */}
-            {template && (
-              <div 
-                className="absolute left-0 right-0 mx-auto max-w-xl"
-                style={{ 
-                  bottom: `calc(100% + ${3 * template.pixelWidth / template.width * (zoom / 100)}px)`,
-                  width: canvasWidth
-                }}
-              >
-                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-start space-x-3 shadow-lg">
-                  <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">
-                      Print Safety Zone Active
-                    </p>
-                    <p className="text-sm text-amber-700">
-                      Keep all artwork within the red guide lines (3mm from edges) to prevent clipping during production. 
-                      Content outside this area may be cut off.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+
             <div
               ref={canvasRef}
               className="relative shadow-xl rounded-lg overflow-hidden"
@@ -1194,6 +1255,50 @@ export default function CanvasWorkspace({
           imageFile={pendingRasterFile.file}
           onVectorDownload={handleVectorDownload}
         />
+      )}
+
+      {/* Oversized Logo Warning Modal */}
+      {showOversizedWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Logo Doesn't Fit Safety Zone
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  Your uploaded logo extends beyond the 3mm safety margin and may be clipped during production. 
+                  The logo needs to be scaled down to <strong>{requiredScaling}%</strong> to fit within the safe print area.
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                  <strong>Recommendation:</strong> Reconfigure your artwork before uploading to avoid quality loss from scaling, 
+                  or use the "Fit to Bounds" button to automatically scale the logo.
+                </p>
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={fitToBounds}
+                    className="flex-1"
+                  >
+                    <Maximize2 className="w-4 h-4 mr-2" />
+                    Fit to Bounds ({requiredScaling}%)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowOversizedWarning(false)}
+                    className="flex-1"
+                  >
+                    Keep As Is
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
     </TooltipProvider>
