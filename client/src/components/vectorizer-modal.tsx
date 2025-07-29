@@ -76,8 +76,8 @@ export function VectorizerModal({
         console.log('Attempting to render SVG with length:', currentSvg.length);
         console.log('SVG preview (first 500 chars):', currentSvg.substring(0, 500));
         
-        // Add a small delay to ensure state has settled
-        setTimeout(() => {
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
           if (svgContainerRef.current) {
             console.log('SVG container ref exists, creating element');
             // Create interactive SVG element instead of img
@@ -161,6 +161,12 @@ export function VectorizerModal({
               };
               
               svgElement.addEventListener('click', handleSvgClick);
+              
+              // Ensure container is truly empty before appending
+              while (svgContainerRef.current.firstChild) {
+                svgContainerRef.current.removeChild(svgContainerRef.current.firstChild);
+              }
+              
               svgContainerRef.current.appendChild(svgElement);
               console.log('Direct DOM update with interactive SVG length:', currentSvg.length);
               console.log('SVG appended to container successfully');
@@ -169,7 +175,7 @@ export function VectorizerModal({
               console.log('Parsed content:', tempDiv.innerHTML.substring(0, 200));
             }
           }
-        }, 50); // Small delay to ensure React state has settled
+        }); // Use requestAnimationFrame
       }
     }
   }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision]);
@@ -1218,15 +1224,16 @@ export function VectorizerModal({
                         }}
                       >
                         <div 
-                          className="vector-preview-wrapper border border-gray-300"
+                          className="vector-preview-wrapper"
                           style={{ 
                             width: '400px',
                             height: '400px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: showGrid ? 'transparent' : '#f0f0f0',
-                            overflow: 'hidden'
+                            backgroundColor: 'transparent',
+                            overflow: 'hidden',
+                            position: 'relative'
                           }}
                         >
                           <div 
@@ -1236,7 +1243,8 @@ export function VectorizerModal({
                               height: '100%',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'center'
+                              justifyContent: 'center',
+                              backgroundColor: 'transparent'
                             }}
                           />
                         </div>
