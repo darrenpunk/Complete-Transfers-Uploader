@@ -171,11 +171,6 @@ export default function PropertiesPanel({
   useEffect(() => {
     setDisplayWidth(actualWidth || undefined);
     setDisplayHeight(actualHeight || undefined);
-    
-    // Force a more aggressive re-render
-    setForceUpdate(prev => prev + 1);
-    
-    console.log(`📐 Display values updated: width=${actualWidth}, height=${actualHeight}, forceUpdate=${forceUpdate + 1}`);
   }, [actualWidth, actualHeight]);
 
   console.log('PropertiesPanel - Current element dimensions:', {
@@ -591,6 +586,10 @@ export default function PropertiesPanel({
             {/* Size */}
             <div>
               <Label className="text-sm font-medium">Size</Label>
+              {/* Show actual dimensions as a workaround for input sync issue */}
+              <div className="text-xs text-muted-foreground mb-1">
+                Current: {actualWidth} × {actualHeight} mm
+              </div>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
