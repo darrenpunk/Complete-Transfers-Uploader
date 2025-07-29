@@ -1313,9 +1313,13 @@ export default function CanvasWorkspace({
                   or use the "Fit to Bounds" button to automatically scale the logo.
                 </p>
                 <div className="flex space-x-2">
-                  {selectedElement && (
+                  {oversizedElements.length > 0 && (
                     <Button
                       onClick={() => {
+                        // Select the first oversized element if none is selected
+                        if (!selectedElement && oversizedElements[0]) {
+                          onElementSelect(oversizedElements[0]);
+                        }
                         rotateBy90();
                         setShowOversizedWarning(false);
                       }}
