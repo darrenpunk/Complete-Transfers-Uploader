@@ -129,9 +129,17 @@ export default function PropertiesPanel({
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
   
-
+  // Local state for input values to prevent glitchy behavior
+  const [localInputValues, setLocalInputValues] = useState({
+    x: '',
+    y: '',
+    width: '',
+    height: '',
+    rotation: '',
+    opacity: ''
+  });
+  
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
-
 
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
@@ -141,6 +149,29 @@ export default function PropertiesPanel({
   const currentElement = selectedElement 
     ? canvasElements.find(el => el.id === selectedElement.id) ?? selectedElement
     : null;
+    
+  // Update local input values when the current element changes
+  useEffect(() => {
+    if (currentElement) {
+      setLocalInputValues({
+        x: currentElement.x?.toString() || '0',
+        y: currentElement.y?.toString() || '0',
+        width: currentElement.width?.toString() || '0',
+        height: currentElement.height?.toString() || '0',
+        rotation: currentElement.rotation?.toString() || '0',
+        opacity: Math.round((currentElement.opacity || 1) * 100).toString()
+      });
+    }
+  }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.rotation, currentElement?.opacity]);
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debouncedUpdateRef.current) {
+        clearTimeout(debouncedUpdateRef.current);
+      }
+    };
+  }, []);
 
   // Update project mutation
   const updateProjectMutation = useMutation({
@@ -290,6 +321,29 @@ export default function PropertiesPanel({
 
 
 
+  // Debounced update function
+  const debouncedUpdateRef = useRef<NodeJS.Timeout>();
+  
+  const handleInputChange = (property: keyof CanvasElement, value: string) => {
+    if (!currentElement) return;
+    
+    // Update local state immediately for responsive UI
+    setLocalInputValues(prev => ({
+      ...prev,
+      [property]: value
+    }));
+    
+    // Clear previous timeout
+    if (debouncedUpdateRef.current) {
+      clearTimeout(debouncedUpdateRef.current);
+    }
+    
+    // Set new timeout to update the server
+    debouncedUpdateRef.current = setTimeout(() => {
+      handlePropertyChange(property, value);
+    }, 500); // 500ms delay
+  };
+
   const handlePropertyChange = (property: keyof CanvasElement, value: any) => {
     if (!currentElement) return;
 
@@ -301,6 +355,15 @@ export default function PropertiesPanel({
       processedValue = parseFloat(value);
       if (isNaN(processedValue)) {
         console.log('Invalid number input, ignoring');
+        return;
+      }
+    }
+
+    // Handle opacity as percentage
+    if (property === 'opacity') {
+      processedValue = parseFloat(value) / 100;
+      if (isNaN(processedValue)) {
+        console.log('Invalid opacity input, ignoring');
         return;
       }
     }
@@ -516,8 +579,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">X (mm)</Label>
                   <Input
                     type="number"
-                    value={currentElement.x}
-                    onChange={(e) => handlePropertyChange('x', e.target.value)}
+                    value={localInputValues.x}
+                    onChange={(e) => handleInputChange('x', e.target.value)}
                     className="text-sm"
                     step="1"
                     min="0"
@@ -528,8 +591,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Y (mm)</Label>
                   <Input
                     type="number"
-                    value={currentElement.y}
-                    onChange={(e) => handlePropertyChange('y', e.target.value)}
+                    value={localInputValues.y}
+                    onChange={(e) => handleInputChange('y', e.target.value)}
                     className="text-sm"
                     step="1" 
                     min="0"
@@ -547,9 +610,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    key={`width-${currentElement?.id}-${currentElement?.width}`}
-                    value={currentElement?.width || 0}
-                    onChange={(e) => handlePropertyChange('width', e.target.value)}
+                    value={localInputValues.width}
+                    onChange={(e) => handleInputChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
                     min="1"
@@ -560,9 +622,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    key={`height-${currentElement?.id}-${currentElement?.height}`}
-                    value={currentElement?.height || 0}
-                    onChange={(e) => handlePropertyChange('height', e.target.value)}
+                    value={localInputValues.height}
+                    onChange={(e) => handleInputChange('height', e.target.value)}
                     className="text-sm"
                     step="1"
                     min="1"
@@ -611,8 +672,8 @@ export default function PropertiesPanel({
                 />
                 <Input
                   type="number"
-                  value={currentElement.rotation || 0}
-                  onChange={(e) => handlePropertyChange('rotation', e.target.value)}
+                  value={localInputValues.rotation}
+                  onChange={(e) => handleInputChange('rotation', e.target.value)}
                   min={0}
                   max={360}
                   step="1"
