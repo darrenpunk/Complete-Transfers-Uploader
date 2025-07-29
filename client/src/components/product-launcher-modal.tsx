@@ -20,6 +20,14 @@ const productCategories = [
     group: "Full Colour Transfers"
   },
   {
+    id: "full-colour-metallic",
+    name: "Full Colour Metallic",
+    description: "Full-Colour screen printed with metallic finish",
+    icon: fullColourIconPath,
+    group: "Full Colour Metallic",
+    filter: "contrast(1.3) brightness(1.1) saturate(1.2)"
+  },
+  {
     id: "single-colour", 
     name: "Single Colour Transfers",
     description: "Screen printed using our off-the-shelf colour range",

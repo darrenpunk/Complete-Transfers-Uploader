@@ -129,6 +129,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **A3 Safety Margin System**: Added 3mm safety margin guide lines with red borders for A3 template to prevent edge clipping during production
 ✓ **Fit to Bounds Button**: Implemented automatic scaling function that scales and centers all content within the 3mm safety margins for A3 templates - appears only when content exists on canvas
 ✓ **Enhanced A3 Workflow**: Complete A3 template support with visual safety guides, warning messages, and one-click content fitting for professional large format printing
+✓ **Full Colour Metallic Product**: Added new "Full Colour Metallic" product category with same templates as Full Colour Transfers, metallic finish filter effect, and automatic garment color selection support
 ✓ **Complete AI Vectorization System**: Integrated AI-powered vectorization API with comprehensive raster file detection across all upload interfaces, providing three workflow options (photographic approval, AI vectorization, professional service) with real-time processing and error handling
 ✓ **Professional Vector Education**: Added detailed explanation text in raster warning modal explaining why vector graphics produce superior transfer quality with sharp lines and clean details for customer satisfaction
 ✓ **AI Vectorization Integration Complete**: Successfully configured API credentials (production mode) with proper environment variable loading via dotenv, ES6 dynamic imports for FormData and node-fetch, and full modal transition workflow

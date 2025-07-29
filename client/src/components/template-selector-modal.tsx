@@ -14,11 +14,21 @@ import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 const getTemplateGroupIcon = (group: string) => {
   switch (group) {
     case "Full Colour Transfer Sizes":
+    case "Full Colour Transfers":
       return (
         <img 
           src={fullColourIconPath} 
           alt="Full Colour Transfer" 
           className="h-10 w-10 object-contain"
+        />
+      );
+    case "Full Colour Metallic":
+      return (
+        <img 
+          src={fullColourIconPath} 
+          alt="Full Colour Metallic" 
+          className="h-10 w-10 object-contain"
+          style={{ filter: "contrast(1.3) brightness(1.1) saturate(1.2)" }}
         />
       );
     case "Single Colour Transfers":

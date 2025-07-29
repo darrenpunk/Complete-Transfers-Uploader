@@ -256,7 +256,7 @@ export default function UploadTool() {
       setShowTemplateSelector(false);
       setHasInitialized(true); // Prevent reopening
       
-      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers";
+      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers" || selectedTemplate.group === "Full Colour Metallic";
       const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfers";
       const isCustomBadgesTemplate = selectedTemplate.group === "Custom Badges" || selectedTemplate.group === "Applique Badges";
       
