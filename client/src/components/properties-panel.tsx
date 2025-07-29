@@ -785,23 +785,6 @@ export default function PropertiesPanel({
               
               {/* Quick Actions */}
               <div className="space-y-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={!currentElement} 
-                      className="w-full" 
-                      onClick={() => onCenterAllElements && onCenterAllElements()}
-                    >
-                      <AlignCenter className="w-4 h-4 mr-2" />
-                      Center Logo
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Center the selected logo on the template</p>
-                  </TooltipContent>
-                </Tooltip>
               </div>
             </div>
 
