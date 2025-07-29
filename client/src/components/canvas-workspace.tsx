@@ -970,10 +970,23 @@ export default function CanvasWorkspace({
                           filter: colorManagementEnabled 
                             ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
                             : "none",
-                          objectFit: 'cover',
+                          objectFit: 'contain',
                           width: '100%',
                           height: '100%',
-                          transform: `rotate(${element.rotation}deg)`,
+                          transform: (() => {
+                            const rotation = element.rotation || 0;
+                            const normalizedRotation = ((rotation % 360) + 360) % 360;
+                            const isRotatedSideways = (normalizedRotation >= 45 && normalizedRotation < 135) || 
+                                                     (normalizedRotation >= 225 && normalizedRotation < 315);
+                            
+                            // Calculate scale factor when rotated sideways
+                            // The image needs to scale up to fill the swapped dimensions
+                            if (isRotatedSideways) {
+                              const scaleFactor = Math.max(element.width / element.height, element.height / element.width);
+                              return `rotate(${rotation}deg) scale(${scaleFactor})`;
+                            }
+                            return `rotate(${rotation}deg)`;
+                          })(),
                           transformOrigin: 'center'
                         }}
                         draggable={false}
