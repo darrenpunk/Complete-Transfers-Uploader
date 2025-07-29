@@ -975,20 +975,16 @@ export default function CanvasWorkspace({
 
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
                       <img
-                        src={
-                          // Priority 1: Element has individual color overrides
-                          element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                            ? `/uploads/${element.id}_modified.svg?t=${Date.now()}`
-                            // Priority 2: Single Colour Transfer with ink color selected
-                            : shouldRecolorForInk 
-                              ? `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`
-                              // Priority 3: Original image
-                              : (() => {
-                                  const url = getImageUrl(logo);
-                                  console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
-                                  return url;
-                                })()
-                        }
+                        src={(() => {
+                          // Priority 1: Single Colour Transfer with ink color selected
+                          if (shouldRecolorForInk) {
+                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
+                          }
+                          // Priority 2: Original image (skip _modified.svg since they may not exist)
+                          const url = getImageUrl(logo);
+                          console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
+                          return url;
+                        })()}
                         alt={logo.originalName}
                         className="w-full h-full"
                         style={{ 
