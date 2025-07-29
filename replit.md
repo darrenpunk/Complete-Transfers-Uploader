@@ -143,6 +143,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Enhanced Rotate Button**: Added "Try Rotate 90°" button directly in oversized warning modal for immediate rotation access, plus improved toolbar button text for better visibility
 ✓ **Auto-Center After Rotation**: Enhanced rotate function to automatically center artwork on template after 90° rotation for optimal positioning
 ✓ **Fixed Rotation Centering**: Corrected centering calculation to account for swapped dimensions during 90°/270° rotations, ensuring perfect center positioning
+✓ **One-Click Logo Recentering Magic**: Added "Center Logo" button in canvas toolbar that instantly centers selected logo on template with perfect positioning calculation - appears alongside Rotate 90° button when element is selected
 ✓ **Complete AI Vectorization System**: Integrated AI-powered vectorization API with comprehensive raster file detection across all upload interfaces, providing three workflow options (photographic approval, AI vectorization, professional service) with real-time processing and error handling
 ✓ **Professional Vector Education**: Added detailed explanation text in raster warning modal explaining why vector graphics produce superior transfer quality with sharp lines and clean details for customer satisfaction
 ✓ **AI Vectorization Integration Complete**: Successfully configured API credentials (production mode) with proper environment variable loading via dotenv, ES6 dynamic imports for FormData and node-fetch, and full modal transition workflow

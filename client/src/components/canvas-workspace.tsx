@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
@@ -744,6 +744,29 @@ export default function CanvasWorkspace({
     });
   };
 
+  // Function to center selected element without rotation
+  const centerLogo = () => {
+    if (!selectedElement || !template) return;
+    
+    // Calculate center position on template
+    const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
+    const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
+    
+    console.log('Centering logo:', {
+      elementSize: `${selectedElement.width}×${selectedElement.height}px`,
+      templateSize: `${template.pixelWidth}×${template.pixelHeight}px`,
+      centerPosition: `${centerX},${centerY}`
+    });
+    
+    updateElementMutation.mutate({
+      id: selectedElement.id,
+      updates: { 
+        x: centerX,
+        y: centerY
+      }
+    });
+  };
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -899,23 +922,41 @@ export default function CanvasWorkspace({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Rotate 90° Button - show when element is selected */}
+              {/* Logo Control Buttons - show when element is selected */}
               {selectedElement && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={rotateBy90}
-                    >
-                      <RotateCw className="w-4 h-4 mr-1" />
-                      Rotate 90°
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Rotate selected element by 90 degrees</p>
-                  </TooltipContent>
-                </Tooltip>
+                <>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={centerLogo}
+                      >
+                        <Move className="w-4 h-4 mr-1" />
+                        Center Logo
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Center selected logo on template</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={rotateBy90}
+                      >
+                        <RotateCw className="w-4 h-4 mr-1" />
+                        Rotate 90°
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Rotate selected element by 90 degrees</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </>
               )}
             </div>
 
