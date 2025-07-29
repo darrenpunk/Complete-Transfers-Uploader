@@ -131,7 +131,6 @@ export default function PropertiesPanel({
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
-  const [alignmentToolsCollapsed, setAlignmentToolsCollapsed] = useState(false);
 
 
   const [propertiesPanelCollapsed, setPropertiesPanelCollapsed] = useState(false);
@@ -596,6 +595,147 @@ export default function PropertiesPanel({
               </div>
             </div>
 
+            {/* Alignment Tools */}
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Alignment</Label>
+              <div className="grid grid-cols-3 gap-1 mb-4">
+                {/* Top row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 left-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Top Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('top-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                
+                {/* Middle row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Middle Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('middle-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Middle Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('middle-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                
+                {/* Bottom row */}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Left" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-left')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 left-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Center" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-center')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  title="Align Bottom Right" 
+                  disabled={!currentElement} 
+                  className="h-8 p-1"
+                  onClick={() => handleAlign('bottom-right')}
+                >
+                  <div className="w-5 h-5 border border-gray-400 relative">
+                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500"></div>
+                  </div>
+                </Button>
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="space-y-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={!currentElement} 
+                      className="w-full" 
+                      onClick={() => onCenterAllElements && onCenterAllElements()}
+                    >
+                      <AlignCenter className="w-4 h-4 mr-2" />
+                      Center Logo
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center the selected logo on the template</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+
             {/* Individual Logo Garment Color */}
             <div>
               <Label className="text-sm font-medium">Logo Garment Color</Label>
@@ -831,176 +971,7 @@ export default function PropertiesPanel({
         )}
       </Card>
 
-      {/* Alignment Tools Section */}
-      <Card className="rounded-none border-x-0 border-t-0">
-        <CardHeader className="cursor-pointer" onClick={() => setAlignmentToolsCollapsed(!alignmentToolsCollapsed)}>
-          <CardTitle className="text-lg flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Move className="w-5 h-5" />
-              Alignment Tools
-            </span>
-            {alignmentToolsCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </CardTitle>
-        </CardHeader>
-        {!alignmentToolsCollapsed && (
-          <CardContent>
-            {/* Alignment Grid */}
-            <div>
-              <Label className="text-sm font-medium mb-2 block">Alignment</Label>
-              <div className="grid grid-cols-3 gap-1 mb-4">
-                {/* Top row */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Top Left" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('top-left')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-0 left-0 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Top Center" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('top-center')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Top Right" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('top-right')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                
-                {/* Middle row */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Middle Left" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('middle-left')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-1/2 left-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Center" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('center')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Middle Right" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('middle-right')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                
-                {/* Bottom row */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Bottom Left" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('bottom-left')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute bottom-0 left-0 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Bottom Center" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('bottom-center')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  title="Align Bottom Right" 
-                  disabled={!currentElement} 
-                  className="h-8 p-1"
-                  onClick={() => handleAlign('bottom-right')}
-                >
-                  <div className="w-5 h-5 border border-gray-400 relative">
-                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-500"></div>
-                  </div>
-                </Button>
-              </div>
-              
-              {/* Quick Actions */}
-              <div className="space-y-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={canvasElements.length === 0}
-                      onClick={() => {
-                        const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
-                        if (!currentTemplate) return;
-                        
-                        canvasElements.forEach(element => {
-                          const x = (currentTemplate.width - element.width) / 2;
-                          const y = (currentTemplate.height - element.height) / 2;
-                          if (onAlignElement) {
-                            onAlignElement(element.id, { x: Math.round(x), y: Math.round(y) });
-                          }
-                        });
-                      }}
-                      className="w-full"
-                    >
-                      Center All Elements
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Center all logos on the canvas at once</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+
 
 
 
