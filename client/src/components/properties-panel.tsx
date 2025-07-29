@@ -219,6 +219,32 @@ export default function PropertiesPanel({
       const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
       return response.json();
     },
+    onMutate: async ({ id, updates }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
+
+      // Snapshot the previous value
+      const previousElements = queryClient.getQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], (old: CanvasElement[] | undefined) => {
+        if (!old) return old;
+        return old.map((element) => 
+          element.id === id ? { ...element, ...updates } : element
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousElements };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousElements) {
+        queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], context.previousElements);
+      }
+    },
     onSuccess: (updatedElement) => {
       // Force invalidation to ensure UI updates
       queryClient.invalidateQueries({
