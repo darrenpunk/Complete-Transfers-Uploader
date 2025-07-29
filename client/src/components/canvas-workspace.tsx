@@ -723,9 +723,14 @@ export default function CanvasWorkspace({
     const currentRotation = selectedElement.rotation || 0;
     const newRotation = (currentRotation + 90) % 360;
     
-    // Calculate center position on template
-    const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
-    const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
+    // For 90° and 270° rotations, dimensions are swapped
+    const isRotatedVertically = newRotation === 90 || newRotation === 270;
+    const effectiveWidth = isRotatedVertically ? selectedElement.height : selectedElement.width;
+    const effectiveHeight = isRotatedVertically ? selectedElement.width : selectedElement.height;
+    
+    // Calculate center position on template using rotated dimensions
+    const centerX = Math.round((template.pixelWidth - effectiveWidth) / 2);
+    const centerY = Math.round((template.pixelHeight - effectiveHeight) / 2);
     
     updateElementMutation.mutate({
       id: selectedElement.id,
