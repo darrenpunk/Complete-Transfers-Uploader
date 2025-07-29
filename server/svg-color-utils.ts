@@ -594,9 +594,10 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     const paddedWidth = Math.max(100, Math.ceil(rawWidth * 1.1)); // 10% padding
     const paddedHeight = Math.max(80, Math.ceil(rawHeight * 1.1)); // 10% padding
     
-    // Apply reasonable size limits for logos
-    const finalWidth = Math.min(paddedWidth, 400);
-    const finalHeight = Math.min(paddedHeight, 400);
+    // For vectorized SVGs, use the actual content dimensions without limiting
+    // These files come from vectorizer.ai and have large viewBoxes but represent normal logo sizes
+    const finalWidth = paddedWidth;
+    const finalHeight = paddedHeight;
     
     console.log(`Vectorized SVG bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (content: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
