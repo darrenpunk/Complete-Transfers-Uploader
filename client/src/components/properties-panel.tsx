@@ -275,14 +275,18 @@ export default function PropertiesPanel({
       processedValue = null;
     }
 
-    // Add constraints to prevent unreasonable values
-    if (property === 'width' && (processedValue < 1 || processedValue > 297)) {
+    // Add constraints to prevent unreasonable values based on current template
+    const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+    const maxTemplateWidth = currentTemplate?.width || 297;
+    const maxTemplateHeight = currentTemplate?.height || 210;
+    
+    if (property === 'width' && (processedValue < 1 || processedValue > maxTemplateWidth)) {
       console.log('Width out of range, clamping');
-      processedValue = Math.max(1, Math.min(297, processedValue));
+      processedValue = Math.max(1, Math.min(maxTemplateWidth, processedValue));
     }
-    if (property === 'height' && (processedValue < 1 || processedValue > 420)) {
+    if (property === 'height' && (processedValue < 1 || processedValue > maxTemplateHeight)) {
       console.log('Height out of range, clamping');
-      processedValue = Math.max(1, Math.min(420, processedValue));
+      processedValue = Math.max(1, Math.min(maxTemplateHeight, processedValue));
     }
     if (property === 'rotation') {
       // Normalize rotation to 0-360 range
@@ -376,9 +380,10 @@ export default function PropertiesPanel({
       });
     }
     
-    // Position Check - ensure logo is within template bounds (use reasonable defaults for common sizes)
-    const templateWidth = 420; // Use A3 landscape as reasonable default
-    const templateHeight = 420; // Use A3 height as reasonable default
+    // Position Check - ensure logo is within template bounds
+    const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+    const templateWidth = currentTemplate?.width || 297; // Default to A4 if template not found
+    const templateHeight = currentTemplate?.height || 210;
     const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
                           currentElement.x + currentElement.width <= templateWidth && 
                           currentElement.y + currentElement.height <= templateHeight;
@@ -388,7 +393,7 @@ export default function PropertiesPanel({
       value: isWithinBounds ? "In Bounds" : "Check Position"
     });
     
-    // Size Check - reasonable print size (adjusted for larger templates like A3)
+    // Size Check - reasonable print size
     const maxWidth = Math.min(templateWidth * 0.95, 500); // Allow up to 95% of template width or 500mm max
     const maxHeight = Math.min(templateHeight * 0.95, 500); // Allow up to 95% of template height or 500mm max
     const hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
