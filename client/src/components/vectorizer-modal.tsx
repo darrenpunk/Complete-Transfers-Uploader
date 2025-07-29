@@ -177,12 +177,20 @@ export function VectorizerModal({
             const svgElement = tempDiv.querySelector('svg');
             
             if (svgElement) {
-              // Style the SVG
-              svgElement.style.maxWidth = '100%';
-              svgElement.style.maxHeight = '100%';
-              svgElement.style.width = 'auto';
-              svgElement.style.height = 'auto';
+              // Style the SVG for proper display
+              svgElement.style.maxWidth = '400px';
+              svgElement.style.maxHeight = '400px';
+              svgElement.style.width = '400px';
+              svgElement.style.height = '400px';
               svgElement.style.cursor = 'crosshair';
+              svgElement.style.display = 'block';
+              
+              // Ensure viewBox is set correctly for proper scaling
+              if (!svgElement.getAttribute('viewBox')) {
+                const width = svgElement.getAttribute('width') || '400';
+                const height = svgElement.getAttribute('height') || '400';
+                svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+              }
               
               // Add click event listener to detect color clicks
               const handleSvgClick = (event: Event) => {
@@ -199,19 +207,22 @@ export function VectorizerModal({
                     // Toggle lock status for this color
                     setLockedColors(prev => {
                       const newSet = new Set(prev);
-                      if (newSet.has(clickedColor)) {
+                      const wasLocked = newSet.has(clickedColor);
+                      
+                      if (wasLocked) {
                         newSet.delete(clickedColor);
-                        toast({
-                          title: "Color Unlocked",
-                          description: `Unlocked color ${clickedColor}`,
-                        });
                       } else {
                         newSet.add(clickedColor);
-                        toast({
-                          title: "Color Locked",
-                          description: `Locked color ${clickedColor}`,
-                        });
                       }
+                      
+                      // Use setTimeout to avoid React warning about updating components during render
+                      setTimeout(() => {
+                        toast({
+                          title: wasLocked ? "Color Unlocked" : "Color Locked",
+                          description: `${wasLocked ? 'Unlocked' : 'Locked'} color ${clickedColor}`,
+                        });
+                      }, 0);
+                      
                       return newSet;
                     });
                   }
