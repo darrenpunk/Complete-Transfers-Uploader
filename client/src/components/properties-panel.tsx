@@ -604,8 +604,8 @@ export default function PropertiesPanel({
                   <Input
                     ref={widthInputRef}
                     type="number"
-                    key={`width-${currentElement.id}-${displayWidth}-${forceUpdate}`}
-                    value={displayWidth ?? ''}
+                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}`}
+                    defaultValue={actualWidth || ''}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -618,8 +618,8 @@ export default function PropertiesPanel({
                   <Input
                     ref={heightInputRef}
                     type="number"
-                    key={`height-${currentElement.id}-${displayHeight}-${forceUpdate}`}
-                    value={displayHeight ?? ''}
+                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}`}
+                    defaultValue={actualHeight || ''}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
                     step="1"
