@@ -688,20 +688,19 @@ export class EnhancedCMYKGenerator {
     console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
     console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
     
-    // Calculate scale to fit target dimensions
+    // Use exact scaling to match canvas element dimensions
     const scaleX = targetWidth / origWidth;
     const scaleY = targetHeight / origHeight;
-    const scale = Math.min(scaleX, scaleY);
     
-    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
+    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, using direct scaling`);
     
-    // Calculate final rendered dimensions
-    const finalWidth = origWidth * scale;
-    const finalHeight = origHeight * scale;
+    // Use target dimensions directly to match canvas display exactly
+    const finalWidth = targetWidth;
+    const finalHeight = targetHeight;
     
     console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
     
-    // Draw the embedded page with vectors preserved
+    // Draw the embedded page with vectors preserved using exact canvas dimensions
     page.drawPage(embeddedPage, {
       x: x,
       y: y,
