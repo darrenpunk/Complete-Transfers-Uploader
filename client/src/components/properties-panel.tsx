@@ -593,7 +593,22 @@ export default function PropertiesPanel({
 
             {/* Rotation */}
             <div>
-              <Label className="text-sm font-medium">Rotation</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Rotation</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentRotation = currentElement.rotation || 0;
+                    const newRotation = (currentRotation + 90) % 360;
+                    handlePropertyChange('rotation', newRotation);
+                  }}
+                  className="h-6 px-2 text-xs"
+                >
+                  <RotateCw className="w-3 h-3 mr-1" />
+                  +90°
+                </Button>
+              </div>
               <div className="flex items-center space-x-2 mt-1">
                 <Slider
                   value={[currentElement.rotation || 0]}
