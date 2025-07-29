@@ -170,6 +170,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **SVG Dimension Fix Attempt Failed**: Multiple attempts to fix Adobe Illustrator distortion by matching width/height to viewBox dimensions made the problem worse - forcing dimensions to match viewBox causes severe vertical stretching (July 29, 2025)
 ✓ **Reverted All Dimension Fixes**: Removed both server-side and client-side dimension manipulation as they conflict with user's custom sizing and cause distortion - vectorizer API output now used as-is with user's custom dimensions preserved (July 29, 2025)
 ✓ **Removed Custom Sizing from Vectorizer**: Completely removed the size editor section from vectorizer modal - users will now resize vectorized SVGs on the canvas after import, simplifying the workflow and avoiding Adobe Illustrator distortion issues (July 29, 2025)
+✓ **Added Explicit Pixel Dimensions to SVG**: Added width and height attributes in pixels (e.g., width="1445px" height="1451px") to match viewBox dimensions, helping Adobe Illustrator interpret the intended size correctly (July 29, 2025)
 
 
 ## Current Status (July 28, 2025)

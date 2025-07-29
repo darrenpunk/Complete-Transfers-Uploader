@@ -1598,8 +1598,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
-      // Note: We're NOT fixing SVG dimensions here anymore as it causes issues
-      // with Adobe Illustrator. The vectorizer API output should be used as-is.
+      // Add proper width/height attributes for Adobe Illustrator compatibility
+      // This ensures Illustrator interprets the dimensions correctly
+      const svgMatch = svgContent.match(/<svg[^>]*viewBox="([^"]+)"[^>]*>/);
+      if (svgMatch) {
+        const viewBoxValues = svgMatch[1].split(/\s+/).map(parseFloat);
+        if (viewBoxValues.length === 4) {
+          const vbWidth = viewBoxValues[2] - viewBoxValues[0];
+          const vbHeight = viewBoxValues[3] - viewBoxValues[1];
+          
+          // Add width and height in pixels to match viewBox
+          // This helps Illustrator understand the intended dimensions
+          svgContent = svgContent.replace(
+            /<svg([^>]*)>/,
+            `<svg$1 width="${vbWidth}px" height="${vbHeight}px">`
+          );
+          
+          console.log(`Added explicit dimensions: width="${vbWidth}px" height="${vbHeight}px" to match viewBox`);
+        }
+      }
       
       // Clean up the temporary file
       if (req.file && req.file.filename) {
