@@ -142,9 +142,7 @@ export default function CanvasWorkspace({
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [showOversizedWarning, setShowOversizedWarning] = useState(false);
-  const [oversizedElements, setOversizedElements] = useState<CanvasElement[]>([]);
-  const [requiredScaling, setRequiredScaling] = useState<number>(100);
+
  // Canvas rotation in degrees
 
   // Update canvas element mutation
@@ -322,70 +320,7 @@ export default function CanvasWorkspace({
     setShowVectorizer(false);
   };
 
-  const handleFitToBounds = async () => {
-    if (!template || canvasElements.length === 0) return;
 
-    // Calculate safety margins (3mm on each side)
-    const marginMm = 3;
-    const safeWidth = template.width - (marginMm * 2);
-    const safeHeight = template.height - (marginMm * 2);
-
-    // Find the bounding box of all visible elements
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    const visibleElements = canvasElements.filter(element => element.isVisible);
-    
-    visibleElements.forEach(element => {
-      minX = Math.min(minX, element.x);
-      minY = Math.min(minY, element.y);
-      maxX = Math.max(maxX, element.x + element.width);
-      maxY = Math.max(maxY, element.y + element.height);
-    });
-
-    if (minX === Infinity || minY === Infinity) return;
-
-    // Calculate current content dimensions
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-
-    // Calculate scale factor to fit within safe bounds
-    const scaleX = safeWidth / contentWidth;
-    const scaleY = safeHeight / contentHeight;
-    const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
-
-    // Calculate offset to center content within safe bounds
-    const scaledWidth = contentWidth * scale;
-    const scaledHeight = contentHeight * scale;
-    const offsetX = marginMm + (safeWidth - scaledWidth) / 2 - minX * scale;
-    const offsetY = marginMm + (safeHeight - scaledHeight) / 2 - minY * scale;
-
-    // Update all elements with new positions and sizes
-    const updates = canvasElements.map(element => ({
-      id: element.id,
-      updates: {
-        x: Math.round(element.x * scale + offsetX),
-        y: Math.round(element.y * scale + offsetY),
-        width: Math.round(element.width * scale),
-        height: Math.round(element.height * scale)
-      }
-    }));
-
-    try {
-      // Batch update all elements sequentially to avoid race conditions
-      for (const { id, updates: elementUpdates } of updates) {
-        await updateElementMutation.mutateAsync({
-          id,
-          updates: elementUpdates
-        });
-      }
-      
-      // Force refresh of canvas elements
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/projects/${project.id}/canvas-elements`] 
-      });
-    } catch (error) {
-      console.error('Error updating elements:', error);
-    }
-  };
 
   // Save to history when elements change (but avoid infinite loops)
   useEffect(() => {
@@ -601,121 +536,11 @@ export default function CanvasWorkspace({
     }
   }, [template?.id]);
 
-  // Check for oversized elements when canvas elements change
-  useEffect(() => {
-    if (template && canvasElements.length > 0) {
-      console.log('Checking for oversized elements:', {
-        templateSize: `${template.width}×${template.height}mm`,
-        templatePixels: `${template.pixelWidth}×${template.pixelHeight}px`,
-        elementCount: canvasElements.length,
-        elements: canvasElements.map(el => ({
-          id: el.id,
-          size: `${el.width}×${el.height}px`,
-          position: `${el.x},${el.y}`
-        }))
-      });
-      checkForOversizedElements();
-    }
-  }, [canvasElements, template]);
 
-  // Function to check if elements are outside the safety bounds (3mm from edges)
-  const checkForOversizedElements = () => {
-    if (!template) return;
 
-    const safetyMargin = 3; // 3mm safety margin
-    const mmToPixelRatio = template.pixelWidth / template.width;
-    const safetyMarginPixels = safetyMargin * mmToPixelRatio;
-    
-    const safeWidth = template.pixelWidth - (2 * safetyMarginPixels);
-    const safeHeight = template.pixelHeight - (2 * safetyMarginPixels);
-    
-    const oversized = canvasElements.filter(element => {
-      const elementRight = element.x + element.width;
-      const elementBottom = element.y + element.height;
-      
-      return (
-        element.x < safetyMarginPixels ||
-        element.y < safetyMarginPixels ||
-        elementRight > template.pixelWidth - safetyMarginPixels ||
-        elementBottom > template.pixelHeight - safetyMarginPixels ||
-        element.width > safeWidth ||
-        element.height > safeHeight
-      );
-    });
 
-    if (oversized.length > 0) {
-      console.log('Found oversized elements:', {
-        count: oversized.length,
-        safeArea: `${safeWidth}×${safeHeight}px`,
-        safetyMarginPixels,
-        oversized: oversized.map(el => ({
-          id: el.id,
-          size: `${el.width}×${el.height}px`,
-          position: `${el.x},${el.y}`,
-          exceedsWidth: el.width > safeWidth,
-          exceedsHeight: el.height > safeHeight
-        }))
-      });
-      
-      setOversizedElements(oversized);
-      
-      // Calculate required scaling to fit all elements within bounds
-      let maxScaleNeeded = 1;
-      oversized.forEach(element => {
-        const scaleX = safeWidth / element.width;
-        const scaleY = safeHeight / element.height;
-        const scaleNeeded = Math.min(scaleX, scaleY);
-        if (scaleNeeded < maxScaleNeeded) {
-          maxScaleNeeded = scaleNeeded;
-        }
-      });
-      
-      setRequiredScaling(Math.round(maxScaleNeeded * 100));
-      setShowOversizedWarning(true);
-      console.log('Showing oversized warning with scaling:', maxScaleNeeded * 100);
-    } else {
-      console.log('No oversized elements found');
-      setOversizedElements([]);
-      setShowOversizedWarning(false);
-    }
-  };
 
-  // Function to fit all content to bounds
-  const fitToBounds = () => {
-    if (!template || oversizedElements.length === 0) return;
 
-    const safetyMargin = 3; // 3mm safety margin
-    const mmToPixelRatio = template.pixelWidth / template.width;
-    const safetyMarginPixels = safetyMargin * mmToPixelRatio;
-    
-    const safeWidth = template.pixelWidth - (2 * safetyMarginPixels);
-    const safeHeight = template.pixelHeight - (2 * safetyMarginPixels);
-    
-    // Calculate scaling factor
-    const scaleFactor = requiredScaling / 100;
-    
-    // Scale and center all elements
-    canvasElements.forEach(element => {
-      const newWidth = Math.round(element.width * scaleFactor);
-      const newHeight = Math.round(element.height * scaleFactor);
-      
-      // Center the scaled element
-      const newX = Math.round(safetyMarginPixels + (safeWidth - newWidth) / 2);
-      const newY = Math.round(safetyMarginPixels + (safeHeight - newHeight) / 2);
-      
-      updateElementMutation.mutate({
-        id: element.id,
-        updates: {
-          width: newWidth,
-          height: newHeight,
-          x: newX,
-          y: newY
-        }
-      });
-    });
-
-    setShowOversizedWarning(false);
-  };
 
 
 
@@ -933,27 +758,7 @@ export default function CanvasWorkspace({
               iccProfileName="PSO Coated FOGRA51 (EFI)"
             />
 
-            {/* Fit to Bounds Button for All Templates */}
-            {template && canvasElements.length > 0 && (
-              <>
-                <div className="h-6 w-px bg-gray-300"></div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleFitToBounds}
-                    >
-                      <Maximize2 className="w-4 h-4 mr-1" />
-                      Fit to Bounds
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Scale and center all content to fit within safety margins</p>
-                  </TooltipContent>
-                </Tooltip>
-              </>
-            )}
+
           </div>
           
           {/* Right section - Undo/Redo */}
@@ -1334,79 +1139,7 @@ export default function CanvasWorkspace({
         />
       )}
 
-      {/* Oversized Logo Warning Modal */}
-      {showOversizedWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Logo Doesn't Fit Safety Zone
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  Your uploaded logo extends beyond the 3mm safety margin and may be clipped during production. 
-                  The logo will be scaled down by <strong>{100 - requiredScaling}%</strong> to fit within the safe print area.
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-                  <strong>Try first:</strong> If your artwork is landscape/portrait, try rotating it by 90° to see if it fits better. 
-                  Otherwise, reconfigure your artwork before uploading to avoid quality loss from scaling, 
-                  or use the "Fit to Bounds" button to automatically scale the logo.
-                </p>
-                <div className="flex space-x-2">
-                  {oversizedElements.length > 0 && (
-                    <Button
-                      onClick={() => {
-                        console.log('🔄 Try Rotate 90° clicked', { 
-                          oversizedElements: oversizedElements.length,
-                          selectedElement: selectedElement?.id || 'none',
-                          firstOversized: oversizedElements[0]?.id || 'none'
-                        });
-                        
-                        // Select the first oversized element if none is selected
-                        const targetElement = selectedElement || oversizedElements[0];
-                        if (targetElement) {
-                          console.log('🎯 Selecting and rotating element:', targetElement.id);
-                          onElementSelect(targetElement);
-                          
-                          // Use individual element rotation
-                          setTimeout(() => {
-                            rotateBy90();
-                          }, 100);
-                        }
-                        setShowOversizedWarning(false);
-                      }}
-                      variant="secondary"
-                      className="flex-1"
-                    >
-                      <RotateCw className="w-4 h-4 mr-2" />
-                      Try Rotate 90°
-                    </Button>
-                  )}
-                  <Button
-                    onClick={fitToBounds}
-                    className="flex-1"
-                  >
-                    <Maximize2 className="w-4 h-4 mr-2" />
-                    Fit to Bounds (-{100 - requiredScaling}%)
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowOversizedWarning(false)}
-                    className="flex-1"
-                  >
-                    Keep As Is
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
     </TooltipProvider>
   );
