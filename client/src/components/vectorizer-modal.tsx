@@ -327,7 +327,22 @@ export function VectorizerModal({
             console.log('Detected extreme coordinates, applying scale transformation');
             // Add a transform to scale down the content
             const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.setAttribute('transform', 'scale(0.26, 0.26)'); // Scale down by ~4x
+            
+            // Calculate appropriate scale based on viewBox size
+            const viewBox = svgEl.getAttribute('viewBox');
+            let scale = 0.26;
+            if (viewBox) {
+              const [, , width, height] = viewBox.split(' ').map(Number);
+              if (width && height) {
+                // Scale to fit within 400x400
+                const scaleX = 400 / width;
+                const scaleY = 400 / height;
+                scale = Math.min(scaleX, scaleY) * 0.9; // 90% to add some padding
+                console.log(`Calculated scale: ${scale} from viewBox ${width}×${height}`);
+              }
+            }
+            
+            g.setAttribute('transform', `scale(${scale}, ${scale})`); // Dynamic scale
             
             // Move all children to the group
             while (svgEl.firstChild) {
