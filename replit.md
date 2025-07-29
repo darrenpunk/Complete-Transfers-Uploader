@@ -175,6 +175,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Eyedropper Color Picker Tool**: Added professional eyedropper tool to vectorizer modal allowing users to copy colors from one element to another - click to pick a source color (blue highlight), then click target color to apply it, with visual indicators and crosshair cursor for intuitive color copying workflow (July 29, 2025)
 ✓ **Automatic CMYK Conversion on Upload**: Logos are now automatically converted to CMYK when imported to canvas - RGB colors are converted using standardized algorithm ensuring all files are print-ready from the start without manual conversion steps (July 29, 2025)
 ✓ **Auto-Fit Templates to Workspace**: Implemented intelligent zoom calculation that automatically scales all templates to their maximum visible size within the workspace - uses actual viewport dimensions to calculate optimal zoom level (10-400% range) ensuring templates fill available space while remaining fully visible (July 29, 2025)
+✓ **Widened Product Selector Modal**: Expanded product selector from max-w-4xl to max-w-6xl and increased grid columns from 3 to 4, reduced padding and font sizes for compact display - all products now visible without scrolling, removed duplicate Sublimation Transfers entry (July 29, 2025)
 
 
 ## Current Status (July 29, 2025)

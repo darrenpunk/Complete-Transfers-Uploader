@@ -87,14 +87,6 @@ const productCategories = [
     icon: fullColourIconPath,
     group: "Zero Silicone Transfers",
     filter: "hue-rotate(20deg)"
-  },
-  {
-    id: "sublimation",
-    name: "Sublimation Transfers",
-    description: "Heat sublimation printing",
-    icon: fullColourIconPath,
-    group: "Sublimation Transfers",
-    filter: "hue-rotate(180deg) saturate(0.9)"
   }
 ];
 
@@ -116,7 +108,7 @@ export default function ProductLauncherModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center mb-2">
             Select Product Type
@@ -126,15 +118,15 @@ export default function ProductLauncherModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
           {productCategories.map((product) => (
             <Card 
               key={product.id}
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-primary"
               onClick={() => handleProductSelect(product.group)}
             >
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="mx-auto w-20 h-20 flex items-center justify-center">
+              <CardContent className="p-4 text-center space-y-3">
+                <div className="mx-auto w-16 h-16 flex items-center justify-center">
                   <img 
                     src={product.icon} 
                     alt={product.name}
@@ -149,24 +141,25 @@ export default function ProductLauncherModal({
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg text-gray-900">
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-base text-gray-900">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs text-gray-600 leading-relaxed">
                     {product.description}
                   </p>
                 </div>
                 
                 <Button 
                   variant="outline" 
+                  size="sm"
                   className="w-full"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleProductSelect(product.group);
                   }}
                 >
-                  Select Templates
+                  Select
                 </Button>
               </CardContent>
             </Card>
