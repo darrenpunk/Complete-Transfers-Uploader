@@ -624,15 +624,17 @@ export default function UploadTool() {
       </header>
 
       {/* Workflow Progress Bar with Logo */}
-      <div className="bg-card border-b border-border px-6 py-4">
-        <div className="flex items-center justify-center mb-4">
+      <div className="bg-card border-b border-border px-6 py-3">
+        <div className="flex items-center gap-8">
           <img 
             src={completeTransfersLogoPath} 
             alt="CompleteTransfers" 
-            className="h-12 w-auto object-contain"
+            className="h-20 w-auto object-contain flex-shrink-0"
           />
+          <div className="flex-1">
+            <ProgressSteps currentStep={currentStep} layout="horizontal" />
+          </div>
         </div>
-        <ProgressSteps currentStep={currentStep} layout="horizontal" />
       </div>
 
       {/* Main Workspace */}
