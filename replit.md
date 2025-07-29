@@ -208,6 +208,13 @@ This is a full-stack web application for uploading logo files and designing layo
 - ✅ Professional print quality maintained with vector preservation
 - ✅ **Pantone Color Detection**: Automatically detects and displays closest Pantone color matches for uploaded logos with confidence percentages
 
+**ARTWORK CENTERING SYSTEM FIXED** (July 29, 2025)
+- ✅ **Upload Size Limiting**: Added maximum 100×100mm dimensions for PDF logos during upload to prevent oversized canvas elements
+- ✅ **PDF Centering Fix**: Fixed artwork positioning in generated PDFs by limiting logo dimensions at upload stage instead of during PDF generation
+- ✅ **Proper Scaling Logic**: Enhanced CMYK generator uses aspect ratio scaling instead of direct dimension matching for consistent output
+- ✅ **Canvas-PDF Consistency**: PDF output now matches canvas preview positioning with properly centered artwork
+- ✅ **Large Format Support**: Detects oversized PDFs (269×339mm estimated) and applies size limits (100×100mm actual) with proper centering calculations
+
 **CRITICAL PDF SCALING AND FONT OUTLINING FIXES COMPLETED** (July 28, 2025)
 - ✅ **Fixed PDF Content Scaling**: Resolved major scaling issue where PDF output content appeared significantly smaller than canvas preview
 - ✅ **Enhanced CMYK Generator Scaling**: Updated mm-to-points conversion calculations for accurate element positioning and sizing
