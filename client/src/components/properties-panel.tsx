@@ -172,18 +172,11 @@ export default function PropertiesPanel({
     setDisplayWidth(actualWidth || undefined);
     setDisplayHeight(actualHeight || undefined);
     
-    // Force UI update with timeout to ensure DOM is ready
-    setTimeout(() => {
-      if (widthInputRef.current && actualWidth) {
-        widthInputRef.current.value = actualWidth.toString();
-        console.log(`🔄 Manually set width input to: ${actualWidth}`);
-      }
-      if (heightInputRef.current && actualHeight) {
-        heightInputRef.current.value = actualHeight.toString();
-        console.log(`🔄 Manually set height input to: ${actualHeight}`);
-      }
-    }, 0);
-  }, [actualWidth, actualHeight, forceUpdate]);
+    // Force a more aggressive re-render
+    setForceUpdate(prev => prev + 1);
+    
+    console.log(`📐 Display values updated: width=${actualWidth}, height=${actualHeight}, forceUpdate=${forceUpdate + 1}`);
+  }, [actualWidth, actualHeight]);
 
   console.log('PropertiesPanel - Current element dimensions:', {
     id: currentElement?.id,
@@ -604,8 +597,8 @@ export default function PropertiesPanel({
                   <input
                     ref={widthInputRef}
                     type="number"
-                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}`}
-                    defaultValue={actualWidth || ''}
+                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}-${Date.now()}`}
+                    value={actualWidth || ''}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     step="1"
@@ -618,8 +611,8 @@ export default function PropertiesPanel({
                   <input
                     ref={heightInputRef}
                     type="number"
-                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}`}
-                    defaultValue={actualHeight || ''}
+                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}-${Date.now()}`}
+                    value={actualHeight || ''}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     step="1"
