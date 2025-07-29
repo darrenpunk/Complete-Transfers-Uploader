@@ -322,7 +322,7 @@ export default function PropertiesPanel({
     }
 
     // Handle aspect ratio maintenance for width/height changes (only if not a rotation change)
-    if (maintainAspectRatio && (property === 'width' || property === 'height') && property !== 'rotation') {
+    if (maintainAspectRatio && (property === 'width' || property === 'height')) {
       const aspectRatio = currentElement.width / currentElement.height;
       if (property === 'width') {
         updates.height = Math.round(processedValue / aspectRatio);
@@ -561,7 +561,17 @@ export default function PropertiesPanel({
                       size="sm"
                       onClick={() => {
                         const currentRotation = currentElement.rotation || 0;
-                        const newRotation = (currentRotation + 90) % 360;
+                        // Cycle through standard rotations: 0° → 90° → 180° → 270° → 0°
+                        let newRotation;
+                        if (currentRotation >= 0 && currentRotation < 90) {
+                          newRotation = 90;
+                        } else if (currentRotation >= 90 && currentRotation < 180) {
+                          newRotation = 180;
+                        } else if (currentRotation >= 180 && currentRotation < 270) {
+                          newRotation = 270;
+                        } else {
+                          newRotation = 0;
+                        }
                         handlePropertyChange('rotation', newRotation);
                       }}
                       className="h-6 px-2 text-xs"
