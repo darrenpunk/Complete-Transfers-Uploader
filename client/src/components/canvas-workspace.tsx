@@ -728,25 +728,7 @@ export default function CanvasWorkspace({
               </Tooltip>
               
 
-              
-              {/* Logo Control Buttons - show when element is selected */}
-              {selectedElement && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={centerLogo}
-                    >
-                      <Move className="w-4 h-4 mr-1" />
-                      Center Logo
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Center selected logo on template</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+
             </div>
 
             <div className="h-6 w-px bg-gray-300"></div>

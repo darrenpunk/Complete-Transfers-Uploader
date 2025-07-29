@@ -488,27 +488,7 @@ export default function PropertiesPanel({
     <TooltipProvider>
     <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
 
-      {/* Product Selector Button at top of properties panel */}
-      <div className="p-6 border-b border-gray-200">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              onClick={() => setShowTemplateSelectorModal(true)}
-              className="w-full"
-            >
-              <Package className="w-4 h-4 mr-2" />
-              Product Selector
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Change your design to a different product type (DTF, UV DTF, Single Colour, etc.)</p>
-          </TooltipContent>
-        </Tooltip>
-        <p className="text-xs text-gray-500 mt-2">
-          Choose a different product template for your design
-        </p>
-      </div>
+
 
       {/* Logo Properties */}
       {currentElement && (
