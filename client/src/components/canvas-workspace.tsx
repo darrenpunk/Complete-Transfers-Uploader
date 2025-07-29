@@ -784,7 +784,7 @@ export default function CanvasWorkspace({
                       onClick={handleFitToBounds}
                     >
                       <Maximize2 className="w-4 h-4 mr-1" />
-                      Fit to Bounds
+                      Fit in Bounds
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
