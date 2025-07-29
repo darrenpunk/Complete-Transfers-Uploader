@@ -998,10 +998,12 @@ export function VectorizerModal({
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="default"
                       onClick={() => setViewMode(viewMode === 'comparison' ? 'preview' : 'comparison')}
+                      className="px-3 py-2"
                     >
-                      {viewMode === 'comparison' ? <Eye className="h-4 w-4" /> : <Columns2 className="h-4 w-4" />}
+                      {viewMode === 'comparison' ? <Eye className="h-5 w-5 mr-2" /> : <Columns2 className="h-5 w-5 mr-2" />}
+                      {viewMode === 'comparison' ? 'Preview' : 'Compare'}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -1027,11 +1029,13 @@ export function VectorizerModal({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="outline"
-                      size="icon"
+                      variant="default"
+                      size="default"
                       onClick={() => setShowHelp(true)}
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700"
                     >
-                      <HelpCircle className="h-4 w-4" />
+                      <HelpCircle className="h-5 w-5 mr-2" />
+                      Help Guide
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
