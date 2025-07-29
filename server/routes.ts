@@ -1586,8 +1586,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
-      // Normalize the SVG coordinates to fix Illustrator distortion issues
-      svgContent = normalizeVectorizedSVG(svgContent);
+      // Skip normalization for now - it's causing issues with coordinate parsing
+      // svgContent = normalizeVectorizedSVG(svgContent);
       
       // Clean up the temporary file
       if (req.file && req.file.filename) {
