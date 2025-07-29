@@ -512,7 +512,7 @@ export default function ToolsSidebar({
                       trigger={
                         <Button 
                           variant={project.garmentColor ? "outline" : "default"} 
-                          className="w-full"
+                          className="w-full hover:bg-gray-400"
                         >
                           <Palette className="w-4 h-4 mr-2" />
                           {project.garmentColor ? "Change Garment Color" : "Select Garment Color"}
@@ -658,7 +658,7 @@ export default function ToolsSidebar({
                       trigger={
                         <Button 
                           variant={project.garmentColor ? "outline" : "secondary"} 
-                          className="w-full"
+                          className="w-full hover:bg-gray-400"
                         >
                           <Palette className="w-4 h-4 mr-2" />
                           {project.garmentColor ? "Change Preview Color" : "Select Preview Color"}

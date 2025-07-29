@@ -814,7 +814,7 @@ export default function PropertiesPanel({
                   trigger={
                     <Button 
                       variant={currentElement.garmentColor ? "outline" : "default"} 
-                      className="w-full"
+                      className="w-full hover:bg-gray-400"
                       size="sm"
                     >
                       <Palette className="w-4 h-4 mr-2" />
