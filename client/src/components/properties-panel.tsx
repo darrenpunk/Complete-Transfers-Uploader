@@ -135,7 +135,6 @@ export default function PropertiesPanel({
     y: '',
     width: '',
     height: '',
-    rotation: '',
     opacity: ''
   });
   
@@ -158,7 +157,6 @@ export default function PropertiesPanel({
         y: currentElement.y?.toString() || '0',
         width: currentElement.width?.toString() || '0',
         height: currentElement.height?.toString() || '0',
-        rotation: currentElement.rotation?.toString() || '0',
         opacity: Math.round((currentElement.opacity || 1) * 100).toString()
       });
     }
@@ -645,41 +643,24 @@ export default function PropertiesPanel({
 
             {/* Rotation */}
             <div>
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Rotation</Label>
+              <Label className="text-sm font-medium mb-2 block">Rotation</Label>
+              <div className="grid grid-cols-2 gap-2">
                 <Button
-                  variant="outline"
+                  variant={currentElement.rotation === 0 ? "default" : "outline"}
                   size="sm"
-                  onClick={() => {
-                    const currentRotation = currentElement.rotation || 0;
-                    const newRotation = (currentRotation + 90) % 360;
-                    handlePropertyChange('rotation', newRotation);
-                  }}
-                  className="h-6 px-2 text-xs"
+                  onClick={() => handlePropertyChange('rotation', 0)}
+                  className="h-8"
                 >
-                  <RotateCw className="w-3 h-3 mr-1" />
-                  +90°
+                  0° Portrait
                 </Button>
-              </div>
-              <div className="flex items-center space-x-2 mt-1">
-                <Slider
-                  value={[currentElement.rotation || 0]}
-                  onValueChange={([value]) => handlePropertyChange('rotation', value)}
-                  min={0}
-                  max={360}
-                  step={1}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  value={localInputValues.rotation}
-                  onChange={(e) => handleInputChange('rotation', e.target.value)}
-                  min={0}
-                  max={360}
-                  step="1"
-                  className="w-16 text-sm"
-                />
-                <span className="text-sm text-gray-500">°</span>
+                <Button
+                  variant={currentElement.rotation === 90 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePropertyChange('rotation', 90)}
+                  className="h-8"
+                >
+                  90° Landscape
+                </Button>
               </div>
             </div>
 
