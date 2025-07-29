@@ -684,11 +684,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             console.log(`Estimated dimensions: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm`);
             
-            // If the estimated size is reasonable for actual artwork (not a mistake), use it
+            // If the estimated size is reasonable for actual artwork, use it but apply maximum limits
             if (estimatedWidthMm > 50 && estimatedWidthMm < 500 && estimatedHeightMm > 50 && estimatedHeightMm < 500) {
-              displayWidth = Math.round(estimatedWidthMm);
-              displayHeight = Math.round(estimatedHeightMm);
-              console.log(`Using actual PDF dimensions: ${displayWidth}×${displayHeight}mm`);
+              // Apply maximum size limits to prevent oversized logos on templates
+              displayWidth = Math.min(Math.round(estimatedWidthMm), 100);  // Max 100mm width
+              displayHeight = Math.min(Math.round(estimatedHeightMm), 100); // Max 100mm height
+              console.log(`Using limited PDF dimensions: ${displayWidth}×${displayHeight}mm (estimated: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm)`);
             } else {
               // For PDF content bounds, use a more appropriate scaling factor
               // Content bounds are in SVG units, roughly equivalent to points
@@ -714,11 +715,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             console.log(`Estimated dimensions: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm`);
             
-            // If the estimated size is reasonable for actual artwork, use it
+            // If the estimated size is reasonable for actual artwork, use it but apply maximum limits
             if (estimatedWidthMm > 50 && estimatedWidthMm < 500 && estimatedHeightMm > 50 && estimatedHeightMm < 500) {
-              displayWidth = Math.round(estimatedWidthMm);
-              displayHeight = Math.round(estimatedHeightMm);
-              console.log(`Using actual PDF dimensions: ${displayWidth}×${displayHeight}mm`);
+              // Apply maximum size limits to prevent oversized logos on templates
+              displayWidth = Math.min(Math.round(estimatedWidthMm), 100);  // Max 100mm width
+              displayHeight = Math.min(Math.round(estimatedHeightMm), 100); // Max 100mm height
+              console.log(`Using limited PDF dimensions: ${displayWidth}×${displayHeight}mm (estimated: ${estimatedWidthMm.toFixed(1)}×${estimatedHeightMm.toFixed(1)}mm)`);
             } else {
               // For PDF content bounds, use a more appropriate scaling factor
               const scaleFactor = 0.35; // Adjusted scale for PDF content bounds

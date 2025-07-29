@@ -688,15 +688,16 @@ export class EnhancedCMYKGenerator {
     console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
     console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
     
-    // Use exact scaling to match canvas element dimensions
+    // Calculate scale to fit target dimensions while maintaining aspect ratio
     const scaleX = targetWidth / origWidth;
     const scaleY = targetHeight / origHeight;
+    const scale = Math.min(scaleX, scaleY);
     
-    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, using direct scaling`);
+    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
     
-    // Use target dimensions directly to match canvas display exactly
-    const finalWidth = targetWidth;
-    const finalHeight = targetHeight;
+    // Calculate final rendered dimensions
+    const finalWidth = origWidth * scale;
+    const finalHeight = origHeight * scale;
     
     console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
     
