@@ -593,14 +593,8 @@ export default function UploadTool() {
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <img 
-              src={completeTransfersLogoPath} 
-              alt="CompleteTransfers" 
-              className="h-8 w-auto object-contain"
-            />
-            <div className="text-muted-foreground">|</div>
-            <div className="text-lg font-medium text-foreground">Web-to-Print Upload Tool</div>
+          <div className="flex-1 text-center">
+            <div className="text-xl font-semibold text-foreground">Web to Print</div>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -629,13 +623,20 @@ export default function UploadTool() {
         </div>
       </header>
 
-      {/* Workflow Progress Bar */}
-      <div className="bg-card border-b border-border px-6 py-3">
+      {/* Workflow Progress Bar with Logo */}
+      <div className="bg-card border-b border-border px-6 py-4">
+        <div className="flex items-center justify-center mb-4">
+          <img 
+            src={completeTransfersLogoPath} 
+            alt="CompleteTransfers" 
+            className="h-12 w-auto object-contain"
+          />
+        </div>
         <ProgressSteps currentStep={currentStep} layout="horizontal" />
       </div>
 
       {/* Main Workspace */}
-      <div className="flex h-[calc(100vh-140px)]">
+      <div className="flex h-[calc(100vh-180px)]">
         {/* Left Sidebar */}
         <ToolsSidebar
           currentStep={currentStep}
