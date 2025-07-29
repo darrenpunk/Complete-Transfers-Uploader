@@ -330,20 +330,13 @@ export function VectorizerModal({
       const svgEl = doc.querySelector('svg');
       
       if (svgEl) {
+        // Remove width and height attributes entirely
+        // This allows Illustrator to use the viewBox for sizing
+        svgEl.removeAttribute('width');
+        svgEl.removeAttribute('height');
+        
         const viewBox = svgEl.getAttribute('viewBox');
-        if (viewBox) {
-          const viewBoxValues = viewBox.split(/\s+/).map(parseFloat);
-          if (viewBoxValues.length === 4) {
-            const vbWidth = viewBoxValues[2] - viewBoxValues[0];
-            const vbHeight = viewBoxValues[3] - viewBoxValues[1];
-            
-            // Set width/height to match viewBox dimensions
-            svgEl.setAttribute('width', String(vbWidth));
-            svgEl.setAttribute('height', String(vbHeight));
-            
-            console.log(`Fixed SVG dimensions for Illustrator: viewBox=${viewBox}, width=${vbWidth}, height=${vbHeight}`);
-          }
-        }
+        console.log(`Removed width/height attributes for Illustrator compatibility. ViewBox: ${viewBox}`);
       }
       
       return new XMLSerializer().serializeToString(doc.documentElement);
@@ -428,12 +421,11 @@ export function VectorizerModal({
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
         
-        // Apply custom sizing to the final SVG first
+        // Apply custom sizing to the final SVG
         finalSvg = applySizingToSvg(finalSvg);
         
-        // Then fix SVG dimensions to match viewBox for Illustrator compatibility
-        // This must be done AFTER sizing to ensure the final dimensions match
-        finalSvg = fixSvgDimensionsForIllustrator(finalSvg);
+        // Note: We're NOT applying the dimension fix here because it conflicts
+        // with user's custom sizing. The user's custom dimensions should be preserved.
         
         console.log('Calling onVectorDownload with', { 
           usedModifiedVersion: svgToDownload !== vectorSvg,
