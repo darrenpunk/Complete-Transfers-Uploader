@@ -324,33 +324,26 @@ export function VectorizerModal({
           });
           
           if (hasExtremeCoords) {
-            console.log('Detected extreme coordinates, applying scale transformation');
-            // Add a transform to scale down the content
-            const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
-            
-            // Calculate appropriate scale based on viewBox size
+            // Check if this is from vectorizer.ai - they use proper viewBox
             const viewBox = svgEl.getAttribute('viewBox');
-            let scale = 0.26;
-            if (viewBox) {
-              const [, , width, height] = viewBox.split(' ').map(Number);
-              if (width && height) {
-                // Scale to fit within 400x400
-                const scaleX = 400 / width;
-                const scaleY = 400 / height;
-                scale = Math.min(scaleX, scaleY) * 0.9; // 90% to add some padding
-                console.log(`Calculated scale: ${scale} from viewBox ${width}×${height}`);
+            const isVectorizerResult = viewBox && (viewBox.includes('1445') || viewBox.includes('1451') || viewBox.match(/\d{4}/));
+            
+            if (!isVectorizerResult) {
+              console.log('Detected extreme coordinates in non-vectorizer SVG, applying scale transformation');
+              // Add a transform to scale down the content
+              const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+              g.setAttribute('transform', `scale(0.26, 0.26)`);
+              
+              // Move all children to the group
+              while (svgEl.firstChild) {
+                g.appendChild(svgEl.firstChild);
               }
+              svgEl.appendChild(g);
+              
+              fixedSvg = new XMLSerializer().serializeToString(doc.documentElement);
+            } else {
+              console.log('Vectorizer result detected, no scaling needed');
             }
-            
-            g.setAttribute('transform', `scale(${scale}, ${scale})`); // Dynamic scale
-            
-            // Move all children to the group
-            while (svgEl.firstChild) {
-              g.appendChild(svgEl.firstChild);
-            }
-            svgEl.appendChild(g);
-            
-            fixedSvg = new XMLSerializer().serializeToString(doc.documentElement);
           }
         }
       }
