@@ -942,12 +942,10 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content */}
                   <div 
-                    className="w-full h-full flex items-center justify-center border border-gray-200 rounded" 
+                    className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" 
                     style={{ 
                       background: 'transparent', 
-                      backgroundColor: 'transparent',
-                      transform: `rotate(${element.rotation}deg)`,
-                      transformOrigin: 'center'
+                      backgroundColor: 'transparent'
                     }}
                   >
                     {/* Logo Elements */}
@@ -972,9 +970,11 @@ export default function CanvasWorkspace({
                           filter: colorManagementEnabled 
                             ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
                             : "none",
-                          objectFit: 'contain',
+                          objectFit: 'cover',
                           width: '100%',
-                          height: '100%'
+                          height: '100%',
+                          transform: `rotate(${element.rotation}deg)`,
+                          transformOrigin: 'center'
                         }}
                         draggable={false}
                         onLoad={() => {
