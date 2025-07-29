@@ -131,6 +131,8 @@ export default function PropertiesPanel({
   const [forceUpdate, setForceUpdate] = useState(0);
   const [displayWidth, setDisplayWidth] = useState<number | undefined>(undefined);
   const [displayHeight, setDisplayHeight] = useState<number | undefined>(undefined);
+  const widthInputRef = useRef<HTMLInputElement>(null);
+  const heightInputRef = useRef<HTMLInputElement>(null);
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
@@ -169,6 +171,18 @@ export default function PropertiesPanel({
   useEffect(() => {
     setDisplayWidth(actualWidth || undefined);
     setDisplayHeight(actualHeight || undefined);
+    
+    // Force UI update with timeout to ensure DOM is ready
+    setTimeout(() => {
+      if (widthInputRef.current && actualWidth) {
+        widthInputRef.current.value = actualWidth.toString();
+        console.log(`🔄 Manually set width input to: ${actualWidth}`);
+      }
+      if (heightInputRef.current && actualHeight) {
+        heightInputRef.current.value = actualHeight.toString();
+        console.log(`🔄 Manually set height input to: ${actualHeight}`);
+      }
+    }, 0);
   }, [actualWidth, actualHeight, forceUpdate]);
 
   console.log('PropertiesPanel - Current element dimensions:', {
@@ -588,6 +602,7 @@ export default function PropertiesPanel({
                 <div>
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
+                    ref={widthInputRef}
                     type="number"
                     key={`width-${currentElement.id}-${displayWidth}-${forceUpdate}`}
                     value={displayWidth ?? ''}
@@ -601,6 +616,7 @@ export default function PropertiesPanel({
                 <div>
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
+                    ref={heightInputRef}
                     type="number"
                     key={`height-${currentElement.id}-${displayHeight}-${forceUpdate}`}
                     value={displayHeight ?? ''}
