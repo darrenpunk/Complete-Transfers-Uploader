@@ -594,7 +594,7 @@ export default function UploadTool() {
       <header className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 text-center">
-            <div className="text-xl font-semibold text-foreground">Web to Print</div>
+            <div className="text-xl font-semibold text-foreground">Artwork Uploader & Gang Sheet Builder</div>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
