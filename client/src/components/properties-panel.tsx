@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { CanvasElement, Logo, Project, TemplateSize } from "@shared/schema";
@@ -129,6 +129,8 @@ export default function PropertiesPanel({
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [displayWidth, setDisplayWidth] = useState<number | undefined>(undefined);
+  const [displayHeight, setDisplayHeight] = useState<number | undefined>(undefined);
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
@@ -163,6 +165,12 @@ export default function PropertiesPanel({
   const actualWidth = cachedElement?.width ?? currentElement?.width ?? 0;
   const actualHeight = cachedElement?.height ?? currentElement?.height ?? 0;
   
+  // Update display values when actual dimensions change
+  useEffect(() => {
+    setDisplayWidth(actualWidth || undefined);
+    setDisplayHeight(actualHeight || undefined);
+  }, [actualWidth, actualHeight, forceUpdate]);
+
   console.log('PropertiesPanel - Current element dimensions:', {
     id: currentElement?.id,
     rotation: currentElement?.rotation,
@@ -172,6 +180,8 @@ export default function PropertiesPanel({
     elementFromCache: currentElement ? `${currentElement.width}×${currentElement.height}` : 'none',
     actualWidth,
     actualHeight,
+    displayWidth,
+    displayHeight,
     forceUpdate
   });
 
@@ -579,8 +589,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}`}
-                    value={actualWidth}
+                    key={`width-${currentElement.id}-${displayWidth}-${forceUpdate}`}
+                    value={displayWidth ?? ''}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -592,8 +602,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}`}
-                    value={actualHeight}
+                    key={`height-${currentElement.id}-${displayHeight}-${forceUpdate}`}
+                    value={displayHeight ?? ''}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
                     step="1"
