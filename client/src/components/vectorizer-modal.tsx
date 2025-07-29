@@ -104,53 +104,7 @@ export function VectorizerModal({
   };
 
   // Apply custom dimensions to SVG
-  const applySizingToSvg = (svg: string): string => {
-    try {
-      let dimensionValue: { width: number; height: number };
-      
-      // Convert dimensions based on selected unit
-      switch (sizeUnit) {
-        case 'mm':
-          // Convert mm to pixels at 300 DPI for print quality
-          dimensionValue = {
-            width: Math.round(customWidth * 11.811), // 1mm = 11.811px at 300 DPI
-            height: Math.round(customHeight * 11.811)
-          };
-          break;
-        case 'in':
-          // Convert inches to pixels at 300 DPI
-          dimensionValue = {
-            width: Math.round(customWidth * 300),
-            height: Math.round(customHeight * 300)
-          };
-          break;
-        case 'px':
-        default:
-          dimensionValue = {
-            width: customWidth,
-            height: customHeight
-          };
-          break;
-      }
 
-      // Update SVG width, height, and viewBox
-      let modifiedSvg = svg;
-      
-      // Update width and height attributes
-      modifiedSvg = modifiedSvg.replace(/width="[^"]*"/, `width="${dimensionValue.width}"`);
-      modifiedSvg = modifiedSvg.replace(/height="[^"]*"/, `height="${dimensionValue.height}"`);
-      
-      // Update viewBox to match new dimensions
-      modifiedSvg = modifiedSvg.replace(/viewBox="[^"]*"/, `viewBox="0 0 ${dimensionValue.width} ${dimensionValue.height}"`);
-      
-      console.log(`Applied sizing: ${customWidth}${sizeUnit} × ${customHeight}${sizeUnit} (${dimensionValue.width}×${dimensionValue.height}px)`);
-      
-      return modifiedSvg;
-    } catch (error) {
-      console.error('Error applying sizing to SVG:', error);
-      return svg; // Return original on error
-    }
-  };
 
   useEffect(() => {
     console.log('VectorizerModal useEffect:', { open, hasImageFile: !!imageFile, fileName });
@@ -367,6 +321,46 @@ export function VectorizerModal({
       setError(err instanceof Error ? err.message : 'Vectorization failed');
       setIsProcessing(false);
     }
+  };
+
+  const applySizingToSvg = (svg: string): string => {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svg, 'image/svg+xml');
+      const svgEl = doc.querySelector('svg');
+      
+      if (svgEl) {
+        // Convert custom dimensions to pixels (assuming 72 DPI for SVG)
+        let widthPx = customWidth;
+        let heightPx = customHeight;
+        
+        if (sizeUnit === 'mm') {
+          // Convert mm to pixels at 72 DPI (1 inch = 25.4mm = 72px)
+          widthPx = customWidth * 72 / 25.4;
+          heightPx = customHeight * 72 / 25.4;
+        } else if (sizeUnit === 'inch') {
+          // Convert inches to pixels at 72 DPI
+          widthPx = customWidth * 72;
+          heightPx = customHeight * 72;
+        }
+        
+        // Update SVG dimensions
+        svgEl.setAttribute('width', `${widthPx}`);
+        svgEl.setAttribute('height', `${heightPx}`);
+        
+        // Keep the viewBox as is to maintain the aspect ratio
+        const viewBox = svgEl.getAttribute('viewBox');
+        if (!viewBox) {
+          svgEl.setAttribute('viewBox', `0 0 ${widthPx} ${heightPx}`);
+        }
+        
+        return new XMLSerializer().serializeToString(doc.documentElement);
+      }
+    } catch (error) {
+      console.error('Error applying sizing to SVG:', error);
+    }
+    
+    return svg;
   };
 
   const handleApproveVector = async () => {

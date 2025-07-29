@@ -656,11 +656,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`PDF content dimensions: ${actualWidth}×${actualHeight} SVG units -> ${displayWidth}×${displayHeight}mm`);
             }
           } else {
-            // For non-PDF images, use 300 DPI scale
-            const scaleFactor = 0.08466667;
-            displayWidth = Math.round(actualWidth * scaleFactor);
-            displayHeight = Math.round(actualHeight * scaleFactor);
-            console.log(`Image dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
+            // For non-PDF images and SVGs
+            if (file.mimetype === 'image/svg+xml' && actualWidth > 300) {
+              // For SVGs (especially vectorized ones), use the bounds as actual size
+              // The calculateSVGContentBounds function returns reasonable pixel dimensions
+              // that should be used more directly
+              const scaleFactor = 0.264583; // 1 pixel = 0.264583mm at 96 DPI
+              displayWidth = Math.round(actualWidth * scaleFactor);
+              displayHeight = Math.round(actualHeight * scaleFactor);
+              console.log(`SVG dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm (using 96 DPI)`);
+            } else {
+              // For raster images, use 300 DPI scale
+              const scaleFactor = 0.08466667;
+              displayWidth = Math.round(actualWidth * scaleFactor);
+              displayHeight = Math.round(actualHeight * scaleFactor);
+              console.log(`Image dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
+            }
           }
         } else {
           console.log('No content dimensions available, using fallback size');
