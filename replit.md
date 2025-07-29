@@ -70,6 +70,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Optimized CMYK Processing**: Uses pdf-lib for vector embedding + Ghostscript for CMYK color conversion without rasterization
 ✓ **Resolved User Issues**: Fixed wrong colors, preserved vectors, and ensured thumbnail previews work correctly in generated CMYK PDFs
 ✓ **Simplified Interface**: Removed RGB PDF option, streamlined to CMYK-only generation for professional print workflows
+✓ **Comprehensive Help Guide System**: Added 8-section help documentation covering uploading, design tools, colors, vectorization, templates, printing, troubleshooting, and technical specs with sidebar navigation and prominent Help button in top header
 ✓ **Direct ICC Profile Embedding**: Implemented pdf-lib native ICC profile embedding into PDF OutputIntents structure for guaranteed profile embedding
 ✓ **Custom ICC Profile Support**: Automatically detects and uses uploaded "PSO Coated FOGRA51 (EFI)" ICC profile from attached assets
 ✓ **CSS Filter Color Management System**: Replaced problematic ImageMagick processing with pure CSS filters that preserve transparency perfectly
