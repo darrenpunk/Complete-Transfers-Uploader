@@ -544,32 +544,79 @@ export default function CanvasWorkspace({
 
 
 
-  // Function to center selected element
-  const centerLogo = () => {
-    if (!selectedElement || !template) {
-      console.log('❌ Cannot center: missing element or template', { selectedElement: !!selectedElement, template: !!template });
+  // Function to fit all content within safety margins
+  const handleFitToBounds = () => {
+    if (!template || !canvasElements || canvasElements.length === 0) {
+      console.log('❌ Cannot fit to bounds: missing template or elements');
       return;
     }
     
-    // Calculate center position on template
-    const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
-    const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
+    // Calculate 3mm safety margins
+    const safetyMarginMm = 3;
+    const safeWidth = template.width - (safetyMarginMm * 2);
+    const safeHeight = template.height - (safetyMarginMm * 2);
     
-    console.log('🎯 Centering logo:', {
-      elementId: selectedElement.id,
-      currentPosition: `${selectedElement.x},${selectedElement.y}`,
-      elementSize: `${selectedElement.width}×${selectedElement.height}px`,
-      templateSize: `${template.pixelWidth}×${template.pixelHeight}px`,
-      newCenterPosition: `${centerX},${centerY}`
+    // Find the bounding box of all elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasElements.forEach(element => {
+      minX = Math.min(minX, element.x);
+      minY = Math.min(minY, element.y);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
     });
     
-    updateElementMutation.mutate({
-      id: selectedElement.id,
-      updates: { 
-        x: centerX,
-        y: centerY
-      }
-    });
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    
+    // Calculate scale factor to fit within safety margins
+    const scaleX = safeWidth / contentWidth;
+    const scaleY = safeHeight / contentHeight;
+    const scaleFactor = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+    
+    if (scaleFactor < 1) {
+      console.log(`🎯 Scaling content by ${(scaleFactor * 100).toFixed(0)}% to fit within safety margins`);
+      
+      // Scale and reposition all elements
+      canvasElements.forEach(element => {
+        const relativeX = element.x - minX;
+        const relativeY = element.y - minY;
+        
+        const newWidth = Math.round(element.width * scaleFactor);
+        const newHeight = Math.round(element.height * scaleFactor);
+        const newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
+        const newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
+        
+        updateElementMutation.mutate({
+          id: element.id,
+          updates: {
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+          }
+        });
+      });
+    } else {
+      // Just center the content if it already fits
+      const centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
+      const centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
+      
+      console.log('🎯 Centering content within safety margins');
+      
+      canvasElements.forEach(element => {
+        const relativeX = element.x - minX;
+        const relativeY = element.y - minY;
+        
+        updateElementMutation.mutate({
+          id: element.id,
+          updates: {
+            x: Math.round(centerOffsetX + relativeX),
+            y: Math.round(centerOffsetY + relativeY)
+          }
+        });
+      });
+    }
   };
 
   if (!template) {
@@ -727,7 +774,24 @@ export default function CanvasWorkspace({
                 </TooltipContent>
               </Tooltip>
               
-
+              {/* Fit to Bounds Button - show when elements exist on canvas */}
+              {canvasElements && canvasElements.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFitToBounds}
+                    >
+                      <Maximize2 className="w-4 h-4 mr-1" />
+                      Fit to Bounds
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Scale and center all content within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
             </div>
 
