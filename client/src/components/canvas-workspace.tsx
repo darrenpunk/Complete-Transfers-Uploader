@@ -131,17 +131,7 @@ export default function CanvasWorkspace({
     console.log('Canvas state update:', { showVectorizer, hasPendingRasterFile: !!pendingRasterFile });
   }, [showVectorizer, pendingRasterFile]);
 
-  // Set default zoom based on template size
-  useEffect(() => {
-    if (template) {
-      // Set 25% zoom for large DTF template (1000x550mm)
-      if (template.width === 1000 && template.height === 550) {
-        setZoom(25);
-      } else {
-        setZoom(100);
-      }
-    }
-  }, [template]);
+  // Removed old fixed zoom logic - now using calculateOptimalZoom
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -189,11 +179,11 @@ export default function CanvasWorkspace({
   });
 
   const handleZoomIn = () => {
-    setZoom(Math.min(zoom + 25, 200));
+    setZoom(Math.min(zoom + 25, 400));
   };
 
   const handleZoomOut = () => {
-    setZoom(Math.max(zoom - 25, 25));
+    setZoom(Math.max(zoom - 25, 10));
   };
 
   // History management
@@ -577,9 +567,11 @@ export default function CanvasWorkspace({
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
-    // Conservative workspace dimensions for different template sizes
-    const maxWorkspaceWidth = 800; // Available canvas area width
-    const maxWorkspaceHeight = 600; // Available canvas area height
+    // Get the actual workspace dimensions
+    // Account for padding (8px * 2), toolbar height (~80px), and some margin
+    const workspaceElement = canvasRef.current?.parentElement;
+    const maxWorkspaceWidth = (workspaceElement?.clientWidth || window.innerWidth * 0.6) - 64; // 64px for padding
+    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100); // 140px header, 80px toolbar, 100px bottom bar
     
     // Calculate scale factors for width and height
     const scaleX = maxWorkspaceWidth / template.pixelWidth;
@@ -588,8 +580,8 @@ export default function CanvasWorkspace({
     // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage and cap between 50% and 150% for usability
-    const optimalZoom = Math.min(Math.max(optimalScale * 100, 50), 150);
+    // Convert to percentage - allow wider range from 25% to 200%
+    const optimalZoom = Math.min(Math.max(optimalScale * 100, 25), 200);
     
     return Math.round(optimalZoom);
   };
@@ -597,8 +589,11 @@ export default function CanvasWorkspace({
   // Auto-adjust zoom when template changes
   useEffect(() => {
     if (template) {
-      const optimalZoom = calculateOptimalZoom(template);
-      setZoom(optimalZoom);
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const optimalZoom = calculateOptimalZoom(template);
+        setZoom(optimalZoom);
+      }, 100);
     }
   }, [template?.id]);
 
@@ -706,7 +701,7 @@ export default function CanvasWorkspace({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Zoom out (25% minimum)</p>
+                  <p>Zoom out (10% minimum)</p>
                 </TooltipContent>
               </Tooltip>
               <span className="text-sm font-medium min-w-[60px] text-center">{zoom}%</span>
@@ -717,7 +712,7 @@ export default function CanvasWorkspace({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Zoom in (200% maximum)</p>
+                  <p>Zoom in (400% maximum)</p>
                 </TooltipContent>
               </Tooltip>
             </div>
