@@ -571,17 +571,26 @@ export default function CanvasWorkspace({
     // Account for padding (8px * 2), toolbar height (~80px), and some margin
     const workspaceElement = canvasRef.current?.parentElement;
     const maxWorkspaceWidth = (workspaceElement?.clientWidth || window.innerWidth * 0.6) - 64; // 64px for padding
-    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100); // 140px header, 80px toolbar, 100px bottom bar
+    
+    // Account for safety zone warning label height (~80px) + 3mm spacing + extra margin
+    const safetyLabelHeight = 80; // Height of the safety zone warning
+    const mmToPixelRatio = template.pixelWidth / template.width;
+    const spacingAboveTemplate = 3 * mmToPixelRatio; // 3mm in pixels at 100% zoom
+    const extraMargin = 40; // Additional margin for better visibility
+    
+    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100 - safetyLabelHeight - extraMargin); // 140px header, 80px toolbar, 100px bottom bar, safety label
     
     // Calculate scale factors for width and height
     const scaleX = maxWorkspaceWidth / template.pixelWidth;
-    const scaleY = maxWorkspaceHeight / template.pixelHeight;
+    // For height, we need to account for the label and spacing
+    const totalHeightNeeded = template.pixelHeight + spacingAboveTemplate + safetyLabelHeight;
+    const scaleY = maxWorkspaceHeight / totalHeightNeeded;
     
-    // Use the smaller scale factor to ensure template fits within bounds
+    // Use the smaller scale factor to ensure template and label fit within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage - allow wider range from 25% to 200%
-    const optimalZoom = Math.min(Math.max(optimalScale * 100, 25), 200);
+    // Convert to percentage - allow wider range from 10% to 400%
+    const optimalZoom = Math.min(Math.max(optimalScale * 100, 10), 400);
     
     return Math.round(optimalZoom);
   };
@@ -815,7 +824,7 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 p-8 overflow-auto" style={{ backgroundColor: '#606060' }}>
-        <div className="flex items-center justify-center min-h-full">
+        <div className="flex items-center justify-center min-h-full" style={{ padding: '100px 0' }}>
           <div className="relative">
             {/* Safety Zone Warning - positioned 3mm above template */}
             {template && (
