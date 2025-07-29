@@ -603,6 +603,16 @@ export default function CanvasWorkspace({
   // Check for oversized elements when canvas elements change
   useEffect(() => {
     if (template && canvasElements.length > 0) {
+      console.log('Checking for oversized elements:', {
+        templateSize: `${template.width}×${template.height}mm`,
+        templatePixels: `${template.pixelWidth}×${template.pixelHeight}px`,
+        elementCount: canvasElements.length,
+        elements: canvasElements.map(el => ({
+          id: el.id,
+          size: `${el.width}×${el.height}px`,
+          position: `${el.x},${el.y}`
+        }))
+      });
       checkForOversizedElements();
     }
   }, [canvasElements, template]);
@@ -633,6 +643,19 @@ export default function CanvasWorkspace({
     });
 
     if (oversized.length > 0) {
+      console.log('Found oversized elements:', {
+        count: oversized.length,
+        safeArea: `${safeWidth}×${safeHeight}px`,
+        safetyMarginPixels,
+        oversized: oversized.map(el => ({
+          id: el.id,
+          size: `${el.width}×${el.height}px`,
+          position: `${el.x},${el.y}`,
+          exceedsWidth: el.width > safeWidth,
+          exceedsHeight: el.height > safeHeight
+        }))
+      });
+      
       setOversizedElements(oversized);
       
       // Calculate required scaling to fit all elements within bounds
@@ -648,7 +671,9 @@ export default function CanvasWorkspace({
       
       setRequiredScaling(Math.round(maxScaleNeeded * 100));
       setShowOversizedWarning(true);
+      console.log('Showing oversized warning with scaling:', maxScaleNeeded * 100);
     } else {
+      console.log('No oversized elements found');
       setOversizedElements([]);
       setShowOversizedWarning(false);
     }
