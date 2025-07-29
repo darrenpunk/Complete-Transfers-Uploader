@@ -180,7 +180,7 @@ export default function TemplateSelectorModal({
                       <Button
                         key={template.id}
                         variant="outline"
-                        className="h-auto p-3 flex flex-col items-center justify-center space-y-2 hover:bg-gray-50 hover:border-blue-500 transition-colors"
+                        className="h-auto p-3 flex flex-col items-center justify-center space-y-2 hover:bg-gray-400 hover:border-blue-500 transition-colors"
                         onClick={() => handleTemplateSelect(template.id)}
                       >
                         <div className="font-semibold">{template.label}</div>

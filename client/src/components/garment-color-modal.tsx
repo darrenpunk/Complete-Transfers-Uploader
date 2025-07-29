@@ -200,7 +200,7 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                         open={expandedGroups.includes(`${manufacturerName}-${group.name}`)}
                         onOpenChange={() => toggleGroup(`${manufacturerName}-${group.name}`)}
                       >
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-100 rounded text-sm">
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-gray-400 rounded text-sm">
                           <span className="font-medium text-gray-700">{group.name}</span>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">

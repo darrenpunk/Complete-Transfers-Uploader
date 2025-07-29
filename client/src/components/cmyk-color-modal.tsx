@@ -157,7 +157,7 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
-          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-400 p-2 rounded">
             <div 
               className="w-8 h-8 rounded border-2 border-gray-300 flex-shrink-0"
               style={{ backgroundColor: currentColor }}

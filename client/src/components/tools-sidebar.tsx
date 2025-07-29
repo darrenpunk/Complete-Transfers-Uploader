@@ -355,7 +355,7 @@ export default function ToolsSidebar({
         <Collapsible open={!logosCollapsed} onOpenChange={(open) => setLogosCollapsed(!open)}>
           <div className="border-b border-gray-200">
             <CollapsibleTrigger asChild>
-              <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+              <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-400">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Image className="w-5 h-5" />
                   Uploaded Logos ({logos.length})
@@ -460,7 +460,7 @@ export default function ToolsSidebar({
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
               <CollapsibleTrigger asChild>
-                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-400">
                   <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
                     <Shirt className="w-5 h-5" />
                     Main Garment Colour
@@ -535,7 +535,7 @@ export default function ToolsSidebar({
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
               <CollapsibleTrigger asChild>
-                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-400">
                   <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
                     <Palette className="w-5 h-5" />
                     Ink Colour
@@ -610,7 +610,7 @@ export default function ToolsSidebar({
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
               <CollapsibleTrigger asChild>
-                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-50">
+                <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-400">
                   <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
                     <Shirt className="w-5 h-5" />
                     Garment Colour Preview
