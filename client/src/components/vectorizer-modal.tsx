@@ -1407,6 +1407,13 @@ export function VectorizerModal({
               </div>
               
               {/* Color Adjustment Sliders - Only show when a color is highlighted */}
+              {!highlightedColor && detectedColors.length > 0 && (
+                <div className="border-t border-gray-700 pt-4 mb-4 text-center">
+                  <p className="text-sm text-gray-400">
+                    Hover over a color swatch above to adjust its CMYK values
+                  </p>
+                </div>
+              )}
               {highlightedColor && (() => {
                 const rgb = hexToRgb(highlightedColor);
                 const currentCmyk = rgb ? rgbToCmyk(rgb.r, rgb.g, rgb.b) : { c: 0, m: 0, y: 0, k: 0 };
@@ -1871,7 +1878,7 @@ export function VectorizerModal({
                 </div>
                 <div>
                   <h4 className="font-medium">Color Adjustment</h4>
-                  <p className="text-muted-foreground">Fine-tune colors using CMYK sliders (Cyan, Magenta, Yellow, Black) and Saturation controls.</p>
+                  <p className="text-muted-foreground">Hover over any color swatch to reveal CMYK adjustment sliders. Fine-tune colors using Cyan, Magenta, Yellow, Black, and Saturation controls.</p>
                 </div>
               </div>
             </div>
