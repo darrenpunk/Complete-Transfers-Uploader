@@ -138,6 +138,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Fit to Bounds Functionality**: Added popup warning modal with "Fit to Bounds" button that calculates required scaling percentage and automatically scales/centers oversized logos within safety margins
 ✓ **Professional Scaling Recommendations**: Modal advises customers to reconfigure artwork before upload to avoid quality loss from scaling down
 ✓ **Rotate by 90° Function**: Added quick rotation button in canvas toolbar that appears when element is selected - perfect for adjusting landscape/portrait artwork orientation after import
+✓ **Fixed Percentage Display**: Corrected oversized warning modal to show scaling reduction percentage (e.g., "-25%") rather than final size percentage for clearer customer understanding
 ✓ **Complete AI Vectorization System**: Integrated AI-powered vectorization API with comprehensive raster file detection across all upload interfaces, providing three workflow options (photographic approval, AI vectorization, professional service) with real-time processing and error handling
 ✓ **Professional Vector Education**: Added detailed explanation text in raster warning modal explaining why vector graphics produce superior transfer quality with sharp lines and clean details for customer satisfaction
 ✓ **AI Vectorization Integration Complete**: Successfully configured API credentials (production mode) with proper environment variable loading via dotenv, ES6 dynamic imports for FormData and node-fetch, and full modal transition workflow

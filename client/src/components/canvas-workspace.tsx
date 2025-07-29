@@ -1305,7 +1305,7 @@ export default function CanvasWorkspace({
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Your uploaded logo extends beyond the 3mm safety margin and may be clipped during production. 
-                  The logo needs to be scaled down to <strong>{requiredScaling}%</strong> to fit within the safe print area.
+                  The logo will be scaled down by <strong>{100 - requiredScaling}%</strong> to fit within the safe print area.
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
                   <strong>Recommendation:</strong> Reconfigure your artwork before uploading to avoid quality loss from scaling, 
@@ -1317,7 +1317,7 @@ export default function CanvasWorkspace({
                     className="flex-1"
                   >
                     <Maximize2 className="w-4 h-4 mr-2" />
-                    Fit to Bounds ({requiredScaling}%)
+                    Fit to Bounds (-{100 - requiredScaling}%)
                   </Button>
                   <Button
                     variant="outline"
