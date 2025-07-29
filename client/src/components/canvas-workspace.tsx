@@ -1144,14 +1144,18 @@ export default function CanvasWorkspace({
                     top: elementY,
                     width: elementWidth,
                     height: elementHeight,
-                    transform: `rotate(${element.rotation - canvasRotation}deg)`,
+                    transform: `rotate(${element.rotation}deg)`,
                     zIndex: element.zIndex
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content */}
-                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ background: 'transparent', backgroundColor: 'transparent' }}>
+                  <div className="w-full h-full flex items-center justify-center border border-gray-200 rounded" style={{ 
+                    background: 'transparent', 
+                    backgroundColor: 'transparent',
+                    transform: `rotate(-${canvasRotation}deg)`
+                  }}>
                     {/* Logo Elements */}
 
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
@@ -1261,7 +1265,10 @@ export default function CanvasWorkspace({
                       
                       {/* Rotation Handle */}
                       <div 
-                        className="absolute -top-6 left-1/2 transform -translate-x-1/2 cursor-grab"
+                        className="absolute -top-6 left-1/2 cursor-grab"
+                        style={{
+                          transform: `translateX(-50%) rotate(-${canvasRotation}deg)`
+                        }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           let rotationTimeout: NodeJS.Timeout;
