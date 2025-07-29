@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2 } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
@@ -691,6 +691,19 @@ export default function CanvasWorkspace({
     setShowOversizedWarning(false);
   };
 
+  // Function to rotate selected element by 90 degrees
+  const rotateBy90 = () => {
+    if (!selectedElement) return;
+    
+    const currentRotation = selectedElement.rotation || 0;
+    const newRotation = (currentRotation + 90) % 360;
+    
+    updateElementMutation.mutate({
+      id: selectedElement.id,
+      updates: { rotation: newRotation }
+    });
+  };
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -845,6 +858,25 @@ export default function CanvasWorkspace({
                   <p>Toggle alignment guides for positioning elements</p>
                 </TooltipContent>
               </Tooltip>
+              
+              {/* Rotate 90° Button - only show when element is selected */}
+              {selectedElement && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={rotateBy90}
+                    >
+                      <RotateCw className="w-4 h-4 mr-1" />
+                      90°
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Rotate selected element by 90 degrees</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
 
             <div className="h-6 w-px bg-gray-300"></div>
