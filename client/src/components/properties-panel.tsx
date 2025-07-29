@@ -601,13 +601,13 @@ export default function PropertiesPanel({
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
-                  <Input
+                  <input
                     ref={widthInputRef}
                     type="number"
                     key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}`}
                     defaultValue={actualWidth || ''}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
-                    className="text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     step="1"
                     min="1"
                     max="297"
@@ -615,13 +615,13 @@ export default function PropertiesPanel({
                 </div>
                 <div>
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
-                  <Input
+                  <input
                     ref={heightInputRef}
                     type="number"
                     key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}`}
                     defaultValue={actualHeight || ''}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
-                    className="text-sm" 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     step="1"
                     min="1"
                     max="420"
