@@ -128,6 +128,7 @@ export default function PropertiesPanel({
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   
 
   const [layersPanelCollapsed, setLayersPanelCollapsed] = useState(false);
@@ -137,8 +138,9 @@ export default function PropertiesPanel({
   const [preflightPanelCollapsed, setPreflightPanelCollapsed] = useState(false);
   
   // Get the current element data from canvasElements to ensure it's up-to-date
+  // Always prefer the cached data over the props to ensure UI synchronization
   const currentElement = selectedElement 
-    ? canvasElements.find(el => el.id === selectedElement.id) || selectedElement
+    ? canvasElements.find(el => el.id === selectedElement.id) ?? selectedElement
     : null;
 
   // Update project mutation
@@ -257,6 +259,8 @@ export default function PropertiesPanel({
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
+      // Force component re-render to update input fields
+      setForceUpdate(prev => prev + 1);
     },
   });
 
@@ -564,7 +568,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    key={`width-${currentElement.id}-${currentElement.width}`}
+                    key={`width-${currentElement.id}-${currentElement.width}-${forceUpdate}`}
                     value={currentElement.width}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
@@ -577,7 +581,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    key={`height-${currentElement.id}-${currentElement.height}`}
+                    key={`height-${currentElement.id}-${currentElement.height}-${forceUpdate}`}
                     value={currentElement.height}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
