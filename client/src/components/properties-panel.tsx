@@ -291,12 +291,37 @@ export default function PropertiesPanel({
     if (property === 'rotation') {
       // Normalize rotation to 0-360 range
       processedValue = ((processedValue % 360) + 360) % 360;
+      
+      // Check if rotation is changing from/to 90° or 270° (dimensions should swap)
+      const oldRotation = currentElement.rotation || 0;
+      const newRotation = processedValue;
+      
+      const wasRotated = (oldRotation % 180) === 90; // Was at 90° or 270°
+      const willBeRotated = (newRotation % 180) === 90; // Will be at 90° or 270°
+      
+      // If rotation state changes (0°/180° ↔ 90°/270°), swap dimensions
+      if (wasRotated !== willBeRotated) {
+        console.log('Rotation changing orientation, swapping dimensions:', {
+          oldRotation,
+          newRotation,
+          oldDimensions: `${currentElement.width}×${currentElement.height}`,
+          newDimensions: `${currentElement.height}×${currentElement.width}`
+        });
+        
+        updates = {
+          rotation: processedValue,
+          width: currentElement.height,
+          height: currentElement.width
+        };
+      } else {
+        updates = { [property]: processedValue };
+      }
+    } else {
+      updates = { [property]: processedValue };
     }
 
-    let updates: Partial<CanvasElement> = { [property]: processedValue };
-
-    // Handle aspect ratio maintenance for width/height changes
-    if (maintainAspectRatio && (property === 'width' || property === 'height')) {
+    // Handle aspect ratio maintenance for width/height changes (only if not a rotation change)
+    if (maintainAspectRatio && (property === 'width' || property === 'height') && property !== 'rotation') {
       const aspectRatio = currentElement.width / currentElement.height;
       if (property === 'width') {
         updates.height = Math.round(processedValue / aspectRatio);
