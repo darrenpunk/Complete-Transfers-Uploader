@@ -1598,8 +1598,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
-      // Skip normalization for now - it's causing issues with coordinate parsing
-      // svgContent = normalizeVectorizedSVG(svgContent);
+      // Fix SVG dimensions to match viewBox for Illustrator compatibility
+      svgContent = svgContent.replace(
+        /<svg([^>]*?)viewBox="([^"]+)"([^>]*?)width="[^"]+"([^>]*?)height="[^"]+"([^>]*?)>/,
+        (match, before, viewBox, middle1, middle2, after) => {
+          const viewBoxValues = viewBox.split(' ').map(parseFloat);
+          if (viewBoxValues.length === 4) {
+            const vbWidth = viewBoxValues[2] - viewBoxValues[0];
+            const vbHeight = viewBoxValues[3] - viewBoxValues[1];
+            // Use viewBox dimensions directly as width/height
+            return `<svg${before}viewBox="${viewBox}"${middle1}width="${vbWidth}"${middle2}height="${vbHeight}"${after}>`;
+          }
+          return match;
+        }
+      );
+      
+      console.log('Fixed SVG dimensions to match viewBox for Illustrator compatibility');
       
       // Clean up the temporary file
       if (req.file && req.file.filename) {

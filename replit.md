@@ -167,6 +167,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Fixed White Color Removal Preview Update**: Resolved issue where white removal worked on backend but preview didn't update - removed problematic null-setting and requestAnimationFrame pattern, now updates immediately like other color deletions (July 29, 2025)
 ✓ **Disabled SVG Coordinate Normalization**: Removed all SVG coordinate manipulation that was causing distortion in Adobe Illustrator - vectorizer output now passes through unchanged preserving original coordinates for proper professional software compatibility (July 29, 2025)
 ✓ **Re-enabled Adobe Compatibility Mode**: Switched vectorizer API back to Adobe compatibility mode (svg_adobe_compatibility_mode: true) since distortion only occurs in Illustrator, not in canvas display - prioritizing professional software compatibility over web display (July 29, 2025)
+✓ **Fixed SVG Dimension Mismatch**: Implemented automatic fix for vectorizer API output that ensures SVG width/height attributes match viewBox dimensions - resolves Illustrator distortion caused by mismatched aspect ratios (e.g., viewBox 1445×1451 with width 1082.83) (July 29, 2025)
 
 
 ## Current Status (July 28, 2025)
