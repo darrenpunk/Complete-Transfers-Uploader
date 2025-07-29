@@ -251,6 +251,10 @@ export default function PropertiesPanel({
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
+      // Also invalidate the specific element to force refresh
+      queryClient.refetchQueries({
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
     },
   });
 
@@ -558,7 +562,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    value={currentElement.width}
+                    value={currentElement?.width || 0}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -570,7 +574,7 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    value={currentElement.height}
+                    value={currentElement?.height || 0}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm"
                     step="1"
