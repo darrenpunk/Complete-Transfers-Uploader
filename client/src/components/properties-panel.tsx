@@ -155,13 +155,24 @@ export default function PropertiesPanel({
     },
   });
   
+  // Get the actual values to use in the inputs - always prefer cache
+  const cachedElement = selectedElement 
+    ? canvasElements.find(el => el.id === selectedElement.id)
+    : null;
+  
+  const actualWidth = cachedElement?.width ?? currentElement?.width ?? 0;
+  const actualHeight = cachedElement?.height ?? currentElement?.height ?? 0;
+  
   console.log('PropertiesPanel - Current element dimensions:', {
     id: currentElement?.id,
     rotation: currentElement?.rotation,
     width: currentElement?.width,
     height: currentElement?.height,
     elementFromProps: selectedElement ? `${selectedElement.width}×${selectedElement.height}` : 'none',
-    elementFromCache: currentElement ? `${currentElement.width}×${currentElement.height}` : 'none'
+    elementFromCache: currentElement ? `${currentElement.width}×${currentElement.height}` : 'none',
+    actualWidth,
+    actualHeight,
+    forceUpdate
   });
 
 
@@ -568,8 +579,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
-                    key={`width-${currentElement.id}-${currentElement.width}-${forceUpdate}`}
-                    value={currentElement.width}
+                    key={`width-${currentElement.id}-${actualWidth}-${forceUpdate}`}
+                    value={actualWidth}
                     onChange={(e) => handlePropertyChange('width', e.target.value)}
                     className="text-sm"
                     step="1"
@@ -581,8 +592,8 @@ export default function PropertiesPanel({
                   <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
-                    key={`height-${currentElement.id}-${currentElement.height}-${forceUpdate}`}
-                    value={currentElement.height}
+                    key={`height-${currentElement.id}-${actualHeight}-${forceUpdate}`}
+                    value={actualHeight}
                     onChange={(e) => handlePropertyChange('height', e.target.value)}
                     className="text-sm" 
                     step="1"
