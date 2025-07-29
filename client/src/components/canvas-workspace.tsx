@@ -145,6 +145,7 @@ export default function CanvasWorkspace({
   const [showOversizedWarning, setShowOversizedWarning] = useState(false);
   const [oversizedElements, setOversizedElements] = useState<CanvasElement[]>([]);
   const [requiredScaling, setRequiredScaling] = useState<number>(100);
+  const [canvasRotation, setCanvasRotation] = useState(0); // Canvas rotation in degrees
 
   // Update canvas element mutation
   const updateElementMutation = useMutation({
@@ -716,41 +717,18 @@ export default function CanvasWorkspace({
     setShowOversizedWarning(false);
   };
 
-  // Function to rotate selected element by 90 degrees and center it
-  const rotateBy90 = () => {
-    if (!selectedElement || !template) {
-      console.log('❌ Cannot rotate: missing element or template', { selectedElement: !!selectedElement, template: !!template });
-      return;
-    }
+  // Function to rotate the entire canvas by 90 degrees
+  const rotateCanvas = () => {
+    const newRotation = (canvasRotation + 90) % 360;
+    setCanvasRotation(newRotation);
     
-    const currentRotation = selectedElement.rotation || 0;
-    const newRotation = (currentRotation + 90) % 360;
-    
-    // Calculate center position on template (rotation doesn't change the element's stored width/height)
-    const centerX = Math.round((template.pixelWidth - selectedElement.width) / 2);
-    const centerY = Math.round((template.pixelHeight - selectedElement.height) / 2);
-    
-    console.log('🔄 Rotating and centering:', {
-      elementId: selectedElement.id,
-      currentPosition: `${selectedElement.x},${selectedElement.y}`,
-      elementSize: `${selectedElement.width}×${selectedElement.height}px`,
-      templateSize: `${template.pixelWidth}×${template.pixelHeight}px`,
-      currentRotation,
-      newRotation,
-      newCenterPosition: `${centerX},${centerY}`
-    });
-    
-    updateElementMutation.mutate({
-      id: selectedElement.id,
-      updates: { 
-        rotation: newRotation,
-        x: centerX,
-        y: centerY
-      }
+    console.log('🔄 Rotating canvas:', {
+      currentRotation: canvasRotation,
+      newRotation: newRotation
     });
   };
 
-  // Function to center selected element without rotation
+  // Function to center selected element
   const centerLogo = () => {
     if (!selectedElement || !template) {
       console.log('❌ Cannot center: missing element or template', { selectedElement: !!selectedElement, template: !!template });
@@ -933,41 +911,40 @@ export default function CanvasWorkspace({
                 </TooltipContent>
               </Tooltip>
               
+              {/* Canvas Controls */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={rotateCanvas}
+                  >
+                    <RotateCw className="w-4 h-4 mr-1" />
+                    Rotate Canvas
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Rotate entire canvas view by 90 degrees</p>
+                </TooltipContent>
+              </Tooltip>
+              
               {/* Logo Control Buttons - show when element is selected */}
               {selectedElement && (
-                <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={centerLogo}
-                      >
-                        <Move className="w-4 h-4 mr-1" />
-                        Center Logo
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Center selected logo on template</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={rotateBy90}
-                      >
-                        <RotateCw className="w-4 h-4 mr-1" />
-                        Rotate 90°
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Rotate selected element by 90 degrees</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={centerLogo}
+                    >
+                      <Move className="w-4 h-4 mr-1" />
+                      Center Logo
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center selected logo on template</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
 
@@ -1042,7 +1019,10 @@ export default function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: project.garmentColor || '#EAEAEA'
+                backgroundColor: project.garmentColor || '#EAEAEA',
+                transform: `rotate(${canvasRotation}deg)`,
+                transformOrigin: 'center',
+                transition: 'transform 0.3s ease-in-out'
               }}
               onClick={handleCanvasClick}
             >
@@ -1420,9 +1400,9 @@ export default function CanvasWorkspace({
                           console.log('🎯 Selecting and rotating element:', targetElement.id);
                           onElementSelect(targetElement);
                           
-                          // Use setTimeout to ensure element selection happens first
+                          // Use canvas rotation instead of individual element rotation
                           setTimeout(() => {
-                            rotateBy90();
+                            rotateCanvas();
                           }, 100);
                         }
                         setShowOversizedWarning(false);
@@ -1431,7 +1411,7 @@ export default function CanvasWorkspace({
                       className="flex-1"
                     >
                       <RotateCw className="w-4 h-4 mr-2" />
-                      Try Rotate 90°
+                      Rotate Canvas
                     </Button>
                   )}
                   <Button
