@@ -172,6 +172,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Removed Custom Sizing from Vectorizer**: Completely removed the size editor section from vectorizer modal - users will now resize vectorized SVGs on the canvas after import, simplifying the workflow and avoiding Adobe Illustrator distortion issues (July 29, 2025)
 ✓ **Added Explicit Pixel Dimensions to SVG**: Added width and height attributes in pixels (e.g., width="1445px" height="1451px") to match viewBox dimensions, helping Adobe Illustrator interpret the intended size correctly - CONFIRMED WORKING, resolves all distortion issues (July 29, 2025)
 ✓ **Eyedropper Color Picker Tool**: Added professional eyedropper tool to vectorizer modal allowing users to copy colors from one element to another - click to pick a source color (blue highlight), then click target color to apply it, with visual indicators and crosshair cursor for intuitive color copying workflow (July 29, 2025)
+✓ **Automatic CMYK Conversion on Upload**: Logos are now automatically converted to CMYK when imported to canvas - RGB colors are converted using standardized algorithm ensuring all files are print-ready from the start without manual conversion steps (July 29, 2025)
 
 
 ## Current Status (July 29, 2025)

@@ -57,6 +57,38 @@ async function extractImageColors(imagePath: string): Promise<any> {
   }
 }
 
+// Helper function for hex to RGB conversion
+function hexToRgb(hex: string): { r: number, g: number, b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+// Helper function for RGB to CMYK conversion
+function rgbToCmyk(r: number, g: number, b: number) {
+  // Normalize RGB values to 0-1
+  r = r / 255;
+  g = g / 255;
+  b = b / 255;
+  
+  // Find the maximum of RGB values
+  const k = 1 - Math.max(r, Math.max(g, b));
+  
+  if (k === 1) {
+    return { c: 0, m: 0, y: 0, k: 100 };
+  }
+  
+  const c = Math.round(((1 - r - k) / (1 - k)) * 100);
+  const m = Math.round(((1 - g - k) / (1 - k)) * 100);
+  const y = Math.round(((1 - b - k) / (1 - k)) * 100);
+  const kPercent = Math.round(k * 100);
+  
+  return { c, m, y, k: kPercent };
+}
+
 // Function to recolor SVG content for Single Colour Transfer templates
 function recolorSVGContent(svgContent: string, inkColor: string): string {
   // Convert the ink color to RGB values for consistent replacement
@@ -580,7 +612,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         const validatedData = insertLogoSchema.parse(logoData);
-        const logo = await storage.createLogo(validatedData);
+        let logo = await storage.createLogo(validatedData);
+        
+        // Automatically convert to CMYK after upload
+        if (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf') {
+          // Check if it needs CMYK conversion
+          const colors = logo.svgColors as any;
+          const needsConversion = Array.isArray(colors) && colors.some(color => !color.converted);
+          
+          if (needsConversion) {
+            console.log('Automatically converting logo to CMYK during upload');
+            
+            try {
+              // Update colors to mark as converted with standardized CMYK values
+              const convertedColors = colors.map(color => {
+                // Use our standardized RGB to CMYK conversion algorithm
+                const rgb = hexToRgb(color.originalColor);
+                if (rgb) {
+                  const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+                  return {
+                    ...color,
+                    cmykColor: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`,
+                    converted: true
+                  };
+                }
+                return { ...color, converted: true };
+              });
+              
+              // Update the logo with converted colors
+              await storage.updateLogo(logo.id, {
+                svgColors: convertedColors as any
+              });
+              
+              // Refresh logo data
+              const updatedLogo = await storage.getLogo(logo.id);
+              if (updatedLogo) {
+                logo = updatedLogo;
+                console.log('Logo automatically converted to CMYK with standardized values');
+              }
+            } catch (conversionError) {
+              console.error('Failed to auto-convert to CMYK:', conversionError);
+              // Continue with original logo if conversion fails
+            }
+          }
+        }
+        
         logos.push(logo);
 
         // Create canvas element for the logo using actual content dimensions scaled to mm
