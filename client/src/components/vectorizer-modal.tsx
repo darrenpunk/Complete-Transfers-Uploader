@@ -168,28 +168,54 @@ export function VectorizerModal({
       svgContainerRef.current.innerHTML = '';
       
       if (currentSvg) {
+        console.log('Attempting to render SVG with length:', currentSvg.length);
+        console.log('SVG preview (first 500 chars):', currentSvg.substring(0, 500));
+        
         // Add a small delay to ensure state has settled
         setTimeout(() => {
           if (svgContainerRef.current) {
+            console.log('SVG container ref exists, creating element');
             // Create interactive SVG element instead of img
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = currentSvg;
-            const svgElement = tempDiv.querySelector('svg');
+            
+            // Clean up XML declaration if present
+            let cleanSvg = currentSvg;
+            if (currentSvg.includes('<?xml')) {
+              cleanSvg = currentSvg.replace(/<\?xml[^>]*\?>\s*/, '').replace(/<!DOCTYPE[^>]*>\s*/, '');
+            }
+            
+            tempDiv.innerHTML = cleanSvg;
+            let svgElement = tempDiv.querySelector('svg');
+            console.log('SVG element found:', !!svgElement);
             
             if (svgElement) {
               // Style the SVG for proper display
-              svgElement.style.maxWidth = '400px';
-              svgElement.style.maxHeight = '400px';
-              svgElement.style.width = '400px';
-              svgElement.style.height = '400px';
+              svgElement.style.width = '100%';
+              svgElement.style.height = '100%';
               svgElement.style.cursor = 'crosshair';
               svgElement.style.display = 'block';
               
-              // Ensure viewBox is set correctly for proper scaling
-              if (!svgElement.getAttribute('viewBox')) {
-                const width = svgElement.getAttribute('width') || '400';
-                const height = svgElement.getAttribute('height') || '400';
-                svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+              // Force proper viewBox if it has extreme values
+              const viewBox = svgElement.getAttribute('viewBox');
+              console.log('Current viewBox:', viewBox);
+              
+              // If viewBox has extreme values, normalize it
+              if (viewBox) {
+                const values = viewBox.split(' ').map(Number);
+                if (values.length === 4) {
+                  const [x, y, width, height] = values;
+                  // Check if coordinates are way off
+                  if (Math.abs(x) > 1000 || Math.abs(y) > 1000 || width > 2000 || height > 2000) {
+                    console.log('Detected extreme viewBox values, normalizing...');
+                    // Set a reasonable viewBox
+                    svgElement.setAttribute('viewBox', '0 0 400 400');
+                    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+                  }
+                }
+              } else {
+                // No viewBox, set a default
+                svgElement.setAttribute('viewBox', '0 0 400 400');
+                svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
               }
               
               // Add click event listener to detect color clicks
@@ -232,12 +258,16 @@ export function VectorizerModal({
               svgElement.addEventListener('click', handleSvgClick);
               svgContainerRef.current.appendChild(svgElement);
               console.log('Direct DOM update with interactive SVG length:', currentSvg.length);
+              console.log('SVG appended to container successfully');
+            } else {
+              console.error('SVG element not found in parsed content');
+              console.log('Parsed content:', tempDiv.innerHTML.substring(0, 200));
             }
           }
         }, 50); // Small delay to ensure React state has settled
       }
     }
-  }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision, toast]);
+  }, [highlightedSvg, coloredSvg, vectorSvg, svgRevision]);
 
 
 
@@ -270,14 +300,54 @@ export function VectorizerModal({
       console.log('Full SVG length:', result.svg?.length);
       console.log('SVG contains svg tag:', result.svg?.includes('<svg'));
       console.log('SVG contains viewBox:', result.svg?.includes('viewBox'));
-      setVectorSvg(result.svg);
+      
+      // Fix SVG with extreme coordinates
+      let fixedSvg = result.svg;
+      if (fixedSvg) {
+        // Parse the SVG to check for extreme coordinates
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(fixedSvg, 'image/svg+xml');
+        const svgEl = doc.querySelector('svg');
+        
+        if (svgEl) {
+          // Check all path elements for extreme coordinates
+          const paths = doc.querySelectorAll('path');
+          let hasExtremeCoords = false;
+          
+          paths.forEach(path => {
+            const d = path.getAttribute('d') || '';
+            // Check if any coordinate is > 500
+            const coords = d.match(/[-\d.]+/g) || [];
+            if (coords.some(coord => Math.abs(parseFloat(coord)) > 500)) {
+              hasExtremeCoords = true;
+            }
+          });
+          
+          if (hasExtremeCoords) {
+            console.log('Detected extreme coordinates, applying scale transformation');
+            // Add a transform to scale down the content
+            const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('transform', 'scale(0.26, 0.26)'); // Scale down by ~4x
+            
+            // Move all children to the group
+            while (svgEl.firstChild) {
+              g.appendChild(svgEl.firstChild);
+            }
+            svgEl.appendChild(g);
+            
+            fixedSvg = new XMLSerializer().serializeToString(doc.documentElement);
+          }
+        }
+      }
+      
+      setVectorSvg(fixedSvg);
       setColoredSvg(null); // Don't initialize colored SVG
       
       // Initialize size editor with SVG dimensions
-      initializeSizeEditor(result.svg);
+      initializeSizeEditor(fixedSvg);
       
       // Detect colors in the SVG
-      const colors = detectColorsInSvg(result.svg);
+      const colors = detectColorsInSvg(fixedSvg);
       console.log('Detected colors:', colors);
       setDetectedColors(colors);
       setOriginalDetectedColors(colors); // Store original for undo
