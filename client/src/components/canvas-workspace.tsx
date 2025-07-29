@@ -1144,7 +1144,7 @@ export default function CanvasWorkspace({
                     top: elementY,
                     width: elementWidth,
                     height: elementHeight,
-                    transform: `rotate(${element.rotation}deg)`,
+                    transform: `rotate(${element.rotation - canvasRotation}deg)`,
                     zIndex: element.zIndex
                   }}
                   onClick={(e) => handleElementClick(element, e)}
