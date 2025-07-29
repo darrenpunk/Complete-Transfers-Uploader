@@ -459,44 +459,48 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
-// Normalize vectorized SVG coordinates to fix Illustrator distortion issues
+// Fix aspect ratio issues in vectorized SVGs to prevent Illustrator distortion
 export function normalizeVectorizedSVG(svgContent: string): string {
   try {
-    // Check if this is a vectorized SVG that needs normalization
+    // Check if this is a vectorized SVG that needs fixing
     const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"');
     const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-    const hasLargeViewBox = viewBoxMatch && viewBoxMatch[1].split(' ').some(val => parseFloat(val) > 1000);
     
-    if (!isVectorizedSVG || !hasLargeViewBox) {
+    if (!isVectorizedSVG || !viewBoxMatch) {
       return svgContent; // No normalization needed
     }
     
-    console.log('Adjusting vectorized SVG viewBox for better display');
-    
-    // Calculate content bounds first
-    const bounds = calculateVectorizedSVGBounds(svgContent);
-    if (!bounds || bounds.minX === undefined || bounds.minY === undefined) {
-      return svgContent; // Can't normalize without bounds
+    // Parse viewBox values
+    const viewBoxValues = viewBoxMatch[1].split(' ').map(parseFloat);
+    if (viewBoxValues.length !== 4) {
+      return svgContent;
     }
     
-    const { minX, minY, width, height } = bounds;
+    const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
     
-    // Create normalized SVG with proper viewBox but WITHOUT modifying path data
+    console.log(`Fixing vectorized SVG aspect ratio - viewBox: ${vbWidth}×${vbHeight}`);
+    
     let normalizedSvg = svgContent;
     
-    // Update viewBox to match actual content bounds (including offset)
-    const newViewBox = `viewBox="${minX} ${minY} ${width} ${height}"`;
-    normalizedSvg = normalizedSvg.replace(/viewBox="[^"]*"/, newViewBox);
+    // Remove width and height attributes to let viewBox control the aspect ratio
+    // This prevents the mismatch between viewBox proportions and width/height attributes
+    normalizedSvg = normalizedSvg.replace(/\swidth="[^"]*"/, '');
+    normalizedSvg = normalizedSvg.replace(/\sheight="[^"]*"/, '');
     
-    // Don't update width/height or translate paths - just adjust viewBox
-    // This preserves the original coordinates for Illustrator compatibility
+    // Add preserveAspectRatio to ensure the content isn't stretched
+    if (!normalizedSvg.includes('preserveAspectRatio')) {
+      normalizedSvg = normalizedSvg.replace(
+        /<svg([^>]*)>/,
+        '<svg$1 preserveAspectRatio="xMidYMid meet">'
+      );
+    }
     
-    console.log(`SVG viewBox adjusted: ${minX.toFixed(1)} ${minY.toFixed(1)} ${width}×${height}`);
+    console.log('SVG aspect ratio fixed - removed fixed dimensions, added preserveAspectRatio');
     
     return normalizedSvg;
     
   } catch (error) {
-    console.error('Error normalizing vectorized SVG:', error);
+    console.error('Error fixing vectorized SVG:', error);
     return svgContent; // Return original on error
   }
 }
