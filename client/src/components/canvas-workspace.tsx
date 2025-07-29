@@ -859,7 +859,7 @@ export default function CanvasWorkspace({
                 </TooltipContent>
               </Tooltip>
               
-              {/* Rotate 90° Button - only show when element is selected */}
+              {/* Rotate 90° Button - show when element is selected */}
               {selectedElement && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -869,7 +869,7 @@ export default function CanvasWorkspace({
                       onClick={rotateBy90}
                     >
                       <RotateCw className="w-4 h-4 mr-1" />
-                      90°
+                      Rotate 90°
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -1312,7 +1312,20 @@ export default function CanvasWorkspace({
                   Otherwise, reconfigure your artwork before uploading to avoid quality loss from scaling, 
                   or use the "Fit to Bounds" button to automatically scale the logo.
                 </p>
-                <div className="flex space-x-3">
+                <div className="flex space-x-2">
+                  {selectedElement && (
+                    <Button
+                      onClick={() => {
+                        rotateBy90();
+                        setShowOversizedWarning(false);
+                      }}
+                      variant="secondary"
+                      className="flex-1"
+                    >
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      Try Rotate 90°
+                    </Button>
+                  )}
                   <Button
                     onClick={fitToBounds}
                     className="flex-1"
