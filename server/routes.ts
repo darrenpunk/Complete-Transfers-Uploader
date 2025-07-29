@@ -1599,21 +1599,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Vectorization successful, SVG length:', svgContent.length);
       
       // Fix SVG dimensions to match viewBox for Illustrator compatibility
-      svgContent = svgContent.replace(
-        /<svg([^>]*?)viewBox="([^"]+)"([^>]*?)width="[^"]+"([^>]*?)height="[^"]+"([^>]*?)>/,
-        (match, before, viewBox, middle1, middle2, after) => {
-          const viewBoxValues = viewBox.split(' ').map(parseFloat);
+      const svgMatch = svgContent.match(/<svg[^>]*>/);
+      if (svgMatch) {
+        const viewBoxMatch = svgMatch[0].match(/viewBox="([^"]+)"/);
+        if (viewBoxMatch) {
+          const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(parseFloat);
           if (viewBoxValues.length === 4) {
             const vbWidth = viewBoxValues[2] - viewBoxValues[0];
             const vbHeight = viewBoxValues[3] - viewBoxValues[1];
-            // Use viewBox dimensions directly as width/height
-            return `<svg${before}viewBox="${viewBox}"${middle1}width="${vbWidth}"${middle2}height="${vbHeight}"${after}>`;
+            
+            // Replace the entire SVG tag with corrected dimensions
+            svgContent = svgContent.replace(
+              /<svg([^>]*)>/,
+              (match) => {
+                // Remove existing width/height attributes and add correct ones
+                let newTag = match
+                  .replace(/\s*width="[^"]*"/g, '')
+                  .replace(/\s*height="[^"]*"/g, '');
+                
+                // Insert new width/height before the closing >
+                newTag = newTag.slice(0, -1) + ` width="${vbWidth}" height="${vbHeight}">`;
+                
+                console.log('Original SVG tag:', match);
+                console.log('Fixed SVG tag:', newTag);
+                console.log(`ViewBox: ${viewBoxMatch[1]}, Width: ${vbWidth}, Height: ${vbHeight}`);
+                
+                return newTag;
+              }
+            );
           }
-          return match;
         }
-      );
-      
-      console.log('Fixed SVG dimensions to match viewBox for Illustrator compatibility');
+      }
       
       // Clean up the temporary file
       if (req.file && req.file.filename) {

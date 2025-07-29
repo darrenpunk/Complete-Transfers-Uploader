@@ -323,6 +323,36 @@ export function VectorizerModal({
     }
   };
 
+  const fixSvgDimensionsForIllustrator = (svg: string): string => {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svg, 'image/svg+xml');
+      const svgEl = doc.querySelector('svg');
+      
+      if (svgEl) {
+        const viewBox = svgEl.getAttribute('viewBox');
+        if (viewBox) {
+          const viewBoxValues = viewBox.split(/\s+/).map(parseFloat);
+          if (viewBoxValues.length === 4) {
+            const vbWidth = viewBoxValues[2] - viewBoxValues[0];
+            const vbHeight = viewBoxValues[3] - viewBoxValues[1];
+            
+            // Set width/height to match viewBox dimensions
+            svgEl.setAttribute('width', String(vbWidth));
+            svgEl.setAttribute('height', String(vbHeight));
+            
+            console.log(`Fixed SVG dimensions for Illustrator: viewBox=${viewBox}, width=${vbWidth}, height=${vbHeight}`);
+          }
+        }
+      }
+      
+      return new XMLSerializer().serializeToString(doc.documentElement);
+    } catch (error) {
+      console.error('Error fixing SVG dimensions:', error);
+      return svg;
+    }
+  };
+
   const applySizingToSvg = (svg: string): string => {
     try {
       const parser = new DOMParser();
@@ -397,6 +427,9 @@ export function VectorizerModal({
         // Use the production-quality normalized SVG from the API response
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
+        
+        // Fix SVG dimensions to match viewBox for Illustrator compatibility
+        finalSvg = fixSvgDimensionsForIllustrator(finalSvg);
         
         // Apply custom sizing to the final SVG
         finalSvg = applySizingToSvg(finalSvg);
