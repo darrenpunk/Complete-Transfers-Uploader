@@ -287,6 +287,8 @@ export default function PropertiesPanel({
       console.log('Height out of range, clamping');
       processedValue = Math.max(1, Math.min(maxTemplateHeight, processedValue));
     }
+    let updates: Partial<CanvasElement>;
+    
     if (property === 'rotation') {
       // Normalize rotation to 0-360 range
       processedValue = ((processedValue % 360) + 360) % 360;
