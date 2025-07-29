@@ -162,9 +162,12 @@ export default function PropertiesPanel({
   const handleAlign = (alignment: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right') => {
     if (!currentElement || !onAlignElement) return;
     
-    // Template dimensions (A3 in mm)
-    const templateWidth = 297;
-    const templateHeight = 420;
+    // Get current template dimensions
+    const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+    if (!currentTemplate) return;
+    
+    const templateWidth = currentTemplate.width;
+    const templateHeight = currentTemplate.height;
     
     let x = currentElement.x;
     let y = currentElement.y;
@@ -920,9 +923,12 @@ export default function PropertiesPanel({
                       size="sm" 
                       disabled={canvasElements.length === 0}
                       onClick={() => {
+                        const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+                        if (!currentTemplate) return;
+                        
                         canvasElements.forEach(element => {
-                          const x = (297 - element.width) / 2; // A3 center
-                          const y = (420 - element.height) / 2;
+                          const x = (currentTemplate.width - element.width) / 2;
+                          const y = (currentTemplate.height - element.height) / 2;
                           if (onAlignElement) {
                             onAlignElement(element.id, { x: Math.round(x), y: Math.round(y) });
                           }
