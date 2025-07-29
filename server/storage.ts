@@ -80,6 +80,10 @@ export class MemStorage implements IStorage {
       { id: "metallic-badge", name: "metallic_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
       { id: "metallic-small", name: "metallic_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
       
+      // Full Colour HD
+      { id: "hd-A3", name: "hd_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour HD", description: "High-definition full-colour screen printed transfers" },
+      { id: "hd-A4", name: "hd_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour HD", description: "High-definition full-colour screen printed transfers" },
+      
       // Single Colour Transfers
       { id: "single-A3", name: "single_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
       { id: "single-A4", name: "single_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },

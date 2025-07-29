@@ -28,6 +28,14 @@ const productCategories = [
     filter: "contrast(1.3) brightness(1.1) saturate(1.2)"
   },
   {
+    id: "full-colour-hd",
+    name: "Full Colour HD",
+    description: "High-definition full-colour screen printed transfers",
+    icon: fullColourIconPath,
+    group: "Full Colour HD",
+    filter: "contrast(1.4) saturate(1.3) brightness(1.05)"
+  },
+  {
     id: "single-colour", 
     name: "Single Colour Transfers",
     description: "Screen printed using our off-the-shelf colour range",

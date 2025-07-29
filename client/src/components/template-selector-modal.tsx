@@ -86,7 +86,7 @@ const getTemplateGroupIcon = (group: string) => {
           src={fullColourIconPath} 
           alt="Full Colour HD" 
           className="h-10 w-10 object-contain"
-          style={{ filter: "contrast(1.1) saturate(1.1)" }}
+          style={{ filter: "contrast(1.4) saturate(1.3) brightness(1.05)" }}
         />
       );
     case "Zero Silicone Transfers":
