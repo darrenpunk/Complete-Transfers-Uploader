@@ -446,13 +446,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // For SVG files, calculate actual content bounding box instead of viewBox
             let svgContent = fs.readFileSync(path.join(uploadDir, finalFilename), 'utf8');
             
-            // Skip normalization - it's causing issues with vectorized SVGs
-            // const normalizedSvgContent = normalizeVectorizedSVG(svgContent);
-            // if (normalizedSvgContent !== svgContent) {
-            //   console.log('Applied SVG coordinate normalization for better Illustrator compatibility');
-            //   fs.writeFileSync(path.join(uploadDir, finalFilename), normalizedSvgContent);
-            //   svgContent = normalizedSvgContent;
-            // }
+            // Apply viewBox adjustment for vectorized SVGs
+            const normalizedSvgContent = normalizeVectorizedSVG(svgContent);
+            if (normalizedSvgContent !== svgContent) {
+              console.log('Applied SVG viewBox adjustment for better display');
+              fs.writeFileSync(path.join(uploadDir, finalFilename), normalizedSvgContent);
+              svgContent = normalizedSvgContent;
+            }
             
             const bbox = calculateSVGContentBounds(svgContent);
             if (bbox) {

@@ -471,7 +471,7 @@ export function normalizeVectorizedSVG(svgContent: string): string {
       return svgContent; // No normalization needed
     }
     
-    console.log('Normalizing vectorized SVG coordinates for better Illustrator compatibility');
+    console.log('Adjusting vectorized SVG viewBox for better display');
     
     // Calculate content bounds first
     const bounds = calculateVectorizedSVGBounds(svgContent);
@@ -481,28 +481,17 @@ export function normalizeVectorizedSVG(svgContent: string): string {
     
     const { minX, minY, width, height } = bounds;
     
-    // Create normalized SVG with proper viewBox and repositioned elements
+    // Create normalized SVG with proper viewBox but WITHOUT modifying path data
     let normalizedSvg = svgContent;
     
-    // Update viewBox to match content bounds starting from origin
-    const newViewBox = `viewBox="0 0 ${width} ${height}"`;
+    // Update viewBox to match actual content bounds (including offset)
+    const newViewBox = `viewBox="${minX} ${minY} ${width} ${height}"`;
     normalizedSvg = normalizedSvg.replace(/viewBox="[^"]*"/, newViewBox);
     
-    // Update width and height attributes
-    normalizedSvg = normalizedSvg.replace(/width="[^"]*"/, `width="${width}"`);
-    normalizedSvg = normalizedSvg.replace(/height="[^"]*"/, `height="${height}"`);
+    // Don't update width/height or translate paths - just adjust viewBox
+    // This preserves the original coordinates for Illustrator compatibility
     
-    // Translate all path coordinates to start from origin
-    const offsetX = -minX;
-    const offsetY = -minY;
-    
-    // Transform path data by offsetting coordinates
-    normalizedSvg = normalizedSvg.replace(/<path[^>]*d="([^"]*)"[^>]*>/g, (match, pathData) => {
-      const normalizedPathData = offsetPathCoordinates(pathData, offsetX, offsetY);
-      return match.replace(pathData, normalizedPathData);
-    });
-    
-    console.log(`SVG normalized: offset by ${offsetX.toFixed(1)}, ${offsetY.toFixed(1)} to fit ${width}×${height} viewBox`);
+    console.log(`SVG viewBox adjusted: ${minX.toFixed(1)} ${minY.toFixed(1)} ${width}×${height}`);
     
     return normalizedSvg;
     
