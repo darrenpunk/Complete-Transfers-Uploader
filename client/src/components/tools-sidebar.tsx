@@ -738,8 +738,18 @@ export default function ToolsSidebar({
             });
             
             // Color Mode Check - Enhanced for different file types
-            const svgColors = logo.svgColors as any;
+            // Try both logo.svgColors and logo.svgColors.colors (different data structures)
+            let svgColors = logo.svgColors as any;
+            if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+              svgColors = svgColors.colors; // Extract colors array from analysis object
+            }
             const isRasterImage = logo.mimeType?.startsWith('image/') && !logo.mimeType.includes('svg');
+            
+            console.log('SVG Colors data structure:', {
+              logoSvgColors: logo.svgColors,
+              extractedSvgColors: svgColors,
+              isArray: Array.isArray(svgColors)
+            });
             
             let colorStatus = "pass";
             let colorValue = "Unknown";
