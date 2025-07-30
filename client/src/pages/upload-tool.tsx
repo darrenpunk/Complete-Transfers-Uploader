@@ -38,6 +38,7 @@ export default function UploadTool() {
   const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -663,6 +664,7 @@ export default function UploadTool() {
           onLogoUpload={handleFilesUpload}
           isUploading={isUploading}
           uploadProgress={uploadProgress}
+          maintainAspectRatio={maintainAspectRatio}
         />
 
         {/* Right Properties Panel */}
@@ -675,6 +677,8 @@ export default function UploadTool() {
           onTemplateChange={handleTemplateChange}
           onAlignElement={handleAlignElement}
           onCenterAllElements={handleCenterAllElements}
+          maintainAspectRatio={maintainAspectRatio}
+          onMaintainAspectRatioChange={setMaintainAspectRatio}
         />
       </div>
 

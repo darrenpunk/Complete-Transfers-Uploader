@@ -92,6 +92,7 @@ interface CanvasWorkspaceProps {
   onLogoUpload?: (files: File[]) => void;
   isUploading?: boolean;
   uploadProgress?: number;
+  maintainAspectRatio?: boolean;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -117,7 +118,8 @@ export default function CanvasWorkspace({
   onElementSelect,
   onLogoUpload,
   isUploading = false,
-  uploadProgress = 0
+  uploadProgress = 0,
+  maintainAspectRatio = true
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   
@@ -463,41 +465,112 @@ export default function CanvasWorkspace({
           let newX = initialPosition.x;
           let newY = initialPosition.y;
 
+          // Calculate aspect ratio from initial size
+          const aspectRatio = initialSize.width / initialSize.height;
+          
           // Calculate new dimensions based on resize handle
           switch (resizeHandle) {
             case 'se': // Southeast
               newWidth = Math.max(20, mouseX - initialPosition.x);
               newHeight = Math.max(20, mouseY - initialPosition.y);
+              
+              if (maintainAspectRatio) {
+                // Use the dimension that changed the most
+                const widthChange = Math.abs(newWidth - initialSize.width);
+                const heightChange = Math.abs(newHeight - initialSize.height);
+                
+                if (widthChange > heightChange) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                }
+              }
               break;
+              
             case 'sw': // Southwest
               newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
               newHeight = Math.max(20, mouseY - initialPosition.y);
               newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              
+              if (maintainAspectRatio) {
+                const widthChange = Math.abs(newWidth - initialSize.width);
+                const heightChange = Math.abs(newHeight - initialSize.height);
+                
+                if (widthChange > heightChange) {
+                  newHeight = newWidth / aspectRatio;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                  newX = initialPosition.x + initialSize.width - newWidth;
+                }
+              }
               break;
+              
             case 'ne': // Northeast
               newWidth = Math.max(20, mouseX - initialPosition.x);
               newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
               newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              
+              if (maintainAspectRatio) {
+                const widthChange = Math.abs(newWidth - initialSize.width);
+                const heightChange = Math.abs(newHeight - initialSize.height);
+                
+                if (widthChange > heightChange) {
+                  newHeight = newWidth / aspectRatio;
+                  newY = initialPosition.y + initialSize.height - newHeight;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                }
+              }
               break;
+              
             case 'nw': // Northwest
               newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
               newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
               newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
               newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              
+              if (maintainAspectRatio) {
+                const widthChange = Math.abs(newWidth - initialSize.width);
+                const heightChange = Math.abs(newHeight - initialSize.height);
+                
+                if (widthChange > heightChange) {
+                  newHeight = newWidth / aspectRatio;
+                  newY = initialPosition.y + initialSize.height - newHeight;
+                } else {
+                  newWidth = newHeight * aspectRatio;
+                  newX = initialPosition.x + initialSize.width - newWidth;
+                }
+              }
               break;
+              
             case 'e': // East
               newWidth = Math.max(20, mouseX - initialPosition.x);
+              if (maintainAspectRatio) {
+                newHeight = newWidth / aspectRatio;
+              }
               break;
+              
             case 'w': // West
               newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
               newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              if (maintainAspectRatio) {
+                newHeight = newWidth / aspectRatio;
+              }
               break;
+              
             case 'n': // North
               newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
               newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              if (maintainAspectRatio) {
+                newWidth = newHeight * aspectRatio;
+              }
               break;
+              
             case 's': // South
               newHeight = Math.max(20, mouseY - initialPosition.y);
+              if (maintainAspectRatio) {
+                newWidth = newHeight * aspectRatio;
+              }
               break;
           }
 

@@ -113,6 +113,8 @@ interface PropertiesPanelProps {
   onTemplateChange: (templateId: string) => void;
   onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
   onCenterAllElements?: () => void;
+  maintainAspectRatio?: boolean;
+  onMaintainAspectRatioChange?: (maintain: boolean) => void;
 }
 
 export default function PropertiesPanel({
@@ -123,10 +125,16 @@ export default function PropertiesPanel({
   templateSizes,
   onTemplateChange,
   onAlignElement,
-  onCenterAllElements
+  onCenterAllElements,
+  maintainAspectRatio: propMaintainAspectRatio = true,
+  onMaintainAspectRatioChange
 }: PropertiesPanelProps) {
   const { toast } = useToast();
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
+  
+  // Use prop if provided, otherwise fallback to local state
+  const [localMaintainAspectRatio, setLocalMaintainAspectRatio] = useState(true);
+  const maintainAspectRatio = propMaintainAspectRatio;
+  const setMaintainAspectRatio = onMaintainAspectRatioChange || setLocalMaintainAspectRatio;
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
