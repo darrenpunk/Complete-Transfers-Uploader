@@ -266,6 +266,7 @@ export default function PropertiesPanel({
         );
       });
 
+      console.log('Properties panel mutation optimistic update:', { id, updates });
       // Return a context object with the snapshotted value
       return { previousElements };
     },

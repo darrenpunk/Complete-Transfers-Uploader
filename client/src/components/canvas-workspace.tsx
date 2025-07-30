@@ -164,12 +164,18 @@ export default function CanvasWorkspace({
           element.id === id ? { ...element, ...updates } : element
         );
       });
+      
+      console.log('Canvas mutation optimistic update:', { id, updates });
     },
-    onSuccess: () => {
-      // Just invalidate to refresh from server
-      queryClient.invalidateQueries({
-        queryKey: ["/api/projects", project.id, "canvas-elements"]
-      });
+    onSuccess: (data, { id, updates }) => {
+      console.log('Canvas mutation success:', { id, updates, serverResponse: data });
+      // Don't invalidate immediately - let the optimistic update persist
+      // Only invalidate after a delay to prevent conflicts
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["/api/projects", project.id, "canvas-elements"]
+        });
+      }, 100);
     },
   });
 
