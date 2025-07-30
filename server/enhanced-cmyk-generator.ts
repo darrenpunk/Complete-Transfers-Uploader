@@ -1222,6 +1222,11 @@ export class EnhancedCMYKGenerator {
             }
           }
           console.log(`Enhanced CMYK: Found ${foundConvertedColors} converted colors for ${element.logoId}`);
+          
+          if (foundConvertedColors > 0) {
+            preservedExactCMYK = true;
+            console.log(`Enhanced CMYK: Setting preservedExactCMYK = true, will apply CMYK colorspace conversion`);
+          }
         } else {
           console.log(`Enhanced CMYK: No converted colors found in logo analysis for ${element.logoId}`);
         }
@@ -1254,6 +1259,7 @@ export class EnhancedCMYKGenerator {
         let finalPdfPath = rgbPdfPath;
         
         // For files that were originally RGB and got converted in the app, apply true CMYK colorspace conversion
+        console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}`);
         if (preservedExactCMYK) {
           console.log(`Enhanced CMYK: Converting RGB PDF to true CMYK colorspace for: ${path.basename(svgPath)}`);
           
