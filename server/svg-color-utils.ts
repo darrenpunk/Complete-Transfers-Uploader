@@ -949,9 +949,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
+    // CRITICAL FIX: Return raw width/height instead of calculated width/height
+    // This ensures we get exactly the dimensions detected (600.7×595.0) not coordinate-calculated ones
     return {
-      width: finalWidth,
-      height: finalHeight,
+      width: rawWidth,  // Use raw width for exact precision
+      height: rawHeight, // Use raw height for exact precision
       minX,
       minY,
       maxX,
