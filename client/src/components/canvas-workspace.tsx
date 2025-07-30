@@ -1128,16 +1128,20 @@ export default function CanvasWorkspace({
                               const centerX = elementX + elementWidth / 2;
                               const centerY = elementY + elementHeight / 2;
                               
+                              // Calculate angle from center to mouse position
                               const angle = Math.atan2(
                                 moveEvent.clientY - rect.top - centerY,
                                 moveEvent.clientX - rect.left - centerX
                               ) * (180 / Math.PI);
                               
+                              // Normalize angle to 0-360 degrees
+                              const normalizedAngle = ((angle % 360) + 360) % 360;
+                              
                               updateElementMutation.mutate({
                                 id: element.id,
-                                updates: { rotation: Math.round(angle) }
+                                updates: { rotation: Math.round(normalizedAngle) }
                               });
-                            }, 16);
+                            }, 50);
                           };
                           
                           const handleRotationMouseUp = () => {

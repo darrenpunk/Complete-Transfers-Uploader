@@ -686,12 +686,21 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const fillColor = pathMatch[1];
         const pathData = pathMatch[2];
         
-        // Skip only transparent/none colors - KEEP white content for text elements
-        const isBackground = fillColor === 'none' || fillColor === 'transparent';
+        // Skip transparent/none colors and pure white backgrounds (but keep white content)
+        const isTransparent = fillColor === 'none' || fillColor === 'transparent';
+        const isPureWhite = fillColor === '#ffffff' || fillColor === 'white' || fillColor === 'rgb(255, 255, 255)' || fillColor === 'rgb(100%, 100%, 100%)';
         
-        // Also skip large background rectangles that cover most of the canvas
+        // Skip large background rectangles that cover most of the canvas
         const isLargeBackground = pathData.includes('M 0 0') && 
                                  (pathData.includes('L 700') || pathData.includes('L 839') || pathData.includes('L 624'));
+        
+        // Determine if this is likely a background vs content element based on path data
+        const pathLength = pathData.length;
+        const hasComplexPath = pathData.includes('C') || pathData.includes('Q'); // Curves indicate content
+        const isRectangularPath = pathData.match(/M[\d\s.,-]+L[\d\s.,-]+L[\d\s.,-]+L[\d\s.,-]+Z/);
+        
+        // Skip if it's a pure white rectangular background with no complex curves
+        const isBackground = isTransparent || (isPureWhite && isRectangularPath && !hasComplexPath) || isLargeBackground;
         
         if (!isBackground && !isLargeBackground) {
           try {
