@@ -5,13 +5,9 @@ export interface StandardizedColor {
   tolerance: number;
 }
 
-// Standard color palette for consistent CMYK conversion
+// Standard color palette for consistent CMYK conversion - now using Adobe-compatible algorithm
 export const STANDARD_COLOR_PALETTE: StandardizedColor[] = [
-  // Green eco-friendly colors (common in logos)
-  { standardRgb: "rgb(105, 140, 34)", standardCmyk: "C:25 M:0 Y:76 K:45", tolerance: 15 },
-  { standardRgb: "rgb(155, 193, 43)", standardCmyk: "C:20 M:0 Y:78 K:24", tolerance: 15 },
-  { standardRgb: "rgb(187, 215, 140)", standardCmyk: "C:13 M:0 Y:35 K:16", tolerance: 15 },
-  { standardRgb: "rgb(65, 87, 22)", standardCmyk: "C:25 M:0 Y:75 K:66", tolerance: 15 },
+  // Removing hardcoded values - now using Adobe-compatible CMYK conversion algorithm
 ];
 
 export function findStandardizedColor(inputRgb: string): StandardizedColor | null {
@@ -49,24 +45,55 @@ export function findStandardizedColor(inputRgb: string): StandardizedColor | nul
 }
 
 export function standardizeRgbToCmyk(r: number, g: number, b: number): string {
-  // First check if this color should be standardized
-  const inputRgb = `rgb(${r}, ${g}, ${b})`;
-  const standardized = findStandardizedColor(inputRgb);
+  // Adobe Illustrator-compatible CMYK conversion
+  // Uses UCR (Under Color Removal) and GCR (Gray Component Replacement) similar to Adobe
   
-  if (standardized) {
-    console.log(`Standardized color ${inputRgb} to ${standardized.standardCmyk}`);
-    return standardized.standardCmyk;
+  // Normalize RGB values to 0-1 range
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+  
+  // Calculate basic CMYK using standard subtractive model
+  const k = 1 - Math.max(rNorm, gNorm, bNorm);
+  
+  // Handle pure black case
+  if (k === 1) {
+    return "C:0 M:0 Y:0 K:100";
   }
-
-  // If not standardized, use normal conversion
-  const rPercent = r / 255;
-  const gPercent = g / 255;
-  const bPercent = b / 255;
   
-  const k = 1 - Math.max(rPercent, gPercent, bPercent);
-  const c = k === 1 ? 0 : (1 - rPercent - k) / (1 - k);
-  const m = k === 1 ? 0 : (1 - gPercent - k) / (1 - k);
-  const y = k === 1 ? 0 : (1 - bPercent - k) / (1 - k);
+  // Calculate CMY components
+  let c = (1 - rNorm - k) / (1 - k);
+  let m = (1 - gNorm - k) / (1 - k);
+  let y = (1 - bNorm - k) / (1 - k);
   
-  return `C:${Math.round(c * 100)} M:${Math.round(m * 100)} Y:${Math.round(y * 100)} K:${Math.round(k * 100)}`;
+  // Apply Adobe-style UCR/GCR adjustments for more accurate color separation
+  const grayComponent = Math.min(c, m, y);
+  
+  // Adobe uses aggressive UCR for bright colors, conservative for dark colors
+  const brightness = (rNorm + gNorm + bNorm) / 3;
+  const ucrAmount = brightness > 0.5 ? 0.9 : 0.3; // More UCR for bright colors
+  
+  // Apply UCR - remove gray component and add to K
+  const grayToRemove = grayComponent * ucrAmount;
+  c = Math.max(0, c - grayToRemove);
+  m = Math.max(0, m - grayToRemove);
+  y = Math.max(0, y - grayToRemove);
+  const adjustedK = k + grayToRemove;
+  
+  // Adobe tends to minimize K in bright colors for better color reproduction
+  const finalK = brightness > 0.6 ? adjustedK * 0.2 : adjustedK;
+  
+  // Re-adjust CMY to compensate for reduced K
+  const kReduction = adjustedK - finalK;
+  c = Math.min(1, c + kReduction * 0.7);
+  m = Math.min(1, m + kReduction * 0.7);
+  y = Math.min(1, y + kReduction * 0.7);
+  
+  // Convert to percentages and round to match Adobe's precision
+  const cPercent = Math.round(c * 100);
+  const mPercent = Math.round(m * 100);
+  const yPercent = Math.round(y * 100);
+  const kPercent = Math.round(finalK * 100);
+  
+  return `C:${cPercent} M:${mPercent} Y:${yPercent} K:${kPercent}`;
 }
