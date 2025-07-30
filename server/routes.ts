@@ -137,19 +137,19 @@ export async function registerRoutes(app: express.Application) {
             const contentBounds = calculateSVGContentBounds(svgContent);
             
             if (contentBounds) {
-              // Use actual content bounds with appropriate scaling
-              const scaleFactor = 0.35;
+              // Use actual content bounds with more generous scaling for better visibility
+              const scaleFactor = 0.5; // Increased from 0.35 to make logos more visible
               displayWidth = Math.round(contentBounds.width * scaleFactor);
               displayHeight = Math.round(contentBounds.height * scaleFactor);
               
               // Apply reasonable limits but allow larger content for big documents
-              const maxWidth = isA3Document ? 250 : 150;
-              const maxHeight = isA3Document ? 350 : 150;
+              const maxWidth = isA3Document ? 300 : 200; // Increased limits
+              const maxHeight = isA3Document ? 400 : 250; // Increased limits
               
               displayWidth = Math.min(displayWidth, maxWidth);
               displayHeight = Math.min(displayHeight, maxHeight);
               
-              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, scaled to: ${displayWidth}×${displayHeight}mm`);
+              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, scaled to: ${displayWidth}×${displayHeight}mm (scale: ${scaleFactor})`);
             } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
