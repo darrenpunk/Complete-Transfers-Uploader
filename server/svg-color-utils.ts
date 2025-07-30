@@ -642,8 +642,8 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
     // Early check for extremely large files - use fallback to prevent timeouts
-    if (svgContent.length > 5000000) { // 5MB+ SVG files
-      console.log('SVG content extremely large (>5MB), using performance fallback');
+    if (svgContent.length > 2000000) { // 2MB+ SVG files
+      console.log('SVG content extremely large (>2MB), using performance fallback');
       return {
         width: 300,
         height: 200

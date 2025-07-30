@@ -318,25 +318,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await execAsync(svgCommand);
             
             if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-              // Post-process SVG to remove white backgrounds and fix transparency
-              try {
-                let svgContent = fs.readFileSync(svgPath, 'utf8');
-                
-                // Calculate content bounds with timeout protection for large files
-                let initialBbox = null;
+              // Check file size before any processing
+              const svgStats = fs.statSync(svgPath);
+              const svgSizeMB = svgStats.size / (1024 * 1024);
+              
+              if (svgSizeMB > 15) { // Skip all processing for files >15MB
+                console.log(`SVG file too large (${svgSizeMB.toFixed(1)}MB), skipping all post-processing to prevent timeout`);
+                // Just use the SVG as-is
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
+                console.log(`Large PDF converted to SVG without post-processing: ${finalFilename}`);
+              } else {
+                // Post-process SVG to remove white backgrounds and fix transparency
                 try {
-                  console.log(`SVG content size: ${svgContent.length} characters`);
-                  if (svgContent.length < 10000000) { // Skip bounds for very large files (>10MB)
-                    initialBbox = calculateSVGContentBounds(svgContent);
-                    if (initialBbox && initialBbox.minX !== undefined && initialBbox.minY !== undefined && initialBbox.maxX !== undefined && initialBbox.maxY !== undefined) {
-                      console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)}`);
+                  let svgContent = fs.readFileSync(svgPath, 'utf8');
+                  
+                  // Calculate content bounds with timeout protection for large files
+                  let initialBbox = null;
+                  try {
+                    console.log(`SVG content size: ${svgContent.length} characters`);
+                    if (svgContent.length < 2000000) { // Further reduced threshold to 2MB
+                      initialBbox = calculateSVGContentBounds(svgContent);
+                      if (initialBbox && initialBbox.minX !== undefined && initialBbox.minY !== undefined && initialBbox.maxX !== undefined && initialBbox.maxY !== undefined) {
+                        console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)}`);
+                      }
+                    } else {
+                      console.log('SVG content too large for bounds calculation, using defaults');
                     }
-                  } else {
-                    console.log('SVG content too large for bounds calculation, using defaults');
+                  } catch (boundsError) {
+                    console.log('Bounds calculation failed, using fallback:', boundsError instanceof Error ? boundsError.message : String(boundsError));
                   }
-                } catch (boundsError) {
-                  console.log('Bounds calculation failed, using fallback:', boundsError instanceof Error ? boundsError.message : String(boundsError));
-                }
                 
                 // SELECTIVE white background removal - only remove obvious page backgrounds
                 console.log('Original SVG first 500 chars:', svgContent.substring(0, 500));
@@ -387,7 +399,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // Apply content bounds cropping after background removal (only for smaller files)
                 let finalBbox = null;
                 try {
-                  if (svgContent.length < 10000000) { // Skip final bounds for very large files
+                  if (svgContent.length < 2000000) { // Further reduced threshold to 2MB
                     finalBbox = calculateSVGContentBounds(svgContent);
                     console.log('Final bbox result:', finalBbox);
                     if (finalBbox && finalBbox.minX !== undefined && finalBbox.minY !== undefined && finalBbox.maxX !== undefined && finalBbox.maxY !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
@@ -428,17 +440,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 console.log('Processed SVG first 500 chars:', svgContent.substring(0, 500));
                 
-                fs.writeFileSync(svgPath, svgContent);
-                console.log('Updated SVG with content bounds cropping');
-              } catch (postProcessError) {
-                console.error('SVG post-processing failed:', postProcessError);
+                  fs.writeFileSync(svgPath, svgContent);
+                  console.log('Updated SVG with content bounds cropping');
+                } catch (postProcessError) {
+                  console.error('SVG post-processing failed:', postProcessError);
+                }
+                
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
+                
+                console.log(`PDF converted to SVG for color editing: ${finalFilename}`);
               }
-              
-              finalFilename = svgFilename;
-              finalMimeType = 'image/svg+xml';
-              finalUrl = `/uploads/${finalFilename}`;
-              
-              console.log(`PDF converted to SVG for color editing: ${finalFilename}`);
             } else {
               throw new Error('SVG conversion failed');
             }
