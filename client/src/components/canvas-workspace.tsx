@@ -465,14 +465,11 @@ export default function CanvasWorkspace({
               break;
           }
 
-          updateElementMutation.mutate({
-            id: selectedElement.id,
-            updates: { 
-              width: Math.round(newWidth), 
-              height: Math.round(newHeight),
-              x: Math.round(newX),
-              y: Math.round(newY)
-            }
+          updateElementDirect(selectedElement.id, { 
+            width: Math.round(newWidth), 
+            height: Math.round(newHeight),
+            x: Math.round(newX),
+            y: Math.round(newY)
           });
         }
       }, 16); // Throttle to ~60fps for smoother interaction
@@ -495,7 +492,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom, updateElementMutation]);
+  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
