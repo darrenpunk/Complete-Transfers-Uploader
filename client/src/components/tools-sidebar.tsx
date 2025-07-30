@@ -754,8 +754,13 @@ export default function ToolsSidebar({
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
               
+              console.log('Preflight debug:', {
+                hasConvertedColors,
+                hasColorOverrides,
+                svgColorsLength: svgColors.length,
+                firstColor: svgColors[0]
+              });
 
-              
               if (hasConvertedColors) {
                 // File was automatically converted to CMYK during upload
                 colorValue = `CMYK Vector`;
