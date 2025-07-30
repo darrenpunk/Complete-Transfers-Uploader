@@ -298,24 +298,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If it's a PDF, try to convert to SVG first for color editing capabilities
         if (file.mimetype === 'application/pdf') {
           try {
-            // Try PDF to SVG conversion first for color manipulation
-            const svgFilename = `${file.filename}.svg`;
-            const svgPath = path.join(uploadDir, svgFilename);
+            // Check PDF file size first to avoid timeout on very large files
+            const pdfStats = fs.statSync(path.join(uploadDir, file.filename));
+            const pdfSizeMB = pdfStats.size / (1024 * 1024);
+            console.log(`PDF file size: ${pdfSizeMB.toFixed(1)}MB`);
             
-            // Use pdf2svg with post-processing to remove white backgrounds
-            let svgCommand;
-            try {
-              // Check if pdf2svg is available
-              await execAsync('which pdf2svg');
-              svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
-              console.log('Using pdf2svg for conversion');
-            } catch {
-              // Fallback to ImageMagick SVG conversion
-              svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
-              console.log('Using ImageMagick for SVG conversion');
-            }
-            
-            await execAsync(svgCommand);
+            if (pdfSizeMB > 30) { // Skip SVG conversion for files >30MB
+              console.log(`PDF file too large (${pdfSizeMB.toFixed(1)}MB), skipping SVG conversion to prevent timeout`);
+              // Use original PDF without SVG conversion
+              finalFilename = file.filename;
+              finalMimeType = file.mimetype;
+              finalUrl = `/uploads/${file.filename}`;
+              console.log(`Large PDF used directly without conversion: ${finalFilename}`);
+            } else {
+              // Try PDF to SVG conversion for smaller files
+              const svgFilename = `${file.filename}.svg`;
+              const svgPath = path.join(uploadDir, svgFilename);
+              
+              // Use pdf2svg with post-processing to remove white backgrounds
+              let svgCommand;
+              try {
+                // Check if pdf2svg is available
+                await execAsync('which pdf2svg');
+                svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
+                console.log('Using pdf2svg for conversion');
+              } catch {
+                // Fallback to ImageMagick SVG conversion
+                svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
+                console.log('Using ImageMagick for SVG conversion');
+              }
+              
+              await execAsync(svgCommand);
             
             if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
               // Check file size before any processing
@@ -452,8 +465,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 console.log(`PDF converted to SVG for color editing: ${finalFilename}`);
               }
-            } else {
-              throw new Error('SVG conversion failed');
+              } else {
+                throw new Error('SVG conversion failed');
+              }
             }
           } catch (svgError) {
             console.error('SVG conversion failed, falling back to PNG with Ghostscript:', svgError);
