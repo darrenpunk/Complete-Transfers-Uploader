@@ -1143,9 +1143,18 @@ export default function CanvasWorkspace({
                               // Normalize angle to 0-360 degrees
                               const normalizedAngle = ((angle % 360) + 360) % 360;
                               
-                              updateElementMutation.mutate({
-                                id: element.id,
-                                updates: { rotation: Math.round(normalizedAngle) }
+                              console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
+                              
+                              // Use direct API call instead of mutation to avoid conflicts
+                              fetch(`/api/canvas-elements/${element.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ rotation: Math.round(normalizedAngle) })
+                              }).then(() => {
+                                // Force immediate refresh of elements
+                                queryClient.invalidateQueries({
+                                  queryKey: ["/api/projects", project.id, "canvas-elements"]
+                                });
                               });
                             }, 50);
                           };
