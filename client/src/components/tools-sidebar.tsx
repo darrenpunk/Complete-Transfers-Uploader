@@ -745,12 +745,6 @@ export default function ToolsSidebar({
             }
             const isRasterImage = logo.mimeType?.startsWith('image/') && !logo.mimeType.includes('svg');
             
-            console.log('SVG Colors data structure:', {
-              logoSvgColors: logo.svgColors,
-              extractedSvgColors: svgColors,
-              isArray: Array.isArray(svgColors)
-            });
-            
             let colorStatus = "pass";
             let colorValue = "Unknown";
             
@@ -763,13 +757,6 @@ export default function ToolsSidebar({
               // Check if element has manual color overrides 
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
-              
-              console.log('Preflight debug:', {
-                hasConvertedColors,
-                hasColorOverrides,
-                svgColorsLength: svgColors.length,
-                firstColor: svgColors[0]
-              });
 
               if (hasConvertedColors) {
                 // File was automatically converted to CMYK during upload
