@@ -152,14 +152,50 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Create logo record
+        // Automatically analyze SVG files for colors and stroke widths BEFORE creating logo record
+        let analysisData = null;
+        if (finalMimeType === 'image/svg+xml') {
+          try {
+            console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
+            const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
+            const svgPath = path.join(uploadDir, finalFilename);
+            console.log(`📁 SVG path: ${svgPath}`);
+            
+            const analysis = analyzeSVGWithStrokeWidths(svgPath);
+            console.log(`🎨 Analysis results:`, {
+              colors: analysis.colors?.length || 0,
+              fonts: analysis.fonts?.length || 0,
+              strokeWidths: analysis.strokeWidths?.length || 0,
+              hasText: analysis.hasText
+            });
+            
+            // Prepare analysis data for logo record
+            analysisData = {
+              colors: analysis.colors,
+              fonts: analysis.fonts,
+              strokeWidths: analysis.strokeWidths,
+              minStrokeWidth: analysis.minStrokeWidth,
+              maxStrokeWidth: analysis.maxStrokeWidth,
+              hasText: analysis.hasText
+            };
+            
+            console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
+          } catch (analysisError) {
+            console.error('❌ SVG analysis failed during upload:', analysisError);
+            console.error('Stack trace:', analysisError.stack);
+          }
+        }
+
+        // Create logo record with analysis data
         const logo = await storage.createLogo({
           projectId,
           filename: finalFilename,
           originalName: file.originalname,
           mimeType: finalMimeType,
           size: file.size,
-          url: finalUrl
+          url: finalUrl,
+          svgColors: analysisData,
+          svgFonts: analysisData?.fonts || null
         });
 
         logos.push(logo);
@@ -278,45 +314,6 @@ export async function registerRoutes(app: express.Application) {
         };
 
         await storage.createCanvasElement(canvasElementData);
-
-        // Automatically analyze SVG files for stroke widths and other properties
-        if (finalMimeType === 'image/svg+xml') {
-          try {
-            console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
-            const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
-            const svgPath = path.join(uploadDir, finalFilename);
-            console.log(`📁 SVG path: ${svgPath}`);
-            
-            const analysis = analyzeSVGWithStrokeWidths(svgPath);
-            console.log(`🎨 Analysis results:`, {
-              colors: analysis.colors?.length || 0,
-              fonts: analysis.fonts?.length || 0,
-              strokeWidths: analysis.strokeWidths?.length || 0,
-              hasText: analysis.hasText
-            });
-            
-            // Update the logo with enhanced analysis data including stroke widths
-            const updatedAnalysis = {
-              colors: analysis.colors,
-              fonts: analysis.fonts,
-              strokeWidths: analysis.strokeWidths,
-              minStrokeWidth: analysis.minStrokeWidth,
-              maxStrokeWidth: analysis.maxStrokeWidth,
-              hasText: analysis.hasText
-            };
-            
-            console.log(`💾 Updating logo ${logo.id} with analysis data`);
-            await storage.updateLogo(logo.id, {
-              svgColors: updatedAnalysis,
-              svgFonts: analysis.fonts
-            });
-            
-            console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
-          } catch (analysisError) {
-            console.error('❌ SVG analysis failed during upload:', analysisError);
-            console.error('Stack trace:', analysisError.stack);
-          }
-        }
       }
 
       res.json(logos);
