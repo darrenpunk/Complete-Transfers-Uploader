@@ -529,11 +529,11 @@ export class EnhancedCMYKGenerator {
       // Map standardized colors to original formats from SVG analysis
       let originalFormatOverrides: Record<string, string> = {};
       
-      const svgColors = logo.svgColors as any[];
-      if (svgColors && Array.isArray(svgColors)) {
+      const svgAnalysis = logo.svgColors as any;
+      if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
         Object.entries(colorOverrides).forEach(([standardizedColor, newColor]) => {
           // Find the matching color in the SVG analysis
-          const colorInfo = svgColors.find((c: any) => c.originalColor === standardizedColor);
+          const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
           if (colorInfo && colorInfo.originalFormat) {
             originalFormatOverrides[colorInfo.originalFormat as string] = newColor as string;
           } else {

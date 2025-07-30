@@ -516,13 +516,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🎨 Applying color overrides to SVG for canvas display:`, element.colorOverrides);
         
         // Get SVG color analysis for format mapping
-        const svgColors = logo.svgColors as any;
+        const svgAnalysis = logo.svgColors as any;
         let originalFormatOverrides: Record<string, string> = {};
         
-        if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+        if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
           Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
             // Find the matching color in the SVG analysis
-            const colorInfo = svgColors.colors.find((c: any) => c.originalColor === standardizedColor);
+            const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
             if (colorInfo && colorInfo.originalFormat) {
               originalFormatOverrides[colorInfo.originalFormat] = newColor;
             } else {
