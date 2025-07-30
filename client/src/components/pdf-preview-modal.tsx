@@ -97,34 +97,48 @@ export default function PDFPreviewModal({
       icon: Palette,
       label: "Color Space",
       value: (() => {
-        // Use same logic as tools sidebar preflight check - only show CMYK if explicitly converted
+        // Use same logic as tools sidebar preflight check - include color overrides
         const hasCMYKLogos = logos.some(logo => {
           const svgColors = logo.svgColors as any;
           const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
           
+          // Check if any canvas element using this logo has color overrides
+          const logoElements = canvasElements.filter(el => el.logoId === logo.id);
+          const hasColorOverrides = logoElements.some(el => 
+            el.colorOverrides && Object.keys(el.colorOverrides).length > 0
+          );
+          
           if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
-            // Only show CMYK if explicitly converted (has converted flag)
-            return svgColors.some(color => color.converted);
+            // Show CMYK if explicitly converted OR has color overrides
+            const hasConvertedColors = svgColors.some(color => color.converted);
+            return hasConvertedColors || hasColorOverrides;
           } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
-            // For raster images, check the mode
-            return svgColors.mode === 'CMYK';
+            // For raster images, check the mode or color overrides
+            return svgColors.mode === 'CMYK' || hasColorOverrides;
           }
-          return false;
+          return hasColorOverrides;
         });
         return hasCMYKLogos ? "CMYK ready" : "RGB colors detected";
       })(),
       status: (() => {
-        // Use same logic as tools sidebar preflight check
+        // Use same logic as tools sidebar preflight check - include color overrides
         const hasCMYKLogos = logos.some(logo => {
           const svgColors = logo.svgColors as any;
           const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
           
+          // Check if any canvas element using this logo has color overrides
+          const logoElements = canvasElements.filter(el => el.logoId === logo.id);
+          const hasColorOverrides = logoElements.some(el => 
+            el.colorOverrides && Object.keys(el.colorOverrides).length > 0
+          );
+          
           if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
-            return svgColors.some(color => color.converted);
+            const hasConvertedColors = svgColors.some(color => color.converted);
+            return hasConvertedColors || hasColorOverrides;
           } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
-            return svgColors.mode === 'CMYK';
+            return svgColors.mode === 'CMYK' || hasColorOverrides;
           }
-          return false;
+          return hasColorOverrides;
         });
         return hasCMYKLogos ? "success" : "warning";
       })()

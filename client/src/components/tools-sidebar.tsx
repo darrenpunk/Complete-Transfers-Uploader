@@ -746,10 +746,14 @@ export default function ToolsSidebar({
               // Vector files with detected SVG colors - show format and count
               // Color detection logic
               
-              // Only show CMYK if explicitly converted (has converted flag)
+              // Check if element has color overrides (manual color changes)
+              const hasColorOverrides = selectedElement.colorOverrides && 
+                Object.keys(selectedElement.colorOverrides).length > 0;
+              
+              // Only show CMYK if explicitly converted OR has color overrides
               const hasConvertedColors = svgColors.some(color => color.converted);
               
-              if (hasConvertedColors) {
+              if (hasConvertedColors || hasColorOverrides) {
                 colorValue = `CMYK Vector`;
                 colorStatus = "pass";
               } else {
