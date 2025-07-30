@@ -1171,13 +1171,18 @@ export class EnhancedCMYKGenerator {
       try {
         const logoData = await storage.getLogo(element.logoId || '');
         console.log(`Enhanced CMYK: Found logo data for ${element.logoId}:`, !!logoData);
+        console.log(`Enhanced CMYK: Logo svgAnalysis exists:`, !!logoData?.svgAnalysis);
+        console.log(`Enhanced CMYK: Colors array:`, logoData?.svgAnalysis?.colors?.length);
         
         // If logo has pre-calculated CMYK values from the app, use those EXACT values
         if (logoData?.svgAnalysis && Array.isArray(logoData.svgAnalysis.colors) && logoData.svgAnalysis.colors.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
+          let foundConvertedColors = 0;
           for (const colorInfo of logoData.svgAnalysis.colors) {
+            console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
+              foundConvertedColors++;
               // Parse CMYK values (e.g., "C:47 M:2 Y:100 K:0")
               const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
               if (cmykMatch) {
@@ -1207,6 +1212,9 @@ export class EnhancedCMYKGenerator {
               }
             }
           }
+          console.log(`Enhanced CMYK: Found ${foundConvertedColors} converted colors for ${element.logoId}`);
+        } else {
+          console.log(`Enhanced CMYK: No converted colors found in logo analysis for ${element.logoId}`);
         }
       } catch (logoError) {
         console.warn(`Enhanced CMYK: Could not access logo data for CMYK preservation:`, logoError);
