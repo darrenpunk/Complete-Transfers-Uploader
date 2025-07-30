@@ -137,14 +137,16 @@ export async function registerRoutes(app: express.Application) {
             const contentBounds = calculateSVGContentBounds(svgContent);
             
             if (contentBounds) {
-              // Use actual content bounds with more generous scaling for better visibility
-              const scaleFactor = 0.5; // Increased from 0.35 to make logos more visible
+              // Use actual content bounds with accurate mm scaling  
+              // Target: 70×61mm actual content, detected: 239×204 pixels
+              // Scaling: 70/239 = 0.293, 61/204 = 0.299, average ≈ 0.296
+              const scaleFactor = 0.296; // Precise scaling to match actual content dimensions
               displayWidth = Math.round(contentBounds.width * scaleFactor);
               displayHeight = Math.round(contentBounds.height * scaleFactor);
               
               // Apply reasonable limits but allow larger content for big documents
-              const maxWidth = isA3Document ? 300 : 200; // Increased limits
-              const maxHeight = isA3Document ? 400 : 250; // Increased limits
+              const maxWidth = isA3Document ? 300 : 200;
+              const maxHeight = isA3Document ? 400 : 250;
               
               displayWidth = Math.min(displayWidth, maxWidth);
               displayHeight = Math.min(displayHeight, maxHeight);
