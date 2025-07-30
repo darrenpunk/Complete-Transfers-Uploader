@@ -145,39 +145,25 @@ export default function CanvasWorkspace({
 
  // Canvas rotation in degrees
 
-  // Update canvas element mutation
-  const updateElementMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<CanvasElement> }) => {
-      const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
-      return response.json();
-    },
-    onMutate: async ({ id, updates }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({
-        queryKey: ["/api/projects", project.id, "canvas-elements"]
-      });
-
-      // Optimistically update the element
-      queryClient.setQueryData(["/api/projects", project.id, "canvas-elements"], (old: CanvasElement[] | undefined) => {
-        if (!old) return old;
-        return old.map((element) => 
-          element.id === id ? { ...element, ...updates } : element
-        );
+  // Helper function for direct API updates to avoid mutation conflicts
+  const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
+    try {
+      await fetch(`/api/canvas-elements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
       });
       
-      console.log('Canvas mutation optimistic update:', { id, updates });
-    },
-    onSuccess: (data, { id, updates }) => {
-      console.log('Canvas mutation success:', { id, updates, serverResponse: data });
-      // Don't invalidate immediately - let the optimistic update persist
-      // Only invalidate after a delay to prevent conflicts
+      // Refresh data after a brief delay
       setTimeout(() => {
         queryClient.invalidateQueries({
           queryKey: ["/api/projects", project.id, "canvas-elements"]
         });
-      }, 100);
-    },
-  });
+      }, 50);
+    } catch (error) {
+      console.error('Failed to update element:', error);
+    }
+  };
 
   // No longer need server-side color management - using CSS filters instead
 
@@ -216,15 +202,12 @@ export default function CanvasWorkspace({
       
       // Apply the previous state to all canvas elements
       previousState.forEach(historicalElement => {
-        updateElementMutation.mutate({
-          id: historicalElement.id,
-          updates: {
-            x: historicalElement.x,
-            y: historicalElement.y,
-            width: historicalElement.width,
-            height: historicalElement.height,
-            rotation: historicalElement.rotation
-          }
+        updateElementDirect(historicalElement.id, {
+          x: historicalElement.x,
+          y: historicalElement.y,
+          width: historicalElement.width,
+          height: historicalElement.height,
+          rotation: historicalElement.rotation
         });
       });
     }
@@ -237,15 +220,12 @@ export default function CanvasWorkspace({
       
       // Apply the next state to all canvas elements
       nextState.forEach(historicalElement => {
-        updateElementMutation.mutate({
-          id: historicalElement.id,
-          updates: {
-            x: historicalElement.x,
-            y: historicalElement.y,
-            width: historicalElement.width,
-            height: historicalElement.height,
-            rotation: historicalElement.rotation
-          }
+        updateElementDirect(historicalElement.id, {
+          x: historicalElement.x,
+          y: historicalElement.y,
+          width: historicalElement.width,
+          height: historicalElement.height,
+          rotation: historicalElement.rotation
         });
       });
     }
@@ -432,9 +412,9 @@ export default function CanvasWorkspace({
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
 
-          updateElementMutation.mutate({
-            id: selectedElement.id,
-            updates: { x: Math.max(0, newX), y: Math.max(0, newY) }
+          updateElementDirect(selectedElement.id, { 
+            x: Math.max(0, newX), 
+            y: Math.max(0, newY) 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -600,14 +580,11 @@ export default function CanvasWorkspace({
         const newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
         const newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
         
-        updateElementMutation.mutate({
-          id: element.id,
-          updates: {
-            x: newX,
-            y: newY,
-            width: newWidth,
-            height: newHeight
-          }
+        updateElementDirect(element.id, {
+          x: newX,
+          y: newY,
+          width: newWidth,
+          height: newHeight
         });
       });
     } else {
@@ -621,12 +598,9 @@ export default function CanvasWorkspace({
         const relativeX = element.x - minX;
         const relativeY = element.y - minY;
         
-        updateElementMutation.mutate({
-          id: element.id,
-          updates: {
-            x: Math.round(centerOffsetX + relativeX),
-            y: Math.round(centerOffsetY + relativeY)
-          }
+        updateElementDirect(element.id, {
+          x: Math.round(centerOffsetX + relativeX),
+          y: Math.round(centerOffsetY + relativeY)
         });
       });
     }
