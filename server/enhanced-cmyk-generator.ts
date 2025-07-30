@@ -1166,6 +1166,7 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
+    console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     try {
       // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
       console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
@@ -1240,7 +1241,11 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: No converted colors found in logo analysis for ${element.logoId}`);
         }
       } catch (logoError) {
-        console.warn(`Enhanced CMYK: Could not access logo data for CMYK preservation:`, logoError);
+        console.error(`Enhanced CMYK: ERROR accessing logo data for CMYK preservation:`, logoError);
+        console.error(`Enhanced CMYK: Error stack:`, (logoError as Error).stack);
+        console.error(`Enhanced CMYK: Element logoId: ${element.logoId}`);
+        console.error(`Enhanced CMYK: Storage object exists: ${!!storage}`);
+        console.error(`Enhanced CMYK: Storage.getLogo exists: ${typeof storage.getLogo}`);
       }
       
       // Save the CMYK-preserved SVG content
