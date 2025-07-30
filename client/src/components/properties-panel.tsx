@@ -243,21 +243,44 @@ export default function PropertiesPanel({
     onAlignElement(currentElement.id, { x: Math.round(x), y: Math.round(y) });
   };
 
-  // Helper function for direct API updates to avoid mutation conflicts
+  // Helper function for optimistic updates with fallback
   const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
     try {
-      await fetch(`/api/canvas-elements/${id}`, {
+      console.log('Properties updateElementDirect called:', { id, updates });
+      
+      // Optimistic update for immediate visual feedback
+      queryClient.setQueryData(
+        ["/api/projects", currentElement?.projectId, "canvas-elements"],
+        (oldData: CanvasElement[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(element =>
+            element.id === id ? { ...element, ...updates } : element
+          );
+        }
+      );
+
+      // Send update to server
+      const response = await fetch(`/api/canvas-elements/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
       
-      // Refresh data immediately for faster updates
+      if (!response.ok) {
+        console.error('Failed to update element - server error:', response.status);
+        // Revert optimistic update on failure
+        queryClient.invalidateQueries({
+          queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+        });
+      } else {
+        console.log('✅ Properties API update successful');
+      }
+    } catch (error) {
+      console.error('Failed to update element:', error);
+      // Revert optimistic update on error
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
-    } catch (error) {
-      console.error('Failed to update element:', error);
     }
   };
 

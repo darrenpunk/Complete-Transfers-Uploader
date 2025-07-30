@@ -246,7 +246,9 @@ export class MemStorage implements IStorage {
       isVisible: insertElement.isVisible !== undefined ? insertElement.isVisible : true,
       isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false,
       colorOverrides: insertElement.colorOverrides || null,
-      garmentColor: insertElement.garmentColor || null
+      garmentColor: insertElement.garmentColor || null,
+      logoId: insertElement.logoId || null,
+      opacity: insertElement.opacity || null
     };
     this.canvasElements.set(id, element);
     return element;
@@ -256,8 +258,10 @@ export class MemStorage implements IStorage {
     const existing = this.canvasElements.get(id);
     if (!existing) return undefined;
     
+    console.log('Storage updateCanvasElement:', { id, existing: existing.rotation, updates });
     const updated = { ...existing, ...updates };
     this.canvasElements.set(id, updated);
+    console.log('Storage updated element:', { id, rotation: updated.rotation });
     return updated;
   }
 

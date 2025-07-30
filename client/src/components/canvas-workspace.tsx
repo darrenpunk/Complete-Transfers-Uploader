@@ -152,34 +152,44 @@ export default function CanvasWorkspace({
 
  // Canvas rotation in degrees
 
-  // Helper function for direct API updates to avoid mutation conflicts
+  // Helper function for optimistic updates with fallback
   const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
     try {
       console.log('Canvas updateElementDirect called:', { id, updates });
+      
+      // Optimistic update for immediate visual feedback
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "canvas-elements"],
+        (oldData: CanvasElement[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(element =>
+            element.id === id ? { ...element, ...updates } : element
+          );
+        }
+      );
+
+      // Send update to server
       const response = await fetch(`/api/canvas-elements/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
       
-      if (response.ok) {
-        console.log('✅ Canvas API update successful');
-        // Force complete cache refresh
-        await queryClient.cancelQueries({
-          queryKey: ["/api/projects", project.id, "canvas-elements"]
-        });
-        queryClient.removeQueries({
-          queryKey: ["/api/projects", project.id, "canvas-elements"]
-        });
-        await queryClient.refetchQueries({
-          queryKey: ["/api/projects", project.id, "canvas-elements"]
-        });
-        console.log('✅ Cache refreshed completely');
-      } else {
+      if (!response.ok) {
         console.error('Failed to update element - server error:', response.status);
+        // Revert optimistic update on failure
+        queryClient.invalidateQueries({
+          queryKey: ["/api/projects", project.id, "canvas-elements"]
+        });
+      } else {
+        console.log('✅ Canvas API update successful');
       }
     } catch (error) {
       console.error('Failed to update element:', error);
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
     }
   };
 
@@ -433,11 +443,6 @@ export default function CanvasWorkspace({
           updateElementDirect(selectedElement.id, { 
             x: Math.max(0, newX), 
             y: Math.max(0, newY) 
-          });
-          
-          // Force immediate refresh for dragging
-          queryClient.refetchQueries({
-            queryKey: ["/api/projects", project.id, "canvas-elements"]
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -1148,13 +1153,8 @@ export default function CanvasWorkspace({
                               console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
                               
                               // Use same direct update function as other operations
-                              await updateElementDirect(element.id, { 
+                              updateElementDirect(element.id, { 
                                 rotation: Math.round(normalizedAngle) 
-                              });
-                              
-                              // Force immediate refresh to show rotation
-                              queryClient.refetchQueries({
-                                queryKey: ["/api/projects", project.id, "canvas-elements"]
                               });
                             }, 50);
                           };
