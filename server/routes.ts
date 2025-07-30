@@ -119,18 +119,36 @@ export async function registerRoutes(app: express.Application) {
               const viewBoxValues = viewBoxMatch[1].split(' ').map(parseFloat);
               if (viewBoxValues.length >= 4) {
                 const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
-                // Check for A3 dimensions (841.89×1190.55 is A3 at 72 DPI)
-                isA3Document = (vbWidth > 800 && vbHeight > 1100) || (vbWidth > 1100 && vbHeight > 800);
-                console.log(`ViewBox: ${vbWidth}×${vbHeight}, A3 document: ${isA3Document}`);
+                
+                // Check for large format documents - A3, A4, or similar sizes
+                const isA3 = (vbWidth > 800 && vbHeight > 1100) || (vbWidth > 1100 && vbHeight > 800);  // A3: 842×1191
+                const isA4 = (vbWidth > 580 && vbHeight > 800) || (vbWidth > 800 && vbHeight > 580);    // A4: 595×842
+                const isLargeFormat = isA3 || isA4;
+                
+                console.log(`ViewBox: ${vbWidth}×${vbHeight}, A3: ${isA3}, A4: ${isA4}, Large format: ${isLargeFormat}`);
+                
+                if (isLargeFormat) {
+                  // Get template size to determine proper scaling
+                  const templateSize = await storage.getTemplateSize(project.templateSize);
+                  if (templateSize) {
+                    // For large format documents, use template dimensions with some scaling
+                    if (isA3 || templateSize.name === 'A3') {
+                      displayWidth = Math.min(297, templateSize.width);
+                      displayHeight = Math.min(420, templateSize.height);
+                    } else if (isA4) {
+                      // A4 content - scale to fit nicely in template
+                      const scaleToFit = Math.min(templateSize.width / 210, templateSize.height / 297);
+                      displayWidth = Math.round(210 * scaleToFit * 0.8); // 80% of available space
+                      displayHeight = Math.round(297 * scaleToFit * 0.8);
+                    }
+                    console.log(`Large format document, using size: ${displayWidth}×${displayHeight}mm for template ${templateSize.name}`);
+                  }
+                  isA3Document = true; // Use large format handling
+                }
               }
             }
             
-            if (isA3Document) {
-              // For A3 documents, use the full template size
-              displayWidth = 297; // A3 width in mm
-              displayHeight = 420; // A3 height in mm
-              console.log(`A3 document detected, using full template size: ${displayWidth}×${displayHeight}mm`);
-            } else {
+            if (!isA3Document) {
               // For non-A3 content, try to get actual content bounds
               const contentBounds = calculateSVGContentBounds(svgPath);
               if (contentBounds) {
