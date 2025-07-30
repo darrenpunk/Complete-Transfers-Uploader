@@ -767,8 +767,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
             if (centerWidth > 0 && centerHeight > 0 && centerWidth < rawWidth * 0.8) {
               console.log(`Using center-focused bounds for text logo: ${centerWidth.toFixed(1)}×${centerHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
               
-              const contentWidth = Math.max(100, Math.ceil(centerWidth + 40)); // Reduced padding from 60 to 40
-              const contentHeight = Math.max(50, Math.ceil(centerHeight + 30)); // Reduced padding from 40 to 30
+              const contentWidth = Math.max(100, Math.ceil(centerWidth + 5)); // Minimal padding for accurate sizing
+              const contentHeight = Math.max(50, Math.ceil(centerHeight + 5)); // Minimal padding for accurate sizing
               
               // Allow larger dimensions for real content - don't cap too aggressively
               return {
@@ -785,9 +785,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           };
         }
         
-        // For text/glyph SVGs, be more generous with the sizing since text can be more complex
-        const contentWidth = Math.max(100, Math.ceil(rawWidth + 40)); // Reduced padding for tighter bounds
-        const contentHeight = Math.max(50, Math.ceil(rawHeight + 30)); // Reduced padding for tighter bounds
+        // For text/glyph SVGs, use minimal padding to get accurate content dimensions
+        const contentWidth = Math.max(100, Math.ceil(rawWidth + 5)); // Minimal padding for tight bounds
+        const contentHeight = Math.max(50, Math.ceil(rawHeight + 5)); // Minimal padding for tight bounds
         
         // Apply generous limits for text-based logos to maintain readability - allow real content sizes
         const finalWidth = Math.min(contentWidth, 700); // Allow larger real content
@@ -909,8 +909,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.7 || filteredHeight < rawHeight * 0.7)) {
           console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
           
-          const contentWidth = Math.max(80, Math.ceil(filteredWidth + 30)); // Reduced padding from 40 to 30
-          const contentHeight = Math.max(60, Math.ceil(filteredHeight + 20)); // Reduced padding from 30 to 20
+          const contentWidth = Math.max(80, Math.ceil(filteredWidth + 5)); // Minimal padding for accurate sizing
+          const contentHeight = Math.max(60, Math.ceil(filteredHeight + 5)); // Minimal padding for accurate sizing
           
           return {
             width: Math.min(contentWidth, 600), // Allow larger real content
@@ -926,9 +926,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Add reasonable padding and ensure minimum viable size
-    const contentWidth = Math.max(80, Math.ceil(rawWidth + 40)); // More generous padding
-    const contentHeight = Math.max(60, Math.ceil(rawHeight + 30));
+    // Use minimal padding for accurate content dimensions
+    const contentWidth = Math.max(80, Math.ceil(rawWidth + 5)); // Minimal padding for tight bounds
+    const contentHeight = Math.max(60, Math.ceil(rawHeight + 5));
     
     // Apply maximum limits to prevent oversized logos but allow reasonable sizes
     const finalWidth = Math.min(contentWidth, 500); // Back to 500 for better control

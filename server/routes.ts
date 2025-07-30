@@ -145,8 +145,9 @@ export async function registerRoutes(app: express.Application) {
               const aspectRatio = contentBounds.width / contentBounds.height;
               const isTightContent = aspectRatio > 0.8 && aspectRatio < 2.5; // Normal logo proportions
               
-              // Use more aggressive scaling for tightly cropped content
-              const scaleFactor = isTightContent ? 0.35 : 0.296; // Higher scale for tight content
+              // Use precise scaling now that padding is minimized (was 40+30px, now 5+5px)
+              // For raw content 198.5×173.7 targeting 70×61mm: 70/203.5 = 0.344, 61/178.7 = 0.341
+              const scaleFactor = isTightContent ? 0.342 : 0.296; // Adjusted for minimal padding
               
               displayWidth = Math.round(contentBounds.width * scaleFactor);
               displayHeight = Math.round(contentBounds.height * scaleFactor);
