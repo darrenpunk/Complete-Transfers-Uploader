@@ -546,6 +546,7 @@ export default function PropertiesPanel({
     });
 
     // Line Thickness Check - ensure lines are thick enough for print reproduction
+    // This includes actual strokes AND converted strokes (filled shapes from expanded strokes)
     if (logo) {
       const svgAnalysis = logo.svgColors as any;
       let lineThicknessStatus = "pass";
@@ -563,7 +564,7 @@ export default function PropertiesPanel({
         }
       } else {
         // No stroke analysis available - could be pure fills or analysis not run
-        lineThicknessValue = "No strokes detected";
+        lineThicknessValue = "No lines detected";
       }
       
       checks.push({

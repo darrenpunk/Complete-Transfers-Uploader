@@ -223,9 +223,32 @@ export function extractSVGFonts(svgPath: string): FontInfo[] {
   }
 }
 
-// Function to extract stroke widths from SVG content
+// Function to calculate minimum dimension of a path (for detecting thin converted strokes)
+function calculatePathMinDimension(pathData: string): number | null {
+  try {
+    const coords = extractPathCoordinates(pathData);
+    if (coords.length < 2) return null;
+    
+    const minX = Math.min(...coords.map(c => c.x));
+    const maxX = Math.max(...coords.map(c => c.x));
+    const minY = Math.min(...coords.map(c => c.y));
+    const maxY = Math.max(...coords.map(c => c.y));
+    
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // Return the smaller dimension (likely represents stroke thickness if converted)
+    return Math.min(width, height);
+  } catch (error) {
+    return null;
+  }
+}
+
+// Function to extract stroke widths from SVG content (including converted strokes)
 function extractStrokeWidths(svgContent: string): number[] {
   const strokeWidths: number[] = [];
+  
+  // 1. Extract actual stroke-width attributes
   const patterns = [
     // Direct stroke-width attributes
     /stroke-width\s*=\s*["']([^"']+)["']/gi,
@@ -258,6 +281,55 @@ function extractStrokeWidths(svgContent: string): number[] {
       }
     }
   });
+
+  // 2. Analyze filled shapes for thin converted strokes
+  const shapePatterns = [
+    // Rectangle elements
+    /<rect[^>]*width\s*=\s*["']([^"']+)["'][^>]*height\s*=\s*["']([^"']+)["'][^>]*>/gi,
+    /<rect[^>]*height\s*=\s*["']([^"']+)["'][^>]*width\s*=\s*["']([^"']+)["'][^>]*>/gi,
+    // Filled paths (potential converted strokes)
+    /<path[^>]*fill\s*=\s*["'](?!none|transparent)[^"']+["'][^>]*d\s*=\s*["']([^"']+)["'][^>]*>/gi
+  ];
+
+  // Analyze rectangles
+  const rectPattern = /<rect[^>]*width\s*=\s*["']([^"']+)["'][^>]*height\s*=\s*["']([^"']+)["'][^>]*/gi;
+  let rectMatch;
+  while ((rectMatch = rectPattern.exec(svgContent)) !== null) {
+    const width = parseFloat(rectMatch[1]);
+    const height = parseFloat(rectMatch[2]);
+    
+    if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+      // Convert to points and find minimum dimension
+      const minDim = Math.min(width * 0.75, height * 0.75); // px to pt conversion
+      
+      // Only consider if it's very thin (likely a converted stroke)
+      if (minDim < 5) { // Less than 5pt could be a converted stroke
+        strokeWidths.push(minDim);
+      }
+    }
+  }
+
+  // Analyze filled paths for thin shapes
+  const pathPattern = /<path[^>]*fill\s*=\s*["'](?!none|transparent)[^"']+["'][^>]*d\s*=\s*["']([^"']+)["'][^>]*/gi;
+  let pathMatch;
+  let pathCount = 0;
+  const maxPaths = 50; // Limit analysis to prevent performance issues
+  
+  while ((pathMatch = pathPattern.exec(svgContent)) !== null && pathCount < maxPaths) {
+    pathCount++;
+    const pathData = pathMatch[1];
+    const minDimension = calculatePathMinDimension(pathData);
+    
+    if (minDimension !== null && minDimension > 0) {
+      // Convert to points
+      const minDimPt = minDimension * 0.75; // px to pt conversion
+      
+      // Only consider very thin filled paths (likely converted strokes)
+      if (minDimPt < 3) { // Less than 3pt is probably a converted stroke
+        strokeWidths.push(minDimPt);
+      }
+    }
+  }
 
   return strokeWidths.filter((width, index, arr) => arr.indexOf(width) === index); // Remove duplicates
 }
