@@ -155,16 +155,29 @@ export default function CanvasWorkspace({
   // Helper function for direct API updates to avoid mutation conflicts
   const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
     try {
-      await fetch(`/api/canvas-elements/${id}`, {
+      console.log('Canvas updateElementDirect called:', { id, updates });
+      const response = await fetch(`/api/canvas-elements/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
       
-      // Refresh data immediately for faster updates
-      queryClient.invalidateQueries({
-        queryKey: ["/api/projects", project.id, "canvas-elements"]
-      });
+      if (response.ok) {
+        console.log('✅ Canvas API update successful');
+        // Force complete cache refresh
+        await queryClient.cancelQueries({
+          queryKey: ["/api/projects", project.id, "canvas-elements"]
+        });
+        queryClient.removeQueries({
+          queryKey: ["/api/projects", project.id, "canvas-elements"]
+        });
+        await queryClient.refetchQueries({
+          queryKey: ["/api/projects", project.id, "canvas-elements"]
+        });
+        console.log('✅ Cache refreshed completely');
+      } else {
+        console.error('Failed to update element - server error:', response.status);
+      }
     } catch (error) {
       console.error('Failed to update element:', error);
     }
@@ -420,6 +433,11 @@ export default function CanvasWorkspace({
           updateElementDirect(selectedElement.id, { 
             x: Math.max(0, newX), 
             y: Math.max(0, newY) 
+          });
+          
+          // Force immediate refresh for dragging
+          queryClient.refetchQueries({
+            queryKey: ["/api/projects", project.id, "canvas-elements"]
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -1113,7 +1131,7 @@ export default function CanvasWorkspace({
                             
                             clearTimeout(rotationTimeout);
                             
-                            rotationTimeout = setTimeout(() => {
+                            rotationTimeout = setTimeout(async () => {
                               const rect = canvasRef.current!.getBoundingClientRect();
                               const centerX = elementX + elementWidth / 2;
                               const centerY = elementY + elementHeight / 2;
@@ -1130,8 +1148,13 @@ export default function CanvasWorkspace({
                               console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
                               
                               // Use same direct update function as other operations
-                              updateElementDirect(element.id, { 
+                              await updateElementDirect(element.id, { 
                                 rotation: Math.round(normalizedAngle) 
+                              });
+                              
+                              // Force immediate refresh to show rotation
+                              queryClient.refetchQueries({
+                                queryKey: ["/api/projects", project.id, "canvas-elements"]
                               });
                             }, 50);
                           };
