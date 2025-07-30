@@ -322,10 +322,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
               try {
                 let svgContent = fs.readFileSync(svgPath, 'utf8');
                 
-                // Calculate content bounds first
-                const initialBbox = calculateSVGContentBounds(svgContent);
-                if (initialBbox && initialBbox.minX !== undefined && initialBbox.minY !== undefined && initialBbox.maxX !== undefined && initialBbox.maxY !== undefined) {
-                  console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)} (colored content only, raw: ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)})`);
+                // Calculate content bounds with timeout protection for large files
+                let initialBbox = null;
+                try {
+                  console.log(`SVG content size: ${svgContent.length} characters`);
+                  if (svgContent.length < 10000000) { // Skip bounds for very large files (>10MB)
+                    initialBbox = calculateSVGContentBounds(svgContent);
+                    if (initialBbox && initialBbox.minX !== undefined && initialBbox.minY !== undefined && initialBbox.maxX !== undefined && initialBbox.maxY !== undefined) {
+                      console.log(`Content bounds: ${initialBbox.minX.toFixed(1)},${initialBbox.minY.toFixed(1)} to ${initialBbox.maxX.toFixed(1)},${initialBbox.maxY.toFixed(1)} = ${initialBbox.width.toFixed(1)}×${initialBbox.height.toFixed(1)}`);
+                    }
+                  } else {
+                    console.log('SVG content too large for bounds calculation, using defaults');
+                  }
+                } catch (boundsError) {
+                  console.log('Bounds calculation failed, using fallback:', boundsError instanceof Error ? boundsError.message : String(boundsError));
                 }
                 
                 // SELECTIVE white background removal - only remove obvious page backgrounds
@@ -374,28 +384,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 }
                 
-                // Apply content bounds cropping after background removal
-                const finalBbox = calculateSVGContentBounds(svgContent);
-                console.log('Final bbox result:', finalBbox);
-                if (finalBbox && finalBbox.minX !== undefined && finalBbox.minY !== undefined && finalBbox.maxX !== undefined && finalBbox.maxY !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
-                  // Use raw content dimensions for tight cropping
-                  const rawWidth = finalBbox.maxX - finalBbox.minX;
-                  const rawHeight = finalBbox.maxY - finalBbox.minY;
-                  
-                  console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
-                  
-                  // Update SVG viewBox to crop to content bounds
-                  const newViewBox = `viewBox="${finalBbox.minX} ${finalBbox.minY} ${rawWidth} ${rawHeight}"`;
-                  const newWidth = `width="${rawWidth}"`;
-                  const newHeight = `height="${rawHeight}"`;
-                  
-                  svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
-                  svgContent = svgContent.replace(/width="[^"]*"/, newWidth);
-                  svgContent = svgContent.replace(/height="[^"]*"/, newHeight);
-                  
-                  console.log('SVG updated with new viewBox:', newViewBox);
-                } else {
-                  console.log('SVG cropping skipped - no valid content bounds found');
+                // Apply content bounds cropping after background removal (only for smaller files)
+                let finalBbox = null;
+                try {
+                  if (svgContent.length < 10000000) { // Skip final bounds for very large files
+                    finalBbox = calculateSVGContentBounds(svgContent);
+                    console.log('Final bbox result:', finalBbox);
+                    if (finalBbox && finalBbox.minX !== undefined && finalBbox.minY !== undefined && finalBbox.maxX !== undefined && finalBbox.maxY !== undefined && finalBbox.width > 0 && finalBbox.height > 0) {
+                      // Use raw content dimensions for tight cropping
+                      const rawWidth = finalBbox.maxX - finalBbox.minX;
+                      const rawHeight = finalBbox.maxY - finalBbox.minY;
+                      
+                      console.log(`SVG cropping to content: ${finalBbox.minX.toFixed(1)},${finalBbox.minY.toFixed(1)} ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
+                      
+                      // Update SVG viewBox to crop to content bounds
+                      const newViewBox = `viewBox="${finalBbox.minX} ${finalBbox.minY} ${rawWidth} ${rawHeight}"`;
+                      const newWidth = `width="${rawWidth}"`;
+                      const newHeight = `height="${rawHeight}"`;
+                      
+                      svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                      svgContent = svgContent.replace(/width="[^"]*"/, newWidth);
+                      svgContent = svgContent.replace(/height="[^"]*"/, newHeight);
+                      
+                      console.log('SVG updated with new viewBox:', newViewBox);
+                    } else {
+                      console.log('SVG cropping skipped - no valid content bounds found');
+                    }
+                  } else {
+                    console.log('SVG too large for final bounds calculation, skipping cropping');
+                  }
+                } catch (finalBoundsError) {
+                  console.log('Final bounds calculation failed, skipping cropping:', finalBoundsError instanceof Error ? finalBoundsError.message : String(finalBoundsError));
                 }
                 
                 // Force SVG background transparency only

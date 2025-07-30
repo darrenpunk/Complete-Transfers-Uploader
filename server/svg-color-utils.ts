@@ -543,7 +543,7 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     const fillPathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
     let pathMatch;
     let fillMatchCount = 0;
-    const maxFillMatches = 500; // Prevent infinite loops
+    const maxFillMatches = 100; // Reduced limit to prevent timeouts
     
     while ((pathMatch = fillPathRegex.exec(svgContent)) !== null && fillMatchCount < maxFillMatches) {
       fillMatchCount++;
@@ -572,7 +572,7 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     const strokePathRegex = /<path[^>]*stroke="none"[^>]*d="([^"]*)"[^>]*>/gi;
     let strokeMatch;
     let strokeMatchCount = 0;
-    const maxStrokeMatches = 200; // Prevent infinite loops
+    const maxStrokeMatches = 50; // Reduced limit to prevent timeouts
     
     while ((strokeMatch = strokePathRegex.exec(svgContent)) !== null && strokeMatchCount < maxStrokeMatches) {
       strokeMatchCount++;
@@ -641,6 +641,15 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
 // Calculate actual content bounding box from SVG elements, excluding obvious backgrounds and font definitions
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
+    // Early check for extremely large files - use fallback to prevent timeouts
+    if (svgContent.length > 5000000) { // 5MB+ SVG files
+      console.log('SVG content extremely large (>5MB), using performance fallback');
+      return {
+        width: 300,
+        height: 200
+      };
+    }
+    
     // Check if this is a vectorized SVG (has vector-effect attribute and large viewBox)
     const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"');
     const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
@@ -670,7 +679,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const pathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
       let pathMatch;
       let matchCount = 0;
-      const maxMatches = 1000; // Prevent infinite loops on complex SVGs
+      const maxMatches = 100; // Reduced limit to prevent timeouts on large files
       
       while ((pathMatch = pathRegex.exec(contentWithoutDefs)) !== null && matchCount < maxMatches) {
         matchCount++;
