@@ -275,20 +275,11 @@ export default function PropertiesPanel({
         queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], context.previousElements);
       }
     },
-    onSuccess: async (updatedElement) => {
-      // Force immediate refetch of canvas elements to update UI
-      await queryClient.invalidateQueries({
+    onSuccess: () => {
+      // Just invalidate to refresh from server
+      queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
       });
-      
-      // Also force React to re-render by updating the query data directly
-      const currentData = queryClient.getQueryData<CanvasElement[]>(["/api/projects", currentElement?.projectId, "canvas-elements"]);
-      if (currentData) {
-        const updatedData = currentData.map(el => 
-          el.id === updatedElement.id ? updatedElement : el
-        );
-        queryClient.setQueryData(["/api/projects", currentElement?.projectId, "canvas-elements"], updatedData);
-      }
     },
   });
 

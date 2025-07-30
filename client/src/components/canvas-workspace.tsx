@@ -151,18 +151,25 @@ export default function CanvasWorkspace({
       const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
       return response.json();
     },
-    onSuccess: (updatedElement) => {
-      // Force invalidation to ensure UI updates
+    onMutate: async ({ id, updates }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
+
+      // Optimistically update the element
+      queryClient.setQueryData(["/api/projects", project.id, "canvas-elements"], (old: CanvasElement[] | undefined) => {
+        if (!old) return old;
+        return old.map((element) => 
+          element.id === id ? { ...element, ...updates } : element
+        );
+      });
+    },
+    onSuccess: () => {
+      // Just invalidate to refresh from server
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", project.id, "canvas-elements"]
       });
-      
-      // Save to history after successful update (with small delay to get updated state)
-      setTimeout(() => {
-        if (canvasElements.length > 0) {
-          saveToHistory(canvasElements);
-        }
-      }, 50);
     },
   });
 
@@ -1142,7 +1149,7 @@ export default function CanvasWorkspace({
                                 id: element.id,
                                 updates: { rotation: Math.round(angle) }
                               });
-                            }, 50);
+                            }, 16);
                           };
                           
                           const handleRotationMouseUp = () => {
