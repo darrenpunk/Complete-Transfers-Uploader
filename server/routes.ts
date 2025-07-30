@@ -40,7 +40,11 @@ const upload = multer({
 
 export async function registerRoutes(app: express.Application) {
   const { MemStorage } = await import('./storage');
+  const { setupImpositionRoutes } = await import('./imposition-routes');
   const storage = new MemStorage();
+  
+  // Setup imposition routes
+  setupImpositionRoutes(app, storage);
   // File upload endpoint
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
     try {
@@ -353,6 +357,26 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('Delete canvas element error:', error);
       res.status(500).json({ error: 'Failed to delete canvas element' });
+    }
+  });
+
+  // Duplicate canvas element endpoint
+  app.post('/api/canvas-elements/:elementId/duplicate', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      console.log(`🔄 Duplicating canvas element: ${elementId}`);
+      
+      const duplicatedElement = await storage.duplicateCanvasElement(elementId);
+      
+      if (!duplicatedElement) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      console.log(`✅ Successfully duplicated element: ${elementId} → ${duplicatedElement.id}`);
+      res.json(duplicatedElement);
+    } catch (error) {
+      console.error('Duplicate canvas element error:', error);
+      res.status(500).json({ error: 'Failed to duplicate canvas element' });
     }
   });
   

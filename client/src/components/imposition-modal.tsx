@@ -60,7 +60,7 @@ export default function ImpositionModal({
       });
       toast({
         title: "Success",
-        description: `Created ${rows}×${columns} imposition grid`,
+        description: `Created ${rows} down × ${columns} across imposition grid`,
       });
       onOpenChange(false);
     },
@@ -79,7 +79,7 @@ export default function ImpositionModal({
     if (rows < 1 || rows > 20) {
       toast({
         title: "Invalid Input",
-        description: "Rows must be between 1 and 20",
+        description: "Down must be between 1 and 20",
         variant: "destructive",
       });
       return;
@@ -88,7 +88,7 @@ export default function ImpositionModal({
     if (columns < 1 || columns > 20) {
       toast({
         title: "Invalid Input", 
-        description: "Columns must be between 1 and 20",
+        description: "Across must be between 1 and 20",
         variant: "destructive",
       });
       return;
@@ -139,7 +139,7 @@ export default function ImpositionModal({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-sm font-medium">Rows</Label>
+                <Label className="text-sm font-medium">Down</Label>
                 <Input
                   type="number"
                   value={rows}
@@ -150,7 +150,7 @@ export default function ImpositionModal({
                 />
               </div>
               <div>
-                <Label className="text-sm font-medium">Columns</Label>
+                <Label className="text-sm font-medium">Across</Label>
                 <Input
                   type="number"
                   value={columns}

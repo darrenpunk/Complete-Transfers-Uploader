@@ -164,7 +164,8 @@ export class MemStorage implements IStorage {
       id, 
       status: insertProject.status || "draft",
       createdAt: new Date().toISOString(),
-      inkColor: insertProject.inkColor || null
+      inkColor: insertProject.inkColor || null,
+      appliqueBadgesForm: insertProject.appliqueBadgesForm || null
     };
     this.projects.set(id, project);
     return project;
@@ -204,7 +205,8 @@ export class MemStorage implements IStorage {
       originalUrl: insertLogo.originalUrl ?? null,
       svgColors: insertLogo.svgColors || null,
       svgFonts: insertLogo.svgFonts || null,
-      fontsOutlined: insertLogo.fontsOutlined || false
+      fontsOutlined: insertLogo.fontsOutlined || false,
+      contentBounds: insertLogo.contentBounds || null
     };
     this.logos.set(id, logo);
     return logo;
@@ -239,6 +241,7 @@ export class MemStorage implements IStorage {
     const element: CanvasElement = { 
       ...insertElement, 
       id,
+      elementType: insertElement.elementType || 'logo',
       x: insertElement.x || 0,
       y: insertElement.y || 0,
       rotation: insertElement.rotation || 0,
