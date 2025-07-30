@@ -12,6 +12,7 @@ import {
 } from '@shared/schema';
 import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
+import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
 
 const execAsync = promisify(exec);
 
@@ -168,38 +169,24 @@ export async function registerRoutes(app: express.Application) {
               fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
             }
             
-            if (contentBounds) {
-              // CRITICAL FIX: Extract raw dimensions from SVG directly for exact precision
-              // Get the raw width/height that was detected during SVG processing
-              const svgContent = fs.readFileSync(svgPath, 'utf8');
-              const viewBoxMatch = svgContent.match(/viewBox="[^"]*\s([0-9.]+)\s([0-9.]+)"/);
-              let rawPixelWidth = contentBounds.width;
-              let rawPixelHeight = contentBounds.height;
-              
-              if (viewBoxMatch) {
-                // Use viewBox dimensions directly for exact precision
-                rawPixelWidth = parseFloat(viewBoxMatch[1]);
-                rawPixelHeight = parseFloat(viewBoxMatch[2]);
-                console.log(`Using raw viewBox dimensions: ${rawPixelWidth}×${rawPixelHeight}px instead of calculated ${contentBounds.width}×${contentBounds.height}px`);
-              }
-              
-              // CRITICAL: Use exact conversion factor for this specific logo
-              // User's Illustrator file: 600×595px = 210×208mm 
-              // This gives us: 1 pixel = 0.35mm exactly
-              const pixelToMmFactor = 0.35; // Exact conversion factor for 600px → 210mm
-              
-              // Use floating point precision throughout - no rounding until final display
-              displayWidth = rawPixelWidth * pixelToMmFactor;
-              displayHeight = rawPixelHeight * pixelToMmFactor;
-              
-              console.log(`ACCURACY CHECK: Content ${rawPixelWidth}×${rawPixelHeight}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (factor: ${pixelToMmFactor})`);
-              
-                  } else if (isA3Document) {
+            // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation
+            const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+            const dimensionResult = detectDimensionsFromSVG(updatedSvgContent2, contentBounds);
+            
+            // Validate accuracy and log any issues
+            validateDimensionAccuracy(dimensionResult);
+            
+            // Use the calculated mm dimensions directly
+            displayWidth = dimensionResult.widthMm;
+            displayHeight = dimensionResult.heightMm;
+            
+            console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
+            
+            } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
               displayWidth = 200;
               displayHeight = 150;
-            }
           }
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
