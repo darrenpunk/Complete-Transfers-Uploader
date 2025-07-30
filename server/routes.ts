@@ -43,6 +43,63 @@ export async function registerRoutes(app: express.Application) {
   const { setupImpositionRoutes } = await import('./imposition-routes');
   const storage = new MemStorage();
   
+  // PDF Generation endpoint - Must be before other routes
+  app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
+    try {
+      console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
+      const projectId = req.params.projectId;
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        console.error(`❌ Project not found: ${projectId}`);
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      console.log(`✅ Project found: ${project.name || 'Untitled'}`);
+
+      // Get project data
+      const logos = await storage.getLogosForProject(projectId);
+      const canvasElements = await storage.getCanvasElementsForProject(projectId);
+      const templateSizes = await storage.getTemplateSizes();
+      
+      console.log(`📊 Project data - Logos: ${logos.length}, Elements: ${canvasElements.length}`);
+      
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      if (!templateSize) {
+        console.error(`❌ Invalid template size: ${project.templateSize}`);
+        return res.status(400).json({ error: 'Invalid template size' });
+      }
+
+      console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
+
+      // Import the EnhancedCMYKGenerator
+      const { EnhancedCMYKGenerator } = await import('./enhanced-cmyk-generator');
+      const generator = new EnhancedCMYKGenerator();
+
+      // Generate PDF using EnhancedCMYKGenerator
+      const pdfData = {
+        projectId,
+        templateSize,
+        canvasElements,
+        logos,
+        garmentColor: project.garmentColor,
+        appliqueBadgesForm: project.appliqueBadgesForm
+      };
+
+      console.log(`🔄 Generating PDF with EnhancedCMYKGenerator...`);
+      const pdfBuffer = await generator.generatePDF(pdfData, project);
+      console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'project'}_cmyk.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ PDF generation error:', error);
+      res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+    }
+  });
+  
   // Setup imposition routes
   setupImpositionRoutes(app, storage);
   // File upload endpoint
@@ -401,7 +458,7 @@ export async function registerRoutes(app: express.Application) {
       res.status(500).json({ error: 'Failed to duplicate canvas element' });
     }
   });
-  
+
   // Ink recolor endpoint (simplified)
   app.get('/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
