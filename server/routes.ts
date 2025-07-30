@@ -182,7 +182,7 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
-            } else if (isA3Document) {
+            } else {
               // Fallback: for large documents with no detectable content bounds
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
               displayWidth = 200;
@@ -288,8 +288,73 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Delete logo endpoint with proper cleanup
+  app.delete('/api/logos/:logoId', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      
+      // Get the logo first to check if it exists
+      const logo = await storage.getLogo(logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Delete all canvas elements that use this logo
+      await storage.deleteCanvasElementsByLogo(logoId);
+      console.log(`🗑️ Cleaned up canvas elements for deleted logo: ${logoId}`);
+      
+      // Delete the logo from storage
+      const deleted = await storage.deleteLogo(logoId);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Clean up physical files
+      try {
+        const uploadsDir = path.resolve('./uploads');
+        const files = [
+          path.join(uploadsDir, logo.filename),
+          path.join(uploadsDir, `${logo.filename}.svg`),
+          path.join(uploadsDir, `${logoId}_modified.svg`),
+          path.join(uploadsDir, `${logoId}_color_managed.png`)
+        ];
+        
+        files.forEach(filePath => {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`🗑️ Deleted file: ${filePath}`);
+          }
+        });
+      } catch (fileError) {
+        console.warn('Warning: Failed to delete some logo files:', fileError);
+      }
+      
+      res.json({ success: true, message: 'Logo and associated elements deleted successfully' });
+    } catch (error) {
+      console.error('Delete logo error:', error);
+      res.status(500).json({ error: 'Failed to delete logo' });
+    }
+  });
+
   // Static file serving with fallback
   app.use('/uploads', express.static(uploadDir));
+
+  // Delete canvas element endpoint
+  app.delete('/api/canvas-elements/:elementId', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      const deleted = await storage.deleteCanvasElement(elementId);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      res.json({ success: true, message: 'Canvas element deleted successfully' });
+    } catch (error) {
+      console.error('Delete canvas element error:', error);
+      res.status(500).json({ error: 'Failed to delete canvas element' });
+    }
+  });
   
   // Ink recolor endpoint (simplified)
   app.get('/uploads/:filename', (req, res, next) => {

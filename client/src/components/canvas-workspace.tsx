@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
+import { useCleanupOrphanedElements } from '@/hooks/use-cleanup-orphaned-elements';
 
 // Import garment color utilities from shared module
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
@@ -281,6 +282,13 @@ export default function CanvasWorkspace({
       setShowRasterWarning(true);
     }
   };
+
+  // Automatic cleanup of orphaned canvas elements
+  useCleanupOrphanedElements({
+    projectId: project.id,
+    canvasElements,
+    logos
+  });
 
   // Raster warning modal handlers
   const handlePhotographicApprove = () => {
@@ -942,14 +950,25 @@ export default function CanvasWorkspace({
             )}
 
             {/* Canvas Elements */}
-            {canvasElements.map((element) => {
-              if (!element.isVisible) return null;
-              
+            {canvasElements
+              .filter((element) => {
+                // Always show visible elements
+                if (!element.isVisible) return false;
+                
+                // For elements with logoId, ensure the logo exists
+                if (element.logoId) {
+                  const logo = logos.find(l => l.id === element.logoId);
+                  if (!logo) {
+                    console.warn(`🧹 Canvas element ${element.id} references missing logo ${element.logoId}, filtering out`);
+                    return false;
+                  }
+                }
+                
+                return true;
+              })
+              .map((element) => {
               // For logo elements, find the associated logo
               const logo = element.logoId ? logos.find(l => l.id === element.logoId) : null;
-              
-              // Skip logo elements without associated logo
-              if (element.elementType === 'logo' && !logo) return null;
 
               const isSelected = selectedElement?.id === element.id;
               
