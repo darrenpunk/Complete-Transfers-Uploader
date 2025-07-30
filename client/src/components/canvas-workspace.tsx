@@ -404,7 +404,7 @@ export default function CanvasWorkspace({
     let updateTimeout: NodeJS.Timeout;
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!canvasRef.current || updateElementMutation.isPending) return;
+      if (!canvasRef.current) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
       const scaleFactor = zoom / 100;
@@ -482,7 +482,7 @@ export default function CanvasWorkspace({
             }
           });
         }
-      }, 50); // Throttle to 20fps
+      }, 16); // Throttle to ~60fps for smoother interaction
     };
 
     const handleMouseUp = () => {
@@ -972,7 +972,7 @@ export default function CanvasWorkspace({
 
               return (
                 <div
-                  key={`${element.id}-${element.width}-${element.height}-${element.rotation}`}
+                  key={element.id}
                   className={`absolute cursor-move ${
                     isSelected ? 'border-2 border-primary bg-blue-50 bg-opacity-50' : 'border border-gray-300 hover:border-gray-400'
                   }`}
@@ -1129,22 +1129,20 @@ export default function CanvasWorkspace({
                             clearTimeout(rotationTimeout);
                             
                             rotationTimeout = setTimeout(() => {
-                              if (!updateElementMutation.isPending) {
-                                const rect = canvasRef.current!.getBoundingClientRect();
-                                const centerX = elementX + elementWidth / 2;
-                                const centerY = elementY + elementHeight / 2;
-                                
-                                const angle = Math.atan2(
-                                  moveEvent.clientY - rect.top - centerY,
-                                  moveEvent.clientX - rect.left - centerX
-                                ) * (180 / Math.PI);
-                                
-                                updateElementMutation.mutate({
-                                  id: element.id,
-                                  updates: { rotation: Math.round(angle) }
-                                });
-                              }
-                            }, 100);
+                              const rect = canvasRef.current!.getBoundingClientRect();
+                              const centerX = elementX + elementWidth / 2;
+                              const centerY = elementY + elementHeight / 2;
+                              
+                              const angle = Math.atan2(
+                                moveEvent.clientY - rect.top - centerY,
+                                moveEvent.clientX - rect.left - centerX
+                              ) * (180 / Math.PI);
+                              
+                              updateElementMutation.mutate({
+                                id: element.id,
+                                updates: { rotation: Math.round(angle) }
+                              });
+                            }, 50);
                           };
                           
                           const handleRotationMouseUp = () => {
