@@ -499,19 +499,21 @@ export class EnhancedCMYKGenerator {
       await this.renderAppliqueBadgesForm(page2, appliqueBadgesForm, pdfDoc, pageWidth, pageHeight);
     }
     
-    // Embed ICC profile directly into PDF using pdf-lib
+    console.log('Enhanced CMYK: Created vector-preserving PDF with pdf-lib');
+    const pdfBytes = await pdfDoc.save();
+    let finalPdfBuffer = Buffer.from(pdfBytes);
+    
+    // Apply ICC profile post-processing using Ghostscript for reliable embedding
     if (useICC) {
       try {
-        await this.embedICCProfileDirectly(pdfDoc, iccProfilePath);
-        console.log(`Enhanced CMYK: Successfully embedded ICC profile directly into PDF structure: ${path.basename(iccProfilePath)}`);
+        finalPdfBuffer = await this.applyICCProfilePostProcessing(finalPdfBuffer, iccProfilePath);
+        console.log(`Enhanced CMYK: Successfully embedded ICC profile via Ghostscript: ${path.basename(iccProfilePath)}`);
       } catch (error) {
-        console.log('Enhanced CMYK: Failed to embed ICC profile directly, continuing without:', error);
+        console.log('Enhanced CMYK: Failed to embed ICC profile via Ghostscript, using PDF without profile:', (error as Error).message);
       }
     }
     
-    console.log('Enhanced CMYK: Created vector-preserving PDF with pdf-lib');
-    const pdfBytes = await pdfDoc.save();
-    return Buffer.from(pdfBytes);
+    return finalPdfBuffer;
   }
 
   private async generateModifiedSVG(element: CanvasElement, logo: Logo, uploadDir: string) {
@@ -931,6 +933,78 @@ export class EnhancedCMYKGenerator {
   private recolorSVGContent(svgContent: string, inkColor: string): string {
     // Apply the same recoloring logic used in the frontend
     return recolorSVG(svgContent, inkColor);
+  }
+
+  private async applyICCProfilePostProcessing(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
+    const execAsync = promisify(exec);
+    const tempDir = path.join(process.cwd(), 'uploads', 'temp_icc');
+    
+    // Create temp directory if it doesn't exist
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    try {
+      const inputPath = path.join(tempDir, `input_${Date.now()}.pdf`);
+      const outputPath = path.join(tempDir, `output_${Date.now()}.pdf`);
+      
+      // Write input PDF
+      fs.writeFileSync(inputPath, pdfBuffer);
+      
+      // Use Ghostscript to embed ICC profile into CMYK PDF
+      const gsCommand = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dColorConversionStrategy=/LeaveColorUnchanged', // Keep existing CMYK colors
+        '-dProcessColorModel=/DeviceCMYK',
+        '-dEmbedAllFonts=true',
+        '-dCompatibilityLevel=1.4',
+        `-sDefaultCMYKProfile="${iccProfilePath}"`,
+        `-sOutputICCProfile="${iccProfilePath}"`,
+        `-sOutputFile="${outputPath}"`,
+        `"${inputPath}"`
+      ].join(' ');
+      
+      console.log(`Enhanced CMYK: Applying ICC profile with Ghostscript: ${path.basename(iccProfilePath)}`);
+      
+      await execAsync(gsCommand);
+      
+      if (fs.existsSync(outputPath)) {
+        const enhancedPDFBuffer = fs.readFileSync(outputPath);
+        
+        // Clean up temp files
+        fs.unlinkSync(inputPath);
+        fs.unlinkSync(outputPath);
+        
+        console.log('Enhanced CMYK: Successfully applied ICC profile post-processing');
+        return enhancedPDFBuffer;
+      } else {
+        throw new Error('Ghostscript ICC profile embedding failed - no output file created');
+      }
+      
+    } catch (error) {
+      console.error('Enhanced CMYK: ICC profile post-processing failed:', error);
+      // Clean up any remaining temp files
+      try {
+        const files = fs.readdirSync(tempDir);
+        files.forEach(file => {
+          fs.unlinkSync(path.join(tempDir, file));
+        });
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+      throw error;
+    } finally {
+      // Clean up temp directory if empty
+      try {
+        fs.rmdirSync(tempDir);
+      } catch (error) {
+        // Ignore if directory not empty or doesn't exist
+      }
+    }
   }
 
   private async embedICCProfileDirectly(pdfDoc: PDFDocument, iccProfilePath: string): Promise<void> {
