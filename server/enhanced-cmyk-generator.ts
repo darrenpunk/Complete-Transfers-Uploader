@@ -342,8 +342,9 @@ export class EnhancedCMYKGenerator {
     
     // Process each canvas element for page 1
     for (const element of canvasElements) {
+      if (!element.logoId || !element.isVisible) continue;
       const logo = logoMap.get(element.logoId);
-      if (!logo || !element.isVisible) continue;
+      if (!logo) continue;
       
       try {
         await this.embedVectorLogo(pdfDoc, page1, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
@@ -365,8 +366,9 @@ export class EnhancedCMYKGenerator {
       
       // Multi-color visualization: show each logo on its own garment color background
       for (const element of canvasElements) {
+        if (!element.logoId || !element.isVisible) continue;
         const logo = logoMap.get(element.logoId);
-        if (!logo || !element.isVisible) continue;
+        if (!logo) continue;
         
         // Use individual garment color or fall back to project default
         const logoGarmentColor = element.garmentColor || garmentColor || '#FFFFFF';
@@ -467,8 +469,9 @@ export class EnhancedCMYKGenerator {
       
       // Process each canvas element for page 2
       for (const element of canvasElements) {
+        if (!element.logoId || !element.isVisible) continue;
         const logo = logoMap.get(element.logoId);
-        if (!logo || !element.isVisible) continue;
+        if (!logo) continue;
         
         try {
           await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
@@ -479,8 +482,9 @@ export class EnhancedCMYKGenerator {
     } else {
       // No garment color specified, just add the logos without background
       for (const element of canvasElements) {
+        if (!element.logoId || !element.isVisible) continue;
         const logo = logoMap.get(element.logoId);
-        if (!logo || !element.isVisible) continue;
+        if (!logo) continue;
         
         try {
           await this.embedVectorLogo(pdfDoc, page2, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
