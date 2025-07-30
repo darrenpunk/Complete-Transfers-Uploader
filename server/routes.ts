@@ -282,9 +282,18 @@ export async function registerRoutes(app: express.Application) {
         // Automatically analyze SVG files for stroke widths and other properties
         if (finalMimeType === 'image/svg+xml') {
           try {
+            console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
             const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
             const svgPath = path.join(uploadDir, finalFilename);
+            console.log(`📁 SVG path: ${svgPath}`);
+            
             const analysis = analyzeSVGWithStrokeWidths(svgPath);
+            console.log(`🎨 Analysis results:`, {
+              colors: analysis.colors?.length || 0,
+              fonts: analysis.fonts?.length || 0,
+              strokeWidths: analysis.strokeWidths?.length || 0,
+              hasText: analysis.hasText
+            });
             
             // Update the logo with enhanced analysis data including stroke widths
             const updatedAnalysis = {
@@ -296,14 +305,16 @@ export async function registerRoutes(app: express.Application) {
               hasText: analysis.hasText
             };
             
+            console.log(`💾 Updating logo ${logo.id} with analysis data`);
             await storage.updateLogo(logo.id, {
               svgColors: updatedAnalysis,
               svgFonts: analysis.fonts
             });
             
-            console.log(`📊 Auto-analyzed ${finalFilename} - Stroke widths: ${analysis.strokeWidths.length}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
+            console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
           } catch (analysisError) {
-            console.warn('SVG analysis failed during upload:', analysisError);
+            console.error('❌ SVG analysis failed during upload:', analysisError);
+            console.error('Stack trace:', analysisError.stack);
           }
         }
       }
