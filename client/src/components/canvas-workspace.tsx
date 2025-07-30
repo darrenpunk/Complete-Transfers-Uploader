@@ -988,7 +988,9 @@ export default function CanvasWorkspace({
                     top: elementY,
                     width: elementWidth,
                     height: elementHeight,
-                    zIndex: element.zIndex
+                    zIndex: element.zIndex,
+                    transform: `rotate(${element.rotation || 0}deg)`,
+                    transformOrigin: 'center'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
@@ -1026,21 +1028,7 @@ export default function CanvasWorkspace({
                           objectFit: 'contain',
                           width: '100%',
                           height: '100%',
-                          transform: (() => {
-                            const rotation = element.rotation || 0;
-                            const normalizedRotation = ((rotation % 360) + 360) % 360;
-                            const isRotatedSideways = (normalizedRotation >= 45 && normalizedRotation < 135) || 
-                                                     (normalizedRotation >= 225 && normalizedRotation < 315);
-                            
-                            // Calculate scale factor when rotated sideways
-                            // The image needs to scale up to fill the swapped dimensions
-                            if (isRotatedSideways) {
-                              const scaleFactor = Math.max(element.width / element.height, element.height / element.width);
-                              return `rotate(${rotation}deg) scale(${scaleFactor})`;
-                            }
-                            return `rotate(${rotation}deg)`;
-                          })(),
-                          transformOrigin: 'center'
+
                         }}
                         draggable={false}
                         onLoad={() => {

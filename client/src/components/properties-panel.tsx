@@ -377,14 +377,8 @@ export default function PropertiesPanel({
     }
     let updates: Partial<CanvasElement>;
     
-    if (property === 'rotation') {
-      // Just normalize rotation to 0-360 range - don't swap dimensions here
-      // Dimension swapping should be handled by the canvas rotation handle only
-      processedValue = ((processedValue % 360) + 360) % 360;
-      updates = { [property]: processedValue };
-    } else {
-      updates = { [property]: processedValue };
-    }
+    // Simple property update without any rotation-specific logic
+    updates = { [property]: processedValue };
 
     // Handle aspect ratio maintenance for width/height changes (only if not a rotation change)
     if (maintainAspectRatio && (property === 'width' || property === 'height')) {
