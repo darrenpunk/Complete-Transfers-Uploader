@@ -160,7 +160,7 @@ export default function PropertiesPanel({
         opacity: Math.round((currentElement.opacity || 1) * 100).toString()
       });
     }
-  }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.rotation, currentElement?.opacity]);
+  }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.opacity]);
   
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -378,47 +378,10 @@ export default function PropertiesPanel({
     let updates: Partial<CanvasElement>;
     
     if (property === 'rotation') {
-      // Normalize rotation to 0-360 range
+      // Just normalize rotation to 0-360 range - don't swap dimensions here
+      // Dimension swapping should be handled by the canvas rotation handle only
       processedValue = ((processedValue % 360) + 360) % 360;
-      
-      // Check if rotation crosses the 45°/135°/225°/315° thresholds where orientation changes
-      const oldRotation = currentElement.rotation || 0;
-      const newRotation = processedValue;
-      
-      // Determine orientation based on which 90° quadrant we're in
-      // 0-45° and 315-360° = portrait (0°)
-      // 45-135° = landscape (90°) 
-      // 135-225° = portrait (180°)
-      // 225-315° = landscape (270°)
-      const getOrientation = (rotation: number) => {
-        const normalized = ((rotation % 360) + 360) % 360;
-        if (normalized >= 45 && normalized < 135) return 'landscape'; // 90°
-        if (normalized >= 225 && normalized < 315) return 'landscape'; // 270°
-        return 'portrait'; // 0° or 180°
-      };
-      
-      const oldOrientation = getOrientation(oldRotation);
-      const newOrientation = getOrientation(newRotation);
-      
-      // If orientation changes, swap dimensions
-      if (oldOrientation !== newOrientation) {
-        console.log('Rotation changing orientation, swapping dimensions:', {
-          oldRotation,
-          newRotation,
-          oldOrientation,
-          newOrientation,
-          oldDimensions: `${currentElement.width}×${currentElement.height}`,
-          newDimensions: `${currentElement.height}×${currentElement.width}`
-        });
-        
-        updates = {
-          rotation: processedValue,
-          width: currentElement.height,
-          height: currentElement.width
-        };
-      } else {
-        updates = { [property]: processedValue };
-      }
+      updates = { [property]: processedValue };
     } else {
       updates = { [property]: processedValue };
     }
