@@ -781,8 +781,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
               
               // Allow larger dimensions for real content - don't cap too aggressively
               return {
-                width: Math.min(contentWidth, 200), // Reduced from 600 to prevent oversized logos
-                height: Math.min(contentHeight, 150) // Reduced from 500 to prevent oversized logos
+                width: contentWidth, // Use exact content width for accuracy  
+                height: contentHeight // Use exact content height for accuracy
               };
             }
           }
@@ -798,9 +798,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const contentWidth = Math.max(100, Math.ceil(rawWidth + 5)); // Minimal padding for tight bounds
         const contentHeight = Math.max(50, Math.ceil(rawHeight + 5)); // Minimal padding for tight bounds
         
-        // Apply reasonable limits for text-based logos to maintain readability
-        const finalWidth = Math.min(contentWidth, 250); // Reduced from 700 to prevent oversized logos
-        const finalHeight = Math.min(contentHeight, 200); // Reduced from 600 to prevent oversized logos
+        // Use exact dimensions for text-based logos for accuracy
+        const finalWidth = contentWidth; // Use exact content width
+        const finalHeight = contentHeight; // Use exact content height
         
         console.log(`Text-aware content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
         
@@ -817,8 +817,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       // Fallback for text-heavy logos - use more generous dimensions
       console.log('Text/glyph SVG with no colored paths found, using text logo fallback');
       return {
-        width: 200,  // Reduced from 350 to prevent oversized logos
-        height: 80   // Reduced from 120 to prevent oversized logos
+        width: 250,  // Reasonable default for text logos
+        height: 100  // Reasonable default for text logos
       };
     }
     
@@ -922,16 +922,19 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const contentHeight = Math.max(60, Math.ceil(filteredHeight + 5)); // Minimal padding for accurate sizing
           
           return {
-            width: Math.min(contentWidth, 200), // Reduced from 600 to prevent oversized logos
-            height: Math.min(contentHeight, 150) // Reduced from 500 to prevent oversized logos
+            width: contentWidth, // Use exact content width for accuracy
+            height: contentHeight // Use exact content height for accuracy
           };
         }
       }
       
-      console.log(`Detected oversized bounds (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative logo sizing`);
+      console.log(`Detected oversized bounds (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using filtered content sizing`);
+      // Even for oversized content, try to find the actual logo content 
+      const filteredWidth = Math.min(rawWidth, 600); // Cap only truly excessive sizes
+      const filteredHeight = Math.min(rawHeight, 600);
       return {
-        width: 150, // Reduced from 300 to prevent oversized logos
-        height: 100 // Reduced from 200 to prevent oversized logos
+        width: filteredWidth,
+        height: filteredHeight
       };
     }
     
@@ -939,10 +942,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const contentWidth = Math.max(80, Math.ceil(rawWidth + 5)); // Minimal padding for tight bounds
     const contentHeight = Math.max(60, Math.ceil(rawHeight + 5));
     
-    // For content detected in reasonable ranges, use actual dimensions to preserve logo sizing
-    // Only cap when truly oversized (indicating background elements)
-    const finalWidth = Math.min(contentWidth, rawWidth > 800 ? 400 : contentWidth); // Use actual content unless clearly oversized
-    const finalHeight = Math.min(contentHeight, rawHeight > 600 ? 300 : contentHeight); // Use actual content unless clearly oversized
+    // CRITICAL: Use actual content dimensions for accurate logo sizing - no artificial caps
+    // This is essential for customer accuracy across all templates
+    const finalWidth = contentWidth; // Use exact content width
+    const finalHeight = contentHeight; // Use exact content height
     
     console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     

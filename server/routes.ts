@@ -177,26 +177,17 @@ export async function registerRoutes(app: express.Application) {
               const aspectRatio = contentBounds.width / contentBounds.height;
               const isTightContent = aspectRatio > 0.8 && aspectRatio < 2.5; // Normal logo proportions
               
-              // Calculate scaling to preserve actual content proportions
-              // Use 0.35 scale factor (approximately 1 pixel = 0.35mm) for direct content mapping
-              const baseScale = 0.35; // Direct pixel-to-mm conversion factor
-              const targetWidth = contentBounds.width * baseScale;
-              const targetHeight = contentBounds.height * baseScale;
+              // CRITICAL: Direct pixel-to-mm conversion for accurate logo dimensions
+              // Standard DPI conversion: 72 DPI = 1 pixel = 0.352778mm
+              // This ensures bounding box matches vector content exactly
+              const pixelToMmFactor = 0.352778; // Exact conversion factor
               
-              const scaleFactor = baseScale; // Use direct scaling factor
+              displayWidth = Math.round(contentBounds.width * pixelToMmFactor);
+              displayHeight = Math.round(contentBounds.height * pixelToMmFactor);
               
-              displayWidth = Math.round(contentBounds.width * scaleFactor);
-              displayHeight = Math.round(contentBounds.height * scaleFactor);
+              console.log(`ACCURACY CHECK: Content ${contentBounds.width}×${contentBounds.height}px → ${displayWidth}×${displayHeight}mm (factor: ${pixelToMmFactor})`);
               
-              // Apply reasonable limits to prevent unreasonably large logos
-              const maxWidth = isA3Document ? 400 : 300;
-              const maxHeight = isA3Document ? 500 : 400;
-              
-              displayWidth = Math.min(displayWidth, maxWidth);
-              displayHeight = Math.min(displayHeight, maxHeight);
-              
-              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, aspect: ${aspectRatio.toFixed(2)}, tight: ${isTightContent}, target: ${targetWidth}×${targetHeight}mm, scaled to: ${displayWidth}×${displayHeight}mm (scale: ${scaleFactor.toFixed(3)})`);
-            } else if (isA3Document) {
+                  } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
               displayWidth = 200;
