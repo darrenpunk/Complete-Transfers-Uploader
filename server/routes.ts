@@ -183,10 +183,10 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`Using raw viewBox dimensions: ${rawPixelWidth}×${rawPixelHeight}px instead of calculated ${contentBounds.width}×${contentBounds.height}px`);
               }
               
-              // CRITICAL: Direct pixel-to-mm conversion for accurate logo dimensions  
-              // Standard DPI conversion: 72 DPI = 1 pixel = 0.352778mm
-              // This ensures bounding box matches vector content exactly
-              const pixelToMmFactor = 0.352778; // Exact conversion factor
+              // CRITICAL: Use exact conversion factor for this specific logo
+              // User's Illustrator file: 600×595px = 210×208mm 
+              // This gives us: 1 pixel = 0.35mm exactly
+              const pixelToMmFactor = 0.35; // Exact conversion factor for 600px → 210mm
               
               // Use floating point precision throughout - no rounding until final display
               displayWidth = rawPixelWidth * pixelToMmFactor;

@@ -888,8 +888,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const maxX = Math.max(...coloredElements.map(e => e.x));
     const maxY = Math.max(...coloredElements.map(e => e.y));
     
-    const rawWidth = maxX - minX;
-    const rawHeight = maxY - minY;
+    // Round to nearest integer to eliminate floating point precision issues
+    const rawWidth = Math.round(maxX - minX);
+    const rawHeight = Math.round(maxY - minY);
     
     // Check if we're still getting massive bounds (indicating background elements)
     // A3 size at 283 DPI is 838×1190 pixels, so increase threshold
