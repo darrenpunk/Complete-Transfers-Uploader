@@ -131,17 +131,19 @@ export async function registerRoutes(app: express.Application) {
                   // Get template size to determine proper scaling
                   const templateSize = await storage.getTemplateSize(project.templateSize);
                   if (templateSize) {
-                    // For large format documents, use template dimensions with some scaling
-                    if (isA3 || templateSize.name === 'A3') {
+                    if (isA3) {
+                      // True A3 content - use full template size
                       displayWidth = Math.min(297, templateSize.width);
                       displayHeight = Math.min(420, templateSize.height);
+                      console.log(`A3 document detected, using full template size: ${displayWidth}×${displayHeight}mm`);
                     } else if (isA4) {
-                      // A4 content - scale to fit nicely in template
+                      // A4 content in any template - scale to fit nicely
+                      // A4 is 210×297mm, scale it to fit template with some padding
                       const scaleToFit = Math.min(templateSize.width / 210, templateSize.height / 297);
-                      displayWidth = Math.round(210 * scaleToFit * 0.8); // 80% of available space
-                      displayHeight = Math.round(297 * scaleToFit * 0.8);
+                      displayWidth = Math.round(210 * scaleToFit * 0.7); // 70% of available space
+                      displayHeight = Math.round(297 * scaleToFit * 0.7);
+                      console.log(`A4 document detected, using scaled size: ${displayWidth}×${displayHeight}mm (scale: ${scaleToFit.toFixed(2)})`);
                     }
-                    console.log(`Large format document, using size: ${displayWidth}×${displayHeight}mm for template ${templateSize.name}`);
                   }
                   isA3Document = true; // Use large format handling
                 }
