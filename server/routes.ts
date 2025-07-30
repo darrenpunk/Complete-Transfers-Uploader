@@ -1260,10 +1260,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uploadDir = path.join(process.cwd(), "uploads");
       const originalPath = path.join(uploadDir, filename);
       
-      // If no recoloring requested or file doesn't exist, pass to static middleware
-      if (!shouldRecolor || !inkColor || !fs.existsSync(originalPath)) {
+      // If no recoloring requested, pass to static middleware
+      if (!shouldRecolor || !inkColor) {
         console.log(`[INK RECOLOR] Passing to static: shouldRecolor=${shouldRecolor}, inkColor=${inkColor}, exists=${fs.existsSync(originalPath)}`);
-        return res.sendFile(originalPath);
+        
+        // Check if file exists, if not and it's an SVG request for a PDF, try the original PDF
+        if (!fs.existsSync(originalPath) && filename.endsWith('.pdf.svg')) {
+          const originalPdfFilename = filename.replace('.svg', '');
+          const originalPdfPath = path.join(uploadDir, originalPdfFilename);
+          
+          if (fs.existsSync(originalPdfPath)) {
+            console.log(`[INK RECOLOR] SVG not found, serving original PDF: ${originalPdfFilename}`);
+            return res.sendFile(originalPdfPath);
+          }
+        }
+        
+        if (fs.existsSync(originalPath)) {
+          return res.sendFile(originalPath);
+        } else {
+          return res.status(404).send('File not found');
+        }
       }
       
       // Generate recolored version for canvas display
