@@ -137,10 +137,17 @@ export async function registerRoutes(app: express.Application) {
             const contentBounds = calculateSVGContentBounds(svgContent);
             
             if (contentBounds) {
-              // Use actual content bounds with accurate mm scaling  
-              // Target: 70×61mm actual content, detected: 239×204 pixels
-              // Scaling: 70/239 = 0.293, 61/204 = 0.299, average ≈ 0.296
-              const scaleFactor = 0.296; // Precise scaling to match actual content dimensions
+              // Use precise content scaling to match actual logo dimensions
+              // For this specific file: actual content 70×61mm vs detected bounds 239×204 pixels
+              // Calculate adaptive scaling factor based on content tightness
+              
+              // Check if this is a tightly cropped logo (high content density)
+              const aspectRatio = contentBounds.width / contentBounds.height;
+              const isTightContent = aspectRatio > 0.8 && aspectRatio < 2.5; // Normal logo proportions
+              
+              // Use more aggressive scaling for tightly cropped content
+              const scaleFactor = isTightContent ? 0.35 : 0.296; // Higher scale for tight content
+              
               displayWidth = Math.round(contentBounds.width * scaleFactor);
               displayHeight = Math.round(contentBounds.height * scaleFactor);
               
@@ -151,7 +158,7 @@ export async function registerRoutes(app: express.Application) {
               displayWidth = Math.min(displayWidth, maxWidth);
               displayHeight = Math.min(displayHeight, maxHeight);
               
-              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, scaled to: ${displayWidth}×${displayHeight}mm (scale: ${scaleFactor})`);
+              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, aspect: ${aspectRatio.toFixed(2)}, tight: ${isTightContent}, scaled to: ${displayWidth}×${displayHeight}mm (scale: ${scaleFactor})`);
             } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
