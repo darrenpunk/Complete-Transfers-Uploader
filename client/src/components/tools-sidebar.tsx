@@ -692,6 +692,11 @@ export default function ToolsSidebar({
           <CollapsibleContent>
             <div className="px-6 pb-6">
         {(() => {
+          console.log('Tools sidebar preflight render:', {
+            selectedElement: selectedElement ? { id: selectedElement.id, logoId: selectedElement.logoId } : null,
+            logos: logos.length
+          });
+          
           if (!selectedElement) {
             return (
               <div className="text-center text-gray-500 py-4">
