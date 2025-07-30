@@ -153,10 +153,10 @@ export default function PropertiesPanel({
   useEffect(() => {
     if (currentElement) {
       setLocalInputValues({
-        x: currentElement.x?.toString() || '0',
-        y: currentElement.y?.toString() || '0',
-        width: currentElement.width?.toString() || '0',
-        height: currentElement.height?.toString() || '0',
+        x: (currentElement.x || 0).toFixed(2),
+        y: (currentElement.y || 0).toFixed(2),
+        width: (currentElement.width || 0).toFixed(2),
+        height: (currentElement.height || 0).toFixed(2),
         opacity: Math.round((currentElement.opacity || 1) * 100).toString()
       });
     }
