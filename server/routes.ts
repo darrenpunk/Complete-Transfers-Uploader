@@ -303,63 +303,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const pdfSizeMB = pdfStats.size / (1024 * 1024);
             console.log(`PDF file size: ${pdfSizeMB.toFixed(1)}MB`);
             
-            if (pdfSizeMB > 30) { // Skip SVG conversion for files >30MB but create PNG for display
-              console.log(`PDF file too large (${pdfSizeMB.toFixed(1)}MB), skipping SVG conversion but creating PNG for canvas display`);
-              
-              // Create a PNG thumbnail for canvas display using Ghostscript (fast, low resolution)
-              const pngFilename = `${file.filename}.png`;
-              const pngPath = path.join(uploadDir, pngFilename);
-              
-              try {
-                // Use low resolution (150 DPI) for fast processing of large files
-                const ghostscriptCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dFirstPage=1 -dLastPage=1 -sOutputFile="${pngPath}" "${path.join(uploadDir, file.filename)}"`;
-                await execAsync(ghostscriptCommand);
-                
-                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                  // Use PNG for canvas display but keep original PDF for final output
-                  finalFilename = pngFilename;
-                  finalMimeType = 'image/png';
-                  finalUrl = `/uploads/${pngFilename}`;
-                  console.log(`Large PDF converted to PNG for display: ${pngFilename}`);
-                } else {
-                  throw new Error('PNG conversion failed');
-                }
-              } catch (pngError) {
-                console.error('PNG conversion failed for large PDF:', pngError);
-                // Fallback to original PDF (will show placeholder but still work for output)
-                finalFilename = file.filename;
-                finalMimeType = file.mimetype;
-                finalUrl = `/uploads/${file.filename}`;
-                console.log(`Large PDF PNG conversion failed, using original: ${finalFilename}`);
-              }
-            } else {
-              // Try PDF to SVG conversion for smaller files
-              const svgFilename = `${file.filename}.svg`;
-              const svgPath = path.join(uploadDir, svgFilename);
-              
-              // Use pdf2svg with post-processing to remove white backgrounds
-              let svgCommand;
-              try {
-                // Check if pdf2svg is available
-                await execAsync('which pdf2svg');
-                svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
-                console.log('Using pdf2svg for conversion');
-              } catch {
-                // Fallback to ImageMagick SVG conversion
-                svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
-                console.log('Using ImageMagick for SVG conversion');
-              }
-              
-              await execAsync(svgCommand);
+
+            // Try PDF to SVG conversion
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
+            
+            // Use pdf2svg with post-processing to remove white backgrounds
+            let svgCommand;
+            try {
+              // Check if pdf2svg is available
+              await execAsync('which pdf2svg');
+              svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
+              console.log('Using pdf2svg for conversion');
+            } catch {
+              // Fallback to ImageMagick SVG conversion
+              svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
+              console.log('Using ImageMagick for SVG conversion');
+            }
+            
+            await execAsync(svgCommand);
             
             if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
               // Check file size before any processing
               const svgStats = fs.statSync(svgPath);
               const svgSizeMB = svgStats.size / (1024 * 1024);
               
-              if (svgSizeMB > 15) { // Skip all processing for files >15MB
-                console.log(`SVG file too large (${svgSizeMB.toFixed(1)}MB), skipping all post-processing to prevent timeout`);
-                // Just use the SVG as-is
+              if (svgSizeMB > 5) { // Skip processing for files >5MB
+                console.log(`SVG file too large (${svgSizeMB.toFixed(1)}MB), skipping post-processing to prevent timeout`);
                 finalFilename = svgFilename;
                 finalMimeType = 'image/svg+xml';
                 finalUrl = `/uploads/${finalFilename}`;
@@ -732,26 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayHeight = 150; // Default fallback
         
         if (actualWidth && actualHeight) {
-          // Check if this is a PNG converted from a large PDF first (before PDF processing)
-          if (file.mimetype === 'image/png' && file.originalname.toLowerCase().endsWith('.pdf')) {
-            // For PNG thumbnails created from large PDFs, use more conservative sizing
-            // These are created at 150 DPI, so we need to scale appropriately
-            const scaleFactor = 0.169333; // 150 DPI conversion: 1 pixel = 0.169333mm
-            let pngWidth = Math.round(actualWidth * scaleFactor);
-            let pngHeight = Math.round(actualHeight * scaleFactor);
-            
-            // Apply maximum size limits for large PDF thumbnails
-            const maxDimension = 100; // Max 100mm for any dimension
-            if (pngWidth > maxDimension || pngHeight > maxDimension) {
-              const scaleDown = Math.min(maxDimension / pngWidth, maxDimension / pngHeight);
-              pngWidth = Math.round(pngWidth * scaleDown);
-              pngHeight = Math.round(pngHeight * scaleDown);
-            }
-            
-            displayWidth = pngWidth;
-            displayHeight = pngHeight;
-            console.log(`Large PDF PNG thumbnail: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm (150 DPI with max ${maxDimension}mm limit)`);
-          } else if (file.mimetype === 'application/pdf' && contentBounds) {
+          if (file.mimetype === 'application/pdf' && contentBounds) {
             // For PDFs with content bounds, use the raw content size for tight bounding boxes
             const rawContentWidth = contentBounds.maxX - contentBounds.minX;
             const rawContentHeight = contentBounds.maxY - contentBounds.minY;
