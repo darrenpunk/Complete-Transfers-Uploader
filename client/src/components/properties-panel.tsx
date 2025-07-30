@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { manufacturerColors } from "@shared/garment-colors";
 import { Palette } from "lucide-react";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
+import { useToast } from "@/hooks/use-toast";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -124,6 +125,7 @@ export default function PropertiesPanel({
   onAlignElement,
   onCenterAllElements
 }: PropertiesPanelProps) {
+  const { toast } = useToast();
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
@@ -328,12 +330,26 @@ export default function PropertiesPanel({
   // Duplicate logo mutation
   const duplicateLogoMutation = useMutation({
     mutationFn: async (elementId: string) => {
+      console.log('🔄 Duplicating element:', elementId);
       const response = await apiRequest("POST", `/api/canvas-elements/${elementId}/duplicate`);
       return response.json();
     },
     onSuccess: (duplicatedElement) => {
+      console.log('✅ Duplicate successful:', duplicatedElement);
       queryClient.invalidateQueries({
         queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
+      toast({
+        title: "Success",
+        description: "Logo duplicated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Duplicate error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate logo. Please try again.",
+        variant: "destructive",
       });
     },
   });
