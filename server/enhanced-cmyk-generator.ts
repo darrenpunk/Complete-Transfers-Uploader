@@ -1217,12 +1217,12 @@ export class EnhancedCMYKGenerator {
                 // Replace the color in the SVG content
                 const colorPattern = new RegExp(originalColor.replace(/[()]/g, '\\$&'), 'g');
                 svgContentForPDF = svgContentForPDF.replace(colorPattern, exactRgbColor);
-                preservedExactCMYK = true;
               }
             }
           }
           console.log(`Enhanced CMYK: Found ${foundConvertedColors} converted colors for ${element.logoId}`);
           
+          // Set flag based on whether we found any converted colors
           if (foundConvertedColors > 0) {
             preservedExactCMYK = true;
             console.log(`Enhanced CMYK: Setting preservedExactCMYK = true, will apply CMYK colorspace conversion`);
