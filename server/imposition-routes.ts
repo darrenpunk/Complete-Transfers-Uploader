@@ -21,9 +21,23 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
 
       const createdElements = [];
       
+      console.log('Original element:', { 
+        id: originalElement.id, 
+        x: originalElement.x, 
+        y: originalElement.y, 
+        width: originalElement.width, 
+        height: originalElement.height 
+      });
+      
       // Calculate grid dimensions
       const totalGridWidth = (columns * originalElement.width) + ((columns - 1) * (horizontalSpacing || 0));
       const totalGridHeight = (rows * originalElement.height) + ((rows - 1) * (verticalSpacing || 0));
+      
+      console.log('Grid calculations:', {
+        rows, columns, horizontalSpacing, verticalSpacing,
+        elementSize: { width: originalElement.width, height: originalElement.height },
+        totalGridSize: { width: totalGridWidth, height: totalGridHeight }
+      });
       
       // Calculate starting position (top-left of grid)
       let startX = originalElement.x;

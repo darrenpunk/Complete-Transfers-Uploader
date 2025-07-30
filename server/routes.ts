@@ -343,6 +343,28 @@ export async function registerRoutes(app: express.Application) {
   // Static file serving with fallback
   app.use('/uploads', express.static(uploadDir));
 
+  // Update canvas element endpoint
+  app.patch('/api/canvas-elements/:elementId', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      const updates = req.body;
+      
+      console.log(`🔄 Updating canvas element: ${elementId}`, updates);
+      
+      const updatedElement = await storage.updateCanvasElement(elementId, updates);
+      
+      if (!updatedElement) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      console.log(`✅ Successfully updated element: ${elementId}`);
+      res.json(updatedElement);
+    } catch (error) {
+      console.error('Update canvas element error:', error);
+      res.status(500).json({ error: 'Failed to update canvas element' });
+    }
+  });
+
   // Delete canvas element endpoint
   app.delete('/api/canvas-elements/:elementId', async (req, res) => {
     try {

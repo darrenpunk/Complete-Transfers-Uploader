@@ -276,6 +276,14 @@ export class MemStorage implements IStorage {
     const original = this.canvasElements.get(id);
     if (!original) return undefined;
     
+    console.log('Original element for duplication:', { 
+      id: original.id, 
+      x: original.x, 
+      y: original.y, 
+      width: original.width, 
+      height: original.height 
+    });
+    
     // Create a duplicate with new ID and offset position
     const duplicateId = randomUUID();
     const duplicate: CanvasElement = {
@@ -283,8 +291,18 @@ export class MemStorage implements IStorage {
       id: duplicateId,
       x: original.x + 20, // Offset by 20mm
       y: original.y + 20, // Offset by 20mm
+      width: original.width, // Keep original width
+      height: original.height, // Keep original height
       zIndex: Math.max(...Array.from(this.canvasElements.values()).map(el => el.zIndex)) + 1
     };
+    
+    console.log('Created duplicate element:', { 
+      id: duplicate.id, 
+      x: duplicate.x, 
+      y: duplicate.y, 
+      width: duplicate.width, 
+      height: duplicate.height 
+    });
     
     this.canvasElements.set(duplicateId, duplicate);
     return duplicate;
