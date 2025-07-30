@@ -939,9 +939,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const contentWidth = Math.max(80, Math.ceil(rawWidth + 5)); // Minimal padding for tight bounds
     const contentHeight = Math.max(60, Math.ceil(rawHeight + 5));
     
-    // Apply maximum limits to prevent oversized logos - use conservative caps for reasonable logo sizes
-    const finalWidth = Math.min(contentWidth, 200); // Reduced from 500 to prevent oversized logos
-    const finalHeight = Math.min(contentHeight, 150); // Reduced from 400 to prevent oversized logos
+    // For content detected in reasonable ranges, use actual dimensions to preserve logo sizing
+    // Only cap when truly oversized (indicating background elements)
+    const finalWidth = Math.min(contentWidth, rawWidth > 800 ? 400 : contentWidth); // Use actual content unless clearly oversized
+    const finalHeight = Math.min(contentHeight, rawHeight > 600 ? 300 : contentHeight); // Use actual content unless clearly oversized
     
     console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
