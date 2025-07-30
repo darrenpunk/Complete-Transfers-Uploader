@@ -732,10 +732,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let displayHeight = 150; // Default fallback
         
         if (actualWidth && actualHeight) {
-          // For all files (including PDFs), use the actual content bounds calculated above
-          // This ensures bounding boxes are tight around the content, not the full page
-          
-          if (file.mimetype === 'application/pdf' && contentBounds) {
+          // Check if this is a PNG converted from a large PDF first (before PDF processing)
+          if (file.mimetype === 'image/png' && file.originalname.toLowerCase().endsWith('.pdf')) {
+            // For PNG thumbnails created from large PDFs, use more conservative sizing
+            // These are created at 150 DPI, so we need to scale appropriately
+            const scaleFactor = 0.169333; // 150 DPI conversion: 1 pixel = 0.169333mm
+            let pngWidth = Math.round(actualWidth * scaleFactor);
+            let pngHeight = Math.round(actualHeight * scaleFactor);
+            
+            // Apply maximum size limits for large PDF thumbnails
+            const maxDimension = 100; // Max 100mm for any dimension
+            if (pngWidth > maxDimension || pngHeight > maxDimension) {
+              const scaleDown = Math.min(maxDimension / pngWidth, maxDimension / pngHeight);
+              pngWidth = Math.round(pngWidth * scaleDown);
+              pngHeight = Math.round(pngHeight * scaleDown);
+            }
+            
+            displayWidth = pngWidth;
+            displayHeight = pngHeight;
+            console.log(`Large PDF PNG thumbnail: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm (150 DPI with max ${maxDimension}mm limit)`);
+          } else if (file.mimetype === 'application/pdf' && contentBounds) {
             // For PDFs with content bounds, use the raw content size for tight bounding boxes
             const rawContentWidth = contentBounds.maxX - contentBounds.minX;
             const rawContentHeight = contentBounds.maxY - contentBounds.minY;
@@ -812,32 +828,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               displayHeight = Math.round(actualHeight * scaleFactor);
               console.log(`SVG dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm (using 96 DPI)`);
             } else {
-              // Check if this is a PNG converted from a large PDF
-              if (file.mimetype === 'image/png' && file.originalname.toLowerCase().endsWith('.pdf')) {
-                // For PNG thumbnails created from large PDFs, use more conservative sizing
-                // These are created at 150 DPI, so we need to scale appropriately
-                const scaleFactor = 0.169333; // 150 DPI conversion: 1 pixel = 0.169333mm
-                let pngWidth = Math.round(actualWidth * scaleFactor);
-                let pngHeight = Math.round(actualHeight * scaleFactor);
-                
-                // Apply maximum size limits for large PDF thumbnails
-                const maxDimension = 100; // Max 100mm for any dimension
-                if (pngWidth > maxDimension || pngHeight > maxDimension) {
-                  const scaleDown = Math.min(maxDimension / pngWidth, maxDimension / pngHeight);
-                  pngWidth = Math.round(pngWidth * scaleDown);
-                  pngHeight = Math.round(pngHeight * scaleDown);
-                }
-                
-                displayWidth = pngWidth;
-                displayHeight = pngHeight;
-                console.log(`Large PDF PNG thumbnail: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm (150 DPI with max ${maxDimension}mm limit)`);
-              } else {
-                // For regular raster images, use 300 DPI scale
-                const scaleFactor = 0.08466667;
-                displayWidth = Math.round(actualWidth * scaleFactor);
-                displayHeight = Math.round(actualHeight * scaleFactor);
-                console.log(`Image dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
-              }
+              // For regular raster images, use 300 DPI scale
+              const scaleFactor = 0.08466667;
+              displayWidth = Math.round(actualWidth * scaleFactor);
+              displayHeight = Math.round(actualHeight * scaleFactor);
+              console.log(`Image dimensions: ${actualWidth}×${actualHeight} pixels -> ${displayWidth}×${displayHeight}mm`);
             }
           }
         } else {
