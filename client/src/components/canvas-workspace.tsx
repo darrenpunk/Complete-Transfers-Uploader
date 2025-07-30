@@ -161,12 +161,10 @@ export default function CanvasWorkspace({
         body: JSON.stringify(updates)
       });
       
-      // Refresh data after a brief delay
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["/api/projects", project.id, "canvas-elements"]
-        });
-      }, 50);
+      // Refresh data immediately for faster updates
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
     } catch (error) {
       console.error('Failed to update element:', error);
     }
@@ -499,7 +497,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom]);
+  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
@@ -1095,9 +1093,17 @@ export default function CanvasWorkspace({
                         onMouseDown={(e) => handleResizeStart(e, element, 'w')}
                       />
                       
-                      {/* Rotation Handle - Make more visible */}
+                      {/* Rotation Handle - Positioned above element */}
                       <div 
-                        className="absolute -top-8 left-1/2 transform -translate-x-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full p-1"
+                        className="absolute left-1/2 transform -translate-x-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full p-2 border-2 border-primary"
+                        style={{ 
+                          top: '-30px',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           let rotationTimeout: NodeJS.Timeout;
@@ -1140,7 +1146,7 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <RotateCw className="w-4 h-4 text-primary" />
+                        <RotateCw className="w-4 h-4 text-primary" title="Drag to rotate" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}

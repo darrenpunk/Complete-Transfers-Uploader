@@ -252,12 +252,10 @@ export default function PropertiesPanel({
         body: JSON.stringify(updates)
       });
       
-      // Refresh data after a brief delay
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
-        });
-      }, 50);
+      // Refresh data immediately for faster updates
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+      });
     } catch (error) {
       console.error('Failed to update element:', error);
     }
