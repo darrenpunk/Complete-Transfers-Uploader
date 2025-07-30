@@ -656,65 +656,104 @@ export class EnhancedCMYKGenerator {
     pdfPath: string,
     templateSize: TemplateSize
   ) {
-    // Read and embed the original PDF to preserve vectors
-    const originalPdfBytes = fs.readFileSync(pdfPath);
-    const originalPdf = await PDFDocument.load(originalPdfBytes);
-    
-    // Get the first page of the original PDF
-    const originalPages = originalPdf.getPages();
-    if (originalPages.length === 0) {
-      throw new Error('PDF has no pages');
+    try {
+      // Step 1: Convert original PDF to CMYK color space
+      const cmykPdfPath = pdfPath.replace('.pdf', '_cmyk.pdf');
+      
+      // Apply CMYK conversion using Ghostscript
+      const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+      
+      let useCMYKVersion = false;
+      try {
+        await new Promise<void>((resolve, reject) => {
+          exec(cmykCommand, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Enhanced CMYK: PDF CMYK conversion failed, using original:`, error);
+              resolve();
+            } else {
+              console.log(`Enhanced CMYK: Successfully converted original PDF to CMYK: ${path.basename(pdfPath)}`);
+              useCMYKVersion = true;
+              resolve();
+            }
+          });
+        });
+      } catch (cmykError) {
+        console.error('Enhanced CMYK: CMYK conversion error:', cmykError);
+      }
+      
+      // Step 2: Use CMYK version if available, otherwise original
+      const finalPdfPath = (useCMYKVersion && fs.existsSync(cmykPdfPath)) ? cmykPdfPath : pdfPath;
+      
+      // Read and embed the PDF to preserve vectors
+      const originalPdfBytes = fs.readFileSync(finalPdfPath);
+      const originalPdf = await PDFDocument.load(originalPdfBytes);
+      
+      // Get the first page of the PDF
+      const originalPages = originalPdf.getPages();
+      if (originalPages.length === 0) {
+        throw new Error('PDF has no pages');
+      }
+      
+      // Embed the first page as a vector page
+      const firstPage = originalPages[0];
+      const embeddedPage = await pdfDoc.embedPage(firstPage, {
+        left: 0,
+        bottom: 0,
+        right: firstPage.getWidth(),
+        top: firstPage.getHeight(),
+      });
+      
+      // Convert mm to points (1 mm = 2.834645669 points)
+      const mmToPoints = 2.834645669;
+      
+      // Calculate position in points
+      const x = element.x * mmToPoints;
+      const y = (templateSize.height - element.y - element.height) * mmToPoints;
+      
+      // Calculate target size in points
+      const targetWidth = element.width * mmToPoints;
+      const targetHeight = element.height * mmToPoints;
+      
+      // Get original page dimensions in points
+      const { width: origWidth, height: origHeight } = embeddedPage.size();
+      
+      console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
+      console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
+      
+      // Calculate scale to fit target dimensions while maintaining aspect ratio
+      const scaleX = targetWidth / origWidth;
+      const scaleY = targetHeight / origHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
+      
+      // Calculate final rendered dimensions
+      const finalWidth = origWidth * scale;
+      const finalHeight = origHeight * scale;
+      
+      console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
+      
+      // Draw the embedded page with vectors preserved using exact canvas dimensions
+      page.drawPage(embeddedPage, {
+        x: x,
+        y: y,
+        width: finalWidth,
+        height: finalHeight,
+        rotate: degrees(element.rotation || 0),
+      });
+      
+      const colorSpace = useCMYKVersion ? 'CMYK' : 'RGB';
+      console.log(`Enhanced CMYK: Successfully embedded ${colorSpace} vector PDF: ${element.logoId}`);
+      
+      // Clean up CMYK temp file
+      if (fs.existsSync(cmykPdfPath)) {
+        fs.unlinkSync(cmykPdfPath);
+      }
+      
+    } catch (error) {
+      console.error(`Enhanced CMYK: Error embedding PDF:`, error);
+      throw error;
     }
-    
-    // Embed the first page as a vector page
-    const firstPage = originalPages[0];
-    const embeddedPage = await pdfDoc.embedPage(firstPage, {
-      left: 0,
-      bottom: 0,
-      right: firstPage.getWidth(),
-      top: firstPage.getHeight(),
-    });
-    
-    // Convert mm to points (1 mm = 2.834645669 points)
-    const mmToPoints = 2.834645669;
-    
-    // Calculate position in points
-    const x = element.x * mmToPoints;
-    const y = (templateSize.height - element.y - element.height) * mmToPoints;
-    
-    // Calculate target size in points
-    const targetWidth = element.width * mmToPoints;
-    const targetHeight = element.height * mmToPoints;
-    
-    // Get original page dimensions in points
-    const { width: origWidth, height: origHeight } = embeddedPage.size();
-    
-    console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
-    console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
-    
-    // Calculate scale to fit target dimensions while maintaining aspect ratio
-    const scaleX = targetWidth / origWidth;
-    const scaleY = targetHeight / origHeight;
-    const scale = Math.min(scaleX, scaleY);
-    
-    console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
-    
-    // Calculate final rendered dimensions
-    const finalWidth = origWidth * scale;
-    const finalHeight = origHeight * scale;
-    
-    console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
-    
-    // Draw the embedded page with vectors preserved using exact canvas dimensions
-    page.drawPage(embeddedPage, {
-      x: x,
-      y: y,
-      width: finalWidth,
-      height: finalHeight,
-      rotate: degrees(element.rotation || 0),
-    });
-    
-    console.log(`Enhanced CMYK: Successfully embedded vector PDF: ${element.logoId}`);
   }
 
   private async embedRecoloredPDFWithCustomColors(
@@ -1050,7 +1089,9 @@ export class EnhancedCMYKGenerator {
     try {
       // Convert SVG to PDF using rsvg-convert
       const tempPdfPath = svgPath.replace('.svg', '_temp.pdf');
+      const cmykPdfPath = svgPath.replace('.svg', '_cmyk.pdf');
       
+      // Step 1: Convert SVG to PDF using rsvg-convert
       const command = `rsvg-convert --format=pdf --output="${tempPdfPath}" "${svgPath}"`;
       await new Promise<void>((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {
@@ -1063,10 +1104,32 @@ export class EnhancedCMYKGenerator {
         });
       });
 
-      // Check if the temp PDF was created
       if (fs.existsSync(tempPdfPath)) {
+        // Step 2: Convert RGB PDF to CMYK PDF using Ghostscript
+        try {
+          const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${tempPdfPath}"`;
+          
+          await new Promise<void>((resolve, reject) => {
+            exec(cmykCommand, (error, stdout, stderr) => {
+              if (error) {
+                console.error(`Enhanced CMYK: CMYK conversion failed, using original:`, error);
+                // Use original RGB PDF if CMYK conversion fails
+                resolve();
+              } else {
+                console.log(`Enhanced CMYK: Successfully converted SVG to CMYK PDF vectors: ${path.basename(svgPath)}`);
+                resolve();
+              }
+            });
+          });
+        } catch (cmykError) {
+          console.error('Enhanced CMYK: CMYK conversion error:', cmykError);
+        }
+
+        // Step 3: Use CMYK PDF if available, otherwise fall back to RGB PDF
+        const finalPdfPath = fs.existsSync(cmykPdfPath) ? cmykPdfPath : tempPdfPath;
+        
         // Load and embed the converted PDF
-        const pdfBytes = fs.readFileSync(tempPdfPath);
+        const pdfBytes = fs.readFileSync(finalPdfPath);
         const convertedPdf = await PDFDocument.load(pdfBytes);
         
         const pages = convertedPdf.getPages();
@@ -1091,11 +1154,13 @@ export class EnhancedCMYKGenerator {
             rotate: degrees(element.rotation || 0),
           });
           
-          console.log(`Enhanced CMYK: Successfully embedded SVG as PDF vectors: ${path.basename(svgPath)}`);
+          const colorSpace = fs.existsSync(cmykPdfPath) ? 'CMYK' : 'RGB';
+          console.log(`Enhanced CMYK: Successfully embedded SVG as ${colorSpace} PDF vectors: ${path.basename(svgPath)}`);
         }
         
-        // Clean up temp file
-        fs.unlinkSync(tempPdfPath);
+        // Clean up temp files
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+        if (fs.existsSync(cmykPdfPath)) fs.unlinkSync(cmykPdfPath);
       } else {
         console.error(`Enhanced CMYK: Failed to create temp PDF from SVG: ${svgPath}`);
       }
