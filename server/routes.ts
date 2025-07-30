@@ -58,8 +58,8 @@ export async function registerRoutes(app: express.Application) {
       console.log(`✅ Project found: ${project.name || 'Untitled'}`);
 
       // Get project data
-      const logos = await storage.getLogosForProject(projectId);
-      const canvasElements = await storage.getCanvasElementsForProject(projectId);
+      const logos = await storage.getLogosByProject(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
       const templateSizes = await storage.getTemplateSizes();
       
       console.log(`📊 Project data - Logos: ${logos.length}, Elements: ${canvasElements.length}`);
