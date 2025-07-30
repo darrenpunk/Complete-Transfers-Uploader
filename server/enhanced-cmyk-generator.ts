@@ -1177,12 +1177,14 @@ export class EnhancedCMYKGenerator {
       try {
         const logoData = await storage.getLogo(element.logoId || '');
         console.log(`Enhanced CMYK: Found logo data for ${element.logoId}:`, !!logoData);
+        console.log(`Enhanced CMYK: Full logo data:`, JSON.stringify(logoData, null, 2));
         console.log(`Enhanced CMYK: Logo svgAnalysis exists:`, !!logoData?.svgAnalysis);
         console.log(`Enhanced CMYK: Colors array:`, logoData?.svgAnalysis?.colors?.length);
         
         // Check both svgAnalysis (frontend) and svgColors (database) for CMYK values
         const colorAnalysis = (logoData as any)?.svgAnalysis || logoData?.svgColors;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
+        console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
         
         if (colorAnalysis && Array.isArray(colorAnalysis.colors) && colorAnalysis.colors.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
