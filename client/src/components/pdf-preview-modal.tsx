@@ -99,7 +99,12 @@ export default function PDFPreviewModal({
       value: (() => {
         // Use same logic as tools sidebar preflight check - include color overrides
         const hasCMYKLogos = logos.some(logo => {
-          const svgColors = logo.svgColors as any;
+          // Try both logo.svgColors and logo.svgColors.colors (different data structures)
+          let svgColors = logo.svgColors as any;
+          if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+            svgColors = svgColors.colors; // Extract colors array from analysis object
+          }
+          
           const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
           
           // Check if any canvas element using this logo has color overrides
@@ -123,7 +128,12 @@ export default function PDFPreviewModal({
       status: (() => {
         // Use same logic as tools sidebar preflight check - include color overrides
         const hasCMYKLogos = logos.some(logo => {
-          const svgColors = logo.svgColors as any;
+          // Try both logo.svgColors and logo.svgColors.colors (different data structures)
+          let svgColors = logo.svgColors as any;
+          if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+            svgColors = svgColors.colors; // Extract colors array from analysis object
+          }
+          
           const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
           
           // Check if any canvas element using this logo has color overrides
