@@ -243,7 +243,27 @@ export default function PropertiesPanel({
     onAlignElement(currentElement.id, { x: Math.round(x), y: Math.round(y) });
   };
 
-  // Update canvas element mutation
+  // Helper function for direct API updates to avoid mutation conflicts
+  const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
+    try {
+      await fetch(`/api/canvas-elements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      
+      // Refresh data after a brief delay
+      setTimeout(() => {
+        queryClient.invalidateQueries({
+          queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+        });
+      }, 50);
+    } catch (error) {
+      console.error('Failed to update element:', error);
+    }
+  };
+
+  // Keep legacy mutation for compatibility but prefer direct updates
   const updateElementMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<CanvasElement> }) => {
       const response = await apiRequest("PATCH", `/api/canvas-elements/${id}`, updates);
@@ -300,10 +320,7 @@ export default function PropertiesPanel({
   // Handle garment color change for individual logos
   const handleGarmentColorChange = (color: string) => {
     if (currentElement) {
-      updateElementMutation.mutate({
-        id: currentElement.id,
-        updates: { garmentColor: color }
-      });
+      updateElementDirect(currentElement.id, { garmentColor: color });
     }
   };
 
@@ -393,27 +410,19 @@ export default function PropertiesPanel({
 
     const sendUpdate = () => {
       console.log('Sending updates:', updates);
-      updateElementMutation.mutate({
-        id: currentElement.id,
-        updates
-      });
+      // Use direct API call to avoid conflicts
+      updateElementDirect(currentElement.id, updates);
     };
 
     sendUpdate();
   };
 
   const toggleVisibility = (element: CanvasElement) => {
-    updateElementMutation.mutate({
-      id: element.id,
-      updates: { isVisible: !element.isVisible }
-    });
+    updateElementDirect(element.id, { isVisible: !element.isVisible });
   };
 
   const toggleLock = (element: CanvasElement) => {
-    updateElementMutation.mutate({
-      id: element.id,
-      updates: { isLocked: !element.isLocked }
-    });
+    updateElementDirect(element.id, { isLocked: !element.isLocked });
   };
 
 
