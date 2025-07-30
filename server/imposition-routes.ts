@@ -35,8 +35,14 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
         const templateSize = project ? await storage.getTemplateSize(project.templateSize) : null;
         
         if (templateSize) {
-          startX = (templateSize.width - totalGridWidth) / 2;
-          startY = (templateSize.height - totalGridHeight) / 2;
+          startX = Math.max(0, (templateSize.width - totalGridWidth) / 2);
+          startY = Math.max(0, (templateSize.height - totalGridHeight) / 2);
+          
+          console.log('Centering calculation:', {
+            templateSize: { width: templateSize.width, height: templateSize.height },
+            gridSize: { width: totalGridWidth, height: totalGridHeight },
+            calculatedStart: { x: startX, y: startY }
+          });
           
           // Update original element position if centering
           await storage.updateCanvasElement(originalElement.id, {
@@ -60,8 +66,17 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
           // Skip the original position (0,0)
           if (row === 0 && col === 0) continue;
           
+          // Calculate position for this grid cell
           const xOffset = col * (originalElement.width + (horizontalSpacing || 0));
           const yOffset = row * (originalElement.height + (verticalSpacing || 0));
+          
+          console.log(`Creating element at grid position [${row}, ${col}]:`, {
+            startX, startY, xOffset, yOffset,
+            finalX: startX + xOffset,
+            finalY: startY + yOffset,
+            elementSize: { width: originalElement.width, height: originalElement.height },
+            spacing: { horizontal: horizontalSpacing, vertical: verticalSpacing }
+          });
           
           const newElement = await storage.createCanvasElement({
             projectId: originalElement.projectId,
@@ -71,7 +86,7 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
             width: originalElement.width,
             height: originalElement.height,
             rotation: originalElement.rotation,
-            zIndex: originalElement.zIndex,
+            zIndex: originalElement.zIndex + 1, // Ensure new elements are above original
             isVisible: originalElement.isVisible,
             isLocked: originalElement.isLocked,
             colorOverrides: originalElement.colorOverrides,
