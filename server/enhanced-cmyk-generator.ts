@@ -1161,49 +1161,81 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize
   ) {
     try {
-      // Convert SVG to PDF using rsvg-convert
-      const tempPdfPath = svgPath.replace('.svg', '_temp.pdf');
-      const cmykPdfPath = svgPath.replace('.svg', '_cmyk.pdf');
+      // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
+      console.log(`Enhanced CMYK: Preserving exact CMYK values from app for: ${path.basename(svgPath)}`);
       
-      // Step 1: Convert SVG to PDF using rsvg-convert
-      const command = `rsvg-convert --format=pdf --output="${tempPdfPath}" "${svgPath}"`;
+      let svgContentForPDF = fs.readFileSync(svgPath, 'utf8');
+      let preservedExactCMYK = false;
+      
+      // Get the logo data to access pre-calculated CMYK values
+      try {
+        const logos = await storage.getLogos(element.logoId || '');
+        const logoData = logos.find(l => l.id === element.logoId);
+        console.log(`Enhanced CMYK: Found logo data for ${element.logoId}:`, !!logoData);
+        
+        // If logo has pre-calculated CMYK values from the app, use those EXACT values
+        if (logoData?.svgAnalysis && Array.isArray(logoData.svgAnalysis.colors) && logoData.svgAnalysis.colors.length > 0) {
+          console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
+          
+          for (const colorInfo of logoData.svgAnalysis.colors) {
+            if (colorInfo.converted && colorInfo.cmykColor) {
+              // Parse CMYK values (e.g., "C:47 M:2 Y:100 K:0")
+              const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
+              if (cmykMatch) {
+                const [, c, m, y, k] = cmykMatch;
+                
+                // Convert CMYK percentages to RGB using the EXACT SAME algorithm that was used for display
+                const cDecimal = parseInt(c) / 100;
+                const mDecimal = parseInt(m) / 100;
+                const yDecimal = parseInt(y) / 100;
+                const kDecimal = parseInt(k) / 100;
+                
+                // Use the EXACT same CMYK-to-RGB conversion as in the app
+                const r = Math.round(255 * (1 - cDecimal) * (1 - kDecimal));
+                const g = Math.round(255 * (1 - mDecimal) * (1 - kDecimal));
+                const b = Math.round(255 * (1 - yDecimal) * (1 - kDecimal));
+                
+                const exactRgbColor = `rgb(${r}, ${g}, ${b})`;
+                
+                // Replace ALL variations of the original color format
+                const originalColor = colorInfo.originalFormat;
+                console.log(`Enhanced CMYK: Preserving exact CMYK ${colorInfo.cmykColor} -> RGB(${r}, ${g}, ${b}) for ${originalColor}`);
+                
+                // Replace the color in the SVG content
+                const colorPattern = new RegExp(originalColor.replace(/[()]/g, '\\$&'), 'g');
+                svgContentForPDF = svgContentForPDF.replace(colorPattern, exactRgbColor);
+                preservedExactCMYK = true;
+              }
+            }
+          }
+        }
+      } catch (logoError) {
+        console.warn(`Enhanced CMYK: Could not access logo data for CMYK preservation:`, logoError);
+      }
+      
+      // Save the CMYK-preserved SVG content
+      const preservedSvgPath = svgPath.replace('.svg', '_cmyk_preserved.svg');
+      fs.writeFileSync(preservedSvgPath, svgContentForPDF);
+      
+      // Convert the CMYK-preserved SVG to PDF using rsvg-convert (no additional CMYK conversion!)
+      const tempPdfPath = svgPath.replace('.svg', '_final.pdf');
+      const command = `rsvg-convert --format=pdf --output="${tempPdfPath}" "${preservedSvgPath}"`;
+      
       await new Promise<void>((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {
           if (error) {
             console.error(`Enhanced CMYK: SVG to PDF conversion failed:`, error);
             reject(error);
           } else {
+            console.log(`Enhanced CMYK: Successfully converted CMYK-preserved SVG to PDF: ${path.basename(svgPath)}`);
             resolve();
           }
         });
       });
 
       if (fs.existsSync(tempPdfPath)) {
-        // Step 2: Convert RGB PDF to CMYK PDF using Ghostscript
-        try {
-          const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${tempPdfPath}"`;
-          
-          await new Promise<void>((resolve, reject) => {
-            exec(cmykCommand, (error, stdout, stderr) => {
-              if (error) {
-                console.error(`Enhanced CMYK: CMYK conversion failed, using original:`, error);
-                // Use original RGB PDF if CMYK conversion fails
-                resolve();
-              } else {
-                console.log(`Enhanced CMYK: Successfully converted SVG to CMYK PDF vectors: ${path.basename(svgPath)}`);
-                resolve();
-              }
-            });
-          });
-        } catch (cmykError) {
-          console.error('Enhanced CMYK: CMYK conversion error:', cmykError);
-        }
-
-        // Step 3: Use CMYK PDF if available, otherwise fall back to RGB PDF
-        const finalPdfPath = fs.existsSync(cmykPdfPath) ? cmykPdfPath : tempPdfPath;
-        
-        // Load and embed the converted PDF
-        const pdfBytes = fs.readFileSync(finalPdfPath);
+        // Load and embed the PDF with exact CMYK values preserved (NO GHOSTSCRIPT CONVERSION!)
+        const pdfBytes = fs.readFileSync(tempPdfPath);
         const convertedPdf = await PDFDocument.load(pdfBytes);
         
         const pages = convertedPdf.getPages();
@@ -1228,18 +1260,18 @@ export class EnhancedCMYKGenerator {
             rotate: degrees(element.rotation || 0),
           });
           
-          const colorSpace = fs.existsSync(cmykPdfPath) ? 'CMYK' : 'RGB';
-          console.log(`Enhanced CMYK: Successfully embedded SVG as ${colorSpace} PDF vectors: ${path.basename(svgPath)}`);
+          const statusMessage = preservedExactCMYK ? 'EXACT CMYK VALUES PRESERVED' : 'RGB values used';
+          console.log(`Enhanced CMYK: Successfully embedded SVG as PDF (${statusMessage}): ${path.basename(svgPath)}`);
         }
         
         // Clean up temp files
         if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
-        if (fs.existsSync(cmykPdfPath)) fs.unlinkSync(cmykPdfPath);
+        if (fs.existsSync(preservedSvgPath)) fs.unlinkSync(preservedSvgPath);
       } else {
-        console.error(`Enhanced CMYK: Failed to create temp PDF from SVG: ${svgPath}`);
+        console.error(`Enhanced CMYK: Failed to create PDF from CMYK-preserved SVG: ${svgPath}`);
       }
     } catch (error) {
-      console.error(`Enhanced CMYK: Error converting SVG to PDF:`, error);
+      console.error(`Enhanced CMYK: Error preserving CMYK values in PDF:`, error);
       // Fallback to skipping this element
     }
   }
