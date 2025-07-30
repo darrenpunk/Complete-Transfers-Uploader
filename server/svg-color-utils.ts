@@ -776,8 +776,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
             if (centerWidth > 0 && centerHeight > 0 && centerWidth < rawWidth * 0.8) {
               console.log(`Using center-focused bounds for text logo: ${centerWidth.toFixed(1)}×${centerHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
               
-              const contentWidth = Math.round(centerWidth); // Use round instead of ceil to avoid adding pixels
-              const contentHeight = Math.round(centerHeight); // Use round instead of ceil to avoid adding pixels
+              const contentWidth = centerWidth; // Use exact floating point value, no rounding
+              const contentHeight = centerHeight; // Use exact floating point value, no rounding
               
               // Allow larger dimensions for real content - don't cap too aggressively
               return {
@@ -795,8 +795,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         }
         
         // For text/glyph SVGs, use exact content dimensions for accuracy
-        const contentWidth = Math.round(rawWidth); // Use round instead of ceil to avoid adding pixels
-        const contentHeight = Math.round(rawHeight); // Use round instead of ceil to avoid adding pixels
+        const contentWidth = rawWidth; // Use exact floating point value, no rounding
+        const contentHeight = rawHeight; // Use exact floating point value, no rounding
         
         // Use exact dimensions for text-based logos for accuracy
         const finalWidth = contentWidth; // Use exact content width
@@ -918,8 +918,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.7 || filteredHeight < rawHeight * 0.7)) {
           console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
           
-          const contentWidth = Math.round(filteredWidth); // Use round instead of ceil to avoid adding pixels
-          const contentHeight = Math.round(filteredHeight); // Use round instead of ceil to avoid adding pixels
+          const contentWidth = filteredWidth; // Use exact floating point value, no rounding
+          const contentHeight = filteredHeight; // Use exact floating point value, no rounding
           
           return {
             width: contentWidth, // Use exact content width for accuracy
@@ -938,9 +938,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Use exact content dimensions for precise logo sizing - no minimums or padding
-    const contentWidth = Math.round(rawWidth); // Use round instead of ceil to avoid adding pixels
-    const contentHeight = Math.round(rawHeight); // Use round instead of ceil to avoid adding pixels
+    // Use exact raw floating point dimensions for perfect precision
+    const contentWidth = rawWidth; // Use exact floating point value, no rounding
+    const contentHeight = rawHeight; // Use exact floating point value, no rounding
     
     // CRITICAL: Use actual content dimensions for accurate logo sizing - no artificial caps
     // This is essential for customer accuracy across all templates
