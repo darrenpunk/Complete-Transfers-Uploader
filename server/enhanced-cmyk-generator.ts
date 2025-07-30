@@ -634,19 +634,24 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
           await this.embedRecoloredPDF(pdfDoc, page, element, originalPdfPath, templateSize, inkColor);
         } else {
-          // Check if logo has CMYK conversion applied and needs color space conversion
-          await this.embedSVGAsPDF(pdfDoc, page, element, logo, templateSize, originalPdfPath);
+          console.log(`Enhanced CMYK: Using original PDF without color changes for: ${logo.originalName}`);
+          await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
         }
         return;
       }
     }
     
-    // Fallback to processed image with CMYK conversion if needed
+    // Fallback to processed image (original graphics without modifications)
     const logoPath = path.join(uploadDir, logo.filename);
     if (fs.existsSync(logoPath)) {
-      console.log(`Enhanced CMYK: Fallback to processed image with CMYK check: ${logo.originalName}`);
-      // Check if logo has CMYK conversion applied and needs color space conversion
-      await this.embedSVGAsPDF(pdfDoc, page, element, logo, templateSize, logoPath);
+      // Check if this is an SVG file that needs CMYK conversion
+      if (logo.mimeType === 'image/svg+xml') {
+        console.log(`Enhanced CMYK: Applying CMYK conversion to SVG fallback: ${logo.originalName}`);
+        await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
+      } else {
+        console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
+        await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
+      }
     } else {
       console.log(`Enhanced CMYK: No suitable file found for: ${logo.originalName}`);
     }
