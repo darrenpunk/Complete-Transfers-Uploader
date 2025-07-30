@@ -542,28 +542,54 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     // Extract coordinates from path elements with fill colors (skip stroke-only elements)
     const fillPathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
     let pathMatch;
-    while ((pathMatch = fillPathRegex.exec(svgContent)) !== null) {
+    let fillMatchCount = 0;
+    const maxFillMatches = 500; // Prevent infinite loops
+    
+    while ((pathMatch = fillPathRegex.exec(svgContent)) !== null && fillMatchCount < maxFillMatches) {
+      fillMatchCount++;
       const fillColor = pathMatch[1];
       const pathData = pathMatch[2];
       
       // Only include paths with actual fill colors (not "none")
       if (fillColor && fillColor !== 'none' && fillColor !== 'transparent') {
-        const coords = extractPathCoordinates(pathData);
-        if (coords.length > 0) {
-          allCoordinates.push(...coords);
+        try {
+          const coords = extractPathCoordinates(pathData);
+          if (coords.length > 0) {
+            allCoordinates.push(...coords);
+          }
+        } catch (coordError) {
+          console.log('Error extracting coordinates from fill path, skipping');
+          continue;
         }
       }
+    }
+    
+    if (fillMatchCount >= maxFillMatches) {
+      console.log(`Stopped processing fill SVG paths after ${maxFillMatches} matches to prevent infinite loop`);
     }
     
     // Also check for stroke-only paths that might contain content
     const strokePathRegex = /<path[^>]*stroke="none"[^>]*d="([^"]*)"[^>]*>/gi;
     let strokeMatch;
-    while ((strokeMatch = strokePathRegex.exec(svgContent)) !== null) {
+    let strokeMatchCount = 0;
+    const maxStrokeMatches = 200; // Prevent infinite loops
+    
+    while ((strokeMatch = strokePathRegex.exec(svgContent)) !== null && strokeMatchCount < maxStrokeMatches) {
+      strokeMatchCount++;
       const pathData = strokeMatch[1];
-      const coords = extractPathCoordinates(pathData);
-      if (coords.length > 0) {
-        allCoordinates.push(...coords);
+      try {
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          allCoordinates.push(...coords);
+        }
+      } catch (coordError) {
+        console.log('Error extracting coordinates from stroke path, skipping');
+        continue;
       }
+    }
+    
+    if (strokeMatchCount >= maxStrokeMatches) {
+      console.log(`Stopped processing stroke SVG paths after ${maxStrokeMatches} matches to prevent infinite loop`);
     }
     
     if (allCoordinates.length === 0) {
@@ -643,7 +669,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       // Find path elements with actual colors (not white/transparent) outside of defs
       const pathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
       let pathMatch;
-      while ((pathMatch = pathRegex.exec(contentWithoutDefs)) !== null) {
+      let matchCount = 0;
+      const maxMatches = 1000; // Prevent infinite loops on complex SVGs
+      
+      while ((pathMatch = pathRegex.exec(contentWithoutDefs)) !== null && matchCount < maxMatches) {
+        matchCount++;
         const fillColor = pathMatch[1];
         const pathData = pathMatch[2];
         
@@ -655,31 +685,40 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
                                  (pathData.includes('L 700') || pathData.includes('L 839') || pathData.includes('L 624'));
         
         if (!isBackground && !isLargeBackground) {
-          const coords = extractPathCoordinates(pathData);
-          if (coords.length > 0) {
-            // Filter out coordinates that span the entire canvas (likely backgrounds)
-            const filteredCoords = coords.filter(coord => {
-              // Exclude coordinates that suggest full-canvas coverage for text logos
-              const isNearLeftEdge = coord.x <= 10;
-              const isNearRightEdge = coord.x >= 800; // For A3 and similar large canvases
-              const isNearTopEdge = coord.y <= 10;
-              const isNearBottomEdge = coord.y >= 1100; // For A3 height
+          try {
+            const coords = extractPathCoordinates(pathData);
+            if (coords.length > 0) {
+              // Filter out coordinates that span the entire canvas (likely backgrounds)
+              const filteredCoords = coords.filter(coord => {
+                // Exclude coordinates that suggest full-canvas coverage for text logos
+                const isNearLeftEdge = coord.x <= 10;
+                const isNearRightEdge = coord.x >= 800; // For A3 and similar large canvases
+                const isNearTopEdge = coord.y <= 10;
+                const isNearBottomEdge = coord.y >= 1100; // For A3 height
+                
+                // Exclude if it's a corner coordinate (likely background rectangle)
+                const isCornerCoord = (isNearLeftEdge || isNearRightEdge) && (isNearTopEdge || isNearBottomEdge);
+                
+                // Also exclude extremely wide or tall spanning coordinates
+                const isFullWidthSpan = isNearLeftEdge && isNearRightEdge;
+                const isFullHeightSpan = isNearTopEdge && isNearBottomEdge;
+                
+                return !(isCornerCoord || isFullWidthSpan || isFullHeightSpan);
+              });
               
-              // Exclude if it's a corner coordinate (likely background rectangle)
-              const isCornerCoord = (isNearLeftEdge || isNearRightEdge) && (isNearTopEdge || isNearBottomEdge);
-              
-              // Also exclude extremely wide or tall spanning coordinates
-              const isFullWidthSpan = isNearLeftEdge && isNearRightEdge;
-              const isFullHeightSpan = isNearTopEdge && isNearBottomEdge;
-              
-              return !(isCornerCoord || isFullWidthSpan || isFullHeightSpan);
-            });
-            
-            if (filteredCoords.length > 0) {
-              coloredElements.push(...filteredCoords);
+              if (filteredCoords.length > 0) {
+                coloredElements.push(...filteredCoords);
+              }
             }
+          } catch (coordError) {
+            console.log('Error extracting coordinates from path, skipping');
+            continue;
           }
         }
+      }
+      
+      if (matchCount >= maxMatches) {
+        console.log(`Stopped processing SVG paths after ${maxMatches} matches to prevent infinite loop`);
       }
       
       // If we found colored paths, use those for bounding box
@@ -789,7 +828,11 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     // Find elements with style-based colors
     const stylePathRegex = /<path[^>]*style="[^"]*fill:\s*([^;]+)[^"]*"[^>]*d="([^"]*)"[^>]*>/gi;
     let styleMatch;
-    while ((styleMatch = stylePathRegex.exec(svgContent)) !== null) {
+    let styleMatchCount = 0;
+    const maxStyleMatches = 500; // Prevent infinite loops
+    
+    while ((styleMatch = stylePathRegex.exec(svgContent)) !== null && styleMatchCount < maxStyleMatches) {
+      styleMatchCount++;
       const fillColor = styleMatch[1].trim();
       const pathData = styleMatch[2];
       
@@ -797,11 +840,20 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const isBackground = fillColor === 'none' || fillColor === 'transparent';
       
       if (!isBackground) {
-        const coords = extractPathCoordinates(pathData);
-        if (coords.length > 0) {
-          coloredElements.push(...coords);
+        try {
+          const coords = extractPathCoordinates(pathData);
+          if (coords.length > 0) {
+            coloredElements.push(...coords);
+          }
+        } catch (coordError) {
+          console.log('Error extracting coordinates from style path, skipping');
+          continue;
         }
       }
+    }
+    
+    if (styleMatchCount >= maxStyleMatches) {
+      console.log(`Stopped processing style-based SVG paths after ${maxStyleMatches} matches to prevent infinite loop`);
     }
     
     if (coloredElements.length === 0) {
