@@ -160,15 +160,15 @@ export default function PDFPreviewModal({
         
         <div className="flex gap-6 h-[70vh]">
           {/* PDF Preview Section */}
-          <div className="flex-1 space-y-4">
-            <h3 className="text-lg font-semibold">PDF Preview</h3>
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-lg font-semibold mb-4">PDF Preview</h3>
             
             {/* Two pages side by side */}
-            <div className="flex gap-4 h-full">
+            <div className="flex gap-4 flex-1">
               {/* Page 1 Preview */}
-              <div className="flex-1 space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-white p-4 h-[500px] flex items-center justify-center relative overflow-hidden">
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
+                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
                   {/* Canvas preview background */}
                   <div 
                     className="absolute inset-4 border-2 border-dashed border-gray-300 rounded"
@@ -214,9 +214,9 @@ export default function PDFPreviewModal({
               </div>
 
               {/* Page 2 Preview */}
-              <div className="flex-1 space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg p-2 h-[500px] overflow-auto">
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                <div className="border rounded-lg p-2 flex-1 overflow-auto">
                   {/* Check if we have individual logo garment colors or use project default */}
                   {(() => {
                     // Get unique garment colors from canvas elements
