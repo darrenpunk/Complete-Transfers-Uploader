@@ -759,6 +759,7 @@ export default function ToolsSidebar({
                 logoId: logo.id,
                 hasColorOverrides,
                 colorOverrides: selectedElement.colorOverrides,
+                hasConvertedColors: svgColors.some(color => color.converted),
                 svgColors: svgColors.slice(0, 2) // First 2 colors for debugging
               });
               
