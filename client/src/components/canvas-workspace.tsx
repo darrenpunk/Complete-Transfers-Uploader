@@ -119,9 +119,14 @@ export default function CanvasWorkspace({
   uploadProgress = 0
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(100);
+  
+  // Core UI state
+  const [zoom, setZoom] = useState(75); // Start at higher zoom for better visibility
   const [colorManagementEnabled, setColorManagementEnabled] = useState(true);
-  const [colorManagedUrls, setColorManagedUrls] = useState<Record<string, string>>({});
+  const [showGrid, setShowGrid] = useState(true);
+  const [showGuides, setShowGuides] = useState(true);
+  
+  // File upload state
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
@@ -130,16 +135,18 @@ export default function CanvasWorkspace({
   useEffect(() => {
     console.log('Canvas state update:', { showVectorizer, hasPendingRasterFile: !!pendingRasterFile });
   }, [showVectorizer, pendingRasterFile]);
-
-  // Removed old fixed zoom logic - now using calculateOptimalZoom
-  const [showGrid, setShowGrid] = useState(true);
-  const [showGuides, setShowGuides] = useState(true);
+  
+  // Canvas dragging state
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
+  // Canvas element resizing state
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
+  
+  // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
@@ -1088,9 +1095,9 @@ export default function CanvasWorkspace({
                         onMouseDown={(e) => handleResizeStart(e, element, 'w')}
                       />
                       
-                      {/* Rotation Handle */}
+                      {/* Rotation Handle - Make more visible */}
                       <div 
-                        className="absolute -top-6 left-1/2 transform -translate-x-1/2 cursor-grab"
+                        className="absolute -top-8 left-1/2 transform -translate-x-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full p-1"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           let rotationTimeout: NodeJS.Timeout;
@@ -1133,8 +1140,7 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <div className="w-1 h-4 bg-primary" />
-                        <div className="w-4 h-4 bg-primary border-2 border-white rounded-full" />
+                        <RotateCw className="w-4 h-4 text-primary" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
