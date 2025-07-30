@@ -12,8 +12,6 @@ import {
 } from '@shared/schema';
 import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
-import { extractColorsFromImage } from './color-utils';
-import { fontOutliner } from './font-outliner';
 
 const execAsync = promisify(exec);
 
@@ -98,8 +96,8 @@ export async function registerRoutes(app: express.Application) {
           filename: finalFilename,
           originalName: file.originalname,
           mimeType: finalMimeType,
-          fileSize: file.size,
-          uploadedAt: new Date()
+          size: file.size,
+          url: finalUrl
         });
 
         logos.push(logo);
@@ -111,24 +109,36 @@ export async function registerRoutes(app: express.Application) {
         try {
           if (finalMimeType === 'image/svg+xml') {
             const svgPath = path.join(uploadDir, finalFilename);
-            const contentBounds = calculateSVGContentBounds(svgPath);
-            if (contentBounds) {
-              // Check if this is an A3-sized document by looking at dimensions
-              const isA3Document = (contentBounds.width > 700 && contentBounds.height > 950) || 
-                                   (contentBounds.width > 950 && contentBounds.height > 700);
-              
-              if (isA3Document) {
-                // For A3 documents, use the full template size
-                displayWidth = 297; // A3 width in mm
-                displayHeight = 420; // A3 height in mm
-                console.log(`A3 document detected, using full template size: ${displayWidth}×${displayHeight}mm`);
-              } else {
-                // For smaller content, use content bounds with scaling
+            
+            // Check viewBox first - most reliable for A3 detection
+            const svgContent = fs.readFileSync(svgPath, 'utf8');
+            const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+            let isA3Document = false;
+            
+            if (viewBoxMatch) {
+              const viewBoxValues = viewBoxMatch[1].split(' ').map(parseFloat);
+              if (viewBoxValues.length >= 4) {
+                const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
+                // Check for A3 dimensions (841.89×1190.55 is A3 at 72 DPI)
+                isA3Document = (vbWidth > 800 && vbHeight > 1100) || (vbWidth > 1100 && vbHeight > 800);
+                console.log(`ViewBox: ${vbWidth}×${vbHeight}, A3 document: ${isA3Document}`);
+              }
+            }
+            
+            if (isA3Document) {
+              // For A3 documents, use the full template size
+              displayWidth = 297; // A3 width in mm
+              displayHeight = 420; // A3 height in mm
+              console.log(`A3 document detected, using full template size: ${displayWidth}×${displayHeight}mm`);
+            } else {
+              // For non-A3 content, try to get actual content bounds
+              const contentBounds = calculateSVGContentBounds(svgPath);
+              if (contentBounds) {
                 const scaleFactor = 0.35;
                 displayWidth = Math.round(contentBounds.width * scaleFactor);
                 displayHeight = Math.round(contentBounds.height * scaleFactor);
                 
-                // Apply reasonable limits for non-A3 content
+                // Apply reasonable limits for logos
                 displayWidth = Math.min(displayWidth, 150);
                 displayHeight = Math.min(displayHeight, 150);
                 console.log(`Logo content detected, using scaled size: ${displayWidth}×${displayHeight}mm`);
