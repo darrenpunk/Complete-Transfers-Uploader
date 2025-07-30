@@ -511,12 +511,29 @@ export default function PropertiesPanel({
       });
       
       // Color Mode Check
-      const svgColors = logo.svgColors as string[] | undefined;
-      const hasColors = svgColors && Array.isArray(svgColors) && svgColors.length > 0;
+      const svgAnalysis = logo.svgColors as any;
+      let colorStatus = "warning";
+      let colorValue = "No Colors";
+      
+      if (svgAnalysis && typeof svgAnalysis === 'object') {
+        if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
+          colorStatus = "pass";
+          colorValue = `${svgAnalysis.colors.length} Colors Detected`;
+        } else if (svgAnalysis.strokeWidths && Array.isArray(svgAnalysis.strokeWidths)) {
+          // Has stroke analysis but no colors - might be pure strokes
+          colorValue = "Analyzed (No Fill Colors)";
+          colorStatus = "pass";
+        }
+      } else if (Array.isArray(svgAnalysis) && svgAnalysis.length > 0) {
+        // Legacy format - array of colors
+        colorStatus = "pass";
+        colorValue = `${svgAnalysis.length} Colors`;
+      }
+      
       checks.push({
         name: "Color Analysis",
-        status: hasColors ? "pass" : "warning",
-        value: hasColors ? `${svgColors.length} Colors` : "No Colors"
+        status: colorStatus,
+        value: colorValue
       });
     }
     
@@ -545,34 +562,7 @@ export default function PropertiesPanel({
       value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`
     });
 
-    // Line Thickness Check - ensure lines are thick enough for print reproduction
-    // This includes actual strokes AND converted strokes (filled shapes from expanded strokes)
-    if (logo) {
-      const svgAnalysis = logo.svgColors as any;
-      let lineThicknessStatus = "pass";
-      let lineThicknessValue = "Lines OK";
-      
-      if (svgAnalysis && typeof svgAnalysis === 'object' && svgAnalysis.minStrokeWidth !== undefined) {
-        const minThickness = svgAnalysis.minStrokeWidth;
-        const minRecommended = 0.25; // 0.25pt minimum for good print reproduction
-        
-        if (minThickness < minRecommended) {
-          lineThicknessStatus = "warning";
-          lineThicknessValue = `${minThickness.toFixed(2)}pt (Min: ${minRecommended}pt)`;
-        } else {
-          lineThicknessValue = `${minThickness.toFixed(2)}pt (Good)`;
-        }
-      } else {
-        // No stroke analysis available - could be pure fills or analysis not run
-        lineThicknessValue = "No lines detected";
-      }
-      
-      checks.push({
-        name: "Line Thickness",
-        status: lineThicknessStatus,
-        value: lineThicknessValue
-      });
-    }
+
     
     return checks;
   }, [currentElement, logos]);

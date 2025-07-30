@@ -11,6 +11,7 @@ import type { CanvasElement, Logo } from "@shared/schema";
 interface SVGColorInfo {
   id: string;
   originalColor: string;
+  originalFormat?: string;
   cmykColor?: string;
   pantoneMatch?: string;
   pantoneDistance?: number;
@@ -73,8 +74,29 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   );
 
   // Only show for SVG logos with detected colors
-  const svgColors = logo.svgColors as SVGColorInfo[] | null;
+  const svgAnalysis = logo.svgColors as { colors?: SVGColorInfo[]; strokeWidths?: number[]; hasText?: boolean } | SVGColorInfo[] | null;
+  
+  // Handle both new analysis format and legacy array format
+  let svgColors: SVGColorInfo[] = [];
+  if (svgAnalysis) {
+    if (Array.isArray(svgAnalysis)) {
+      // Legacy format - direct array of color info
+      svgColors = svgAnalysis;
+    } else if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
+      // New format - colors are in the colors property
+      svgColors = svgAnalysis.colors;
+    }
+  }
+  
   const shouldShow = svgColors && svgColors.length > 0 && logo.mimeType === 'image/svg+xml';
+  
+  console.log('ColorPickerPanel Debug:', {
+    logoId: logo.id,
+    svgAnalysis: svgAnalysis,
+    svgColors: svgColors,
+    shouldShow: shouldShow,
+    mimeType: logo.mimeType
+  });
 
   const updateColorsMutation = useMutation({
     mutationFn: async (colors: Record<string, string>) => {
