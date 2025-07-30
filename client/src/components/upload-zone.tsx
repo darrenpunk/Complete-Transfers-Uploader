@@ -60,7 +60,7 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       'application/pdf': ['.pdf'],
     },
     multiple: true,
-    maxSize: 100 * 1024 * 1024, // 100MB
+    maxSize: 200 * 1024 * 1024, // 200MB for large artwork files
     onDropRejected: (rejectedFiles) => {
       console.log('Files rejected:', rejectedFiles.map(f => ({ 
         name: f.file.name, 

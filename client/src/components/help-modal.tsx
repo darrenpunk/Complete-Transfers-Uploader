@@ -412,7 +412,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <div>
                         <h4 className="font-medium">Large file upload fails</h4>
                         <p className="text-sm text-muted-foreground">
-                          Maximum file size is 100MB. For larger files, try optimizing the PDF 
+                          Maximum file size is 200MB. For larger files, try optimizing the PDF 
                           or reducing image resolution before uploading.
                         </p>
                       </div>

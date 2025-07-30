@@ -11,8 +11,8 @@ console.log("Loaded VECTORIZER_API_ID:", process.env.VECTORIZER_API_ID ? "exists
 console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ? "exists" : "not found");
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

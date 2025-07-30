@@ -189,7 +189,7 @@ const upload = multer({
     }
   }),
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
+    fileSize: 200 * 1024 * 1024, // 200MB limit for large artwork files
   },
   fileFilter: (req: any, file: any, cb: any) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'application/pdf'];
