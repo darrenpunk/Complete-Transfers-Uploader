@@ -544,6 +544,34 @@ export default function PropertiesPanel({
       status: hasReasonableSize ? "pass" : "warning",
       value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`
     });
+
+    // Line Thickness Check - ensure lines are thick enough for print reproduction
+    if (logo) {
+      const svgAnalysis = logo.svgColors as any;
+      let lineThicknessStatus = "pass";
+      let lineThicknessValue = "Lines OK";
+      
+      if (svgAnalysis && typeof svgAnalysis === 'object' && svgAnalysis.minStrokeWidth !== undefined) {
+        const minThickness = svgAnalysis.minStrokeWidth;
+        const minRecommended = 0.25; // 0.25pt minimum for good print reproduction
+        
+        if (minThickness < minRecommended) {
+          lineThicknessStatus = "warning";
+          lineThicknessValue = `${minThickness.toFixed(2)}pt (Min: ${minRecommended}pt)`;
+        } else {
+          lineThicknessValue = `${minThickness.toFixed(2)}pt (Good)`;
+        }
+      } else {
+        // No stroke analysis available - could be pure fills or analysis not run
+        lineThicknessValue = "No strokes detected";
+      }
+      
+      checks.push({
+        name: "Line Thickness",
+        status: lineThicknessStatus,
+        value: lineThicknessValue
+      });
+    }
     
     return checks;
   }, [currentElement, logos]);

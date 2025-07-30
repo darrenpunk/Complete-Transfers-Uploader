@@ -278,6 +278,34 @@ export async function registerRoutes(app: express.Application) {
         };
 
         await storage.createCanvasElement(canvasElementData);
+
+        // Automatically analyze SVG files for stroke widths and other properties
+        if (finalMimeType === 'image/svg+xml') {
+          try {
+            const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
+            const svgPath = path.join(uploadDir, finalFilename);
+            const analysis = analyzeSVGWithStrokeWidths(svgPath);
+            
+            // Update the logo with enhanced analysis data including stroke widths
+            const updatedAnalysis = {
+              colors: analysis.colors,
+              fonts: analysis.fonts,
+              strokeWidths: analysis.strokeWidths,
+              minStrokeWidth: analysis.minStrokeWidth,
+              maxStrokeWidth: analysis.maxStrokeWidth,
+              hasText: analysis.hasText
+            };
+            
+            await storage.updateLogo(logo.id, {
+              svgColors: updatedAnalysis,
+              svgFonts: analysis.fonts
+            });
+            
+            console.log(`📊 Auto-analyzed ${finalFilename} - Stroke widths: ${analysis.strokeWidths.length}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
+          } catch (analysisError) {
+            console.warn('SVG analysis failed during upload:', analysisError);
+          }
+        }
       }
 
       res.json(logos);
@@ -476,6 +504,60 @@ export async function registerRoutes(app: express.Application) {
       } else {
         next();
       }
+    }
+  });
+
+  // SVG Analysis endpoint for stroke width detection
+  app.post('/api/logos/:logoId/analyze', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Only analyze SVG files
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ error: 'Can only analyze SVG files' });
+      }
+      
+      const svgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+      
+      // Perform enhanced SVG analysis including stroke widths
+      const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
+      const analysis = analyzeSVGWithStrokeWidths(svgPath);
+      
+      // Update the logo with enhanced analysis data
+      const updatedAnalysis = {
+        colors: analysis.colors,
+        fonts: analysis.fonts,
+        strokeWidths: analysis.strokeWidths,
+        minStrokeWidth: analysis.minStrokeWidth,
+        maxStrokeWidth: analysis.maxStrokeWidth,
+        hasText: analysis.hasText
+      };
+      
+      await storage.updateLogo(logoId, {
+        svgColors: updatedAnalysis,
+        svgFonts: analysis.fonts
+      });
+      
+      console.log(`📊 Enhanced SVG analysis completed for ${logo.filename}`);
+      console.log(`   - Colors: ${analysis.colors.length}`);
+      console.log(`   - Fonts: ${analysis.fonts.length}`);
+      console.log(`   - Stroke widths: ${analysis.strokeWidths.length}`);
+      if (analysis.minStrokeWidth !== undefined) {
+        console.log(`   - Min line thickness: ${analysis.minStrokeWidth.toFixed(2)}pt`);
+      }
+      
+      res.json(updatedAnalysis);
+    } catch (error) {
+      console.error('SVG analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze SVG' });
     }
   });
 

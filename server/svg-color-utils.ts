@@ -223,6 +223,45 @@ export function extractSVGFonts(svgPath: string): FontInfo[] {
   }
 }
 
+// Function to extract stroke widths from SVG content
+function extractStrokeWidths(svgContent: string): number[] {
+  const strokeWidths: number[] = [];
+  const patterns = [
+    // Direct stroke-width attributes
+    /stroke-width\s*=\s*["']([^"']+)["']/gi,
+    // Stroke-width in style attributes
+    /style\s*=\s*["'][^"']*stroke-width\s*:\s*([^;"']+)[^"']*["']/gi,
+    // CSS style blocks
+    /stroke-width\s*:\s*([^;}\s]+)/gi
+  ];
+
+  patterns.forEach(pattern => {
+    let match;
+    while ((match = pattern.exec(svgContent)) !== null) {
+      const widthStr = match[1].trim();
+      
+      // Parse numeric value (handle pt, px, mm units)
+      let widthValue = parseFloat(widthStr);
+      
+      if (!isNaN(widthValue) && widthValue > 0) {
+        // Convert units to points (pt) for consistent comparison
+        if (widthStr.includes('mm')) {
+          widthValue = widthValue * 2.834; // mm to pt
+        } else if (widthStr.includes('px')) {
+          widthValue = widthValue * 0.75; // px to pt (assuming 96 DPI)
+        } else if (widthStr.includes('in')) {
+          widthValue = widthValue * 72; // inches to pt
+        }
+        // Default assumption is points if no unit specified
+        
+        strokeWidths.push(widthValue);
+      }
+    }
+  });
+
+  return strokeWidths.filter((width, index, arr) => arr.indexOf(width) === index); // Remove duplicates
+}
+
 export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   try {
     const svgContent = fs.readFileSync(svgPath, 'utf8');
@@ -456,6 +495,40 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   } catch (error) {
     console.error('Error extracting SVG colors:', error);
     return [];
+  }
+}
+
+// Enhanced SVG analysis function that includes stroke width detection
+export function analyzeSVGWithStrokeWidths(svgPath: string): {
+  colors: SVGColorInfo[];
+  fonts: any[];
+  strokeWidths: number[];
+  hasText: boolean;
+  minStrokeWidth?: number;
+  maxStrokeWidth?: number;
+} {
+  try {
+    const svgContent = fs.readFileSync(svgPath, 'utf8');
+    const colors = extractSVGColors(svgPath);
+    const fonts = extractSVGFonts(svgPath);
+    const strokeWidths = extractStrokeWidths(svgContent);
+    
+    return {
+      colors,
+      fonts,
+      strokeWidths,
+      hasText: fonts.length > 0,
+      minStrokeWidth: strokeWidths.length > 0 ? Math.min(...strokeWidths) : undefined,
+      maxStrokeWidth: strokeWidths.length > 0 ? Math.max(...strokeWidths) : undefined
+    };
+  } catch (error) {
+    console.error('Error analyzing SVG with stroke widths:', error);
+    return {
+      colors: [],
+      fonts: [],
+      strokeWidths: [],
+      hasText: false
+    };
   }
 }
 
