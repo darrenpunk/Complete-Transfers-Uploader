@@ -750,6 +750,13 @@ export default function ToolsSidebar({
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
               
+              console.log('Tools sidebar preflight debug:', {
+                logoId: logo.id,
+                hasColorOverrides,
+                colorOverrides: selectedElement.colorOverrides,
+                svgColors: svgColors.slice(0, 2) // First 2 colors for debugging
+              });
+              
               // Only show CMYK if explicitly converted OR has color overrides
               const hasConvertedColors = svgColors.some(color => color.converted);
               
