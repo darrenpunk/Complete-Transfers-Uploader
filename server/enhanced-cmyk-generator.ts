@@ -1162,7 +1162,7 @@ export class EnhancedCMYKGenerator {
   ) {
     try {
       // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
-      console.log(`Enhanced CMYK: Preserving exact CMYK values from app for: ${path.basename(svgPath)}`);
+      console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
       
       let svgContentForPDF = fs.readFileSync(svgPath, 'utf8');
       let preservedExactCMYK = false;
@@ -1174,12 +1174,15 @@ export class EnhancedCMYKGenerator {
         console.log(`Enhanced CMYK: Logo svgAnalysis exists:`, !!logoData?.svgAnalysis);
         console.log(`Enhanced CMYK: Colors array:`, logoData?.svgAnalysis?.colors?.length);
         
-        // If logo has pre-calculated CMYK values from the app, use those EXACT values
-        if (logoData?.svgAnalysis && Array.isArray(logoData.svgAnalysis.colors) && logoData.svgAnalysis.colors.length > 0) {
+        // Check both svgAnalysis (frontend) and svgColors (database) for CMYK values
+        const colorAnalysis = (logoData as any)?.svgAnalysis || logoData?.svgColors;
+        console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
+        
+        if (colorAnalysis && Array.isArray(colorAnalysis.colors) && colorAnalysis.colors.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
-          for (const colorInfo of logoData.svgAnalysis.colors) {
+          for (const colorInfo of colorAnalysis.colors) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
               foundConvertedColors++;
