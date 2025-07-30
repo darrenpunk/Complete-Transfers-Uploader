@@ -87,7 +87,7 @@ export async function registerRoutes(app: express.Application) {
       };
 
       console.log(`🔄 Generating PDF with EnhancedCMYKGenerator...`);
-      const pdfBuffer = await generator.generatePDF(pdfData, project);
+      const pdfBuffer = await generator.generateCMYKPDF(pdfData);
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');

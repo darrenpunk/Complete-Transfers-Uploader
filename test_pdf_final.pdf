@@ -1,1 +1,1 @@
-{"error":"Project not found"}
+{"error":"Failed to generate PDF: generator.generatePDF is not a function"}
