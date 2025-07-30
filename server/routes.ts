@@ -169,6 +169,21 @@ export async function registerRoutes(app: express.Application) {
               hasText: analysis.hasText
             });
             
+            // Auto-convert colors to CMYK during upload
+            if (analysis.colors && analysis.colors.length > 0) {
+              console.log(`🎨 Auto-converting colors to CMYK for ${finalFilename}`);
+              
+              // Mark all colors as converted to CMYK
+              const convertedColors = analysis.colors.map(color => ({
+                ...color,
+                converted: true
+              }));
+              
+              // Update analysis with converted colors
+              analysis.colors = convertedColors;
+              console.log(`✅ Auto-converted ${convertedColors.length} colors to CMYK`);
+            }
+            
             // Prepare analysis data for logo record
             analysisData = {
               colors: analysis.colors,

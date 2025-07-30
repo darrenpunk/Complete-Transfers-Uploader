@@ -692,10 +692,7 @@ export default function ToolsSidebar({
           <CollapsibleContent>
             <div className="px-6 pb-6">
         {(() => {
-          console.log('Tools sidebar preflight render:', {
-            selectedElement: selectedElement ? { id: selectedElement.id, logoId: selectedElement.logoId } : null,
-            logos: logos.length
-          });
+
           
           if (!selectedElement) {
             return (
@@ -748,29 +745,27 @@ export default function ToolsSidebar({
             let colorValue = "Unknown";
             
             if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
-              // Vector files with detected SVG colors - show format and count
-              // Color detection logic
+              // Vector files with detected SVG colors - detect original color space
               
-              // Check if element has color overrides (manual color changes)
+              // Check if file was auto-converted to CMYK during upload
+              const hasConvertedColors = svgColors.some(color => color.converted);
+              
+              // Check if element has manual color overrides 
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
               
-              console.log('Tools sidebar preflight debug:', {
-                logoId: logo.id,
-                hasColorOverrides,
-                colorOverrides: selectedElement.colorOverrides,
-                hasConvertedColors: svgColors.some(color => color.converted),
-                svgColors: svgColors.slice(0, 2) // First 2 colors for debugging
-              });
+
               
-              // Only show CMYK if explicitly converted OR has color overrides
-              const hasConvertedColors = svgColors.some(color => color.converted);
-              
-              if (hasConvertedColors || hasColorOverrides) {
+              if (hasConvertedColors) {
+                // File was automatically converted to CMYK during upload
+                colorValue = `CMYK Vector`;
+                colorStatus = "pass";
+              } else if (hasColorOverrides) {
+                // Manual color changes applied (becomes CMYK)
                 colorValue = `CMYK Vector`;
                 colorStatus = "pass";
               } else {
-                // Default to RGB for unconverted files (even if they have auto-generated CMYK values)
+                // Original RGB file - show conversion option
                 colorValue = `RGB Vector`;
                 colorStatus = "warning";
               }
