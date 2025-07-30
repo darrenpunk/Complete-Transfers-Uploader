@@ -201,6 +201,7 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **Increased File Upload Limits**: Raised maximum file upload size from 100MB to 200MB across client, server, and Express body parser to handle large complex artwork files (July 30, 2025)
 ✓ **SVG Processing Optimization**: Reduced regex pattern limits and added file size checks to prevent timeouts on large complex vector files - added early termination for files >5MB and >10MB with fallback processing (July 30, 2025)
 ✓ **Large PDF File Support**: Implemented complete solution for handling very large PDF files (>30MB) by skipping SVG conversion entirely and using original PDFs directly with fallback file serving logic (July 30, 2025)
+✓ **Large PDF Canvas Display Fix**: Added PNG thumbnail generation for large PDFs using Ghostscript at 150 DPI to enable canvas display while preserving original vector PDF for final output (July 30, 2025)
 
 
 ## Current Status (July 29, 2025)

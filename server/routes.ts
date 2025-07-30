@@ -303,13 +303,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const pdfSizeMB = pdfStats.size / (1024 * 1024);
             console.log(`PDF file size: ${pdfSizeMB.toFixed(1)}MB`);
             
-            if (pdfSizeMB > 30) { // Skip SVG conversion for files >30MB
-              console.log(`PDF file too large (${pdfSizeMB.toFixed(1)}MB), skipping SVG conversion to prevent timeout`);
-              // Use original PDF without SVG conversion
-              finalFilename = file.filename;
-              finalMimeType = file.mimetype;
-              finalUrl = `/uploads/${file.filename}`;
-              console.log(`Large PDF used directly without conversion: ${finalFilename}`);
+            if (pdfSizeMB > 30) { // Skip SVG conversion for files >30MB but create PNG for display
+              console.log(`PDF file too large (${pdfSizeMB.toFixed(1)}MB), skipping SVG conversion but creating PNG for canvas display`);
+              
+              // Create a PNG thumbnail for canvas display using Ghostscript (fast, low resolution)
+              const pngFilename = `${file.filename}.png`;
+              const pngPath = path.join(uploadDir, pngFilename);
+              
+              try {
+                // Use low resolution (150 DPI) for fast processing of large files
+                const ghostscriptCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dFirstPage=1 -dLastPage=1 -sOutputFile="${pngPath}" "${path.join(uploadDir, file.filename)}"`;
+                await execAsync(ghostscriptCommand);
+                
+                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                  // Use PNG for canvas display but keep original PDF for final output
+                  finalFilename = pngFilename;
+                  finalMimeType = 'image/png';
+                  finalUrl = `/uploads/${pngFilename}`;
+                  console.log(`Large PDF converted to PNG for display: ${pngFilename}`);
+                } else {
+                  throw new Error('PNG conversion failed');
+                }
+              } catch (pngError) {
+                console.error('PNG conversion failed for large PDF:', pngError);
+                // Fallback to original PDF (will show placeholder but still work for output)
+                finalFilename = file.filename;
+                finalMimeType = file.mimetype;
+                finalUrl = `/uploads/${file.filename}`;
+                console.log(`Large PDF PNG conversion failed, using original: ${finalFilename}`);
+              }
             } else {
               // Try PDF to SVG conversion for smaller files
               const svgFilename = `${file.filename}.svg`;
