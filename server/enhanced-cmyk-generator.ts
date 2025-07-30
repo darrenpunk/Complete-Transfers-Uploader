@@ -634,18 +634,19 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
           await this.embedRecoloredPDF(pdfDoc, page, element, originalPdfPath, templateSize, inkColor);
         } else {
-          console.log(`Enhanced CMYK: Using original PDF without color changes for: ${logo.originalName}`);
-          await this.embedOriginalPDF(pdfDoc, page, element, originalPdfPath, templateSize);
+          // Check if logo has CMYK conversion applied and needs color space conversion
+          await this.embedSVGAsPDF(pdfDoc, page, element, logo, templateSize, originalPdfPath);
         }
         return;
       }
     }
     
-    // Fallback to processed image (original graphics without modifications)
+    // Fallback to processed image with CMYK conversion if needed
     const logoPath = path.join(uploadDir, logo.filename);
     if (fs.existsSync(logoPath)) {
-      console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
-      await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
+      console.log(`Enhanced CMYK: Fallback to processed image with CMYK check: ${logo.originalName}`);
+      // Check if logo has CMYK conversion applied and needs color space conversion
+      await this.embedSVGAsPDF(pdfDoc, page, element, logo, templateSize, logoPath);
     } else {
       console.log(`Enhanced CMYK: No suitable file found for: ${logo.originalName}`);
     }
