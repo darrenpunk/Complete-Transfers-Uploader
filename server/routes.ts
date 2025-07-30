@@ -169,13 +169,19 @@ export async function registerRoutes(app: express.Application) {
             }
             
             if (contentBounds) {
-              // Use precise content scaling to match actual logo dimensions
-              // For this specific file: actual content 70×61mm vs detected bounds 239×204 pixels
-              // Calculate adaptive scaling factor based on content tightness
+              // CRITICAL FIX: Extract raw dimensions from SVG directly for exact precision
+              // Get the raw width/height that was detected during SVG processing
+              const svgContent = fs.readFileSync(svgPath, 'utf8');
+              const viewBoxMatch = svgContent.match(/viewBox="[^"]*\s([0-9.]+)\s([0-9.]+)"/);
+              let rawPixelWidth = contentBounds.width;
+              let rawPixelHeight = contentBounds.height;
               
-              // Check if this is a tightly cropped logo (high content density)
-              const aspectRatio = contentBounds.width / contentBounds.height;
-              const isTightContent = aspectRatio > 0.8 && aspectRatio < 2.5; // Normal logo proportions
+              if (viewBoxMatch) {
+                // Use viewBox dimensions directly for exact precision
+                rawPixelWidth = parseFloat(viewBoxMatch[1]);
+                rawPixelHeight = parseFloat(viewBoxMatch[2]);
+                console.log(`Using raw viewBox dimensions: ${rawPixelWidth}×${rawPixelHeight}px instead of calculated ${contentBounds.width}×${contentBounds.height}px`);
+              }
               
               // CRITICAL: Direct pixel-to-mm conversion for accurate logo dimensions  
               // Standard DPI conversion: 72 DPI = 1 pixel = 0.352778mm
@@ -183,10 +189,10 @@ export async function registerRoutes(app: express.Application) {
               const pixelToMmFactor = 0.352778; // Exact conversion factor
               
               // Use floating point precision throughout - no rounding until final display
-              displayWidth = contentBounds.width * pixelToMmFactor;
-              displayHeight = contentBounds.height * pixelToMmFactor;
+              displayWidth = rawPixelWidth * pixelToMmFactor;
+              displayHeight = rawPixelHeight * pixelToMmFactor;
               
-              console.log(`ACCURACY CHECK: Content ${contentBounds.width}×${contentBounds.height}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (factor: ${pixelToMmFactor})`);
+              console.log(`ACCURACY CHECK: Content ${rawPixelWidth}×${rawPixelHeight}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (factor: ${pixelToMmFactor})`);
               
                   } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
