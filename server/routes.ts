@@ -128,41 +128,33 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`ViewBox: ${vbWidth}×${vbHeight}, A3: ${isA3}, A4: ${isA4}, Large format: ${isLargeFormat}`);
                 
                 if (isLargeFormat) {
-                  // Get template size to determine proper scaling
-                  const templateSize = await storage.getTemplateSize(project.templateSize);
-                  if (templateSize) {
-                    if (isA3) {
-                      // True A3 content - use full template size
-                      displayWidth = Math.min(297, templateSize.width);
-                      displayHeight = Math.min(420, templateSize.height);
-                      console.log(`A3 document detected, using full template size: ${displayWidth}×${displayHeight}mm`);
-                    } else if (isA4) {
-                      // A4 content in any template - scale to fit nicely
-                      // A4 is 210×297mm, scale it to fit template with some padding
-                      const scaleToFit = Math.min(templateSize.width / 210, templateSize.height / 297);
-                      displayWidth = Math.round(210 * scaleToFit * 0.7); // 70% of available space
-                      displayHeight = Math.round(297 * scaleToFit * 0.7);
-                      console.log(`A4 document detected, using scaled size: ${displayWidth}×${displayHeight}mm (scale: ${scaleToFit.toFixed(2)})`);
-                    }
-                  }
-                  isA3Document = true; // Use large format handling
+                  isA3Document = true; // Mark as large format for later processing
                 }
               }
             }
             
-            if (!isA3Document) {
-              // For non-A3 content, try to get actual content bounds
-              const contentBounds = calculateSVGContentBounds(svgPath);
-              if (contentBounds) {
-                const scaleFactor = 0.35;
-                displayWidth = Math.round(contentBounds.width * scaleFactor);
-                displayHeight = Math.round(contentBounds.height * scaleFactor);
-                
-                // Apply reasonable limits for logos
-                displayWidth = Math.min(displayWidth, 150);
-                displayHeight = Math.min(displayHeight, 150);
-                console.log(`Logo content detected, using scaled size: ${displayWidth}×${displayHeight}mm`);
-              }
+            // Always try to get actual content bounds first, regardless of document format
+            const contentBounds = calculateSVGContentBounds(svgContent);
+            
+            if (contentBounds) {
+              // Use actual content bounds with appropriate scaling
+              const scaleFactor = 0.35;
+              displayWidth = Math.round(contentBounds.width * scaleFactor);
+              displayHeight = Math.round(contentBounds.height * scaleFactor);
+              
+              // Apply reasonable limits but allow larger content for big documents
+              const maxWidth = isA3Document ? 250 : 150;
+              const maxHeight = isA3Document ? 350 : 150;
+              
+              displayWidth = Math.min(displayWidth, maxWidth);
+              displayHeight = Math.min(displayHeight, maxHeight);
+              
+              console.log(`Content bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}, scaled to: ${displayWidth}×${displayHeight}mm`);
+            } else if (isA3Document) {
+              // Fallback: for large documents with no detectable content bounds
+              console.log(`Large format document with no detectable content bounds, using conservative sizing`);
+              displayWidth = 200;
+              displayHeight = 150;
             }
           }
         } catch (error) {
