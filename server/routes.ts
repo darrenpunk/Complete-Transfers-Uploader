@@ -177,15 +177,16 @@ export async function registerRoutes(app: express.Application) {
               const aspectRatio = contentBounds.width / contentBounds.height;
               const isTightContent = aspectRatio > 0.8 && aspectRatio < 2.5; // Normal logo proportions
               
-              // CRITICAL: Direct pixel-to-mm conversion for accurate logo dimensions
+              // CRITICAL: Direct pixel-to-mm conversion for accurate logo dimensions  
               // Standard DPI conversion: 72 DPI = 1 pixel = 0.352778mm
               // This ensures bounding box matches vector content exactly
               const pixelToMmFactor = 0.352778; // Exact conversion factor
               
-              displayWidth = Math.round(contentBounds.width * pixelToMmFactor);
-              displayHeight = Math.round(contentBounds.height * pixelToMmFactor);
+              // Use floating point precision throughout - no rounding until final display
+              displayWidth = contentBounds.width * pixelToMmFactor;
+              displayHeight = contentBounds.height * pixelToMmFactor;
               
-              console.log(`ACCURACY CHECK: Content ${contentBounds.width}×${contentBounds.height}px → ${displayWidth}×${displayHeight}mm (factor: ${pixelToMmFactor})`);
+              console.log(`ACCURACY CHECK: Content ${contentBounds.width}×${contentBounds.height}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (factor: ${pixelToMmFactor})`);
               
                   } else if (isA3Document) {
               // Fallback: for large documents with no detectable content bounds
