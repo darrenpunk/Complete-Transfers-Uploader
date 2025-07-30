@@ -458,6 +458,99 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Update canvas element colors endpoint
+  app.post('/api/canvas-elements/:elementId/update-colors', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      const { colorOverrides } = req.body;
+      
+      console.log(`🎨 Updating colors for canvas element: ${elementId}`, colorOverrides);
+      
+      const updatedElement = await storage.updateCanvasElement(elementId, {
+        colorOverrides
+      });
+      
+      if (!updatedElement) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      console.log(`✅ Successfully updated colors for element: ${elementId}`);
+      res.json(updatedElement);
+    } catch (error) {
+      console.error('Update canvas element colors error:', error);
+      res.status(500).json({ error: 'Failed to update canvas element colors' });
+    }
+  });
+
+  // Get modified SVG with color overrides for canvas display
+  app.get('/api/canvas-elements/:elementId/modified-svg', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      
+      // Get the canvas element
+      const element = await storage.getCanvasElement(elementId);
+      if (!element) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      // Get the logo
+      const logo = await storage.getLogo(element.logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Only works for SVG files
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ error: 'Only SVG files support color modification' });
+      }
+      
+      const svgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+      
+      // Apply color overrides if they exist
+      let svgContent = fs.readFileSync(svgPath, 'utf8');
+      
+      if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+        console.log(`🎨 Applying color overrides to SVG for canvas display:`, element.colorOverrides);
+        
+        // Get SVG color analysis for format mapping
+        const svgColors = logo.svgColors as any;
+        let originalFormatOverrides: Record<string, string> = {};
+        
+        if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+          Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
+            // Find the matching color in the SVG analysis
+            const colorInfo = svgColors.colors.find((c: any) => c.originalColor === standardizedColor);
+            if (colorInfo && colorInfo.originalFormat) {
+              originalFormatOverrides[colorInfo.originalFormat] = newColor;
+            } else {
+              // Fallback to standardized color if original format not found
+              originalFormatOverrides[standardizedColor] = newColor;
+            }
+          });
+        } else {
+          // Fallback if no SVG color analysis available
+          originalFormatOverrides = element.colorOverrides as Record<string, string>;
+        }
+        
+        // Apply color changes
+        const { applySVGColorChanges } = await import('./svg-color-utils');
+        svgContent = applySVGColorChanges(svgPath, originalFormatOverrides);
+      }
+      
+      // Set proper content type and return the SVG
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.send(svgContent);
+      
+    } catch (error) {
+      console.error('Generate modified SVG error:', error);
+      res.status(500).json({ error: 'Failed to generate modified SVG' });
+    }
+  });
+
   // Delete canvas element endpoint
   app.delete('/api/canvas-elements/:elementId', async (req, res) => {
     try {

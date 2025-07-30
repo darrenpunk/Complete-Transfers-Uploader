@@ -1105,11 +1105,15 @@ export default function CanvasWorkspace({
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
                       <img
                         src={(() => {
-                          // Priority 1: Single Colour Transfer with ink color selected
+                          // Priority 1: Color overrides exist - use modified SVG endpoint
+                          if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
+                          }
+                          // Priority 2: Single Colour Transfer with ink color selected
                           if (shouldRecolorForInk) {
                             return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
                           }
-                          // Priority 2: Original image (skip _modified.svg since they may not exist)
+                          // Priority 3: Original image
                           const url = getImageUrl(logo);
                           console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
                           return url;
