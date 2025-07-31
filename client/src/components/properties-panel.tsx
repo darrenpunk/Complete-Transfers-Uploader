@@ -542,8 +542,8 @@ export default function PropertiesPanel({
     const templateWidth = currentTemplate?.width || 297; // Default to A3 if template not found
     const templateHeight = currentTemplate?.height || 420;
     
-    // Add a 5mm safe zone margin from all edges for professional printing
-    const safeZoneMargin = 5;
+    // Add a 3mm safe zone margin from all edges for professional printing
+    const safeZoneMargin = 3;
     const safeZoneMinX = safeZoneMargin;
     const safeZoneMinY = safeZoneMargin;
     const safeZoneMaxX = templateWidth - safeZoneMargin;
@@ -556,7 +556,7 @@ export default function PropertiesPanel({
     checks.push({
       name: "Position",
       status: isWithinBounds ? "pass" : "warning",
-      value: isWithinBounds ? "Within Safe Zone" : "Outside Safe Zone (5mm margin)"
+      value: isWithinBounds ? "Within Safe Zone" : "Outside Safe Zone (3mm margin)"
     });
     
     // Size Check - reasonable print size
