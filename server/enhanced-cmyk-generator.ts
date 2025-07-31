@@ -670,8 +670,26 @@ export class EnhancedCMYKGenerator {
       // Step 1: Convert original PDF to CMYK color space
       const cmykPdfPath = pdfPath.replace('.pdf', '_cmyk.pdf');
       
-      // Apply CMYK conversion using Ghostscript
-      const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+      // Get ICC profile path for proper color conversion
+      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+      
+      let iccProfilePath = uploadedICCPath;
+      if (!fs.existsSync(uploadedICCPath)) {
+        iccProfilePath = fallbackICCPath;
+      }
+      
+      const hasICC = fs.existsSync(iccProfilePath);
+      
+      // Apply CMYK conversion using Ghostscript with ICC profile for accurate color management
+      let cmykCommand: string;
+      if (hasICC) {
+        // Use ICC profile for proper color management
+        cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+      } else {
+        // Fallback without ICC profile
+        cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+      }
       
       let useCMYKVersion = false;
       try {
@@ -681,7 +699,7 @@ export class EnhancedCMYKGenerator {
               console.error(`Enhanced CMYK: PDF CMYK conversion failed, using original:`, error);
               resolve();
             } else {
-              console.log(`Enhanced CMYK: Successfully converted original PDF to CMYK: ${path.basename(pdfPath)}`);
+              console.log(`Enhanced CMYK: Successfully converted original PDF to CMYK with ${hasICC ? 'ICC profile' : 'standard conversion'}: ${path.basename(pdfPath)}`);
               useCMYKVersion = true;
               resolve();
             }
@@ -1075,9 +1093,10 @@ export class EnhancedCMYKGenerator {
         
         fs.writeFileSync(inputPath, pdfBuffer);
         
-        // Use ghostscript to embed ICC profile directly into PDF structure
-        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -dEmbedAllFonts=true -dCompatibilityLevel=1.4 -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -sOutputFile="${outputPath}" "${inputPath}"`;
-        console.log(`Enhanced CMYK: Embedding ICC profile into PDF structure: ${path.basename(iccProfilePath)}`);
+        // Use ghostscript to embed ICC profile with proper color management
+        // Important: Use -dOverrideICC to ensure ICC profile is applied correctly
+        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -dEmbedAllFonts=true -dCompatibilityLevel=1.4 -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -sOutputFile="${outputPath}" "${inputPath}"`;
+        console.log(`Enhanced CMYK: Embedding ICC profile into PDF structure with color management: ${path.basename(iccProfilePath)}`);
         
         await execAsync(gsCommand);
         const enhancedPDF = fs.readFileSync(outputPath);
