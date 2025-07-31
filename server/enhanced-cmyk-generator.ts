@@ -1179,10 +1179,11 @@ export class EnhancedCMYKGenerator {
       
       // Get the logo data to access pre-calculated CMYK values
       console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
-      console.log(`Enhanced CMYK: About to call storage.getLogo`);
+      console.log(`Enhanced CMYK: About to call storage.getLogo with ID:`, element.logoId);
       try {
         const logoData = await storage.getLogo(element.logoId || '');
         console.log(`Enhanced CMYK: storage.getLogo returned:`, !!logoData);
+        console.log(`Enhanced CMYK: logoData structure:`, logoData ? Object.keys(logoData) : 'null');
         
         if (!logoData) {
           console.log(`Enhanced CMYK: Logo data is null/undefined for ${element.logoId}`);
