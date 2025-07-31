@@ -1312,12 +1312,12 @@ export class EnhancedCMYKGenerator {
       let preservedExactCMYK = false;
       
       // Get the logo data to access pre-calculated CMYK values
-      console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
-      console.log(`Enhanced CMYK: About to call storage.getLogo with ID:`, element.logoId);
+      console.log(`*** ENHANCED CMYK DEBUG: Attempting to get logo data for ID: ${element.logoId}`);
+      console.log(`*** ENHANCED CMYK DEBUG: About to call storage.getLogo with ID:`, element.logoId);
       let logoData: any = null;
       try {
         logoData = await storage.getLogo(element.logoId || '');
-        console.log(`Enhanced CMYK: storage.getLogo returned:`, !!logoData);
+        console.log(`*** ENHANCED CMYK DEBUG: storage.getLogo returned:`, !!logoData);
         console.log(`Enhanced CMYK: logoData structure:`, logoData ? Object.keys(logoData) : 'null');
         
         if (!logoData) {
@@ -1331,10 +1331,10 @@ export class EnhancedCMYKGenerator {
         
         // Check svgColors from database for CMYK values
         const colorAnalysis = logoData?.svgColors as any;
-        console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
-        console.log(`Enhanced CMYK: Logo MIME type:`, logoData?.mimeType);
-        console.log(`Enhanced CMYK: Color analysis structure:`, typeof colorAnalysis, Array.isArray(colorAnalysis));
-        console.log(`Enhanced CMYK: Color analysis raw:`, JSON.stringify(colorAnalysis, null, 2));
+        console.log(`*** ENHANCED CMYK DEBUG: Color analysis data:`, !!colorAnalysis);
+        console.log(`*** ENHANCED CMYK DEBUG: Logo MIME type:`, logoData?.mimeType);
+        console.log(`*** ENHANCED CMYK DEBUG: Color analysis structure:`, typeof colorAnalysis, Array.isArray(colorAnalysis));
+        console.log(`*** ENHANCED CMYK DEBUG: Color analysis raw:`, JSON.stringify(colorAnalysis, null, 2));
         
         // Check for CMYK colors in various data structures
         let hasConvertedColors = false;
