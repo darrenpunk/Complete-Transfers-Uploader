@@ -32,8 +32,10 @@ export async function embedAdobeCMYKValues(pdfPath: string, colorMappings: Array
         const resources = page.node.Resources();
         if (resources) {
           // Add CMYK color space to resources
-          const colorSpaces = resources.get(PDFName.of('ColorSpace')) || pdfDoc.context.obj({});
-          colorSpaces.set(PDFName.of('CS1'), PDFName.of('DeviceCMYK'));
+          const colorSpaces = resources.lookup(PDFName.of('ColorSpace')) || pdfDoc.context.obj({});
+          if (colorSpaces instanceof PDFDict) {
+            colorSpaces.set(PDFName.of('CS1'), PDFName.of('DeviceCMYK'));
+          }
           resources.set(PDFName.of('ColorSpace'), colorSpaces);
         }
       }
@@ -54,6 +56,11 @@ export async function embedAdobeCMYKValues(pdfPath: string, colorMappings: Array
  * Creates a PostScript prologue that redefines color operators to use Adobe CMYK values
  */
 export function createAdobeCMYKPrologue(colorMappings: Array<{ rgb: string; cmyk: CMYKColor }>): string {
+  console.log(`Adobe CMYK Prologue: Creating prologue with ${colorMappings.length} color mappings`);
+  colorMappings.forEach((mapping, index) => {
+    console.log(`  Mapping ${index + 1}: ${mapping.rgb} -> C:${mapping.cmyk.c} M:${mapping.cmyk.m} Y:${mapping.cmyk.y} K:${mapping.cmyk.k}`);
+  });
+  
   let prologue = `%!PS-Adobe-3.0
 %%Title: Adobe CMYK Color Management
 %%Creator: CompleteTransfers Adobe Profile System

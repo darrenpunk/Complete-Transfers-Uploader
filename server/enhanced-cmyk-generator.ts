@@ -1326,6 +1326,7 @@ export class EnhancedCMYKGenerator {
                       rgb: `rgb(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b})`,
                       cmyk: { c: parseInt(c), m: parseInt(m), y: parseInt(y), k: parseInt(k) }
                     });
+                    console.log(`Enhanced CMYK: Added mapping - RGB(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b}) -> CMYK(${c}, ${m}, ${y}, ${k})`);
                   }
                 }
               }
