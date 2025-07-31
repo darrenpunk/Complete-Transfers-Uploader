@@ -127,7 +127,7 @@ export default function ProductLauncherModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="text-center mb-2">
+          <div className="text-center">
             <div className="flex justify-center mb-3">
               <img 
                 src={completeTransfersLogoPath} 
@@ -147,7 +147,7 @@ export default function ProductLauncherModal({
           </div>
         </DialogHeader>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 pt-4">
           {productCategories.map((product) => (
             <Card 
               key={product.id}
