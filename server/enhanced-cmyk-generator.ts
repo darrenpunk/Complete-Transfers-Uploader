@@ -1307,11 +1307,12 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
+    console.log(`*** CRITICAL DEBUG: embedSVGAsPDF function called!`);
     try {
       console.log(`*** CRITICAL DEBUG: embedSVGAsPDF START for ${path.basename(svgPath)}`);
       console.log(`*** CRITICAL DEBUG: Element logoId: ${element.logoId}`);
       console.log(`*** CRITICAL DEBUG: Storage exists: ${!!storage}`);
-    console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
+      console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
     
@@ -1347,6 +1348,13 @@ export class EnhancedCMYKGenerator {
         console.log(`*** ENHANCED CMYK DEBUG: Logo MIME type:`, logoData?.mimeType);
         console.log(`*** ENHANCED CMYK DEBUG: Color analysis structure:`, typeof colorAnalysis, Array.isArray(colorAnalysis));
         console.log(`*** ENHANCED CMYK DEBUG: Color analysis raw:`, JSON.stringify(colorAnalysis, null, 2));
+        
+        // Also check svgAnalysis field
+        const svgAnalysis = logoData?.svgAnalysis as any;
+        console.log(`*** ENHANCED CMYK DEBUG: svgAnalysis exists:`, !!svgAnalysis);
+        if (svgAnalysis) {
+          console.log(`*** ENHANCED CMYK DEBUG: svgAnalysis.colors:`, JSON.stringify(svgAnalysis.colors, null, 2));
+        }
         
         // Check for CMYK colors in various data structures
         let hasConvertedColors = false;
