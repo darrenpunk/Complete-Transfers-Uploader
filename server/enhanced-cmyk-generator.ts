@@ -651,7 +651,13 @@ export class EnhancedCMYKGenerator {
       // Check if this is an SVG file that needs CMYK conversion
       if (logo.mimeType === 'image/svg+xml') {
         console.log(`Enhanced CMYK: Applying CMYK conversion to SVG fallback: ${logo.originalName}`);
-        await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
+        try {
+          await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
+        } catch (svgError) {
+          console.error(`*** CRITICAL ERROR in embedSVGAsPDF:`, svgError);
+          console.error(`*** CRITICAL ERROR stack:`, (svgError as Error).stack);
+          throw svgError;
+        }
       } else {
         console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
         await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
@@ -1307,6 +1313,8 @@ export class EnhancedCMYKGenerator {
     console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
+    
+    // Wrap entire function in try-catch to capture any early errors
     try {
       // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
       console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
