@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+
+const execAsync = promisify(exec);
 import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts } from "pdf-lib";
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
@@ -1232,22 +1234,23 @@ export class EnhancedCMYKGenerator {
               if (cmykMatch) {
                 const [, c, m, y, k] = cmykMatch;
                 
-                // Convert CMYK percentages to RGB using the EXACT SAME algorithm that was used for display
-                const cDecimal = parseInt(c) / 100;
-                const mDecimal = parseInt(m) / 100;
-                const yDecimal = parseInt(y) / 100;
-                const kDecimal = parseInt(k) / 100;
+                // Use Adobe CMYK to RGB conversion for consistency
+                // Import the Adobe conversion function
+                const { adobeCmykToRgb } = require('./adobe-cmyk-profile');
                 
-                // Use the EXACT same CMYK-to-RGB conversion as in the app
-                const r = Math.round(255 * (1 - cDecimal) * (1 - kDecimal));
-                const g = Math.round(255 * (1 - mDecimal) * (1 - kDecimal));
-                const b = Math.round(255 * (1 - yDecimal) * (1 - kDecimal));
+                // Convert Adobe CMYK to RGB using the same algorithm as the app
+                const rgbValue = adobeCmykToRgb(
+                  parseInt(c),
+                  parseInt(m),
+                  parseInt(y),
+                  parseInt(k)
+                );
                 
-                const exactRgbColor = `rgb(${r}, ${g}, ${b})`;
+                const exactRgbColor = `rgb(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b})`;
                 
                 // Replace ALL variations of the original color format
                 const originalColor = colorInfo.originalFormat;
-                console.log(`Enhanced CMYK: Preserving exact CMYK ${colorInfo.cmykColor} -> RGB(${r}, ${g}, ${b}) for ${originalColor}`);
+                console.log(`Enhanced CMYK: Using Adobe CMYK ${colorInfo.cmykColor} -> RGB(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b}) for ${originalColor}`);
                 
                 // Replace the color in the SVG content
                 const colorPattern = new RegExp(originalColor.replace(/[()]/g, '\\$&'), 'g');
@@ -1304,28 +1307,67 @@ export class EnhancedCMYKGenerator {
           
           try {
             // Use Ghostscript to convert the PDF to true CMYK colorspace
-            // Use Ghostscript's standard CMYK conversion
-            const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-            console.log(`Enhanced CMYK: Executing CMYK conversion command: ${cmykCommand}`);
+            // IMPORTANT: Create custom color mapping PostScript to use Adobe CMYK values
+            const colorMappings: Array<{ rgb: string; cmyk: { c: number; m: number; y: number; k: number } }> = [];
             
-            await new Promise<void>((resolve, reject) => {
-              exec(cmykCommand, (error, stdout, stderr) => {
-                console.log(`Enhanced CMYK: CMYK conversion stdout:`, stdout);
-                console.log(`Enhanced CMYK: CMYK conversion stderr:`, stderr);
-                
-                if (error) {
-                  console.warn(`Enhanced CMYK: CMYK colorspace conversion failed, using RGB PDF:`, error);
-                  resolve();
-                } else if (fs.existsSync(cmykPdfPath)) {
-                  console.log(`Enhanced CMYK: Successfully converted to true CMYK colorspace: ${path.basename(svgPath)}`);
-                  finalPdfPath = cmykPdfPath;
-                  resolve();
-                } else {
-                  console.warn(`Enhanced CMYK: CMYK conversion succeeded but no output file created`);
-                  resolve();
+            // Build color mappings from the logo analysis
+            if (colorAnalysis && Array.isArray(colorAnalysis?.colors)) {
+              for (const colorInfo of colorAnalysis.colors) {
+                if (colorInfo.converted && colorInfo.cmykColor) {
+                  const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
+                  if (cmykMatch) {
+                    const [, c, m, y, k] = cmykMatch;
+                    const { adobeCmykToRgb } = require('./adobe-cmyk-profile');
+                    const rgbValue = adobeCmykToRgb(parseInt(c), parseInt(m), parseInt(y), parseInt(k));
+                    
+                    colorMappings.push({
+                      rgb: `rgb(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b})`,
+                      cmyk: { c: parseInt(c), m: parseInt(m), y: parseInt(y), k: parseInt(k) }
+                    });
+                  }
                 }
+              }
+            }
+            
+            // If we have Adobe CMYK mappings, use custom conversion
+            let conversionSuccessful = false;
+            
+            if (colorMappings.length > 0) {
+              try {
+                const { applyAdobeCMYKConversion } = require('./direct-cmyk-embedding');
+                await applyAdobeCMYKConversion(rgbPdfPath, cmykPdfPath, colorMappings);
+                console.log(`Enhanced CMYK: Applied Adobe CMYK conversion with ${colorMappings.length} color mappings`);
+                conversionSuccessful = true;
+              } catch (error) {
+                console.error(`Enhanced CMYK: Adobe CMYK conversion failed:`, error);
+              }
+            }
+            
+            // If Adobe conversion failed or no mappings, use standard Ghostscript
+            if (!conversionSuccessful) {
+              const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+              console.log(`Enhanced CMYK: Executing standard CMYK conversion command`);
+              
+              await new Promise<void>((resolve, reject) => {
+                exec(cmykCommand, (error, stdout, stderr) => {
+                  if (error) {
+                    console.warn(`Enhanced CMYK: CMYK colorspace conversion failed, using RGB PDF:`, error);
+                    resolve();
+                  } else if (fs.existsSync(cmykPdfPath)) {
+                    console.log(`Enhanced CMYK: Successfully converted to true CMYK colorspace: ${path.basename(svgPath)}`);
+                    conversionSuccessful = true;
+                    resolve();
+                  } else {
+                    console.warn(`Enhanced CMYK: CMYK conversion succeeded but no output file created`);
+                    resolve();
+                  }
+                });
               });
-            });
+            }
+            
+            if (conversionSuccessful && fs.existsSync(cmykPdfPath)) {
+              finalPdfPath = cmykPdfPath;
+            }
           } catch (cmykError) {
             console.warn('Enhanced CMYK: CMYK colorspace conversion error:', cmykError);
           }
