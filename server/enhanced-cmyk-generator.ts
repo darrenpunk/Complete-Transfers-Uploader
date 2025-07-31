@@ -277,6 +277,7 @@ export class EnhancedCMYKGenerator {
     }
   }
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
+    console.log(`*** CODE UPDATED AT ${new Date().toISOString()} - generateCMYKPDF called`);
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     try {
