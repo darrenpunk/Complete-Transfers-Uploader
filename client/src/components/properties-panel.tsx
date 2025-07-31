@@ -537,18 +537,26 @@ export default function PropertiesPanel({
       });
     }
     
-    // Position Check - ensure logo is within template bounds
+    // Position Check - ensure logo is within template bounds with safe zone margin
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
-    const templateWidth = currentTemplate?.width || 297; // Default to A4 if template not found
-    const templateHeight = currentTemplate?.height || 210;
+    const templateWidth = currentTemplate?.width || 297; // Default to A3 if template not found
+    const templateHeight = currentTemplate?.height || 420;
     
-    const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
-                          currentElement.x + currentElement.width <= templateWidth && 
-                          currentElement.y + currentElement.height <= templateHeight;
+    // Add a 5mm safe zone margin from all edges for professional printing
+    const safeZoneMargin = 5;
+    const safeZoneMinX = safeZoneMargin;
+    const safeZoneMinY = safeZoneMargin;
+    const safeZoneMaxX = templateWidth - safeZoneMargin;
+    const safeZoneMaxY = templateHeight - safeZoneMargin;
+    
+    const isWithinBounds = currentElement.x >= safeZoneMinX && 
+                          currentElement.y >= safeZoneMinY && 
+                          currentElement.x + currentElement.width <= safeZoneMaxX && 
+                          currentElement.y + currentElement.height <= safeZoneMaxY;
     checks.push({
       name: "Position",
       status: isWithinBounds ? "pass" : "warning",
-      value: isWithinBounds ? "In Bounds" : "Check Position"
+      value: isWithinBounds ? "Within Safe Zone" : "Outside Safe Zone (5mm margin)"
     });
     
     // Size Check - reasonable print size
