@@ -127,7 +127,7 @@ export default function ProductLauncherModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="text-center mb-4">
+          <div className="text-center mb-2">
             <div className="flex justify-center mb-3">
               <img 
                 src={completeTransfersLogoPath} 
@@ -135,12 +135,15 @@ export default function ProductLauncherModal({
                 className="h-16 w-auto object-contain"
               />
             </div>
-            <DialogTitle className="text-2xl font-bold">
-              Select Product Type
-            </DialogTitle>
-            <DialogDescription className="text-gray-600 mt-1">
-              Choose the type of product you want to create artwork for
-            </DialogDescription>
+            <div className="flex items-center justify-center gap-2">
+              <DialogTitle className="text-2xl font-bold">
+                Select Product Type
+              </DialogTitle>
+              <span className="text-gray-600">-</span>
+              <DialogDescription className="text-gray-600 m-0">
+                Choose the type of product you want to create artwork for
+              </DialogDescription>
+            </div>
           </div>
         </DialogHeader>
         
