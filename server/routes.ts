@@ -210,10 +210,10 @@ export async function registerRoutes(app: express.Application) {
           // Process raster images with DPI detection and CMYK conversion
           try {
             console.log(`🖼️ Processing raster image: ${finalFilename}`);
-            const { processRasterImageImport } = await import('./raster-processing');
+            const rasterUtils = await import('./raster-processing.js');
             const imagePath = path.join(uploadDir, finalFilename);
             
-            const result = await processRasterImageImport(imagePath, uploadDir, finalFilename, true);
+            const result = await rasterUtils.processRasterImageImport(imagePath, uploadDir, finalFilename, true);
             rasterAnalysis = result.analysis;
             
             if (result.cmykPath) {
@@ -243,6 +243,20 @@ export async function registerRoutes(app: express.Application) {
           } catch (rasterError) {
             console.error('❌ Raster processing failed during upload:', rasterError);
             console.error('Stack trace:', (rasterError as Error).stack);
+            
+            // Fallback: Create basic analysis data if raster processing fails
+            console.log(`📋 Using fallback analysis for raster image: ${finalFilename}`);
+            analysisData = {
+              type: 'raster',
+              dpi: 72,
+              resolution: 72,
+              colorSpace: 'RGB',
+              quality: 'low',
+              printReady: false,
+              widthPx: 0,
+              heightPx: 0,
+              hasTransparency: false
+            };
           }
         }
 

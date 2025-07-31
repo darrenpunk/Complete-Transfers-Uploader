@@ -494,15 +494,24 @@ export default function PropertiesPanel({
         const rasterData = logo.svgColors as any;
         let actualDPI = 72; // Default fallback
         
-        if (rasterData && rasterData.dpi) {
-          actualDPI = rasterData.dpi;
-        } else if (rasterData && rasterData.resolution) {
-          actualDPI = rasterData.resolution;
+        console.log(`🔍 Preflight DPI check for logo:`, { 
+          logoId: logo.id, 
+          rasterData, 
+          isRaster: rasterData?.type === 'raster',
+          dpi: rasterData?.dpi,
+          resolution: rasterData?.resolution 
+        });
+        
+        if (rasterData && rasterData.type === 'raster') {
+          // Use DPI from raster analysis
+          actualDPI = rasterData.dpi || rasterData.resolution || 72;
+          console.log(`✅ Using raster DPI: ${actualDPI}`);
         } else {
-          // Calculate effective resolution for raster files
+          // Calculate effective resolution for non-raster files
           const scaleX = currentElement.width / (logo.width || 1);
           const scaleY = currentElement.height / (logo.height || 1);
           actualDPI = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+          console.log(`📐 Calculated DPI: ${actualDPI}`);
         }
         
         const hasGoodResolution = actualDPI >= 150; // 150 DPI minimum for print
