@@ -1191,12 +1191,12 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Colors array:`, (logoData as any)?.svgAnalysis?.colors?.length);
         }
         
-        // Check both svgAnalysis (frontend) and svgColors (database) for CMYK values
-        const colorAnalysis = (logoData as any)?.svgAnalysis || logoData?.svgColors;
+        // Check svgColors from database for CMYK values
+        const colorAnalysis = logoData?.svgColors as any;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
         console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
         
-        if (colorAnalysis && Array.isArray(colorAnalysis.colors) && colorAnalysis.colors.length > 0) {
+        if (colorAnalysis && Array.isArray(colorAnalysis?.colors) && colorAnalysis.colors.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
