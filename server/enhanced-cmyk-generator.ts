@@ -986,10 +986,14 @@ export class EnhancedCMYKGenerator {
         '-dBATCH',
         '-dSAFER',
         '-sDEVICE=pdfwrite',
-        '-dColorConversionStrategy=/CMYK',  // Force CMYK conversion
+        '-dColorConversionStrategy=/UseDeviceIndependentColor',  // Preserve color with ICC
         '-dProcessColorModel=/DeviceCMYK',
         '-dOverrideICC=true',
-        `-sDefaultCMYKProfile="${iccProfilePath}"`,
+        '-dRenderIntent=0',  // Perceptual rendering intent
+        '-dEmbedAllFonts=true',
+        '-dSubsetFonts=true',
+        '-dCompressFonts=true',
+        `-sOutputICCProfile="${iccProfilePath}"`,  // Embed ICC profile
         `-sOutputFile="${outputPath}"`,
         `"${inputPath}"`
       ].join(' ');
