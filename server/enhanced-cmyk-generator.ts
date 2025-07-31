@@ -1222,11 +1222,12 @@ export class EnhancedCMYKGenerator {
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
         console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
         
-        if (colorAnalysis && Array.isArray(colorAnalysis?.colors) && colorAnalysis.colors.length > 0) {
+        // svgColors is directly the array, not nested under .colors
+        if (colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
-          for (const colorInfo of colorAnalysis.colors) {
+          for (const colorInfo of colorAnalysis) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
               foundConvertedColors++;
@@ -1313,8 +1314,8 @@ export class EnhancedCMYKGenerator {
             
             // Build color mappings from the logo analysis
             const colorAnalysis = logoData?.svgColors as any;
-            if (colorAnalysis && Array.isArray(colorAnalysis?.colors)) {
-              for (const colorInfo of colorAnalysis.colors) {
+            if (colorAnalysis && Array.isArray(colorAnalysis)) {
+              for (const colorInfo of colorAnalysis) {
                 if (colorInfo.converted && colorInfo.cmykColor) {
                   const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
                   if (cmykMatch) {
