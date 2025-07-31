@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { standardizeRgbToCmyk } from './color-standardization';
 
 // Pantone color database - Common Pantone colors with their RGB/CMYK values
 const PANTONE_COLORS = [
@@ -441,8 +440,9 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // Use standardized conversion for consistent results
-        const cmykColor = standardizeRgbToCmyk(r, g, b);
+        // Use simple CMYK conversion that matches Ghostscript output
+        const cmyk = rgbToCmyk(r, g, b);
+        const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {
           original: colorString,  // Keep the exact format from SVG
@@ -458,8 +458,9 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Use standardized conversion for consistent results
-        const cmykColor = standardizeRgbToCmyk(r, g, b);
+        // Use simple CMYK conversion that matches Ghostscript output
+        const cmyk = rgbToCmyk(r, g, b);
+        const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {
           original: colorString,  // Keep the exact format from SVG
