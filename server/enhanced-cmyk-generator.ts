@@ -1357,7 +1357,7 @@ export class EnhancedCMYKGenerator {
           }
           // Check nested colors format (new format from raster processing)
           else if (colorAnalysis.colors && Array.isArray(colorAnalysis.colors)) {
-            hasConvertedColors = colorAnalysis.colors.some(color => color.converted && color.cmykColor);
+            hasConvertedColors = colorAnalysis.colors.some((color: any) => color.converted && color.cmykColor);
             console.log(`Enhanced CMYK: Nested colors format - has converted colors:`, hasConvertedColors);
           }
         }
