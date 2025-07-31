@@ -253,128 +253,178 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg p-3 h-full overflow-auto flex items-start justify-center">
-                  {/* Check if we have individual logo garment colors or use project default */}
+                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
+                  {/* Exact match to server-side PDF generation logic */}
                   {(() => {
-                    // Get unique garment colors from canvas elements
-                    const elementColors = canvasElements
-                      .map(element => element.garmentColor)
-                      .filter(color => color && color !== 'default');
+                    // Check if we have individual garment colors per logo (matching server logic)
+                    const hasIndividualColors = canvasElements.some(element => element.garmentColor);
                     
-                    const uniqueColors = Array.from(new Set(elementColors));
-                    
-                    // If no individual colors, use project default
-                    if (uniqueColors.length === 0) {
+                    if (hasIndividualColors) {
+                      // Multi-color visualization: show each logo on its own garment color background
+                      // This matches the enhanced-cmyk-generator.ts logic for individual colors
                       return (
-                        <div className="w-full h-full flex items-start justify-center relative pt-2"
-                             style={{ backgroundColor: project?.garmentColor || '#f5f5f5' }}>
-                          <div 
-                            className="border-2 border-dashed border-gray-400 rounded opacity-60"
-                            style={{
-                              aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                              width: '90%',
-                              maxHeight: '320px'
-                            }}
-                          >
-                            <div className="w-full h-full relative">
-                              {canvasElements.map((element) => {
-                                const logo = logos.find(l => l.id === element.logoId);
-                                if (!logo) return null;
+                        <div 
+                          className="relative"
+                          style={{
+                            aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                            width: '90%',
+                            maxHeight: '400px',
+                            backgroundColor: '#ffffff' // White background like the PDF
+                          }}
+                        >
+                          {canvasElements.map((element) => {
+                            const logo = logos.find(l => l.id === element.logoId);
+                            if (!logo) return null;
+                            
+                            // Use individual garment color or fall back to project default
+                            const logoGarmentColor = element.garmentColor || project?.garmentColor || '#FFFFFF';
+                            
+                            return (
+                              <div key={element.id}>
+                                {/* Background rectangle for this logo (matching server logic) */}
+                                <div
+                                  className="absolute"
+                                  style={{
+                                    left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                    top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                    width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                    height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                    backgroundColor: logoGarmentColor,
+                                  }}
+                                />
                                 
-                                return (
-                                  <div
-                                    key={element.id}
-                                    className="absolute"
-                                    style={{
-                                      left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                      top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                      width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                      height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                      transform: `rotate(${element.rotation || 0}deg)`,
-                                      opacity: (element.opacity || 1) * 0.8,
-                                    }}
-                                  >
-                                    <img
-                                      src={`/uploads/${logo.filename}`}
-                                      alt={logo.originalName}
-                                      className="w-full h-full object-contain"
-                                      style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
+                                {/* Logo positioned on top of background */}
+                                <div
+                                  className="absolute"
+                                  style={{
+                                    left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                    top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                    width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                    height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                    transform: `rotate(${element.rotation || 0}deg)`,
+                                    opacity: element.opacity || 1,
+                                  }}
+                                >
+                                  <img
+                                    src={`/uploads/${logo.filename}`}
+                                    alt={logo.originalName}
+                                    className="w-full h-full object-contain"
+                                    style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                                  />
+                                </div>
+                                
+                                {/* Color label text below the logo (matching server logic) */}
+                                <div
+                                  className="absolute text-xs font-medium px-1 py-0.5 rounded"
+                                  style={{
+                                    left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                    top: `${((element.y + element.height + 5) / (template?.height || 420)) * 100}%`,
+                                    color: (() => {
+                                      // Calculate text color based on background brightness (matching server logic)
+                                      const hex = logoGarmentColor.replace('#', '');
+                                      const r = parseInt(hex.substr(0, 2), 16);
+                                      const g = parseInt(hex.substr(2, 2), 16);
+                                      const b = parseInt(hex.substr(4, 2), 16);
+                                      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                                      return brightness > 128 ? '#000000' : '#ffffff';
+                                    })(),
+                                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                    border: '0.5px solid #cccccc'
+                                  }}
+                                >
+                                  {(() => {
+                                    // Get color name (simplified version matching server logic)
+                                    const colorName = logoGarmentColor;
+                                    return colorName.length > 12 ? colorName.substring(0, 12) + '...' : colorName;
+                                  })()}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else if (project?.garmentColor) {
+                      // Single color visualization: all artwork on project garment color
+                      // Full page background matching server logic
+                      return (
+                        <div 
+                          className="relative"
+                          style={{
+                            aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                            width: '90%',
+                            maxHeight: '400px',
+                            backgroundColor: project.garmentColor // Full background color
+                          }}
+                        >
+                          {canvasElements.map((element) => {
+                            const logo = logos.find(l => l.id === element.logoId);
+                            if (!logo) return null;
+                            
+                            return (
+                              <div
+                                key={element.id}
+                                className="absolute"
+                                style={{
+                                  left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                  top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                  width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                  height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                  transform: `rotate(${element.rotation || 0}deg)`,
+                                  opacity: element.opacity || 1,
+                                }}
+                              >
+                                <img
+                                  src={`/uploads/${logo.filename}`}
+                                  alt={logo.originalName}
+                                  className="w-full h-full object-contain"
+                                  style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else {
+                      // No garment color specified (matching server logic)
+                      return (
+                        <div 
+                          className="relative border-2 border-dashed border-gray-300 rounded"
+                          style={{
+                            aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                            width: '90%',
+                            maxHeight: '400px',
+                            backgroundColor: '#ffffff'
+                          }}
+                        >
+                          {canvasElements.map((element) => {
+                            const logo = logos.find(l => l.id === element.logoId);
+                            if (!logo) return null;
+                            
+                            return (
+                              <div
+                                key={element.id}
+                                className="absolute"
+                                style={{
+                                  left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                  top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                  width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                  height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                  transform: `rotate(${element.rotation || 0}deg)`,
+                                  opacity: element.opacity || 1,
+                                }}
+                              >
+                                <img
+                                  src={`/uploads/${logo.filename}`}
+                                  alt={logo.originalName}
+                                  className="w-full h-full object-contain"
+                                  style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     }
-                    
-                    // Show grid of different garment colors
-                    return (
-                      <div className="grid grid-cols-2 gap-2 h-full">
-                        {uniqueColors.map((garmentColor, index) => {
-                          // Get elements for this garment color
-                          const elementsForColor = canvasElements.filter(el => el.garmentColor === garmentColor);
-                          
-                          return (
-                            <div 
-                              key={`${garmentColor}-${index}`}
-                              className="border rounded p-2 flex items-center justify-center relative"
-                              style={{ backgroundColor: garmentColor }}
-                            >
-                              <div 
-                                className="border border-dashed border-gray-400/60 rounded opacity-70"
-                                style={{
-                                  aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                                  width: '90%',
-                                  maxWidth: '120px'
-                                }}
-                              >
-                                <div className="w-full h-full relative">
-                                  {elementsForColor.map((element) => {
-                                    const logo = logos.find(l => l.id === element.logoId);
-                                    if (!logo) return null;
-                                    
-                                    return (
-                                      <div
-                                        key={element.id}
-                                        className="absolute"
-                                        style={{
-                                          left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                          top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                          width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                          height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                          transform: `rotate(${element.rotation || 0}deg)`,
-                                          opacity: (element.opacity || 1) * 0.8,
-                                        }}
-                                      >
-                                        <img
-                                          src={`/uploads/${logo.filename}`}
-                                          alt={logo.originalName}
-                                          className="w-full h-full object-contain"
-                                          style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              
-                              {/* Color label */}
-                              <div className="absolute bottom-1 right-1 text-xs text-white bg-black/60 px-1 py-0.5 rounded text-center">
-                                <div 
-                                  className="w-2 h-2 rounded border border-white mx-auto mb-0.5"
-                                  style={{ backgroundColor: garmentColor }}
-                                />
-                                <div className="text-[9px] leading-tight">
-                                  {elementsForColor.length} logo{elementsForColor.length !== 1 ? 's' : ''}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
                   })()}
                 </div>
               </div>
