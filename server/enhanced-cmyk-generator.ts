@@ -986,12 +986,10 @@ export class EnhancedCMYKGenerator {
         '-dBATCH',
         '-dSAFER',
         '-sDEVICE=pdfwrite',
-        '-dColorConversionStrategy=/LeaveColorUnchanged', // Keep existing CMYK colors
+        '-dColorConversionStrategy=/CMYK',  // Force CMYK conversion
         '-dProcessColorModel=/DeviceCMYK',
-        '-dEmbedAllFonts=true',
-        '-dCompatibilityLevel=1.4',
+        '-dOverrideICC=true',
         `-sDefaultCMYKProfile="${iccProfilePath}"`,
-        `-sOutputICCProfile="${iccProfilePath}"`,
         `-sOutputFile="${outputPath}"`,
         `"${inputPath}"`
       ].join(' ');
@@ -1302,9 +1300,9 @@ export class EnhancedCMYKGenerator {
       if (fs.existsSync(rgbPdfPath)) {
         let finalPdfPath = rgbPdfPath;
         
-        // For files that were originally RGB and got converted in the app, apply true CMYK colorspace conversion
-        console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}`);
-        if (preservedExactCMYK) {
+        // ALWAYS apply CMYK colorspace conversion to ensure consistent output
+        console.log(`Enhanced CMYK: Converting to CMYK colorspace (preservedExactCMYK: ${preservedExactCMYK})`);
+        if (true) { // Always convert to CMYK
           console.log(`Enhanced CMYK: Converting RGB PDF to true CMYK colorspace for: ${path.basename(svgPath)}`);
           
           try {
