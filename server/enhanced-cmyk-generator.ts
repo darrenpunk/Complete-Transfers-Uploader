@@ -1307,9 +1307,10 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
-    console.log(`*** CRITICAL DEBUG: embedSVGAsPDF START for ${path.basename(svgPath)}`);
-    console.log(`*** CRITICAL DEBUG: Element logoId: ${element.logoId}`);
-    console.log(`*** CRITICAL DEBUG: Storage exists: ${!!storage}`);
+    try {
+      console.log(`*** CRITICAL DEBUG: embedSVGAsPDF START for ${path.basename(svgPath)}`);
+      console.log(`*** CRITICAL DEBUG: Element logoId: ${element.logoId}`);
+      console.log(`*** CRITICAL DEBUG: Storage exists: ${!!storage}`);
     console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
@@ -1554,6 +1555,11 @@ export class EnhancedCMYKGenerator {
     } catch (error) {
       console.error(`Enhanced CMYK: Error preserving CMYK values in PDF:`, error);
       // Fallback to skipping this element
+    }
+    } catch (error) {
+      console.error(`*** CRITICAL ERROR: Uncaught error in embedSVGAsPDF:`, error);
+      console.error(`*** CRITICAL ERROR: Stack trace:`, (error as Error).stack);
+      throw error;
     }
   }
 
