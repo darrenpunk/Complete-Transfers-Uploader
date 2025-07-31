@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { rgbToCmyk } from './color-utils';
+import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 // Pantone color database - Common Pantone colors with their RGB/CMYK values
 const PANTONE_COLORS = [
@@ -421,8 +421,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // Use improved CMYK conversion from color-utils
-        const cmyk = rgbToCmyk({ r, g, b });
+        // Use Adobe CMYK conversion for Illustrator compatibility
+        const cmyk = adobeRgbToCmyk({ r, g, b });
         const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {
@@ -439,8 +439,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Use improved CMYK conversion from color-utils
-        const cmyk = rgbToCmyk({ r, g, b });
+        // Use Adobe CMYK conversion for Illustrator compatibility
+        const cmyk = adobeRgbToCmyk({ r, g, b });
         const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {
