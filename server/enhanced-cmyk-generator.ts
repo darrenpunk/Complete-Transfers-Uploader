@@ -277,7 +277,6 @@ export class EnhancedCMYKGenerator {
     }
   }
   async generateCMYKPDF(data: PDFGenerationData): Promise<Buffer> {
-    console.log(`*** CODE UPDATED AT ${new Date().toISOString()} - generateCMYKPDF called`);
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     try {
@@ -652,13 +651,7 @@ export class EnhancedCMYKGenerator {
       // Check if this is an SVG file that needs CMYK conversion
       if (logo.mimeType === 'image/svg+xml') {
         console.log(`Enhanced CMYK: Applying CMYK conversion to SVG fallback: ${logo.originalName}`);
-        try {
-          await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
-        } catch (svgError) {
-          console.error(`*** CRITICAL ERROR in embedSVGAsPDF:`, svgError);
-          console.error(`*** CRITICAL ERROR stack:`, (svgError as Error).stack);
-          throw svgError;
-        }
+        await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
       } else {
         console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
         await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
@@ -1158,147 +1151,35 @@ export class EnhancedCMYKGenerator {
       return;
     }
     
-    // For raster images (PNG/JPEG), apply CMYK conversion with ICC profile
-    if (mimeType.includes('jpeg') || mimeType.includes('jpg') || mimeType.includes('png')) {
-      console.log(`Enhanced CMYK: Processing raster image with CMYK+ICC: ${path.basename(imagePath)}`);
-      await this.embedRasterImageWithCMYK(pdfDoc, page, element, imagePath, mimeType, templateSize);
+    const imageBytes = fs.readFileSync(imagePath);
+    let image;
+    
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } else if (mimeType.includes('png')) {
+      image = await pdfDoc.embedPng(imageBytes);
+    } else {
+      console.warn(`Unsupported image type: ${mimeType}`);
       return;
     }
     
-    console.warn(`Unsupported image type: ${mimeType}`);
-  }
-
-  private async embedRasterImageWithCMYK(
-    pdfDoc: PDFDocument,
-    page: ReturnType<PDFDocument['addPage']>,
-    element: CanvasElement,
-    imagePath: string,
-    mimeType: string,
-    templateSize: TemplateSize
-  ) {
-    const execAsync = promisify(exec);
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    const tempDir = path.join(uploadDir, 'temp_cmyk_raster');
+    // Convert mm to points (1 mm = 2.834645669 points)
+    const mmToPoints = 2.834645669;
     
-    // Create temp directory if it doesn't exist
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+    // Calculate position in points (flip Y coordinate for PDF)
+    const x = element.x * mmToPoints;
+    const y = (templateSize.height - element.y - element.height) * mmToPoints;
+    const width = element.width * mmToPoints;
+    const height = element.height * mmToPoints;
     
-    try {
-      // Check for ICC profile
-      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
-      const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
-      
-      let iccProfilePath = uploadedICCPath;
-      let useICC = fs.existsSync(uploadedICCPath);
-      
-      if (!useICC) {
-        iccProfilePath = fallbackICCPath;
-        useICC = fs.existsSync(fallbackICCPath);
-      }
-      
-      const timestamp = Date.now();
-      const cmykImagePath = path.join(tempDir, `cmyk_${timestamp}.${mimeType.includes('png') ? 'png' : 'jpg'}`);
-      
-      // Convert raster image to CMYK with ICC profile using ImageMagick
-      let convertCommand;
-      if (useICC) {
-        // Apply ICC profile and convert to CMYK
-        convertCommand = `convert "${imagePath}" -profile "${iccProfilePath}" -colorspace CMYK -intent perceptual -quality 100 "${cmykImagePath}"`;
-        console.log(`Enhanced CMYK: Converting raster to CMYK with ICC profile: ${path.basename(iccProfilePath)}`);
-      } else {
-        // Standard CMYK conversion without ICC profile
-        convertCommand = `convert "${imagePath}" -colorspace CMYK -intent perceptual -quality 100 "${cmykImagePath}"`;
-        console.log(`Enhanced CMYK: Converting raster to CMYK without ICC profile`);
-      }
-      
-      await execAsync(convertCommand);
-      
-      if (fs.existsSync(cmykImagePath)) {
-        // Embed the CMYK-converted image
-        const cmykImageBytes = fs.readFileSync(cmykImagePath);
-        let image;
-        
-        if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-          image = await pdfDoc.embedJpg(cmykImageBytes);
-        } else if (mimeType.includes('png')) {
-          image = await pdfDoc.embedPng(cmykImageBytes);
-        }
-        
-        if (image) {
-          // Convert mm to points (1 mm = 2.834645669 points)
-          const mmToPoints = 2.834645669;
-          
-          // Calculate position in points (flip Y coordinate for PDF)
-          const x = element.x * mmToPoints;
-          const y = (templateSize.height - element.y - element.height) * mmToPoints;
-          const width = element.width * mmToPoints;
-          const height = element.height * mmToPoints;
-          
-          // Draw the CMYK image
-          page.drawImage(image, {
-            x: x,
-            y: y,
-            width: width,
-            height: height,
-            rotate: degrees(element.rotation || 0),
-          });
-          
-          console.log(`Enhanced CMYK: Successfully embedded CMYK raster image: ${path.basename(imagePath)}`);
-        }
-        
-        // Clean up temp file
-        fs.unlinkSync(cmykImagePath);
-        
-      } else {
-        throw new Error('CMYK conversion failed - no output file created');
-      }
-      
-    } catch (error) {
-      console.error(`Enhanced CMYK: Raster CMYK conversion failed for ${path.basename(imagePath)}:`, error);
-      
-      // Fallback: embed original image without CMYK conversion
-      console.log(`Enhanced CMYK: Using fallback RGB embedding for: ${path.basename(imagePath)}`);
-      const imageBytes = fs.readFileSync(imagePath);
-      let image;
-      
-      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-        image = await pdfDoc.embedJpg(imageBytes);
-      } else if (mimeType.includes('png')) {
-        image = await pdfDoc.embedPng(imageBytes);
-      }
-      
-      if (image) {
-        const mmToPoints = 2.834645669;
-        const x = element.x * mmToPoints;
-        const y = (templateSize.height - element.y - element.height) * mmToPoints;
-        const width = element.width * mmToPoints;
-        const height = element.height * mmToPoints;
-        
-        page.drawImage(image, {
-          x: x,
-          y: y,
-          width: width,
-          height: height,
-          rotate: degrees(element.rotation || 0),
-        });
-        
-        console.log(`Enhanced CMYK: Fallback RGB embedding completed for: ${path.basename(imagePath)}`);
-      }
-    } finally {
-      // Clean up temp directory if empty
-      try {
-        if (fs.existsSync(tempDir)) {
-          const files = fs.readdirSync(tempDir);
-          if (files.length === 0) {
-            fs.rmdirSync(tempDir);
-          }
-        }
-      } catch (cleanupError) {
-        // Ignore cleanup errors
-      }
-    }
+    // Draw the image
+    page.drawImage(image, {
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      rotate: degrees(element.rotation || 0),
+    });
   }
 
   private async embedSVGAsPDF(
@@ -1308,16 +1189,9 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
-    console.log(`*** CRITICAL DEBUG: embedSVGAsPDF function called!`);
-    try {
-      console.log(`*** CRITICAL DEBUG: embedSVGAsPDF START for ${path.basename(svgPath)}`);
-      console.log(`*** CRITICAL DEBUG: Element logoId: ${element.logoId}`);
-      console.log(`*** CRITICAL DEBUG: Storage exists: ${!!storage}`);
-      console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
+    console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
-    
-    // Wrap entire function in try-catch to capture any early errors
     try {
       // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
       console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
@@ -1326,12 +1200,12 @@ export class EnhancedCMYKGenerator {
       let preservedExactCMYK = false;
       
       // Get the logo data to access pre-calculated CMYK values
-      console.log(`*** ENHANCED CMYK DEBUG: Attempting to get logo data for ID: ${element.logoId}`);
-      console.log(`*** ENHANCED CMYK DEBUG: About to call storage.getLogo with ID:`, element.logoId);
+      console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
+      console.log(`Enhanced CMYK: About to call storage.getLogo with ID:`, element.logoId);
       let logoData: any = null;
       try {
         logoData = await storage.getLogo(element.logoId || '');
-        console.log(`*** ENHANCED CMYK DEBUG: storage.getLogo returned:`, !!logoData);
+        console.log(`Enhanced CMYK: storage.getLogo returned:`, !!logoData);
         console.log(`Enhanced CMYK: logoData structure:`, logoData ? Object.keys(logoData) : 'null');
         
         if (!logoData) {
@@ -1345,42 +1219,15 @@ export class EnhancedCMYKGenerator {
         
         // Check svgColors from database for CMYK values
         const colorAnalysis = logoData?.svgColors as any;
-        console.log(`*** ENHANCED CMYK DEBUG: Color analysis data:`, !!colorAnalysis);
-        console.log(`*** ENHANCED CMYK DEBUG: Logo MIME type:`, logoData?.mimeType);
-        console.log(`*** ENHANCED CMYK DEBUG: Color analysis structure:`, typeof colorAnalysis, Array.isArray(colorAnalysis));
-        console.log(`*** ENHANCED CMYK DEBUG: Color analysis raw:`, JSON.stringify(colorAnalysis, null, 2));
+        console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
+        console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
         
-        // Also check svgAnalysis field
-        const svgAnalysis = logoData?.svgAnalysis as any;
-        console.log(`*** ENHANCED CMYK DEBUG: svgAnalysis exists:`, !!svgAnalysis);
-        if (svgAnalysis) {
-          console.log(`*** ENHANCED CMYK DEBUG: svgAnalysis.colors:`, JSON.stringify(svgAnalysis.colors, null, 2));
-        }
-        
-        // Check for CMYK colors in various data structures
-        let hasConvertedColors = false;
-        if (colorAnalysis) {
-          // Check direct array format (original working format)
-          if (Array.isArray(colorAnalysis)) {
-            hasConvertedColors = colorAnalysis.some(color => color.converted && color.cmykColor);
-            console.log(`Enhanced CMYK: Direct array format - has converted colors:`, hasConvertedColors);
-          }
-          // Check nested colors format (new format from raster processing)
-          else if (colorAnalysis.colors && Array.isArray(colorAnalysis.colors)) {
-            hasConvertedColors = colorAnalysis.colors.some((color: any) => color.converted && color.cmykColor);
-            console.log(`Enhanced CMYK: Nested colors format - has converted colors:`, hasConvertedColors);
-          }
-        }
-        
-        // ONLY process vector files for CMYK conversion - skip raster files entirely
-        if (logoData?.mimeType?.includes('image/svg') && hasConvertedColors) {
+        // svgColors is directly the array, not nested under .colors
+        if (colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
-          // Get the actual colors array depending on the structure
-          const colorsArray = Array.isArray(colorAnalysis) ? colorAnalysis : colorAnalysis.colors;
-          
-          for (const colorInfo of colorsArray) {
+          for (const colorInfo of colorAnalysis) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
               foundConvertedColors++;
@@ -1564,11 +1411,6 @@ export class EnhancedCMYKGenerator {
     } catch (error) {
       console.error(`Enhanced CMYK: Error preserving CMYK values in PDF:`, error);
       // Fallback to skipping this element
-    }
-    } catch (error) {
-      console.error(`*** CRITICAL ERROR: Uncaught error in embedSVGAsPDF:`, error);
-      console.error(`*** CRITICAL ERROR: Stack trace:`, (error as Error).stack);
-      throw error;
     }
   }
 

@@ -490,36 +490,16 @@ export default function PropertiesPanel({
           value: "Vector (Resolution Independent)"
         });
       } else {
-        // Use actual DPI from raster analysis if available
-        const rasterData = logo.svgColors as any;
-        let actualDPI = 72; // Default fallback
-        
-        console.log(`🔍 Preflight DPI check for logo:`, { 
-          logoId: logo.id, 
-          rasterData, 
-          isRaster: rasterData?.type === 'raster',
-          dpi: rasterData?.dpi,
-          resolution: rasterData?.resolution 
-        });
-        
-        if (rasterData && rasterData.type === 'raster') {
-          // Use DPI from raster analysis
-          actualDPI = rasterData.dpi || rasterData.resolution || 72;
-          console.log(`✅ Using raster DPI: ${actualDPI}`);
-        } else {
-          // Calculate effective resolution for non-raster files
-          const scaleX = currentElement.width / (logo.width || 1);
-          const scaleY = currentElement.height / (logo.height || 1);
-          actualDPI = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-          console.log(`📐 Calculated DPI: ${actualDPI}`);
-        }
-        
-        const hasGoodResolution = actualDPI >= 150; // 150 DPI minimum for print
+        // Calculate effective resolution for raster files only
+        const scaleX = currentElement.width / (logo.width || 1);
+        const scaleY = currentElement.height / (logo.height || 1);
+        const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+        const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
         
         checks.push({
           name: "Print Resolution",
           status: hasGoodResolution ? "pass" : "warning",
-          value: hasGoodResolution ? `${Math.round(actualDPI)} DPI` : `${Math.round(actualDPI)} DPI (Low)`
+          value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
         });
       }
       
@@ -536,20 +516,9 @@ export default function PropertiesPanel({
       let colorValue = "No Colors";
       
       if (svgAnalysis && typeof svgAnalysis === 'object') {
-        // Check if it's a raster image with color space info
-        if (svgAnalysis.type === 'raster' && svgAnalysis.colorSpace) {
-          colorStatus = svgAnalysis.colorSpace === 'CMYK' ? "pass" : "warning";
-          colorValue = `${svgAnalysis.colorSpace} Color Space`;
-        } else if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
-          // Check if vector colors have been converted to CMYK
-          const convertedColors = svgAnalysis.colors.filter((color: any) => color.converted && color.cmykColor);
-          if (convertedColors.length > 0) {
-            colorStatus = "pass";
-            colorValue = `CMYK Color Space (${convertedColors.length} colors)`;
-          } else {
-            colorStatus = "warning";
-            colorValue = `RGB Color Space (${svgAnalysis.colors.length} colors)`;
-          }
+        if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
+          colorStatus = "pass";
+          colorValue = `${svgAnalysis.colors.length} Colors Detected`;
         } else if (svgAnalysis.strokeWidths && Array.isArray(svgAnalysis.strokeWidths)) {
           // Has stroke analysis but no colors - might be pure strokes
           colorValue = "Analyzed (No Fill Colors)";

@@ -156,11 +156,8 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Analyze files BEFORE creating logo record
+        // Automatically analyze SVG files for colors and stroke widths BEFORE creating logo record
         let analysisData = null;
-        let rasterAnalysis = null;
-        let cmykVersion = null;
-        
         if (finalMimeType === 'image/svg+xml') {
           try {
             console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
@@ -204,59 +201,7 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
           } catch (analysisError) {
             console.error('❌ SVG analysis failed during upload:', analysisError);
-            console.error('Stack trace:', (analysisError as Error).stack);
-          }
-        } else if (finalMimeType.includes('image/') && (finalMimeType.includes('png') || finalMimeType.includes('jpeg') || finalMimeType.includes('jpg'))) {
-          // Process raster images with DPI detection and CMYK conversion
-          try {
-            console.log(`🖼️ Processing raster image: ${finalFilename}`);
-            const rasterUtils = await import('./raster-processing.js');
-            const imagePath = path.join(uploadDir, finalFilename);
-            
-            const result = await rasterUtils.processRasterImageImport(imagePath, uploadDir, finalFilename, true);
-            rasterAnalysis = result.analysis;
-            
-            if (result.cmykPath) {
-              // Use CMYK version as the main file
-              const cmykFilename = path.basename(result.cmykPath);
-              finalFilename = cmykFilename;
-              finalUrl = `/uploads/${cmykFilename}`;
-              cmykVersion = cmykFilename;
-              console.log(`✅ Using CMYK version as main file: ${cmykFilename}`);
-            }
-            
-            // Create analysis data compatible with existing structure
-            analysisData = {
-              dpi: rasterAnalysis.actualDPI,
-              resolution: rasterAnalysis.actualDPI,
-              colorSpace: rasterAnalysis.colorSpace,
-              quality: rasterAnalysis.quality,
-              printReady: rasterAnalysis.printReady,
-              type: 'raster',
-              widthPx: rasterAnalysis.widthPx,
-              heightPx: rasterAnalysis.heightPx,
-              hasTransparency: rasterAnalysis.hasTransparency
-            };
-            
-            console.log(`📊 Raster analysis complete: ${finalFilename} - ${rasterAnalysis.actualDPI} DPI, ${rasterAnalysis.colorSpace}`);
-            
-          } catch (rasterError) {
-            console.error('❌ Raster processing failed during upload:', rasterError);
-            console.error('Stack trace:', (rasterError as Error).stack);
-            
-            // Fallback: Create basic analysis data if raster processing fails
-            console.log(`📋 Using fallback analysis for raster image: ${finalFilename}`);
-            analysisData = {
-              type: 'raster',
-              dpi: 72,
-              resolution: 72,
-              colorSpace: 'RGB',
-              quality: 'low',
-              printReady: false,
-              widthPx: 0,
-              heightPx: 0,
-              hasTransparency: false
-            };
+            console.error('Stack trace:', analysisError.stack);
           }
         }
 
@@ -278,9 +223,8 @@ export async function registerRoutes(app: express.Application) {
         let displayWidth = 200;
         let displayHeight = 150;
 
-        // Calculate dimensions based on file type
-        if (finalMimeType === 'image/svg+xml') {
-          try {
+        try {
+          if (finalMimeType === 'image/svg+xml') {
             const svgPath = path.join(uploadDir, finalFilename);
             
             // Check viewBox first - most reliable for A3 detection
@@ -354,64 +298,14 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
-            // Dimension calculation successful
-          } catch (error) {
-            console.error('Failed to calculate SVG content bounds:', error);
-            // Fallback: for large documents with no detectable content bounds
-            console.log(`Using fallback dimensions for SVG processing failure`);
-            displayWidth = 200;
-            displayHeight = 150;
+            } else {
+              // Fallback: for large documents with no detectable content bounds
+              console.log(`Large format document with no detectable content bounds, using conservative sizing`);
+              displayWidth = 200;
+              displayHeight = 150;
           }
-        } else if (finalMimeType === 'image/png' || finalMimeType === 'image/jpeg' || finalMimeType === 'image/jpg') {
-          // RASTER IMAGE DIMENSION DETECTION: Calculate actual content-based sizing
-          try {
-            const rasterPath = path.join(uploadDir, finalFilename);
-            
-            // Use ImageMagick identify to get actual image dimensions and content bounds
-            const identifyCommand = `identify -format "%w %h %[opaque]" "${rasterPath}"`;
-            const { stdout } = await execAsync(identifyCommand);
-            const [widthPx, heightPx, hasTransparency] = stdout.trim().split(' ');
-            
-            const imageWidthPx = parseInt(widthPx);
-            const imageHeightPx = parseInt(heightPx);
-            
-            console.log(`📏 Raster image dimensions: ${imageWidthPx}×${imageHeightPx}px, transparent: ${hasTransparency !== 'true'}`);
-            
-            // Convert pixels to mm using standard print DPI (300 DPI = 11.811 pixels per mm)
-            const pixelsPerMm = 11.811; // 300 DPI conversion factor
-            let contentWidthMm = imageWidthPx / pixelsPerMm;
-            let contentHeightMm = imageHeightPx / pixelsPerMm;
-            
-            // Apply reasonable size limits to prevent oversized images
-            const maxDimensionMm = 200; // Maximum 200mm for any dimension
-            const minDimensionMm = 20;  // Minimum 20mm for any dimension
-            
-            if (contentWidthMm > maxDimensionMm || contentHeightMm > maxDimensionMm) {
-              const scaleFactor = Math.min(maxDimensionMm / contentWidthMm, maxDimensionMm / contentHeightMm);
-              contentWidthMm *= scaleFactor;
-              contentHeightMm *= scaleFactor;
-              console.log(`📐 Scaled down oversized raster image by ${(scaleFactor * 100).toFixed(1)}%`);
-            }
-            
-            if (contentWidthMm < minDimensionMm || contentHeightMm < minDimensionMm) {
-              const scaleFactor = Math.max(minDimensionMm / contentWidthMm, minDimensionMm / contentHeightMm);
-              contentWidthMm *= scaleFactor;
-              contentHeightMm *= scaleFactor;
-              console.log(`📐 Scaled up tiny raster image by ${(scaleFactor * 100).toFixed(1)}%`);
-            }
-            
-            displayWidth = Math.round(contentWidthMm * 100) / 100; // Round to 2 decimal places
-            displayHeight = Math.round(contentHeightMm * 100) / 100;
-            
-            console.log(`🖼️ RASTER DIMENSIONS: ${imageWidthPx}×${imageHeightPx}px → ${displayWidth}×${displayHeight}mm (content-based sizing)`);
-            
-          } catch (imageError) {
-            console.error('Failed to analyze raster image dimensions:', imageError);
-            // Keep fallback dimensions for raster images
-            displayWidth = 100; // Smaller fallback for raster images
-            displayHeight = 75;
-            console.log(`⚠️ Using raster fallback dimensions: ${displayWidth}×${displayHeight}mm`);
-          }
+        } catch (error) {
+          console.error('Failed to calculate content bounds:', error);
         }
 
         // Get template size for centering

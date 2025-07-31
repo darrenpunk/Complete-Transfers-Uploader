@@ -9,7 +9,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight } from "lucide-react";
-import completeTransferLogo from "@assets/CompleteLogoLandscaple_b88f3ee7-d80a-40e1-9feb-9fde499db87f_1753538047767.pdf";
 
 interface HelpModalProps {
   open: boolean;
@@ -34,16 +33,9 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[80vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle className="text-2xl flex items-center gap-3">
-            <img 
-              src={completeTransferLogo} 
-              alt="CompleteTransfers Logo" 
-              className="h-8 w-auto"
-            />
-            <div className="flex items-center gap-2">
-              <HelpCircle className="h-6 w-6" />
-              Help Guide
-            </div>
+          <DialogTitle className="text-2xl flex items-center gap-2">
+            <HelpCircle className="h-6 w-6" />
+            CompleteTransfers Help Guide
           </DialogTitle>
         </DialogHeader>
         
