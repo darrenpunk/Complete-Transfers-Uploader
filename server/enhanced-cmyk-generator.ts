@@ -1301,6 +1301,9 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
+    console.log(`*** CRITICAL DEBUG: embedSVGAsPDF START for ${path.basename(svgPath)}`);
+    console.log(`*** CRITICAL DEBUG: Element logoId: ${element.logoId}`);
+    console.log(`*** CRITICAL DEBUG: Storage exists: ${!!storage}`);
     console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
