@@ -127,22 +127,17 @@ export default function ProductLauncherModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold text-center mb-2">
-                Select Product Type
-              </DialogTitle>
-              <DialogDescription className="text-center text-gray-600">
-                Choose the type of product you want to create artwork for
-              </DialogDescription>
-            </div>
-            <div className="flex-shrink-0 ml-6">
+          <div className="text-center mb-4">
+            <div className="flex justify-center mb-3">
               <img 
                 src={completeTransfersLogoPath} 
                 alt="CompleteTransfers" 
                 className="h-16 w-auto object-contain"
               />
             </div>
+            <DialogTitle className="text-2xl font-bold mb-1">
+              Select Product Type - Choose the type of product you want to create artwork for
+            </DialogTitle>
           </div>
         </DialogHeader>
         
