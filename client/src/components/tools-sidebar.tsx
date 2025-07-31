@@ -796,26 +796,14 @@ export default function ToolsSidebar({
             });
           }
           
-          // Position Check - ensure logo is within template bounds with safe zone margin
-          const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
-          const templateWidth = currentTemplate?.width || 297;
-          const templateHeight = currentTemplate?.height || 420;
-          
-          // Add a 3mm safe zone margin from all edges for professional printing
-          const safeZoneMargin = 3;
-          const safeZoneMinX = safeZoneMargin;
-          const safeZoneMinY = safeZoneMargin;
-          const safeZoneMaxX = templateWidth - safeZoneMargin;
-          const safeZoneMaxY = templateHeight - safeZoneMargin;
-          
-          const isWithinBounds = selectedElement.x >= safeZoneMinX && 
-                                selectedElement.y >= safeZoneMinY && 
-                                selectedElement.x + selectedElement.width <= safeZoneMaxX && 
-                                selectedElement.y + selectedElement.height <= safeZoneMaxY;
+          // Position Check
+          const isWithinBounds = selectedElement.x >= 0 && selectedElement.y >= 0 && 
+                                selectedElement.x + selectedElement.width <= 297 && 
+                                selectedElement.y + selectedElement.height <= 420;
           checks.push({
             name: "Position",
             status: isWithinBounds ? "pass" : "warning",
-            value: isWithinBounds ? "Within Safe Zone" : "Outside Safe Zone (3mm margin)"
+            value: isWithinBounds ? "In Bounds" : "Check Position"
           });
           
           // Size Check

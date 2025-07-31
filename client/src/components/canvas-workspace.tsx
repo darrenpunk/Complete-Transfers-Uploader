@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, Maximize } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
@@ -218,107 +218,49 @@ export default function CanvasWorkspace({
     setZoom(Math.max(zoom - 25, 10));
   };
 
-  const handleZoomToFill = () => {
-    if (!template) return;
-    
-    // Get workspace container dimensions (accounting for padding and UI elements)
-    const workspaceWidth = window.innerWidth - 400; // Subtract sidebar width
-    const workspaceHeight = window.innerHeight - 200; // Subtract header and padding
-    
-    // Calculate the aspect ratios
-    const canvasAspectRatio = template.width / template.height;
-    const workspaceAspectRatio = workspaceWidth / workspaceHeight;
-    
-    let optimalZoom;
-    
-    if (canvasAspectRatio > workspaceAspectRatio) {
-      // Canvas is wider relative to workspace, fit to width
-      optimalZoom = (workspaceWidth * 0.85) / template.width * 100 / 2.834; // Convert mm to px with some margin
-    } else {
-      // Canvas is taller relative to workspace, fit to height
-      optimalZoom = (workspaceHeight * 0.85) / template.height * 100 / 2.834; // Convert mm to px with some margin
-    }
-    
-    // Clamp zoom to reasonable bounds
-    const clampedZoom = Math.max(10, Math.min(300, Math.round(optimalZoom)));
-    
-    console.log('🔍 Zoom to fill calculation:', {
-      workspaceWidth,
-      workspaceHeight,
-      templateWidth: template.width,
-      templateHeight: template.height,
-      canvasAspectRatio,
-      workspaceAspectRatio,
-      optimalZoom,
-      clampedZoom
-    });
-    
-    setZoom(clampedZoom);
-  };
-
-  // Skip history updates during undo/redo operations
-  const [isUndoRedoOperation, setIsUndoRedoOperation] = useState(false);
-
   // History management
-  const saveToHistory = useCallback((elements: CanvasElement[]) => {
-    if (isUndoRedoOperation) return; // Don't save during undo/redo operations
-    
-    console.log('🏛️ Saving to history, elements count:', elements.length);
+  const saveToHistory = (elements: CanvasElement[]) => {
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push([...elements]);
-    
-    // Limit history to 50 entries to prevent memory issues
-    if (newHistory.length > 50) {
-      newHistory.shift();
-    } else {
-      setHistoryIndex(newHistory.length - 1);
-    }
-    
     setHistory(newHistory);
-  }, [history, historyIndex, isUndoRedoOperation]);
+    setHistoryIndex(newHistory.length - 1);
+  };
 
-  const handleUndo = useCallback(() => {
-    console.log('🔙 Undo requested, historyIndex:', historyIndex, 'history length:', history.length);
-    console.log('🔙 History state:', history.map((h, i) => ({ index: i, count: h.length, isCurrent: i === historyIndex })));
-    
+  const handleUndo = () => {
     if (historyIndex > 0) {
-      console.log('🔙 Undo conditions met, proceeding...');
-      setIsUndoRedoOperation(true);
       const previousState = history[historyIndex - 1];
       setHistoryIndex(historyIndex - 1);
       
-      console.log('🔙 Restoring previous state with', previousState.length, 'elements');
-      
-      // Force update the query cache with previous state
-      queryClient.setQueryData(
-        ["/api/projects", project.id, "canvas-elements"],
-        [...previousState]
-      );
-      
-      setTimeout(() => setIsUndoRedoOperation(false), 100);
-    } else {
-      console.log('🔙 Cannot undo: historyIndex is', historyIndex);
+      // Apply the previous state to all canvas elements
+      previousState.forEach(historicalElement => {
+        updateElementDirect(historicalElement.id, {
+          x: historicalElement.x,
+          y: historicalElement.y,
+          width: historicalElement.width,
+          height: historicalElement.height,
+          rotation: historicalElement.rotation
+        });
+      });
     }
-  }, [historyIndex, history, project.id]);
+  };
 
-  const handleRedo = useCallback(() => {
-    console.log('🔜 Redo requested, historyIndex:', historyIndex, 'history length:', history.length);
+  const handleRedo = () => {
     if (historyIndex < history.length - 1) {
-      setIsUndoRedoOperation(true);
       const nextState = history[historyIndex + 1];
       setHistoryIndex(historyIndex + 1);
       
-      console.log('🔜 Restoring next state with', nextState.length, 'elements');
-      
-      // Force update the query cache with next state
-      queryClient.setQueryData(
-        ["/api/projects", project.id, "canvas-elements"],
-        [...nextState]
-      );
-      
-      setTimeout(() => setIsUndoRedoOperation(false), 100);
+      // Apply the next state to all canvas elements
+      nextState.forEach(historicalElement => {
+        updateElementDirect(historicalElement.id, {
+          x: historicalElement.x,
+          y: historicalElement.y,
+          width: historicalElement.width,
+          height: historicalElement.height,
+          rotation: historicalElement.rotation
+        });
+      });
     }
-  }, [historyIndex, history, project.id]);
+  };
 
   // Helper function to detect raster files
   const isRasterFile = (file: File): boolean => {
@@ -413,27 +355,18 @@ export default function CanvasWorkspace({
 
   // Save to history when elements change (but avoid infinite loops)
   useEffect(() => {
-    if (canvasElements.length > 0 && !isUndoRedoOperation) {
-      // Always save the current state, but debounce to avoid excessive saves
-      const timeoutId = setTimeout(() => {
-        saveToHistory(canvasElements);
-      }, 500); // 500ms debounce
-      
-      return () => clearTimeout(timeoutId);
+    if (canvasElements.length > 0 && history.length === 0) {
+      saveToHistory(canvasElements);
     }
-  }, [canvasElements, saveToHistory, isUndoRedoOperation]);
+  }, [canvasElements]);
 
   // Add keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('🔴 Key pressed:', { key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey });
-      
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-        console.log('🔴 Undo shortcut detected!');
         event.preventDefault();
         handleUndo();
       } else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
-        console.log('🔴 Redo shortcut detected!');
         event.preventDefault();
         handleRedo();
       }
@@ -895,16 +828,6 @@ export default function CanvasWorkspace({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Zoom in (400% maximum)</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="sm" onClick={handleZoomToFill}>
-                    <Maximize className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Zoom to fill workspace</p>
                 </TooltipContent>
               </Tooltip>
             </div>
