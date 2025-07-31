@@ -1168,6 +1168,7 @@ export class EnhancedCMYKGenerator {
     svgPath: string,
     templateSize: TemplateSize
   ) {
+    console.log(`Enhanced CMYK: ========== embedSVGAsPDF START ==========`);
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
     console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
     try {

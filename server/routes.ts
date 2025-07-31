@@ -39,9 +39,8 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: express.Application) {
-  const { MemStorage } = await import('./storage');
+  const { storage } = await import('./storage');
   const { setupImpositionRoutes } = await import('./imposition-routes');
-  const storage = new MemStorage();
   
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
