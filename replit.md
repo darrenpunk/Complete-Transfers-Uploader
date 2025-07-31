@@ -2,6 +2,18 @@
 
 ## Recent Updates (July 31, 2025)
 
+### Raster Image Bounding Box Fix ✓ COMPLETED 
+**Issue**: Raster images (PNG/JPEG) were getting excessive padding with generic 200×150mm dimensions instead of content-based sizing
+**Solution**: 
+- Implemented comprehensive raster image dimension detection using ImageMagick identify command
+- Calculates actual pixel dimensions and converts to mm using 300 DPI standard (11.811 pixels per mm)
+- Applies intelligent size limits: max 200mm, min 20mm for any dimension
+- Scales oversized or tiny images proportionally to reasonable display sizes
+- Maintains vector logo bounding box calculations unchanged
+- Fixed complex syntax errors in try-catch structure during implementation
+**Result**: Raster images now import with accurate content-based dimensions, eliminating excessive padding while preserving vector logo precision
+**Status**: Successfully deployed and tested - application running without syntax errors
+
 ### Logo Import Clipping Investigation
 **Issue**: Specific logo (Greystones) was importing with clipped/missing content while other documents processed correctly
 **Investigation**: 

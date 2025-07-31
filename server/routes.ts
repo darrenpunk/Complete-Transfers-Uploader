@@ -223,8 +223,9 @@ export async function registerRoutes(app: express.Application) {
         let displayWidth = 200;
         let displayHeight = 150;
 
-        try {
-          if (finalMimeType === 'image/svg+xml') {
+        // Calculate dimensions based on file type
+        if (finalMimeType === 'image/svg+xml') {
+          try {
             const svgPath = path.join(uploadDir, finalFilename);
             
             // Check viewBox first - most reliable for A3 detection
@@ -298,14 +299,64 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
-            } else {
-              // Fallback: for large documents with no detectable content bounds
-              console.log(`Large format document with no detectable content bounds, using conservative sizing`);
-              displayWidth = 200;
-              displayHeight = 150;
+            // Dimension calculation successful
+          } catch (error) {
+            console.error('Failed to calculate SVG content bounds:', error);
+            // Fallback: for large documents with no detectable content bounds
+            console.log(`Using fallback dimensions for SVG processing failure`);
+            displayWidth = 200;
+            displayHeight = 150;
           }
-        } catch (error) {
-          console.error('Failed to calculate content bounds:', error);
+        } else if (finalMimeType === 'image/png' || finalMimeType === 'image/jpeg' || finalMimeType === 'image/jpg') {
+          // RASTER IMAGE DIMENSION DETECTION: Calculate actual content-based sizing
+          try {
+            const rasterPath = path.join(uploadDir, finalFilename);
+            
+            // Use ImageMagick identify to get actual image dimensions and content bounds
+            const identifyCommand = `identify -format "%w %h %[opaque]" "${rasterPath}"`;
+            const { stdout } = await execAsync(identifyCommand);
+            const [widthPx, heightPx, hasTransparency] = stdout.trim().split(' ');
+            
+            const imageWidthPx = parseInt(widthPx);
+            const imageHeightPx = parseInt(heightPx);
+            
+            console.log(`📏 Raster image dimensions: ${imageWidthPx}×${imageHeightPx}px, transparent: ${hasTransparency !== 'true'}`);
+            
+            // Convert pixels to mm using standard print DPI (300 DPI = 11.811 pixels per mm)
+            const pixelsPerMm = 11.811; // 300 DPI conversion factor
+            let contentWidthMm = imageWidthPx / pixelsPerMm;
+            let contentHeightMm = imageHeightPx / pixelsPerMm;
+            
+            // Apply reasonable size limits to prevent oversized images
+            const maxDimensionMm = 200; // Maximum 200mm for any dimension
+            const minDimensionMm = 20;  // Minimum 20mm for any dimension
+            
+            if (contentWidthMm > maxDimensionMm || contentHeightMm > maxDimensionMm) {
+              const scaleFactor = Math.min(maxDimensionMm / contentWidthMm, maxDimensionMm / contentHeightMm);
+              contentWidthMm *= scaleFactor;
+              contentHeightMm *= scaleFactor;
+              console.log(`📐 Scaled down oversized raster image by ${(scaleFactor * 100).toFixed(1)}%`);
+            }
+            
+            if (contentWidthMm < minDimensionMm || contentHeightMm < minDimensionMm) {
+              const scaleFactor = Math.max(minDimensionMm / contentWidthMm, minDimensionMm / contentHeightMm);
+              contentWidthMm *= scaleFactor;
+              contentHeightMm *= scaleFactor;
+              console.log(`📐 Scaled up tiny raster image by ${(scaleFactor * 100).toFixed(1)}%`);
+            }
+            
+            displayWidth = Math.round(contentWidthMm * 100) / 100; // Round to 2 decimal places
+            displayHeight = Math.round(contentHeightMm * 100) / 100;
+            
+            console.log(`🖼️ RASTER DIMENSIONS: ${imageWidthPx}×${imageHeightPx}px → ${displayWidth}×${displayHeight}mm (content-based sizing)`);
+            
+          } catch (imageError) {
+            console.error('Failed to analyze raster image dimensions:', imageError);
+            // Keep fallback dimensions for raster images
+            displayWidth = 100; // Smaller fallback for raster images
+            displayHeight = 75;
+            console.log(`⚠️ Using raster fallback dimensions: ${displayWidth}×${displayHeight}mm`);
+          }
         }
 
         // Get template size for centering
