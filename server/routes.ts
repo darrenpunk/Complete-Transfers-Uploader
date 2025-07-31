@@ -156,8 +156,11 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Automatically analyze SVG files for colors and stroke widths BEFORE creating logo record
+        // Analyze files BEFORE creating logo record
         let analysisData = null;
+        let rasterAnalysis = null;
+        let cmykVersion = null;
+        
         if (finalMimeType === 'image/svg+xml') {
           try {
             console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
@@ -201,7 +204,45 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
           } catch (analysisError) {
             console.error('❌ SVG analysis failed during upload:', analysisError);
-            console.error('Stack trace:', analysisError.stack);
+            console.error('Stack trace:', (analysisError as Error).stack);
+          }
+        } else if (finalMimeType.includes('image/') && (finalMimeType.includes('png') || finalMimeType.includes('jpeg') || finalMimeType.includes('jpg'))) {
+          // Process raster images with DPI detection and CMYK conversion
+          try {
+            console.log(`🖼️ Processing raster image: ${finalFilename}`);
+            const { processRasterImageImport } = await import('./raster-processing');
+            const imagePath = path.join(uploadDir, finalFilename);
+            
+            const result = await processRasterImageImport(imagePath, uploadDir, finalFilename, true);
+            rasterAnalysis = result.analysis;
+            
+            if (result.cmykPath) {
+              // Use CMYK version as the main file
+              const cmykFilename = path.basename(result.cmykPath);
+              finalFilename = cmykFilename;
+              finalUrl = `/uploads/${cmykFilename}`;
+              cmykVersion = cmykFilename;
+              console.log(`✅ Using CMYK version as main file: ${cmykFilename}`);
+            }
+            
+            // Create analysis data compatible with existing structure
+            analysisData = {
+              dpi: rasterAnalysis.actualDPI,
+              resolution: rasterAnalysis.actualDPI,
+              colorSpace: rasterAnalysis.colorSpace,
+              quality: rasterAnalysis.quality,
+              printReady: rasterAnalysis.printReady,
+              type: 'raster',
+              widthPx: rasterAnalysis.widthPx,
+              heightPx: rasterAnalysis.heightPx,
+              hasTransparency: rasterAnalysis.hasTransparency
+            };
+            
+            console.log(`📊 Raster analysis complete: ${finalFilename} - ${rasterAnalysis.actualDPI} DPI, ${rasterAnalysis.colorSpace}`);
+            
+          } catch (rasterError) {
+            console.error('❌ Raster processing failed during upload:', rasterError);
+            console.error('Stack trace:', (rasterError as Error).stack);
           }
         }
 

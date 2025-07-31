@@ -490,16 +490,27 @@ export default function PropertiesPanel({
           value: "Vector (Resolution Independent)"
         });
       } else {
-        // Calculate effective resolution for raster files only
-        const scaleX = currentElement.width / (logo.width || 1);
-        const scaleY = currentElement.height / (logo.height || 1);
-        const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-        const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
+        // Use actual DPI from raster analysis if available
+        const rasterData = logo.svgColors as any;
+        let actualDPI = 72; // Default fallback
+        
+        if (rasterData && rasterData.dpi) {
+          actualDPI = rasterData.dpi;
+        } else if (rasterData && rasterData.resolution) {
+          actualDPI = rasterData.resolution;
+        } else {
+          // Calculate effective resolution for raster files
+          const scaleX = currentElement.width / (logo.width || 1);
+          const scaleY = currentElement.height / (logo.height || 1);
+          actualDPI = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
+        }
+        
+        const hasGoodResolution = actualDPI >= 150; // 150 DPI minimum for print
         
         checks.push({
           name: "Print Resolution",
           status: hasGoodResolution ? "pass" : "warning",
-          value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
+          value: hasGoodResolution ? `${Math.round(actualDPI)} DPI` : `${Math.round(actualDPI)} DPI (Low)`
         });
       }
       
@@ -516,7 +527,11 @@ export default function PropertiesPanel({
       let colorValue = "No Colors";
       
       if (svgAnalysis && typeof svgAnalysis === 'object') {
-        if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
+        // Check if it's a raster image with color space info
+        if (svgAnalysis.type === 'raster' && svgAnalysis.colorSpace) {
+          colorStatus = svgAnalysis.colorSpace === 'CMYK' ? "pass" : "warning";
+          colorValue = `${svgAnalysis.colorSpace} Color Space`;
+        } else if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
           colorStatus = "pass";
           colorValue = `${svgAnalysis.colors.length} Colors Detected`;
         } else if (svgAnalysis.strokeWidths && Array.isArray(svgAnalysis.strokeWidths)) {
