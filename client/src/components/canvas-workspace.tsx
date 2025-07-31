@@ -279,7 +279,10 @@ export default function CanvasWorkspace({
 
   const handleUndo = useCallback(() => {
     console.log('🔙 Undo requested, historyIndex:', historyIndex, 'history length:', history.length);
+    console.log('🔙 History state:', history.map((h, i) => ({ index: i, count: h.length, isCurrent: i === historyIndex })));
+    
     if (historyIndex > 0) {
+      console.log('🔙 Undo conditions met, proceeding...');
       setIsUndoRedoOperation(true);
       const previousState = history[historyIndex - 1];
       setHistoryIndex(historyIndex - 1);
@@ -293,6 +296,8 @@ export default function CanvasWorkspace({
       );
       
       setTimeout(() => setIsUndoRedoOperation(false), 100);
+    } else {
+      console.log('🔙 Cannot undo: historyIndex is', historyIndex);
     }
   }, [historyIndex, history, project.id]);
 
@@ -421,10 +426,14 @@ export default function CanvasWorkspace({
   // Add keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('🔴 Key pressed:', { key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey });
+      
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        console.log('🔴 Undo shortcut detected!');
         event.preventDefault();
         handleUndo();
       } else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        console.log('🔴 Redo shortcut detected!');
         event.preventDefault();
         handleRedo();
       }
