@@ -834,20 +834,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           try {
             const coords = extractPathCoordinates(pathData);
             if (coords.length > 0) {
-              // Be much less aggressive with coordinate filtering to prevent clipping
-              // Only filter out coordinates that are CLEARLY full-canvas backgrounds
-              const filteredCoords = coords.filter(coord => {
-                // Only exclude coordinates that are exactly at corners of very large canvases
-                const isExactLeftEdge = coord.x === 0;
-                const isExactRightEdge = coord.x >= 2000; // Only exclude extremely large canvas edges
-                const isExactTopEdge = coord.y === 0;
-                const isExactBottomEdge = coord.y >= 2000; // Only exclude extremely large canvas edges
-                
-                // Only exclude if it's exactly at all four corners (true background rectangle)
-                const isFullCanvasBackground = isExactLeftEdge && isExactRightEdge && isExactTopEdge && isExactBottomEdge;
-                
-                return !isFullCanvasBackground;
-              });
+              // NO coordinate filtering - use all coordinates to prevent clipping
+              // The aggressive filtering was causing parts of logos to be excluded
+              const filteredCoords = coords;
               
               if (filteredCoords.length > 0) {
                 coloredElements.push(...filteredCoords);

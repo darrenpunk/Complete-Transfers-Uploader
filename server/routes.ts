@@ -253,19 +253,36 @@ export async function registerRoutes(app: express.Application) {
             // Always try to get actual content bounds first, regardless of document format
             const contentBounds = calculateSVGContentBounds(svgContent);
             
-            // DISABLED: SVG viewBox cropping to prevent clipping issues
-            // The automatic cropping was causing parts of logos to be permanently removed
-            // when content bounds calculation was slightly incorrect
+            // Crop SVG to actual content bounds to remove whitespace
             if (contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
                 contentBounds.maxX !== undefined && contentBounds.maxY !== undefined) {
               
               const croppedWidth = contentBounds.maxX - contentBounds.minX;
               const croppedHeight = contentBounds.maxY - contentBounds.minY;
               
-              console.log(`Content bounds detected: ${contentBounds.minX.toFixed(1)},${contentBounds.minY.toFixed(1)} to ${contentBounds.maxX.toFixed(1)},${contentBounds.maxY.toFixed(1)} = ${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)} (viewBox cropping disabled to prevent clipping)`);
+              // Create new viewBox that crops to actual content
+              const newViewBox = `${contentBounds.minX} ${contentBounds.minY} ${croppedWidth} ${croppedHeight}`;
               
-              // NOTE: ViewBox cropping disabled to prevent logo clipping
-              // Original SVG viewBox and dimensions are preserved
+              // Update SVG with cropped viewBox
+              let updatedSvgContent = svgContent.replace(
+                /viewBox="[^"]*"/,
+                `viewBox="${newViewBox}"`
+              );
+              
+              // Also update width and height to match aspect ratio
+              updatedSvgContent = updatedSvgContent.replace(
+                /width="[^"]*"/,
+                `width="${croppedWidth}"`
+              );
+              updatedSvgContent = updatedSvgContent.replace(
+                /height="[^"]*"/,
+                `height="${croppedHeight}"`
+              );
+              
+              console.log(`Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
+              
+              // Write the cropped SVG back to file
+              fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
             }
             
             // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation
