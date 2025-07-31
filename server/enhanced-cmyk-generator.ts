@@ -9,6 +9,8 @@ import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
 import { applySVGColorChanges } from "./svg-color-utils";
 
+console.log('Enhanced CMYK Generator loaded - Version 2.0');
+
 export interface PDFGenerationData {
   projectId: string;
   templateSize: TemplateSize;
