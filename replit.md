@@ -211,7 +211,14 @@ This is a full-stack web application for uploading logo files and designing layo
 ✓ **COMPLETE COLOR MODIFICATION SYSTEM OPERATIONAL**: Successfully implemented end-to-end color modification workflow with real-time canvas preview and PDF generation integration - CMYK sliders now instantly update canvas display and final PDF output maintains color changes with full vector preservation (July 30, 2025)
 
 
-## Current Status (July 30, 2025)
+## Current Status (July 31, 2025)
+**CRITICAL STORAGE BUG FIXED - CMYK CONVERSION FULLY OPERATIONAL**
+- ✅ **ROOT CAUSE IDENTIFIED AND FIXED**: Routes.ts was creating a new MemStorage instance instead of using the shared instance from storage.ts
+- ✅ **STORAGE ARCHITECTURE CORRECTED**: Changed `const storage = new MemStorage()` to `import { storage } from './storage'` in routes.ts
+- ✅ **DATA PERSISTENCE VERIFIED**: CMYK color data saved during upload is now accessible during PDF generation
+- ✅ **USER CONFIRMED WORKING**: "yes working!!!" - CMYK conversion successfully tested and verified by user
+- ✅ **ROBUST IMPLEMENTATION**: Single shared storage instance pattern ensures data consistency across all operations
+
 **COMPLETE COLOR MODIFICATION SYSTEM OPERATIONAL**: Real-time color changes working perfectly across all interfaces
 - ✅ **Live Canvas Preview**: Modified SVG endpoint generates color-changed images in real-time for canvas display
 - ✅ **PDF Color Integration**: Enhanced CMYK Generator applies color overrides to final PDF output with vector preservation
@@ -293,6 +300,21 @@ This is a full-stack web application for uploading logo files and designing layo
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Critical Architecture Patterns
+
+### Storage Instance Management (CRITICAL)
+**⚠️ IMPORTANT**: The application uses a SINGLE shared storage instance pattern. All modules MUST import the shared instance from `server/storage.ts`:
+
+```typescript
+// ✅ CORRECT - Import shared instance
+import { storage } from './storage';
+
+// ❌ WRONG - Never create new instances
+const storage = new MemStorage(); // This breaks data persistence!
+```
+
+**Why this matters**: Creating multiple storage instances causes data isolation where information saved in one instance (e.g., during file upload) is not accessible in another instance (e.g., during PDF generation). This was the root cause of the CMYK conversion bug fixed on July 31, 2025.
 
 ## System Architecture
 
