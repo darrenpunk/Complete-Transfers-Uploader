@@ -74,9 +74,12 @@ export async function registerRoutes(app: express.Application) {
 
       // Import the EnhancedCMYKGenerator
       console.log('📦 About to import EnhancedCMYKGenerator...');
+      // Force fresh import by adding timestamp
+      const moduleUrl = `./enhanced-cmyk-generator?t=${Date.now()}`;
       const { EnhancedCMYKGenerator } = await import('./enhanced-cmyk-generator');
       console.log('✅ EnhancedCMYKGenerator imported successfully');
       const generator = new EnhancedCMYKGenerator();
+      console.log('📊 Generator instance created');
 
       // Generate PDF using EnhancedCMYKGenerator
       const pdfData = {
