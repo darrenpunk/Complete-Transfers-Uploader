@@ -218,49 +218,64 @@ export default function CanvasWorkspace({
     setZoom(Math.max(zoom - 25, 10));
   };
 
+  // Skip history updates during undo/redo operations
+  const [isUndoRedoOperation, setIsUndoRedoOperation] = useState(false);
+
   // History management
-  const saveToHistory = (elements: CanvasElement[]) => {
+  const saveToHistory = useCallback((elements: CanvasElement[]) => {
+    if (isUndoRedoOperation) return; // Don't save during undo/redo operations
+    
+    console.log('🏛️ Saving to history, elements count:', elements.length);
     const newHistory = history.slice(0, historyIndex + 1);
     newHistory.push([...elements]);
+    
+    // Limit history to 50 entries to prevent memory issues
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    } else {
+      setHistoryIndex(newHistory.length - 1);
+    }
+    
     setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
+  }, [history, historyIndex, isUndoRedoOperation]);
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
+    console.log('🔙 Undo requested, historyIndex:', historyIndex, 'history length:', history.length);
     if (historyIndex > 0) {
+      setIsUndoRedoOperation(true);
       const previousState = history[historyIndex - 1];
       setHistoryIndex(historyIndex - 1);
       
-      // Apply the previous state to all canvas elements
-      previousState.forEach(historicalElement => {
-        updateElementDirect(historicalElement.id, {
-          x: historicalElement.x,
-          y: historicalElement.y,
-          width: historicalElement.width,
-          height: historicalElement.height,
-          rotation: historicalElement.rotation
-        });
-      });
+      console.log('🔙 Restoring previous state with', previousState.length, 'elements');
+      
+      // Force update the query cache with previous state
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "canvas-elements"],
+        [...previousState]
+      );
+      
+      setTimeout(() => setIsUndoRedoOperation(false), 100);
     }
-  };
+  }, [historyIndex, history, project.id]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
+    console.log('🔜 Redo requested, historyIndex:', historyIndex, 'history length:', history.length);
     if (historyIndex < history.length - 1) {
+      setIsUndoRedoOperation(true);
       const nextState = history[historyIndex + 1];
       setHistoryIndex(historyIndex + 1);
       
-      // Apply the next state to all canvas elements
-      nextState.forEach(historicalElement => {
-        updateElementDirect(historicalElement.id, {
-          x: historicalElement.x,
-          y: historicalElement.y,
-          width: historicalElement.width,
-          height: historicalElement.height,
-          rotation: historicalElement.rotation
-        });
-      });
+      console.log('🔜 Restoring next state with', nextState.length, 'elements');
+      
+      // Force update the query cache with next state
+      queryClient.setQueryData(
+        ["/api/projects", project.id, "canvas-elements"],
+        [...nextState]
+      );
+      
+      setTimeout(() => setIsUndoRedoOperation(false), 100);
     }
-  };
+  }, [historyIndex, history, project.id]);
 
   // Helper function to detect raster files
   const isRasterFile = (file: File): boolean => {
@@ -355,10 +370,15 @@ export default function CanvasWorkspace({
 
   // Save to history when elements change (but avoid infinite loops)
   useEffect(() => {
-    if (canvasElements.length > 0 && history.length === 0) {
-      saveToHistory(canvasElements);
+    if (canvasElements.length > 0 && !isUndoRedoOperation) {
+      // Always save the current state, but debounce to avoid excessive saves
+      const timeoutId = setTimeout(() => {
+        saveToHistory(canvasElements);
+      }, 500); // 500ms debounce
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [canvasElements]);
+  }, [canvasElements, saveToHistory, isUndoRedoOperation]);
 
   // Add keyboard shortcuts for undo/redo
   useEffect(() => {
