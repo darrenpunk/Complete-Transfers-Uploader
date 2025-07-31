@@ -1169,6 +1169,7 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize
   ) {
     console.log(`Enhanced CMYK: embedSVGAsPDF called for element:`, JSON.stringify(element));
+    console.log(`Enhanced CMYK: Method started, storage exists: ${!!storage}`);
     try {
       // CRITICAL: Use pre-calculated CMYK values from app instead of RGB-to-CMYK conversion
       console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
@@ -1178,6 +1179,7 @@ export class EnhancedCMYKGenerator {
       
       // Get the logo data to access pre-calculated CMYK values
       console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
+      console.log(`Enhanced CMYK: About to call storage.getLogo`);
       try {
         const logoData = await storage.getLogo(element.logoId || '');
         console.log(`Enhanced CMYK: storage.getLogo returned:`, !!logoData);
