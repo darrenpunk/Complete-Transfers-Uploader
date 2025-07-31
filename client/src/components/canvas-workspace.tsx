@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, Maximize } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
@@ -216,6 +216,44 @@ export default function CanvasWorkspace({
 
   const handleZoomOut = () => {
     setZoom(Math.max(zoom - 25, 10));
+  };
+
+  const handleZoomToFill = () => {
+    if (!template) return;
+    
+    // Get workspace container dimensions (accounting for padding and UI elements)
+    const workspaceWidth = window.innerWidth - 400; // Subtract sidebar width
+    const workspaceHeight = window.innerHeight - 200; // Subtract header and padding
+    
+    // Calculate the aspect ratios
+    const canvasAspectRatio = template.width / template.height;
+    const workspaceAspectRatio = workspaceWidth / workspaceHeight;
+    
+    let optimalZoom;
+    
+    if (canvasAspectRatio > workspaceAspectRatio) {
+      // Canvas is wider relative to workspace, fit to width
+      optimalZoom = (workspaceWidth * 0.85) / template.width * 100 / 2.834; // Convert mm to px with some margin
+    } else {
+      // Canvas is taller relative to workspace, fit to height
+      optimalZoom = (workspaceHeight * 0.85) / template.height * 100 / 2.834; // Convert mm to px with some margin
+    }
+    
+    // Clamp zoom to reasonable bounds
+    const clampedZoom = Math.max(10, Math.min(300, Math.round(optimalZoom)));
+    
+    console.log('🔍 Zoom to fill calculation:', {
+      workspaceWidth,
+      workspaceHeight,
+      templateWidth: template.width,
+      templateHeight: template.height,
+      canvasAspectRatio,
+      workspaceAspectRatio,
+      optimalZoom,
+      clampedZoom
+    });
+    
+    setZoom(clampedZoom);
   };
 
   // Skip history updates during undo/redo operations
@@ -848,6 +886,16 @@ export default function CanvasWorkspace({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Zoom in (400% maximum)</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={handleZoomToFill}>
+                    <Maximize className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Zoom to fill workspace</p>
                 </TooltipContent>
               </Tooltip>
             </div>

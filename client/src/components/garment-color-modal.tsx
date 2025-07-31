@@ -50,12 +50,9 @@ const quickColors = [
 
 // Function to get color name from hex value
 function getColorName(hex: string): string {
-  console.log('🎨 getColorName called with:', hex);
-  
   // Check quick colors first
   const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
   if (quickColor) {
-    console.log('✅ Found quick color match:', quickColor.name);
     return quickColor.name;
   }
 
@@ -64,14 +61,12 @@ function getColorName(hex: string): string {
     for (const group of colorGroups) {
       const manufacturerColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
       if (manufacturerColor) {
-        console.log('✅ Found manufacturer color match:', `${manufacturerColor.name} (${manufacturerColor.code})`);
         return `${manufacturerColor.name} (${manufacturerColor.code})`;
       }
     }
   }
 
   // If no match found, return hex as fallback
-  console.log('❌ No color match found, returning hex:', hex);
   return hex;
 }
 
