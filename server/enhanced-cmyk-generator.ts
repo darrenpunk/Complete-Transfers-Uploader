@@ -1202,8 +1202,9 @@ export class EnhancedCMYKGenerator {
       // Get the logo data to access pre-calculated CMYK values
       console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
       console.log(`Enhanced CMYK: About to call storage.getLogo with ID:`, element.logoId);
+      let logoData: any = null;
       try {
-        const logoData = await storage.getLogo(element.logoId || '');
+        logoData = await storage.getLogo(element.logoId || '');
         console.log(`Enhanced CMYK: storage.getLogo returned:`, !!logoData);
         console.log(`Enhanced CMYK: logoData structure:`, logoData ? Object.keys(logoData) : 'null');
         
@@ -1311,6 +1312,7 @@ export class EnhancedCMYKGenerator {
             const colorMappings: Array<{ rgb: string; cmyk: { c: number; m: number; y: number; k: number } }> = [];
             
             // Build color mappings from the logo analysis
+            const colorAnalysis = logoData?.svgColors as any;
             if (colorAnalysis && Array.isArray(colorAnalysis?.colors)) {
               for (const colorInfo of colorAnalysis.colors) {
                 if (colorInfo.converted && colorInfo.cmykColor) {
@@ -1329,44 +1331,37 @@ export class EnhancedCMYKGenerator {
               }
             }
             
-            // If we have Adobe CMYK mappings, use custom conversion
-            let conversionSuccessful = false;
-            
-            if (colorMappings.length > 0) {
-              try {
-                const { applyAdobeCMYKConversion } = require('./direct-cmyk-embedding');
-                await applyAdobeCMYKConversion(rgbPdfPath, cmykPdfPath, colorMappings);
-                console.log(`Enhanced CMYK: Applied Adobe CMYK conversion with ${colorMappings.length} color mappings`);
-                conversionSuccessful = true;
-              } catch (error) {
-                console.error(`Enhanced CMYK: Adobe CMYK conversion failed:`, error);
+            // Create PostScript prologue with Adobe CMYK mappings
+            try {
+              if (colorMappings.length > 0) {
+                const { createAdobeCMYKPrologue } = require('./adobe-cmyk-pdf');
+                const prologue = createAdobeCMYKPrologue(colorMappings);
+                const prologuePath = rgbPdfPath.replace('.pdf', '_prologue.ps');
+                fs.writeFileSync(prologuePath, prologue);
+                
+                // Use Ghostscript with our custom prologue to preserve Adobe CMYK values
+                const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${prologuePath}" "${rgbPdfPath}"`;
+                console.log(`Enhanced CMYK: Converting to CMYK with Adobe prologue (${colorMappings.length} mappings)`);
+                
+                await execAsync(cmykCommand);
+                
+                // Clean up prologue file
+                if (fs.existsSync(prologuePath)) {
+                  fs.unlinkSync(prologuePath);
+                }
+              } else {
+                // Standard conversion if no mappings
+                const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+                console.log(`Enhanced CMYK: Converting to CMYK with standard Ghostscript`);
+                await execAsync(cmykCommand);
               }
-            }
-            
-            // If Adobe conversion failed or no mappings, use standard Ghostscript
-            if (!conversionSuccessful) {
-              const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-              console.log(`Enhanced CMYK: Executing standard CMYK conversion command`);
               
-              await new Promise<void>((resolve, reject) => {
-                exec(cmykCommand, (error, stdout, stderr) => {
-                  if (error) {
-                    console.warn(`Enhanced CMYK: CMYK colorspace conversion failed, using RGB PDF:`, error);
-                    resolve();
-                  } else if (fs.existsSync(cmykPdfPath)) {
-                    console.log(`Enhanced CMYK: Successfully converted to true CMYK colorspace: ${path.basename(svgPath)}`);
-                    conversionSuccessful = true;
-                    resolve();
-                  } else {
-                    console.warn(`Enhanced CMYK: CMYK conversion succeeded but no output file created`);
-                    resolve();
-                  }
-                });
-              });
-            }
-            
-            if (conversionSuccessful && fs.existsSync(cmykPdfPath)) {
-              finalPdfPath = cmykPdfPath;
+              if (fs.existsSync(cmykPdfPath)) {
+                console.log(`Enhanced CMYK: Successfully converted to CMYK colorspace: ${path.basename(svgPath)}`);
+                finalPdfPath = cmykPdfPath;
+              }
+            } catch (cmykError) {
+              console.warn(`Enhanced CMYK: CMYK conversion failed, using RGB PDF:`, cmykError);
             }
           } catch (cmykError) {
             console.warn('Enhanced CMYK: CMYK colorspace conversion error:', cmykError);
