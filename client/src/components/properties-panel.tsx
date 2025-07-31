@@ -541,8 +541,15 @@ export default function PropertiesPanel({
           colorStatus = svgAnalysis.colorSpace === 'CMYK' ? "pass" : "warning";
           colorValue = `${svgAnalysis.colorSpace} Color Space`;
         } else if (svgAnalysis.colors && Array.isArray(svgAnalysis.colors) && svgAnalysis.colors.length > 0) {
-          colorStatus = "pass";
-          colorValue = `${svgAnalysis.colors.length} Colors Detected`;
+          // Check if vector colors have been converted to CMYK
+          const convertedColors = svgAnalysis.colors.filter((color: any) => color.converted && color.cmykColor);
+          if (convertedColors.length > 0) {
+            colorStatus = "pass";
+            colorValue = `CMYK Color Space (${convertedColors.length} colors)`;
+          } else {
+            colorStatus = "warning";
+            colorValue = `RGB Color Space (${svgAnalysis.colors.length} colors)`;
+          }
         } else if (svgAnalysis.strokeWidths && Array.isArray(svgAnalysis.strokeWidths)) {
           // Has stroke analysis but no colors - might be pure strokes
           colorValue = "Analyzed (No Fill Colors)";
