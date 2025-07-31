@@ -9,6 +9,9 @@ export interface ColorMapping {
 // Exact color mappings from Adobe Illustrator
 // These values are from actual measurements using the Eco logo
 export const adobeColorMappings: ColorMapping[] = [
+  // Orange color from user's artwork (F26124)
+  { rgb: { r: 242, g: 97, b: 36 }, cmyk: { c: 0, m: 75, y: 95, k: 0 } },
+  
   // PANTONE 6196 C / Dark green
   { rgb: { r: 106, g: 132, b: 38 }, cmyk: { c: 64, m: 21, y: 99, k: 56 } },
   

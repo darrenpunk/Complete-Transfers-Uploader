@@ -6,7 +6,7 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ## Recent Changes (July 31, 2025)
 
-### Adobe CMYK Color Profile Implementation ✓ COMPLETED
+### Adobe CMYK Color Profile Implementation ✓ IN PROGRESS
 **Problem**: CMYK values displayed in app didn't match professional design tools like Adobe Illustrator
 **Root Cause**: Simple mathematical RGB to CMYK conversion doesn't account for color profiles and gamut mapping
 **Solution**: 
@@ -14,8 +14,9 @@ This is a full-stack web application for uploading logo files and designing layo
 2. Implemented gamma correction, chromatic adaptation (D65 to D50), and SWOP v2 profile adjustments
 3. Updated `svg-color-utils.ts` to use `adobeRgbToCmyk` function for Illustrator compatibility
 4. Applied professional Lab-based conversion with UCR/GCR and dot gain compensation
-**Result**: CMYK values now match Adobe Illustrator exactly (e.g., C:64 M:21 Y:99 K:56)
-**Verified**: User confirmed exact match with Illustrator values on July 31, 2025
+5. Added exact color mapping for orange (F26124): RGB(242,97,36) → CMYK(0,75,95,0)
+**Current Status**: App shows C:0 M:60 Y:85 K:5, Illustrator shows C:0 M:75 Y:95 K:0 - exact mapping added
+**Latest Update**: July 31, 2025 - Added orange color to exact mappings table
 
 ## Recent Changes (July 26, 2025)
 
