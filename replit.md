@@ -2,6 +2,18 @@
 
 ## Recent Updates (July 31, 2025)
 
+### Raster Image CMYK+ICC Profile Fix ✓ COMPLETED 
+**Issue**: Raster images (PNG/JPEG) were displaying distorted in RGB colorspace instead of professional CMYK with ICC profile embedding
+**Solution**: 
+- Implemented comprehensive raster image CMYK conversion with ICC profile embedding in PDF generation
+- Added `embedRasterImageWithCMYK` method to properly process PNG/JPEG files during PDF output
+- Uses ImageMagick to convert raster images to CMYK colorspace with PSO Coated FOGRA51 ICC profile
+- Maintains exact dimensions and quality while ensuring professional printing compatibility
+- Provides fallback to standard CMYK conversion if ICC profile unavailable
+- All raster images now embedded as CMYK in PDF output matching vector processing
+**Result**: Raster images now generate proper CMYK PDF output with embedded ICC profiles, eliminating RGB distortion and ensuring professional print quality
+**Status**: Successfully deployed - both vector and raster images now produce CMYK+ICC PDF output
+
 ### Raster Image Bounding Box Fix ✓ COMPLETED 
 **Issue**: Raster images (PNG/JPEG) were getting excessive padding with generic 200×150mm dimensions instead of content-based sizing
 **Solution**: 

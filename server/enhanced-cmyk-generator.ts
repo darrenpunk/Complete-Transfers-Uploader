@@ -1151,35 +1151,147 @@ export class EnhancedCMYKGenerator {
       return;
     }
     
-    const imageBytes = fs.readFileSync(imagePath);
-    let image;
-    
-    if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
-      image = await pdfDoc.embedJpg(imageBytes);
-    } else if (mimeType.includes('png')) {
-      image = await pdfDoc.embedPng(imageBytes);
-    } else {
-      console.warn(`Unsupported image type: ${mimeType}`);
+    // For raster images (PNG/JPEG), apply CMYK conversion with ICC profile
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg') || mimeType.includes('png')) {
+      console.log(`Enhanced CMYK: Processing raster image with CMYK+ICC: ${path.basename(imagePath)}`);
+      await this.embedRasterImageWithCMYK(pdfDoc, page, element, imagePath, mimeType, templateSize);
       return;
     }
     
-    // Convert mm to points (1 mm = 2.834645669 points)
-    const mmToPoints = 2.834645669;
+    console.warn(`Unsupported image type: ${mimeType}`);
+  }
+
+  private async embedRasterImageWithCMYK(
+    pdfDoc: PDFDocument,
+    page: ReturnType<PDFDocument['addPage']>,
+    element: CanvasElement,
+    imagePath: string,
+    mimeType: string,
+    templateSize: TemplateSize
+  ) {
+    const execAsync = promisify(exec);
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    const tempDir = path.join(uploadDir, 'temp_cmyk_raster');
     
-    // Calculate position in points (flip Y coordinate for PDF)
-    const x = element.x * mmToPoints;
-    const y = (templateSize.height - element.y - element.height) * mmToPoints;
-    const width = element.width * mmToPoints;
-    const height = element.height * mmToPoints;
+    // Create temp directory if it doesn't exist
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
     
-    // Draw the image
-    page.drawImage(image, {
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      rotate: degrees(element.rotation || 0),
-    });
+    try {
+      // Check for ICC profile
+      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+      
+      let iccProfilePath = uploadedICCPath;
+      let useICC = fs.existsSync(uploadedICCPath);
+      
+      if (!useICC) {
+        iccProfilePath = fallbackICCPath;
+        useICC = fs.existsSync(fallbackICCPath);
+      }
+      
+      const timestamp = Date.now();
+      const cmykImagePath = path.join(tempDir, `cmyk_${timestamp}.${mimeType.includes('png') ? 'png' : 'jpg'}`);
+      
+      // Convert raster image to CMYK with ICC profile using ImageMagick
+      let convertCommand;
+      if (useICC) {
+        // Apply ICC profile and convert to CMYK
+        convertCommand = `convert "${imagePath}" -profile "${iccProfilePath}" -colorspace CMYK -intent perceptual -quality 100 "${cmykImagePath}"`;
+        console.log(`Enhanced CMYK: Converting raster to CMYK with ICC profile: ${path.basename(iccProfilePath)}`);
+      } else {
+        // Standard CMYK conversion without ICC profile
+        convertCommand = `convert "${imagePath}" -colorspace CMYK -intent perceptual -quality 100 "${cmykImagePath}"`;
+        console.log(`Enhanced CMYK: Converting raster to CMYK without ICC profile`);
+      }
+      
+      await execAsync(convertCommand);
+      
+      if (fs.existsSync(cmykImagePath)) {
+        // Embed the CMYK-converted image
+        const cmykImageBytes = fs.readFileSync(cmykImagePath);
+        let image;
+        
+        if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+          image = await pdfDoc.embedJpg(cmykImageBytes);
+        } else if (mimeType.includes('png')) {
+          image = await pdfDoc.embedPng(cmykImageBytes);
+        }
+        
+        if (image) {
+          // Convert mm to points (1 mm = 2.834645669 points)
+          const mmToPoints = 2.834645669;
+          
+          // Calculate position in points (flip Y coordinate for PDF)
+          const x = element.x * mmToPoints;
+          const y = (templateSize.height - element.y - element.height) * mmToPoints;
+          const width = element.width * mmToPoints;
+          const height = element.height * mmToPoints;
+          
+          // Draw the CMYK image
+          page.drawImage(image, {
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            rotate: degrees(element.rotation || 0),
+          });
+          
+          console.log(`Enhanced CMYK: Successfully embedded CMYK raster image: ${path.basename(imagePath)}`);
+        }
+        
+        // Clean up temp file
+        fs.unlinkSync(cmykImagePath);
+        
+      } else {
+        throw new Error('CMYK conversion failed - no output file created');
+      }
+      
+    } catch (error) {
+      console.error(`Enhanced CMYK: Raster CMYK conversion failed for ${path.basename(imagePath)}:`, error);
+      
+      // Fallback: embed original image without CMYK conversion
+      console.log(`Enhanced CMYK: Using fallback RGB embedding for: ${path.basename(imagePath)}`);
+      const imageBytes = fs.readFileSync(imagePath);
+      let image;
+      
+      if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+        image = await pdfDoc.embedJpg(imageBytes);
+      } else if (mimeType.includes('png')) {
+        image = await pdfDoc.embedPng(imageBytes);
+      }
+      
+      if (image) {
+        const mmToPoints = 2.834645669;
+        const x = element.x * mmToPoints;
+        const y = (templateSize.height - element.y - element.height) * mmToPoints;
+        const width = element.width * mmToPoints;
+        const height = element.height * mmToPoints;
+        
+        page.drawImage(image, {
+          x: x,
+          y: y,
+          width: width,
+          height: height,
+          rotate: degrees(element.rotation || 0),
+        });
+        
+        console.log(`Enhanced CMYK: Fallback RGB embedding completed for: ${path.basename(imagePath)}`);
+      }
+    } finally {
+      // Clean up temp directory if empty
+      try {
+        if (fs.existsSync(tempDir)) {
+          const files = fs.readdirSync(tempDir);
+          if (files.length === 0) {
+            fs.rmdirSync(tempDir);
+          }
+        }
+      } catch (cleanupError) {
+        // Ignore cleanup errors
+      }
+    }
   }
 
   private async embedSVGAsPDF(
