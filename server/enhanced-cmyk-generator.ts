@@ -1333,13 +1333,33 @@ export class EnhancedCMYKGenerator {
         const colorAnalysis = logoData?.svgColors as any;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
         console.log(`Enhanced CMYK: Logo MIME type:`, logoData?.mimeType);
+        console.log(`Enhanced CMYK: Color analysis structure:`, typeof colorAnalysis, Array.isArray(colorAnalysis));
+        console.log(`Enhanced CMYK: Color analysis raw:`, JSON.stringify(colorAnalysis, null, 2));
+        
+        // Check for CMYK colors in various data structures
+        let hasConvertedColors = false;
+        if (colorAnalysis) {
+          // Check direct array format (original working format)
+          if (Array.isArray(colorAnalysis)) {
+            hasConvertedColors = colorAnalysis.some(color => color.converted && color.cmykColor);
+            console.log(`Enhanced CMYK: Direct array format - has converted colors:`, hasConvertedColors);
+          }
+          // Check nested colors format (new format from raster processing)
+          else if (colorAnalysis.colors && Array.isArray(colorAnalysis.colors)) {
+            hasConvertedColors = colorAnalysis.colors.some(color => color.converted && color.cmykColor);
+            console.log(`Enhanced CMYK: Nested colors format - has converted colors:`, hasConvertedColors);
+          }
+        }
         
         // ONLY process vector files for CMYK conversion - skip raster files entirely
-        if (logoData?.mimeType?.includes('image/svg') && colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
+        if (logoData?.mimeType?.includes('image/svg') && hasConvertedColors) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
-          for (const colorInfo of colorAnalysis) {
+          // Get the actual colors array depending on the structure
+          const colorsArray = Array.isArray(colorAnalysis) ? colorAnalysis : colorAnalysis.colors;
+          
+          for (const colorInfo of colorsArray) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
               foundConvertedColors++;
