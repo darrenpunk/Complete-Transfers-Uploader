@@ -54,47 +54,20 @@ function hexToRgb(hex: string | undefined): { r: number; g: number; b: number } 
 }
 
 function rgbToCmyk(rgb: { r: number; g: number; b: number }): CMYKColor {
-  // Adobe Illustrator compatible RGB to CMYK conversion
-  // This matches the server-side algorithm for consistency
-  
-  // Normalize RGB values to 0-1 range
   const r = rgb.r / 255;
   const g = rgb.g / 255;
   const b = rgb.b / 255;
-  
-  // Calculate initial K (black) value
-  const k = 1 - Math.max(r, g, b);
-  
-  // Handle pure black case
-  if (k >= 0.99) {
-    return { c: 0, m: 0, y: 0, k: 100 };
-  }
-  
-  // Calculate CMY values with Illustrator-calibrated adjustments
-  let c = (1 - r - k) / (1 - k);
-  let m = (1 - g - k) / (1 - k);
-  let y = (1 - b - k) / (1 - k);
-  
-  // Apply Illustrator-specific adjustments
-  // Adjust Magenta channel (Illustrator tends to use slightly more magenta)
-  if (m > 0.3) {
-    m = m * 1.25; // Adjusted to get M:75 exactly
-  }
-  
-  // Adjust Yellow channel (Illustrator tends to use more yellow)
-  if (y > 0.5) {
-    y = y * 1.12; // Adjusted to get Y:95 exactly
-  }
-  
-  // Illustrator tends to eliminate black generation for bright colors
-  const kReduced = 0; // Set K to 0 to match Illustrator's behavior for bright colors
-  
-  // Convert to percentages with proper bounds
+
+  const k = 1 - Math.max(r, Math.max(g, b));
+  const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+  const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
+  const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+
   return {
-    c: Math.round(Math.max(0, Math.min(100, c * 100))),
-    m: Math.round(Math.max(0, Math.min(100, m * 100))),
-    y: Math.round(Math.max(0, Math.min(100, y * 100))),
-    k: Math.round(Math.max(0, Math.min(100, kReduced * 100)))
+    c: Math.round(c * 100),
+    m: Math.round(m * 100),
+    y: Math.round(y * 100),
+    k: Math.round(k * 100)
   };
 }
 
