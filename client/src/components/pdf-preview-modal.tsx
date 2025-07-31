@@ -168,22 +168,24 @@ export default function PDFPreviewModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex gap-6 h-[70vh]">
+        <div className="flex gap-6 h-[60vh]">
           {/* PDF Preview Section */}
           <div className="flex-1 flex flex-col">
-            <h3 className="text-lg font-semibold mb-4">PDF Preview</h3>
+            <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             {/* Two pages side by side */}
-            <div className="flex gap-4 flex-1">
+            <div className="flex gap-4 h-full">
               {/* Page 1 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
                   {/* Canvas preview background */}
                   <div 
-                    className="absolute inset-4 border-2 border-dashed border-gray-300 rounded"
+                    className="border-2 border-dashed border-gray-300 rounded mt-2"
                     style={{
-                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                      width: '90%',
+                      maxHeight: '400px'
                     }}
                   >
                     {/* Template background */}
@@ -217,7 +219,7 @@ export default function PDFPreviewModal({
                       })}
                     </div>
                   </div>
-                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-white px-2 py-1 rounded">
+                  <div className="absolute bottom-1 right-1 text-xs text-muted-foreground bg-white px-2 py-1 rounded">
                     {template?.name} ({template?.width}×{template?.height}mm)
                   </div>
                 </div>
@@ -226,7 +228,7 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg p-2 flex-1 overflow-auto">
+                <div className="border rounded-lg p-3 h-full overflow-auto flex items-start justify-center">
                   {/* Check if we have individual logo garment colors or use project default */}
                   {(() => {
                     // Get unique garment colors from canvas elements
@@ -239,14 +241,14 @@ export default function PDFPreviewModal({
                     // If no individual colors, use project default
                     if (uniqueColors.length === 0) {
                       return (
-                        <div className="w-full h-full flex items-center justify-center relative"
+                        <div className="w-full h-full flex items-start justify-center relative pt-2"
                              style={{ backgroundColor: project?.garmentColor || '#f5f5f5' }}>
                           <div 
                             className="border-2 border-dashed border-gray-400 rounded opacity-60"
                             style={{
                               aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                              width: '80%',
-                              maxWidth: '300px'
+                              width: '90%',
+                              maxHeight: '320px'
                             }}
                           >
                             <div className="w-full h-full relative">
@@ -357,36 +359,34 @@ export default function PDFPreviewModal({
           <Separator orientation="vertical" />
 
           {/* Preflight Summary Sidebar */}
-          <div className="w-80 space-y-4">
+          <div className="w-80 space-y-3">
             <h3 className="text-lg font-semibold">Preflight Summary</h3>
             
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-3">
-                {preflightItems.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
-                    <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{item.label}</p>
-                        {item.status === "success" ? (
-                          <CheckCircle className="w-3 h-3 text-green-500" />
-                        ) : (
-                          <AlertTriangle className="w-3 h-3 text-amber-500" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{item.value}</p>
+            <div className="space-y-2 h-[200px] overflow-y-auto">
+              {preflightItems.map((item, index) => (
+                <div key={index} className="flex items-start gap-2 p-2 rounded-lg border">
+                  <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{item.label}</p>
+                      {item.status === "success" ? (
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="w-3 h-3 text-amber-500" />
+                      )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{item.value}</p>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              ))}
+            </div>
 
             <Separator />
 
             {/* Project Details */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <h4 className="text-sm font-semibold">Project Details</h4>
-              <div className="text-xs space-y-1 text-muted-foreground">
+              <div className="text-xs space-y-0.5 text-muted-foreground">
                 <p><span className="font-medium">Template:</span> {template?.name}</p>
                 <p><span className="font-medium">Size:</span> {template?.width}×{template?.height}mm</p>
                 <p><span className="font-medium">Elements:</span> {canvasElements.length} positioned</p>
@@ -397,14 +397,14 @@ export default function PDFPreviewModal({
         </div>
 
         {/* Approval Checkboxes */}
-        <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-3 pt-3 border-t">
           <div className="flex items-start space-x-3">
             <Checkbox 
               id="design-approval" 
               checked={designApproved}
               onCheckedChange={(checked) => setDesignApproved(checked === true)}
             />
-            <div className="grid gap-1.5 leading-none">
+            <div className="grid gap-1 leading-none">
               <Label 
                 htmlFor="design-approval"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -423,7 +423,7 @@ export default function PDFPreviewModal({
               checked={rightsConfirmed}
               onCheckedChange={(checked) => setRightsConfirmed(checked === true)}
             />
-            <div className="grid gap-1.5 leading-none">
+            <div className="grid gap-1 leading-none">
               <Label 
                 htmlFor="rights-confirmation"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
