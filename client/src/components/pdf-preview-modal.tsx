@@ -159,13 +159,38 @@ export default function PDFPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5" />
-            PDF Preview & Approval
-          </DialogTitle>
-          <DialogDescription>
-            Review your design and confirm approval before generating the final PDF
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                PDF Preview & Approval
+              </DialogTitle>
+              <DialogDescription>
+                Review your design and confirm approval before generating the final PDF
+              </DialogDescription>
+            </div>
+            <div className="flex-shrink-0">
+              <svg 
+                width="120" 
+                height="32" 
+                viewBox="0 0 120 32" 
+                className="h-8 w-auto"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <text 
+                  x="60" 
+                  y="20" 
+                  textAnchor="middle" 
+                  className="fill-primary font-bold text-sm"
+                  style={{ fontSize: '12px', fontFamily: 'system-ui, -apple-system, sans-serif' }}
+                >
+                  CompleteTransfers
+                </text>
+                <circle cx="10" cy="16" r="6" className="fill-primary opacity-20" />
+                <circle cx="110" cy="16" r="6" className="fill-primary opacity-20" />
+              </svg>
+            </div>
+          </div>
         </DialogHeader>
         
         <div className="flex gap-6 h-[60vh]">
