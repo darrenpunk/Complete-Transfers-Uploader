@@ -1332,21 +1332,14 @@ export class EnhancedCMYKGenerator {
         // Check svgColors from database for CMYK values
         const colorAnalysis = logoData?.svgColors as any;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
-        console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
+        console.log(`Enhanced CMYK: Logo MIME type:`, logoData?.mimeType);
         
-        // Check both direct array and nested object structure
-        let colorsToProcess = [];
-        if (colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
-          colorsToProcess = colorAnalysis;
-        } else if (colorAnalysis && colorAnalysis.colors && Array.isArray(colorAnalysis.colors)) {
-          colorsToProcess = colorAnalysis.colors;
-        }
-        
-        if (colorsToProcess.length > 0) {
+        // ONLY process vector files for CMYK conversion - skip raster files entirely
+        if (logoData?.mimeType?.includes('image/svg') && colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
-          for (const colorInfo of colorsToProcess) {
+          for (const colorInfo of colorAnalysis) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
             if (colorInfo.converted && colorInfo.cmykColor) {
               foundConvertedColors++;
