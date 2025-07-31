@@ -817,38 +817,36 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const isTransparent = fillColor === 'none' || fillColor === 'transparent';
         const isPureWhite = fillColor === '#ffffff' || fillColor === 'white' || fillColor === 'rgb(255, 255, 255)' || fillColor === 'rgb(100%, 100%, 100%)';
         
-        // Skip large background rectangles that cover most of the canvas
+        // Only skip extremely obvious full-page backgrounds (much more conservative)
         const isLargeBackground = pathData.includes('M 0 0') && 
-                                 (pathData.includes('L 700') || pathData.includes('L 839') || pathData.includes('L 624'));
+                                 pathData.includes('L 0') && 
+                                 (pathData.includes('L 2000') || pathData.includes('L 1700')); // Only very large canvases
         
-        // Determine if this is likely a background vs content element based on path data
+        // Be more conservative about what we consider "background"
         const pathLength = pathData.length;
         const hasComplexPath = pathData.includes('C') || pathData.includes('Q'); // Curves indicate content
-        const isRectangularPath = pathData.match(/M[\d\s.,-]+L[\d\s.,-]+L[\d\s.,-]+L[\d\s.,-]+Z/);
+        const isSimpleRectangle = pathData.match(/^M\s*0\s*0\s*L[^CLQ]*Z$/); // Only simple rectangles starting at 0,0
         
-        // Skip if it's a pure white rectangular background with no complex curves
-        const isBackground = isTransparent || (isPureWhite && isRectangularPath && !hasComplexPath) || isLargeBackground;
+        // Only skip if it's clearly a transparent full-page background
+        const isBackground = isTransparent || (isPureWhite && isSimpleRectangle && pathLength < 50) || isLargeBackground;
         
         if (!isBackground && !isLargeBackground) {
           try {
             const coords = extractPathCoordinates(pathData);
             if (coords.length > 0) {
-              // Filter out coordinates that span the entire canvas (likely backgrounds)
+              // Be much less aggressive with coordinate filtering to prevent clipping
+              // Only filter out coordinates that are CLEARLY full-canvas backgrounds
               const filteredCoords = coords.filter(coord => {
-                // Exclude coordinates that suggest full-canvas coverage for text logos
-                const isNearLeftEdge = coord.x <= 10;
-                const isNearRightEdge = coord.x >= 800; // For A3 and similar large canvases
-                const isNearTopEdge = coord.y <= 10;
-                const isNearBottomEdge = coord.y >= 1100; // For A3 height
+                // Only exclude coordinates that are exactly at corners of very large canvases
+                const isExactLeftEdge = coord.x === 0;
+                const isExactRightEdge = coord.x >= 2000; // Only exclude extremely large canvas edges
+                const isExactTopEdge = coord.y === 0;
+                const isExactBottomEdge = coord.y >= 2000; // Only exclude extremely large canvas edges
                 
-                // Exclude if it's a corner coordinate (likely background rectangle)
-                const isCornerCoord = (isNearLeftEdge || isNearRightEdge) && (isNearTopEdge || isNearBottomEdge);
+                // Only exclude if it's exactly at all four corners (true background rectangle)
+                const isFullCanvasBackground = isExactLeftEdge && isExactRightEdge && isExactTopEdge && isExactBottomEdge;
                 
-                // Also exclude extremely wide or tall spanning coordinates
-                const isFullWidthSpan = isNearLeftEdge && isNearRightEdge;
-                const isFullHeightSpan = isNearTopEdge && isNearBottomEdge;
-                
-                return !(isCornerCoord || isFullWidthSpan || isFullHeightSpan);
+                return !isFullCanvasBackground;
               });
               
               if (filteredCoords.length > 0) {
