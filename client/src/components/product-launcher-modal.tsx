@@ -135,9 +135,12 @@ export default function ProductLauncherModal({
                 className="h-16 w-auto object-contain"
               />
             </div>
-            <DialogTitle className="text-2xl font-bold mb-1">
-              Select Product Type - Choose the type of product you want to create artwork for
+            <DialogTitle className="text-2xl font-bold">
+              Select Product Type
             </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-1">
+              Choose the type of product you want to create artwork for
+            </DialogDescription>
           </div>
         </DialogHeader>
         
