@@ -9,6 +9,7 @@ import dtfIconPath from "@assets/DTF_1753540006979.png";
 import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.png";
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
+import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 // Product categories with icons and descriptions
 const productCategories = [
@@ -126,12 +127,23 @@ export default function ProductLauncherModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center mb-2">
-            Select Product Type
-          </DialogTitle>
-          <DialogDescription className="text-center text-gray-600">
-            Choose the type of product you want to create artwork for
-          </DialogDescription>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1">
+              <DialogTitle className="text-2xl font-bold text-center mb-2">
+                Select Product Type
+              </DialogTitle>
+              <DialogDescription className="text-center text-gray-600">
+                Choose the type of product you want to create artwork for
+              </DialogDescription>
+            </div>
+            <div className="flex-shrink-0 ml-6">
+              <img 
+                src={completeTransfersLogoPath} 
+                alt="CompleteTransfers" 
+                className="h-16 w-auto object-contain"
+              />
+            </div>
+          </div>
         </DialogHeader>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
