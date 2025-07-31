@@ -6,7 +6,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 
 const execAsync = promisify(exec);
-import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts, PDFString } from "pdf-lib";
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
 import { applySVGColorChanges } from "./svg-color-utils";
@@ -979,23 +979,19 @@ export class EnhancedCMYKGenerator {
       // Write input PDF
       fs.writeFileSync(inputPath, pdfBuffer);
       
-      // Use Ghostscript to embed ICC profile into CMYK PDF
+      // Try a simpler Ghostscript command that just embeds the ICC profile
       const gsCommand = [
         'gs',
         '-dNOPAUSE',
         '-dBATCH',
         '-dSAFER',
         '-sDEVICE=pdfwrite',
-        '-dColorConversionStrategy=/UseDeviceIndependentColor',  // Preserve color with ICC
         '-dProcessColorModel=/DeviceCMYK',
-        '-dOverrideICC=true',
-        '-dRenderIntent=0',  // Perceptual rendering intent
-        '-dEmbedAllFonts=true',
-        '-dSubsetFonts=true',
-        '-dCompressFonts=true',
-        `-sOutputICCProfile="${iccProfilePath}"`,  // Embed ICC profile
-        `-sOutputFile="${outputPath}"`,
-        `"${inputPath}"`
+        '-dColorConversionStrategy=/CMYK',
+        '-dOverrideICC',
+        `-sOutputICCProfile=${iccProfilePath}`,
+        `-sOutputFile=${outputPath}`,
+        inputPath
       ].join(' ');
       
       console.log(`Enhanced CMYK: Applying ICC profile with Ghostscript: ${path.basename(iccProfilePath)}`);
@@ -1017,16 +1013,24 @@ export class EnhancedCMYKGenerator {
       
     } catch (error) {
       console.error('Enhanced CMYK: ICC profile post-processing failed:', error);
-      // Clean up any remaining temp files
+      
+      // If Ghostscript fails, try embedding ICC profile directly with pdf-lib
       try {
-        const files = fs.readdirSync(tempDir);
-        files.forEach(file => {
-          fs.unlinkSync(path.join(tempDir, file));
-        });
-      } catch (cleanupError) {
-        // Ignore cleanup errors
+        console.log('Enhanced CMYK: Attempting direct ICC profile embedding with pdf-lib');
+        return await this.embedICCProfileDirectly(pdfBuffer, iccProfilePath);
+      } catch (directError) {
+        console.error('Enhanced CMYK: Direct ICC profile embedding also failed:', directError);
+        // Clean up any remaining temp files
+        try {
+          const files = fs.readdirSync(tempDir);
+          files.forEach(file => {
+            fs.unlinkSync(path.join(tempDir, file));
+          });
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+        }
+        throw error;
       }
-      throw error;
     } finally {
       // Clean up temp directory if empty
       try {
@@ -1034,6 +1038,68 @@ export class EnhancedCMYKGenerator {
       } catch (error) {
         // Ignore if directory not empty or doesn't exist
       }
+    }
+  }
+
+  private async embedICCProfileDirectly(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
+    try {
+      // Load the existing PDF
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      
+      // Read the ICC profile
+      const iccProfileData = fs.readFileSync(iccProfilePath);
+      
+      // Create an ICC-based color space
+      const iccRef = pdfDoc.context.nextRef();
+      const iccStream = pdfDoc.context.stream(iccProfileData, {
+        N: 4, // Number of color components for CMYK
+        Alternate: 'DeviceCMYK',
+        Filter: 'FlateDecode'
+      });
+      
+      pdfDoc.context.assign(iccRef, iccStream);
+      
+      // Get all pages and update their resources
+      const pages = pdfDoc.getPages();
+      for (const page of pages) {
+        const resources = page.node.Resources();
+        if (resources) {
+          // Add ColorSpace resource with ICC profile
+          const colorSpaceDict = resources.lookup(PDFName.of('ColorSpace')) || pdfDoc.context.obj({});
+          colorSpaceDict.set(PDFName.of('DefaultCMYK'), pdfDoc.context.obj([
+            PDFName.of('ICCBased'),
+            iccRef
+          ]));
+          resources.set(PDFName.of('ColorSpace'), colorSpaceDict);
+        }
+      }
+      
+      // Add OutputIntent for PDF/X compliance
+      const outputIntent = pdfDoc.context.obj({
+        Type: PDFName.of('OutputIntent'),
+        S: PDFName.of('GTS_PDFX'),
+        OutputConditionIdentifier: PDFString.of('FOGRA51'),
+        RegistryName: PDFString.of('http://www.color.org'),
+        Info: PDFString.of('PSO Coated v3 (FOGRA51)'),
+        DestOutputProfile: iccRef
+      });
+      
+      const outputIntents = pdfDoc.catalog.lookup(PDFName.of('OutputIntents')) || pdfDoc.context.obj([]);
+      if (Array.isArray(outputIntents)) {
+        outputIntents.push(outputIntent);
+      } else {
+        pdfDoc.catalog.set(PDFName.of('OutputIntents'), pdfDoc.context.obj([outputIntent]));
+      }
+      
+      console.log('Enhanced CMYK: Successfully embedded ICC profile directly with pdf-lib');
+      
+      // Save the PDF with embedded ICC profile
+      return Buffer.from(await pdfDoc.save());
+      
+    } catch (error) {
+      console.error('Enhanced CMYK: Direct ICC profile embedding failed:', error);
+      // Return original buffer if embedding fails
+      return pdfBuffer;
     }
   }
 
