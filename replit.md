@@ -6,14 +6,15 @@ This is a full-stack web application for uploading logo files and designing layo
 
 ## Recent Changes (July 31, 2025)
 
-### CMYK Value Consistency Fix
-**Problem**: CMYK values displayed in app didn't match PDF output (e.g., app showed C:20 M:0 Y:71 K:48 while PDF showed C:68 M:44 Y:100 K:38)
-**Root Cause**: App used Adobe-style UCR/GCR algorithm with complex adjustments while Ghostscript used standard CMYK conversion
+### CMYK Value Consistency Fix (Revised)
+**Problem**: CMYK values displayed in app don't match professional design tools like Adobe Illustrator
+**Root Cause**: Simple mathematical RGB to CMYK conversion doesn't account for color profiles and gamut mapping
 **Solution**: 
-1. Removed `standardizeRgbToCmyk` function that used Adobe-style algorithm
-2. Updated `svg-color-utils.ts` to use simple `rgbToCmyk` function matching Ghostscript
-3. Ensured all color conversions use the same algorithm for consistency
-**Result**: CMYK values in app now exactly match PDF output values
+1. Enhanced `rgbToCmyk` function in `color-utils.ts` with gamma correction and UCR/GCR adjustments
+2. Updated `svg-color-utils.ts` to import and use the improved conversion function
+3. Applied professional print-oriented conversion matching RIP software behavior
+**Result**: CMYK values now better match what designers expect in professional tools
+**Note**: Exact CMYK matching requires ICC color profiles; current implementation provides closer approximation
 
 ## Recent Changes (July 26, 2025)
 

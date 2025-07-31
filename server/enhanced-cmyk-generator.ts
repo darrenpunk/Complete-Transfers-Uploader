@@ -1285,8 +1285,8 @@ export class EnhancedCMYKGenerator {
           
           try {
             // Use Ghostscript to convert the PDF to true CMYK colorspace
-            // IMPORTANT: Use -dColorConversionStrategy=/LeaveColorUnchanged to preserve our CMYK values
-            const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/LeaveColorUnchanged -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+            // Use Ghostscript's standard CMYK conversion
+            const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
             console.log(`Enhanced CMYK: Executing CMYK conversion command: ${cmykCommand}`);
             
             await new Promise<void>((resolve, reject) => {

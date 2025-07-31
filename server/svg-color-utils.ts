@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { rgbToCmyk } from './color-utils';
 
 // Pantone color database - Common Pantone colors with their RGB/CMYK values
 const PANTONE_COLORS = [
@@ -356,27 +357,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       return `rgb(${rgbValues.join(', ')})`;
     };
 
-    // Function to convert RGB to CMYK
-    const rgbToCmyk = (r: number, g: number, b: number) => {
-      // Normalize RGB values to 0-1
-      r = r / 255;
-      g = g / 255;
-      b = b / 255;
-      
-      // Find the maximum of RGB values
-      const k = 1 - Math.max(r, Math.max(g, b));
-      
-      if (k === 1) {
-        return { c: 0, m: 0, y: 0, k: 100 };
-      }
-      
-      const c = Math.round(((1 - r - k) / (1 - k)) * 100);
-      const m = Math.round(((1 - g - k) / (1 - k)) * 100);
-      const y = Math.round(((1 - b - k) / (1 - k)) * 100);
-      const kPercent = Math.round(k * 100);
-      
-      return { c, m, y, k: kPercent };
-    };
+    // RGB to CMYK conversion is now imported from color-utils.ts
 
     // Function to detect embedded Pantone color information 
     const detectEmbeddedPantone = (content: string): string | undefined => {
@@ -440,8 +421,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // Use simple CMYK conversion that matches Ghostscript output
-        const cmyk = rgbToCmyk(r, g, b);
+        // Use improved CMYK conversion from color-utils
+        const cmyk = rgbToCmyk({ r, g, b });
         const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {
@@ -458,8 +439,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Use simple CMYK conversion that matches Ghostscript output
-        const cmyk = rgbToCmyk(r, g, b);
+        // Use improved CMYK conversion from color-utils
+        const cmyk = rgbToCmyk({ r, g, b });
         const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
         
         return {

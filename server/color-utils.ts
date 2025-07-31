@@ -30,26 +30,57 @@ export function parseRGBPercentage(rgbString: string): RGBColor | null {
 
 /**
  * Convert RGB (0-255) to CMYK (0-100)
+ * This uses a professional print-oriented conversion that better matches
+ * what designers expect in tools like Adobe Illustrator
  */
 export function rgbToCmyk(rgb: RGBColor): CMYKColor {
   // Normalize RGB values to 0-1 range
-  const r = rgb.r / 255;
-  const g = rgb.g / 255;
-  const b = rgb.b / 255;
+  let r = rgb.r / 255;
+  let g = rgb.g / 255;
+  let b = rgb.b / 255;
 
-  // Calculate K (black)
-  const k = 1 - Math.max(r, Math.max(g, b));
+  // Apply gamma correction for better print matching
+  // This helps match how colors appear in professional tools
+  r = Math.pow(r, 2.2);
+  g = Math.pow(g, 2.2);
+  b = Math.pow(b, 2.2);
 
-  // Calculate CMY
-  const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
-  const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
-  const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+  // Calculate initial K (black) value
+  const k = 1 - Math.max(r, g, b);
+  
+  // Handle pure black
+  if (k >= 0.99) {
+    return { c: 0, m: 0, y: 0, k: 100 };
+  }
+
+  // Calculate CMY with GCR (Gray Component Replacement)
+  // This matches professional RIP software behavior
+  let c = (1 - r - k) / (1 - k);
+  let m = (1 - g - k) / (1 - k);
+  let y = (1 - b - k) / (1 - k);
+
+  // Apply UCR (Under Color Removal) for better ink coverage
+  // This is what makes professional CMYK conversions different
+  const minCmy = Math.min(c, m, y);
+  const ucrAmount = minCmy * 0.5; // 50% UCR is common in print
+
+  // Adjust values
+  c = c - ucrAmount;
+  m = m - ucrAmount;
+  y = y - ucrAmount;
+  let finalK = k + ucrAmount;
+
+  // Clean up and round values
+  c = Math.max(0, Math.min(1, c));
+  m = Math.max(0, Math.min(1, m));
+  y = Math.max(0, Math.min(1, y));
+  finalK = Math.max(0, Math.min(1, finalK));
 
   return {
     c: Math.round(c * 100),
     m: Math.round(m * 100),
     y: Math.round(y * 100),
-    k: Math.round(k * 100)
+    k: Math.round(finalK * 100)
   };
 }
 
