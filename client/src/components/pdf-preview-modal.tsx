@@ -22,6 +22,7 @@ import {
   Type,
   Layers
 } from "lucide-react";
+import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -170,25 +171,11 @@ export default function PDFPreviewModal({
               </DialogDescription>
             </div>
             <div className="flex-shrink-0">
-              <svg 
-                width="120" 
-                height="32" 
-                viewBox="0 0 120 32" 
-                className="h-8 w-auto"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <text 
-                  x="60" 
-                  y="20" 
-                  textAnchor="middle" 
-                  className="fill-primary font-bold text-sm"
-                  style={{ fontSize: '12px', fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                >
-                  CompleteTransfers
-                </text>
-                <circle cx="10" cy="16" r="6" className="fill-primary opacity-20" />
-                <circle cx="110" cy="16" r="6" className="fill-primary opacity-20" />
-              </svg>
+              <img 
+                src={completeTransfersLogoPath} 
+                alt="CompleteTransfers" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
           </div>
         </DialogHeader>
