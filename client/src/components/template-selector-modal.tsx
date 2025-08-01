@@ -165,7 +165,7 @@ export default function TemplateSelectorModal({
     return dtfGroups.includes(template.group || '') ? 1 : 10;
   };
   
-  const minQuantity = getMinQuantity(selectedTemplateData);
+  const minQuantity = getMinQuantity(selectedTemplateData || null);
   
   const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
     queryKey: ['/api/pricing', selectedTemplate, copies],
@@ -310,10 +310,10 @@ export default function TemplateSelectorModal({
                     ) : pricingData ? (
                       <div className="space-y-1">
                         <p className="text-sm">
-                          €{pricingData.pricePerUnit.toFixed(2)} per unit
+                          €{pricingData.pricePerUnit.toFixed(2)} per unit ex VAT
                         </p>
                         <p className="text-lg font-semibold">
-                          Total: €{pricingData.totalPrice.toFixed(2)}
+                          Total: €{pricingData.totalPrice.toFixed(2)} ex VAT
                         </p>
                       </div>
                     ) : (

@@ -1,25 +1,7 @@
 # Logo Upload and Design Tool
 
 ## Overview
-This is a full-stack web application designed for uploading logo files and creating layouts on garment templates. Its primary purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
-
-## Recent Changes (Aug 2025)
-- **Fixed PDF Scaling Issue**: Corrected scale calculation in PDF generator - element dimensions are already in mm from database, so mmToPoints conversion (2.834) is applied directly instead of incorrect pixel-to-points calculation
-- **Removed CMYK Preview Feature**: Per user request, removed all color management preview functionality to simplify the application and stick to basics. The system now displays original colors without any preview filters or conversions
-- **Fixed Color Changes in PDF Generation**: Updated SimplifiedPDFGenerator to properly apply color overrides to SVG files during PDF generation. Color changes are now saved to modified SVG files before conversion to PDF, ensuring color modifications appear in final output. Fixed critical syntax error (duplicate variable declaration) that was preventing PDF generation.
-- **Enhanced PNG Transparency Handling**: Integrated SVGEmbeddedImageHandler for SVGs containing embedded PNG images to preserve transparency during PDF conversion
-- **Fixed Original PDF Content Preservation**: Modified PDF generator to prioritize using original PDF files directly when no color changes are made. Files uploaded as PDFs that get converted to SVGs for editing now preserve their original embedded content (including PNG images) by embedding the original PDF directly in the final output when unchanged.
-- **Fixed Vectorization API Endpoint**: Added missing `/api/vectorize` endpoint that was causing "Unexpected token '<', \"<!DOCTYPE\"... is not valid JSON" errors. The vectorization tool now properly communicates with the AI vectorization service and returns proper JSON responses instead of HTML error pages.
-- **Completed Vectorization Workflow**: Fixed API parameter format (output.format=svg), added proper content-type detection, and resolved canvas display issues. Vectorized SVG files now appear correctly on the canvas workspace and are fully interactive for positioning and editing.
-- **Added CMYK Vectorization**: Vectorized SVG files now automatically convert RGB colors to CMYK using Adobe-matching color profiles. White colors are preserved as RGB for transparency, while all other colors are converted to device-cmyk format for accurate print output.
-- **Fixed Vectorization Display Issue**: Resolved browser compatibility problem where device-cmyk colors couldn't be displayed. Implemented dual approach: RGB colors for browser display with embedded CMYK metadata comments for print accuracy. Vectorized logos now appear correctly on canvas while maintaining print-ready CMYK conversion data.
-- **Enhanced Vectorization CMYK Marking**: Vectorized files are now properly marked as CMYK format to prevent RGB warnings on import. The color analysis system detects vectorized files and automatically converts RGB colors to CMYK values using Adobe color profiles while preserving white colors for transparency.
-- **Fixed Vectorization Transparency Issue**: Resolved green background problem by implementing inline SVG rendering instead of img elements. Created SvgInlineRenderer component that fetches SVG content and renders it directly in the DOM, eliminating browser-imposed backgrounds. SVG files now display with true transparency on the canvas, matching the vectorizer preview behavior.
-- **Fixed RGB Warning on Vectorized Files**: Enhanced detection logic to properly identify vectorized CMYK files and prevent RGB warnings on logo interaction. White colors preserved for transparency no longer trigger RGB warnings.
-- **Updated Vectorizer API Parameters**: Matched exact settings from vectorizer.ai screenshot including fill shapes draw style, SVG 1.1 output, shape stacking cutouts, and all curve types enabled. This should produce filled vector shapes matching the website output.
-- **Fixed Vectorized SVG Green Background Issue**: Resolved the green background problem in vectorized SVGs by implementing automatic stroke outline removal during PDF generation. The system now detects and removes large stroke groups (>100px width) that vectorizer.ai adds as background outlines. This preserves the clean vector artwork without unwanted backgrounds in the final PDF output.
-- **Enhanced Vectorization Rendering**: Fixed vector-effect="non-scaling-stroke" rendering issues by automatically removing these attributes during background cleanup. The enhanced removeVectorizedBackgrounds function now eliminates both large stroke groups and problematic vector-effect attributes, ensuring clean display in both canvas and PDF output. User confirmed vectorization working correctly.
-- **Auto-Recoloring for Single Colour Templates**: Implemented automatic recoloring of vector files when uploaded to Single Colour Transfer templates. The system detects single colour templates and applies the selected ink color to all vector elements while preserving white/transparent colors. RGB warnings are disabled for single colour templates since auto-recoloring handles color management automatically.
+This is a full-stack web application for uploading logo files and creating layouts on garment templates. Its purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -28,88 +10,36 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript.
-- **Routing**: Wouter for client-side navigation.
-- **State Management**: TanStack Query (React Query) for server state.
+- **Routing**: Wouter.
+- **State Management**: TanStack Query (React Query).
 - **UI Framework**: shadcn/ui components built on Radix UI primitives.
-- **Styling**: Tailwind CSS with custom CSS variables for theming.
-- **Build Tool**: Vite with React plugin.
-- **UI/UX Decisions**:
-    - Workflow-based interface with a 5-step progress bar (Upload → Design → Pre-flight → Generate → Attach).
-    - Dark mode interface with custom branding (#961E75 primary color).
-    - Professional color palettes including 27 garment colors, Hi-Viz, pastels, and specialized inks.
-    - Enhanced color tooltips showing names, HEX, RGB, CMYK, and ink types.
-    - Dual manufacturer integration (Gildan and Fruit of the Loom color databases) with collapsible accordion groups.
-    - Mandatory garment color selection with validation.
-    - CMYK popup color picker with full sliders and numeric inputs.
-    - Template grouping with custom icons for various transfer types (DTF, UV DTF, etc.).
-    - Smart zoom for large templates and auto-fitting templates to workspace.
-    - Collapsible template interface with accordion functionality.
-    - Individual garment color assignment per logo.
-    - Auto-opening garment color modal for Full Colour Transfer templates.
-    - Project naming input with validation.
-    - "Start Over" button to reset project state.
-    - PDF preview & approval modal with design and copyright checkboxes.
-    - Content-based bounding boxes for accurate logo sizing.
-    - Safety margin guide lines for A3 templates.
-    - "Fit to Bounds" button for scaling content within safety margins.
-    - Rotate by 90° function for selected elements.
-    - "Center Logo" button for selected elements.
-    - Eyedropper color picker tool in vectorizer modal.
-    - Canvas rotation feature to rotate entire workspace view.
-    - Upload progress bar system.
+- **Styling**: Tailwind CSS with custom CSS variables.
+- **Build Tool**: Vite.
+- **UI/UX Decisions**: Workflow-based interface with a 5-step progress bar, dark mode with custom branding (#961E75), professional color palettes (27 garment colors, Hi-Viz, pastels, specialized inks), enhanced color tooltips, dual manufacturer integration (Gildan and Fruit of the Loom), mandatory garment color selection, CMYK popup color picker, template grouping with custom icons, smart zoom, collapsible template interface, individual garment color assignment, auto-opening garment color modal, project naming input, "Start Over" button, PDF preview & approval modal, content-based bounding boxes, safety margin guide lines, "Fit to Bounds" button, rotate by 90° function, "Center Logo" button, eyedropper color picker, canvas rotation, and upload progress bar system.
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript.
 - **API Design**: RESTful endpoints with JSON responses.
-- **File Handling**: Multer for multipart file uploads, supporting PNG, JPEG, SVG, PDF up to 200MB.
+- **File Handling**: Multer for multipart file uploads (PNG, JPEG, SVG, PDF up to 200MB).
 - **Error Handling**: Centralized error middleware.
-- **Development**: Hot reload with `tsx`.
 
 ### Database Strategy
 - **ORM**: Drizzle ORM with PostgreSQL dialect.
 - **Database**: PostgreSQL (configured via `DATABASE_URL`).
-- **Migrations**: Drizzle Kit for schema management.
+- **Migrations**: Drizzle Kit.
 - **Connection**: Neon Database serverless driver for PostgreSQL.
 
 ### System Design Choices
-- **Storage Instance Management**: Critical design pattern enforcing a single shared storage instance (`server/storage.ts`) to ensure data persistence and avoid inconsistencies.
-- **Color Workflow Isolation**: Implemented `ColorWorkflowManager` to separate vector file (SVG/PDF) color handling from raster files (PNG/JPEG). Vector files preserve CMYK colors and convert RGB to CMYK using Adobe-matching algorithm. Raster files are now also converted to CMYK during PDF generation for accurate print output.
-- **Mixed Content Detection**: Implemented `MixedContentDetector` to analyze PDFs and SVGs for both raster and vector content. Files with mixed content are flagged to prevent color workflow contamination, ensuring vector elements maintain CMYK accuracy while embedded raster images preserve their original color space.
-- **CMYK Color Accuracy Fix (Aug 2025)**: Resolved critical issue where CMYK values displayed in app didn't match PDF output. Root cause: files with existing CMYK colors were being converted again through RGB-to-CMYK algorithm. Solution: Enhanced CMYK detection to properly identify existing CMYK colors (device-cmyk format) and mark them with isCMYK flag. Files with existing CMYK now only get ICC profile embedding without color conversion using `embedICCProfileOnly` method. User confirmed all outputs perfect: CMYK vectors, RGB vectors, and mixed raster/vector files.
-- **PNG Transparency Issue (Aug 2025)**: Identified issue with PNG images embedded in SVGs showing inverted transparency (transparent areas become white, colored areas become transparent). Root cause: PNG format doesn't support CMYK colorspace natively, and embedded base64 PNG data in SVGs needs special handling during PDF generation. PNG files now remain in RGB format with transparency preserved.
-- **File Upload System**:
-    - Local filesystem storage in `/uploads`.
-    - Multi-tier PDF conversion: Ghostscript primary (color accuracy), ImageMagick fallback, original PDF storage for vector output.
-    - Color preservation via Ghostscript with `pngalpha` and CSS filters for transparency.
-    - Vector preservation by retaining original PDF files and using `pdf-lib` for true vector embedding.
-    - Automatic CMYK conversion on upload for vector files only, using Adobe Illustrator-matching algorithm.
-    - PNG thumbnail generation for large PDFs for canvas display.
-    - Visual indicators show "CMYK Preserved" for vector files and "RGB Raster" for raster files.
+- **Storage Instance Management**: Single shared storage instance (`server/storage.ts`) for data persistence.
+- **Color Workflow Isolation**: `ColorWorkflowManager` separates vector (SVG/PDF) from raster (PNG/JPEG) color handling. Vector files preserve CMYK and convert RGB to CMYK. Raster files are also converted to CMYK for accurate print output.
+- **Mixed Content Detection**: `MixedContentDetector` flags PDFs and SVGs with mixed raster/vector content to prevent color workflow contamination.
+- **File Upload System**: Local filesystem storage in `/uploads`. Multi-tier PDF conversion (Ghostscript primary, ImageMagick fallback). Color preservation via Ghostscript. Vector preservation by retaining original PDF files and using `pdf-lib`. Automatic CMYK conversion on upload for vector files. PNG thumbnail generation for large PDFs. Visual indicators for "CMYK Preserved" and "RGB Raster".
 - **Canvas System**: Interactive workspace for logo manipulation with real-time property editing.
-- **AI Vectorization System**: Integrated AI-powered API with raster file detection, offering photographic approval, AI vectorization, and professional service options.
-    - Features: Zoom controls, transparency checkerboard, side-by-side comparison, color preset palette, white background removal, advanced color detection and individual color deletion, color reduction, color locking, and credit protection.
+- **AI Vectorization System**: Integrated AI-powered API with raster file detection, offering photographic approval, AI vectorization, and professional service options. Includes zoom controls, transparency checkerboard, side-by-side comparison, color preset palette, white background removal, advanced color detection, individual color deletion, color reduction, color locking, and credit protection.
 - **Imposition Tool**: Grid replication system for logos with customizable rows, columns, spacing, and canvas centering.
 - **Alignment Tools**: "Select All" and "Center All" functions.
-- **PDF Generation**:
-    - Dual-page PDF output with artwork on garment background.
-    - CMYK PDF generation with FOGRA51 ICC profile embedding for professional print.
-    - Enhanced vector preservation via `pdf-lib` and Ghostscript.
-    - Ink color recoloring system for single-color transfers.
-    - Applique Badges Embroidery Form for custom badge templates with PDF embedding.
-    - PDF filename generation including quantity.
-- **Preflight Checks**:
-    - Comprehensive help guide system.
-    - Required project naming with validation.
-    - CMYK color analysis display showing actual CMYK values.
-    - Intelligent color standardization system.
-    - Critical font detection for live vs. outlined text.
-    - Accurate bounding box calculation using actual logo content dimensions.
-    - Enhanced typography workflow.
-    - Duplicate color detection cleanup.
-    - Line thickness detection for print quality validation.
-    - Pantone detection system for embedded Pantone swatches.
-    - Oversized logo detection system with "Fit to Bounds" functionality.
-    - **Simplified Workflow (Aug 2025)**: Major pivot to preserve original file structure. No automatic CMYK conversion - files maintain their original color mode and values. RGB files display warning about production conversion. CMYK preview toggle added using ICC FOGRA51 profile for visual reference only.
+- **PDF Generation**: Dual-page PDF output with artwork on garment background. CMYK PDF generation with FOGRA51 ICC profile embedding. Enhanced vector preservation via `pdf-lib` and Ghostscript. Ink color recoloring for single-color transfers. Applique Badges Embroidery Form for custom badge templates with PDF embedding. PDF filename generation including quantity.
+- **Preflight Checks**: Comprehensive help guide, required project naming, CMYK color analysis display, intelligent color standardization, critical font detection, accurate bounding box calculation, enhanced typography workflow, duplicate color detection, line thickness detection, Pantone detection, oversized logo detection with "Fit to Bounds".
 - **Monorepo Structure**: Shared TypeScript types between frontend and backend.
 
 ## External Dependencies
@@ -117,19 +47,19 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Dependencies
 - **UI Components**: Radix UI component library.
 - **Form Handling**: React Hook Form with Zod validation resolvers.
-- **File Upload**: React Dropzone for drag-and-drop.
-- **Utilities**: `date-fns` for date manipulation, `clsx` for conditional styling.
+- **File Upload**: React Dropzone.
+- **Utilities**: `date-fns`, `clsx`.
 
 ### Backend Dependencies
-- **Database**: `@neondatabase/serverless` for PostgreSQL connections.
-- **ORM**: `drizzle-orm` with `drizzle-zod` for type-safe schema validation.
-- **File Upload**: `multer` for handling `multipart/form-data`.
-- **Session Management**: `connect-pg-simple` for PostgreSQL session storage.
-- **Image Processing**: Ghostscript, ImageMagick, `rsvg-convert` (for SVG to PDF).
+- **Database**: `@neondatabase/serverless` (PostgreSQL connections).
+- **ORM**: `drizzle-orm` with `drizzle-zod`.
+- **File Upload**: `multer`.
+- **Session Management**: `connect-pg-simple` (PostgreSQL session storage).
+- **Image Processing**: Ghostscript, ImageMagick, `rsvg-convert`.
 - **PDF Manipulation**: `pdf-lib`.
 - **AI Vectorization**: External AI vectorization API.
 
 ### Development Tools
-- **Build**: `esbuild` for backend, Vite for frontend.
+- **Build**: `esbuild` (backend), Vite (frontend).
 - **TypeScript**: Strict type checking.
 - **Linting**: ESLint with TypeScript rules.

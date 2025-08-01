@@ -118,7 +118,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
               <div className="bg-muted p-4 rounded-lg">
                 <p className="font-medium mb-2">Request ID: {requestId}</p>
                 <p className="text-sm text-muted-foreground">
-                  Charge: €3.00
+                  Charge: €3.00 ex VAT
                 </p>
               </div>
             </div>
@@ -161,7 +161,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="font-medium">Service Charge:</span>
-                <span className="text-lg font-bold text-primary">€3.00</span>
+                <span className="text-lg font-bold text-primary">€3.00 ex VAT</span>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>• High-quality vector conversion</p>
