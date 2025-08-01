@@ -732,6 +732,7 @@ export default function UploadTool() {
         onBack={() => {
           setShowTemplateSelector(false);
           setShowProductLauncher(true);
+          setHasInitialized(false); // Reset initialization to allow proper flow
         }}
         selectedGroup={selectedProductGroup}
       />
