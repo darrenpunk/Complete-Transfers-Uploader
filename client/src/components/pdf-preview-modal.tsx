@@ -160,7 +160,7 @@ export default function PDFPreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="flex items-center gap-2 justify-center">
@@ -172,7 +172,7 @@ export default function PDFPreviewModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex gap-6 h-[75vh]">
+        <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
           {/* PDF Preview Section */}
           <div className="flex-1 flex flex-col">
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
@@ -371,7 +371,7 @@ export default function PDFPreviewModal({
           <div className="w-80 space-y-4">
             <h3 className="text-lg font-semibold">Preflight Summary</h3>
             
-            <ScrollArea className="h-[300px]">
+            <ScrollArea className="h-[200px]">
               <div className="space-y-3">
                 {preflightItems.map((item, index) => (
                   <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
@@ -408,7 +408,7 @@ export default function PDFPreviewModal({
         </div>
 
         {/* Approval Checkboxes */}
-        <div className="space-y-4 pt-4 border-t">
+        <div className="space-y-3 pt-3 border-t mt-auto">
           <div className="flex items-start space-x-3">
             <Checkbox 
               id="design-approval" 
