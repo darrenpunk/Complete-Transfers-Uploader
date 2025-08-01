@@ -11,6 +11,7 @@ import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 import { useCleanupOrphanedElements } from '@/hooks/use-cleanup-orphaned-elements';
+import { applyCmykPreviewToSvg, createCmykPreviewFilter } from "@/lib/cmyk-preview";
 
 // Import garment color utilities from shared module
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
@@ -1156,25 +1157,27 @@ export default function CanvasWorkspace({
                         src={(() => {
                           // Priority 1: Color overrides exist - use modified SVG endpoint
                           if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
-                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
+                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}&cmykPreview=${colorManagementEnabled}`;
                           }
                           // Priority 2: Single Colour Transfer with ink color selected
                           if (shouldRecolorForInk) {
-                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
+                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}&cmykPreview=${colorManagementEnabled}`;
                           }
-                          // Priority 3: Original image
+                          // Priority 3: Original image with CMYK preview for SVG files
                           const url = getImageUrl(logo);
-                          console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
-                          return url;
+                          const isSvg = logo.mimeType === 'image/svg+xml';
+                          const finalUrl = isSvg && colorManagementEnabled 
+                            ? `/api/logos/${logo.id}/cmyk-preview?t=${Date.now()}` 
+                            : url;
+                          console.log('🖼️ Using image URL:', finalUrl, 'for logo:', logo.filename, logo.mimeType, 'CMYK Preview:', colorManagementEnabled);
+                          return finalUrl;
                         })()}
                         alt={logo.originalName}
                         className="w-full h-full"
                         style={{ 
                           background: 'transparent', 
                           backgroundColor: 'transparent',
-                          filter: colorManagementEnabled 
-                            ? "brightness(0.85) contrast(1.15) saturate(0.65) sepia(0.1)" 
-                            : "none",
+                          filter: "none",
                           objectFit: 'contain',
                           width: '100%',
                           height: '100%',

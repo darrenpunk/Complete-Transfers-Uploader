@@ -819,5 +819,68 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // CMYK Preview endpoint for SVG files
+  app.get('/api/logos/:logoId/cmyk-preview', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Only works for SVG files
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ error: 'CMYK preview only available for SVG files' });
+      }
+      
+      const svgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+      
+      // Read SVG content
+      let svgContent = fs.readFileSync(svgPath, 'utf8');
+      
+      // Apply RGB to CMYK conversion using Adobe algorithm
+      const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
+      
+      // Parse SVG and convert all RGB colors to CMYK
+      svgContent = svgContent.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
+        const cmyk = adobeRgbToCmyk(parseInt(r), parseInt(g), parseInt(b));
+        // Convert CMYK back to RGB for display
+        const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
+        const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
+        const bNew = Math.round(255 * (1 - cmyk.y / 100) * (1 - cmyk.k / 100));
+        return `rgb(${rNew}, ${gNew}, ${bNew})`;
+      });
+      
+      // Also convert hex colors
+      svgContent = svgContent.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const cmyk = adobeRgbToCmyk(r, g, b);
+        // Convert CMYK back to RGB for display
+        const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
+        const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
+        const bNew = Math.round(255 * (1 - cmyk.y / 100) * (1 - cmyk.k / 100));
+        const hexNew = '#' + 
+          rNew.toString(16).padStart(2, '0') + 
+          gNew.toString(16).padStart(2, '0') + 
+          bNew.toString(16).padStart(2, '0');
+        return hexNew;
+      });
+      
+      // Send the modified SVG with CMYK preview colors
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.send(svgContent);
+      
+    } catch (error) {
+      console.error('CMYK preview error:', error);
+      res.status(500).json({ error: 'Failed to generate CMYK preview' });
+    }
+  });
+
   return app;
 }
