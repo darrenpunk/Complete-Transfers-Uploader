@@ -197,10 +197,13 @@ export default function UploadTool() {
 
   // Handle PDF preview approval
   const handlePDFPreviewApproval = () => {
+    console.log('PDF preview approved, checking project name:', currentProject?.name);
     if (needsProjectName(currentProject)) {
+      console.log('Project needs naming, showing modal');
       setPendingAction('pdf');
       setShowProjectNameModal(true);
     } else {
+      console.log('Project has name, generating PDF directly');
       // Use default quantity of 1 when not going through modal
       generatePDFMutation.mutate({ name: currentProject?.name || '', quantity: 1 });
     }
@@ -208,9 +211,11 @@ export default function UploadTool() {
 
   // Handle Generate PDF button click
   const handleGeneratePDF = () => {
+    console.log('Generate PDF clicked');
     // Always show PDF preview first
     setPendingAction('pdf');
     setShowPDFPreviewModal(true);
+    console.log('PDF preview modal should now be shown:', true);
   };
 
   // Handle Continue button click  

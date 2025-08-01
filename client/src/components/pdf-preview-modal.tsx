@@ -44,6 +44,8 @@ export default function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [designApproved, setDesignApproved] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  
+  console.log('PDFPreviewModal render:', { open, project: project?.name });
 
   const canProceed = designApproved && rightsConfirmed;
 
