@@ -1118,33 +1118,8 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // Set parameters to match the exact settings from vectorizer.ai screenshot
+      // Set only the essential parameters that the API accepts
       formData.append('output.format', 'svg'); // Explicitly set SVG format
-      formData.append('output.version', '1.1'); // SVG 1.1 as shown in screenshot
-      
-      // Draw style - CRITICAL: Must be 'fill' not 'stroke' to get filled shapes
-      formData.append('output.draw_style', 'fill'); // Fill shapes as shown in screenshot
-      
-      // Shape stacking - Place shapes in cut-outs
-      formData.append('output.shape_stacking', 'cutouts');
-      
-      // Group by - None
-      formData.append('output.group_by', 'none');
-      
-      // Line fit tolerance - Medium
-      formData.append('output.line_fit', 'medium');
-      
-      // Gap filler settings as shown in screenshot
-      formData.append('output.gap_filler.enabled', 'true');
-      formData.append('output.gap_filler.non_scaling_stroke', 'true');
-      formData.append('output.gap_filler.stroke_width', '2.0');
-      
-      // Allowed curve types - all enabled
-      formData.append('output.curves.lines', 'true');
-      formData.append('output.curves.quadratic_bezier', 'true');
-      formData.append('output.curves.cubic_bezier', 'true');
-      formData.append('output.curves.circular_arcs', 'true');
-      formData.append('output.curves.elliptical_arcs', 'true');
       
       // Production mode
       if (!isPreview) {
