@@ -676,7 +676,10 @@ export default function UploadTool() {
           onInkColorChange={handleInkColorChange}
           onAlignElement={handleAlignElement}
           onCenterAllElements={handleCenterAllElements}
-          onOpenVectorizationForm={() => setShowVectorizationForm(true)}
+          onOpenVectorizationForm={() => {
+            console.log('onOpenVectorizationForm called from ToolsSidebar');
+            setShowVectorizationForm(true);
+          }}
         />
 
         {/* Main Canvas Area */}

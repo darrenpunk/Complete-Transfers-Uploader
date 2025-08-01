@@ -38,9 +38,12 @@ export function RasterWarningModal({
         // Don't call onClose() here - let the parent component handle modal transitions
         break;
       case 'service-vectorize':
+        console.log('service-vectorize selected, onOpenVectorizationForm:', !!onOpenVectorizationForm);
         if (onOpenVectorizationForm) {
+          console.log('Calling onOpenVectorizationForm');
           onOpenVectorizationForm();
         } else {
+          console.log('Fallback to onVectorizeWithService');
           onVectorizeWithService();
         }
         onClose();
