@@ -156,19 +156,42 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Import color workflow manager
+        // Import color workflow manager and mixed content detector
         const { ColorWorkflowManager, FileType } = await import('./color-workflow-manager');
+        const { MixedContentDetector } = await import('./mixed-content-detector');
         
-        // Determine file type and workflow
-        const fileType = ColorWorkflowManager.getFileType(finalMimeType, finalFilename);
+        // Analyze file content for mixed raster/vector content
+        let fileType = ColorWorkflowManager.getFileType(finalMimeType, finalFilename);
+        
+        // For PDFs and SVGs, check if they contain mixed content
+        if (fileType === FileType.VECTOR_PDF || fileType === FileType.VECTOR_SVG) {
+          const filePath = path.join(uploadDir, finalFilename);
+          const contentAnalysis = await MixedContentDetector.analyzeFile(filePath, finalMimeType);
+          
+          console.log(`📊 Content analysis for ${finalFilename}:`, {
+            hasRaster: contentAnalysis.hasRasterContent,
+            hasVector: contentAnalysis.hasVectorContent,
+            isMixed: contentAnalysis.isMixedContent,
+            rasterCount: contentAnalysis.rasterImages.count,
+            vectorTypes: contentAnalysis.vectorElements.types,
+            recommendation: contentAnalysis.recommendation
+          });
+          
+          // Override file type if mixed content detected
+          if (contentAnalysis.isMixedContent) {
+            fileType = FileType.MIXED_CONTENT;
+          }
+        }
+        
+        // Determine workflow based on content analysis
         const colorWorkflow = ColorWorkflowManager.getColorWorkflow(fileType);
         
         console.log(`📂 File type: ${fileType}, Workflow: ${JSON.stringify(colorWorkflow)}`);
         console.log(`🎨 ${ColorWorkflowManager.getWorkflowMessage(fileType, colorWorkflow)}`);
         
-        // Only analyze colors for vector files
+        // Only analyze colors for vector and mixed files
         let analysisData = null;
-        if (ColorWorkflowManager.shouldAnalyzeColors(fileType)) {
+        if (ColorWorkflowManager.shouldAnalyzeColors(fileType) || fileType === FileType.MIXED_CONTENT) {
           try {
             console.log(`🔍 Starting color analysis for vector file: ${finalFilename}`);
             const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
@@ -224,7 +247,8 @@ export async function registerRoutes(app: express.Application) {
           size: file.size,
           url: finalUrl,
           svgColors: analysisData,
-          svgFonts: analysisData?.fonts || null
+          svgFonts: analysisData?.fonts || null,
+          isMixedContent: fileType === FileType.MIXED_CONTENT
         });
 
         logos.push(logo);

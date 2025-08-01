@@ -37,6 +37,7 @@ export const logos = pgTable("logos", {
   svgFonts: jsonb("svg_fonts"), // Store detected SVG fonts for font analysis
   fontsOutlined: boolean("fonts_outlined").default(false), // Track if fonts have been outlined
   contentBounds: jsonb("content_bounds"), // Store actual content boundaries for proper cropping {minX, minY, maxX, maxY}
+  isMixedContent: boolean("is_mixed_content").default(false), // Track if file contains both raster and vector content
 });
 
 export const canvasElements = pgTable("canvas_elements", {

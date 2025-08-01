@@ -11,6 +11,7 @@ export enum FileType {
   VECTOR_PDF = 'vector-pdf', 
   RASTER_PNG = 'raster-png',
   RASTER_JPEG = 'raster-jpeg',
+  MIXED_CONTENT = 'mixed-content',
   UNKNOWN = 'unknown'
 }
 
@@ -73,6 +74,14 @@ export class ColorWorkflowManager {
         return {
           preserveCMYK: true,
           convertToCMYK: true,
+          allowRasterConversion: false
+        };
+      
+      case FileType.MIXED_CONTENT:
+        // Mixed content: preserve CMYK for vectors, don't convert rasters
+        return {
+          preserveCMYK: true,
+          convertToCMYK: true, // Only applies to vector elements
           allowRasterConversion: false
         };
       
@@ -189,6 +198,8 @@ export class ColorWorkflowManager {
   static getWorkflowMessage(fileType: FileType, workflow: ColorWorkflowOptions): string {
     if (fileType === FileType.VECTOR_SVG || fileType === FileType.VECTOR_PDF) {
       return 'Vector file: CMYK colors preserved, RGB colors will be converted to CMYK';
+    } else if (fileType === FileType.MIXED_CONTENT) {
+      return 'Mixed content file: Vector elements will preserve CMYK, raster images remain unchanged';
     } else if (fileType === FileType.RASTER_PNG || fileType === FileType.RASTER_JPEG) {
       return 'Raster file: RGB color space maintained';
     }

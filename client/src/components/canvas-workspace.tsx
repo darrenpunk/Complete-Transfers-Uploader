@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 import ColorManagementToggle from "./color-management-toggle";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
@@ -295,6 +296,9 @@ export default function CanvasWorkspace({
       setShowRasterWarning(true);
     }
   };
+
+  // Initialize toast
+  const { toast } = useToast();
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -816,6 +820,14 @@ export default function CanvasWorkspace({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                           </svg>
                           RGB Raster
+                        </div>
+                      )}
+                      {logos.some(logo => (logo as any).isMixedContent) && (
+                        <div className="flex items-center bg-purple-50 text-purple-700 px-2 py-1 rounded ml-1">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9h8m-4 0v8m5-12h.01M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          Mixed Content
                         </div>
                       )}
                     </div>
