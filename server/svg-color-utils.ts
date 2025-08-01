@@ -1328,87 +1328,19 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
   try {
     let modifiedSvg = svgContent;
     
-    // CRITICAL FIX: Remove entire stroke-based g groups that create the duplicate background
-    // Vectorized files have two versions: stroke (creates background) and fill (actual logo)
-    // We need to remove the entire stroke group
-    const strokeGroupRegex = /<g[^>]*stroke-width\s*=\s*["'][^"']+["'][^>]*fill\s*=\s*["']none["'][^>]*>[\s\S]*?<\/g>/gi;
-    let removedCount = 0;
-    modifiedSvg = modifiedSvg.replace(strokeGroupRegex, (match) => {
-      const strokeWidthMatch = match.match(/stroke-width\s*=\s*["']([^"']+)["']/);
-      if (strokeWidthMatch) {
-        const width = parseFloat(strokeWidthMatch[1]);
-        if (width > 10) {
-          console.log(`🎨 Removing entire stroke group with excessive width: ${width}`);
-          removedCount++;
-          return ''; // Remove the entire group
-        }
+    // Vectorized files have a specific structure with stroke outlines
+    // Look for g elements with excessive stroke-width and remove just that group
+    const strokeGroupRegex = /<g[^>]*stroke-width\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/g>/gi;
+    
+    modifiedSvg = modifiedSvg.replace(strokeGroupRegex, (match, strokeWidth) => {
+      const width = parseFloat(strokeWidth);
+      // Only remove groups with abnormally large stroke widths (vectorizer artifacts)
+      if (width > 100) {
+        console.log(`🎨 Removing stroke outline group with width: ${width}`);
+        return ''; // Remove the entire stroke group
       }
       return match;
     });
-    
-    // If no groups were removed, try a more aggressive approach
-    if (removedCount === 0) {
-      // Remove all stroke-only paths from vectorized files (they create the background)
-      const strokeOnlyPathRegex = /<path[^>]*stroke\s*=\s*["'][^"']+["'][^>]*(?:fill\s*=\s*["']none["']|(?!fill))[^>]*\/>/gi;
-      modifiedSvg = modifiedSvg.replace(strokeOnlyPathRegex, (match) => {
-        console.log(`🎨 Removing stroke-only path from vectorized SVG`);
-        return '';
-      });
-    }
-    
-    // Remove filled rectangles that might be backgrounds
-    const rectRegex = /<rect[^>]*(?:\/>|>.*?<\/rect>)/gi;
-    modifiedSvg = modifiedSvg.replace(rectRegex, (match) => {
-      // Check if this has a fill attribute (any filled rectangle is suspect)
-      if (match.includes('fill=') && !match.includes('fill="none"')) {
-        console.log(`🎨 Removing filled rectangle element from vectorized SVG`);
-        return '';
-      }
-      return match;
-    });
-    
-    // Remove any large paths that could be backgrounds (filled paths)
-    const largePathRegex = /<path[^>]*d\s*=\s*["']([^"']*)["'][^>]*fill\s*=\s*["']([^"']+)["'][^>]*(?:\/>|>.*?<\/path>)/gi;
-    modifiedSvg = modifiedSvg.replace(largePathRegex, (match, pathData, fillColor) => {
-      // Skip if it's a white fill (used for transparency)
-      if (fillColor === '#ffffff' || fillColor === 'white') {
-        return match;
-      }
-      
-      // If path contains M, L commands and closes with Z, it might be a background
-      if (pathData.includes('M') && pathData.includes('Z')) {
-        const coords = pathData.match(/[\d.-]+/g);
-        if (coords && coords.length >= 6) {
-          const values = coords.map(parseFloat);
-          const maxValue = Math.max(...values);
-          const minValue = Math.min(...values);
-          const range = maxValue - minValue;
-          
-          // If the path spans a large area, it's likely a background
-          if (range > 500) {
-            console.log(`🎨 Removing large background path from vectorized SVG (range: ${range})`);
-            return '';
-          }
-        }
-      }
-      return match;
-    });
-    
-    // Remove any style tags that might contain background styles
-    modifiedSvg = modifiedSvg.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
-    
-    // Remove any defs that might contain background patterns
-    const defsRegex = /<defs[^>]*>([\s\S]*?)<\/defs>/gi;
-    modifiedSvg = modifiedSvg.replace(defsRegex, (match, content) => {
-      if (content.includes('pattern') || content.includes('linearGradient') || content.includes('radialGradient')) {
-        console.log(`🎨 Removing defs with potential background patterns`);
-        return '';
-      }
-      return match;
-    });
-    
-    // Add explicit transparent background to SVG root
-    modifiedSvg = modifiedSvg.replace(/<svg([^>]*)>/, '<svg$1 style="background: transparent;">');
     
     console.log(`🎨 Background removal complete for vectorized SVG`);
     return modifiedSvg;
