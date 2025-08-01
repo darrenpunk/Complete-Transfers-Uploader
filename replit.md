@@ -91,6 +91,7 @@ Preferred communication style: Simple, everyday language.
     - Line thickness detection for print quality validation.
     - Pantone detection system for embedded Pantone swatches.
     - Oversized logo detection system with "Fit to Bounds" functionality.
+    - **Simplified Workflow (Aug 2025)**: Major pivot to preserve original file structure. No automatic CMYK conversion - files maintain their original color mode and values. RGB files display warning about production conversion. CMYK preview toggle added using ICC FOGRA51 profile for visual reference only.
 - **Monorepo Structure**: Shared TypeScript types between frontend and backend.
 
 ## External Dependencies

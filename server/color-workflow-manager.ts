@@ -70,28 +70,28 @@ export class ColorWorkflowManager {
     switch (fileType) {
       case FileType.VECTOR_SVG:
       case FileType.VECTOR_PDF:
-        // Vector files: preserve CMYK if present, convert RGB to CMYK
+        // Vector files: preserve original structure and colors
         return {
           preserveCMYK: true,
-          convertToCMYK: true,
+          convertToCMYK: false, // Don't convert - preserve original
           allowRasterConversion: false
         };
       
       case FileType.MIXED_CONTENT:
-        // Mixed content: preserve CMYK for vectors, don't convert rasters
+        // Mixed content: preserve original structure
         return {
           preserveCMYK: true,
-          convertToCMYK: true, // Only applies to vector elements
+          convertToCMYK: false, // Don't convert - preserve original
           allowRasterConversion: false
         };
       
       case FileType.RASTER_PNG:
       case FileType.RASTER_JPEG:
-        // Raster files: convert to CMYK but handle carefully
+        // Raster files: preserve original colors
         return {
           preserveCMYK: false,
-          convertToCMYK: true, // Convert raster to CMYK for print
-          allowRasterConversion: true
+          convertToCMYK: false, // Don't convert - preserve original
+          allowRasterConversion: false
         };
       
       default:

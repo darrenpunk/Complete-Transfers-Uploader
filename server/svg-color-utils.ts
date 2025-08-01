@@ -102,7 +102,7 @@ export interface SVGColorInfo {
   id: string;
   originalColor: string;
   originalFormat?: string; // The exact color format as found in the SVG
-  cmykColor?: string; // CMYK representation of the color
+  cmykColor?: string | null; // CMYK representation of the color (if available)
   pantoneMatch?: string; // Closest Pantone color match
   pantoneDistance?: number; // Color distance to Pantone match
   elementType: string;
@@ -110,6 +110,7 @@ export interface SVGColorInfo {
   selector: string; // CSS selector to identify the element
   converted?: boolean;
   isCMYK?: boolean; // Whether the color is already in CMYK format
+  rgb?: { r: number; g: number; b: number } | null; // RGB values if available
 }
 
 export interface FontInfo {
@@ -477,51 +478,50 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         rgbColor = convertRgbPercent(colorString);
       }
       
-      // Extract RGB values for CMYK conversion
+      // Extract RGB values but don't convert to CMYK - just store the RGB values
       const rgbMatch = rgbColor.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
       if (rgbMatch) {
         const r = parseInt(rgbMatch[1]);
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // Use Adobe CMYK conversion for Illustrator compatibility
-        console.log(`🎨 Converting RGB(${r}, ${g}, ${b}) to CMYK...`);
-        const cmyk = adobeRgbToCmyk({ r, g, b });
-        const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
-        console.log(`🎨 Result: ${cmykColor}`);
+        // Store RGB values without conversion
+        console.log(`🎨 Detected RGB(${r}, ${g}, ${b}) - preserving original values`);
         
         return {
           original: colorString,  // Keep the exact format from SVG
           display: rgbColor,      // Standardized format for UI
-          cmyk: cmykColor,
-          isCMYK: false
+          cmyk: null,             // No CMYK conversion
+          isCMYK: false,
+          rgb: { r, g, b }        // Store RGB values for later use if needed
         };
       }
       
-      // For hex colors, convert to RGB first
+      // For hex colors, convert to RGB for display but don't convert to CMYK
       if (colorString.startsWith('#')) {
         const hex = colorString.substring(1);
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Use Adobe CMYK conversion for Illustrator compatibility
-        const cmyk = adobeRgbToCmyk({ r, g, b });
-        const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
+        // Store RGB values without CMYK conversion
+        console.log(`🎨 Detected HEX ${colorString} as RGB(${r}, ${g}, ${b}) - preserving original values`);
         
         return {
           original: colorString,  // Keep the exact format from SVG
           display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
-          cmyk: cmykColor,
-          isCMYK: false
+          cmyk: null,             // No CMYK conversion
+          isCMYK: false,
+          rgb: { r, g, b }        // Store RGB values for later use if needed
         };
       }
       
       return {
         original: colorString,
         display: colorString,
-        cmyk: 'Unknown',
-        isCMYK: false
+        cmyk: null,    // No CMYK conversion
+        isCMYK: false,
+        rgb: null      // No RGB values available
       };
     };
 

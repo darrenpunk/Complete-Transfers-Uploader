@@ -4,7 +4,9 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Palette, RotateCcw } from "lucide-react";
+import { Palette, RotateCcw, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import CMYKColorModal from "./cmyk-color-modal";
 import type { CanvasElement, Logo } from "@shared/schema";
 
@@ -18,6 +20,7 @@ interface SVGColorInfo {
   elementType: string;
   attribute: string;
   selector: string;
+  isCMYK?: boolean;
 }
 
 interface CMYKColor {
@@ -80,6 +83,20 @@ function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
   };
 }
 
+// Convert CMYK to RGB for preview display
+function cmykToRGB(cmyk: CMYKColor): { r: number; g: number; b: number } {
+  const c = cmyk.c / 100;
+  const m = cmyk.m / 100;
+  const y = cmyk.y / 100;
+  const k = cmyk.k / 100;
+  
+  const r = Math.round(255 * (1 - c) * (1 - k));
+  const g = Math.round(255 * (1 - m) * (1 - k));
+  const b = Math.round(255 * (1 - y) * (1 - k));
+  
+  return { r, g, b };
+}
+
 interface ColorPickerPanelProps {
   selectedElement: CanvasElement;
   logo: Logo;
@@ -89,6 +106,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   const [colorOverrides, setColorOverrides] = useState<Record<string, string>>(
     (selectedElement.colorOverrides as Record<string, string>) || {}
   );
+  const [showCMYKPreview, setShowCMYKPreview] = useState(false);
 
   // Only show for SVG logos with detected colors
   const svgAnalysis = logo.svgColors as { colors?: SVGColorInfo[]; strokeWidths?: number[]; hasText?: boolean } | SVGColorInfo[] | null;
@@ -163,10 +181,23 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   return (
     <Card className="mt-4">
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Palette className="w-4 h-4" />
-          Logo Colors
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Logo Colors
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="cmyk-preview" className="text-xs text-gray-500">
+              CMYK Preview
+            </Label>
+            <Switch
+              id="cmyk-preview"
+              checked={showCMYKPreview}
+              onCheckedChange={setShowCMYKPreview}
+              className="scale-75"
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Color Grid - Same style as garment colors */}
@@ -182,11 +213,19 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             }
             
-            // Use override color if exists, otherwise original display color
-            const displayColor = hasOverride ? currentColor : originalDisplayColor;
-            
             // Get the correct Adobe CMYK values
             const adobeCMYK = getCMYKFromColorInfo(colorInfo);
+            
+            // Use override color if exists, otherwise original display color
+            let displayColor = hasOverride ? currentColor : originalDisplayColor;
+            
+            // Apply CMYK preview filter if enabled and color is RGB
+            const needsCMYKPreview = showCMYKPreview && !isCMYK && !hasOverride;
+            if (needsCMYKPreview && adobeCMYK) {
+              // Convert CMYK back to RGB for display (this simulates the color shift)
+              const previewRGB = cmykToRGB(adobeCMYK);
+              displayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+            }
             
             return (
               <CMYKColorModal
@@ -217,18 +256,36 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           <div className="text-xs text-gray-600">
             {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
           </div>
-          {svgColors.map((color, index) => (
-            <div key={index} className="space-y-1">
-              <div className="text-xs text-gray-500 font-mono">
-                {color.cmykColor || color.originalColor}
-              </div>
-              {color.pantoneMatch && (
-                <div className="text-xs text-purple-600 dark:text-purple-400">
-                  🎨 {color.pantoneMatch} ({Math.round((1 - (color.pantoneDistance || 0) / 255) * 100)}% match)
+          {svgColors.map((color, index) => {
+            const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
+            
+            return (
+              <div key={index} className="space-y-1">
+                <div className="text-xs text-gray-500 font-mono">
+                  {isCMYK ? (
+                    // Show CMYK values if already CMYK
+                    color.cmykColor || color.originalColor
+                  ) : (
+                    // Show RGB values for RGB colors
+                    color.originalColor
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+                {!isCMYK && (
+                  <div className="text-xs text-orange-600 dark:text-orange-400">
+                    ⚠️ RGB color - will be converted to CMYK for production
+                    {showCMYKPreview && (
+                      <span className="ml-1 text-blue-500">(preview active)</span>
+                    )}
+                  </div>
+                )}
+                {color.pantoneMatch && (
+                  <div className="text-xs text-purple-600 dark:text-purple-400">
+                    🎨 {color.pantoneMatch} ({Math.round((1 - (color.pantoneDistance || 0) / 255) * 100)}% match)
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {Object.keys(colorOverrides).length > 0 && (
             <div className="text-xs text-blue-600">
               {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} modified

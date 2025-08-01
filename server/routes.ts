@@ -71,16 +71,14 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the EnhancedCMYKGenerator
-      console.log('📦 About to import EnhancedCMYKGenerator...');
-      // Force fresh import by adding timestamp
-      const moduleUrl = `./enhanced-cmyk-generator?t=${Date.now()}`;
-      const { EnhancedCMYKGenerator } = await import('./enhanced-cmyk-generator');
-      console.log('✅ EnhancedCMYKGenerator imported successfully');
-      const generator = new EnhancedCMYKGenerator();
+      // Import the SimplifiedPDFGenerator for preserving original files
+      console.log('📦 About to import SimplifiedPDFGenerator...');
+      const { SimplifiedPDFGenerator } = await import('./simplified-pdf-generator');
+      console.log('✅ SimplifiedPDFGenerator imported successfully');
+      const generator = new SimplifiedPDFGenerator();
       console.log('📊 Generator instance created');
 
-      // Generate PDF using EnhancedCMYKGenerator
+      // Generate PDF that preserves original file content
       const pdfData = {
         projectId,
         templateSize,
@@ -90,8 +88,8 @@ export async function registerRoutes(app: express.Application) {
         appliqueBadgesForm: project.appliqueBadgesForm
       };
 
-      console.log(`🔄 Generating PDF with EnhancedCMYKGenerator...`);
-      const pdfBuffer = await generator.generateCMYKPDF(pdfData);
+      console.log(`🔄 Generating PDF with original file preservation...`);
+      const pdfBuffer = await generator.generatePDF(pdfData);
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');
