@@ -989,7 +989,10 @@ export default function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: project.garmentColor || '#EAEAEA'
+                backgroundColor: project.garmentColor || '#EAEAEA',
+                filter: colorManagementEnabled 
+                  ? "brightness(0.9) contrast(1.05) saturate(0.8)"
+                  : "none"
               }}
               onClick={handleCanvasClick}
             >
@@ -1177,7 +1180,9 @@ export default function CanvasWorkspace({
                         style={{ 
                           background: 'transparent', 
                           backgroundColor: 'transparent',
-                          filter: "none",
+                          filter: colorManagementEnabled 
+                            ? "brightness(0.85) contrast(1.1) saturate(0.75) hue-rotate(-5deg)"
+                            : "none",
                           objectFit: 'contain',
                           width: '100%',
                           height: '100%',

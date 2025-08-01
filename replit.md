@@ -3,6 +3,10 @@
 ## Overview
 This is a full-stack web application designed for uploading logo files and creating layouts on garment templates. Its primary purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
 
+## Recent Changes (Aug 2025)
+- **Fixed CMYK Preview Regression**: Restored working CMYK preview toggle by implementing CSS filter approach with brightness(0.85) contrast(1.1) saturate(0.75) hue-rotate(-5deg) for accurate CMYK color shift visualization
+- **Fixed PDF Scaling Issue**: Corrected scale calculation in PDF generator - element dimensions are already in mm from database, so mmToPoints conversion (2.834) is applied directly instead of incorrect pixel-to-points calculation
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 

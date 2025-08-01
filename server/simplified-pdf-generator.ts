@@ -238,11 +238,10 @@ export class SimplifiedPDFGenerator {
   }
 
   private calculateScale(element: any, templateSize: any): number {
-    // Canvas uses pixels, PDF uses points
-    // The element dimensions are in pixels based on 0.35mm per pixel
-    // We need to convert to points: 0.35mm * 2.834 points/mm = 0.9919 points per pixel
-    const pixelToPoints = 0.35 * 2.834;
-    return pixelToPoints;
+    // The element dimensions are already in mm from the database
+    // We need to convert mm to points: 1mm = 2.834 points
+    const mmToPoints = 2.834;
+    return mmToPoints;
   }
 
   private calculatePosition(element: any, templateSize: any, page: PDFPage): { x: number; y: number } {
