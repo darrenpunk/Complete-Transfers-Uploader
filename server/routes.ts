@@ -122,6 +122,13 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      // Get template information to check if this is a single colour template
+      const templateSizes = await storage.getTemplateSizes();
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      const isSingleColourTemplate = templateSize?.group === "Single Colour Transfers";
+      
+      console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}`);
+
       const logos = [];
       
       for (const file of files) {
@@ -357,6 +364,57 @@ export async function registerRoutes(app: express.Application) {
         }
         
         const logo = await storage.createLogo(logoData);
+
+        // Auto-recolor for single colour templates with ink color
+        if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
+          try {
+            console.log(`🎨 Auto-recoloring vector for single colour template with ink: ${project.inkColor}`);
+            
+            // Import recoloring utility
+            const { recolorSVG } = await import('./svg-recolor');
+            
+            const filePath = path.join(uploadDir, finalFilename);
+            
+            // Read current SVG content
+            const svgContent = fs.readFileSync(filePath, 'utf8');
+            
+            // Apply recoloring
+            const recoloredContent = recolorSVG(svgContent, project.inkColor);
+            
+            // Write recolored content back to file
+            fs.writeFileSync(filePath, recoloredContent, 'utf8');
+            
+            console.log(`✅ Auto-recolored ${finalFilename} with ink color ${project.inkColor}`);
+            
+            // Re-analyze colors after recoloring to update the logo record
+            if (finalMimeType === 'image/svg+xml') {
+              try {
+                const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
+                const updatedAnalysis = analyzeSVGWithStrokeWidths(filePath);
+                
+                // Update logo with new color analysis
+                await storage.updateLogo(logo.id, {
+                  svgColors: {
+                    colors: updatedAnalysis.colors,
+                    fonts: updatedAnalysis.fonts,
+                    strokeWidths: updatedAnalysis.strokeWidths,
+                    minStrokeWidth: updatedAnalysis.minStrokeWidth,
+                    maxStrokeWidth: updatedAnalysis.maxStrokeWidth,
+                    hasText: updatedAnalysis.hasText
+                  }
+                });
+                
+                console.log(`🔄 Updated color analysis for recolored logo`);
+              } catch (error) {
+                console.error('Failed to update color analysis after recoloring:', error);
+              }
+            }
+            
+          } catch (error) {
+            console.error('Auto-recoloring failed:', error);
+            // Continue with upload even if recoloring fails
+          }
+        }
 
         logos.push(logo);
 
