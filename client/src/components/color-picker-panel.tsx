@@ -192,6 +192,9 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     // If originalColor starts with CMYK(), it's vectorized and not RGB
     if (color.originalColor?.startsWith('CMYK(')) return false;
     
+    // White colors (transparency) should not trigger RGB warning
+    if (color.originalColor === 'rgb(255, 255, 255)' || color.originalColor === '#ffffff') return false;
+    
     // Otherwise, it's RGB
     return true;
   });
