@@ -935,10 +935,10 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Function to convert RGB colors in SVG to CMYK
-  function convertVectorizedSvgToCmyk(svgContent: string): string {
+  // Function to add CMYK metadata to SVG while keeping RGB for display
+  function addCmykMetadataToSvg(svgContent: string): string {
     try {
-      // Parse SVG content and replace RGB hex colors with CMYK equivalents
+      // Keep RGB colors for browser display but add CMYK data attributes
       let modifiedSvg = svgContent;
       
       // Find all hex color values in the SVG
@@ -947,7 +947,10 @@ export async function registerRoutes(app: express.Application) {
       
       if (matches) {
         const uniqueColors = [...new Set(matches)];
-        console.log(`🎨 Converting ${uniqueColors.length} unique RGB colors to CMYK`);
+        console.log(`🎨 Adding CMYK metadata to ${uniqueColors.length} unique RGB colors`);
+        
+        // Add CMYK color definitions to SVG metadata
+        let cmykMetadata = '\n<!-- CMYK Color Mappings for Print:\n';
         
         for (const hexColor of uniqueColors) {
           // Skip white color (keep as RGB for transparency)
@@ -963,20 +966,19 @@ export async function registerRoutes(app: express.Application) {
           // Convert RGB to CMYK using Adobe profile
           const cmyk = adobeRgbToCmyk(r, g, b);
           
-          // Convert CMYK to device-cmyk format for SVG
-          const cmykString = `device-cmyk(${(cmyk.c / 100).toFixed(3)}, ${(cmyk.m / 100).toFixed(3)}, ${(cmyk.y / 100).toFixed(3)}, ${(cmyk.k / 100).toFixed(3)})`;
-          
-          // Replace all instances of this hex color with CMYK
-          const globalRegex = new RegExp(hexColor.replace('#', '#'), 'gi');
-          modifiedSvg = modifiedSvg.replace(globalRegex, cmykString);
-          
-          console.log(`🎨 Converted ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
+          cmykMetadata += `${hexColor} → C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}\n`;
+          console.log(`🎨 CMYK metadata: ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
         }
+        
+        cmykMetadata += '-->\n';
+        
+        // Insert metadata after the opening SVG tag
+        modifiedSvg = modifiedSvg.replace('<svg', cmykMetadata + '<svg');
       }
       
       return modifiedSvg;
     } catch (error) {
-      console.error('Error converting SVG to CMYK:', error);
+      console.error('Error adding CMYK metadata to SVG:', error);
       return svgContent; // Return original if conversion fails
     }
   }
@@ -1077,13 +1079,13 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
-      // Convert RGB colors to CMYK in the SVG
+      // Add CMYK metadata to SVG while keeping RGB for display
       let cmykSvg = result;
       try {
-        cmykSvg = convertVectorizedSvgToCmyk(result);
-        console.log(`🎨 Converted vectorized SVG to CMYK`);
+        cmykSvg = addCmykMetadataToSvg(result);
+        console.log(`🎨 Added CMYK metadata to vectorized SVG`);
       } catch (error) {
-        console.error('Failed to convert vectorized SVG to CMYK:', error);
+        console.error('Failed to add CMYK metadata to vectorized SVG:', error);
         // Continue with RGB version if conversion fails
       }
       
