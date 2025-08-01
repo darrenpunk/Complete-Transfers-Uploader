@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
+import fs from "fs";
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +14,26 @@ console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ?
 const app = express();
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: false, limit: '200mb' }));
+
+// Configure proper MIME types for uploads directory
+app.use('/uploads', express.static('./uploads', {
+  setHeaders: (res, path) => {
+    // Set proper MIME type for SVG files even without extension
+    if (path.endsWith('.svg') || res.req?.url?.includes('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    } else {
+      // Try to detect SVG content by reading file
+      try {
+        const content = fs.readFileSync(path, 'utf8');
+        if (content.includes('<svg') || content.includes('<?xml')) {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        }
+      } catch (e) {
+        // If file read fails, continue with default
+      }
+    }
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
