@@ -158,7 +158,7 @@ export default function TemplateSelectorModal({
   // Determine minimum quantity based on template group
   const getMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
-    const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers'];
+    const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers', 'DTF - Digital Film Transfers'];
     return dtfGroups.includes(template.group || '') ? 1 : 10;
   };
   
