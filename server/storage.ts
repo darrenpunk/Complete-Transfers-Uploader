@@ -215,7 +215,10 @@ export class MemStorage implements IStorage {
       svgColors: insertLogo.svgColors || null,
       svgFonts: insertLogo.svgFonts || null,
       fontsOutlined: insertLogo.fontsOutlined || false,
-      contentBounds: insertLogo.contentBounds || null
+      contentBounds: insertLogo.contentBounds || null,
+      isMixedContent: insertLogo.isMixedContent || false,
+      isPhotographic: insertLogo.isPhotographic || false,
+      previewFilename: insertLogo.previewFilename || null
     };
     this.logos.set(id, logo);
     return logo;

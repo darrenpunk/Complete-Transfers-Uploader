@@ -198,7 +198,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   // Check if any colors are RGB (not CMYK)
   // For vectorized files, all colors should be marked as isCMYK: true
   // For single colour templates, disable RGB warnings since auto-recoloring handles it
-  const hasRGBColors = !isSingleColourTemplate && svgColors.some(color => {
+  // For photographic raster files, disable RGB warnings since they're meant to be photographic
+  const hasRGBColors = !isSingleColourTemplate && !(logo as any).isPhotographic && svgColors.some(color => {
     // If explicitly marked as CMYK, it's not RGB
     if (color.isCMYK) return false;
     

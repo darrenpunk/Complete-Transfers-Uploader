@@ -1238,6 +1238,25 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Mark logo as photographic endpoint
+  app.patch('/api/logos/:id/photographic', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isPhotographic } = req.body;
+
+      const logo = await storage.updateLogo(id, { isPhotographic: Boolean(isPhotographic) });
+      
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+
+      res.json(logo);
+    } catch (error) {
+      console.error('Error updating logo photographic status:', error);
+      res.status(500).json({ error: 'Failed to update logo' });
+    }
+  });
+
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {
     try {

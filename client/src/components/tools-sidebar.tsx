@@ -151,9 +151,34 @@ export default function ToolsSidebar({
   };
 
   // Raster warning modal handlers
-  const handlePhotographicApprove = () => {
+  const handlePhotographicApprove = async () => {
     if (pendingRasterFile) {
+      // Store the file name to mark as photographic after upload
+      const fileName = pendingRasterFile.file.name;
+      
       uploadLogosMutation.mutate([pendingRasterFile.file]);
+      
+      // Wait a moment for upload to complete, then mark as photographic
+      setTimeout(async () => {
+        try {
+          // Find the uploaded logo by filename
+          const uploadedLogo = logos.find(logo => logo.originalName === fileName);
+          if (uploadedLogo) {
+            // Mark the logo as photographic
+            await fetch(`/api/logos/${uploadedLogo.id}/photographic`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ isPhotographic: true })
+            });
+            
+            // Refresh logos to get updated data
+            queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+          }
+        } catch (error) {
+          console.error('Failed to mark logo as photographic:', error);
+        }
+      }, 1000);
+      
       setPendingRasterFile(null);
       setShowRasterWarning(false);
     }
