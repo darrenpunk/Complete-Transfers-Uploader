@@ -254,8 +254,6 @@ export class SimplifiedPDFGenerator {
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
       
       // Apply color changes to SVG
-      let svgContent = fs.readFileSync(uploadPath, 'utf8');
-      
       if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
         console.log(`🎨 Applying color overrides:`, element.colorOverrides);
         
@@ -293,9 +291,9 @@ export class SimplifiedPDFGenerator {
       }
       
       // Check if SVG has embedded images for special handling
-      const svgContent = fs.readFileSync(modifiedSvgPath, 'utf8');
+      const modifiedSvgContent = fs.readFileSync(modifiedSvgPath, 'utf8');
       const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
-      const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
+      const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(modifiedSvgContent);
       
       if (hasEmbeddedImages) {
         console.log(`📌 SVG contains embedded images, using special handler for transparency`);
