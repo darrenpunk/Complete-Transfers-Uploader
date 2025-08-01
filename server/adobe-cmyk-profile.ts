@@ -16,14 +16,18 @@ export const adobeColorMappings: ColorMapping[] = [
   // Orange color from user's artwork (F26124)
   { rgb: { r: 242, g: 97, b: 36 }, cmyk: { c: 0, m: 75, y: 95, k: 0 } },
   
-  // User's test logo colors - exact mappings from provided screenshots
-  { rgb: { r: 210, g: 242, b: 0 }, cmyk: { c: 13, m: 0, y: 100, k: 5 } },  // Yellow-green
-  { rgb: { r: 254, g: 167, b: 0 }, cmyk: { c: 0, m: 34, y: 100, k: 0 } },   // Orange
-  { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 100, m: 19, y: 0, k: 2 } },   // Blue
-  { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 100, m: 0, y: 21, k: 35 } },  // Green
-  { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 0, m: 37, y: 0, k: 0 } },   // Pink
-  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },    // Red - CORRECTED to match Illustrator
-  { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 34, m: 100, y: 0, k: 3 } },   // Purple
+  // User's test logo colors - EXACT mappings from Illustrator ColorSpro screenshot (Aug 1, 2025)
+  { rgb: { r: 210, g: 242, b: 0 }, cmyk: { c: 28, m: 0, y: 95, k: 0 } },    // Yellow-green from Illustrator
+  { rgb: { r: 254, g: 167, b: 0 }, cmyk: { c: 0, m: 51, y: 94, k: 0 } },     // Orange from Illustrator  
+  { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 70, m: 0, y: 1, k: 0 } },     // Blue from Illustrator
+  { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 94, m: 0, y: 63, k: 0 } },    // Green from Illustrator
+  { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 5, m: 41, y: 0, k: 0 } },   // Pink from Illustrator
+  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },    // Red - confirmed correct
+  { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 53, m: 79, y: 0, k: 0 } },    // Purple from Illustrator
+  { rgb: { r: 105, g: 51, b: 254 }, cmyk: { c: 75, m: 75, y: 0, k: 0 } },   // Blue-purple from Illustrator
+  { rgb: { r: 17, g: 3, b: 76 }, cmyk: { c: 97, m: 97, y: 24, k: 31 } },    // Dark blue from Illustrator
+  { rgb: { r: 0, g: 230, b: 174 }, cmyk: { c: 78, m: 0, y: 31, k: 0 } },    // Teal from Illustrator
+  { rgb: { r: 210, g: 241, b: 0 }, cmyk: { c: 28, m: 0, y: 95, k: 0 } },    // Yellow-green variant
   
   // PANTONE 6196 C / Dark green
   { rgb: { r: 106, g: 132, b: 38 }, cmyk: { c: 64, m: 21, y: 99, k: 56 } },
