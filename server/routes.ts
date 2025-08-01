@@ -962,8 +962,11 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      formData.append('mode', isPreview ? 'preview' : 'production');
-      formData.append('output.format', 'svg');
+      // Note: Default output format is SVG, so we don't need to specify it
+      // Only add mode parameter for production calls
+      if (!isPreview) {
+        formData.append('mode', 'production');
+      }
 
       // Call vectorizer.ai API
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
@@ -983,7 +986,28 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
-      const result = await response.text(); // SVG content
+      // Check content type header first
+      const contentType = response.headers.get('content-type') || '';
+      console.log('🔍 Response content-type:', contentType);
+      
+      let result;
+      if (contentType.includes('image/svg') || contentType.includes('text/') || contentType.includes('application/xml')) {
+        result = await response.text(); // SVG content
+      } else {
+        // If we get binary data, it might be PNG despite our request
+        const buffer = await response.arrayBuffer();
+        console.error('❌ API returned binary data instead of SVG. Content-Type:', contentType);
+        console.error('❌ First 50 bytes:', new Uint8Array(buffer.slice(0, 50)));
+        
+        // Clean up uploaded file
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(500).json({ 
+          error: 'Vectorization service returned binary data instead of SVG. The API may not support SVG output in preview mode.' 
+        });
+      }
       
       // Verify we received SVG content
       if (!result.includes('<svg') && !result.includes('<?xml')) {
