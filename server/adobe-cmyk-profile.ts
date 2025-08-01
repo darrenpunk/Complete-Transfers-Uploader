@@ -7,10 +7,23 @@ export interface ColorMapping {
 }
 
 // Exact color mappings from Adobe Illustrator
-// These values are from actual measurements using the Eco logo
+// These values are from actual measurements using various artwork
 export const adobeColorMappings: ColorMapping[] = [
+  // Red color from user's latest test (C93431)
+  { rgb: { r: 201, g: 52, b: 49 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },
+  
+  // Original Eco logo colors
   // Orange color from user's artwork (F26124)
   { rgb: { r: 242, g: 97, b: 36 }, cmyk: { c: 0, m: 75, y: 95, k: 0 } },
+  
+  // User's test logo colors - exact mappings from provided screenshots
+  { rgb: { r: 210, g: 242, b: 0 }, cmyk: { c: 13, m: 0, y: 100, k: 5 } },  // Yellow-green
+  { rgb: { r: 254, g: 167, b: 0 }, cmyk: { c: 0, m: 34, y: 100, k: 0 } },   // Orange
+  { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 100, m: 19, y: 0, k: 2 } },   // Blue
+  { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 100, m: 0, y: 21, k: 35 } },  // Green
+  { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 0, m: 37, y: 0, k: 0 } },   // Pink
+  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 75, y: 72, k: 0 } },    // Red
+  { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 34, m: 100, y: 0, k: 3 } },   // Purple
   
   // PANTONE 6196 C / Dark green
   { rgb: { r: 106, g: 132, b: 38 }, cmyk: { c: 64, m: 21, y: 99, k: 56 } },
