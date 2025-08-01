@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import CMYKColorModal from "./cmyk-color-modal";
 import { RGBWarningModal } from "./rgb-warning-modal";
-import type { CanvasElement, Logo } from "@shared/schema";
+import type { CanvasElement, Logo, Project, TemplateSize } from "@shared/schema";
 
 interface SVGColorInfo {
   id: string;
@@ -110,6 +110,21 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   const [showCMYKPreview, setShowCMYKPreview] = useState(false);
   const [hasShownRGBWarning, setHasShownRGBWarning] = useState(false);
 
+  // Fetch project and template information to check if this is a single colour template
+  const { data: project } = useQuery<Project>({
+    queryKey: ["/api/projects", selectedElement.projectId],
+    enabled: !!selectedElement.projectId
+  });
+
+  const { data: templateSizes } = useQuery<TemplateSize[]>({
+    queryKey: ["/api/template-sizes"]
+  });
+
+  // Check if this is a single colour template
+  const isSingleColourTemplate = templateSizes && project 
+    ? templateSizes.find(t => t.id === project.templateSize)?.group === "Single Colour Transfers"
+    : false;
+
   // Only show for SVG logos with detected colors
   const svgAnalysis = logo.svgColors as { colors?: SVGColorInfo[]; strokeWidths?: number[]; hasText?: boolean } | SVGColorInfo[] | null;
   
@@ -182,7 +197,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
 
   // Check if any colors are RGB (not CMYK)
   // For vectorized files, all colors should be marked as isCMYK: true
-  const hasRGBColors = svgColors.some(color => {
+  // For single colour templates, disable RGB warnings since auto-recoloring handles it
+  const hasRGBColors = !isSingleColourTemplate && svgColors.some(color => {
     // If explicitly marked as CMYK, it's not RGB
     if (color.isCMYK) return false;
     
@@ -202,6 +218,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   console.log('RGB Warning Check:', {
     logoId: logo.id,
     svgColorsCount: svgColors.length,
+    isSingleColourTemplate,
     hasRGBColors,
     colorDetails: svgColors.map(c => ({
       originalColor: c.originalColor,
