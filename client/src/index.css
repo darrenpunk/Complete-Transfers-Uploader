@@ -61,6 +61,36 @@ svg, img[src$=".svg"], .canvas-element svg, .canvas-element img {
   background-color: transparent !important;
 }
 
+/* Force transparency on all SVG images in canvas workspace */
+.canvas-element img[src*="uploads/"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  /* Ensure no browser default background */
+  mix-blend-mode: normal;
+}
+
+/* Additional force transparency for vectorized files */
+img[src*="uploads/"][src*=".svg"], 
+img[src*="api/canvas-elements/"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: normal;
+}
+
+/* Force transparency in vectorizer modal preview */
+.vector-preview-wrapper svg,
+.vector-preview-wrapper img {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure vectorized SVG elements display transparently everywhere */
+svg[data-vectorized-cmyk="true"],
+img[alt*="vectorized"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 /* Note: Removed aggressive white element hiding to preserve white content in logos */
 
 /* Ensure canvas workspace has proper dark mode styling */
