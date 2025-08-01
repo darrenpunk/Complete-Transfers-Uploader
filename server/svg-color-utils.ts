@@ -344,8 +344,11 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
 
     // Check if this is a vectorized CMYK file
     const isVectorizedCMYK = svgContent.includes('data-vectorized-cmyk="true"') || 
-                           svgContent.includes('VECTORIZED_CMYK_FILE');
-    console.log(`🎨 SVG Analysis: Vectorized CMYK file detected: ${isVectorizedCMYK}`);
+                             svgContent.includes('VECTORIZED_CMYK_FILE');
+    
+    if (isVectorizedCMYK) {
+      console.log('🎨 Detected vectorized CMYK file - all colors will be marked as CMYK');
+    }
     
     if (isVectorizedCMYK) {
       console.log(`🎨 SVG Analysis: Processing vectorized CMYK file with special handling`);

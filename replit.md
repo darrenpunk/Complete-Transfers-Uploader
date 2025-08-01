@@ -16,6 +16,7 @@ This is a full-stack web application designed for uploading logo files and creat
 - **Enhanced Vectorization CMYK Marking**: Vectorized files are now properly marked as CMYK format to prevent RGB warnings on import. The color analysis system detects vectorized files and automatically converts RGB colors to CMYK values using Adobe color profiles while preserving white colors for transparency.
 - **Fixed Vectorization Transparency Issue**: Resolved green background problem by implementing inline SVG rendering instead of img elements. Created SvgInlineRenderer component that fetches SVG content and renders it directly in the DOM, eliminating browser-imposed backgrounds. SVG files now display with true transparency on the canvas, matching the vectorizer preview behavior.
 - **Fixed RGB Warning on Vectorized Files**: Enhanced detection logic to properly identify vectorized CMYK files and prevent RGB warnings on logo interaction. White colors preserved for transparency no longer trigger RGB warnings.
+- **Updated Vectorizer API Parameters**: Matched exact settings from vectorizer.ai screenshot including fill shapes draw style, SVG 1.1 output, shape stacking cutouts, and all curve types enabled. This should produce filled vector shapes matching the website output.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
