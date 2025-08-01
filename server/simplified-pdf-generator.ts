@@ -199,22 +199,41 @@ export class SimplifiedPDFGenerator {
       console.log(`📦 Converting SVG to PDF with original colors (no color changes): ${logo.filename}`);
       
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
+      const tempSvgPath = path.join(process.cwd(), 'uploads', `temp_clean_${Date.now()}.svg`);
       
       // Check if SVG has embedded images for special handling
-      const svgContent = fs.readFileSync(uploadPath, 'utf8');
+      let svgContent = fs.readFileSync(uploadPath, 'utf8');
+      
+      // Check if this is a vectorized file and apply background removal
+      if (svgContent.includes('data-vectorized-cmyk="true"')) {
+        console.log(`🎨 Detected vectorized SVG, applying background removal`);
+        const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+        svgContent = removeVectorizedBackgrounds(svgContent);
+        // Save cleaned SVG
+        fs.writeFileSync(tempSvgPath, svgContent);
+      } else {
+        // Copy original SVG
+        fs.copyFileSync(uploadPath, tempSvgPath);
+      }
+      
       const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
       const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
       
       if (hasEmbeddedImages) {
         console.log(`📌 SVG contains embedded images, using special handler for transparency`);
-        const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(uploadPath, tempPdfPath);
+        const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(tempSvgPath, tempPdfPath);
         if (!converted) {
           // Fallback to standard conversion
-          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${uploadPath}"`);
+          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`);
         }
       } else {
         // Standard conversion for SVGs without embedded images
-        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${uploadPath}"`);
+        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`);
+      }
+      
+      // Clean up temp SVG
+      if (fs.existsSync(tempSvgPath)) {
+        fs.unlinkSync(tempSvgPath);
       }
       
       if (fs.existsSync(tempPdfPath)) {
@@ -283,6 +302,15 @@ export class SimplifiedPDFGenerator {
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
       
       // Apply color changes to SVG
+      let svgToModify = fs.readFileSync(uploadPath, 'utf8');
+      
+      // Check if this is a vectorized file and apply background removal first
+      if (svgToModify.includes('data-vectorized-cmyk="true"')) {
+        console.log(`🎨 Detected vectorized SVG in color changes section, applying background removal`);
+        const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+        svgToModify = removeVectorizedBackgrounds(svgToModify);
+      }
+      
       if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
         console.log(`🎨 Applying color overrides:`, element.colorOverrides);
         
@@ -309,14 +337,14 @@ export class SimplifiedPDFGenerator {
         // Apply color changes
         const { applySVGColorChanges } = await import('./svg-color-utils');
         console.log(`🎨 About to apply color changes with overrides:`, originalFormatOverrides);
-        const modifiedSvgContent = applySVGColorChanges(uploadPath, originalFormatOverrides);
+        const modifiedSvgContent = applySVGColorChanges(svgToModify, originalFormatOverrides);
         
         // Save the modified SVG
         fs.writeFileSync(modifiedSvgPath, modifiedSvgContent);
         console.log(`💾 Saved modified SVG to: ${modifiedSvgPath}`);
       } else {
-        // No color changes, just copy the original
-        fs.copyFileSync(uploadPath, modifiedSvgPath);
+        // No color changes, but save the potentially cleaned SVG
+        fs.writeFileSync(modifiedSvgPath, svgToModify);
       }
       
       // Check if SVG has embedded images for special handling

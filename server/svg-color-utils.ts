@@ -1322,3 +1322,82 @@ export function applySVGColorChanges(svgPath: string, colorOverrides: Record<str
 function escapeRegExp(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// Remove background elements from vectorized SVG files
+export function removeVectorizedBackgrounds(svgContent: string): string {
+  try {
+    let modifiedSvg = svgContent;
+    
+    // Remove any filled rectangles that might be backgrounds
+    const rectRegex = /<rect[^>]*(?:\/>|>.*?<\/rect>)/gi;
+    modifiedSvg = modifiedSvg.replace(rectRegex, (match) => {
+      // Check if this has a fill attribute (any filled rectangle is suspect)
+      if (match.includes('fill=') && !match.includes('fill="none"')) {
+        console.log(`🎨 Removing filled rectangle element from vectorized SVG`);
+        return '';
+      }
+      return match;
+    });
+    
+    // Remove any large paths that could be backgrounds
+    const largePathRegex = /<path[^>]*d\s*=\s*["']([^"']*)["'][^>]*fill\s*=\s*["']([^"']+)["'][^>]*(?:\/>|>.*?<\/path>)/gi;
+    modifiedSvg = modifiedSvg.replace(largePathRegex, (match, pathData, fillColor) => {
+      // If path contains M, L commands and closes with Z, it might be a background
+      if (pathData.includes('M') && pathData.includes('Z')) {
+        const coords = pathData.match(/[\d.-]+/g);
+        if (coords && coords.length >= 6) {
+          const values = coords.map(parseFloat);
+          const maxValue = Math.max(...values);
+          const minValue = Math.min(...values);
+          const range = maxValue - minValue;
+          
+          // If the path spans a large area, it's likely a background
+          if (range > 400) {
+            console.log(`🎨 Removing large background path from vectorized SVG (range: ${range})`);
+            return '';
+          }
+        }
+      }
+      return match;
+    });
+    
+    // Remove any elements with green fills that might be unwanted backgrounds
+    const greenElements = /<[^>]+fill\s*=\s*["']#[678][\da-fA-F]{5}["'][^>]*(?:\/>|[^<]*<\/[^>]+>)/gi;
+    modifiedSvg = modifiedSvg.replace(greenElements, (match) => {
+      // Check if this is a green color (starts with #6, #7, or #8 for green hues)
+      const colorMatch = match.match(/fill\s*=\s*["'](#[678][\da-fA-F]{5})["']/i);
+      if (colorMatch) {
+        const color = colorMatch[1];
+        const rgb = hexToRgb(color);
+        if (rgb && rgb.g > rgb.r && rgb.g > rgb.b) {
+          console.log(`🎨 Removing green background element from vectorized SVG`);
+          return '';
+        }
+      }
+      return match;
+    });
+    
+    // Remove any style tags that might contain background styles
+    modifiedSvg = modifiedSvg.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+    
+    // Remove any defs that might contain background patterns
+    const defsRegex = /<defs[^>]*>([\s\S]*?)<\/defs>/gi;
+    modifiedSvg = modifiedSvg.replace(defsRegex, (match, content) => {
+      if (content.includes('pattern') || content.includes('linearGradient') || content.includes('radialGradient')) {
+        console.log(`🎨 Removing defs with potential background patterns`);
+        return '';
+      }
+      return match;
+    });
+    
+    // Add explicit transparent background to SVG root
+    modifiedSvg = modifiedSvg.replace(/<svg([^>]*)>/, '<svg$1 style="background: transparent;">');
+    
+    console.log(`🎨 Background removal complete for vectorized SVG`);
+    return modifiedSvg;
+    
+  } catch (error) {
+    console.error('Error removing vectorized backgrounds:', error);
+    return svgContent; // Return original on error
+  }
+}
