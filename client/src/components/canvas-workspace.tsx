@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 import { useCleanupOrphanedElements } from '@/hooks/use-cleanup-orphaned-elements';
+import SvgInlineRenderer from "./svg-inline-renderer";
 
 
 // Import garment color utilities from shared module
@@ -1108,7 +1109,7 @@ export default function CanvasWorkspace({
               
               // Check if this is a Single Colour Transfer template requiring ink color recoloring
               const isSingleColourTemplate = template?.group === "Single Colour Transfers";
-              const shouldRecolorForInk = isSingleColourTemplate && project.inkColor && logo;
+              const shouldRecolorForInk = isSingleColourTemplate && !!project.inkColor && !!logo;
               
               // Debug: Log color overrides for this element
               if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
@@ -1164,64 +1165,75 @@ export default function CanvasWorkspace({
                     {/* Logo Elements */}
 
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
-                      <img
-                        src={(() => {
-                          // Priority 1: Color overrides exist - use modified SVG endpoint
-                          if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
-                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
-                          }
-                          // Priority 2: Single Colour Transfer with ink color selected
-                          if (shouldRecolorForInk) {
-                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
-                          }
-                          // Priority 3: Original image
-                          const url = getImageUrl(logo);
-                          console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
-                          return url;
-                        })()}
-                        alt={logo.originalName}
-                        className="w-full h-full"
-                        style={{ 
-                          background: 'transparent', 
-                          backgroundColor: 'transparent',
-                          filter: "none",
-                          objectFit: 'contain',
-                          width: '100%',
-                          height: '100%',
+                      // Check if this is an SVG file that should be rendered inline
+                      logo.mimeType === 'image/svg+xml' ? (
+                        <SvgInlineRenderer 
+                          element={element}
+                          logo={logo}
+                          project={project}
+                          shouldRecolorForInk={shouldRecolorForInk}
+                        />
+                      ) : (
+                        // For non-SVG files (PNG, JPEG), use regular img element
+                        <img
+                          src={(() => {
+                            // Priority 1: Color overrides exist - use modified SVG endpoint
+                            if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+                              return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
+                            }
+                            // Priority 2: Single Colour Transfer with ink color selected
+                            if (shouldRecolorForInk) {
+                              return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
+                            }
+                            // Priority 3: Original image
+                            const url = getImageUrl(logo);
+                            console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
+                            return url;
+                          })()}
+                          alt={logo.originalName}
+                          className="w-full h-full"
+                          style={{ 
+                            background: 'transparent', 
+                            backgroundColor: 'transparent',
+                            filter: "none",
+                            objectFit: 'contain',
+                            width: '100%',
+                            height: '100%',
 
-                        }}
-                        draggable={false}
-                        onLoad={() => {
-                          const imageUrl = element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
-                            ? `/uploads/${element.id}_modified.svg`
-                            : shouldRecolorForInk 
-                              ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
-                              : getImageUrl(logo);
-                          console.log('✅ Image loaded successfully:', imageUrl);
-                          console.log('Logo details:', { 
-                            filename: logo.filename, 
-                            mimeType: logo.mimeType,
-                            originalName: logo.originalName
-                          });
-                        }}
-                        onError={(e) => {
-                          console.error('Failed to load image:', logo ? getImageUrl(logo) : 'unknown');
-                          // Show fallback icon if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent && logo) {
-                            parent.innerHTML = `
-                              <div class="flex flex-col items-center justify-center text-gray-500 p-2">
-                                <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                </svg>
-                                <span class="text-xs">${logo.originalName}</span>
-                              </div>
-                            `;
-                          }
-                        }}
-                      />
+                          }}
+                          draggable={false}
+                          onLoad={() => {
+                            const imageUrl = element.colorOverrides && Object.keys(element.colorOverrides).length > 0 
+                              ? `/uploads/${element.id}_modified.svg`
+                              : shouldRecolorForInk 
+                                ? `/uploads/${logo.filename}?inkColor=${project.inkColor}&recolor=true`
+                                : getImageUrl(logo);
+                            console.log('✅ Image loaded successfully:', imageUrl);
+                            console.log('Logo details:', { 
+                              filename: logo.filename, 
+                              mimeType: logo.mimeType,
+                              originalName: logo.originalName
+                            });
+                          }}
+                          onError={(e) => {
+                            console.error('Failed to load image:', logo ? getImageUrl(logo) : 'unknown');
+                            // Show fallback icon if image fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent && logo) {
+                              parent.innerHTML = `
+                                <div class="flex flex-col items-center justify-center text-gray-500 p-2">
+                                  <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                  </svg>
+                                  <span class="text-xs">${logo.originalName}</span>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      )
                     ) : (
                       <div className="flex flex-col items-center justify-center text-gray-500 p-2">
                         <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">

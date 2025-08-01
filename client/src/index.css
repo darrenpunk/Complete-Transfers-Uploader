@@ -91,6 +91,36 @@ img[alt*="vectorized"] {
   background-color: transparent !important;
 }
 
+/* Target the exact canvas element structure - force transparency on all levels */
+.absolute.cursor-move > div > img {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Override any parent element backgrounds that might affect SVG display */
+.absolute.cursor-move > div {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure selected elements also maintain transparency */
+.border-primary.bg-blue-50 > div {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.border-primary.bg-blue-50 > div > img {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Global force for ALL img elements in the canvas */
+.canvas-workspace img {
+  background: transparent !important;
+  background-color: transparent !important;
+  isolation: isolate;
+}
+
 /* Note: Removed aggressive white element hiding to preserve white content in logos */
 
 /* Ensure canvas workspace has proper dark mode styling */

@@ -1062,7 +1062,27 @@ export async function registerRoutes(app: express.Application) {
       // STEP 5: Look for and remove any fill attributes on the root SVG element
       modifiedSvg = modifiedSvg.replace(/(<svg[^>]*)\s+fill\s*=\s*["'][^"']*["']/gi, '$1');
       
-      console.log(`🎨 Aggressive transparency preservation: Removed background elements`);
+      // STEP 6: Remove any style tags that might contain background styles
+      modifiedSvg = modifiedSvg.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+      
+      // STEP 7: Remove any elements with background in their style attribute
+      modifiedSvg = modifiedSvg.replace(/<[^>]+style\s*=\s*["'][^"']*background[^"']*["'][^>]*>/gi, '');
+      
+      // STEP 8: Add explicit transparent background to SVG root
+      modifiedSvg = modifiedSvg.replace(/<svg([^>]*)>/, '<svg$1 style="background: transparent;">');
+      
+      // STEP 9: Remove any defs that might contain background patterns
+      const defsRegex = /<defs[^>]*>([\s\S]*?)<\/defs>/gi;
+      modifiedSvg = modifiedSvg.replace(defsRegex, (match, content) => {
+        // Check if defs contains patterns or gradients that might be backgrounds
+        if (content.includes('pattern') || content.includes('linearGradient') || content.includes('radialGradient')) {
+          console.log(`🎨 Removing defs with potential background patterns`);
+          return '';
+        }
+        return match;
+      });
+      
+      console.log(`🎨 Comprehensive transparency preservation: Removed all potential background sources`);
       return modifiedSvg;
     } catch (error) {
       console.error('Error removing background fills:', error);
