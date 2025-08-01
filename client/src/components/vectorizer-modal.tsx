@@ -238,26 +238,8 @@ export function VectorizerModal({
           });
           
           if (hasExtremeCoords) {
-            // Check if this is from vectorizer.ai - they use proper viewBox
-            const viewBox = svgEl.getAttribute('viewBox');
-            const isVectorizerResult = viewBox && (viewBox.includes('1445') || viewBox.includes('1451') || viewBox.match(/\d{4}/));
-            
-            if (!isVectorizerResult) {
-              console.log('Detected extreme coordinates in non-vectorizer SVG, applying scale transformation');
-              // Add a transform to scale down the content
-              const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
-              g.setAttribute('transform', `scale(0.26, 0.26)`);
-              
-              // Move all children to the group
-              while (svgEl.firstChild) {
-                g.appendChild(svgEl.firstChild);
-              }
-              svgEl.appendChild(g);
-              
-              fixedSvg = new XMLSerializer().serializeToString(doc.documentElement);
-            } else {
-              console.log('Vectorizer result detected, no scaling needed');
-            }
+            // Skip the scaling transformation - let the viewBox handle it
+            console.log('Large coordinates detected but skipping transformation to preserve proper rendering');
           }
         }
       }
