@@ -1,0 +1,40 @@
+%!PS-Adobe-3.0
+%%Title: RGB to CMYK Conversion Test
+%%EndComments
+
+% Override setrgbcolor to convert to CMYK using our algorithm
+/setrgbcolor {
+  % Get RGB values (0-1 range)
+  3 copy
+  
+  % Convert to 0-255 range for our algorithm
+  255 mul round cvi /b exch def
+  255 mul round cvi /g exch def  
+  255 mul round cvi /r exch def
+  
+  % Apply our Adobe-matching CMYK conversion algorithm
+  /cyan 0 def
+  /magenta 0 def
+  /yellow 0 def
+  /black 0 def
+  
+  % Calculate K (black) first
+  r g b min min /minRGB exch def
+  255 minRGB sub 255 div /black exch def
+  
+  % Calculate CMY if K < 1
+  black 1 lt {
+    255 r sub minRGB sub 255 minRGB sub div /cyan exch def
+    255 g sub minRGB sub 255 minRGB sub div /magenta exch def
+    255 b sub minRGB sub 255 minRGB sub div /yellow exch def
+  } if
+  
+  % Ensure values are in valid range
+  cyan 0 max 1 min /cyan exch def
+  magenta 0 max 1 min /magenta exch def
+  yellow 0 max 1 min /yellow exch def
+  black 0 max 1 min /black exch def
+  
+  % Set CMYK color
+  cyan magenta yellow black setcmykcolor
+} bind def

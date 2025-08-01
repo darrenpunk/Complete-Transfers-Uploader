@@ -10,7 +10,7 @@ import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, Standard
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
 import { applySVGColorChanges } from "./svg-color-utils";
-import { convertSVGtoCMYKPDF, prepareSVGForCMYKConversion } from "./preserve-cmyk-values";
+import { prepareSVGForCMYKConversion } from "./preserve-cmyk-values";
 
 console.log('Enhanced CMYK Generator loaded - Version 2.0');
 
@@ -508,15 +508,15 @@ export class EnhancedCMYKGenerator {
     const pdfBytes = await pdfDoc.save();
     let finalPdfBuffer = Buffer.from(pdfBytes);
     
-    // Apply ICC profile post-processing using Ghostscript for reliable embedding
-    if (useICC) {
-      try {
-        finalPdfBuffer = await this.applyICCProfilePostProcessing(finalPdfBuffer, iccProfilePath);
-        console.log(`Enhanced CMYK: Successfully embedded ICC profile via Ghostscript: ${path.basename(iccProfilePath)}`);
-      } catch (error) {
-        console.log('Enhanced CMYK: Failed to embed ICC profile via Ghostscript, using PDF without profile:', (error as Error).message);
-      }
-    }
+    // Temporarily disable ICC profile embedding to fix color issues first
+    // if (useICC) {
+    //   try {
+    //     finalPdfBuffer = await this.applyICCProfilePostProcessing(finalPdfBuffer, iccProfilePath);
+    //     console.log(`Enhanced CMYK: Successfully embedded ICC profile via Ghostscript: ${path.basename(iccProfilePath)}`);
+    //   } catch (error) {
+    //     console.log('Enhanced CMYK: Failed to embed ICC profile via Ghostscript, using PDF without profile:', (error as Error).message);
+    //   }
+    // }
     
     return finalPdfBuffer;
   }
@@ -990,9 +990,9 @@ export class EnhancedCMYKGenerator {
         '-dColorConversionStrategy=/LeaveColorUnchanged',  // CRITICAL: Don't change colors!
         '-dProcessColorModel=/DeviceCMYK',
         '-dOverrideICC=true',
-        `-sOutputICCProfile=${iccProfilePath}`,
-        `-sOutputFile=${outputPath}`,
-        inputPath
+        `-sOutputICCProfile="${iccProfilePath}"`,
+        `-sOutputFile="${outputPath}"`,
+        `"${inputPath}"`
       ].join(' ');
       
       console.log(`Enhanced CMYK: Applying ICC profile with Ghostscript: ${path.basename(iccProfilePath)}`);
@@ -1239,12 +1239,12 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Colors array:`, (logoData as any)?.svgAnalysis?.colors?.length);
         }
         
-        // Check svgColors from database for CMYK values
-        const colorAnalysis = logoData?.svgColors as any;
+        // Check both svgColors and svgAnalysis for CMYK values
+        const colorAnalysis = logoData?.svgColors || (logoData as any)?.svgAnalysis?.colors;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
         console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
         
-        // svgColors is directly the array, not nested under .colors
+        // Handle both formats
         if (colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
@@ -1338,19 +1338,20 @@ export class EnhancedCMYKGenerator {
               }
             }
             
-            // Convert with exact CMYK preservation
+            // Convert with exact CMYK preservation using our new direct approach
             if (colorMappings.length > 0) {
               console.log(`Enhanced CMYK: Using direct CMYK preservation with ${colorMappings.length} color mappings`);
-              const success = await convertSVGtoCMYKPDF(preservedSvgPath, cmykPdfPath, colorMappings);
+              const { convertSVGtoCMYKPDFDirect } = await import('./direct-cmyk-pdf');
+              const success = await convertSVGtoCMYKPDFDirect(preservedSvgPath, cmykPdfPath, colorAnalysis);
               
               if (success && fs.existsSync(cmykPdfPath)) {
                 finalPdfPath = cmykPdfPath;
                 console.log(`Enhanced CMYK: Successfully created CMYK PDF with exact color preservation`);
               } else {
-                // Fallback to standard Ghostscript conversion
-                const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dConvertCMYKImagesToRGB=false -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-                console.log(`Enhanced CMYK: Falling back to standard Ghostscript conversion`);
-                await execAsync(gsCommand);
+                // Fallback to direct CMYK conversion without color mappings
+                const { convertSVGtoCMYKPDFDirect } = await import('./direct-cmyk-pdf');
+                const fallbackSuccess = await convertSVGtoCMYKPDFDirect(preservedSvgPath, cmykPdfPath);
+                console.log(`Enhanced CMYK: Fallback to direct CMYK conversion`);
                 
                 if (fs.existsSync(cmykPdfPath)) {
                   finalPdfPath = cmykPdfPath;
@@ -1358,9 +1359,10 @@ export class EnhancedCMYKGenerator {
               }
             } else {
               // Standard conversion if no mappings
-              const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dConvertCMYKImagesToRGB=false -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-              console.log(`Enhanced CMYK: Converting to CMYK with standard Ghostscript`);
-              await execAsync(gsCommand);
+              // Use our new direct CMYK conversion for all cases
+              const { convertSVGtoCMYKPDFDirect } = await import('./direct-cmyk-pdf');
+              const success = await convertSVGtoCMYKPDFDirect(preservedSvgPath, cmykPdfPath);
+              console.log(`Enhanced CMYK: Using direct CMYK conversion with standard algorithm`);
               
               if (fs.existsSync(cmykPdfPath)) {
                 finalPdfPath = cmykPdfPath;
