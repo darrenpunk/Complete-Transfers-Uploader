@@ -34,8 +34,8 @@ export class SimplifiedPDFGenerator {
       data.templateSize.height * 2.834
     ]);
 
-    // Page 1: Design on white background
-    this.drawBackground(page1, 'white');
+    // Page 1: Design without background (transparent)
+    // Don't draw any background for the first page
     await this.embedLogos(pdfDoc, page1, data.canvasElements, data.logos, data.templateSize);
 
     // Page 2: Design on garment color (if specified)
@@ -238,19 +238,21 @@ export class SimplifiedPDFGenerator {
   }
 
   private calculateScale(element: any, templateSize: any): number {
-    // Convert from pixels to points (0.35mm per pixel)
-    const mmToPoints = 2.834;
-    const pixelToMm = 0.35;
-    return pixelToMm * mmToPoints;
+    // The element dimensions are already in the correct scale for the canvas
+    // We just need to convert to PDF points (1 point = 1/72 inch)
+    // Since our canvas uses 0.35mm per pixel, and there are 2.834 points per mm
+    // The scale should be 1.0 (no additional scaling needed)
+    return 1.0;
   }
 
   private calculatePosition(element: any, templateSize: any, page: PDFPage): { x: number; y: number } {
     const { height } = page.getSize();
-    const scale = this.calculateScale(element, templateSize);
     
+    // Direct mapping: canvas coordinates to PDF coordinates
+    // No scaling needed as dimensions are already correct
     return {
-      x: element.x * scale,
-      y: height - (element.y * scale) - (element.height * scale)
+      x: element.x,
+      y: height - element.y - element.height
     };
   }
 }
