@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Transparency Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .pdf-box {
+            background: white;
+            border: 2px solid #333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .pdf-box h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .pdf-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .checkerboard {
+            background-image: 
+                linear-gradient(45deg, #808080 25%, transparent 25%), 
+                linear-gradient(-45deg, #808080 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #808080 75%), 
+                linear-gradient(-45deg, transparent 75%, #808080 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.good { background: #4CAF50; color: white; }
+        .status.bad { background: #f44336; color: white; }
+        .status.unknown { background: #ff9800; color: white; }
+    </style>
+</head>
+<body>
+    <h1>PDF Transparency Test Comparison</h1>
+    <p>The checkerboard pattern below each PDF helps identify if transparency is preserved correctly. 
+       If you see the checkerboard through transparent areas, transparency is working.</p>
+    
+    <div class="container">
+        <div class="pdf-box">
+            <h3>Standard rsvg-convert <span class="status unknown">DEFAULT</span></h3>
+            <div class="pdf-info">
+                <strong>Method:</strong> rsvg-convert -f pdf<br>
+                <strong>File:</strong> test-standard-rsvg.pdf<br>
+                <strong>Size:</strong> 233KB
+            </div>
+            <div class="checkerboard">
+                <iframe src="test-standard-rsvg.pdf"></iframe>
+            </div>
+        </div>
+        
+        <div class="pdf-box">
+            <h3>Inkscape Export <span class="status good">RECOMMENDED</span></h3>
+            <div class="pdf-info">
+                <strong>Method:</strong> inkscape --export-type=pdf<br>
+                <strong>File:</strong> test-inkscape-transparency.pdf<br>
+                <strong>Size:</strong> 245KB<br>
+                <strong>Note:</strong> Better handling of embedded images
+            </div>
+            <div class="checkerboard">
+                <iframe src="test-inkscape-transparency.pdf"></iframe>
+            </div>
+        </div>
+        
+        <div class="pdf-box">
+            <h3>Ghostscript with Transparency <span class="status unknown">POST-PROCESS</span></h3>
+            <div class="pdf-info">
+                <strong>Method:</strong> gs -dPreserveTransparency=true<br>
+                <strong>File:</strong> test-gs-transparency.pdf<br>
+                <strong>Size:</strong> 314KB
+            </div>
+            <div class="checkerboard">
+                <iframe src="test-gs-transparency.pdf"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #fff; border-radius: 8px;">
+        <h2>Analysis</h2>
+        <p>Look for these indicators of correct transparency handling:</p>
+        <ul>
+            <li>✓ Transparent areas should show the checkerboard pattern through them</li>
+            <li>✓ Logo colors should remain vibrant and accurate</li>
+            <li>✓ No white boxes around logos where transparency should be</li>
+            <li>✗ Inverted transparency (colored areas transparent, transparent areas opaque)</li>
+            <li>✗ All black or missing content</li>
+        </ul>
+    </div>
+</body>
+</html>

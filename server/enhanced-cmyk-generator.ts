@@ -1404,22 +1404,51 @@ export class EnhancedCMYKGenerator {
       const preservedSvgPath = svgPath.replace('.svg', '_cmyk_preserved.svg');
       fs.writeFileSync(preservedSvgPath, svgContentForPDF);
       
+      // Check if SVG has embedded images
+      const svgContent = fs.readFileSync(preservedSvgPath, 'utf8');
+      const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
+      const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
+      
+      if (hasEmbeddedImages) {
+        console.log(`Enhanced CMYK: SVG contains embedded images, using special handling for transparency`);
+      }
+      
       // Convert the CMYK-preserved SVG to PDF using rsvg-convert
       const rgbPdfPath = svgPath.replace('.svg', '_rgb.pdf');
       const cmykPdfPath = svgPath.replace('.svg', '_cmyk.pdf');
       const command = `rsvg-convert --format=pdf --output="${rgbPdfPath}" "${preservedSvgPath}"`;
       
-      await new Promise<void>((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Enhanced CMYK: SVG to PDF conversion failed:`, error);
-            reject(error);
-          } else {
-            console.log(`Enhanced CMYK: Successfully converted CMYK-preserved SVG to PDF: ${path.basename(svgPath)}`);
-            resolve();
-          }
+      // Use special handler for SVGs with embedded images
+      if (hasEmbeddedImages) {
+        const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(preservedSvgPath, rgbPdfPath);
+        if (!converted) {
+          // Fallback to standard conversion
+          await new Promise<void>((resolve, reject) => {
+            exec(command, (error, stdout, stderr) => {
+              if (error) {
+                console.error(`Enhanced CMYK: SVG to PDF conversion failed:`, error);
+                reject(error);
+              } else {
+                console.log(`Enhanced CMYK: Successfully converted CMYK-preserved SVG to PDF: ${path.basename(svgPath)}`);
+                resolve();
+              }
+            });
+          });
+        }
+      } else {
+        // Standard conversion for SVGs without embedded images
+        await new Promise<void>((resolve, reject) => {
+          exec(command, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Enhanced CMYK: SVG to PDF conversion failed:`, error);
+              reject(error);
+            } else {
+              console.log(`Enhanced CMYK: Successfully converted CMYK-preserved SVG to PDF: ${path.basename(svgPath)}`);
+              resolve();
+            }
+          });
         });
-      });
+      }
 
       if (fs.existsSync(rgbPdfPath)) {
         let finalPdfPath = rgbPdfPath;
