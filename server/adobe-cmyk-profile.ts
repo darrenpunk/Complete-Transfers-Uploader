@@ -134,11 +134,16 @@ export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }):
  * Uses calibrated conversion algorithm matching Illustrator's behavior
  */
 export function adobeRgbToCmyk(rgb: { r: number; g: number; b: number }): { c: number; m: number; y: number; k: number } {
+  console.log(`🎯 ADOBE CMYK CONVERSION: Processing RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`);
+  
   // First check if we have an exact mapping for critical brand colors
   const exactMatch = findClosestAdobeMatch(rgb);
   if (exactMatch) {
+    console.log(`🎯 USING EXACT MATCH: RGB(${rgb.r}, ${rgb.g}, ${rgb.b}) → CMYK(${exactMatch.cmyk.c}, ${exactMatch.cmyk.m}, ${exactMatch.cmyk.y}, ${exactMatch.cmyk.k})`);
     return exactMatch.cmyk;
   }
+  
+  console.log(`🎯 NO EXACT MATCH FOUND: Falling back to algorithm for RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
   
   // Adobe Illustrator US Web Coated (SWOP) v2 CMYK conversion algorithm
   // Enhanced algorithm that matches Illustrator's behavior with proper color profile compensation
