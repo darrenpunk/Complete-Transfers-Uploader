@@ -613,10 +613,14 @@ export default function UploadTool() {
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
-            <Button variant="outline" onClick={() => {
-              console.log('Vectorization Service button clicked');
-              setShowVectorizationForm(true);
-              console.log('showVectorizationForm set to true');
+            <Button variant="outline" onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Vectorization Service button clicked, current state:', showVectorizationForm);
+              setShowVectorizationForm(prev => {
+                console.log('Setting showVectorizationForm from', prev, 'to true');
+                return true;
+              });
             }}>
               <Palette className="w-4 h-4 mr-2" />
               Vectorization Service
@@ -666,6 +670,7 @@ export default function UploadTool() {
           onInkColorChange={handleInkColorChange}
           onAlignElement={handleAlignElement}
           onCenterAllElements={handleCenterAllElements}
+          onOpenVectorizationForm={() => setShowVectorizationForm(true)}
         />
 
         {/* Main Canvas Area */}

@@ -11,6 +11,7 @@ interface RasterWarningModalProps {
   onPhotographicApprove: () => void;
   onVectorizeWithAI: () => void;
   onVectorizeWithService: () => void;
+  onOpenVectorizationForm?: () => void;
 }
 
 export function RasterWarningModal({
@@ -19,7 +20,8 @@ export function RasterWarningModal({
   fileName,
   onPhotographicApprove,
   onVectorizeWithAI,
-  onVectorizeWithService
+  onVectorizeWithService,
+  onOpenVectorizationForm
 }: RasterWarningModalProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
@@ -36,7 +38,11 @@ export function RasterWarningModal({
         // Don't call onClose() here - let the parent component handle modal transitions
         break;
       case 'service-vectorize':
-        onVectorizeWithService();
+        if (onOpenVectorizationForm) {
+          onOpenVectorizationForm();
+        } else {
+          onVectorizeWithService();
+        }
         onClose();
         break;
     }

@@ -35,8 +35,9 @@ interface ToolsSidebarProps {
   onTemplateChange: (templateId: string) => void;
   onGarmentColorChange: (color: string) => void;
   onInkColorChange: (color: string) => void;
-  onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
-  onCenterAllElements?: () => void;
+  onAlignElement: (elementId: string, alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
+  onCenterAllElements: () => void;
+  onOpenVectorizationForm?: () => void;
 }
 
 // Professional color palette with complete specifications
@@ -105,7 +106,8 @@ export default function ToolsSidebar({
   onGarmentColorChange,
   onInkColorChange,
   onAlignElement,
-  onCenterAllElements
+  onCenterAllElements,
+  onOpenVectorizationForm
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [logosCollapsed, setLogosCollapsed] = useState(false);
@@ -1022,6 +1024,7 @@ export default function ToolsSidebar({
           onPhotographicApprove={handlePhotographicApprove}
           onVectorizeWithAI={handleVectorizeWithAI}
           onVectorizeWithService={handleVectorizeWithService}
+          onOpenVectorizationForm={onOpenVectorizationForm}
         />
       )}
 
