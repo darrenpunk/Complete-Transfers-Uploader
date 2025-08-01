@@ -963,6 +963,9 @@ export async function registerRoutes(app: express.Application) {
         contentType: req.file.mimetype
       });
       formData.append('mode', isPreview ? 'preview' : 'production');
+      formData.append('output_format', 'svg');
+      formData.append('processing.max_colors', '256');
+      formData.append('processing.curve_fitting', 'true');
 
       // Call vectorizer.ai API
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
@@ -983,6 +986,20 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const result = await response.text(); // SVG content
+      
+      // Verify we received SVG content
+      if (!result.includes('<svg') && !result.includes('<?xml')) {
+        console.error('❌ API returned non-SVG content:', result.substring(0, 200));
+        
+        // Clean up uploaded file
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(500).json({ 
+          error: 'Vectorization service returned invalid format. Expected SVG but got different content.' 
+        });
+      }
       
       // Clean up uploaded file
       if (fs.existsSync(req.file.path)) {
