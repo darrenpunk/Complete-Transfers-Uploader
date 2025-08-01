@@ -9,6 +9,7 @@ import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
 
 // Import the same icons used in the sidebar
 import dtfIconPath from "@assets/DTF_1753540006979.png";
@@ -123,6 +124,7 @@ interface TemplateSelectorModalProps {
   templates: TemplateSize[];
   onSelectTemplate: (templateId: string, copies: number) => void;
   onClose: () => void;
+  onBack?: () => void;
   selectedGroup?: string;
 }
 
@@ -137,6 +139,7 @@ export default function TemplateSelectorModal({
   templates,
   onSelectTemplate,
   onClose,
+  onBack,
   selectedGroup
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -328,12 +331,24 @@ export default function TemplateSelectorModal({
         )}
 
         <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-          >
-            Cancel
-          </Button>
+          <div className="flex gap-2">
+            {onBack && (
+              <Button
+                variant="outline"
+                onClick={onBack}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+          </div>
           <Button
             onClick={handleContinue}
             disabled={!selectedTemplate || copies < minQuantity}

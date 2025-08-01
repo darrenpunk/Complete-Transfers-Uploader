@@ -729,6 +729,11 @@ export default function UploadTool() {
         templates={templateSizes}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
+        onBack={() => {
+          setShowTemplateSelector(false);
+          setShowProductLauncher(true);
+        }}
+        selectedGroup={selectedProductGroup}
       />
 
       {/* PDF Preview Modal */}
