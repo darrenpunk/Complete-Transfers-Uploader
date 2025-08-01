@@ -1328,7 +1328,18 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
   try {
     let modifiedSvg = svgContent;
     
-    // Remove any filled rectangles that might be backgrounds
+    // First, fix the extremely large stroke widths that create backgrounds
+    // Look for g elements with large stroke-width
+    modifiedSvg = modifiedSvg.replace(/<g[^>]*stroke-width\s*=\s*["']([^"']+)["'][^>]*>/gi, (match, strokeWidth) => {
+      const width = parseFloat(strokeWidth);
+      if (width > 100) {
+        console.log(`🎨 Reducing excessive stroke width: ${width} → 2.00`);
+        return match.replace(/stroke-width\s*=\s*["'][^"']+["']/, 'stroke-width="2.00"');
+      }
+      return match;
+    });
+    
+    // Remove filled rectangles that might be backgrounds
     const rectRegex = /<rect[^>]*(?:\/>|>.*?<\/rect>)/gi;
     modifiedSvg = modifiedSvg.replace(rectRegex, (match) => {
       // Check if this has a fill attribute (any filled rectangle is suspect)
@@ -1339,7 +1350,43 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
       return match;
     });
     
-    // Remove any large paths that could be backgrounds
+    // Remove paths with green strokes that form rectangular shapes (backgrounds)
+    const strokePathRegex = /<path[^>]*stroke\s*=\s*["']([^"']+)["'][^>]*d\s*=\s*["']([^"']*)["'][^>]*(?:\/>|>.*?<\/path>)/gi;
+    modifiedSvg = modifiedSvg.replace(strokePathRegex, (match, strokeColor, pathData) => {
+      // Check if this is a green color
+      if (strokeColor.match(/#[4-9a-fA-F][0-9a-fA-F]{5}/)) {
+        const rgb = hexToRgb(strokeColor);
+        if (rgb && rgb.g > rgb.r && rgb.g > rgb.b) {
+          // Check if path forms a rectangular shape
+          const hasMoveTo = pathData.includes('M');
+          const hasLineTo = pathData.includes('L');
+          const hasClose = pathData.includes('Z');
+          
+          if (hasMoveTo && hasLineTo && hasClose) {
+            // Count the number of line segments
+            const lineCount = (pathData.match(/L/g) || []).length;
+            if (lineCount >= 3 && lineCount <= 5) {
+              console.log(`🎨 Removing green rectangular stroke path: ${strokeColor}`);
+              return '';
+            }
+          }
+          
+          // Also check for very large coordinate values that indicate full-page backgrounds
+          const coords = pathData.match(/[\d.-]+/g);
+          if (coords) {
+            const values = coords.map(parseFloat);
+            const maxValue = Math.max(...values);
+            if (maxValue > 500) {
+              console.log(`🎨 Removing large green stroke path: ${strokeColor} (max coord: ${maxValue})`);
+              return '';
+            }
+          }
+        }
+      }
+      return match;
+    });
+    
+    // Remove any large paths that could be backgrounds (filled paths)
     const largePathRegex = /<path[^>]*d\s*=\s*["']([^"']*)["'][^>]*fill\s*=\s*["']([^"']+)["'][^>]*(?:\/>|>.*?<\/path>)/gi;
     modifiedSvg = modifiedSvg.replace(largePathRegex, (match, pathData, fillColor) => {
       // If path contains M, L commands and closes with Z, it might be a background
@@ -1361,16 +1408,15 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
       return match;
     });
     
-    // Remove any elements with green fills that might be unwanted backgrounds
-    const greenElements = /<[^>]+fill\s*=\s*["']#[678][\da-fA-F]{5}["'][^>]*(?:\/>|[^<]*<\/[^>]+>)/gi;
-    modifiedSvg = modifiedSvg.replace(greenElements, (match) => {
-      // Check if this is a green color (starts with #6, #7, or #8 for green hues)
-      const colorMatch = match.match(/fill\s*=\s*["'](#[678][\da-fA-F]{5})["']/i);
+    // Remove any elements with green fills
+    const greenFillElements = /<[^>]+fill\s*=\s*["']#[4-9a-fA-F][\da-fA-F]{5}["'][^>]*(?:\/>|[^<]*<\/[^>]+>)/gi;
+    modifiedSvg = modifiedSvg.replace(greenFillElements, (match) => {
+      const colorMatch = match.match(/fill\s*=\s*["'](#[4-9a-fA-F][\da-fA-F]{5})["']/i);
       if (colorMatch) {
         const color = colorMatch[1];
         const rgb = hexToRgb(color);
         if (rgb && rgb.g > rgb.r && rgb.g > rgb.b) {
-          console.log(`🎨 Removing green background element from vectorized SVG`);
+          console.log(`🎨 Removing green fill element from vectorized SVG`);
           return '';
         }
       }
