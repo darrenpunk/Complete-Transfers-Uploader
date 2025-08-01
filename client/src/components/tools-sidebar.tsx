@@ -984,7 +984,7 @@ export default function ToolsSidebar({
       <TemplateSelectorModal
         open={showTemplateSelectorModal}
         templates={templateSizes}
-        onSelectTemplate={onTemplateChange}
+        onSelectTemplate={(templateId) => onTemplateChange(templateId)}
         onClose={() => setShowTemplateSelectorModal(false)}
       />
 

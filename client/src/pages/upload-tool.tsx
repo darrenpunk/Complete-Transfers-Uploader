@@ -255,7 +255,7 @@ export default function UploadTool() {
   };
 
   // Handle template selection from modal
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = (templateId: string, copies: number = 1) => {
     const selectedTemplate = templateSizes.find(t => t.id === templateId);
     if (selectedTemplate) {
       console.log('Template selected:', { templateId, selectedTemplate, group: selectedTemplate.group });

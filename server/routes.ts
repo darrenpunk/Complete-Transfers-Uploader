@@ -19,6 +19,58 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
+// Pricing calculation function (simulates Odoo pricelist logic)
+function calculateTemplatePrice(template: any, copies: number): number {
+  // Base price per template size (in EUR)
+  const sizeMultipliers: Record<string, number> = {
+    'A6': 0.8,
+    'A5': 1.0, 
+    'A4': 1.5,
+    'A3': 2.5,
+    'A2': 4.0,
+    'A1': 6.0,
+    'dtf_1000x550': 3.0, // Large DTF format
+  };
+
+  // Group-based multipliers
+  const groupMultipliers: Record<string, number> = {
+    'Full Colour Transfers': 1.0,
+    'Full Colour Transfer Sizes': 1.0,
+    'Single Colour Transfers': 0.7,
+    'DTF Transfer Sizes': 1.2,
+    'UV DTF Transfers': 1.8,
+    'Woven Badges': 2.5,
+    'Applique Badges': 3.0,
+    'Reflective Transfers': 1.5,
+    'Full Colour HD': 1.3,
+    'Zero Silicone Transfers': 1.1,
+    'Sublimation Transfers': 0.9,
+    'Full Colour Metallic': 1.4,
+  };
+
+  // Quantity discounts
+  const getQuantityDiscount = (qty: number): number => {
+    if (qty >= 1000) return 0.7; // 30% discount
+    if (qty >= 500) return 0.75;  // 25% discount  
+    if (qty >= 100) return 0.8;   // 20% discount
+    if (qty >= 50) return 0.85;   // 15% discount
+    if (qty >= 25) return 0.9;    // 10% discount
+    if (qty >= 10) return 0.95;   // 5% discount
+    return 1.0; // No discount
+  };
+
+  // Base calculation
+  const basePrice = 2.50; // EUR base price
+  const sizeMultiplier = sizeMultipliers[template.name] || sizeMultipliers['A4'];
+  const groupMultiplier = groupMultipliers[template.group] || 1.0;
+  const quantityDiscount = getQuantityDiscount(copies);
+
+  const pricePerUnit = basePrice * sizeMultiplier * groupMultiplier * quantityDiscount;
+  
+  // Minimum price constraint
+  return Math.max(0.50, pricePerUnit);
+}
+
 const uploadDir = path.resolve('./uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -1147,6 +1199,43 @@ export async function registerRoutes(app: express.Application) {
       return svgContent;
     }
   }
+
+  // Pricing endpoint for Odoo integration
+  app.get('/api/pricing', async (req, res) => {
+    try {
+      const { templateId, copies } = req.query;
+      
+      if (!templateId || !copies) {
+        return res.status(400).json({ error: 'Template ID and copies are required' });
+      }
+
+      const copiesNum = parseInt(copies as string);
+      if (isNaN(copiesNum) || copiesNum < 1) {
+        return res.status(400).json({ error: 'Invalid copies quantity' });
+      }
+
+      // Get template data to determine pricing tier
+      const templateSizes = await storage.getTemplateSizes();
+      const template = templateSizes.find(t => t.id === templateId);
+      
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found' });
+      }
+
+      // Calculate pricing based on template size and quantity
+      const pricePerUnit = calculateTemplatePrice(template, copiesNum);
+      const totalPrice = pricePerUnit * copiesNum;
+
+      res.json({
+        pricePerUnit: Math.round(pricePerUnit * 100) / 100, // Round to 2 decimals
+        totalPrice: Math.round(totalPrice * 100) / 100,
+        currency: 'EUR'
+      });
+    } catch (error) {
+      console.error('Pricing calculation error:', error);
+      res.status(500).json({ error: 'Failed to calculate pricing' });
+    }
+  });
 
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {

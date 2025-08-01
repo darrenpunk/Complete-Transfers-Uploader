@@ -2,8 +2,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Import the same icons used in the sidebar
 import dtfIconPath from "@assets/DTF_1753540006979.png";
@@ -116,9 +121,15 @@ const getTemplateGroupIcon = (group: string) => {
 interface TemplateSelectorModalProps {
   open: boolean;
   templates: TemplateSize[];
-  onSelectTemplate: (templateId: string) => void;
+  onSelectTemplate: (templateId: string, copies: number) => void;
   onClose: () => void;
   selectedGroup?: string;
+}
+
+interface PricingData {
+  pricePerUnit: number;
+  totalPrice: number;
+  currency: string;
 }
 
 export default function TemplateSelectorModal({
@@ -128,6 +139,9 @@ export default function TemplateSelectorModal({
   onClose,
   selectedGroup
 }: TemplateSelectorModalProps) {
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [copies, setCopies] = useState<number>(1);
+
   // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
     const group = template.group || "Other";
@@ -138,9 +152,34 @@ export default function TemplateSelectorModal({
     return groups;
   }, {} as Record<string, TemplateSize[]>);
 
+  // Get pricing data for selected template and copies
+  const selectedTemplateData = selectedTemplate ? templates.find(t => t.id === selectedTemplate) : null;
+  
+  const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
+    queryKey: ['/api/pricing', selectedTemplate, copies],
+    enabled: !!selectedTemplate && copies > 0,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+
   const handleTemplateSelect = (templateId: string) => {
-    onSelectTemplate(templateId);
+    setSelectedTemplate(templateId);
+  };
+
+  const handleContinue = () => {
+    if (selectedTemplate && copies > 0) {
+      onSelectTemplate(selectedTemplate, copies);
+      onClose();
+      // Reset state for next time
+      setSelectedTemplate(null);
+      setCopies(1);
+    }
+  };
+
+  const handleCancel = () => {
     onClose();
+    // Reset state for next time
+    setSelectedTemplate(null);
+    setCopies(1);
   };
 
   console.log('TemplateSelectorModal render', { open, templatesLength: templates.length });
@@ -181,8 +220,12 @@ export default function TemplateSelectorModal({
                     {groupTemplates.map((template) => (
                       <Button
                         key={template.id}
-                        variant="outline"
-                        className="h-auto p-3 flex flex-col items-center justify-center space-y-2 hover:bg-gray-400 hover:border-blue-500 transition-colors"
+                        variant={selectedTemplate === template.id ? "default" : "outline"}
+                        className={`h-auto p-3 flex flex-col items-center justify-center space-y-2 transition-colors ${
+                          selectedTemplate === template.id 
+                            ? "bg-primary text-primary-foreground border-primary" 
+                            : "hover:bg-gray-400 hover:border-blue-500"
+                        }`}
                         onClick={() => handleTemplateSelect(template.id)}
                       >
                         <div className="font-semibold">{template.label}</div>
@@ -202,12 +245,83 @@ export default function TemplateSelectorModal({
           ))}
         </div>
 
-        <div className="flex justify-center pt-4 border-t">
+        {/* Copies and Pricing Section */}
+        {selectedTemplate && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Selected Template</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTemplateData?.label} ({selectedTemplateData?.width}×{selectedTemplateData?.height}mm)
+                  </p>
+                </div>
+                <div className="text-right space-y-1">
+                  <Label htmlFor="copies" className="text-sm font-medium">
+                    Quantity
+                  </Label>
+                  <Input
+                    id="copies"
+                    type="number"
+                    min="1"
+                    max="10000"
+                    value={copies}
+                    onChange={(e) => setCopies(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-24 text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Pricing Display */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Price Estimate</p>
+                    {isPricingLoading ? (
+                      <p className="text-sm">Loading pricing...</p>
+                    ) : pricingData ? (
+                      <div className="space-y-1">
+                        <p className="text-sm">
+                          €{pricingData.pricePerUnit.toFixed(2)} per unit
+                        </p>
+                        <p className="text-lg font-semibold">
+                          Total: €{pricingData.totalPrice.toFixed(2)}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Pricing unavailable
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">
+                      {copies} × {selectedTemplateData?.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Prices from Odoo system
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="flex justify-between pt-4 border-t">
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={handleCancel}
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleContinue}
+            disabled={!selectedTemplate || copies < 1}
+            className="min-w-32"
+          >
+            Continue
           </Button>
         </div>
       </DialogContent>
