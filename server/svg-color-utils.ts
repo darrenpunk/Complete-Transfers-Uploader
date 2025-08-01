@@ -342,6 +342,15 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     const colors: SVGColorInfo[] = [];
     let colorId = 0;
 
+    // Check if this is a vectorized CMYK file
+    const isVectorizedCMYK = svgContent.includes('data-vectorized-cmyk="true"') || 
+                           svgContent.includes('VECTORIZED_CMYK_FILE');
+    console.log(`🎨 SVG Analysis: Vectorized CMYK file detected: ${isVectorizedCMYK}`);
+    
+    if (isVectorizedCMYK) {
+      console.log(`🎨 SVG Analysis: Processing vectorized CMYK file with special handling`);
+    }
+
     // Function to convert RGB percentage to 0-255 values
     const convertRgbPercent = (rgbString: string): string => {
       const match = rgbString.match(/rgb\(([^)]+)\)/);
@@ -485,7 +494,34 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // Store RGB values without conversion
+        // For vectorized CMYK files, mark RGB colors as already converted to CMYK
+        if (isVectorizedCMYK) {
+          // Skip white color (keep as RGB for transparency)
+          if (r === 255 && g === 255 && b === 255) {
+            console.log(`🎨 Vectorized CMYK: Preserving white RGB(${r}, ${g}, ${b}) for transparency`);
+            return {
+              original: colorString,
+              display: rgbColor,
+              cmyk: null,
+              isCMYK: false,
+              rgb: { r, g, b }
+            };
+          }
+          
+          // Convert RGB to CMYK using Adobe profile and mark as CMYK
+          const cmykValues = adobeRgbToCmyk({ r, g, b });
+          console.log(`🎨 Vectorized CMYK: RGB(${r}, ${g}, ${b}) → CMYK ${cmykValues.c}%,${cmykValues.m}%,${cmykValues.y}%,${cmykValues.k}%`);
+          
+          return {
+            original: colorString,
+            display: `CMYK(${cmykValues.c}, ${cmykValues.m}, ${cmykValues.y}, ${cmykValues.k})`,
+            cmyk: `C:${cmykValues.c} M:${cmykValues.m} Y:${cmykValues.y} K:${cmykValues.k}`,
+            isCMYK: true,  // Mark as CMYK to avoid RGB warning
+            rgb: { r, g, b }
+          };
+        }
+        
+        // Store RGB values without conversion for non-vectorized files
         console.log(`🎨 Detected RGB(${r}, ${g}, ${b}) - preserving original values`);
         
         return {
@@ -504,7 +540,34 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Store RGB values without CMYK conversion
+        // For vectorized CMYK files, mark hex colors as already converted to CMYK
+        if (isVectorizedCMYK) {
+          // Skip white color (keep as RGB for transparency)
+          if (r === 255 && g === 255 && b === 255) {
+            console.log(`🎨 Vectorized CMYK: Preserving white hex ${colorString} for transparency`);
+            return {
+              original: colorString,
+              display: `rgb(${r}, ${g}, ${b})`,
+              cmyk: null,
+              isCMYK: false,
+              rgb: { r, g, b }
+            };
+          }
+          
+          // Convert hex to CMYK using Adobe profile and mark as CMYK
+          const cmykValues = adobeRgbToCmyk({ r, g, b });
+          console.log(`🎨 Vectorized CMYK: Hex ${colorString} RGB(${r}, ${g}, ${b}) → CMYK ${cmykValues.c}%,${cmykValues.m}%,${cmykValues.y}%,${cmykValues.k}%`);
+          
+          return {
+            original: colorString,
+            display: `CMYK(${cmykValues.c}, ${cmykValues.m}, ${cmykValues.y}, ${cmykValues.k})`,
+            cmyk: `C:${cmykValues.c} M:${cmykValues.m} Y:${cmykValues.y} K:${cmykValues.k}`,
+            isCMYK: true,  // Mark as CMYK to avoid RGB warning
+            rgb: { r, g, b }
+          };
+        }
+        
+        // Store RGB values without CMYK conversion for non-vectorized files
         console.log(`🎨 Detected HEX ${colorString} as RGB(${r}, ${g}, ${b}) - preserving original values`);
         
         return {

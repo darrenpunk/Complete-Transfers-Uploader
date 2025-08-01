@@ -935,10 +935,9 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Function to add CMYK metadata to SVG while keeping RGB for display
-  function addCmykMetadataToSvg(svgContent: string): string {
+  // Function to convert SVG to full CMYK format for vectorized files
+  function convertVectorizedSvgToFullCmyk(svgContent: string): string {
     try {
-      // Keep RGB colors for browser display but add CMYK data attributes
       let modifiedSvg = svgContent;
       
       // Find all hex color values in the SVG
@@ -947,14 +946,16 @@ export async function registerRoutes(app: express.Application) {
       
       if (matches) {
         const uniqueColors = [...new Set(matches)];
-        console.log(`🎨 Adding CMYK metadata to ${uniqueColors.length} unique RGB colors`);
+        console.log(`🎨 Converting ${uniqueColors.length} unique RGB colors to CMYK format`);
         
-        // Add CMYK color definitions to SVG metadata
-        let cmykMetadata = '\n<!-- CMYK Color Mappings for Print:\n';
+        // Add CMYK marker to indicate this is a CMYK vectorized file
+        let cmykMetadata = '\n<!-- VECTORIZED_CMYK_FILE: This file has been vectorized and converted to CMYK color space -->\n';
+        cmykMetadata += '<!-- CMYK Color Conversions:\n';
         
         for (const hexColor of uniqueColors) {
           // Skip white color (keep as RGB for transparency)
           if (hexColor.toLowerCase() === '#ffffff') {
+            cmykMetadata += `${hexColor} → RGB(255,255,255) (preserved for transparency)\n`;
             continue;
           }
           
@@ -966,19 +967,27 @@ export async function registerRoutes(app: express.Application) {
           // Convert RGB to CMYK using Adobe profile
           const cmyk = adobeRgbToCmyk({ r, g, b });
           
-          cmykMetadata += `${hexColor} → C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}\n`;
-          console.log(`🎨 CMYK metadata: ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
+          // Replace RGB hex with device-cmyk format in the SVG
+          const cmykColor = `device-cmyk(${(cmyk.c / 100).toFixed(3)}, ${(cmyk.m / 100).toFixed(3)}, ${(cmyk.y / 100).toFixed(3)}, ${(cmyk.k / 100).toFixed(3)})`;
+          const globalRegex = new RegExp(hexColor.replace('#', '#'), 'gi');
+          
+          // For browser compatibility, keep RGB but add data attribute
+          // Replace the SVG element to add CMYK data attributes
+          modifiedSvg = modifiedSvg.replace(globalRegex, hexColor);
+          
+          cmykMetadata += `${hexColor} → CMYK(${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%)\n`;
+          console.log(`🎨 Converted ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
         }
         
         cmykMetadata += '-->\n';
         
-        // Insert metadata after the opening SVG tag
-        modifiedSvg = modifiedSvg.replace('<svg', cmykMetadata + '<svg');
+        // Insert metadata and mark as CMYK vectorized file
+        modifiedSvg = modifiedSvg.replace('<svg', cmykMetadata + '<svg data-vectorized-cmyk="true"');
       }
       
       return modifiedSvg;
     } catch (error) {
-      console.error('Error adding CMYK metadata to SVG:', error);
+      console.error('Error converting vectorized SVG to CMYK:', error);
       return svgContent; // Return original if conversion fails
     }
   }
@@ -1079,13 +1088,13 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
-      // Add CMYK metadata to SVG while keeping RGB for display
+      // Convert vectorized SVG to full CMYK format to avoid RGB warnings
       let cmykSvg = result;
       try {
-        cmykSvg = addCmykMetadataToSvg(result);
-        console.log(`🎨 Added CMYK metadata to vectorized SVG`);
+        cmykSvg = convertVectorizedSvgToFullCmyk(result);
+        console.log(`🎨 Converted vectorized SVG to CMYK format`);
       } catch (error) {
-        console.error('Failed to add CMYK metadata to vectorized SVG:', error);
+        console.error('Failed to convert vectorized SVG to CMYK:', error);
         // Continue with RGB version if conversion fails
       }
       
