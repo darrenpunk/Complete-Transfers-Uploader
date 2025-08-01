@@ -87,10 +87,10 @@ export class ColorWorkflowManager {
       
       case FileType.RASTER_PNG:
       case FileType.RASTER_JPEG:
-        // Raster files: no CMYK preservation, optional conversion
+        // Raster files: convert to CMYK but handle carefully
         return {
           preserveCMYK: false,
-          convertToCMYK: false, // Don't auto-convert raster to CMYK
+          convertToCMYK: true, // Convert raster to CMYK for print
           allowRasterConversion: true
         };
       
@@ -199,9 +199,9 @@ export class ColorWorkflowManager {
     if (fileType === FileType.VECTOR_SVG || fileType === FileType.VECTOR_PDF) {
       return 'Vector file: CMYK colors preserved, RGB colors will be converted to CMYK';
     } else if (fileType === FileType.MIXED_CONTENT) {
-      return 'Mixed content file: Vector elements will preserve CMYK, raster images remain unchanged';
+      return 'Mixed content file: Vector elements will preserve CMYK, raster images will be converted to CMYK';
     } else if (fileType === FileType.RASTER_PNG || fileType === FileType.RASTER_JPEG) {
-      return 'Raster file: RGB color space maintained';
+      return 'Raster file: Will be converted to CMYK for accurate print output';
     }
     return 'Unknown file type';
   }

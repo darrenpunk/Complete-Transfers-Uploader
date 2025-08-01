@@ -1178,7 +1178,38 @@ export class EnhancedCMYKGenerator {
       return;
     }
     
-    const imageBytes = fs.readFileSync(imagePath);
+    // For raster images, attempt CMYK conversion first
+    let finalImagePath = imagePath;
+    
+    if (mimeType.includes('jpeg') || mimeType.includes('jpg') || mimeType.includes('png')) {
+      try {
+        const { RasterCMYKConverter } = await import('./raster-cmyk-converter');
+        
+        // Check if already CMYK
+        const isAlreadyCMYK = await RasterCMYKConverter.isAlreadyCMYK(imagePath);
+        
+        if (!isAlreadyCMYK) {
+          console.log(`Enhanced CMYK: Converting raster image to CMYK: ${path.basename(imagePath)}`);
+          const cmykImagePath = imagePath.replace(/\.(png|jpg|jpeg)$/i, '_cmyk.$1');
+          
+          const converted = await RasterCMYKConverter.convertRasterToCMYK(imagePath, cmykImagePath, mimeType);
+          
+          if (converted && fs.existsSync(cmykImagePath)) {
+            finalImagePath = cmykImagePath;
+            console.log(`Enhanced CMYK: Using CMYK-converted raster image`);
+          } else {
+            console.log(`Enhanced CMYK: Raster CMYK conversion failed, using original RGB`);
+          }
+        } else {
+          console.log(`Enhanced CMYK: Raster image already in CMYK color space`);
+        }
+      } catch (error) {
+        console.error('Enhanced CMYK: Error during raster CMYK conversion:', error);
+        // Continue with original image
+      }
+    }
+    
+    const imageBytes = fs.readFileSync(finalImagePath);
     let image;
     
     if (mimeType.includes('jpeg') || mimeType.includes('jpg')) {

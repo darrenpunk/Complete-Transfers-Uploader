@@ -55,7 +55,7 @@ Preferred communication style: Simple, everyday language.
 
 ### System Design Choices
 - **Storage Instance Management**: Critical design pattern enforcing a single shared storage instance (`server/storage.ts`) to ensure data persistence and avoid inconsistencies.
-- **Color Workflow Isolation**: Implemented `ColorWorkflowManager` to separate vector file (SVG/PDF) color handling from raster files (PNG/JPEG). Vector files preserve CMYK colors and convert RGB to CMYK using Adobe-matching algorithm. Raster files maintain RGB without automatic conversion.
+- **Color Workflow Isolation**: Implemented `ColorWorkflowManager` to separate vector file (SVG/PDF) color handling from raster files (PNG/JPEG). Vector files preserve CMYK colors and convert RGB to CMYK using Adobe-matching algorithm. Raster files are now also converted to CMYK during PDF generation for accurate print output.
 - **Mixed Content Detection**: Implemented `MixedContentDetector` to analyze PDFs and SVGs for both raster and vector content. Files with mixed content are flagged to prevent color workflow contamination, ensuring vector elements maintain CMYK accuracy while embedded raster images preserve their original color space.
 - **File Upload System**:
     - Local filesystem storage in `/uploads`.

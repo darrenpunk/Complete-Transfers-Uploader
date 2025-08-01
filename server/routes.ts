@@ -189,9 +189,39 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📂 File type: ${fileType}, Workflow: ${JSON.stringify(colorWorkflow)}`);
         console.log(`🎨 ${ColorWorkflowManager.getWorkflowMessage(fileType, colorWorkflow)}`);
         
-        // Only analyze colors for vector and mixed files
+        // Analyze colors based on file type
         let analysisData = null;
-        if (ColorWorkflowManager.shouldAnalyzeColors(fileType) || fileType === FileType.MIXED_CONTENT) {
+        
+        // Handle raster files separately
+        if (fileType === FileType.RASTER_PNG || fileType === FileType.RASTER_JPEG) {
+          try {
+            console.log(`🖼️ Processing raster file for CMYK conversion: ${finalFilename}`);
+            const { RasterCMYKConverter } = await import('./raster-cmyk-converter');
+            
+            // Analyze raster colors for display
+            const rasterPath = path.join(uploadDir, finalFilename);
+            const colors = await RasterCMYKConverter.analyzeRasterColors(rasterPath);
+            
+            if (colors.length > 0) {
+              analysisData = {
+                colors: colors,
+                fonts: [],
+                strokeWidths: [],
+                hasText: false
+              };
+              console.log(`🎨 Analyzed ${colors.length} dominant colors in raster image`);
+            }
+            
+            // Note: Actual CMYK conversion happens during PDF generation
+            // This prevents breaking the upload workflow
+            
+          } catch (error) {
+            console.error('Error analyzing raster colors:', error);
+            // Continue without color analysis - don't break upload
+          }
+        } 
+        // Handle vector and mixed files
+        else if (ColorWorkflowManager.shouldAnalyzeColors(fileType) || fileType === FileType.MIXED_CONTENT) {
           try {
             console.log(`🔍 Starting color analysis for vector file: ${finalFilename}`);
             const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
