@@ -1,7 +1,7 @@
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 
 interface CompleteTransferLogoProps {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
@@ -9,7 +9,8 @@ export default function CompleteTransferLogo({ size = "md", className = "" }: Co
   const sizeClasses = {
     sm: "h-8",
     md: "h-12", 
-    lg: "h-16"
+    lg: "h-16",
+    xl: "h-20"
   };
 
   return (

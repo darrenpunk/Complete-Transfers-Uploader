@@ -149,7 +149,7 @@ export default function TemplateSelectorModal({
     <Dialog open={open} onOpenChange={() => {}} modal={true}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50">
         <DialogHeader>
-          <CompleteTransferLogo size="md" className="mb-4" />
+          <CompleteTransferLogo size="xl" className="mb-6 transform scale-125" />
           <DialogTitle className="text-2xl font-bold text-center">
             {selectedGroup ? `${selectedGroup} - Select Template Size` : "Select Your Template Size"}
           </DialogTitle>
