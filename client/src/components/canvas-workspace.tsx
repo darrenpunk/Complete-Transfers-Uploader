@@ -126,7 +126,7 @@ export default function CanvasWorkspace({
   
   // Core UI state
   const [zoom, setZoom] = useState(75); // Start at higher zoom for better visibility
-  const [colorManagementEnabled, setColorManagementEnabled] = useState(true);
+  const [colorManagementEnabled, setColorManagementEnabled] = useState(false); // Default to OFF (RGB preview)
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
   
