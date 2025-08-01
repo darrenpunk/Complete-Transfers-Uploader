@@ -232,7 +232,7 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg p-3 flex-1 overflow-auto flex items-start justify-center">
+                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
                   {/* Check if we have individual logo garment colors or use project default */}
                   {(() => {
                     // Get unique garment colors from canvas elements
@@ -371,10 +371,10 @@ export default function PDFPreviewModal({
           <div className="w-80 space-y-4">
             <h3 className="text-lg font-semibold">Preflight Summary</h3>
             
-            <ScrollArea className="h-[200px]">
-              <div className="space-y-3">
+            <div className="space-y-2">
+              <div className="space-y-2">
                 {preflightItems.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg border">
+                  <div key={index} className="flex items-start gap-2 p-2 rounded border">
                     <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -390,7 +390,7 @@ export default function PDFPreviewModal({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
 
             <Separator />
 
