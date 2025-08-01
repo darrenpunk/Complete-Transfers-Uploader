@@ -57,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - **Storage Instance Management**: Critical design pattern enforcing a single shared storage instance (`server/storage.ts`) to ensure data persistence and avoid inconsistencies.
 - **Color Workflow Isolation**: Implemented `ColorWorkflowManager` to separate vector file (SVG/PDF) color handling from raster files (PNG/JPEG). Vector files preserve CMYK colors and convert RGB to CMYK using Adobe-matching algorithm. Raster files are now also converted to CMYK during PDF generation for accurate print output.
 - **Mixed Content Detection**: Implemented `MixedContentDetector` to analyze PDFs and SVGs for both raster and vector content. Files with mixed content are flagged to prevent color workflow contamination, ensuring vector elements maintain CMYK accuracy while embedded raster images preserve their original color space.
+- **CMYK Color Accuracy Fix (Aug 2025)**: Resolved critical issue where CMYK values displayed in app didn't match PDF output. Root cause: files with existing CMYK colors were being converted again through RGB-to-CMYK algorithm. Solution: Enhanced CMYK detection to properly identify existing CMYK colors (device-cmyk format) and mark them with isCMYK flag. Files with existing CMYK now only get ICC profile embedding without color conversion using `embedICCProfileOnly` method.
 - **File Upload System**:
     - Local filesystem storage in `/uploads`.
     - Multi-tier PDF conversion: Ghostscript primary (color accuracy), ImageMagick fallback, original PDF storage for vector output.

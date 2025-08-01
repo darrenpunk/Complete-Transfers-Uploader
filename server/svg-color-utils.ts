@@ -411,10 +411,31 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       
       // First check if this is already a CMYK color specification
       // SVG can contain CMYK colors in device-cmyk format or spot colors
-      const cmykMatch = colorString.match(/device-cmyk\(([^)]+)\)/i);
+      const cmykMatch = colorString.match(/device-cmyk\s*\(([^)]+)\)/i);
       if (cmykMatch) {
         // Parse CMYK values (can be decimal 0-1 or percentage)
         const values = cmykMatch[1].split(/[,\s]+/).map(v => {
+          const num = parseFloat(v);
+          // Convert to percentage if decimal
+          return v.includes('%') ? parseInt(v) : Math.round(num * 100);
+        });
+        
+        if (values.length === 4) {
+          const [c, m, y, k] = values;
+          return {
+            original: colorString,
+            display: `CMYK(${c}, ${m}, ${y}, ${k})`,
+            cmyk: `C:${c} M:${m} Y:${y} K:${k}`,
+            isCMYK: true
+          };
+        }
+      }
+      
+      // Also check for cmyk() format (without device- prefix)
+      const simpleCmykMatch = colorString.match(/cmyk\s*\(([^)]+)\)/i);
+      if (simpleCmykMatch) {
+        // Parse CMYK values (can be decimal 0-1 or percentage)
+        const values = simpleCmykMatch[1].split(/[,\s]+/).map(v => {
           const num = parseFloat(v);
           // Convert to percentage if decimal
           return v.includes('%') ? parseInt(v) : Math.round(num * 100);
@@ -521,7 +542,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'fill',
-          selector: `${elementType}:nth-of-type(${index + 1})`
+          selector: `${elementType}:nth-of-type(${index + 1})`,
+          isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
         });
       }
 
@@ -539,7 +561,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'stroke',
-          selector: `${elementType}:nth-of-type(${index + 1})`
+          selector: `${elementType}:nth-of-type(${index + 1})`,
+          isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
         });
       }
 
@@ -556,12 +579,14 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           colors.push({
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
+            originalFormat: colorInfo.original,   // Add originalFormat
             cmykColor: colorInfo.cmyk,
             pantoneMatch: embeddedPantone,
             pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'fill',
-            selector: `${elementType}:nth-of-type(${index + 1})`
+            selector: `${elementType}:nth-of-type(${index + 1})`,
+            isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
           });
         }
 
@@ -573,12 +598,14 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           colors.push({
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
+            originalFormat: colorInfo.original,   // Add originalFormat
             cmykColor: colorInfo.cmyk,
             pantoneMatch: embeddedPantone,
             pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'stroke',
-            selector: `${elementType}:nth-of-type(${index + 1})`
+            selector: `${elementType}:nth-of-type(${index + 1})`,
+            isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
           });
         }
       }

@@ -508,15 +508,18 @@ export class EnhancedCMYKGenerator {
     const pdfBytes = await pdfDoc.save();
     let finalPdfBuffer = Buffer.from(pdfBytes);
     
-    // Temporarily disable ICC profile embedding to fix color issues first
-    // if (useICC) {
-    //   try {
-    //     finalPdfBuffer = await this.applyICCProfilePostProcessing(finalPdfBuffer, iccProfilePath);
-    //     console.log(`Enhanced CMYK: Successfully embedded ICC profile via Ghostscript: ${path.basename(iccProfilePath)}`);
-    //   } catch (error) {
-    //     console.log('Enhanced CMYK: Failed to embed ICC profile via Ghostscript, using PDF without profile:', (error as Error).message);
-    //   }
-    // }
+    // Apply ICC profile embedding ONLY - no color conversion!
+    // This is critical: we must not alter the CMYK values that are already in the PDF
+    if (useICC) {
+      try {
+        console.log('Enhanced CMYK: Embedding ICC profile without color conversion...');
+        finalPdfBuffer = await this.embedICCProfileOnly(finalPdfBuffer, iccProfilePath);
+        console.log('Enhanced CMYK: ICC profile embedded successfully');
+      } catch (error) {
+        console.error('Enhanced CMYK: ICC profile embedding failed:', error);
+        // Continue with PDF without profile rather than risk color changes
+      }
+    }
     
     return finalPdfBuffer;
   }
@@ -706,6 +709,8 @@ export class EnhancedCMYKGenerator {
       
       if (hasCMYK) {
         console.log(`Enhanced CMYK: PDF already contains CMYK colors, preserving original: ${path.basename(pdfPath)}`);
+        // For PDFs that already have CMYK, we still need to preserve the exact values
+        // Skip conversion but ensure proper embedding
       } else {
         // Step 1: Convert original PDF to CMYK color space
         
@@ -723,8 +728,8 @@ export class EnhancedCMYKGenerator {
         // Apply CMYK conversion using Ghostscript with ICC profile for accurate color management
         let cmykCommand: string;
         if (hasICC) {
-          // Use ICC profile for proper color management
-          cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+          // Use ICC profile for proper color management - but preserve exact CMYK values!
+          cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -dPreserveSeparation=true -dPreserveDeviceN=true -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
         } else {
           // Fallback without ICC profile
           cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
@@ -1032,8 +1037,11 @@ export class EnhancedCMYKGenerator {
       ].join(' ');
       
       console.log(`Enhanced CMYK: Applying ICC profile with Ghostscript: ${path.basename(iccProfilePath)}`);
+      console.log(`Enhanced CMYK: GS Command: ${gsCommand}`);
       
-      await execAsync(gsCommand);
+      const { stdout, stderr } = await execAsync(gsCommand);
+      if (stdout) console.log('Enhanced CMYK: GS stdout:', stdout);
+      if (stderr) console.log('Enhanced CMYK: GS stderr:', stderr);
       
       if (fs.existsSync(outputPath)) {
         const enhancedPDFBuffer = fs.readFileSync(outputPath);
@@ -1075,6 +1083,43 @@ export class EnhancedCMYKGenerator {
       } catch (error) {
         // Ignore if directory not empty or doesn't exist
       }
+    }
+  }
+
+  private async embedICCProfileOnly(pdfPath: string, iccProfilePath: string): Promise<boolean> {
+    try {
+      const execAsync = promisify(exec);
+      const outputPath = pdfPath.replace('.pdf', '_icc.pdf');
+      
+      // Use Ghostscript to embed ICC profile WITHOUT color conversion
+      const gsCommand = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dColorConversionStrategy=/LeaveColorUnchanged', // CRITICAL: Don't convert colors
+        '-dProcessColorModel=/DeviceCMYK',
+        '-dEmbedAllFonts=true',
+        '-dCompatibilityLevel=1.4',
+        `-sOutputICCProfile="${iccProfilePath}"`,
+        `-sOutputFile="${outputPath}"`,
+        `"${pdfPath}"`
+      ].join(' ');
+      
+      console.log('Enhanced CMYK: Embedding ICC profile WITHOUT color conversion');
+      await execAsync(gsCommand);
+      
+      if (fs.existsSync(outputPath)) {
+        // Replace original with ICC-embedded version
+        fs.renameSync(outputPath, pdfPath);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Enhanced CMYK: ICC profile embedding failed:', error);
+      return false;
     }
   }
 
@@ -1316,27 +1361,34 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Using pre-calculated CMYK values from app analysis`);
           
           let foundConvertedColors = 0;
+          let hasExistingCMYK = false;
+          
           for (const colorInfo of colorAnalysis) {
-            console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted);
-            if (colorInfo.converted && colorInfo.cmykColor) {
+            console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted, 'isCMYK:', colorInfo.isCMYK);
+            
+            // Check if color is already CMYK
+            if (colorInfo.isCMYK) {
+              hasExistingCMYK = true;
+              console.log(`Enhanced CMYK: Color already in CMYK format: ${colorInfo.cmykColor}`);
+            }
+            
+            // Only count as "converted" if it was actually converted from RGB to CMYK
+            if (colorInfo.converted && colorInfo.cmykColor && !colorInfo.isCMYK) {
               foundConvertedColors++;
-              // Parse CMYK values (e.g., "C:47 M:2 Y:100 K:0")
-              const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
-              if (cmykMatch) {
-                const [, c, m, y, k] = cmykMatch;
-                
-                // Don't convert to RGB - we'll preserve CMYK values directly
-                console.log(`Enhanced CMYK: Preserving exact CMYK values ${colorInfo.cmykColor} for ${colorInfo.originalFormat}`);
-              }
+              console.log(`Enhanced CMYK: RGB->CMYK converted color: ${colorInfo.cmykColor} for ${colorInfo.originalFormat}`);
             }
           }
-          console.log(`Enhanced CMYK: Found ${foundConvertedColors} converted colors for ${element.logoId}`);
           
-          // Set flag based on whether we found any converted colors
+          console.log(`Enhanced CMYK: Found ${foundConvertedColors} RGB->CMYK converted colors, ${hasExistingCMYK ? 'HAS' : 'NO'} existing CMYK colors`);
+          
+          // Set flag based on whether we need CMYK conversion
           if (foundConvertedColors > 0) {
             preservedExactCMYK = true;
             console.log(`Enhanced CMYK: Setting preservedExactCMYK = true, will apply CMYK colorspace conversion`);
           }
+          
+          // Pass hasExistingCMYK flag to the next section
+          (element as any)._hasExistingCMYK = hasExistingCMYK;
         } else {
           console.log(`Enhanced CMYK: No converted colors found in logo analysis for ${element.logoId}`);
         }
@@ -1372,20 +1424,25 @@ export class EnhancedCMYKGenerator {
       if (fs.existsSync(rgbPdfPath)) {
         let finalPdfPath = rgbPdfPath;
         
-        // Apply CMYK colorspace conversion based on whether colors were preserved
-        console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}`);
-        if (preservedExactCMYK) {
+        // Retrieve hasExistingCMYK flag
+        const hasExistingCMYK = (element as any)._hasExistingCMYK || false;
+        
+        // Apply CMYK colorspace conversion based on whether colors need conversion
+        console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}, hasExistingCMYK: ${hasExistingCMYK}`);
+        
+        // Only apply CMYK conversion if we have RGB colors that need converting
+        if (preservedExactCMYK && !hasExistingCMYK) {
           console.log(`Enhanced CMYK: Converting RGB PDF to true CMYK colorspace for: ${path.basename(svgPath)}`);
           
           try {
-            // Use Ghostscript to convert the PDF to true CMYK colorspace
-            // Use the new direct CMYK preservation approach
+            // Use the direct CMYK conversion approach for RGB->CMYK conversion
             const colorMappings = [];
             const colorAnalysis = logoData?.svgColors as any;
             
             if (colorAnalysis && Array.isArray(colorAnalysis)) {
               for (const colorInfo of colorAnalysis) {
-                if (colorInfo.converted && colorInfo.cmykColor) {
+                // Only process colors that were converted from RGB to CMYK
+                if (colorInfo.converted && colorInfo.cmykColor && !colorInfo.isCMYK) {
                   const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
                   if (cmykMatch) {
                     const [, c, m, y, k] = cmykMatch;
@@ -1399,7 +1456,7 @@ export class EnhancedCMYKGenerator {
                         k: parseInt(k, 10)
                       }
                     });
-                    console.log(`Enhanced CMYK: Preserving exact CMYK values: ${colorInfo.cmykColor}`);
+                    console.log(`Enhanced CMYK: Converting RGB to CMYK: ${colorInfo.cmykColor}`);
                   }
                 }
               }
@@ -1407,13 +1464,13 @@ export class EnhancedCMYKGenerator {
             
             // Convert with exact CMYK preservation using our new direct approach
             if (colorMappings.length > 0) {
-              console.log(`Enhanced CMYK: Using direct CMYK preservation with ${colorMappings.length} color mappings`);
+              console.log(`Enhanced CMYK: Using direct CMYK conversion for ${colorMappings.length} RGB colors`);
               const { convertSVGtoCMYKPDFDirect } = await import('./direct-cmyk-pdf');
               const success = await convertSVGtoCMYKPDFDirect(preservedSvgPath, cmykPdfPath, colorAnalysis);
               
               if (success && fs.existsSync(cmykPdfPath)) {
                 finalPdfPath = cmykPdfPath;
-                console.log(`Enhanced CMYK: Successfully created CMYK PDF with exact color preservation`);
+                console.log(`Enhanced CMYK: Successfully converted RGB colors to CMYK`);
               } else {
                 // Fallback to direct CMYK conversion without color mappings
                 const { convertSVGtoCMYKPDFDirect } = await import('./direct-cmyk-pdf');
@@ -1437,6 +1494,25 @@ export class EnhancedCMYKGenerator {
             }
           } catch (cmykError) {
             console.warn('Enhanced CMYK: CMYK colorspace conversion error:', cmykError);
+          }
+        } else if (hasExistingCMYK) {
+          // For files with existing CMYK colors, only embed ICC profile without conversion
+          console.log(`Enhanced CMYK: File has existing CMYK colors, embedding ICC profile only`);
+          
+          try {
+            const iccProfilePath = path.join(process.cwd(), "attached_assets", "PSO Coated FOGRA51 (EFI)_1753573621935.icc");
+            
+            if (fs.existsSync(iccProfilePath)) {
+              const success = await this.embedICCProfileOnly(rgbPdfPath, iccProfilePath);
+              if (success) {
+                console.log(`Enhanced CMYK: Successfully embedded ICC profile without color conversion`);
+                finalPdfPath = rgbPdfPath;
+              }
+            } else {
+              console.log(`Enhanced CMYK: ICC profile not found, using PDF as-is`);
+            }
+          } catch (error) {
+            console.error(`Enhanced CMYK: ICC profile embedding failed:`, error);
           }
         }
         
@@ -1491,5 +1567,68 @@ export class EnhancedCMYKGenerator {
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
     } : { r: 255, g: 255, b: 255 };
+  }
+
+  /**
+   * Embed ICC profile without any color conversion
+   * This preserves exact CMYK values while adding the profile for color management
+   */
+  private async embedICCProfileOnly(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
+    const execAsync = promisify(exec);
+    const tempDir = path.join(process.cwd(), 'uploads', 'temp_icc_only');
+    
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    const timestamp = Date.now();
+    const inputPath = path.join(tempDir, `input_${timestamp}.pdf`);
+    const outputPath = path.join(tempDir, `output_${timestamp}.pdf`);
+    
+    try {
+      fs.writeFileSync(inputPath, pdfBuffer);
+      
+      // Use Ghostscript with specific flags to ONLY embed ICC without color conversion
+      const gsCommand = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dColorConversionStrategy=/LeaveColorUnchanged', // Critical: Don't convert colors!
+        '-dPreserveSeparation=true',
+        '-dPreserveDeviceN=true',
+        '-dPreserveOPIComments=true',
+        '-dDownsampleColorImages=false',
+        '-dDownsampleGrayImages=false',
+        '-dDownsampleMonoImages=false',
+        '-dColorImageFilter=/FlateEncode', // Lossless
+        '-dAutoFilterColorImages=false',
+        '-dEncodeColorImages=true',
+        `-sOutputICCProfile="${iccProfilePath}"`,
+        '-dPDFA=2', // PDF/A-2 for color management
+        '-dPDFACompatibilityPolicy=1',
+        `-sOutputFile="${outputPath}"`,
+        `"${inputPath}"`
+      ].join(' ');
+      
+      console.log('Enhanced CMYK: Embedding ICC profile with color preservation...');
+      await execAsync(gsCommand);
+      
+      if (fs.existsSync(outputPath)) {
+        const result = fs.readFileSync(outputPath);
+        fs.unlinkSync(inputPath);
+        fs.unlinkSync(outputPath);
+        return result;
+      } else {
+        throw new Error('ICC profile embedding failed - no output created');
+      }
+      
+    } catch (error) {
+      // Clean up on error
+      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+      throw error;
+    }
   }
 }

@@ -296,11 +296,18 @@ export async function registerRoutes(app: express.Application) {
             if (analysis.colors && analysis.colors.length > 0 && colorWorkflow.convertToCMYK) {
               console.log(`🎨 Processing colors for ${finalFilename} based on workflow`);
               
-              // Mark colors as converted only if workflow requires conversion
-              const processedColors = analysis.colors.map(color => ({
-                ...color,
-                converted: colorWorkflow.convertToCMYK && !(color as any).isCMYK // Only mark as converted if actually converting RGB to CMYK
-              }));
+              // Mark colors as converted only if workflow requires conversion AND color is not already CMYK
+              const processedColors = analysis.colors.map(color => {
+                const isCMYK = (color as any).isCMYK || false;
+                const shouldConvert = colorWorkflow.convertToCMYK && !isCMYK;
+                
+                console.log(`🎨 Color processing: ${color.originalColor} - isCMYK: ${isCMYK}, converted: ${shouldConvert}`);
+                
+                return {
+                  ...color,
+                  converted: shouldConvert // Only mark as converted if actually converting RGB to CMYK
+                };
+              });
               
               // Update analysis with processed colors
               analysis.colors = processedColors;
