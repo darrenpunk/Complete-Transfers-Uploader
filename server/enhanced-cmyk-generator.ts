@@ -10,6 +10,7 @@ import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, Standard
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
 import { applySVGColorChanges } from "./svg-color-utils";
+import { convertSVGtoCMYKPDF, prepareSVGForCMYKConversion } from "./preserve-cmyk-values";
 
 console.log('Enhanced CMYK Generator loaded - Version 2.0');
 
@@ -1257,27 +1258,8 @@ export class EnhancedCMYKGenerator {
               if (cmykMatch) {
                 const [, c, m, y, k] = cmykMatch;
                 
-                // Use Adobe CMYK to RGB conversion for consistency
-                // Import the Adobe conversion function
-                const { adobeCmykToRgb } = require('./adobe-cmyk-profile');
-                
-                // Convert Adobe CMYK to RGB using the same algorithm as the app
-                const rgbValue = adobeCmykToRgb(
-                  parseInt(c),
-                  parseInt(m),
-                  parseInt(y),
-                  parseInt(k)
-                );
-                
-                const exactRgbColor = `rgb(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b})`;
-                
-                // Replace ALL variations of the original color format
-                const originalColor = colorInfo.originalFormat;
-                console.log(`Enhanced CMYK: Using Adobe CMYK ${colorInfo.cmykColor} -> RGB(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b}) for ${originalColor}`);
-                
-                // Replace the color in the SVG content
-                const colorPattern = new RegExp(originalColor.replace(/[()]/g, '\\$&'), 'g');
-                svgContentForPDF = svgContentForPDF.replace(colorPattern, exactRgbColor);
+                // Don't convert to RGB - we'll preserve CMYK values directly
+                console.log(`Enhanced CMYK: Preserving exact CMYK values ${colorInfo.cmykColor} for ${colorInfo.originalFormat}`);
               }
             }
           }
@@ -1330,61 +1312,59 @@ export class EnhancedCMYKGenerator {
           
           try {
             // Use Ghostscript to convert the PDF to true CMYK colorspace
-            // IMPORTANT: Create custom color mapping PostScript to use Adobe CMYK values
-            const colorMappings: Array<{ rgb: string; cmyk: { c: number; m: number; y: number; k: number } }> = [];
-            
-            // Build color mappings from the logo analysis
+            // Use the new direct CMYK preservation approach
+            const colorMappings = [];
             const colorAnalysis = logoData?.svgColors as any;
+            
             if (colorAnalysis && Array.isArray(colorAnalysis)) {
               for (const colorInfo of colorAnalysis) {
                 if (colorInfo.converted && colorInfo.cmykColor) {
                   const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
                   if (cmykMatch) {
                     const [, c, m, y, k] = cmykMatch;
-                    const { adobeCmykToRgb } = require('./adobe-cmyk-profile');
-                    const rgbValue = adobeCmykToRgb(parseInt(c), parseInt(m), parseInt(y), parseInt(k));
-                    
                     colorMappings.push({
-                      rgb: `rgb(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b})`,
-                      cmyk: { c: parseInt(c), m: parseInt(m), y: parseInt(y), k: parseInt(k) }
+                      originalColor: colorInfo.originalFormat || colorInfo.originalColor,
+                      cmykColor: colorInfo.cmykColor,
+                      cmykValues: {
+                        c: parseInt(c, 10),
+                        m: parseInt(m, 10),
+                        y: parseInt(y, 10),
+                        k: parseInt(k, 10)
+                      }
                     });
-                    console.log(`Enhanced CMYK: Added mapping - RGB(${rgbValue.r}, ${rgbValue.g}, ${rgbValue.b}) -> CMYK(${c}, ${m}, ${y}, ${k})`);
+                    console.log(`Enhanced CMYK: Preserving exact CMYK values: ${colorInfo.cmykColor}`);
                   }
                 }
               }
             }
             
-            // Create PostScript prologue with Adobe CMYK mappings
-            try {
-              if (colorMappings.length > 0) {
-                const { createAdobeCMYKPrologue } = require('./adobe-cmyk-pdf');
-                const prologue = createAdobeCMYKPrologue(colorMappings);
-                const prologuePath = rgbPdfPath.replace('.pdf', '_prologue.ps');
-                fs.writeFileSync(prologuePath, prologue);
-                
-                // Use Ghostscript with our custom prologue to preserve Adobe CMYK values
-                const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${prologuePath}" "${rgbPdfPath}"`;
-                console.log(`Enhanced CMYK: Converting to CMYK with Adobe prologue (${colorMappings.length} mappings)`);
-                
-                await execAsync(cmykCommand);
-                
-                // Clean up prologue file
-                if (fs.existsSync(prologuePath)) {
-                  fs.unlinkSync(prologuePath);
-                }
+            // Convert with exact CMYK preservation
+            if (colorMappings.length > 0) {
+              console.log(`Enhanced CMYK: Using direct CMYK preservation with ${colorMappings.length} color mappings`);
+              const success = await convertSVGtoCMYKPDF(preservedSvgPath, cmykPdfPath, colorMappings);
+              
+              if (success && fs.existsSync(cmykPdfPath)) {
+                finalPdfPath = cmykPdfPath;
+                console.log(`Enhanced CMYK: Successfully created CMYK PDF with exact color preservation`);
               } else {
-                // Standard conversion if no mappings
-                const cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-                console.log(`Enhanced CMYK: Converting to CMYK with standard Ghostscript`);
-                await execAsync(cmykCommand);
+                // Fallback to standard Ghostscript conversion
+                const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dConvertCMYKImagesToRGB=false -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+                console.log(`Enhanced CMYK: Falling back to standard Ghostscript conversion`);
+                await execAsync(gsCommand);
+                
+                if (fs.existsSync(cmykPdfPath)) {
+                  finalPdfPath = cmykPdfPath;
+                }
               }
+            } else {
+              // Standard conversion if no mappings
+              const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dConvertCMYKImagesToRGB=false -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+              console.log(`Enhanced CMYK: Converting to CMYK with standard Ghostscript`);
+              await execAsync(gsCommand);
               
               if (fs.existsSync(cmykPdfPath)) {
-                console.log(`Enhanced CMYK: Successfully converted to CMYK colorspace: ${path.basename(svgPath)}`);
                 finalPdfPath = cmykPdfPath;
               }
-            } catch (cmykError) {
-              console.warn(`Enhanced CMYK: CMYK conversion failed, using RGB PDF:`, cmykError);
             }
           } catch (cmykError) {
             console.warn('Enhanced CMYK: CMYK colorspace conversion error:', cmykError);
