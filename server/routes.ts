@@ -144,8 +144,8 @@ export async function registerRoutes(app: express.Application) {
                 const pngFilename = `${file.filename}_preview.png`;
                 const pngPath = path.join(uploadDir, pngFilename);
                 
-                // Use Ghostscript to create PNG preview while preserving colors
-                const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                // Use Ghostscript to create PNG preview at higher resolution
+                const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                 await execAsync(gsCommand);
                 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
