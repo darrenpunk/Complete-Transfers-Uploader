@@ -848,22 +848,52 @@ export async function registerRoutes(app: express.Application) {
       console.log('CMYK Preview: Processing SVG with', svgContent.match(/rgb\([^)]+\)/g)?.length || 0, 'RGB colors');
       
       // Parse SVG and convert all RGB colors to CMYK
-      // Handle percentage-based RGB values
-      svgContent = svgContent.replace(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/g, (match, rPct, gPct, bPct) => {
-        const r = Math.round(parseFloat(rPct) * 2.55);
-        const g = Math.round(parseFloat(gPct) * 2.55);
-        const b = Math.round(parseFloat(bPct) * 2.55);
-        const cmyk = adobeRgbToCmyk(r, g, b);
-        // Convert CMYK back to RGB for display
-        const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
-        const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
-        const bNew = Math.round(255 * (1 - cmyk.y / 100) * (1 - cmyk.k / 100));
-        
-        // Return in percentage format to match original
-        const result = `rgb(${(rNew/255*100).toFixed(6)}%, ${(gNew/255*100).toFixed(6)}%, ${(bNew/255*100).toFixed(6)}%)`;
-        console.log(`CMYK Preview: ${match} -> ${result}`);
-        return result;
+      // Count how many replacements we'll make
+      let replacementCount = 0;
+      
+      // Handle percentage-based RGB values with a more robust regex
+      svgContent = svgContent.replace(/rgb\(([\d.]+)%,\s*([\d.]+)%,\s*([\d.]+)%\)/g, (match, rPct, gPct, bPct) => {
+        try {
+          // Parse percentages
+          const rPercent = parseFloat(rPct);
+          const gPercent = parseFloat(gPct);
+          const bPercent = parseFloat(bPct);
+          
+          // Validate inputs
+          if (isNaN(rPercent) || isNaN(gPercent) || isNaN(bPercent)) {
+            console.log(`CMYK Preview: Invalid values in ${match} - r:${rPct}, g:${gPct}, b:${bPct}`);
+            return match;
+          }
+          
+          // Convert percentages to RGB (0-255)
+          const r = Math.round(rPercent * 2.55);
+          const g = Math.round(gPercent * 2.55);
+          const b = Math.round(bPercent * 2.55);
+          
+          // Apply Adobe CMYK conversion
+          const cmyk = adobeRgbToCmyk(r, g, b);
+          
+          // Convert CMYK back to RGB for display
+          const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
+          const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
+          const bNew = Math.round(255 * (1 - cmyk.y / 100) * (1 - cmyk.k / 100));
+          
+          // Return in percentage format to match original
+          const result = `rgb(${(rNew/255*100).toFixed(6)}%, ${(gNew/255*100).toFixed(6)}%, ${(bNew/255*100).toFixed(6)}%)`;
+          
+          replacementCount++;
+          if (replacementCount <= 5) {
+            console.log(`CMYK Preview: Converting RGB(${r},${g},${b}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k}) -> RGB(${rNew},${gNew},${bNew})`);
+          }
+          
+          return result;
+        } catch (err) {
+          console.error('CMYK Preview conversion error:', err, 'for match:', match);
+          return match;
+        }
       });
+      
+      console.log(`CMYK Preview: Made ${replacementCount} color replacements`);
       
       // Handle regular RGB values
       svgContent = svgContent.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
