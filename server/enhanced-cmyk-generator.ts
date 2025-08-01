@@ -1308,7 +1308,8 @@ export class EnhancedCMYKGenerator {
       console.log(`Enhanced CMYK: Starting CMYK conversion for: ${path.basename(svgPath)}, logoId: ${element.logoId}`);
       
       let svgContentForPDF = fs.readFileSync(svgPath, 'utf8');
-      let preservedExactCMYK = false;
+      let preservedExactCMYK = true; // Force CMYK conversion for all vector files
+      console.log(`Enhanced CMYK: FORCING preservedExactCMYK = true for all vector files`);
       
       // Get the logo data to access pre-calculated CMYK values
       console.log(`Enhanced CMYK: Attempting to get logo data for ID: ${element.logoId}`);
@@ -1331,7 +1332,12 @@ export class EnhancedCMYKGenerator {
         // Check both svgColors and svgAnalysis for CMYK values
         const colorAnalysis = logoData?.svgColors || (logoData as any)?.svgAnalysis?.colors;
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
-        console.log(`Enhanced CMYK: Color analysis content:`, JSON.stringify(colorAnalysis, null, 2));
+        console.log(`Enhanced CMYK: logoData.svgColors:`, !!logoData?.svgColors);
+        console.log(`Enhanced CMYK: logoData.svgAnalysis:`, !!(logoData as any)?.svgAnalysis);
+        console.log(`Enhanced CMYK: logoData.svgAnalysis.colors:`, !!(logoData as any)?.svgAnalysis?.colors);
+        if (colorAnalysis) {
+          console.log(`Enhanced CMYK: Color analysis length:`, Array.isArray(colorAnalysis) ? colorAnalysis.length : 'not array');
+        }
         
         // Handle both formats
         if (colorAnalysis && Array.isArray(colorAnalysis) && colorAnalysis.length > 0) {
@@ -1342,6 +1348,7 @@ export class EnhancedCMYKGenerator {
           
           for (const colorInfo of colorAnalysis) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted, 'isCMYK:', colorInfo.isCMYK);
+            console.log(`Enhanced CMYK: Color info details:`, JSON.stringify(colorInfo, null, 2));
             
             // Check if color is already CMYK
             if (colorInfo.isCMYK) {
@@ -1350,7 +1357,9 @@ export class EnhancedCMYKGenerator {
             }
             
             // Only count as "converted" if it was actually converted from RGB to CMYK
-            if (colorInfo.converted && colorInfo.cmykColor && !colorInfo.isCMYK) {
+            const isConverted = colorInfo.converted && colorInfo.cmykColor && !colorInfo.isCMYK;
+            console.log(`Enhanced CMYK: Conversion check - converted: ${colorInfo.converted}, has cmykColor: ${!!colorInfo.cmykColor}, not CMYK: ${!colorInfo.isCMYK}, result: ${isConverted}`);
+            if (isConverted) {
               foundConvertedColors++;
               console.log(`Enhanced CMYK: RGB->CMYK converted color: ${colorInfo.cmykColor} for ${colorInfo.originalFormat}`);
             }
@@ -1369,7 +1378,9 @@ export class EnhancedCMYKGenerator {
           // Pass hasExistingCMYK flag to the next section
           (element as any)._hasExistingCMYK = hasExistingCMYK;
         } else {
-          console.log(`Enhanced CMYK: No converted colors found in logo analysis for ${element.logoId}`);
+          console.log(`Enhanced CMYK: No color analysis found, but forcing CMYK conversion for vector file`);
+          // For vector files without analysis data, force CMYK conversion
+          preservedExactCMYK = true;
         }
       } catch (logoError) {
         console.error(`Enhanced CMYK: ERROR accessing logo data for CMYK preservation:`, logoError);
@@ -1438,8 +1449,9 @@ export class EnhancedCMYKGenerator {
         // Apply CMYK colorspace conversion based on whether colors need conversion
         console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}, hasExistingCMYK: ${hasExistingCMYK}`);
         
-        // Only apply CMYK conversion if we have RGB colors that need converting
-        if (preservedExactCMYK && !hasExistingCMYK) {
+        // Force CMYK conversion for all vector files to ensure proper colorspace
+        console.log(`Enhanced CMYK: FORCING CMYK conversion for vector files to ensure proper colorspace`);
+        if (true) { // Force CMYK conversion for all SVG files
           console.log(`Enhanced CMYK: Converting RGB PDF to true CMYK colorspace for: ${path.basename(svgPath)}`);
           
           try {
