@@ -39,9 +39,18 @@ export class RasterCMYKConverter {
       }
 
       // Use ImageMagick to convert to CMYK with proper profile
-      const command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
+      // For PNG files, we need special handling to preserve transparency
+      let command;
+      if (mimeType === 'image/png') {
+        // For PNG: preserve alpha channel with -alpha on and -background transparent
+        command = `convert "${inputPath}" -alpha on -background transparent -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
+      } else {
+        // For JPEG: standard conversion
+        command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
+      }
       
       console.log('🔧 Running ImageMagick command for raster CMYK conversion');
+      console.log('📋 Command:', command);
       await execAsync(command);
       
       // Verify the output file was created
