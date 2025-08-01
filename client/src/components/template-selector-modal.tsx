@@ -140,7 +140,7 @@ export default function TemplateSelectorModal({
   selectedGroup
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [copies, setCopies] = useState<number>(1);
+  const [copies, setCopies] = useState<number>(10); // Default to 10
 
   // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
@@ -155,6 +155,15 @@ export default function TemplateSelectorModal({
   // Get pricing data for selected template and copies
   const selectedTemplateData = selectedTemplate ? templates.find(t => t.id === selectedTemplate) : null;
   
+  // Determine minimum quantity based on template group
+  const getMinQuantity = (template: TemplateSize | null): number => {
+    if (!template) return 10;
+    const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers'];
+    return dtfGroups.includes(template.group || '') ? 1 : 10;
+  };
+  
+  const minQuantity = getMinQuantity(selectedTemplateData);
+  
   const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
     queryKey: ['/api/pricing', selectedTemplate, copies],
     enabled: !!selectedTemplate && copies > 0,
@@ -163,6 +172,12 @@ export default function TemplateSelectorModal({
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
+    // Update copies to minimum when template changes
+    const template = templates.find(t => t.id === templateId);
+    const newMinQuantity = getMinQuantity(template || null);
+    if (copies < newMinQuantity) {
+      setCopies(newMinQuantity);
+    }
   };
 
   const handleContinue = () => {
@@ -171,7 +186,7 @@ export default function TemplateSelectorModal({
       onClose();
       // Reset state for next time
       setSelectedTemplate(null);
-      setCopies(1);
+      setCopies(10);
     }
   };
 
@@ -179,7 +194,7 @@ export default function TemplateSelectorModal({
     onClose();
     // Reset state for next time
     setSelectedTemplate(null);
-    setCopies(1);
+    setCopies(10);
   };
 
   console.log('TemplateSelectorModal render', { open, templatesLength: templates.length });
@@ -259,17 +274,20 @@ export default function TemplateSelectorModal({
                 </div>
                 <div className="text-right space-y-1">
                   <Label htmlFor="copies" className="text-sm font-medium">
-                    Quantity
+                    Quantity of Transfers Required
                   </Label>
                   <Input
                     id="copies"
                     type="number"
-                    min="1"
+                    min={minQuantity}
                     max="10000"
                     value={copies}
-                    onChange={(e) => setCopies(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => setCopies(Math.max(minQuantity, parseInt(e.target.value) || minQuantity))}
                     className="w-24 text-center"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Min: {minQuantity} {minQuantity === 1 ? '(DTF/UV DTF)' : '(Standard)'}
+                  </p>
                 </div>
               </div>
 
@@ -318,7 +336,7 @@ export default function TemplateSelectorModal({
           </Button>
           <Button
             onClick={handleContinue}
-            disabled={!selectedTemplate || copies < 1}
+            disabled={!selectedTemplate || copies < minQuantity}
             className="min-w-32"
           >
             Continue
