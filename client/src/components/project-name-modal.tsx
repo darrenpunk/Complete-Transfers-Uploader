@@ -12,13 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { FileText, AlertCircle, MessageSquare, Hash } from "lucide-react";
+import { FileText, AlertCircle, MessageSquare } from "lucide-react";
 
 interface ProjectNameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentName?: string;
-  onConfirm: (projectData: { name: string; comments: string; quantity: number }) => void;
+  onConfirm: (projectData: { name: string; comments: string }) => void;
   isGeneratingPDF?: boolean;
   title?: string;
   description?: string;
@@ -35,7 +35,6 @@ export default function ProjectNameModal({
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
-  const [quantity, setQuantity] = useState(1);
   const [hasError, setHasError] = useState(false);
 
   const handleConfirm = () => {
@@ -46,34 +45,22 @@ export default function ProjectNameModal({
       return;
     }
 
-    if (quantity < 1) {
-      setHasError(true);
-      return;
-    }
-
     setHasError(false);
     onConfirm({
       name: trimmedName,
-      comments: comments.trim(),
-      quantity: quantity
+      comments: comments.trim()
     });
     onOpenChange(false);
   };
 
   const handleInputChange = (value: string) => {
     setProjectName(value);
-    if (hasError && value.trim() && value.trim() !== 'Untitled Project' && quantity >= 1) {
+    if (hasError && value.trim() && value.trim() !== 'Untitled Project') {
       setHasError(false);
     }
   };
 
-  const handleQuantityChange = (value: string) => {
-    const num = parseInt(value) || 1;
-    setQuantity(Math.max(1, num));
-    if (hasError && projectName.trim() && projectName.trim() !== 'Untitled Project' && num >= 1) {
-      setHasError(false);
-    }
-  };
+
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -109,24 +96,7 @@ export default function ProjectNameModal({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="quantity" className="flex items-center gap-2">
-              <Hash className="w-4 h-4" />
-              Quantity of Transfers Required
-            </Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => handleQuantityChange(e.target.value)}
-              placeholder="1"
-              className={hasError ? "border-red-300 focus:border-red-500" : ""}
-            />
-            <div className="text-xs text-muted-foreground">
-              This quantity will be added to the Odoo webcart
-            </div>
-          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="comments" className="flex items-center gap-2">
@@ -149,7 +119,7 @@ export default function ProjectNameModal({
           {hasError && (
             <div className="flex items-center gap-2 text-sm text-red-600">
               <AlertCircle className="w-4 h-4" />
-              Please enter a valid project name and quantity (minimum 1)
+              Please enter a valid project name
             </div>
           )}
           

@@ -155,7 +155,7 @@ export default function UploadTool() {
   });
 
   // Handle project naming confirmation
-  const handleProjectNameConfirm = async (projectData: { name: string; comments: string; quantity: number }) => {
+  const handleProjectNameConfirm = async (projectData: { name: string; comments: string }) => {
     try {
       // Update project name if needed
       if (currentProject && currentProject.name !== projectData.name) {
@@ -163,17 +163,17 @@ export default function UploadTool() {
         setCurrentProject(updatedProject);
       }
 
-      // Store the project data (comments and quantity) for future use with Odoo integration
+      // Store the project data (comments) for future use with Odoo integration
       // For now, we'll log this data but it can be stored in project metadata later
       console.log('Project data for Odoo integration:', {
         name: projectData.name,
         comments: projectData.comments,
-        quantity: projectData.quantity
+        quantity: 1 // Default quantity since it's now managed in template selection
       });
 
       // Execute the pending action
       if (pendingAction === 'pdf') {
-        generatePDFMutation.mutate({ name: projectData.name, quantity: projectData.quantity });
+        generatePDFMutation.mutate({ name: projectData.name, quantity: 1 });
       } else if (pendingAction === 'continue') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
       }
