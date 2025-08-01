@@ -335,7 +335,7 @@ export default function CanvasWorkspace({
     }
   };
 
-  const handleVectorDownload = (vectorSvg: string) => {
+  const handleVectorDownload = async (vectorSvg: string) => {
     console.log('handleVectorDownload called', { hasPendingRasterFile: !!pendingRasterFile, hasOnLogoUpload: !!onLogoUpload });
     if (pendingRasterFile && onLogoUpload) {
       // Convert SVG string to File object
@@ -345,9 +345,30 @@ export default function CanvasWorkspace({
       });
       
       console.log('Uploading vectorized SVG:', svgFile.name, svgFile.type, svgFile.size);
-      onLogoUpload([svgFile]);
-      setPendingRasterFile(null);
-      setShowVectorizer(false);
+      
+      try {
+        // Find the old raster logo that needs to be replaced
+        const oldRasterLogo = logos.find(logo => 
+          logo.originalName === pendingRasterFile.fileName || 
+          logo.filename === pendingRasterFile.fileName
+        );
+        
+        // Upload the new vectorized SVG
+        onLogoUpload([svgFile]);
+        
+        // If we found the old logo, we'll need to update canvas elements to reference the new one
+        // This will be handled after the upload completes via the useEffect that watches logos
+        if (oldRasterLogo) {
+          console.log('Found old raster logo to replace:', oldRasterLogo.id);
+        }
+        
+        setPendingRasterFile(null);
+        setShowVectorizer(false);
+      } catch (error) {
+        console.error('Error handling vector download:', error);
+        setPendingRasterFile(null);
+        setShowVectorizer(false);
+      }
     }
   };
 
