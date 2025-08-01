@@ -1342,6 +1342,10 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
       return match;
     });
     
+    // Also remove vector-effect="non-scaling-stroke" attributes which can cause rendering issues
+    modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["']non-scaling-stroke["']/gi, '');
+    console.log(`🎨 Removed non-scaling-stroke attributes`);
+    
     console.log(`🎨 Background removal complete for vectorized SVG`);
     return modifiedSvg;
     
