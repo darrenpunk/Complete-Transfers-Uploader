@@ -963,9 +963,7 @@ export async function registerRoutes(app: express.Application) {
         contentType: req.file.mimetype
       });
       formData.append('mode', isPreview ? 'preview' : 'production');
-      formData.append('output_format', 'svg');
-      formData.append('processing.max_colors', '256');
-      formData.append('processing.curve_fitting', 'true');
+      formData.append('output.format', 'svg');
 
       // Call vectorizer.ai API
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
