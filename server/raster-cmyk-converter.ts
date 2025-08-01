@@ -42,27 +42,11 @@ export class RasterCMYKConverter {
       // For PNG files, we need special handling to preserve transparency
       let command;
       if (mimeType === 'image/png') {
-        // For PNG: More complex handling to properly preserve transparency in CMYK
-        // Step 1: Extract alpha channel
-        const alphaPath = outputPath.replace('.png', '_alpha.png');
-        const rgbPath = outputPath.replace('.png', '_rgb.png');
+        // For PNG: Use a simpler approach that preserves both color and transparency
+        // Convert to CMYK while preserving the alpha channel
+        command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK -alpha set "${outputPath}"`;
         
-        // Extract and preserve the alpha channel
-        await execAsync(`convert "${inputPath}" -alpha extract "${alphaPath}"`);
-        
-        // Convert RGB to CMYK while flattening against white background temporarily
-        await execAsync(`convert "${inputPath}" -background white -alpha remove -profile "${iccProfilePath}" -colorspace CMYK "${rgbPath}"`);
-        
-        // Recombine with original alpha channel
-        command = `convert "${rgbPath}" "${alphaPath}" -alpha off -compose CopyOpacity -composite "${outputPath}"`;
-        
-        // Cleanup temp files after
-        setTimeout(() => {
-          try {
-            if (fs.existsSync(alphaPath)) fs.unlinkSync(alphaPath);
-            if (fs.existsSync(rgbPath)) fs.unlinkSync(rgbPath);
-          } catch (e) {}
-        }, 1000);
+        console.log('🔧 Running ImageMagick command for PNG CMYK conversion with transparency');
       } else {
         // For JPEG: standard conversion
         command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
