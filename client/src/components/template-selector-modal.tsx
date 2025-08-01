@@ -195,7 +195,12 @@ export default function TemplateSelectorModal({
   };
 
   const handleCancel = () => {
-    onClose();
+    // If onBack is available, go back to product selector instead of closing
+    if (onBack) {
+      onBack();
+    } else {
+      onClose();
+    }
     // Reset state for next time
     setSelectedTemplate(null);
     setCopies(1);
@@ -332,24 +337,14 @@ export default function TemplateSelectorModal({
         )}
 
         <div className="flex justify-between pt-4 border-t">
-          <div className="flex gap-2">
-            {onBack && (
-              <Button
-                variant="outline"
-                onClick={onBack}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-            >
-              Cancel
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {onBack ? 'Back to Product Selection' : 'Cancel'}
+          </Button>
           <Button
             onClick={handleContinue}
             disabled={!selectedTemplate || copies < minQuantity}
