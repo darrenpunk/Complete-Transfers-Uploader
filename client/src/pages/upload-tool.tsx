@@ -15,10 +15,11 @@ import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw, HelpCircle, Palette } from "lucide-react";
+import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw, HelpCircle, Palette, GraduationCap } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
+import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -40,6 +41,7 @@ export default function UploadTool() {
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showVectorizationForm, setShowVectorizationForm] = useState(false);
+  const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
 
   // Fetch template sizes
@@ -613,6 +615,10 @@ export default function UploadTool() {
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
+            <Button variant="outline" onClick={() => setShowOnboardingTutorial(true)}>
+              <GraduationCap className="w-4 h-4 mr-2" />
+              Tutorial
+            </Button>
             <Button variant="outline" onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -791,6 +797,12 @@ export default function UploadTool() {
       <VectorizationServiceForm
         open={showVectorizationForm}
         onOpenChange={setShowVectorizationForm}
+      />
+
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial
+        open={showOnboardingTutorial}
+        onOpenChange={setShowOnboardingTutorial}
       />
 
     </div>
