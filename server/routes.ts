@@ -845,7 +845,27 @@ export async function registerRoutes(app: express.Application) {
       // Apply RGB to CMYK conversion using Adobe algorithm
       const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
       
+      console.log('CMYK Preview: Processing SVG with', svgContent.match(/rgb\([^)]+\)/g)?.length || 0, 'RGB colors');
+      
       // Parse SVG and convert all RGB colors to CMYK
+      // Handle percentage-based RGB values
+      svgContent = svgContent.replace(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/g, (match, rPct, gPct, bPct) => {
+        const r = Math.round(parseFloat(rPct) * 2.55);
+        const g = Math.round(parseFloat(gPct) * 2.55);
+        const b = Math.round(parseFloat(bPct) * 2.55);
+        const cmyk = adobeRgbToCmyk(r, g, b);
+        // Convert CMYK back to RGB for display
+        const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
+        const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
+        const bNew = Math.round(255 * (1 - cmyk.y / 100) * (1 - cmyk.k / 100));
+        
+        // Return in percentage format to match original
+        const result = `rgb(${(rNew/255*100).toFixed(6)}%, ${(gNew/255*100).toFixed(6)}%, ${(bNew/255*100).toFixed(6)}%)`;
+        console.log(`CMYK Preview: ${match} -> ${result}`);
+        return result;
+      });
+      
+      // Handle regular RGB values
       svgContent = svgContent.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
         const cmyk = adobeRgbToCmyk(parseInt(r), parseInt(g), parseInt(b));
         // Convert CMYK back to RGB for display
