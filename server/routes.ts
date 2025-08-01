@@ -139,19 +139,47 @@ export async function registerRoutes(app: express.Application) {
             
             if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
-              // Keep original PDF but create a PNG preview for canvas display
+              
+              // Convert to SVG for canvas display (vectors preserved)
               try {
-                const pngFilename = `${file.filename}_preview.png`;
-                const pngPath = path.join(uploadDir, pngFilename);
+                const svgFilename = `${file.filename}.svg`;
+                const svgPath = path.join(uploadDir, svgFilename);
                 
-                // Use Ghostscript to create PNG preview at higher resolution
-                const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                await execAsync(gsCommand);
+                // Use pdf2svg for high-quality vector conversion
+                let svgCommand;
+                try {
+                  await execAsync('which pdf2svg');
+                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                } catch {
+                  // Fallback to Inkscape if pdf2svg not available
+                  svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+                }
                 
-                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                  // Store preview filename in metadata
-                  (file as any).previewFilename = pngFilename;
-                  console.log(`Created PNG preview for CMYK PDF: ${pngFilename}`);
+                await execAsync(svgCommand);
+                
+                if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                  // Store original PDF info for later embedding
+                  (file as any).originalPdfPath = pdfPath;
+                  (file as any).isCMYKPreserved = true;
+                  
+                  // Use SVG for display but remember to use PDF for output
+                  finalFilename = svgFilename;
+                  finalMimeType = 'image/svg+xml';
+                  finalUrl = `/uploads/${finalFilename}`;
+                  
+                  console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
+                } else {
+                  // Fallback to PNG preview if SVG conversion fails
+                  const pngFilename = `${file.filename}_preview.png`;
+                  const pngPath = path.join(uploadDir, pngFilename);
+                  
+                  const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  await execAsync(gsCommand);
+                  
+                  if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                    (file as any).previewFilename = pngFilename;
+                    console.log(`Created PNG preview for CMYK PDF: ${pngFilename}`);
+                  }
                 }
               } catch (error) {
                 console.error('Failed to create CMYK PDF preview:', error);
@@ -312,6 +340,12 @@ export async function registerRoutes(app: express.Application) {
         // Add preview filename if it exists (for CMYK PDFs)
         if ((file as any).previewFilename) {
           logoData.previewFilename = (file as any).previewFilename;
+        }
+        
+        // Add original PDF info for CMYK PDFs
+        if ((file as any).originalPdfPath && (file as any).isCMYKPreserved) {
+          logoData.originalFilename = file.filename; // Store the original PDF filename
+          logoData.originalMimeType = 'application/pdf';
         }
         
         const logo = await storage.createLogo(logoData);
