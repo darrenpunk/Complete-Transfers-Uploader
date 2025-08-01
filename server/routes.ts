@@ -940,6 +940,10 @@ export async function registerRoutes(app: express.Application) {
     try {
       let modifiedSvg = svgContent;
       
+      // Remove any background rectangles or fills that cover the entire canvas
+      // This helps preserve transparency in vectorized files
+      modifiedSvg = removeBackgroundFills(modifiedSvg);
+      
       // Find all hex color values in the SVG
       const hexColorRegex = /#[0-9a-fA-F]{6}/g;
       const matches = svgContent.match(hexColorRegex);
@@ -950,6 +954,7 @@ export async function registerRoutes(app: express.Application) {
         
         // Add CMYK marker to indicate this is a CMYK vectorized file
         let cmykMetadata = '\n<!-- VECTORIZED_CMYK_FILE: This file has been vectorized and converted to CMYK color space -->\n';
+        cmykMetadata += '<!-- TRANSPARENCY_PRESERVED: Background fills removed to maintain transparency -->\n';
         cmykMetadata += '<!-- CMYK Color Conversions:\n';
         
         for (const hexColor of uniqueColors) {
@@ -967,13 +972,8 @@ export async function registerRoutes(app: express.Application) {
           // Convert RGB to CMYK using Adobe profile
           const cmyk = adobeRgbToCmyk({ r, g, b });
           
-          // Replace RGB hex with device-cmyk format in the SVG
-          const cmykColor = `device-cmyk(${(cmyk.c / 100).toFixed(3)}, ${(cmyk.m / 100).toFixed(3)}, ${(cmyk.y / 100).toFixed(3)}, ${(cmyk.k / 100).toFixed(3)})`;
-          const globalRegex = new RegExp(hexColor.replace('#', '#'), 'gi');
-          
           // For browser compatibility, keep RGB but add data attribute
-          // Replace the SVG element to add CMYK data attributes
-          modifiedSvg = modifiedSvg.replace(globalRegex, hexColor);
+          modifiedSvg = modifiedSvg.replace(new RegExp(hexColor, 'gi'), hexColor);
           
           cmykMetadata += `${hexColor} → CMYK(${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%)\n`;
           console.log(`🎨 Converted ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
@@ -989,6 +989,50 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('Error converting vectorized SVG to CMYK:', error);
       return svgContent; // Return original if conversion fails
+    }
+  }
+
+  // Function to remove background fills that may have been added during vectorization
+  function removeBackgroundFills(svgContent: string): string {
+    try {
+      let modifiedSvg = svgContent;
+      
+      // Remove large background rectangles that cover the entire canvas
+      // Look for rect elements that might be backgrounds
+      const rectRegex = /<rect[^>]*>/gi;
+      const rectMatches = modifiedSvg.match(rectRegex);
+      
+      if (rectMatches) {
+        for (const rectMatch of rectMatches) {
+          // Check if this rect covers a large area (likely a background)
+          const widthMatch = rectMatch.match(/width\s*=\s*["']([^"']+)["']/);
+          const heightMatch = rectMatch.match(/height\s*=\s*["']([^"']+)["']/);
+          const xMatch = rectMatch.match(/x\s*=\s*["']([^"']+)["']/);
+          const yMatch = rectMatch.match(/y\s*=\s*["']([^"']+)["']/);
+          
+          if (widthMatch && heightMatch) {
+            const width = parseFloat(widthMatch[1]);
+            const height = parseFloat(heightMatch[1]);
+            const x = xMatch ? parseFloat(xMatch[1]) : 0;
+            const y = yMatch ? parseFloat(yMatch[1]) : 0;
+            
+            // If this is a large rectangle starting near origin, it's likely a background
+            if (width > 200 && height > 200 && x <= 10 && y <= 10) {
+              console.log(`🎨 Removing background rectangle: ${width}x${height} at (${x},${y})`);
+              modifiedSvg = modifiedSvg.replace(rectMatch, '');
+            }
+          }
+        }
+      }
+      
+      // Also look for and remove any fill="..." attributes on the root SVG element
+      modifiedSvg = modifiedSvg.replace(/(<svg[^>]*)\s+fill\s*=\s*["'][^"']*["']/gi, '$1');
+      
+      console.log(`🎨 Transparency preservation: Removed background elements`);
+      return modifiedSvg;
+    } catch (error) {
+      console.error('Error removing background fills:', error);
+      return svgContent;
     }
   }
 
@@ -1025,6 +1069,10 @@ export async function registerRoutes(app: express.Application) {
       if (!isPreview) {
         formData.append('mode', 'production');
       }
+      
+      // Add transparency preservation parameters
+      formData.append('background.remove', 'true');  // Remove background fills
+      formData.append('transparency.preserve', 'true');  // Preserve transparent areas
 
       // Call vectorizer.ai API
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
