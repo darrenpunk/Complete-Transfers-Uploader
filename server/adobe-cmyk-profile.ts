@@ -22,7 +22,7 @@ export const adobeColorMappings: ColorMapping[] = [
   { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 100, m: 19, y: 0, k: 2 } },   // Blue
   { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 100, m: 0, y: 21, k: 35 } },  // Green
   { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 0, m: 37, y: 0, k: 0 } },   // Pink
-  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 75, y: 72, k: 0 } },    // Red
+  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },    // Red - CORRECTED to match Illustrator
   { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 34, m: 100, y: 0, k: 3 } },   // Purple
   
   // PANTONE 6196 C / Dark green
