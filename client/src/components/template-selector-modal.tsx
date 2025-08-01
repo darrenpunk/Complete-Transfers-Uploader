@@ -162,6 +162,7 @@ export default function TemplateSelectorModal({
   const getMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
     const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers', 'DTF - Digital Film Transfers', 'UV DTF - Select Template Size'];
+    console.log('Checking min quantity for template:', { group: template.group, dtfGroups, isMatch: dtfGroups.includes(template.group || '') });
     return dtfGroups.includes(template.group || '') ? 1 : 10;
   };
   
@@ -177,9 +178,12 @@ export default function TemplateSelectorModal({
     setSelectedTemplate(templateId);
     // Update copies to minimum when template changes
     const template = templates.find(t => t.id === templateId);
-    const newMinQuantity = getMinQuantity(template || null);
-    if (copies < newMinQuantity) {
-      setCopies(newMinQuantity);
+    if (template) {
+      const newMinQuantity = getMinQuantity(template);
+      console.log('Template selected:', { templateId, group: template.group, newMinQuantity });
+      if (copies < newMinQuantity) {
+        setCopies(newMinQuantity);
+      }
     }
   };
 
