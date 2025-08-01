@@ -128,30 +128,58 @@ export async function registerRoutes(app: express.Application) {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // If it's a PDF, convert to SVG for editing capabilities
+        // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
           try {
-            const svgFilename = `${file.filename}.svg`;
-            const svgPath = path.join(uploadDir, svgFilename);
+            const pdfPath = path.join(uploadDir, file.filename);
+            const { CMYKDetector } = await import('./cmyk-detector');
             
-            // Use pdf2svg for conversion
-            let svgCommand;
-            try {
-              await execAsync('which pdf2svg');
-              svgCommand = `pdf2svg "${path.join(uploadDir, file.filename)}" "${svgPath}"`;
-            } catch {
-              svgCommand = `convert -density 300 -background none "${path.join(uploadDir, file.filename)}[0]" "${svgPath}"`;
-            }
+            // Check if PDF contains CMYK colors
+            const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
             
-            await execAsync(svgCommand);
-            
-            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-              finalFilename = svgFilename;
-              finalMimeType = 'image/svg+xml';
-              finalUrl = `/uploads/${finalFilename}`;
+            if (hasCMYK) {
+              console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
+              // Keep original PDF but create a PNG preview for canvas display
+              try {
+                const pngFilename = `${file.filename}_preview.png`;
+                const pngPath = path.join(uploadDir, pngFilename);
+                
+                // Use Ghostscript to create PNG preview while preserving colors
+                const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                await execAsync(gsCommand);
+                
+                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                  // Store preview filename in metadata
+                  (file as any).previewFilename = pngFilename;
+                  console.log(`Created PNG preview for CMYK PDF: ${pngFilename}`);
+                }
+              } catch (error) {
+                console.error('Failed to create CMYK PDF preview:', error);
+              }
+            } else {
+              // Convert RGB PDF to SVG for editing capabilities
+              const svgFilename = `${file.filename}.svg`;
+              const svgPath = path.join(uploadDir, svgFilename);
+              
+              // Use pdf2svg for conversion
+              let svgCommand;
+              try {
+                await execAsync('which pdf2svg');
+                svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+              } catch {
+                svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+              }
+              
+              await execAsync(svgCommand);
+              
+              if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
+              }
             }
           } catch (error) {
-            console.error('PDF conversion failed:', error);
+            console.error('PDF processing failed:', error);
             // Continue with original PDF
           }
         }
@@ -269,7 +297,7 @@ export async function registerRoutes(app: express.Application) {
         }
 
         // Create logo record with analysis data
-        const logo = await storage.createLogo({
+        const logoData: any = {
           projectId,
           filename: finalFilename,
           originalName: file.originalname,
@@ -279,7 +307,14 @@ export async function registerRoutes(app: express.Application) {
           svgColors: analysisData,
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT
-        });
+        };
+        
+        // Add preview filename if it exists (for CMYK PDFs)
+        if ((file as any).previewFilename) {
+          logoData.previewFilename = (file as any).previewFilename;
+        }
+        
+        const logo = await storage.createLogo(logoData);
 
         logos.push(logo);
 

@@ -38,6 +38,7 @@ export const logos = pgTable("logos", {
   fontsOutlined: boolean("fonts_outlined").default(false), // Track if fonts have been outlined
   contentBounds: jsonb("content_bounds"), // Store actual content boundaries for proper cropping {minX, minY, maxX, maxY}
   isMixedContent: boolean("is_mixed_content").default(false), // Track if file contains both raster and vector content
+  previewFilename: text("preview_filename"), // PNG preview filename for CMYK PDFs
 });
 
 export const canvasElements = pgTable("canvas_elements", {

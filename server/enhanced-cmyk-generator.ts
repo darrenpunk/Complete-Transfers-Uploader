@@ -625,7 +625,28 @@ export class EnhancedCMYKGenerator {
       }
     }
     
-    // Check if we have original PDF for vector preservation (only if fonts are not outlined)
+    // Check if we have a PDF file (either original or CMYK preserved)
+    if (logo.mimeType === 'application/pdf' && !logo.fontsOutlined) {
+      const pdfPath = path.join(uploadDir, logo.filename);
+      if (fs.existsSync(pdfPath)) {
+        console.log(`Enhanced CMYK: Embedding PDF vectors: ${logo.originalName}`);
+        
+        // Apply color overrides if they exist (for ALL templates)
+        if (hasColorOverrides) {
+          console.log(`Enhanced CMYK: Applying color overrides to PDF vector content`);
+          await this.embedRecoloredPDFWithCustomColors(pdfDoc, page, element, pdfPath, templateSize, element.colorOverrides);
+        } else if (isSingleColourTransfer && inkColor) {
+          console.log(`Enhanced CMYK: Applying ink color ${inkColor} to PDF vector content`);
+          await this.embedRecoloredPDF(pdfDoc, page, element, pdfPath, templateSize, inkColor);
+        } else {
+          console.log(`Enhanced CMYK: Using PDF without color changes for: ${logo.originalName}`);
+          await this.embedOriginalPDF(pdfDoc, page, element, pdfPath, templateSize);
+        }
+        return;
+      }
+    }
+    
+    // Also check if we have original PDF for vector preservation (for converted files)
     if (logo.originalFilename && logo.originalMimeType === 'application/pdf' && !logo.fontsOutlined) {
       const originalPdfPath = path.join(uploadDir, logo.originalFilename);
       if (fs.existsSync(originalPdfPath)) {
@@ -675,50 +696,60 @@ export class EnhancedCMYKGenerator {
     templateSize: TemplateSize
   ) {
     try {
-      // Step 1: Convert original PDF to CMYK color space
-      const cmykPdfPath = pdfPath.replace('.pdf', '_cmyk.pdf');
+      // Check if PDF already contains CMYK colors
+      const { CMYKDetector } = await import('./cmyk-detector');
+      const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
       
-      // Get ICC profile path for proper color conversion
-      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
-      const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
-      
-      let iccProfilePath = uploadedICCPath;
-      if (!fs.existsSync(uploadedICCPath)) {
-        iccProfilePath = fallbackICCPath;
-      }
-      
-      const hasICC = fs.existsSync(iccProfilePath);
-      
-      // Apply CMYK conversion using Ghostscript with ICC profile for accurate color management
-      let cmykCommand: string;
-      if (hasICC) {
-        // Use ICC profile for proper color management
-        cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
-      } else {
-        // Fallback without ICC profile
-        cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
-      }
-      
+      let finalPdfPath = pdfPath;
+      let cmykPdfPath = pdfPath.replace('.pdf', '_cmyk.pdf');
       let useCMYKVersion = false;
-      try {
-        await new Promise<void>((resolve, reject) => {
-          exec(cmykCommand, (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Enhanced CMYK: PDF CMYK conversion failed, using original:`, error);
-              resolve();
-            } else {
-              console.log(`Enhanced CMYK: Successfully converted original PDF to CMYK with ${hasICC ? 'ICC profile' : 'standard conversion'}: ${path.basename(pdfPath)}`);
-              useCMYKVersion = true;
-              resolve();
-            }
-          });
-        });
-      } catch (cmykError) {
-        console.error('Enhanced CMYK: CMYK conversion error:', cmykError);
-      }
       
-      // Step 2: Use CMYK version if available, otherwise original
-      const finalPdfPath = (useCMYKVersion && fs.existsSync(cmykPdfPath)) ? cmykPdfPath : pdfPath;
+      if (hasCMYK) {
+        console.log(`Enhanced CMYK: PDF already contains CMYK colors, preserving original: ${path.basename(pdfPath)}`);
+      } else {
+        // Step 1: Convert original PDF to CMYK color space
+        
+        // Get ICC profile path for proper color conversion
+        const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+        const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+        
+        let iccProfilePath = uploadedICCPath;
+        if (!fs.existsSync(uploadedICCPath)) {
+          iccProfilePath = fallbackICCPath;
+        }
+        
+        const hasICC = fs.existsSync(iccProfilePath);
+        
+        // Apply CMYK conversion using Ghostscript with ICC profile for accurate color management
+        let cmykCommand: string;
+        if (hasICC) {
+          // Use ICC profile for proper color management
+          cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sDefaultCMYKProfile="${iccProfilePath}" -sOutputICCProfile="${iccProfilePath}" -dOverrideICC=true -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+        } else {
+          // Fallback without ICC profile
+          cmykCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${pdfPath}"`;
+        }
+        
+        try {
+          await new Promise<void>((resolve, reject) => {
+            exec(cmykCommand, (error, stdout, stderr) => {
+              if (error) {
+                console.error(`Enhanced CMYK: PDF CMYK conversion failed, using original:`, error);
+                resolve();
+              } else {
+                console.log(`Enhanced CMYK: Successfully converted original PDF to CMYK with ${hasICC ? 'ICC profile' : 'standard conversion'}: ${path.basename(pdfPath)}`);
+                useCMYKVersion = true;
+                resolve();
+              }
+            });
+          });
+        } catch (cmykError) {
+          console.error('Enhanced CMYK: CMYK conversion error:', cmykError);
+        }
+        
+        // Step 2: Use CMYK version if available, otherwise original
+        finalPdfPath = (useCMYKVersion && fs.existsSync(cmykPdfPath)) ? cmykPdfPath : pdfPath;
+      }
       
       // Read and embed the PDF to preserve vectors
       const originalPdfBytes = fs.readFileSync(finalPdfPath);

@@ -395,16 +395,20 @@ export default function CanvasWorkspace({
 
   // Function to get the image URL for display
   const getImageUrl = (logo: Logo): string => {
-    // For PDF files, use the SVG conversion
+    // For PDF files, check if we have a preview image (for CMYK PDFs)
     if (logo.mimeType === 'application/pdf') {
-      // Check if filename already ends with .svg (for processed files)
+      // Check if a preview filename exists (for CMYK PDFs)
+      if ((logo as any).previewFilename) {
+        return `/uploads/${(logo as any).previewFilename}`;
+      }
+      // Otherwise, check if SVG conversion exists (for RGB PDFs)
       if (logo.filename.endsWith('.svg')) {
         return `/uploads/${logo.filename}`;
       }
-      // Otherwise, append .svg to the PDF filename
+      // Check if .svg version exists
       return `/uploads/${logo.filename}.svg`;
     }
-    // For other image files, use original
+    // For SVG and other image files, use original
     return `/uploads/${logo.filename}`;
   };
 
