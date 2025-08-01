@@ -979,16 +979,16 @@ export class EnhancedCMYKGenerator {
       // Write input PDF
       fs.writeFileSync(inputPath, pdfBuffer);
       
-      // Try a simpler Ghostscript command that just embeds the ICC profile
+      // Use Ghostscript to embed ICC profile WITHOUT converting colors
       const gsCommand = [
         'gs',
         '-dNOPAUSE',
         '-dBATCH',
         '-dSAFER',
         '-sDEVICE=pdfwrite',
+        '-dColorConversionStrategy=/LeaveColorUnchanged',  // CRITICAL: Don't change colors!
         '-dProcessColorModel=/DeviceCMYK',
-        '-dColorConversionStrategy=/CMYK',
-        '-dOverrideICC',
+        '-dOverrideICC=true',
         `-sOutputICCProfile=${iccProfilePath}`,
         `-sOutputFile=${outputPath}`,
         inputPath
@@ -1066,11 +1066,8 @@ export class EnhancedCMYKGenerator {
         if (resources) {
           // Add ColorSpace resource with ICC profile
           const colorSpaceDict = resources.lookup(PDFName.of('ColorSpace')) || pdfDoc.context.obj({});
-          colorSpaceDict.set(PDFName.of('DefaultCMYK'), pdfDoc.context.obj([
-            PDFName.of('ICCBased'),
-            iccRef
-          ]));
-          resources.set(PDFName.of('ColorSpace'), colorSpaceDict);
+          // Skip setting color space to avoid altering CMYK values
+          // We'll embed ICC profile as OutputIntent only
         }
       }
       
@@ -1100,50 +1097,6 @@ export class EnhancedCMYKGenerator {
       console.error('Enhanced CMYK: Direct ICC profile embedding failed:', error);
       // Return original buffer if embedding fails
       return pdfBuffer;
-    }
-  }
-
-  private async embedICCProfileDirectly(pdfDoc: PDFDocument, iccProfilePath: string): Promise<void> {
-    try {
-      // Read ICC profile data
-      const iccProfileBytes = fs.readFileSync(iccProfilePath);
-      
-      // Create ICC profile stream object
-      const iccProfileRef = pdfDoc.context.register(
-        pdfDoc.context.stream(iccProfileBytes, {
-          Type: 'ICCBased',
-          N: 4, // CMYK = 4 components
-        })
-      );
-      
-      // Create output intent dictionary
-      const outputIntentDict = pdfDoc.context.obj({
-        Type: 'OutputIntent',
-        S: 'GTS_PDFX',
-        OutputConditionIdentifier: 'PSO Coated FOGRA51',
-        Info: 'PSO Coated FOGRA51 (EFI)',
-        DestOutputProfile: iccProfileRef
-      });
-      
-      const outputIntentRef = pdfDoc.context.register(outputIntentDict);
-      
-      // Add output intent to catalog using low-level context manipulation
-      const catalog = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Root);
-      if (catalog instanceof PDFDict) {
-        let outputIntents = catalog.get(PDFName.of('OutputIntents'));
-        if (!outputIntents) {
-          outputIntents = pdfDoc.context.obj([outputIntentRef]);
-          catalog.set(PDFName.of('OutputIntents'), outputIntents);
-        } else if (outputIntents instanceof PDFArray) {
-          outputIntents.push(outputIntentRef);
-        }
-      }
-      
-      console.log('Enhanced CMYK: ICC profile embedded directly into PDF structure');
-      
-    } catch (error) {
-      console.error('Failed to embed ICC profile directly:', error);
-      throw error;
     }
   }
 
@@ -1370,9 +1323,9 @@ export class EnhancedCMYKGenerator {
       if (fs.existsSync(rgbPdfPath)) {
         let finalPdfPath = rgbPdfPath;
         
-        // ALWAYS apply CMYK colorspace conversion to ensure consistent output
-        console.log(`Enhanced CMYK: Converting to CMYK colorspace (preservedExactCMYK: ${preservedExactCMYK})`);
-        if (true) { // Always convert to CMYK
+        // Apply CMYK colorspace conversion based on whether colors were preserved
+        console.log(`Enhanced CMYK: Checking if CMYK conversion needed - preservedExactCMYK: ${preservedExactCMYK}`);
+        if (preservedExactCMYK) {
           console.log(`Enhanced CMYK: Converting RGB PDF to true CMYK colorspace for: ${path.basename(svgPath)}`);
           
           try {
