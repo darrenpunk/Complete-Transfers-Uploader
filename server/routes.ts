@@ -5,6 +5,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import FormData from 'form-data';
+import fetch from 'node-fetch';
 import { IStorage } from './storage';
 import { 
   insertProjectSchema, 
@@ -955,9 +956,9 @@ export async function registerRoutes(app: express.Application) {
 
       // Prepare form data for vectorizer.ai API
       const formData = new FormData();
-      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileStream = fs.createReadStream(req.file.path);
       
-      formData.append('image', fileBuffer, {
+      formData.append('image', fileStream, {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
@@ -967,9 +968,10 @@ export async function registerRoutes(app: express.Application) {
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${vectorizerApiId}:${vectorizerApiSecret}`).toString('base64')}`
+          'Authorization': `Basic ${Buffer.from(`${vectorizerApiId}:${vectorizerApiSecret}`).toString('base64')}`,
+          ...formData.getHeaders()
         },
-        body: formData
+        body: formData as any
       });
 
       if (!response.ok) {
