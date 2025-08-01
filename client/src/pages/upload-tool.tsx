@@ -613,7 +613,11 @@ export default function UploadTool() {
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
-            <Button variant="outline" onClick={() => setShowVectorizationForm(true)}>
+            <Button variant="outline" onClick={() => {
+              console.log('Vectorization Service button clicked');
+              setShowVectorizationForm(true);
+              console.log('showVectorizationForm set to true');
+            }}>
               <Palette className="w-4 h-4 mr-2" />
               Vectorization Service
             </Button>

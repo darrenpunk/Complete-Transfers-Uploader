@@ -27,6 +27,7 @@ interface VectorizationServiceFormProps {
 }
 
 export function VectorizationServiceForm({ open, onOpenChange }: VectorizationServiceFormProps) {
+  console.log('VectorizationServiceForm render:', { open });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string>("");
