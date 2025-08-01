@@ -1329,14 +1329,34 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Colors array:`, (logoData as any)?.svgAnalysis?.colors?.length);
         }
         
-        // Check both svgColors and svgAnalysis for CMYK values
-        const colorAnalysis = logoData?.svgColors || (logoData as any)?.svgAnalysis?.colors;
+        // Check multiple possible structures for CMYK values
+        let colorAnalysis = null;
+        
+        // Try svgColors.colors first (frontend structure)
+        if (logoData?.svgColors?.colors && Array.isArray(logoData.svgColors.colors)) {
+          colorAnalysis = logoData.svgColors.colors;
+          console.log(`Enhanced CMYK: Found color analysis in svgColors.colors with ${colorAnalysis.length} colors`);
+        }
+        // Try svgColors as direct array
+        else if (logoData?.svgColors && Array.isArray(logoData.svgColors)) {
+          colorAnalysis = logoData.svgColors;
+          console.log(`Enhanced CMYK: Found color analysis in svgColors as array with ${colorAnalysis.length} colors`);
+        }
+        // Try svgAnalysis.colors
+        else if ((logoData as any)?.svgAnalysis?.colors && Array.isArray((logoData as any).svgAnalysis.colors)) {
+          colorAnalysis = (logoData as any).svgAnalysis.colors;
+          console.log(`Enhanced CMYK: Found color analysis in svgAnalysis.colors with ${colorAnalysis.length} colors`);
+        }
+        
         console.log(`Enhanced CMYK: Color analysis data:`, !!colorAnalysis);
         console.log(`Enhanced CMYK: logoData.svgColors:`, !!logoData?.svgColors);
+        console.log(`Enhanced CMYK: logoData.svgColors.colors:`, !!(logoData?.svgColors?.colors));
         console.log(`Enhanced CMYK: logoData.svgAnalysis:`, !!(logoData as any)?.svgAnalysis);
         console.log(`Enhanced CMYK: logoData.svgAnalysis.colors:`, !!(logoData as any)?.svgAnalysis?.colors);
         if (colorAnalysis) {
           console.log(`Enhanced CMYK: Color analysis length:`, Array.isArray(colorAnalysis) ? colorAnalysis.length : 'not array');
+        } else {
+          console.log(`Enhanced CMYK: Raw svgColors structure:`, JSON.stringify(logoData?.svgColors, null, 2));
         }
         
         // Handle both formats
@@ -1346,9 +1366,43 @@ export class EnhancedCMYKGenerator {
           let foundConvertedColors = 0;
           let hasExistingCMYK = false;
           
+          // Apply CMYK color values to SVG content FIRST
+          const { applySVGColorChanges } = await import('./svg-color-utils');
+          console.log(`Enhanced CMYK: Applying CMYK colors to SVG content before PDF conversion`);
+          
+          // Create color overrides map for all CMYK colors
+          const colorOverrides: Record<string, string> = {};
+          
           for (const colorInfo of colorAnalysis) {
             console.log(`Enhanced CMYK: Processing color:`, colorInfo.cmykColor, 'converted:', colorInfo.converted, 'isCMYK:', colorInfo.isCMYK);
             console.log(`Enhanced CMYK: Color info details:`, JSON.stringify(colorInfo, null, 2));
+            
+            // Convert CMYK to RGB for SVG embedding
+            if (colorInfo.cmykColor && colorInfo.originalColor) {
+              // Parse CMYK values and convert to RGB
+              const cmykMatch = colorInfo.cmykColor.match(/C:(\d+)\s+M:(\d+)\s+Y:(\d+)\s+K:(\d+)/);
+              if (cmykMatch) {
+                const [, c, m, y, k] = cmykMatch.map(Number);
+                // Convert CMYK to RGB for SVG display (approximation)
+                const r = Math.round(255 * (1 - c/100) * (1 - k/100));
+                const g = Math.round(255 * (1 - m/100) * (1 - k/100));
+                const b = Math.round(255 * (1 - y/100) * (1 - k/100));
+                const rgbColor = `rgb(${r}, ${g}, ${b})`;
+                
+                console.log(`Enhanced CMYK: Converting CMYK ${colorInfo.cmykColor} to RGB ${rgbColor} for SVG`);
+                colorOverrides[colorInfo.originalColor] = rgbColor;
+              }
+            }
+          }
+          
+          // Apply color overrides to SVG content
+          if (Object.keys(colorOverrides).length > 0) {
+            console.log(`Enhanced CMYK: Applying ${Object.keys(colorOverrides).length} color overrides to SVG`);
+            svgContentForPDF = applySVGColorChanges(svgPath, colorOverrides);
+            console.log(`Enhanced CMYK: SVG content updated with accurate CMYK-derived colors`);
+          }
+          
+          for (const colorInfo of colorAnalysis) {
             
             // Check if color is already CMYK
             if (colorInfo.isCMYK) {
@@ -1366,6 +1420,7 @@ export class EnhancedCMYKGenerator {
           }
           
           console.log(`Enhanced CMYK: Found ${foundConvertedColors} RGB->CMYK converted colors, ${hasExistingCMYK ? 'HAS' : 'NO'} existing CMYK colors`);
+          console.log(`Enhanced CMYK: SVG content updated with CMYK colors`);
           
           // Set flag based on whether we need CMYK conversion
           // If all colors are RGB (not CMYK), we should convert to CMYK
