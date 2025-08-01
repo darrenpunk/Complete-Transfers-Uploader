@@ -207,8 +207,11 @@ export class SimplifiedPDFGenerator {
       // Check if this is a vectorized file and apply background removal
       if (svgContent.includes('data-vectorized-cmyk="true"')) {
         console.log(`🎨 Detected vectorized SVG, applying background removal`);
+        console.log(`🔍 Original SVG has stroke-width="630.03": ${svgContent.includes('stroke-width="630.03"')}`);
         const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
         svgContent = removeVectorizedBackgrounds(svgContent);
+        console.log(`🔍 Cleaned SVG has stroke-width="630.03": ${svgContent.includes('stroke-width="630.03"')}`);
+        console.log(`📏 SVG size changed from ${fs.readFileSync(uploadPath, 'utf8').length} to ${svgContent.length}`);
         // Save cleaned SVG
         fs.writeFileSync(tempSvgPath, svgContent);
       } else {
