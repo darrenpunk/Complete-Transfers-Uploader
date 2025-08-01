@@ -1537,22 +1537,34 @@ export class EnhancedCMYKGenerator {
               }
             }
             
-            // Use simple Ghostscript conversion to CMYK colorspace
-            console.log(`Enhanced CMYK: Converting RGB PDF to CMYK colorspace using Ghostscript`);
+            // Use exact CMYK mapping for precise color conversion
+            console.log(`Enhanced CMYK: Converting RGB PDF to CMYK with exact color mappings`);
             
             try {
-              const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
-              await new Promise<void>((resolve, reject) => {
-                exec(gsCommand, (error, stdout, stderr) => {
-                  if (error) {
-                    console.error(`Enhanced CMYK: Ghostscript CMYK conversion failed:`, error);
-                    resolve(); // Don't reject, just continue
-                  } else {
-                    console.log(`Enhanced CMYK: Successfully converted to CMYK colorspace`);
-                    resolve();
-                  }
+              // Import our exact CMYK conversion function
+              const { convertSVGtoExactCMYKPDF } = await import('./exact-cmyk-pdf');
+              
+              // Use the color analysis data for exact mapping
+              const success = await convertSVGtoExactCMYKPDF(svgPath, cmykPdfPath, colorAnalysis);
+              
+              if (!success) {
+                // Fallback to simple Ghostscript conversion
+                console.log(`Enhanced CMYK: Exact mapping failed, using standard Ghostscript conversion`);
+                const gsCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/CMYK -dProcessColorModel=/DeviceCMYK -sOutputFile="${cmykPdfPath}" "${rgbPdfPath}"`;
+                await new Promise<void>((resolve, reject) => {
+                  exec(gsCommand, (error, stdout, stderr) => {
+                    if (error) {
+                      console.error(`Enhanced CMYK: Ghostscript CMYK conversion failed:`, error);
+                      resolve(); // Don't reject, just continue
+                    } else {
+                      console.log(`Enhanced CMYK: Successfully converted to CMYK colorspace`);
+                      resolve();
+                    }
+                  });
                 });
-              });
+              } else {
+                console.log(`Enhanced CMYK: Successfully converted with exact CMYK color mappings`);
+              }
               
               if (fs.existsSync(cmykPdfPath)) {
                 finalPdfPath = cmykPdfPath;
