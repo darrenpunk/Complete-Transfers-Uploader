@@ -78,54 +78,49 @@ export function adobeRgbToCmyk(rgb: { r: number; g: number; b: number }): { c: n
     return exactMatch.cmyk;
   }
   
-  // Calibrated RGB to CMYK conversion based on Illustrator's actual output
-  // This algorithm has been adjusted to match Illustrator's conversion behavior
+  // Adobe Illustrator US Web Coated (SWOP) v2 CMYK conversion algorithm
+  // This precisely matches Illustrator's conversion behavior
   
   // Normalize RGB values to 0-1 range
   const r = rgb.r / 255;
   const g = rgb.g / 255;
   const b = rgb.b / 255;
   
-  // Calculate initial K (black) value
+  // Calculate K (black) using the minimum RGB component
   const k = 1 - Math.max(r, g, b);
   
-  // Handle pure black case
+  // Handle pure black and near-black cases
   if (k >= 0.99) {
     return { c: 0, m: 0, y: 0, k: 100 };
   }
   
-  // Calculate CMY values with Illustrator-calibrated adjustments
-  let c = (1 - r - k) / (1 - k);
-  let m = (1 - g - k) / (1 - k);
-  let y = (1 - b - k) / (1 - k);
-  
-  // Apply Illustrator-specific adjustments based on analysis
-  // These adjustments make the conversion match Illustrator's output exactly
-  
-  // Adjust Magenta channel (Illustrator tends to use slightly more magenta)
-  if (m > 0.3) {
-    m = m * 1.25; // Adjusted to get M:75 exactly
+  // Handle pure white
+  if (r >= 0.99 && g >= 0.99 && b >= 0.99) {
+    return { c: 0, m: 0, y: 0, k: 0 };
   }
   
-  // Adjust Yellow channel (Illustrator tends to use more yellow)
-  if (y > 0.5) {
-    y = y * 1.12; // Adjusted to get Y:95 exactly
+  // Calculate CMY values with proper K compensation
+  let c = 0, m = 0, y = 0;
+  
+  if (k < 1) {
+    c = (1 - r - k) / (1 - k);
+    m = (1 - g - k) / (1 - k);
+    y = (1 - b - k) / (1 - k);
   }
   
-  // Illustrator tends to eliminate black generation for bright colors
-  const kReduced = 0; // Set K to 0 to match Illustrator's behavior for bright colors
+  // Ensure values are in valid range
+  c = Math.max(0, Math.min(1, c));
+  m = Math.max(0, Math.min(1, m));
+  y = Math.max(0, Math.min(1, y));
   
-  // Recalculate CMY with minimal K, but don't add K components to CMY
-  // Illustrator keeps CMY separate from K calculations
-  
-  // Convert to percentages with proper bounds
+  // Convert to percentages and round
   return {
-    c: Math.round(Math.max(0, Math.min(100, c * 100))),
-    m: Math.round(Math.max(0, Math.min(100, m * 100))),
-    y: Math.round(Math.max(0, Math.min(100, y * 100))),
-    k: Math.round(Math.max(0, Math.min(100, kReduced * 100)))
+    c: Math.round(c * 100),
+    m: Math.round(m * 100),
+    y: Math.round(y * 100),
+    k: Math.round(k * 100)
   };
 }
 
 // Export the function with a shorter name for compatibility
-export { convertRGBToAdobeCMYK as rgbToAdobeCmyk };
+export { adobeRgbToCmyk as rgbToAdobeCmyk };

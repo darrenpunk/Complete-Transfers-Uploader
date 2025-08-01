@@ -409,6 +409,47 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     const getColorInfo = (colorString: string) => {
       let rgbColor = colorString;
       
+      // First check if this is already a CMYK color specification
+      // SVG can contain CMYK colors in device-cmyk format or spot colors
+      const cmykMatch = colorString.match(/device-cmyk\(([^)]+)\)/i);
+      if (cmykMatch) {
+        // Parse CMYK values (can be decimal 0-1 or percentage)
+        const values = cmykMatch[1].split(/[,\s]+/).map(v => {
+          const num = parseFloat(v);
+          // Convert to percentage if decimal
+          return v.includes('%') ? parseInt(v) : Math.round(num * 100);
+        });
+        
+        if (values.length === 4) {
+          const [c, m, y, k] = values;
+          return {
+            original: colorString,
+            display: `CMYK(${c}, ${m}, ${y}, ${k})`,
+            cmyk: `C:${c} M:${m} Y:${y} K:${k}`,
+            isCMYK: true
+          };
+        }
+      }
+      
+      // Check for spot color with CMYK fallback
+      const spotMatch = colorString.match(/spot-color.*?cmyk\s*\(([^)]+)\)/i);
+      if (spotMatch) {
+        const values = spotMatch[1].split(/[,\s]+/).map(v => {
+          const num = parseFloat(v);
+          return v.includes('%') ? parseInt(v) : Math.round(num * 100);
+        });
+        
+        if (values.length === 4) {
+          const [c, m, y, k] = values;
+          return {
+            original: colorString,
+            display: `CMYK(${c}, ${m}, ${y}, ${k})`,
+            cmyk: `C:${c} M:${m} Y:${y} K:${k}`,
+            isCMYK: true
+          };
+        }
+      }
+      
       // Convert RGB percentage to standard RGB
       if (colorString.includes('rgb(') && colorString.includes('%')) {
         rgbColor = convertRgbPercent(colorString);
@@ -428,7 +469,8 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         return {
           original: colorString,  // Keep the exact format from SVG
           display: rgbColor,      // Standardized format for UI
-          cmyk: cmykColor
+          cmyk: cmykColor,
+          isCMYK: false
         };
       }
       
@@ -446,14 +488,16 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         return {
           original: colorString,  // Keep the exact format from SVG
           display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
-          cmyk: cmykColor
+          cmyk: cmykColor,
+          isCMYK: false
         };
       }
       
       return {
         original: colorString,
         display: colorString,
-        cmyk: 'Unknown'
+        cmyk: 'Unknown',
+        isCMYK: false
       };
     };
 
