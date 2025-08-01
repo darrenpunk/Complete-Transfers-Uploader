@@ -156,11 +156,21 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Automatically analyze SVG files for colors and stroke widths BEFORE creating logo record
+        // Import color workflow manager
+        const { ColorWorkflowManager, FileType } = await import('./color-workflow-manager');
+        
+        // Determine file type and workflow
+        const fileType = ColorWorkflowManager.getFileType(finalMimeType, finalFilename);
+        const colorWorkflow = ColorWorkflowManager.getColorWorkflow(fileType);
+        
+        console.log(`📂 File type: ${fileType}, Workflow: ${JSON.stringify(colorWorkflow)}`);
+        console.log(`🎨 ${ColorWorkflowManager.getWorkflowMessage(fileType, colorWorkflow)}`);
+        
+        // Only analyze colors for vector files
         let analysisData = null;
-        if (finalMimeType === 'image/svg+xml') {
+        if (ColorWorkflowManager.shouldAnalyzeColors(fileType)) {
           try {
-            console.log(`🔍 Starting SVG analysis for ${finalFilename}`);
+            console.log(`🔍 Starting color analysis for vector file: ${finalFilename}`);
             const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
             const svgPath = path.join(uploadDir, finalFilename);
             console.log(`📁 SVG path: ${svgPath}`);
@@ -173,19 +183,19 @@ export async function registerRoutes(app: express.Application) {
               hasText: analysis.hasText
             });
             
-            // Auto-convert colors to CMYK during upload
-            if (analysis.colors && analysis.colors.length > 0) {
-              console.log(`🎨 Auto-converting colors to CMYK for ${finalFilename}`);
+            // Process colors based on workflow
+            if (analysis.colors && analysis.colors.length > 0 && colorWorkflow.convertToCMYK) {
+              console.log(`🎨 Processing colors for ${finalFilename} based on workflow`);
               
-              // Mark all colors as converted to CMYK
-              const convertedColors = analysis.colors.map(color => ({
+              // Mark colors as converted only if workflow requires conversion
+              const processedColors = analysis.colors.map(color => ({
                 ...color,
-                converted: true
+                converted: colorWorkflow.convertToCMYK && !(color as any).isCMYK // Only mark as converted if actually converting RGB to CMYK
               }));
               
-              // Update analysis with converted colors
-              analysis.colors = convertedColors;
-              console.log(`✅ Auto-converted ${convertedColors.length} colors to CMYK`);
+              // Update analysis with processed colors
+              analysis.colors = processedColors;
+              console.log(`✅ Processed ${processedColors.length} colors - CMYK preserved: ${colorWorkflow.preserveCMYK}`);
             }
             
             // Prepare analysis data for logo record

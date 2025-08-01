@@ -55,13 +55,15 @@ Preferred communication style: Simple, everyday language.
 
 ### System Design Choices
 - **Storage Instance Management**: Critical design pattern enforcing a single shared storage instance (`server/storage.ts`) to ensure data persistence and avoid inconsistencies.
+- **Color Workflow Isolation**: Implemented `ColorWorkflowManager` to separate vector file (SVG/PDF) color handling from raster files (PNG/JPEG). Vector files preserve CMYK colors and convert RGB to CMYK using Adobe-matching algorithm. Raster files maintain RGB without automatic conversion.
 - **File Upload System**:
     - Local filesystem storage in `/uploads`.
     - Multi-tier PDF conversion: Ghostscript primary (color accuracy), ImageMagick fallback, original PDF storage for vector output.
     - Color preservation via Ghostscript with `pngalpha` and CSS filters for transparency.
-    - Vector preservation by retaining original PDF files and using `pdf-lib` for true vector embedding with ICC profile post-processing.
-    - Automatic CMYK conversion on upload using a standardized algorithm.
+    - Vector preservation by retaining original PDF files and using `pdf-lib` for true vector embedding.
+    - Automatic CMYK conversion on upload for vector files only, using Adobe Illustrator-matching algorithm.
     - PNG thumbnail generation for large PDFs for canvas display.
+    - Visual indicators show "CMYK Preserved" for vector files and "RGB Raster" for raster files.
 - **Canvas System**: Interactive workspace for logo manipulation with real-time property editing.
 - **AI Vectorization System**: Integrated AI-powered API with raster file detection, offering photographic approval, AI vectorization, and professional service options.
     - Features: Zoom controls, transparency checkerboard, side-by-side comparison, color preset palette, white background removal, advanced color detection and individual color deletion, color reduction, color locking, and credit protection.

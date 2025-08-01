@@ -266,15 +266,26 @@ export default function CanvasWorkspace({
   const isRasterFile = (file: File): boolean => {
     return file.type === 'image/png' || file.type === 'image/jpeg';
   };
+  
+  // Helper function to detect vector files
+  const isVectorFile = (file: File): boolean => {
+    return file.type === 'image/svg+xml' || file.type === 'application/pdf';
+  };
 
   // Handle file uploads with raster detection
   const handleCanvasFileUpload = (files: File[]) => {
     const rasterFiles = files.filter(isRasterFile);
     const vectorFiles = files.filter(file => !isRasterFile(file));
     
-    // Process vector files immediately
+    // Process vector files immediately with notification
     if (vectorFiles.length > 0 && onLogoUpload) {
       onLogoUpload(vectorFiles);
+      // Show color workflow notification for vector files
+      toast({
+        title: "Vector Files Uploaded",
+        description: "CMYK colors will be preserved. RGB colors will be converted to CMYK for accurate print output.",
+        variant: "default",
+      });
     }
     
     // Handle raster files one by one with warning modal
@@ -787,6 +798,28 @@ export default function CanvasWorkspace({
                   <span className="text-sm text-gray-600">
                     {logos.length} logo{logos.length !== 1 ? 's' : ''}
                   </span>
+                  
+                  {/* Color Workflow Status */}
+                  <div className="flex items-center space-x-2 ml-2">
+                    <div className="flex items-center text-xs">
+                      {logos.some(logo => logo.mimeType === 'image/svg+xml' || logo.mimeType === 'application/pdf') && (
+                        <div className="flex items-center bg-green-50 text-green-700 px-2 py-1 rounded">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          CMYK Preserved
+                        </div>
+                      )}
+                      {logos.some(logo => logo.mimeType === 'image/png' || logo.mimeType === 'image/jpeg') && (
+                        <div className="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded ml-1">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          RGB Raster
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {/* Quick Logo Preview */}
                   <div className="flex items-center space-x-1">
                     {logos.slice(0, 3).map((logo, index) => (

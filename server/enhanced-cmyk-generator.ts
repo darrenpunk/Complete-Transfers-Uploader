@@ -649,12 +649,17 @@ export class EnhancedCMYKGenerator {
     // Fallback to processed image (original graphics without modifications)
     const logoPath = path.join(uploadDir, logo.filename);
     if (fs.existsSync(logoPath)) {
+      // Import color workflow manager to check file type
+      const { ColorWorkflowManager, FileType } = await import('./color-workflow-manager');
+      const fileType = ColorWorkflowManager.getFileType(logo.mimeType || 'image/png', logo.filename);
+      const workflow = ColorWorkflowManager.getColorWorkflow(fileType);
+      
       // Check if this is an SVG file that needs CMYK conversion
-      if (logo.mimeType === 'image/svg+xml') {
+      if (logo.mimeType === 'image/svg+xml' && workflow.convertToCMYK) {
         console.log(`Enhanced CMYK: Applying CMYK conversion to SVG fallback: ${logo.originalName}`);
         await this.embedSVGAsPDF(pdfDoc, page, element, logoPath, templateSize);
       } else {
-        console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName}`);
+        console.log(`Enhanced CMYK: Fallback to original processed image: ${logo.originalName} (${fileType})`);
         await this.embedImageFile(pdfDoc, page, element, logoPath, logo.mimeType || 'image/png', templateSize);
       }
     } else {
