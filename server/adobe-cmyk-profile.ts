@@ -54,6 +54,7 @@ export const adobeColorMappings: ColorMapping[] = [
  * Find the closest color match in our Adobe profile
  */
 export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }): ColorMapping | null {
+  console.log(`🔍 Looking for Adobe match for RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`);
   let closestMatch: ColorMapping | null = null;
   let minDistance = Infinity;
   
@@ -65,8 +66,9 @@ export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }):
       Math.pow(rgb.b - mapping.rgb.b, 2)
     );
     
-    // If exact match or very close (within tolerance of 5)
-    if (distance < 5) {
+    // If exact match or very close (within tolerance of 2 for exact matches)
+    if (distance < 2) {
+      console.log(`✅ Exact match found: RGB(${mapping.rgb.r}, ${mapping.rgb.g}, ${mapping.rgb.b}) → CMYK(${mapping.cmyk.c}, ${mapping.cmyk.m}, ${mapping.cmyk.y}, ${mapping.cmyk.k})`);
       return mapping;
     }
     
@@ -74,6 +76,12 @@ export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }):
       minDistance = distance;
       closestMatch = mapping;
     }
+  }
+  
+  if (closestMatch && minDistance < 20) {
+    console.log(`📍 Closest match found: RGB(${closestMatch.rgb.r}, ${closestMatch.rgb.g}, ${closestMatch.rgb.b}) → CMYK(${closestMatch.cmyk.c}, ${closestMatch.cmyk.m}, ${closestMatch.cmyk.y}, ${closestMatch.cmyk.k}) (distance: ${minDistance.toFixed(1)})`);
+  } else {
+    console.log(`❌ No suitable Adobe match found for RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`);
   }
   
   // Only return if reasonably close (within 20 RGB units)

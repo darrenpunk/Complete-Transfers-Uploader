@@ -485,8 +485,10 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const b = parseInt(rgbMatch[3]);
         
         // Use Adobe CMYK conversion for Illustrator compatibility
+        console.log(`🎨 Converting RGB(${r}, ${g}, ${b}) to CMYK...`);
         const cmyk = adobeRgbToCmyk({ r, g, b });
         const cmykColor = `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`;
+        console.log(`🎨 Result: ${cmykColor}`);
         
         return {
           original: colorString,  // Keep the exact format from SVG
