@@ -39,20 +39,18 @@ export class RasterCMYKConverter {
       }
 
       // Use ImageMagick to convert to CMYK with proper profile
-      // For PNG files, we need special handling to preserve transparency
-      let command;
+      // PNG files don't support CMYK natively, so we keep them as RGB
+      // The PDF generation will handle the color conversion
       if (mimeType === 'image/png') {
-        // For PNG: Use a simpler approach that preserves both color and transparency
-        // Convert to CMYK while preserving the alpha channel
-        command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK -alpha set "${outputPath}"`;
-        
-        console.log('🔧 Running ImageMagick command for PNG CMYK conversion with transparency');
-      } else {
-        // For JPEG: standard conversion
-        command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
+        console.log('⚠️ PNG files remain in RGB colorspace - CMYK conversion happens during PDF generation');
+        // Don't convert PNG files here - let PDF generation handle it
+        return false;
       }
       
-      console.log('🔧 Running ImageMagick command for raster CMYK conversion');
+      // For JPEG: standard conversion
+      const command = `convert "${inputPath}" -profile "${iccProfilePath}" -colorspace CMYK "${outputPath}"`;
+      
+      console.log('🔧 Running ImageMagick command for JPEG CMYK conversion');
       console.log('📋 Command:', command);
       await execAsync(command);
       
