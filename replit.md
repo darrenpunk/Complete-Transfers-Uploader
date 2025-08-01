@@ -9,6 +9,7 @@ This is a full-stack web application designed for uploading logo files and creat
 - **Fixed Color Changes in PDF Generation**: Updated SimplifiedPDFGenerator to properly apply color overrides to SVG files during PDF generation. Color changes are now saved to modified SVG files before conversion to PDF, ensuring color modifications appear in final output. Fixed critical syntax error (duplicate variable declaration) that was preventing PDF generation.
 - **Enhanced PNG Transparency Handling**: Integrated SVGEmbeddedImageHandler for SVGs containing embedded PNG images to preserve transparency during PDF conversion
 - **Fixed Original PDF Content Preservation**: Modified PDF generator to prioritize using original PDF files directly when no color changes are made. Files uploaded as PDFs that get converted to SVGs for editing now preserve their original embedded content (including PNG images) by embedding the original PDF directly in the final output when unchanged.
+- **Fixed Vectorization API Endpoint**: Added missing `/api/vectorize` endpoint that was causing "Unexpected token '<', \"<!DOCTYPE\"... is not valid JSON" errors. The vectorization tool now properly communicates with the AI vectorization service and returns proper JSON responses instead of HTML error pages.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

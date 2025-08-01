@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
 import { exec } from 'child_process';
+import FormData from 'form-data';
 import { IStorage } from './storage';
 import { 
   insertProjectSchema, 
@@ -929,6 +930,81 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('CMYK preview error:', error);
       res.status(500).json({ error: 'Failed to generate CMYK preview' });
+    }
+  });
+
+  // AI Vectorization endpoint
+  app.post('/api/vectorize', upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image file provided' });
+      }
+
+      const isPreview = req.body.preview === 'true';
+      console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview})`);
+
+      // Check if we have vectorizer API credentials
+      const vectorizerApiId = process.env.VECTORIZER_API_ID;
+      const vectorizerApiSecret = process.env.VECTORIZER_API_SECRET;
+
+      if (!vectorizerApiId || !vectorizerApiSecret) {
+        return res.status(500).json({ 
+          error: 'Vectorization service not configured. API credentials missing.' 
+        });
+      }
+
+      // Prepare form data for vectorizer.ai API
+      const formData = new FormData();
+      const fileBuffer = fs.readFileSync(req.file.path);
+      
+      formData.append('image', fileBuffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype
+      });
+      formData.append('mode', isPreview ? 'preview' : 'production');
+
+      // Call vectorizer.ai API
+      const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${Buffer.from(`${vectorizerApiId}:${vectorizerApiSecret}`).toString('base64')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Vectorizer API error:', response.status, errorText);
+        return res.status(response.status).json({ 
+          error: `Vectorization failed: ${response.statusText}` 
+        });
+      }
+
+      const result = await response.text(); // SVG content
+      
+      // Clean up uploaded file
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
+      
+      res.json({ 
+        svg: result,
+        mode: isPreview ? 'preview' : 'production'
+      });
+
+    } catch (error) {
+      console.error('Vectorization error:', error);
+      
+      // Clean up uploaded file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Vectorization failed' 
+      });
     }
   });
 
