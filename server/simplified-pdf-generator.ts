@@ -141,7 +141,36 @@ export class SimplifiedPDFGenerator {
   ) {
     const uploadPath = path.join(process.cwd(), 'uploads', logo.filename);
     
-    // If it's a PDF, embed the original PDF directly
+    // PRIORITY: If this was originally a PDF (even if converted to SVG), use the original PDF directly
+    if (logo.originalMimeType === 'application/pdf' && logo.originalFilename) {
+      console.log(`📄 Using original PDF for direct embedding: ${logo.originalFilename}`);
+      
+      const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+      
+      if (fs.existsSync(originalPdfPath)) {
+        const existingPdfBytes = fs.readFileSync(originalPdfPath);
+        const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+        
+        // Calculate position and scale
+        const scale = this.calculateScale(element, templateSize);
+        const position = this.calculatePosition(element, templateSize, page);
+        
+        page.drawPage(embeddedPage, {
+          x: position.x,
+          y: position.y,
+          width: element.width * scale,
+          height: element.height * scale,
+          rotate: element.rotation ? degrees(element.rotation) : undefined,
+        });
+        
+        console.log(`✅ Successfully embedded original PDF: ${logo.originalFilename}`);
+        return;
+      } else {
+        console.log(`⚠️ Original PDF not found: ${originalPdfPath}, falling back to converted file`);
+      }
+    }
+    
+    // If it's a current PDF, embed it directly
     if (logo.mimeType === 'application/pdf') {
       console.log(`📄 Embedding original PDF: ${logo.filename}`);
       
