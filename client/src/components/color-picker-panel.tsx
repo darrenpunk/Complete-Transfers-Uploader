@@ -181,7 +181,32 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   }
 
   // Check if any colors are RGB (not CMYK)
-  const hasRGBColors = svgColors.some(color => !color.isCMYK && !color.cmykColor?.includes('C:'));
+  // For vectorized files, all colors should be marked as isCMYK: true
+  const hasRGBColors = svgColors.some(color => {
+    // If explicitly marked as CMYK, it's not RGB
+    if (color.isCMYK) return false;
+    
+    // If has CMYK color data, it's not RGB
+    if (color.cmykColor?.includes('C:')) return false;
+    
+    // If originalColor starts with CMYK(), it's vectorized and not RGB
+    if (color.originalColor?.startsWith('CMYK(')) return false;
+    
+    // Otherwise, it's RGB
+    return true;
+  });
+
+  console.log('RGB Warning Check:', {
+    logoId: logo.id,
+    svgColorsCount: svgColors.length,
+    hasRGBColors,
+    colorDetails: svgColors.map(c => ({
+      originalColor: c.originalColor,
+      isCMYK: c.isCMYK,
+      hasCMYKData: !!c.cmykColor?.includes('C:'),
+      startsWithCMYK: c.originalColor?.startsWith('CMYK(')
+    }))
+  });
 
   return (
     <>
