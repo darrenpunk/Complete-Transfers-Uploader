@@ -15,6 +15,7 @@ import {
 import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
 import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
+import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
@@ -934,6 +935,52 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Function to convert RGB colors in SVG to CMYK
+  function convertVectorizedSvgToCmyk(svgContent: string): string {
+    try {
+      // Parse SVG content and replace RGB hex colors with CMYK equivalents
+      let modifiedSvg = svgContent;
+      
+      // Find all hex color values in the SVG
+      const hexColorRegex = /#[0-9a-fA-F]{6}/g;
+      const matches = svgContent.match(hexColorRegex);
+      
+      if (matches) {
+        const uniqueColors = [...new Set(matches)];
+        console.log(`🎨 Converting ${uniqueColors.length} unique RGB colors to CMYK`);
+        
+        for (const hexColor of uniqueColors) {
+          // Skip white color (keep as RGB for transparency)
+          if (hexColor.toLowerCase() === '#ffffff') {
+            continue;
+          }
+          
+          // Convert hex to RGB
+          const r = parseInt(hexColor.slice(1, 3), 16);
+          const g = parseInt(hexColor.slice(3, 5), 16);
+          const b = parseInt(hexColor.slice(5, 7), 16);
+          
+          // Convert RGB to CMYK using Adobe profile
+          const cmyk = adobeRgbToCmyk(r, g, b);
+          
+          // Convert CMYK to device-cmyk format for SVG
+          const cmykString = `device-cmyk(${(cmyk.c / 100).toFixed(3)}, ${(cmyk.m / 100).toFixed(3)}, ${(cmyk.y / 100).toFixed(3)}, ${(cmyk.k / 100).toFixed(3)})`;
+          
+          // Replace all instances of this hex color with CMYK
+          const globalRegex = new RegExp(hexColor.replace('#', '#'), 'gi');
+          modifiedSvg = modifiedSvg.replace(globalRegex, cmykString);
+          
+          console.log(`🎨 Converted ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
+        }
+      }
+      
+      return modifiedSvg;
+    } catch (error) {
+      console.error('Error converting SVG to CMYK:', error);
+      return svgContent; // Return original if conversion fails
+    }
+  }
+
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {
     try {
@@ -1030,8 +1077,18 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
+      // Convert RGB colors to CMYK in the SVG
+      let cmykSvg = result;
+      try {
+        cmykSvg = convertVectorizedSvgToCmyk(result);
+        console.log(`🎨 Converted vectorized SVG to CMYK`);
+      } catch (error) {
+        console.error('Failed to convert vectorized SVG to CMYK:', error);
+        // Continue with RGB version if conversion fails
+      }
+      
       res.json({ 
-        svg: result,
+        svg: cmykSvg,
         mode: isPreview ? 'preview' : 'production'
       });
 

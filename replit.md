@@ -11,6 +11,7 @@ This is a full-stack web application designed for uploading logo files and creat
 - **Fixed Original PDF Content Preservation**: Modified PDF generator to prioritize using original PDF files directly when no color changes are made. Files uploaded as PDFs that get converted to SVGs for editing now preserve their original embedded content (including PNG images) by embedding the original PDF directly in the final output when unchanged.
 - **Fixed Vectorization API Endpoint**: Added missing `/api/vectorize` endpoint that was causing "Unexpected token '<', \"<!DOCTYPE\"... is not valid JSON" errors. The vectorization tool now properly communicates with the AI vectorization service and returns proper JSON responses instead of HTML error pages.
 - **Completed Vectorization Workflow**: Fixed API parameter format (output.format=svg), added proper content-type detection, and resolved canvas display issues. Vectorized SVG files now appear correctly on the canvas workspace and are fully interactive for positioning and editing.
+- **Added CMYK Vectorization**: Vectorized SVG files now automatically convert RGB colors to CMYK using Adobe-matching color profiles. White colors are preserved as RGB for transparency, while all other colors are converted to device-cmyk format for accurate print output.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
