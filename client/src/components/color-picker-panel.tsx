@@ -250,18 +250,6 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             let originalDisplayColor = colorInfo.originalColor;
             if (rgbPercent) {
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
-            } else if (colorInfo.originalColor === 'rgb(255, 255, 255)') {
-              // Handle the common white color case
-              originalDisplayColor = '#ffffff';
-            } else if (colorInfo.originalColor.startsWith('rgb(') && colorInfo.originalColor.includes(',')) {
-              // Parse standard rgb(r,g,b) format
-              const match = colorInfo.originalColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-              if (match) {
-                const r = parseInt(match[1]);
-                const g = parseInt(match[2]);
-                const b = parseInt(match[3]);
-                originalDisplayColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-              }
             }
             
             // Get the correct Adobe CMYK values
