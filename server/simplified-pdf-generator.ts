@@ -167,12 +167,26 @@ export class SimplifiedPDFGenerator {
     } 
     // If it's an SVG, convert to PDF but preserve colors
     else if (logo.mimeType === 'image/svg+xml') {
-      console.log(`🎨 Converting SVG to PDF with original colors: ${logo.filename}`);
+      console.log(`📦 Converting SVG to PDF with original colors (no color changes): ${logo.filename}`);
       
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
       
-      // Use rsvg-convert for faithful SVG to PDF conversion
-      await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${uploadPath}"`);
+      // Check if SVG has embedded images for special handling
+      const svgContent = fs.readFileSync(uploadPath, 'utf8');
+      const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
+      const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
+      
+      if (hasEmbeddedImages) {
+        console.log(`📌 SVG contains embedded images, using special handler for transparency`);
+        const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(uploadPath, tempPdfPath);
+        if (!converted) {
+          // Fallback to standard conversion
+          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${uploadPath}"`);
+        }
+      } else {
+        // Standard conversion for SVGs without embedded images
+        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${uploadPath}"`);
+      }
       
       if (fs.existsSync(tempPdfPath)) {
         const pdfBytes = fs.readFileSync(tempPdfPath);
@@ -228,13 +242,96 @@ export class SimplifiedPDFGenerator {
     logo: any,
     templateSize: any
   ) {
-    // This method would handle cases where the user has made color changes
-    // For now, we'll use the existing embedding logic
-    // In a full implementation, this would apply the color overrides
     console.log(`🎨 Applying color changes to ${logo.filename}`);
     
-    // Fall back to original embedding for now
-    await this.embedOriginalFile(pdfDoc, page, element, logo, templateSize);
+    // For SVG files with color changes
+    if (logo.mimeType === 'image/svg+xml') {
+      console.log(`🎨 Converting SVG to PDF with color modifications: ${logo.filename}`);
+      
+      // First, we need to apply color changes and save the modified SVG
+      const uploadPath = path.join(process.cwd(), 'uploads', logo.filename);
+      const modifiedSvgPath = path.join(process.cwd(), 'uploads', `${element.id}_modified.svg`);
+      const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
+      
+      // Apply color changes to SVG
+      let svgContent = fs.readFileSync(uploadPath, 'utf8');
+      
+      if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+        console.log(`🎨 Applying color overrides:`, element.colorOverrides);
+        
+        // Get SVG color analysis for format mapping
+        const svgAnalysis = logo.svgColors as any;
+        let originalFormatOverrides: Record<string, string> = {};
+        
+        if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
+          Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
+            // Find the matching color in the SVG analysis
+            const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
+            if (colorInfo && colorInfo.originalFormat) {
+              originalFormatOverrides[colorInfo.originalFormat] = newColor;
+            } else {
+              // Fallback to standardized color if original format not found
+              originalFormatOverrides[standardizedColor] = newColor;
+            }
+          });
+        } else {
+          // Fallback if no SVG color analysis available
+          originalFormatOverrides = element.colorOverrides as Record<string, string>;
+        }
+        
+        // Apply color changes
+        const { applySVGColorChanges } = await import('./svg-color-utils');
+        svgContent = applySVGColorChanges(uploadPath, originalFormatOverrides);
+        
+        // Save the modified SVG
+        fs.writeFileSync(modifiedSvgPath, svgContent);
+      } else {
+        // No color changes, just copy the original
+        fs.copyFileSync(uploadPath, modifiedSvgPath);
+      }
+      
+      // Check if SVG has embedded images for special handling
+      const svgContent = fs.readFileSync(modifiedSvgPath, 'utf8');
+      const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
+      const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
+      
+      if (hasEmbeddedImages) {
+        console.log(`📌 SVG contains embedded images, using special handler for transparency`);
+        const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(modifiedSvgPath, tempPdfPath);
+        if (!converted) {
+          // Fallback to standard conversion
+          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${modifiedSvgPath}"`);
+        }
+      } else {
+        // Standard conversion for SVGs without embedded images
+        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${modifiedSvgPath}"`);
+      }
+      
+      if (fs.existsSync(tempPdfPath)) {
+        const pdfBytes = fs.readFileSync(tempPdfPath);
+        const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(pdfBytes));
+        
+        const scale = this.calculateScale(element, templateSize);
+        const position = this.calculatePosition(element, templateSize, page);
+        
+        page.drawPage(embeddedPage, {
+          x: position.x,
+          y: position.y,
+          width: element.width * scale,
+          height: element.height * scale,
+          rotate: element.rotation ? degrees(element.rotation) : undefined,
+        });
+        
+        // Clean up temp files
+        fs.unlinkSync(tempPdfPath);
+        if (fs.existsSync(modifiedSvgPath)) {
+          fs.unlinkSync(modifiedSvgPath);
+        }
+      }
+    } else {
+      // For non-SVG files, use original embedding
+      await this.embedOriginalFile(pdfDoc, page, element, logo, templateSize);
+    }
   }
 
   private calculateScale(element: any, templateSize: any): number {
