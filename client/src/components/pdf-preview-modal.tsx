@@ -172,22 +172,24 @@ export default function PDFPreviewModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex gap-6 h-[70vh]">
+        <div className="flex gap-6 h-[75vh]">
           {/* PDF Preview Section */}
           <div className="flex-1 flex flex-col">
-            <h3 className="text-lg font-semibold mb-4">PDF Preview</h3>
+            <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             {/* Two pages side by side */}
             <div className="flex gap-4 flex-1">
               {/* Page 1 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
                   {/* Canvas preview background */}
                   <div 
-                    className="absolute inset-4 border-2 border-dashed border-gray-300 rounded"
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded"
                     style={{
-                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                      width: '90%',
+                      maxWidth: '280px'
                     }}
                   >
                     {/* Template background */}
@@ -230,7 +232,7 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg p-2 flex-1 overflow-auto">
+                <div className="border rounded-lg p-3 flex-1 overflow-auto flex items-start justify-center">
                   {/* Check if we have individual logo garment colors or use project default */}
                   {(() => {
                     // Get unique garment colors from canvas elements
@@ -243,14 +245,19 @@ export default function PDFPreviewModal({
                     // If no individual colors, use project default
                     if (uniqueColors.length === 0) {
                       return (
-                        <div className="w-full h-full flex items-center justify-center relative"
-                             style={{ backgroundColor: project?.garmentColor || '#f5f5f5' }}>
+                        <div className="mt-2 rounded-lg p-3 flex items-start justify-center relative"
+                             style={{ 
+                               backgroundColor: project?.garmentColor || '#f5f5f5',
+                               width: '90%',
+                               maxWidth: '280px',
+                               aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                             }}>
                           <div 
-                            className="border-2 border-dashed border-gray-400 rounded opacity-60"
+                            className="border-2 border-dashed border-gray-400 rounded"
                             style={{
                               aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                              width: '80%',
-                              maxWidth: '300px'
+                              width: '85%',
+                              maxWidth: '250px'
                             }}
                           >
                             <div className="w-full h-full relative">
@@ -268,7 +275,7 @@ export default function PDFPreviewModal({
                                       width: `${(element.width / (template?.width || 297)) * 100}%`,
                                       height: `${(element.height / (template?.height || 420)) * 100}%`,
                                       transform: `rotate(${element.rotation || 0}deg)`,
-                                      opacity: (element.opacity || 1) * 0.8,
+                                      opacity: element.opacity || 1,
                                     }}
                                   >
                                     <img
@@ -322,7 +329,7 @@ export default function PDFPreviewModal({
                                           width: `${(element.width / (template?.width || 297)) * 100}%`,
                                           height: `${(element.height / (template?.height || 420)) * 100}%`,
                                           transform: `rotate(${element.rotation || 0}deg)`,
-                                          opacity: (element.opacity || 1) * 0.8,
+                                          opacity: element.opacity || 1,
                                         }}
                                       >
                                         <img
