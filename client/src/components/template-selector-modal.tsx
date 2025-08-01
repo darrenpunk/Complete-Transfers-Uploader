@@ -143,7 +143,7 @@ export default function TemplateSelectorModal({
   selectedGroup
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [copies, setCopies] = useState<number>(10); // Default to 10
+  const [copies, setCopies] = useState<number>(1); // Start at 1, will be adjusted based on template
 
   // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
@@ -162,7 +162,6 @@ export default function TemplateSelectorModal({
   const getMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
     const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers', 'DTF - Digital Film Transfers', 'UV DTF - Select Template Size'];
-    console.log('Checking min quantity for template:', { group: template.group, dtfGroups, isMatch: dtfGroups.includes(template.group || '') });
     return dtfGroups.includes(template.group || '') ? 1 : 10;
   };
   
@@ -180,10 +179,8 @@ export default function TemplateSelectorModal({
     const template = templates.find(t => t.id === templateId);
     if (template) {
       const newMinQuantity = getMinQuantity(template);
-      console.log('Template selected:', { templateId, group: template.group, newMinQuantity });
-      if (copies < newMinQuantity) {
-        setCopies(newMinQuantity);
-      }
+      // Always set to minimum quantity when selecting a template
+      setCopies(newMinQuantity);
     }
   };
 
@@ -193,7 +190,7 @@ export default function TemplateSelectorModal({
       onClose();
       // Reset state for next time
       setSelectedTemplate(null);
-      setCopies(10);
+      setCopies(1);
     }
   };
 
@@ -201,7 +198,7 @@ export default function TemplateSelectorModal({
     onClose();
     // Reset state for next time
     setSelectedTemplate(null);
-    setCopies(10);
+    setCopies(1);
   };
 
   console.log('TemplateSelectorModal render', { open, templatesLength: templates.length });
