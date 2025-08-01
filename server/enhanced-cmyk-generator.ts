@@ -1359,9 +1359,11 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: Found ${foundConvertedColors} RGB->CMYK converted colors, ${hasExistingCMYK ? 'HAS' : 'NO'} existing CMYK colors`);
           
           // Set flag based on whether we need CMYK conversion
-          if (foundConvertedColors > 0) {
+          // If all colors are RGB (not CMYK), we should convert to CMYK
+          if (foundConvertedColors > 0 || (!hasExistingCMYK && colorAnalysis.length > 0)) {
             preservedExactCMYK = true;
             console.log(`Enhanced CMYK: Setting preservedExactCMYK = true, will apply CMYK colorspace conversion`);
+            console.log(`Enhanced CMYK: Reason - foundConvertedColors: ${foundConvertedColors}, hasExistingCMYK: ${hasExistingCMYK}, total colors: ${colorAnalysis.length}`);
           }
           
           // Pass hasExistingCMYK flag to the next section
