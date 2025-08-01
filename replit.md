@@ -17,6 +17,7 @@ This is a full-stack web application designed for uploading logo files and creat
 - **Fixed Vectorization Transparency Issue**: Resolved green background problem by implementing inline SVG rendering instead of img elements. Created SvgInlineRenderer component that fetches SVG content and renders it directly in the DOM, eliminating browser-imposed backgrounds. SVG files now display with true transparency on the canvas, matching the vectorizer preview behavior.
 - **Fixed RGB Warning on Vectorized Files**: Enhanced detection logic to properly identify vectorized CMYK files and prevent RGB warnings on logo interaction. White colors preserved for transparency no longer trigger RGB warnings.
 - **Updated Vectorizer API Parameters**: Matched exact settings from vectorizer.ai screenshot including fill shapes draw style, SVG 1.1 output, shape stacking cutouts, and all curve types enabled. This should produce filled vector shapes matching the website output.
+- **Fixed Vectorized SVG Green Background Issue**: Resolved the green background problem in vectorized SVGs by implementing automatic stroke outline removal during PDF generation. The system now detects and removes large stroke groups (>100px width) that vectorizer.ai adds as background outlines. This preserves the clean vector artwork without unwanted backgrounds in the final PDF output.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
