@@ -997,56 +997,72 @@ export async function registerRoutes(app: express.Application) {
     try {
       let modifiedSvg = svgContent;
       
-      // Remove large background rectangles that cover the entire canvas
-      // Look for rect elements that might be backgrounds
+      // STEP 1: Remove ALL rectangles that could be backgrounds (very aggressive)
       const rectRegex = /<rect[^>]*(?:\/>|>.*?<\/rect>)/gi;
-      const rectMatches = modifiedSvg.match(rectRegex);
-      
-      if (rectMatches) {
-        for (const rectMatch of rectMatches) {
-          // Check if this rect covers a large area (likely a background)
-          const widthMatch = rectMatch.match(/width\s*=\s*["']([^"']+)["']/);
-          const heightMatch = rectMatch.match(/height\s*=\s*["']([^"']+)["']/);
-          const xMatch = rectMatch.match(/x\s*=\s*["']([^"']+)["']/);
-          const yMatch = rectMatch.match(/y\s*=\s*["']([^"']+)["']/);
-          
-          if (widthMatch && heightMatch) {
-            const width = parseFloat(widthMatch[1]);
-            const height = parseFloat(heightMatch[1]);
-            const x = xMatch ? parseFloat(xMatch[1]) : 0;
-            const y = yMatch ? parseFloat(yMatch[1]) : 0;
-            
-            // More aggressive background detection - smaller threshold and any large rectangles
-            if ((width > 100 && height > 100) && (x <= 50 && y <= 50)) {
-              console.log(`🎨 Removing background rectangle: ${width}x${height} at (${x},${y})`);
-              modifiedSvg = modifiedSvg.replace(rectMatch, '');
-            }
-          }
-        }
-      }
-      
-      // Remove any paths or shapes that fill the entire background with white or light colors
-      const largePathRegex = /<path[^>]*d\s*=\s*["'][^"']*["'][^>]*fill\s*=\s*["'](?:#ffffff|#f{6}|white|rgb\(255,\s*255,\s*255\))["'][^>]*(?:\/>|>.*?<\/path>)/gi;
-      modifiedSvg = modifiedSvg.replace(largePathRegex, (match) => {
-        console.log(`🎨 Removing white background path`);
-        return '';
-      });
-      
-      // Remove any circle or ellipse elements that might be background fills
-      const backgroundShapeRegex = /<(circle|ellipse)[^>]*r[xy]?\s*=\s*["']([^"']+)["'][^>]*fill\s*=\s*["'](?:#ffffff|white|rgb\(255,\s*255,\s*255\))["'][^>]*(?:\/>|>.*?<\/\1>)/gi;
-      modifiedSvg = modifiedSvg.replace(backgroundShapeRegex, (match, shape, radius) => {
-        const r = parseFloat(radius);
-        if (r > 50) {
-          console.log(`🎨 Removing white background ${shape} with radius ${r}`);
+      modifiedSvg = modifiedSvg.replace(rectRegex, (match) => {
+        // Check if this has a fill attribute (any filled rectangle is suspect)
+        if (match.includes('fill=')) {
+          console.log(`🎨 Removing filled rectangle element`);
           return '';
         }
         return match;
       });
       
-      // Also look for and remove any fill="..." attributes on the root SVG element
+      // STEP 2: Remove the first element if it's a large shape that could be background
+      // Vectorizer.ai often puts background as the first major element
+      const firstElementRegex = /(<svg[^>]*>[\s\S]*?)<(path|polygon|circle|ellipse)[^>]*fill\s*=\s*["']([^"']+)["'][^>]*>/i;
+      const firstMatch = modifiedSvg.match(firstElementRegex);
+      if (firstMatch) {
+        const [fullMatch, svgStart, elementType, fillColor] = firstMatch;
+        // If the first colored element has a large coordinate space, remove it
+        const coords = fullMatch.match(/[\d.-]+/g);
+        if (coords && coords.length > 4) {
+          const values = coords.map(parseFloat);
+          const maxCoord = Math.max(...values);
+          if (maxCoord > 200) {
+            console.log(`🎨 Removing first large ${elementType} element with fill ${fillColor} (likely background)`);
+            modifiedSvg = modifiedSvg.replace(fullMatch, svgStart);
+          }
+        }
+      }
+      
+      // STEP 3: Remove any path that forms a closed shape with large dimensions
+      const largePathRegex = /<path[^>]*d\s*=\s*["']([^"']*)["'][^>]*fill\s*=\s*["']([^"']+)["'][^>]*(?:\/>|>.*?<\/path>)/gi;
+      modifiedSvg = modifiedSvg.replace(largePathRegex, (match, pathData, fillColor) => {
+        // If path contains M, L commands and closes with Z, it might be a background
+        if (pathData.includes('M') && pathData.includes('Z')) {
+          const coords = pathData.match(/[\d.-]+/g);
+          if (coords && coords.length >= 6) {
+            const values = coords.map(parseFloat);
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values);
+            const range = maxValue - minValue;
+            
+            // If the path spans a large area, it's likely a background
+            if (range > 150) {
+              console.log(`🎨 Removing large background path with fill ${fillColor} (range: ${range})`);
+              return '';
+            }
+          }
+        }
+        return match;
+      });
+      
+      // STEP 4: Remove any circles/ellipses with large radius
+      const largeCircleRegex = /<(circle|ellipse)[^>]*r[xy]?\s*=\s*["']([^"']+)["'][^>]*fill[^>]*(?:\/>|>.*?<\/\1>)/gi;
+      modifiedSvg = modifiedSvg.replace(largeCircleRegex, (match, shape, radius) => {
+        const r = parseFloat(radius);
+        if (r > 30) {
+          console.log(`🎨 Removing large filled ${shape} with radius ${r}`);
+          return '';
+        }
+        return match;
+      });
+      
+      // STEP 5: Look for and remove any fill attributes on the root SVG element
       modifiedSvg = modifiedSvg.replace(/(<svg[^>]*)\s+fill\s*=\s*["'][^"']*["']/gi, '$1');
       
-      console.log(`🎨 Transparency preservation: Removed background elements`);
+      console.log(`🎨 Aggressive transparency preservation: Removed background elements`);
       return modifiedSvg;
     } catch (error) {
       console.error('Error removing background fills:', error);
@@ -1088,11 +1104,15 @@ export async function registerRoutes(app: express.Application) {
         formData.append('mode', 'production');
       }
       
-      // Add transparency preservation parameters
+      // Add transparency preservation parameters - try multiple parameter formats
       formData.append('background.remove', 'true');  // Remove background fills
       formData.append('background.color', 'transparent');  // Use transparent background
+      formData.append('background.enabled', 'false');  // Disable background
+      formData.append('remove_background', 'true');  // Alternative format
+      formData.append('transparent_background', 'true');  // Alternative format
       formData.append('transparency.preserve', 'true');  // Preserve transparent areas
       formData.append('preserve_transparency', 'true');  // Alternative parameter name
+      formData.append('background_removal', 'true');  // Another alternative
 
       // Call vectorizer.ai API
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
