@@ -1173,7 +1173,7 @@ export default function CanvasWorkspace({
                           background: 'transparent', 
                           backgroundColor: 'transparent',
                           filter: colorManagementEnabled 
-                            ? "brightness(0.98) contrast(1.02) saturate(0.95)" 
+                            ? "brightness(0.88) contrast(1.1) saturate(0.75) hue-rotate(-5deg)" 
                             : "none",
                           objectFit: 'contain',
                           width: '100%',
