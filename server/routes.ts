@@ -10,7 +10,8 @@ import { IStorage } from './storage';
 import { 
   insertProjectSchema, 
   insertLogoSchema, 
-  insertCanvasElementSchema 
+  insertCanvasElementSchema,
+  insertVectorizationRequestSchema
 } from '@shared/schema';
 import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
@@ -1364,6 +1365,82 @@ export async function registerRoutes(app: express.Application) {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : 'Vectorization failed' 
       });
+    }
+  });
+
+  // Vectorization Service Routes
+  app.post('/api/vectorization-requests', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Validate request body
+      const requestData = insertVectorizationRequestSchema.parse({
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        url: `/uploads/${req.file.filename}`,
+        comments: req.body.comments,
+        printSize: req.body.printSize,
+        charge: 15 // Fixed 15 euro charge
+      });
+
+      const vectorizationRequest = await storage.createVectorizationRequest(requestData);
+
+      // TODO: Integrate with webcart for 15 euro charge
+      // For now, we'll simulate the webcart integration
+      console.log('Vectorization request created:', {
+        id: vectorizationRequest.id,
+        file: vectorizationRequest.originalName,
+        charge: vectorizationRequest.charge,
+        comments: vectorizationRequest.comments,
+        printSize: vectorizationRequest.printSize
+      });
+
+      res.json({
+        id: vectorizationRequest.id,
+        success: true,
+        message: 'Vectorization request submitted successfully',
+        charge: vectorizationRequest.charge,
+        webcartUrl: '#' // TODO: Replace with actual webcart URL
+      });
+
+    } catch (error) {
+      console.error('Vectorization request error:', error);
+      
+      // Clean up uploaded file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to submit vectorization request' 
+      });
+    }
+  });
+
+  app.get('/api/vectorization-requests', async (req, res) => {
+    try {
+      const requests = await storage.getVectorizationRequests();
+      res.json(requests);
+    } catch (error) {
+      console.error('Failed to fetch vectorization requests:', error);
+      res.status(500).json({ error: 'Failed to fetch vectorization requests' });
+    }
+  });
+
+  app.get('/api/vectorization-requests/:id', async (req, res) => {
+    try {
+      const request = await storage.getVectorizationRequest(req.params.id);
+      if (!request) {
+        return res.status(404).json({ error: 'Vectorization request not found' });
+      }
+      res.json(request);
+    } catch (error) {
+      console.error('Failed to fetch vectorization request:', error);
+      res.status(500).json({ error: 'Failed to fetch vectorization request' });
     }
   });
 

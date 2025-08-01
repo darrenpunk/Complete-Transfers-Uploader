@@ -8,7 +8,9 @@ import {
   type CanvasElement,
   type InsertCanvasElement,
   type TemplateSize,
-  type InsertTemplateSize
+  type InsertTemplateSize,
+  type VectorizationRequest,
+  type InsertVectorizationRequest
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -45,6 +47,12 @@ export interface IStorage {
   getTemplateSize(id: string): Promise<TemplateSize | undefined>;
   getTemplateSizes(): Promise<TemplateSize[]>;
   createTemplateSize(templateSize: InsertTemplateSize): Promise<TemplateSize>;
+
+  // Vectorization request methods
+  getVectorizationRequest(id: string): Promise<VectorizationRequest | undefined>;
+  getVectorizationRequests(): Promise<VectorizationRequest[]>;
+  createVectorizationRequest(request: InsertVectorizationRequest): Promise<VectorizationRequest>;
+  updateVectorizationRequest(id: string, updates: Partial<VectorizationRequest>): Promise<VectorizationRequest | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -53,6 +61,7 @@ export class MemStorage implements IStorage {
   private logos: Map<string, Logo> = new Map();
   private canvasElements: Map<string, CanvasElement> = new Map();
   private templateSizes: Map<string, TemplateSize> = new Map();
+  private vectorizationRequests: Map<string, VectorizationRequest> = new Map();
 
   constructor() {
     this.initializeTemplateSizes();
@@ -336,6 +345,41 @@ export class MemStorage implements IStorage {
     const templateSize: TemplateSize = { ...insertTemplateSize, id };
     this.templateSizes.set(id, templateSize);
     return templateSize;
+  }
+
+  // Vectorization request methods
+  async getVectorizationRequest(id: string): Promise<VectorizationRequest | undefined> {
+    return this.vectorizationRequests.get(id);
+  }
+
+  async getVectorizationRequests(): Promise<VectorizationRequest[]> {
+    return Array.from(this.vectorizationRequests.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async createVectorizationRequest(insertRequest: InsertVectorizationRequest): Promise<VectorizationRequest> {
+    const id = randomUUID();
+    const request: VectorizationRequest = { 
+      ...insertRequest, 
+      id,
+      charge: insertRequest.charge || 15,
+      status: insertRequest.status || "pending",
+      createdAt: new Date().toISOString(),
+      webcartOrderId: insertRequest.webcartOrderId || null,
+      completedAt: insertRequest.completedAt || null
+    };
+    this.vectorizationRequests.set(id, request);
+    return request;
+  }
+
+  async updateVectorizationRequest(id: string, updates: Partial<VectorizationRequest>): Promise<VectorizationRequest | undefined> {
+    const existing = this.vectorizationRequests.get(id);
+    if (!existing) return undefined;
+    
+    const updated = { ...existing, ...updates };
+    this.vectorizationRequests.set(id, updated);
+    return updated;
   }
 }
 

@@ -83,6 +83,22 @@ export const templateSizes = pgTable("template_sizes", {
   description: text("description"), // product description
 });
 
+export const vectorizationRequests = pgTable("vectorization_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  url: text("url").notNull(),
+  comments: text("comments").notNull(),
+  printSize: text("print_size").notNull(), // Final print size requirement
+  charge: real("charge").notNull().default(15), // 15 euro charge
+  status: text("status").notNull().default("pending"), // pending, processing, completed, cancelled
+  webcartOrderId: text("webcart_order_id"), // ID from webcart integration
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  completedAt: text("completed_at"), // When vectorization was completed
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -99,6 +115,12 @@ export const insertCanvasElementSchema = createInsertSchema(canvasElements).omit
 
 export const insertTemplateSizeSchema = createInsertSchema(templateSizes).omit({
   id: true,
+});
+
+export const insertVectorizationRequestSchema = createInsertSchema(vectorizationRequests).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
 });
 
 // Update schemas
@@ -120,6 +142,9 @@ export type CanvasElement = typeof canvasElements.$inferSelect;
 
 export type InsertTemplateSize = z.infer<typeof insertTemplateSizeSchema>;
 export type TemplateSize = typeof templateSizes.$inferSelect;
+
+export type InsertVectorizationRequest = z.infer<typeof insertVectorizationRequestSchema>;
+export type VectorizationRequest = typeof vectorizationRequests.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertProjectSchema>;

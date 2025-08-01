@@ -15,9 +15,10 @@ import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw, HelpCircle } from "lucide-react";
+import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw, HelpCircle, Palette } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
+import { VectorizationServiceForm } from "@/components/vectorization-service-form";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -38,6 +39,7 @@ export default function UploadTool() {
   const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showVectorizationForm, setShowVectorizationForm] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
 
   // Fetch template sizes
@@ -611,6 +613,10 @@ export default function UploadTool() {
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
+            <Button variant="outline" onClick={() => setShowVectorizationForm(true)}>
+              <Palette className="w-4 h-4 mr-2" />
+              Vectorization Service
+            </Button>
             <Button variant="outline" onClick={() => setShowHelpModal(true)}>
               <HelpCircle className="w-4 h-4 mr-2" />
               Help
@@ -770,6 +776,12 @@ export default function UploadTool() {
       <HelpModal
         open={showHelpModal}
         onOpenChange={setShowHelpModal}
+      />
+
+      {/* Vectorization Service Form */}
+      <VectorizationServiceForm
+        open={showVectorizationForm}
+        onOpenChange={setShowVectorizationForm}
       />
 
     </div>
