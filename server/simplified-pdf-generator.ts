@@ -281,10 +281,12 @@ export class SimplifiedPDFGenerator {
         
         // Apply color changes
         const { applySVGColorChanges } = await import('./svg-color-utils');
-        svgContent = applySVGColorChanges(uploadPath, originalFormatOverrides);
+        console.log(`🎨 About to apply color changes with overrides:`, originalFormatOverrides);
+        const modifiedSvgContent = applySVGColorChanges(uploadPath, originalFormatOverrides);
         
         // Save the modified SVG
-        fs.writeFileSync(modifiedSvgPath, svgContent);
+        fs.writeFileSync(modifiedSvgPath, modifiedSvgContent);
+        console.log(`💾 Saved modified SVG to: ${modifiedSvgPath}`);
       } else {
         // No color changes, just copy the original
         fs.copyFileSync(uploadPath, modifiedSvgPath);
@@ -304,7 +306,9 @@ export class SimplifiedPDFGenerator {
         }
       } else {
         // Standard conversion for SVGs without embedded images
+        console.log(`🔄 Converting modified SVG to PDF: ${modifiedSvgPath} -> ${tempPdfPath}`);
         await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${modifiedSvgPath}"`);
+        console.log(`✅ SVG to PDF conversion completed`);
       }
       
       if (fs.existsSync(tempPdfPath)) {
