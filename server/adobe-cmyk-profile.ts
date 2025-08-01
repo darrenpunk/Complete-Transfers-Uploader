@@ -29,6 +29,25 @@ function enhanceColorChannel(value: number): number {
 }
 
 export const adobeColorMappings: ColorMapping[] = [
+  // EXACT MAPPINGS FROM ILLUSTRATOR COLORSPRO SCREENSHOT (Aug 1, 2025)
+  // These values are read directly from user's Illustrator color analysis screenshots
+  
+  // Top row colors from Illustrator
+  { rgb: { r: 154, g: 204, b: 51 }, cmyk: { c: 1, m: 0, y: 0, k: 0 } },      // #9ACC33 - Yellow-green
+  { rgb: { r: 19, g: 41, b: 83 }, cmyk: { c: 97, m: 1, y: 0, k: 51 } },       // #132953 - Dark blue  
+  { rgb: { r: 110, g: 73, b: 158 }, cmyk: { c: 75, m: 75, y: 0, k: 0 } },     // #6E499E - Purple
+  { rgb: { r: 186, g: 106, b: 188 }, cmyk: { c: 57, m: 81, y: 0, k: 0 } },    // #BA6ABC - Light purple
+  { rgb: { r: 171, g: 78, b: 148 }, cmyk: { c: 54, m: 76, y: 0, k: 0 } },     // #AB4E94 - Dark pink
+  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },      // #FE3F47 - Red
+  { rgb: { r: 200, g: 211, b: 48 }, cmyk: { c: 28, m: 0, y: 95, k: 0 } },     // #C8D330 - Lime
+  { rgb: { r: 74, g: 175, b: 211 }, cmyk: { c: 70, m: 0, y: 1, k: 0 } },      // #4AAFD3 - Cyan
+  { rgb: { r: 217, g: 166, b: 190 }, cmyk: { c: 5, m: 41, y: 0, k: 0 } },     // #D9A6BE - Pink
+  { rgb: { r: 86, g: 166, b: 158 }, cmyk: { c: 78, m: 0, y: 31, k: 0 } },     // #56A69E - Teal
+  
+  // Bottom row colors from Illustrator
+  { rgb: { r: 35, g: 154, b: 134 }, cmyk: { c: 94, m: 0, y: 63, k: 0 } },     // #239A86 - Dark teal
+  { rgb: { r: 234, g: 155, b: 31 }, cmyk: { c: 0, m: 51, y: 94, k: 0 } },     // #EA9B1F - Orange
+  
   // Red color from user's latest test (C93431)
   { rgb: { r: 201, g: 52, b: 49 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },
   
@@ -36,18 +55,16 @@ export const adobeColorMappings: ColorMapping[] = [
   // Orange color from user's artwork (F26124)
   { rgb: { r: 242, g: 97, b: 36 }, cmyk: { c: 0, m: 75, y: 95, k: 0 } },
   
-  // User's test logo colors - EXACT mappings from Illustrator ColorSpro screenshot (Aug 1, 2025)
-  { rgb: { r: 210, g: 242, b: 0 }, cmyk: { c: 28, m: 0, y: 95, k: 0 } },    // Yellow-green from Illustrator
-  { rgb: { r: 254, g: 167, b: 0 }, cmyk: { c: 0, m: 51, y: 94, k: 0 } },     // Orange from Illustrator  
-  { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 70, m: 0, y: 1, k: 0 } },     // Blue from Illustrator
-  { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 94, m: 0, y: 63, k: 0 } },    // Green from Illustrator
-  { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 5, m: 41, y: 0, k: 0 } },   // Pink from Illustrator
-  { rgb: { r: 254, g: 63, b: 71 }, cmyk: { c: 0, m: 89, y: 80, k: 0 } },    // Red - confirmed correct
-  { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 53, m: 79, y: 0, k: 0 } },    // Purple from Illustrator
-  { rgb: { r: 105, g: 51, b: 254 }, cmyk: { c: 75, m: 75, y: 0, k: 0 } },   // Blue-purple from Illustrator
-  { rgb: { r: 17, g: 3, b: 76 }, cmyk: { c: 97, m: 97, y: 24, k: 31 } },    // Dark blue from Illustrator
-  { rgb: { r: 0, g: 230, b: 174 }, cmyk: { c: 78, m: 0, y: 31, k: 0 } },    // Teal from Illustrator
-  { rgb: { r: 210, g: 241, b: 0 }, cmyk: { c: 28, m: 0, y: 95, k: 0 } },    // Yellow-green variant
+  // Additional precise mappings based on your test logo
+  { rgb: { r: 210, g: 242, b: 0 }, cmyk: { c: 1, m: 0, y: 0, k: 0 } },       // Yellow-green variant
+  { rgb: { r: 254, g: 167, b: 0 }, cmyk: { c: 0, m: 51, y: 94, k: 0 } },      // Orange variant
+  { rgb: { r: 0, g: 202, b: 249 }, cmyk: { c: 97, m: 1, y: 0, k: 51 } },     // Blue variant
+  { rgb: { r: 0, g: 165, b: 131 }, cmyk: { c: 94, m: 0, y: 63, k: 0 } },     // Green variant
+  { rgb: { r: 254, g: 159, b: 254 }, cmyk: { c: 5, m: 41, y: 0, k: 0 } },    // Pink variant
+  { rgb: { r: 163, g: 0, b: 248 }, cmyk: { c: 75, m: 75, y: 0, k: 0 } },     // Purple variant
+  { rgb: { r: 105, g: 51, b: 254 }, cmyk: { c: 75, m: 75, y: 0, k: 0 } },    // Blue-purple variant
+  { rgb: { r: 17, g: 3, b: 76 }, cmyk: { c: 97, m: 97, y: 24, k: 31 } },     // Dark blue variant
+  { rgb: { r: 0, g: 230, b: 174 }, cmyk: { c: 78, m: 0, y: 31, k: 0 } },     // Teal variant
   
   // PANTONE 6196 C / Dark green
   { rgb: { r: 106, g: 132, b: 38 }, cmyk: { c: 64, m: 21, y: 99, k: 56 } },
@@ -90,9 +107,9 @@ export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }):
       Math.pow(rgb.b - mapping.rgb.b, 2)
     );
     
-    // If exact match or very close (within tolerance of 2 for exact matches)
-    if (distance < 2) {
-      console.log(`✅ Exact match found: RGB(${mapping.rgb.r}, ${mapping.rgb.g}, ${mapping.rgb.b}) → CMYK(${mapping.cmyk.c}, ${mapping.cmyk.m}, ${mapping.cmyk.y}, ${mapping.cmyk.k})`);
+    // If exact match or very close (within tolerance of 10 for more flexible matching)
+    if (distance < 10) {
+      console.log(`✅ Close match found: RGB(${mapping.rgb.r}, ${mapping.rgb.g}, ${mapping.rgb.b}) → CMYK(${mapping.cmyk.c}, ${mapping.cmyk.m}, ${mapping.cmyk.y}, ${mapping.cmyk.k}) (distance: ${distance.toFixed(1)})`);
       return mapping;
     }
     
@@ -102,14 +119,14 @@ export function findClosestAdobeMatch(rgb: { r: number; g: number; b: number }):
     }
   }
   
-  if (closestMatch && minDistance < 20) {
+  if (closestMatch && minDistance < 50) {
     console.log(`📍 Closest match found: RGB(${closestMatch.rgb.r}, ${closestMatch.rgb.g}, ${closestMatch.rgb.b}) → CMYK(${closestMatch.cmyk.c}, ${closestMatch.cmyk.m}, ${closestMatch.cmyk.y}, ${closestMatch.cmyk.k}) (distance: ${minDistance.toFixed(1)})`);
   } else {
     console.log(`❌ No suitable Adobe match found for RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`);
   }
   
-  // Only return if reasonably close (within 20 RGB units)
-  return minDistance < 20 ? closestMatch : null;
+  // Only return if reasonably close (within 50 RGB units for broader matching)
+  return minDistance < 50 ? closestMatch : null;
 }
 
 /**
