@@ -282,11 +282,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                   )}
                 </div>
 
-                {color.pantoneMatch && (
-                  <div className="text-xs text-purple-600 dark:text-purple-400">
-                    🎨 {color.pantoneMatch} ({Math.round((1 - (color.pantoneDistance || 0) / 255) * 100)}% match)
-                  </div>
-                )}
+
               </div>
             );
           })}

@@ -535,7 +535,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       const fillMatch = elementMatch.match(/fill\s*=\s*["']([^"']+)["']/i);
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(fillMatch[1]);
-        const embeddedPantone = detectEmbeddedPantone(elementMatch);
         const colorData: SVGColorInfo = {
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,     // Standardized format for UI
@@ -547,12 +546,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
         };
         
-        // Only add Pantone fields if actually detected
-        if (embeddedPantone) {
-          colorData.pantoneMatch = embeddedPantone;
-          colorData.pantoneDistance = 0;
-        }
-        
         colors.push(colorData);
       }
 
@@ -560,7 +553,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       const strokeMatch = elementMatch.match(/stroke\s*=\s*["']([^"']+)["']/i);
       if (strokeMatch && strokeMatch[1] !== 'none' && strokeMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(strokeMatch[1]);
-        const embeddedPantone = detectEmbeddedPantone(elementMatch);
         const strokeColorData: SVGColorInfo = {
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,     // Standardized format for UI
@@ -571,12 +563,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           selector: `${elementType}:nth-of-type(${index + 1})`,
           isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
         };
-        
-        // Only add Pantone fields if actually detected
-        if (embeddedPantone) {
-          strokeColorData.pantoneMatch = embeddedPantone;
-          strokeColorData.pantoneDistance = 0;
-        }
         
         colors.push(strokeColorData);
       }
@@ -590,7 +576,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const styleFillMatch = style.match(/fill\s*:\s*([^;]+)/i);
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleFillMatch[1].trim());
-          const embeddedPantone = detectEmbeddedPantone(elementMatch);
           const styleFillColorData: SVGColorInfo = {
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
@@ -602,12 +587,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
             isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
           };
           
-          // Only add Pantone fields if actually detected
-          if (embeddedPantone) {
-            styleFillColorData.pantoneMatch = embeddedPantone;
-            styleFillColorData.pantoneDistance = 0;
-          }
-          
           colors.push(styleFillColorData);
         }
 
@@ -615,7 +594,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const styleStrokeMatch = style.match(/stroke\s*:\s*([^;]+)/i);
         if (styleStrokeMatch && styleStrokeMatch[1] !== 'none' && styleStrokeMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleStrokeMatch[1].trim());
-          const embeddedPantone = detectEmbeddedPantone(elementMatch);
           const styleStrokeColorData: SVGColorInfo = {
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
@@ -626,12 +604,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
             selector: `${elementType}:nth-of-type(${index + 1})`,
             isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
           };
-          
-          // Only add Pantone fields if actually detected
-          if (embeddedPantone) {
-            styleStrokeColorData.pantoneMatch = embeddedPantone;
-            styleStrokeColorData.pantoneDistance = 0;
-          }
           
           colors.push(styleStrokeColorData);
         }
