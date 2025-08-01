@@ -964,7 +964,7 @@ export async function registerRoutes(app: express.Application) {
           const b = parseInt(hexColor.slice(5, 7), 16);
           
           // Convert RGB to CMYK using Adobe profile
-          const cmyk = adobeRgbToCmyk(r, g, b);
+          const cmyk = adobeRgbToCmyk({ r, g, b });
           
           cmykMetadata += `${hexColor} → C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}\n`;
           console.log(`🎨 CMYK metadata: ${hexColor} (RGB ${r},${g},${b}) → CMYK ${cmyk.c}%,${cmyk.m}%,${cmyk.y}%,${cmyk.k}%`);
