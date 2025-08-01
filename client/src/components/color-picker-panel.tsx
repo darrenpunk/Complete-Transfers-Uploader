@@ -8,6 +8,7 @@ import { Palette, RotateCcw, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import CMYKColorModal from "./cmyk-color-modal";
+import { RGBWarningModal } from "./rgb-warning-modal";
 import type { CanvasElement, Logo } from "@shared/schema";
 
 interface SVGColorInfo {
@@ -107,6 +108,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     (selectedElement.colorOverrides as Record<string, string>) || {}
   );
   const [showCMYKPreview, setShowCMYKPreview] = useState(false);
+  const [hasShownRGBWarning, setHasShownRGBWarning] = useState(false);
 
   // Only show for SVG logos with detected colors
   const svgAnalysis = logo.svgColors as { colors?: SVGColorInfo[]; strokeWidths?: number[]; hasText?: boolean } | SVGColorInfo[] | null;
@@ -178,8 +180,16 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return null;
   }
 
+  // Check if any colors are RGB (not CMYK)
+  const hasRGBColors = svgColors.some(color => !color.isCMYK && !color.cmykColor?.includes('C:'));
+
   return (
-    <Card className="mt-4">
+    <>
+      <RGBWarningModal 
+        hasRGBColors={hasRGBColors && !hasShownRGBWarning} 
+        onClose={() => setHasShownRGBWarning(true)} 
+      />
+      <Card className="mt-4">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -206,6 +216,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             const hasOverride = !!colorOverrides[colorInfo.originalColor];
             const currentColor = hasOverride ? colorOverrides[colorInfo.originalColor] : colorInfo.originalColor;
             const rgbPercent = parseRGBPercentage(colorInfo.originalColor);
+            const isCMYK = colorInfo.isCMYK || (colorInfo.cmykColor && colorInfo.cmykColor.includes('C:'));
             
             // Convert original color to hex for display
             let originalDisplayColor = colorInfo.originalColor;
@@ -270,14 +281,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                     color.originalColor
                   )}
                 </div>
-                {!isCMYK && (
-                  <div className="text-xs text-orange-600 dark:text-orange-400">
-                    ⚠️ RGB color - will be converted to CMYK for production
-                    {showCMYKPreview && (
-                      <span className="ml-1 text-blue-500">(preview active)</span>
-                    )}
-                  </div>
-                )}
+
                 {color.pantoneMatch && (
                   <div className="text-xs text-purple-600 dark:text-purple-400">
                     🎨 {color.pantoneMatch} ({Math.round((1 - (color.pantoneDistance || 0) / 255) * 100)}% match)
@@ -314,5 +318,6 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
