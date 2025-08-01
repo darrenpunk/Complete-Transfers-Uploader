@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
 
 // Import the same icons used in the sidebar
@@ -148,6 +149,7 @@ export default function TemplateSelectorModal({
     <Dialog open={open} onOpenChange={() => {}} modal={true}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50">
         <DialogHeader>
+          <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-2xl font-bold text-center">
             {selectedGroup ? `${selectedGroup} - Select Template Size` : "Select Your Template Size"}
           </DialogTitle>

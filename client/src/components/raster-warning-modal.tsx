@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Camera, Wand2, Users } from "lucide-react";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { useState } from "react";
 
 interface RasterWarningModalProps {
@@ -45,7 +46,8 @@ export function RasterWarningModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-orange-600">
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="flex items-center gap-2 text-orange-600 justify-center">
             <AlertTriangle className="h-5 w-5" />
             Raster File Detected: {fileName}
           </DialogTitle>

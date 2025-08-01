@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { useToast } from "@/hooks/use-toast";
 
 interface VectorizerModalProps {
@@ -1010,6 +1011,7 @@ export function VectorizerModal({
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
           <DialogHeader className="flex-shrink-0">
+            <CompleteTransferLogo size="md" className="mb-4" />
             <div className="flex items-center justify-between">
               <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
               <div className="flex items-center gap-2">

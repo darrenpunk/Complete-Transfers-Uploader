@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { FileText, AlertCircle, MessageSquare, Hash } from "lucide-react";
 
 interface ProjectNameModalProps {
@@ -84,11 +85,12 @@ export default function ProjectNameModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="flex items-center gap-2 justify-center">
             <FileText className="w-5 h-5" />
             {title}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-center">
             {description}
           </DialogDescription>
         </DialogHeader>

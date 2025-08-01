@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { 
   FileText, 
   AlertTriangle, 
@@ -161,11 +162,12 @@ export default function PDFPreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="flex items-center gap-2 justify-center">
             <Eye className="w-5 h-5" />
             PDF Preview & Approval
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-center">
             Review your design and confirm approval before generating the final PDF
           </DialogDescription>
         </DialogHeader>

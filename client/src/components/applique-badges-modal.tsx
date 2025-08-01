@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { X } from "lucide-react";
 
 interface AppliqueBadgesFormData {
@@ -110,6 +111,7 @@ export default function AppliqueBadgesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
+          <CompleteTransferLogo size="md" className="mb-4" />
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold">
               EMBROIDERY FILE OPTIONS

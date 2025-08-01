@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import { Palette } from "lucide-react";
 
 interface CMYKColor {
@@ -174,7 +175,8 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
       </DialogTrigger>
       <DialogContent className="max-w-md" aria-describedby="cmyk-editor-description">
         <DialogHeader>
-          <DialogTitle>CMYK Color Editor</DialogTitle>
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="text-center">CMYK Color Editor</DialogTitle>
         </DialogHeader>
         <div id="cmyk-editor-description" className="sr-only">
           Professional CMYK color editor with sliders and numeric inputs for precise color control

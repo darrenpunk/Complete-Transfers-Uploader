@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -126,6 +127,7 @@ export default function ProductLauncherModal({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
+          <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-2xl font-bold text-center mb-2">
             Select Product Type
           </DialogTitle>

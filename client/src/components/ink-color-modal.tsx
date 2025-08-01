@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Button } from "@/components/ui/button";
 import { PaintBucket, Palette } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import CompleteTransferLogo from "./complete-transfer-logo";
 import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 
 interface InkColorModalProps {
@@ -93,12 +94,13 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="flex items-center gap-2 justify-center">
             <PaintBucket className="w-5 h-5" />
             Select Ink Color
             {!currentColor && <span className="text-red-500 text-sm font-normal">*Required</span>}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-center">
             Please select the colour of the ink that your graphics will be printed with. For single colour transfers the selection of this colour is important as this is what our print staff see when they process your job regardless if the colour you have set in your artwork file.
           </DialogDescription>
         </DialogHeader>
