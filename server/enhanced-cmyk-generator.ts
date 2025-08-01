@@ -513,8 +513,20 @@ export class EnhancedCMYKGenerator {
     if (useICC) {
       try {
         console.log('Enhanced CMYK: Embedding ICC profile without color conversion...');
-        finalPdfBuffer = await this.embedICCProfileOnly(finalPdfBuffer, iccProfilePath);
-        console.log('Enhanced CMYK: ICC profile embedded successfully');
+        // Save temporary PDF file for ICC profile embedding
+        const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_icc_${Date.now()}.pdf`);
+        fs.writeFileSync(tempPdfPath, finalPdfBuffer);
+        
+        const success = await this.embedICCProfileOnly(tempPdfPath, iccProfilePath);
+        if (success) {
+          finalPdfBuffer = fs.readFileSync(tempPdfPath);
+          console.log('Enhanced CMYK: ICC profile embedded successfully');
+        }
+        
+        // Clean up temp file
+        if (fs.existsSync(tempPdfPath)) {
+          fs.unlinkSync(tempPdfPath);
+        }
       } catch (error) {
         console.error('Enhanced CMYK: ICC profile embedding failed:', error);
         // Continue with PDF without profile rather than risk color changes
@@ -1086,42 +1098,7 @@ export class EnhancedCMYKGenerator {
     }
   }
 
-  private async embedICCProfileOnly(pdfPath: string, iccProfilePath: string): Promise<boolean> {
-    try {
-      const execAsync = promisify(exec);
-      const outputPath = pdfPath.replace('.pdf', '_icc.pdf');
-      
-      // Use Ghostscript to embed ICC profile WITHOUT color conversion
-      const gsCommand = [
-        'gs',
-        '-dNOPAUSE',
-        '-dBATCH',
-        '-dSAFER',
-        '-sDEVICE=pdfwrite',
-        '-dColorConversionStrategy=/LeaveColorUnchanged', // CRITICAL: Don't convert colors
-        '-dProcessColorModel=/DeviceCMYK',
-        '-dEmbedAllFonts=true',
-        '-dCompatibilityLevel=1.4',
-        `-sOutputICCProfile="${iccProfilePath}"`,
-        `-sOutputFile="${outputPath}"`,
-        `"${pdfPath}"`
-      ].join(' ');
-      
-      console.log('Enhanced CMYK: Embedding ICC profile WITHOUT color conversion');
-      await execAsync(gsCommand);
-      
-      if (fs.existsSync(outputPath)) {
-        // Replace original with ICC-embedded version
-        fs.renameSync(outputPath, pdfPath);
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Enhanced CMYK: ICC profile embedding failed:', error);
-      return false;
-    }
-  }
+
 
   private async embedICCProfileDirectly(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
     try {
@@ -1602,7 +1579,7 @@ export class EnhancedCMYKGenerator {
    * Embed ICC profile without any color conversion
    * This preserves exact CMYK values while adding the profile for color management
    */
-  private async embedICCProfileOnly(pdfBuffer: Buffer, iccProfilePath: string): Promise<Buffer> {
+  private async embedICCProfileOnly(pdfPath: string, iccProfilePath: string): Promise<boolean> {
     const execAsync = promisify(exec);
     const tempDir = path.join(process.cwd(), 'uploads', 'temp_icc_only');
     
@@ -1615,7 +1592,8 @@ export class EnhancedCMYKGenerator {
     const outputPath = path.join(tempDir, `output_${timestamp}.pdf`);
     
     try {
-      fs.writeFileSync(inputPath, pdfBuffer);
+      // Copy the PDF file to temp location
+      fs.copyFileSync(pdfPath, inputPath);
       
       // Use Ghostscript with specific flags to ONLY embed ICC without color conversion
       const gsCommand = [
@@ -1645,10 +1623,11 @@ export class EnhancedCMYKGenerator {
       await execAsync(gsCommand);
       
       if (fs.existsSync(outputPath)) {
-        const result = fs.readFileSync(outputPath);
+        // Copy result back to original path
+        fs.copyFileSync(outputPath, pdfPath);
         fs.unlinkSync(inputPath);
         fs.unlinkSync(outputPath);
-        return result;
+        return true;
       } else {
         throw new Error('ICC profile embedding failed - no output created');
       }
@@ -1657,7 +1636,8 @@ export class EnhancedCMYKGenerator {
       // Clean up on error
       if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
       if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-      throw error;
+      console.error('Enhanced CMYK: ICC profile embedding failed:', error);
+      return false;
     }
   }
 }
