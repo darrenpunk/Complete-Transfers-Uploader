@@ -109,6 +109,7 @@ export interface SVGColorInfo {
   attribute: string; // 'fill', 'stroke', etc.
   selector: string; // CSS selector to identify the element
   converted?: boolean;
+  isCMYK?: boolean; // Whether the color is already in CMYK format
 }
 
 export interface FontInfo {
@@ -533,18 +534,24 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(fillMatch[1]);
         const embeddedPantone = detectEmbeddedPantone(elementMatch);
-        colors.push({
+        const colorData: SVGColorInfo = {
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,     // Standardized format for UI
           originalFormat: colorInfo.original,   // Exact format from SVG for replacement
           cmykColor: colorInfo.cmyk,
-          pantoneMatch: embeddedPantone,
-          pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'fill',
           selector: `${elementType}:nth-of-type(${index + 1})`,
           isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
-        });
+        };
+        
+        // Only add Pantone fields if actually detected
+        if (embeddedPantone) {
+          colorData.pantoneMatch = embeddedPantone;
+          colorData.pantoneDistance = 0;
+        }
+        
+        colors.push(colorData);
       }
 
       // Check for stroke colors
@@ -552,18 +559,24 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       if (strokeMatch && strokeMatch[1] !== 'none' && strokeMatch[1] !== 'transparent') {
         const colorInfo = getColorInfo(strokeMatch[1]);
         const embeddedPantone = detectEmbeddedPantone(elementMatch);
-        colors.push({
+        const strokeColorData: SVGColorInfo = {
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,     // Standardized format for UI
           originalFormat: colorInfo.original,   // Exact format from SVG for replacement
           cmykColor: colorInfo.cmyk,
-          pantoneMatch: embeddedPantone,
-          pantoneDistance: embeddedPantone ? 0 : undefined,
           elementType,
           attribute: 'stroke',
           selector: `${elementType}:nth-of-type(${index + 1})`,
           isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
-        });
+        };
+        
+        // Only add Pantone fields if actually detected
+        if (embeddedPantone) {
+          strokeColorData.pantoneMatch = embeddedPantone;
+          strokeColorData.pantoneDistance = 0;
+        }
+        
+        colors.push(strokeColorData);
       }
 
       // Check for style-based colors
@@ -576,18 +589,24 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleFillMatch[1].trim());
           const embeddedPantone = detectEmbeddedPantone(elementMatch);
-          colors.push({
+          const styleFillColorData: SVGColorInfo = {
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
             originalFormat: colorInfo.original,   // Add originalFormat
             cmykColor: colorInfo.cmyk,
-            pantoneMatch: embeddedPantone,
-            pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'fill',
             selector: `${elementType}:nth-of-type(${index + 1})`,
             isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
-          });
+          };
+          
+          // Only add Pantone fields if actually detected
+          if (embeddedPantone) {
+            styleFillColorData.pantoneMatch = embeddedPantone;
+            styleFillColorData.pantoneDistance = 0;
+          }
+          
+          colors.push(styleFillColorData);
         }
 
         // Extract stroke from style
@@ -595,18 +614,24 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         if (styleStrokeMatch && styleStrokeMatch[1] !== 'none' && styleStrokeMatch[1] !== 'transparent') {
           const colorInfo = getColorInfo(styleStrokeMatch[1].trim());
           const embeddedPantone = detectEmbeddedPantone(elementMatch);
-          colors.push({
+          const styleStrokeColorData: SVGColorInfo = {
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
             originalFormat: colorInfo.original,   // Add originalFormat
             cmykColor: colorInfo.cmyk,
-            pantoneMatch: embeddedPantone,
-            pantoneDistance: embeddedPantone ? 0 : undefined,
             elementType,
             attribute: 'stroke',
             selector: `${elementType}:nth-of-type(${index + 1})`,
             isCMYK: colorInfo.isCMYK  // Pass through CMYK detection flag
-          });
+          };
+          
+          // Only add Pantone fields if actually detected
+          if (embeddedPantone) {
+            styleStrokeColorData.pantoneMatch = embeddedPantone;
+            styleStrokeColorData.pantoneDistance = 0;
+          }
+          
+          colors.push(styleStrokeColorData);
         }
       }
     });
