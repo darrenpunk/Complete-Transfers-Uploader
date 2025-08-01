@@ -7,11 +7,11 @@ import { Progress } from "@/components/ui/progress";
 import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import ColorManagementToggle from "./color-management-toggle";
+
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 import { useCleanupOrphanedElements } from '@/hooks/use-cleanup-orphaned-elements';
-import { applyCmykPreviewToSvg, createCmykPreviewFilter } from "@/lib/cmyk-preview";
+
 
 // Import garment color utilities from shared module
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
@@ -127,7 +127,7 @@ export default function CanvasWorkspace({
   
   // Core UI state
   const [zoom, setZoom] = useState(75); // Start at higher zoom for better visibility
-  const [colorManagementEnabled, setColorManagementEnabled] = useState(false); // Default to OFF (RGB preview)
+ // Default to OFF (RGB preview)
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
   
@@ -938,16 +938,6 @@ export default function CanvasWorkspace({
 
             </div>
 
-            <div className="h-6 w-px bg-gray-300"></div>
-
-            {/* Color Management Toggle */}
-            <ColorManagementToggle
-              enabled={colorManagementEnabled}
-              onToggle={setColorManagementEnabled}
-              iccProfileName="PSO Coated FOGRA51 (EFI)"
-            />
-
-
           </div>
           
           {/* Right section - Undo/Redo */}
@@ -989,10 +979,7 @@ export default function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: project.garmentColor || '#EAEAEA',
-                filter: colorManagementEnabled 
-                  ? "brightness(0.9) contrast(1.05) saturate(0.8)"
-                  : "none"
+                backgroundColor: project.garmentColor || '#EAEAEA'
               }}
               onClick={handleCanvasClick}
             >
@@ -1160,29 +1147,23 @@ export default function CanvasWorkspace({
                         src={(() => {
                           // Priority 1: Color overrides exist - use modified SVG endpoint
                           if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
-                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}&cmykPreview=${colorManagementEnabled}`;
+                            return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
                           }
                           // Priority 2: Single Colour Transfer with ink color selected
                           if (shouldRecolorForInk) {
-                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}&cmykPreview=${colorManagementEnabled}`;
+                            return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
                           }
-                          // Priority 3: Original image with CMYK preview for SVG files
+                          // Priority 3: Original image
                           const url = getImageUrl(logo);
-                          const isSvg = logo.mimeType === 'image/svg+xml';
-                          const finalUrl = isSvg && colorManagementEnabled 
-                            ? `/api/logos/${logo.id}/cmyk-preview?t=${Date.now()}` 
-                            : url;
-                          console.log('🖼️ Using image URL:', finalUrl, 'for logo:', logo.filename, logo.mimeType, 'CMYK Preview:', colorManagementEnabled);
-                          return finalUrl;
+                          console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
+                          return url;
                         })()}
                         alt={logo.originalName}
                         className="w-full h-full"
                         style={{ 
                           background: 'transparent', 
                           backgroundColor: 'transparent',
-                          filter: colorManagementEnabled 
-                            ? "brightness(0.85) contrast(1.1) saturate(0.75) hue-rotate(-5deg)"
-                            : "none",
+                          filter: "none",
                           objectFit: 'contain',
                           width: '100%',
                           height: '100%',
@@ -1322,7 +1303,7 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <RotateCw className="w-4 h-4 text-primary" title="Drag to rotate" />
+                        <RotateCw className="w-4 h-4 text-primary" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
@@ -1348,11 +1329,6 @@ export default function CanvasWorkspace({
             {/* Canvas Info */}
             <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
               {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
-              {colorManagementEnabled && (
-                <span className="ml-2 px-1 bg-primary text-primary-foreground rounded text-xs">
-                  ICC Preview
-                </span>
-              )}
             </div>
           </div>
         </div>
