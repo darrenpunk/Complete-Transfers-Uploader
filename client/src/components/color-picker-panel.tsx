@@ -39,7 +39,30 @@ function parseRGBPercentage(rgbString: string): { r: number; g: number; b: numbe
   return { r, g, b };
 }
 
-function rgbToCmyk(rgb: { r: number; g: number; b: number }): CMYKColor {
+// Parse CMYK from the cmykColor string in the analysis (which uses Adobe conversion)
+function parseCMYKString(cmykString: string): CMYKColor | null {
+  const match = cmykString.match(/C:(\d+) M:(\d+) Y:(\d+) K:(\d+)/);
+  if (!match) return null;
+  
+  return {
+    c: parseInt(match[1]),
+    m: parseInt(match[2]),
+    y: parseInt(match[3]),
+    k: parseInt(match[4])
+  };
+}
+
+function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
+  // Use the pre-calculated CMYK from the server-side Adobe conversion
+  if (colorInfo.cmykColor) {
+    return parseCMYKString(colorInfo.cmykColor);
+  }
+  
+  // Fallback for percentage RGB parsing if needed
+  const rgb = parseRGBPercentage(colorInfo.originalFormat || colorInfo.originalColor);
+  if (!rgb) return null;
+  
+  // This is a basic fallback - should not be used for vector files
   const r = rgb.r / 255;
   const g = rgb.g / 255;
   const b = rgb.b / 255;
@@ -55,12 +78,6 @@ function rgbToCmyk(rgb: { r: number; g: number; b: number }): CMYKColor {
     y: Math.round(y * 100),
     k: Math.round(k * 100)
   };
-}
-
-function getCMYKFromRGBPercentage(rgbString: string): CMYKColor | null {
-  const rgb = parseRGBPercentage(rgbString);
-  if (!rgb) return null;
-  return rgbToCmyk(rgb);
 }
 
 interface ColorPickerPanelProps {
@@ -168,6 +185,9 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             // Use override color if exists, otherwise original display color
             const displayColor = hasOverride ? currentColor : originalDisplayColor;
             
+            // Get the correct Adobe CMYK values
+            const adobeCMYK = getCMYKFromColorInfo(colorInfo);
+            
             return (
               <CMYKColorModal
                 key={`${colorInfo.originalColor}-${index}`}
@@ -175,6 +195,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 currentColor={currentColor}
                 onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
                 label={`Color ${index + 1}`}
+                cmykValues={adobeCMYK || undefined}
                 trigger={
                   <button
                     className={`w-10 h-10 rounded-full border-2 shadow-sm transition-all hover:scale-105 ${
