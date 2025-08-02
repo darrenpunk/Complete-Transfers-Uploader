@@ -23,6 +23,7 @@ import {
   Type,
   Layers
 } from "lucide-react";
+import { gildanColors, fruitOfTheLoomColors } from "@shared/garment-colors";
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -366,27 +367,47 @@ export default function PDFPreviewModal({
                     <div className="mt-auto pt-2">
                       <div className="flex items-center gap-3 flex-wrap px-4">
                         {(() => {
-                          // Get unique colors to display
-                          const colorsToShow = new Map<string, string>();
+                          // Get unique colors to display with name and CMYK
+                          const colorsToShow = new Map<string, { name: string; cmyk: string }>();
+                          
+                          // Helper function to get color info
+                          const getColorInfo = (hexColor: string): { name: string; cmyk: string } => {
+                            // Search through manufacturer colors
+                            const manufacturers = ['gildan', 'fruitOfTheLoom'];
+                            for (const manufacturer of manufacturers) {
+                              const colorGroups = manufacturer === 'gildan' ? gildanColors : fruitOfTheLoomColors;
+                              for (const group of colorGroups) {
+                                for (const color of group.colors) {
+                                  if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+                                    const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
+                                    return { name: color.name, cmyk };
+                                  }
+                                }
+                              }
+                            }
+                            return { name: hexColor.toUpperCase(), cmyk: '' };
+                          };
                           
                           if (project?.garmentColor) {
-                            colorsToShow.set(project.garmentColor, project.garmentColor.toUpperCase());
+                            const info = getColorInfo(project.garmentColor);
+                            colorsToShow.set(project.garmentColor, info);
                           }
                           
                           canvasElements.forEach(element => {
                             if (element.garmentColor) {
-                              colorsToShow.set(element.garmentColor, element.garmentColor.toUpperCase());
+                              const info = getColorInfo(element.garmentColor);
+                              colorsToShow.set(element.garmentColor, info);
                             }
                           });
                           
-                          return Array.from(colorsToShow.entries()).map(([color, label]) => (
+                          return Array.from(colorsToShow.entries()).map(([color, info]) => (
                             <div key={color} className="flex items-center gap-1.5">
                               <div 
                                 className="w-3 h-3 rounded-sm border border-gray-400"
                                 style={{ backgroundColor: color }}
                               />
                               <span className="text-xs" style={{ color: '#6D6D6D' }}>
-                                {label}
+                                {info.cmyk ? `${info.name} ${info.cmyk}` : info.name}
                               </span>
                             </div>
                           ));

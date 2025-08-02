@@ -130,25 +130,21 @@ export class SimplifiedPDFGenerator {
     const pageHeight = page.getSize().height;
     
     // Get unique colors used
-    const colorsUsed = new Map<string, string>();
+    const colorsUsed = new Map<string, { name: string; cmyk: string }>();
     
     // Add default garment color if specified
     if (defaultGarmentColor) {
-      const colorName = this.getColorName(defaultGarmentColor);
-      console.log(`🎨 Default garment color: ${defaultGarmentColor}, name: ${colorName}`);
-      if (colorName) {
-        colorsUsed.set(defaultGarmentColor, colorName);
-      }
+      const colorInfo = this.getColorInfo(defaultGarmentColor);
+      console.log(`🎨 Default garment color: ${defaultGarmentColor}, name: ${colorInfo.name}, cmyk: ${colorInfo.cmyk}`);
+      colorsUsed.set(defaultGarmentColor, colorInfo);
     }
     
     // Add individual element colors
     for (const element of elements) {
       if (element.garmentColor) {
-        const colorName = this.getColorName(element.garmentColor);
-        console.log(`🎨 Element ${element.id} garment color: ${element.garmentColor}, name: ${colorName}`);
-        if (colorName) {
-          colorsUsed.set(element.garmentColor, colorName);
-        }
+        const colorInfo = this.getColorInfo(element.garmentColor);
+        console.log(`🎨 Element ${element.id} garment color: ${element.garmentColor}, name: ${colorInfo.name}, cmyk: ${colorInfo.cmyk}`);
+        colorsUsed.set(element.garmentColor, colorInfo);
       }
     }
     
@@ -161,7 +157,7 @@ export class SimplifiedPDFGenerator {
     const squareSize = 15;
     const padding = 10;
     
-    Array.from(colorsUsed.entries()).forEach(([colorHex, colorName]) => {
+    Array.from(colorsUsed.entries()).forEach(([colorHex, colorInfo]) => {
       // Draw color square
       const rgbColor = this.hexToRgb(colorHex);
       if (rgbColor) {
@@ -176,8 +172,9 @@ export class SimplifiedPDFGenerator {
         });
       }
       
-      // Draw label text with #6D6D6D color
-      page.drawText(colorName, {
+      // Draw label text with color name and CMYK values
+      const labelText = colorInfo.cmyk ? `${colorInfo.name} ${colorInfo.cmyk}` : colorInfo.name;
+      page.drawText(labelText, {
         x: xOffset + squareSize + 5,
         y: yOffset + 3,
         size: fontSize,
@@ -186,7 +183,7 @@ export class SimplifiedPDFGenerator {
       });
       
       // Move to next position
-      const textWidth = font.widthOfTextAtSize(colorName, fontSize);
+      const textWidth = font.widthOfTextAtSize(labelText, fontSize);
       xOffset += squareSize + textWidth + padding + 10;
     });
   }
@@ -212,6 +209,30 @@ export class SimplifiedPDFGenerator {
     // If exact match not found, return the hex color as the name
     console.log(`❌ No exact color name found for hex: ${hexColor}, using hex as label`);
     return hexColor.toUpperCase();
+  }
+
+  private getColorInfo(hexColor: string): { name: string; cmyk: string } {
+    console.log(`🔍 Looking for color info for hex: ${hexColor}`);
+    
+    // If no hex color provided, return hex
+    if (!hexColor) return { name: hexColor, cmyk: "" };
+    
+    // Search through all manufacturer colors to find the info
+    for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
+      for (const group of colorGroups) {
+        for (const color of group.colors) {
+          if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+            console.log(`✅ Found color: ${color.name} from ${manufacturer}`);
+            const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
+            return { name: color.name, cmyk };
+          }
+        }
+      }
+    }
+    
+    // If exact match not found, return the hex color as the name
+    console.log(`❌ No exact color info found for hex: ${hexColor}, using hex as label`);
+    return { name: hexColor.toUpperCase(), cmyk: "" };
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
