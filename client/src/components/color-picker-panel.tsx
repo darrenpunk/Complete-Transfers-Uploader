@@ -108,7 +108,11 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     (selectedElement.colorOverrides as Record<string, string>) || {}
   );
   const [showCMYKPreview, setShowCMYKPreview] = useState(false);
-  const [shownRGBWarningLogos, setShownRGBWarningLogos] = useState<Set<string>>(new Set());
+  // Use a global state or localStorage to persist RGB warnings across component re-renders
+  const [shownRGBWarningLogos, setShownRGBWarningLogos] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem('shownRGBWarningLogos');
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
 
   // Fetch project and template information to check if this is a single colour template
   const { data: project } = useQuery<Project>({
@@ -244,7 +248,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
       <RGBWarningModal 
         hasRGBColors={hasRGBColors && !hasShownWarningForThisLogo} 
         onClose={() => {
-          setShownRGBWarningLogos(prev => new Set([...prev, logoFilename]));
+          const newSet = new Set([...shownRGBWarningLogos, logoFilename]);
+          setShownRGBWarningLogos(newSet);
+          // Persist to localStorage
+          localStorage.setItem('shownRGBWarningLogos', JSON.stringify(Array.from(newSet)));
         }} 
       />
       <Card className="mt-4">
