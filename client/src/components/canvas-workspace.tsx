@@ -1031,9 +1031,10 @@ export default function CanvasWorkspace({
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 overflow-auto relative" style={{ backgroundColor: '#606060' }}>
-        <div className="absolute inset-0 flex items-center justify-center" style={{ padding: '20px' }}>
-          <div className="relative">
+      <div className="flex-1 relative" style={{ backgroundColor: '#606060', overflow: 'hidden' }}>
+        <div className="absolute inset-0 overflow-auto">
+          <div className="flex items-center justify-center" style={{ padding: '20px', minWidth: '100%', minHeight: '100%' }}>
+            <div className="relative">
 
             <div
               ref={canvasRef}
@@ -1500,6 +1501,7 @@ export default function CanvasWorkspace({
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
