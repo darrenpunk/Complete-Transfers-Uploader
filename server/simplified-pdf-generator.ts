@@ -217,7 +217,7 @@ export class SimplifiedPDFGenerator {
     // If no hex color provided, return hex
     if (!hexColor) return { name: hexColor, cmyk: "" };
     
-    // First try exact match
+    // Only look for exact matches in manufacturer colors
     for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
       for (const group of colorGroups) {
         for (const color of group.colors) {
@@ -230,48 +230,8 @@ export class SimplifiedPDFGenerator {
       }
     }
     
-    // If no exact match, find closest color
-    let closestColor: any = null;
-    let closestDistance = Infinity;
-    let closestManufacturer = '';
-    
-    // Convert hex to RGB for comparison
-    const targetRgb = this.hexToRgb(hexColor);
-    if (!targetRgb) {
-      console.log(`❌ Invalid hex color: ${hexColor}`);
-      return { name: hexColor.toUpperCase(), cmyk: "" };
-    }
-    
-    for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
-      for (const group of colorGroups) {
-        for (const color of group.colors) {
-          const colorRgb = this.hexToRgb(color.hex);
-          if (!colorRgb) continue;
-          
-          // Calculate color distance using Euclidean distance
-          const distance = Math.sqrt(
-            Math.pow(targetRgb.r - colorRgb.r, 2) +
-            Math.pow(targetRgb.g - colorRgb.g, 2) +
-            Math.pow(targetRgb.b - colorRgb.b, 2)
-          );
-          
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestColor = color;
-            closestManufacturer = manufacturer;
-          }
-        }
-      }
-    }
-    
-    if (closestColor && closestDistance < 100) { // Threshold for accepting a color as close enough
-      console.log(`🎯 Found closest color: ${closestColor.name} from ${closestManufacturer} (distance: ${closestDistance.toFixed(2)})`);
-      const cmyk = `(${closestColor.cmyk.c}, ${closestColor.cmyk.m}, ${closestColor.cmyk.y}, ${closestColor.cmyk.k})`;
-      return { name: closestColor.name, cmyk };
-    }
-    
-    // If no close match found, return the hex color as the name
-    console.log(`❌ No close color match found for hex: ${hexColor}, using hex as label`);
+    // If no exact match found, return the hex color as the name
+    console.log(`❌ No exact color match found for hex: ${hexColor}, using hex as label`);
     return { name: hexColor.toUpperCase(), cmyk: "" };
   }
 

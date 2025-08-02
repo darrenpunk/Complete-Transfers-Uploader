@@ -331,7 +331,7 @@ export default function PDFPreviewModal({
                           const getColorInfo = (hexColor: string): { name: string; cmyk: string } => {
                             console.log('Preview - Looking for color info for hex:', hexColor);
                             
-                            // First try exact match
+                            // Only look for exact matches in garment colors
                             const allColors = [
                               ...gildanColors.flatMap(group => group.colors),
                               ...fruitOfTheLoomColors.flatMap(group => group.colors)
@@ -345,40 +345,8 @@ export default function PDFPreviewModal({
                               }
                             }
                             
-                            // If no exact match, find closest color
-                            let closestColor: any = null;
-                            let closestDistance = Infinity;
-                            
-                            const targetRgb = hexToRgb(hexColor);
-                            if (!targetRgb) {
-                              console.log('Preview - Invalid hex color:', hexColor);
-                              return { name: hexColor.toUpperCase(), cmyk: '' };
-                            }
-                            
-                            for (const color of allColors) {
-                              const colorRgb = hexToRgb(color.hex);
-                              if (!colorRgb) continue;
-                              
-                              // Calculate color distance
-                              const distance = Math.sqrt(
-                                Math.pow(targetRgb.r - colorRgb.r, 2) +
-                                Math.pow(targetRgb.g - colorRgb.g, 2) +
-                                Math.pow(targetRgb.b - colorRgb.b, 2)
-                              );
-                              
-                              if (distance < closestDistance) {
-                                closestDistance = distance;
-                                closestColor = color;
-                              }
-                            }
-                            
-                            if (closestColor && closestDistance < 100) {
-                              const cmyk = `(${closestColor.cmyk.c}, ${closestColor.cmyk.m}, ${closestColor.cmyk.y}, ${closestColor.cmyk.k})`;
-                              console.log('Preview - Found closest color:', closestColor.name, 'distance:', closestDistance.toFixed(2), cmyk);
-                              return { name: closestColor.name, cmyk };
-                            }
-                            
-                            console.log('Preview - No close match found, using hex');
+                            // If no exact match found, return the hex color as the name
+                            console.log('Preview - No exact match found, using hex');
                             return { name: hexColor.toUpperCase(), cmyk: '' };
                           };
                           
