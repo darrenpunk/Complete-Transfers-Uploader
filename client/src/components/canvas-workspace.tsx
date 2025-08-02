@@ -1241,10 +1241,10 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" 
+                    className="w-full h-full flex items-center justify-center rounded overflow-hidden" 
                     style={{ 
-                      background: element.garmentColor || 'transparent', 
-                      backgroundColor: element.garmentColor || 'transparent'
+                      backgroundColor: element.garmentColor || 'transparent',
+                      border: '1px solid #e5e7eb'
                     }}
                   >
                     {/* Logo Elements */}

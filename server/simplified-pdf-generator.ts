@@ -153,6 +153,7 @@ export class SimplifiedPDFGenerator {
     }
     
     console.log(`🎨 Total unique colors found: ${colorsUsed.size}`);
+    console.log(`🎨 Colors to be displayed:`, Array.from(colorsUsed.entries()));
     
     // Draw color labels at the bottom of the page
     let xOffset = 20;
@@ -193,6 +194,9 @@ export class SimplifiedPDFGenerator {
   private getColorName(hexColor: string): string | null {
     console.log(`🔍 Looking for color name for hex: ${hexColor}`);
     
+    // If no hex color provided, return null
+    if (!hexColor) return null;
+    
     // Search through all manufacturer colors to find the name
     for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
       for (const group of colorGroups) {
@@ -205,8 +209,9 @@ export class SimplifiedPDFGenerator {
       }
     }
     
-    console.log(`❌ No color name found for hex: ${hexColor}`);
-    return null;
+    // If exact match not found, return the hex color as the name
+    console.log(`❌ No exact color name found for hex: ${hexColor}, using hex as label`);
+    return hexColor.toUpperCase();
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {

@@ -53,10 +53,10 @@ export default function SvgInlineRenderer({
           }
         }
         
-        // Force transparent background on the SVG element itself
+        // Remove any existing style attributes that might have background
         cleanedSvg = cleanedSvg.replace(
-          /<svg([^>]*)>/,
-          '<svg$1 style="background: transparent;">'
+          /style\s*=\s*["'][^"']*background[^"']*["']/gi,
+          ''
         );
         
         setSvgContent(cleanedSvg);
@@ -94,10 +94,6 @@ export default function SvgInlineRenderer({
   return (
     <div 
       className="w-full h-full flex items-center justify-center"
-      style={{ 
-        background: 'transparent',
-        backgroundColor: 'transparent'
-      }}
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );
