@@ -60,11 +60,19 @@ export function ColorModesModal({ open, onOpenChange }: ColorModesModalProps) {
                   A gamut is the complete range or scope of something. In digital and print design, a colour gamut is the range of colours you can achieve 
                   using different colour combinations like CMYK and RGB.
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-3">
                   An RGB colour gamut is much larger than a CMYK colour gamut, meaning you can achieve many more colours in RGB than you can in CMYK. 
                   This is why your design may look awesome on screen, but when printed it becomes muddied and dark. Some colours can not be reproduced 
                   using CMYK so when you convert the image from RGB to CMYK, some colours will lose their vibrance.
                 </p>
+                {/* Color Gamut Comparison Image */}
+                <div className="flex justify-center my-4">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/3491458-5a0dd68b/Color-gamut.png" 
+                    alt="RGB vs CMYK Color Gamut Comparison"
+                    className="max-w-full h-auto rounded-lg shadow-sm"
+                  />
+                </div>
               </div>
 
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
@@ -86,9 +94,18 @@ export function ColorModesModal({ open, onOpenChange }: ColorModesModalProps) {
                 within the are outside the CMYK colour gamut.
               </p>
               
-              <p className="text-sm text-muted-foreground italic">
+              <p className="text-sm text-muted-foreground italic mb-3">
                 The example below on the left was designed in RGB colour mode, the example on the right is when it was converted to CMYK.
               </p>
+              
+              {/* RGB to CMYK Conversion Example */}
+              <div className="flex justify-center my-4">
+                <img 
+                  src="https://www.completetransfers.com/web/image/3491459-8057d2d2/rgb%20to%20CMYK.png" 
+                  alt="RGB to CMYK Conversion Example"
+                  className="max-w-full h-auto rounded-lg shadow-sm"
+                />
+              </div>
             </section>
 
             {/* How to Get the Best Results */}
@@ -119,22 +136,42 @@ export function ColorModesModal({ open, onOpenChange }: ColorModesModalProps) {
               <h3 className="text-lg font-semibold mb-4">Software-Specific Guides</h3>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/3491686-7ae8f8fc/corel.png"
+                    alt="Corel Draw"
+                    className="h-16 w-auto mb-3 object-contain"
+                  />
                   <h4 className="font-semibold mb-1">Corel Draw</h4>
                   <p className="text-sm text-muted-foreground">Professional vector graphics editor</p>
                 </div>
                 
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/3491685-564fdf1e/illustrator.png"
+                    alt="Adobe Illustrator"
+                    className="h-16 w-auto mb-3 object-contain"
+                  />
                   <h4 className="font-semibold mb-1">Adobe Illustrator</h4>
                   <p className="text-sm text-muted-foreground">Industry-standard vector design software</p>
                 </div>
                 
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/3491692-d5b8be60/Affinity_Designer_2-logo.svg.png"
+                    alt="Affinity Designer"
+                    className="h-16 w-auto mb-3 object-contain"
+                  />
                   <h4 className="font-semibold mb-1">Affinity Designer</h4>
                   <p className="text-sm text-muted-foreground">Modern vector graphics application</p>
                 </div>
                 
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/3491691-09157f12/Adobe_Photoshop_CC_icon.svg.png"
+                    alt="Adobe Photoshop"
+                    className="h-16 w-auto mb-3 object-contain"
+                  />
                   <h4 className="font-semibold mb-1">Adobe Photoshop</h4>
                   <p className="text-sm text-muted-foreground">Raster graphics and photo editing</p>
                 </div>
