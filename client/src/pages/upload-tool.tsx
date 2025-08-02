@@ -662,53 +662,59 @@ export default function UploadTool() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" style={{ position: 'relative' }}>
         {/* Left Sidebar */}
-        <ToolsSidebar
-          currentStep={currentStep}
-          project={currentProject}
-          logos={logos}
-          templateSizes={templateSizes}
-          canvasElements={canvasElements}
-          selectedElement={selectedElement}
-          onTemplateChange={handleTemplateChange}
-          onGarmentColorChange={handleGarmentColorChange}
-          onInkColorChange={handleInkColorChange}
-          onAlignElement={handleAlignElement}
-          onCenterAllElements={handleCenterAllElements}
-          onOpenVectorizationForm={() => {
-            console.log('onOpenVectorizationForm called from ToolsSidebar');
-            setShowVectorizationForm(true);
-          }}
-        />
+        <div className="flex-shrink-0">
+          <ToolsSidebar
+            currentStep={currentStep}
+            project={currentProject}
+            logos={logos}
+            templateSizes={templateSizes}
+            canvasElements={canvasElements}
+            selectedElement={selectedElement}
+            onTemplateChange={handleTemplateChange}
+            onGarmentColorChange={handleGarmentColorChange}
+            onInkColorChange={handleInkColorChange}
+            onAlignElement={handleAlignElement}
+            onCenterAllElements={handleCenterAllElements}
+            onOpenVectorizationForm={() => {
+              console.log('onOpenVectorizationForm called from ToolsSidebar');
+              setShowVectorizationForm(true);
+            }}
+          />
+        </div>
 
         {/* Main Canvas Area */}
-        <CanvasWorkspace
-          project={currentProject}
-          template={currentTemplate}
-          logos={logos}
-          canvasElements={canvasElements}
-          selectedElement={selectedElement}
-          onElementSelect={setSelectedElement}
-          onLogoUpload={handleFilesUpload}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
-          maintainAspectRatio={maintainAspectRatio}
-        />
+        <div className="flex-1 min-w-0">
+          <CanvasWorkspace
+            project={currentProject}
+            template={currentTemplate}
+            logos={logos}
+            canvasElements={canvasElements}
+            selectedElement={selectedElement}
+            onElementSelect={setSelectedElement}
+            onLogoUpload={handleFilesUpload}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+            maintainAspectRatio={maintainAspectRatio}
+          />
+        </div>
 
         {/* Right Properties Panel */}
-        <PropertiesPanel
-          selectedElement={selectedElement}
-          canvasElements={canvasElements}
-          logos={logos}
-          project={currentProject}
-          templateSizes={templateSizes}
-          onTemplateChange={handleTemplateChange}
-          onAlignElement={handleAlignElement}
-          onCenterAllElements={handleCenterAllElements}
-          maintainAspectRatio={maintainAspectRatio}
-          onMaintainAspectRatioChange={setMaintainAspectRatio}
-        />
+        <div className="flex-shrink-0" style={{ width: '320px' }}>
+          <PropertiesPanel
+            selectedElement={selectedElement}
+            canvasElements={canvasElements}
+            logos={logos}
+            project={currentProject}
+            templateSizes={templateSizes}
+            onTemplateChange={handleTemplateChange}
+            onAlignElement={handleAlignElement}
+            onCenterAllElements={handleCenterAllElements}
+            maintainAspectRatio={maintainAspectRatio}
+            onMaintainAspectRatioChange={setMaintainAspectRatio}
+          />
+        </div>
       </div>
 
       {/* Bottom Action Bar - Fixed at bottom */}
