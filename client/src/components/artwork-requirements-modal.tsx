@@ -82,7 +82,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
                 <img 
                   src="https://www.completetransfers.com/web/image/503384/Vector_bitmap.jpg"
                   alt="Vectorised vs Bitmap/Raster Comparison"
-                  className="max-w-md h-auto rounded-lg shadow-sm"
+                  className="max-w-lg h-auto rounded-lg shadow-sm"
                 />
               </div>
             </section>
