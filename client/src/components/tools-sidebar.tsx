@@ -7,7 +7,7 @@ import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema"
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus, Move } from "lucide-react";
+import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus, Move, Info } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 import { TextDialog } from "./text-dialog";
@@ -17,6 +17,7 @@ import InkColorModal from "@/components/ink-color-modal";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
+import { ColorModesModal } from "./color-modes-modal";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
@@ -119,6 +120,7 @@ export default function ToolsSidebar({
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
+  const [colorModesModalOpen, setColorModesModalOpen] = useState(false);
 
   
   const toggleGroup = (groupName: string) => {
@@ -923,6 +925,21 @@ export default function ToolsSidebar({
                     </div>
                   )}
                   
+                  {/* Learn More about Colour Modes button */}
+                  {check.name === "Edit Colours" && (
+                    <div className="ml-4 mt-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs h-7 text-primary"
+                        onClick={() => setColorModesModalOpen(true)}
+                      >
+                        <Info className="w-3 h-3 mr-1" />
+                        Learn More about Colour Modes
+                      </Button>
+                    </div>
+                  )}
+                  
                   {/* Font Outlining Option */}
                   {check.name === "Typography" && check.status === "warning" && (
                     <div className="ml-4 mt-2 space-y-2">
@@ -1039,6 +1056,11 @@ export default function ToolsSidebar({
         />
       )}
 
+      {/* Color Modes Modal */}
+      <ColorModesModal
+        open={colorModesModalOpen}
+        onOpenChange={setColorModesModalOpen}
+      />
 
     </div>
   );

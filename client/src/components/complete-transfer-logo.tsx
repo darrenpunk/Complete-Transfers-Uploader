@@ -5,7 +5,7 @@ interface CompleteTransferLogoProps {
   className?: string;
 }
 
-export default function CompleteTransferLogo({ size = "md", className = "" }: CompleteTransferLogoProps) {
+export function CompleteTransferLogo({ size = "md", className = "" }: CompleteTransferLogoProps) {
   const sizeClasses = {
     sm: "h-8",
     md: "h-12", 
@@ -23,3 +23,5 @@ export default function CompleteTransferLogo({ size = "md", className = "" }: Co
     </div>
   );
 }
+
+export default CompleteTransferLogo;
