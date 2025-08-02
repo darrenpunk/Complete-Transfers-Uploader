@@ -108,8 +108,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     (selectedElement.colorOverrides as Record<string, string>) || {}
   );
   const [showCMYKPreview, setShowCMYKPreview] = useState(false);
-  const [hasShownRGBWarning, setHasShownRGBWarning] = useState(false);
-  const [logoIdForWarning, setLogoIdForWarning] = useState<string | null>(null);
+  const [shownRGBWarningLogos, setShownRGBWarningLogos] = useState<Set<string>>(new Set());
 
   // Fetch project and template information to check if this is a single colour template
   const { data: project } = useQuery<Project>({
@@ -192,13 +191,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return colorOverrides[originalColor] || originalColor;
   };
 
-  // Reset warning state when logo changes - use useEffect to avoid state changes during render
-  useEffect(() => {
-    if (logoIdForWarning !== logo.id) {
-      setLogoIdForWarning(logo.id);
-      setHasShownRGBWarning(false);
-    }
-  }, [logo.id, logoIdForWarning]);
+
 
   if (!shouldShow) {
     return null;
@@ -225,13 +218,16 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return true;
   });
 
+  // Check if we've already shown the warning for this logo
+  const hasShownWarningForThisLogo = shownRGBWarningLogos.has(logo.id);
+
   console.log('RGB Warning Check:', {
     logoId: logo.id,
     svgColorsCount: svgColors.length,
     isSingleColourTemplate,
     hasRGBColors,
-    hasShownRGBWarning,
-    logoIdForWarning,
+    hasShownWarningForThisLogo,
+    shownRGBWarningLogos: Array.from(shownRGBWarningLogos),
     colorDetails: svgColors.map(c => ({
       originalColor: c.originalColor,
       isCMYK: c.isCMYK,
@@ -243,8 +239,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   return (
     <>
       <RGBWarningModal 
-        hasRGBColors={hasRGBColors && !hasShownRGBWarning} 
-        onClose={() => setHasShownRGBWarning(true)} 
+        hasRGBColors={hasRGBColors && !hasShownWarningForThisLogo} 
+        onClose={() => {
+          setShownRGBWarningLogos(prev => new Set([...prev, logo.id]));
+        }} 
       />
       <Card className="mt-4">
       <CardHeader className="pb-3">
