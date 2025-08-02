@@ -1031,8 +1031,8 @@ export default function CanvasWorkspace({
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 overflow-auto" style={{ backgroundColor: '#606060' }}>
-        <div className="flex items-center justify-center w-full h-full" style={{ padding: '20px', minHeight: '100%' }}>
+      <div className="flex-1 overflow-auto relative" style={{ backgroundColor: '#606060' }}>
+        <div className="absolute inset-0 flex items-center justify-center" style={{ padding: '20px' }}>
           <div className="relative">
 
             <div
@@ -1218,8 +1218,8 @@ export default function CanvasWorkspace({
                     transform: `rotate(${element.rotation || 0}deg)`,
                     transformOrigin: 'center',
                     border: isSelected 
-                      ? `${Math.max(1, 2 / (zoom / 100))}px solid hsl(var(--primary))` 
-                      : `1px solid #d1d5db`
+                      ? `${2 / (zoom / 100)}px solid hsl(var(--primary))` 
+                      : `${1 / (zoom / 100)}px solid #d1d5db`
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
@@ -1320,9 +1320,9 @@ export default function CanvasWorkspace({
                   {isSelected && (() => {
                     // Calculate scaled handle size and positioning
                     const zoomFactor = zoom / 100;
-                    const handleSize = Math.max(8, 12 / zoomFactor); // 12px at 100% zoom, minimum 8px
-                    const handleOffset = Math.max(2, 4 / zoomFactor); // 4px offset at 100% zoom, minimum 2px
-                    const borderWidth = Math.max(1, 1 / zoomFactor); // 1px border at 100% zoom
+                    const handleSize = 12 / zoomFactor; // 12px at 100% zoom
+                    const handleOffset = 4 / zoomFactor; // 4px offset at 100% zoom
+                    const borderWidth = 1 / zoomFactor; // 1px border at 100% zoom
                     
                     const handleStyle = {
                       width: `${handleSize}px`,
@@ -1414,12 +1414,12 @@ export default function CanvasWorkspace({
                       <div 
                         className="absolute left-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full border-primary flex items-center justify-center"
                         style={{ 
-                          top: `-${Math.max(24, 30 / (zoom / 100))}px`,
-                          width: `${Math.max(24, 32 / (zoom / 100))}px`,
-                          height: `${Math.max(24, 32 / (zoom / 100))}px`,
+                          top: `-${30 / (zoom / 100)}px`,
+                          width: `${32 / (zoom / 100)}px`,
+                          height: `${32 / (zoom / 100)}px`,
                           transform: 'translateX(-50%)',
-                          padding: `${Math.max(4, 8 / (zoom / 100))}px`,
-                          borderWidth: `${Math.max(1, 2 / (zoom / 100))}px`,
+                          padding: `${8 / (zoom / 100)}px`,
+                          borderWidth: `${2 / (zoom / 100)}px`,
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -1463,18 +1463,18 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <RotateCw style={{ width: `${Math.max(12, 16 / (zoom / 100))}px`, height: `${Math.max(12, 16 / (zoom / 100))}px` }} className="text-primary" />
+                        <RotateCw style={{ width: `${16 / (zoom / 100)}px`, height: `${16 / (zoom / 100)}px` }} className="text-primary" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
                       <div 
                         className="absolute bg-red-500 hover:bg-red-600 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
                         style={{
-                          top: `-${Math.max(6, 8 / (zoom / 100))}px`,
-                          right: `-${Math.max(6, 8 / (zoom / 100))}px`,
-                          width: `${Math.max(18, 24 / (zoom / 100))}px`,
-                          height: `${Math.max(18, 24 / (zoom / 100))}px`,
-                          borderWidth: `${Math.max(1, 2 / (zoom / 100))}px`,
+                          top: `-${8 / (zoom / 100)}px`,
+                          right: `-${8 / (zoom / 100)}px`,
+                          width: `${24 / (zoom / 100)}px`,
+                          height: `${24 / (zoom / 100)}px`,
+                          borderWidth: `${2 / (zoom / 100)}px`,
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1485,7 +1485,7 @@ export default function CanvasWorkspace({
                         }}
                         title="Delete element"
                       >
-                        <Trash2 style={{ width: `${Math.max(9, 12 / (zoom / 100))}px`, height: `${Math.max(9, 12 / (zoom / 100))}px` }} className="text-white" />
+                        <Trash2 style={{ width: `${12 / (zoom / 100)}px`, height: `${12 / (zoom / 100)}px` }} className="text-white" />
                       </div>
                     </>
                     );
