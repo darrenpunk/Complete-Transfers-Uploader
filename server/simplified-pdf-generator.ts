@@ -176,13 +176,13 @@ export class SimplifiedPDFGenerator {
         });
       }
       
-      // Draw label text
+      // Draw label text with #6D6D6D color
       page.drawText(colorName, {
         x: xOffset + squareSize + 5,
         y: yOffset + 3,
         size: fontSize,
         font,
-        color: rgb(0, 0, 0),
+        color: rgb(0x6D / 255, 0x6D / 255, 0x6D / 255),
       });
       
       // Move to next position

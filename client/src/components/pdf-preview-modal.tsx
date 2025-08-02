@@ -232,134 +232,168 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
-                  {/* Check if we have individual logo garment colors or use project default */}
-                  {(() => {
-                    // Get unique garment colors from canvas elements
-                    const elementColors = canvasElements
-                      .map(element => element.garmentColor)
-                      .filter(color => color && color !== 'default');
-                    
-                    const uniqueColors = Array.from(new Set(elementColors));
-                    
-                    // If no individual colors, use project default
-                    if (uniqueColors.length === 0) {
-                      return (
-                        <div className="mt-2 rounded-lg p-3 flex items-start justify-center relative"
-                             style={{ 
-                               backgroundColor: project?.garmentColor || '#f5f5f5',
-                               width: '90%',
-                               maxWidth: '280px',
-                               aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
-                             }}>
-                          <div 
-                            className="border-2 border-dashed border-gray-400 rounded"
-                            style={{
-                              aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                              width: '85%',
-                              maxWidth: '250px'
-                            }}
-                          >
-                            <div className="w-full h-full relative">
-                              {canvasElements.map((element) => {
-                                const logo = logos.find(l => l.id === element.logoId);
-                                if (!logo) return null;
-                                
-                                return (
-                                  <div
-                                    key={element.id}
-                                    className="absolute"
-                                    style={{
-                                      left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                      top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                      width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                      height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                      transform: `rotate(${element.rotation || 0}deg)`,
-                                      opacity: element.opacity || 1,
-                                    }}
-                                  >
-                                    <img
-                                      src={`/uploads/${logo.filename}`}
-                                      alt={logo.originalName}
-                                      className="w-full h-full object-contain"
-                                      style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    // Show grid of different garment colors
-                    return (
-                      <div className="grid grid-cols-2 gap-2 h-full">
-                        {uniqueColors.map((garmentColor, index) => {
-                          // Get elements for this garment color
-                          const elementsForColor = canvasElements.filter(el => el.garmentColor === garmentColor);
+                <div className="border rounded-lg bg-white p-3 flex-1 flex flex-col items-start justify-start relative overflow-hidden">
+                  {/* Render page 2 exactly as PDF output */}
+                  <div className="w-full h-full flex flex-col">
+                    {/* Logos on garment backgrounds */}
+                    <div className="flex-1 flex items-center justify-center">
+                      {(() => {
+                        // Get unique garment colors from canvas elements
+                        const colorsUsed = new Map<string, string>();
+                        
+                        // Add default garment color if specified
+                        if (project?.garmentColor) {
+                          colorsUsed.set(project.garmentColor, project.garmentColor);
+                        }
+                        
+                        // Add individual element colors
+                        canvasElements.forEach(element => {
+                          if (element.garmentColor) {
+                            colorsUsed.set(element.garmentColor, element.garmentColor);
+                          }
+                        });
+                        
+                        // If there are individual garment colors, show them in a grid
+                        const garmentColors = Array.from(colorsUsed.keys());
+                        
+                        if (garmentColors.length <= 1) {
+                          // Single color - show full page preview
+                          const bgColor = garmentColors[0] || project?.garmentColor || '#f5f5f5';
                           
                           return (
                             <div 
-                              key={`${garmentColor}-${index}`}
-                              className="border rounded p-2 flex items-center justify-center relative"
-                              style={{ backgroundColor: garmentColor }}
+                              className="rounded-lg flex items-center justify-center"
+                              style={{ 
+                                backgroundColor: bgColor,
+                                width: '90%',
+                                maxWidth: '280px',
+                                aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                              }}
                             >
-                              <div 
-                                className="border border-dashed border-gray-400/60 rounded opacity-70"
-                                style={{
-                                  aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                                  width: '90%',
-                                  maxWidth: '120px'
-                                }}
-                              >
-                                <div className="w-full h-full relative">
-                                  {elementsForColor.map((element) => {
-                                    const logo = logos.find(l => l.id === element.logoId);
-                                    if (!logo) return null;
-                                    
-                                    return (
-                                      <div
-                                        key={element.id}
-                                        className="absolute"
-                                        style={{
-                                          left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                          top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                          width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                          height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                          transform: `rotate(${element.rotation || 0}deg)`,
-                                          opacity: element.opacity || 1,
-                                        }}
-                                      >
-                                        <img
-                                          src={`/uploads/${logo.filename}`}
-                                          alt={logo.originalName}
-                                          className="w-full h-full object-contain"
-                                          style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              
-                              {/* Color label */}
-                              <div className="absolute bottom-1 right-1 text-xs text-white bg-black/60 px-1 py-0.5 rounded text-center">
-                                <div 
-                                  className="w-2 h-2 rounded border border-white mx-auto mb-0.5"
-                                  style={{ backgroundColor: garmentColor }}
-                                />
-                                <div className="text-[9px] leading-tight">
-                                  {elementsForColor.length} logo{elementsForColor.length !== 1 ? 's' : ''}
-                                </div>
+                              {/* Template area with logos */}
+                              <div className="relative" style={{
+                                width: '90%',
+                                height: '90%'
+                              }}>
+                                {canvasElements.map((element) => {
+                                  const logo = logos.find(l => l.id === element.logoId);
+                                  if (!logo) return null;
+                                  
+                                  return (
+                                    <div
+                                      key={element.id}
+                                      className="absolute"
+                                      style={{
+                                        left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                        top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                        width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                        height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                        transform: `rotate(${element.rotation || 0}deg)`,
+                                        opacity: element.opacity || 1,
+                                      }}
+                                    >
+                                      <img
+                                        src={`/uploads/${logo.filename}`}
+                                        alt={logo.originalName}
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           );
-                        })}
+                        }
+                        
+                        // Multiple colors - show grid
+                        return (
+                          <div className="grid grid-cols-2 gap-3 w-full max-w-[280px]">
+                            {garmentColors.map((garmentColor) => {
+                              // Get elements for this garment color
+                              const elementsForColor = canvasElements.filter(el => 
+                                el.garmentColor === garmentColor || 
+                                (!el.garmentColor && garmentColor === project?.garmentColor)
+                              );
+                              
+                              return (
+                                <div 
+                                  key={garmentColor}
+                                  className="rounded-lg flex items-center justify-center"
+                                  style={{ 
+                                    backgroundColor: garmentColor,
+                                    aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                                  }}
+                                >
+                                  <div className="relative" style={{
+                                    width: '90%',
+                                    height: '90%'
+                                  }}>
+                                    {elementsForColor.map((element) => {
+                                      const logo = logos.find(l => l.id === element.logoId);
+                                      if (!logo) return null;
+                                      
+                                      return (
+                                        <div
+                                          key={element.id}
+                                          className="absolute"
+                                          style={{
+                                            left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                            top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                            width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                            transform: `rotate(${element.rotation || 0}deg)`,
+                                            opacity: element.opacity || 1,
+                                          }}
+                                        >
+                                          <img
+                                            src={`/uploads/${logo.filename}`}
+                                            alt={logo.originalName}
+                                            className="w-full h-full object-contain"
+                                          />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    
+                    {/* Color labels at bottom - exactly like PDF */}
+                    <div className="mt-auto pt-2">
+                      <div className="flex items-center gap-3 flex-wrap px-4">
+                        {(() => {
+                          // Get unique colors to display
+                          const colorsToShow = new Map<string, string>();
+                          
+                          if (project?.garmentColor) {
+                            colorsToShow.set(project.garmentColor, project.garmentColor.toUpperCase());
+                          }
+                          
+                          canvasElements.forEach(element => {
+                            if (element.garmentColor) {
+                              colorsToShow.set(element.garmentColor, element.garmentColor.toUpperCase());
+                            }
+                          });
+                          
+                          return Array.from(colorsToShow.entries()).map(([color, label]) => (
+                            <div key={color} className="flex items-center gap-1.5">
+                              <div 
+                                className="w-3 h-3 rounded-sm border border-gray-400"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-xs" style={{ color: '#6D6D6D' }}>
+                                {label}
+                              </span>
+                            </div>
+                          ));
+                        })()}
                       </div>
-                    );
-                  })()}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
