@@ -3,6 +3,8 @@
 ## Overview
 This is a full-stack web application for uploading logo files and creating layouts on garment templates. Its purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
 
+**Current Status**: Production-ready application deployed for team testing with comprehensive onboarding tutorial system and full vectorization service integration.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
@@ -36,6 +38,7 @@ Preferred communication style: Simple, everyday language.
 - **File Upload System**: Local filesystem storage in `/uploads`. Multi-tier PDF conversion (Ghostscript primary, ImageMagick fallback). Color preservation via Ghostscript. Vector preservation by retaining original PDF files and using `pdf-lib`. Automatic CMYK conversion on upload for vector files. PNG thumbnail generation for large PDFs. Visual indicators for "CMYK Preserved" and "RGB Raster".
 - **Canvas System**: Interactive workspace for logo manipulation with real-time property editing.
 - **AI Vectorization System**: Integrated AI-powered API with raster file detection, offering photographic approval, AI vectorization, and professional service options. Includes zoom controls, transparency checkerboard, side-by-side comparison, color preset palette, white background removal, advanced color detection, individual color deletion, color reduction, color locking, and credit protection.
+- **Onboarding Tutorial System**: Comprehensive 6-step interactive tutorial accessible via header "Tutorial" button, covering complete workflow from template selection to PDF generation with professional explanations and visual progress indicators.
 - **Imposition Tool**: Grid replication system for logos with customizable rows, columns, spacing, and canvas centering.
 - **Alignment Tools**: "Select All" and "Center All" functions.
 - **PDF Generation**: Dual-page PDF output with artwork on garment background. CMYK PDF generation with FOGRA51 ICC profile embedding. Enhanced vector preservation via `pdf-lib` and Ghostscript. Ink color recoloring for single-color transfers. Applique Badges Embroidery Form for custom badge templates with PDF embedding. PDF filename generation including quantity.
