@@ -156,12 +156,25 @@ export default function CanvasWorkspace({
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // History management
+  const saveToHistory = useCallback((elements: CanvasElement[]) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push([...elements]);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  }, [history, historyIndex]);
+
  // Canvas rotation in degrees
 
   // Helper function for optimistic updates with fallback
-  const updateElementDirect = async (id: string, updates: Partial<CanvasElement>) => {
+  const updateElementDirect = useCallback(async (id: string, updates: Partial<CanvasElement>, saveHistory = true) => {
     try {
       console.log('Canvas updateElementDirect called:', { id, updates });
+      
+      // Save current state to history before making changes (but only if not from undo/redo)
+      if (saveHistory && canvasElements) {
+        saveToHistory(canvasElements);
+      }
       
       // Optimistic update for immediate visual feedback
       queryClient.setQueryData(
@@ -197,7 +210,7 @@ export default function CanvasWorkspace({
         queryKey: ["/api/projects", project.id, "canvas-elements"]
       });
     }
-  };
+  }, [canvasElements, saveToHistory, queryClient, project.id]);
 
   // No longer need server-side color management - using CSS filters instead
 
@@ -221,20 +234,12 @@ export default function CanvasWorkspace({
     setZoom(Math.max(zoom - 25, 10));
   };
 
-  // History management
-  const saveToHistory = (elements: CanvasElement[]) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push([...elements]);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const previousState = history[historyIndex - 1];
       setHistoryIndex(historyIndex - 1);
       
-      // Apply the previous state to all canvas elements
+      // Apply the previous state to all canvas elements (don't save to history)
       previousState.forEach(historicalElement => {
         updateElementDirect(historicalElement.id, {
           x: historicalElement.x,
@@ -242,17 +247,17 @@ export default function CanvasWorkspace({
           width: historicalElement.width,
           height: historicalElement.height,
           rotation: historicalElement.rotation
-        });
+        }, false);
       });
     }
-  };
+  }, [historyIndex, history, updateElementDirect]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       const nextState = history[historyIndex + 1];
       setHistoryIndex(historyIndex + 1);
       
-      // Apply the next state to all canvas elements
+      // Apply the next state to all canvas elements (don't save to history)
       nextState.forEach(historicalElement => {
         updateElementDirect(historicalElement.id, {
           x: historicalElement.x,
@@ -260,10 +265,10 @@ export default function CanvasWorkspace({
           width: historicalElement.width,
           height: historicalElement.height,
           rotation: historicalElement.rotation
-        });
+        }, false);
       });
     }
-  };
+  }, [historyIndex, history, updateElementDirect]);
 
   // Helper function to detect raster files
   const isRasterFile = (file: File): boolean => {
@@ -991,7 +996,12 @@ export default function CanvasWorkspace({
           <div className="flex items-center space-x-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={handleUndo} disabled={historyIndex <= 0}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleUndo} 
+                  disabled={historyIndex <= 0}
+                >
                   <Undo className="w-4 h-4 mr-1" />
                   Undo
                 </Button>
@@ -1002,7 +1012,12 @@ export default function CanvasWorkspace({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRedo} 
+                  disabled={historyIndex >= history.length - 1}
+                >
                   <Redo className="w-4 h-4 mr-1" />
                   Redo
                 </Button>
@@ -1086,23 +1101,50 @@ export default function CanvasWorkspace({
                       >
                         3mm
                       </div>
-                      {/* Warning message */}
-                      <div 
-                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                                   bg-red-50 border border-red-300 rounded-lg px-4 py-3 max-w-md text-center"
-                        style={{ 
-                          opacity: canvasElements.length === 0 ? 0.9 : 0,
-                          pointerEvents: 'none',
-                          transition: 'opacity 0.3s ease-in-out'
-                        }}
-                      >
-                        <p className="text-sm text-red-800 font-medium">
-                          Safety Zone Warning
-                        </p>
-                        <p className="text-xs text-red-700 mt-1">
-                          Keep all content within the red guide lines (3mm from edges) to avoid clipping during production
-                        </p>
-                      </div>
+                      {/* Dynamic Position Warning */}
+                      {(() => {
+                        // Check if any elements are outside safety margins
+                        const hasElementsOutsideMargins = canvasElements.some(element => {
+                          if (!element.isVisible) return false;
+                          
+                          const mmToPixelRatio = template.pixelWidth / template.width;
+                          const marginInMm = 3; // 3mm safety margin
+                          
+                          // Convert element position and size from mm to check margins
+                          const elementRight = element.x + element.width;
+                          const elementBottom = element.y + element.height;
+                          
+                          // Check if element is outside safety margins
+                          const outsideLeft = element.x < marginInMm;
+                          const outsideTop = element.y < marginInMm;
+                          const outsideRight = elementRight > (template.width - marginInMm);
+                          const outsideBottom = elementBottom > (template.height - marginInMm);
+                          
+                          return outsideLeft || outsideTop || outsideRight || outsideBottom;
+                        });
+                        
+                        return (
+                          <div 
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
+                                       bg-red-50 border border-red-300 rounded-lg px-4 py-3 max-w-md text-center"
+                            style={{ 
+                              opacity: canvasElements.length === 0 ? 0.9 : (hasElementsOutsideMargins ? 0.9 : 0),
+                              pointerEvents: 'none',
+                              transition: 'opacity 0.3s ease-in-out'
+                            }}
+                          >
+                            <p className="text-sm text-red-800 font-medium">
+                              {canvasElements.length === 0 ? 'Safety Zone Warning' : 'Position Warning'}
+                            </p>
+                            <p className="text-xs text-red-700 mt-1">
+                              {canvasElements.length === 0 
+                                ? 'Keep all content within the red guide lines (3mm from edges) to avoid clipping during production'
+                                : 'Some elements are outside the safety zone. Move them within the red guide lines to avoid clipping during production.'
+                              }
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </>
                   );
                 })()}

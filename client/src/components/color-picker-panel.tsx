@@ -109,6 +109,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   );
   const [showCMYKPreview, setShowCMYKPreview] = useState(false);
   const [hasShownRGBWarning, setHasShownRGBWarning] = useState(false);
+  const [logoIdForWarning, setLogoIdForWarning] = useState<string | null>(null);
 
   // Fetch project and template information to check if this is a single colour template
   const { data: project } = useQuery<Project>({
@@ -195,6 +196,12 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return null;
   }
 
+  // Reset warning state when logo changes
+  if (logoIdForWarning !== logo.id) {
+    setLogoIdForWarning(logo.id);
+    setHasShownRGBWarning(false);
+  }
+
   // Check if any colors are RGB (not CMYK)
   // For vectorized files, all colors should be marked as isCMYK: true
   // For single colour templates, disable RGB warnings since auto-recoloring handles it
@@ -221,6 +228,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     svgColorsCount: svgColors.length,
     isSingleColourTemplate,
     hasRGBColors,
+    hasShownRGBWarning,
+    logoIdForWarning,
     colorDetails: svgColors.map(c => ({
       originalColor: c.originalColor,
       isCMYK: c.isCMYK,
