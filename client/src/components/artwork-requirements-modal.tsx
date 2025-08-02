@@ -72,7 +72,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
               </div>
 
               {/* Vector vs Raster Header */}
-              <div className="flex justify-center gap-8 my-4">
+              <div className="flex justify-center gap-8 my-4 text-[16px]">
                 <h3 className="text-lg font-semibold text-[#961E75]">Vector Artwork</h3>
                 <h3 className="text-lg font-semibold text-[#961E75]">Raster Artwork</h3>
               </div>
