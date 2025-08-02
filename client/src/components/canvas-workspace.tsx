@@ -1031,16 +1031,27 @@ export default function CanvasWorkspace({
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 relative" style={{ backgroundColor: '#606060' }}>
-        <div className="absolute inset-0 flex items-center justify-center overflow-auto">
-          <div className="relative" style={{ margin: '20px' }}>
-
+      <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
+        <div 
+          className="absolute inset-0 overflow-auto flex"
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div 
+            className="relative"
+            style={{
+              width: canvasWidth,
+              height: canvasHeight,
+              flexShrink: 0
+            }}
+          >
             <div
               ref={canvasRef}
-              className="relative shadow-xl rounded-lg overflow-hidden"
+              className="relative shadow-xl rounded-lg overflow-hidden w-full h-full"
               style={{
-                width: canvasWidth,
-                height: canvasHeight,
                 backgroundColor: project.garmentColor || '#EAEAEA'
               }}
               onClick={handleCanvasClick}
