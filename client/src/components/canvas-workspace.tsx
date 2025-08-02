@@ -1031,8 +1031,8 @@ export default function CanvasWorkspace({
       </div>
 
       {/* Canvas Container */}
-      <div className="flex-1 p-8 overflow-auto" style={{ backgroundColor: '#606060' }}>
-        <div className="flex items-center justify-center min-h-full" style={{ padding: '100px 0' }}>
+      <div className="flex-1 p-4 overflow-auto" style={{ backgroundColor: '#606060' }}>
+        <div className="flex items-center justify-center min-h-full" style={{ padding: '20px 0' }}>
           <div className="relative">
 
             <div
@@ -1207,7 +1207,7 @@ export default function CanvasWorkspace({
                 <div
                   key={element.id}
                   className={`absolute cursor-move ${
-                    isSelected ? 'border-2 border-primary bg-blue-50 bg-opacity-50' : 'border border-gray-300 hover:border-gray-400'
+                    isSelected ? 'bg-blue-50 bg-opacity-50' : 'hover:border-gray-400'
                   }`}
                   style={{
                     left: elementX,
@@ -1216,7 +1216,10 @@ export default function CanvasWorkspace({
                     height: elementHeight,
                     zIndex: element.zIndex,
                     transform: `rotate(${element.rotation || 0}deg)`,
-                    transformOrigin: 'center'
+                    transformOrigin: 'center',
+                    border: isSelected 
+                      ? `${Math.max(1, 2 / zoom * 100)}px solid hsl(var(--primary))` 
+                      : `1px solid #d1d5db`
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
@@ -1314,52 +1317,108 @@ export default function CanvasWorkspace({
                   </div>
 
                   {/* Transformation Handles */}
-                  {isSelected && (
+                  {isSelected && (() => {
+                    // Calculate scaled handle size and positioning
+                    const handleSize = Math.max(8, 12 / zoom * 100); // 12px at 100% zoom, minimum 8px
+                    const handleOffset = Math.max(2, 4 / zoom * 100); // 4px offset at 100% zoom, minimum 2px
+                    const borderWidth = Math.max(1, 1 / zoom * 100); // 1px border at 100% zoom
+                    
+                    const handleStyle = {
+                      width: `${handleSize}px`,
+                      height: `${handleSize}px`,
+                      borderWidth: `${borderWidth}px`,
+                    };
+                    
+                    return (
                     <>
                       {/* Corner handles with resize functionality */}
                       <div 
-                        className="absolute -top-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-nw-resize" 
+                        className="absolute bg-primary border-white rounded-full cursor-nw-resize" 
+                        style={{
+                          ...handleStyle,
+                          top: `-${handleOffset}px`,
+                          left: `-${handleOffset}px`,
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'nw')}
                       />
                       <div 
-                        className="absolute -top-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-n-resize transform -translate-x-1/2" 
+                        className="absolute bg-primary border-white rounded-full cursor-n-resize" 
+                        style={{
+                          ...handleStyle,
+                          top: `-${handleOffset}px`,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'n')}
                       />
                       <div 
-                        className="absolute -top-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-ne-resize" 
+                        className="absolute bg-primary border-white rounded-full cursor-ne-resize" 
+                        style={{
+                          ...handleStyle,
+                          top: `-${handleOffset}px`,
+                          right: `-${handleOffset}px`,
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'ne')}
                       />
                       <div 
-                        className="absolute top-1/2 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-e-resize transform -translate-y-1/2" 
+                        className="absolute bg-primary border-white rounded-full cursor-e-resize" 
+                        style={{
+                          ...handleStyle,
+                          top: '50%',
+                          right: `-${handleOffset}px`,
+                          transform: 'translateY(-50%)',
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'e')}
                       />
                       <div 
-                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border border-white rounded-full cursor-se-resize" 
+                        className="absolute bg-primary border-white rounded-full cursor-se-resize" 
+                        style={{
+                          ...handleStyle,
+                          bottom: `-${handleOffset}px`,
+                          right: `-${handleOffset}px`,
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'se')}
                       />
                       <div 
-                        className="absolute -bottom-1 left-1/2 w-3 h-3 bg-primary border border-white rounded-full cursor-s-resize transform -translate-x-1/2" 
+                        className="absolute bg-primary border-white rounded-full cursor-s-resize" 
+                        style={{
+                          ...handleStyle,
+                          bottom: `-${handleOffset}px`,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 's')}
                       />
                       <div 
-                        className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-sw-resize" 
+                        className="absolute bg-primary border-white rounded-full cursor-sw-resize" 
+                        style={{
+                          ...handleStyle,
+                          bottom: `-${handleOffset}px`,
+                          left: `-${handleOffset}px`,
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'sw')}
                       />
                       <div 
-                        className="absolute top-1/2 -left-1 w-3 h-3 bg-primary border border-white rounded-full cursor-w-resize transform -translate-y-1/2" 
+                        className="absolute bg-primary border-white rounded-full cursor-w-resize" 
+                        style={{
+                          ...handleStyle,
+                          top: '50%',
+                          left: `-${handleOffset}px`,
+                          transform: 'translateY(-50%)',
+                        }}
                         onMouseDown={(e) => handleResizeStart(e, element, 'w')}
                       />
                       
                       {/* Rotation Handle - Positioned above element */}
                       <div 
-                        className="absolute left-1/2 transform -translate-x-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full p-2 border-2 border-primary"
+                        className="absolute left-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full border-primary flex items-center justify-center"
                         style={{ 
-                          top: '-30px',
-                          width: '32px',
-                          height: '32px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
+                          top: `-${Math.max(24, 30 / zoom * 100)}px`,
+                          width: `${Math.max(24, 32 / zoom * 100)}px`,
+                          height: `${Math.max(24, 32 / zoom * 100)}px`,
+                          transform: 'translateX(-50%)',
+                          padding: `${Math.max(4, 8 / zoom * 100)}px`,
+                          borderWidth: `${Math.max(1, 2 / zoom * 100)}px`,
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -1403,12 +1462,19 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <RotateCw className="w-4 h-4 text-primary" />
+                        <RotateCw style={{ width: `${Math.max(12, 16 / zoom * 100)}px`, height: `${Math.max(12, 16 / zoom * 100)}px` }} className="text-primary" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
                       <div 
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
+                        className="absolute bg-red-500 hover:bg-red-600 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
+                        style={{
+                          top: `-${Math.max(6, 8 / zoom * 100)}px`,
+                          right: `-${Math.max(6, 8 / zoom * 100)}px`,
+                          width: `${Math.max(18, 24 / zoom * 100)}px`,
+                          height: `${Math.max(18, 24 / zoom * 100)}px`,
+                          borderWidth: `${Math.max(1, 2 / zoom * 100)}px`,
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
                           // Prevent multiple rapid clicks
@@ -1418,10 +1484,11 @@ export default function CanvasWorkspace({
                         }}
                         title="Delete element"
                       >
-                        <Trash2 className="w-3 h-3 text-white" />
+                        <Trash2 style={{ width: `${Math.max(9, 12 / zoom * 100)}px`, height: `${Math.max(9, 12 / zoom * 100)}px` }} className="text-white" />
                       </div>
                     </>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
