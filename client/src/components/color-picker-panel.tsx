@@ -218,11 +218,14 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return true;
   });
 
-  // Check if we've already shown the warning for this logo
-  const hasShownWarningForThisLogo = shownRGBWarningLogos.has(logo.id);
+  // Check if we've already shown the warning for this logo file (not element ID)
+  // This ensures duplicated/impositioned logos don't trigger multiple warnings
+  const logoFilename = logo.originalFilename || logo.filename;
+  const hasShownWarningForThisLogo = shownRGBWarningLogos.has(logoFilename);
 
   console.log('RGB Warning Check:', {
     logoId: logo.id,
+    logoFilename,
     svgColorsCount: svgColors.length,
     isSingleColourTemplate,
     hasRGBColors,
@@ -241,7 +244,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
       <RGBWarningModal 
         hasRGBColors={hasRGBColors && !hasShownWarningForThisLogo} 
         onClose={() => {
-          setShownRGBWarningLogos(prev => new Set([...prev, logo.id]));
+          setShownRGBWarningLogos(prev => new Set([...prev, logoFilename]));
         }} 
       />
       <Card className="mt-4">
