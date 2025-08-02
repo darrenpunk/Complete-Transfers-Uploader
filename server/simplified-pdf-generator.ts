@@ -1,8 +1,9 @@
-import { PDFDocument, rgb, PDFPage, degrees } from 'pdf-lib';
+import { PDFDocument, rgb, PDFPage, degrees, StandardFonts } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { manufacturerColors } from '../shared/garment-colors';
 
 const execAsync = promisify(exec);
 
@@ -44,9 +45,12 @@ export class SimplifiedPDFGenerator {
       data.templateSize.height * 2.834
     ]);
     
-    // Draw individual element backgrounds
+    // Draw individual element backgrounds with labels
     await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
     await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
+    
+    // Add color labels to page 2
+    await this.addColorLabels(pdfDoc, page2, data.canvasElements, data.templateSize, data.garmentColor);
 
     const pdfBytes = await pdfDoc.save();
     console.log('✅ Simplified PDF generated successfully');
@@ -109,6 +113,89 @@ export class SimplifiedPDFGenerator {
         }
       }
     }
+  }
+
+  private async addColorLabels(
+    pdfDoc: PDFDocument,
+    page: PDFPage,
+    elements: any[],
+    templateSize: any,
+    defaultGarmentColor?: string
+  ) {
+    // Get font for labels
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontSize = 10;
+    const pageHeight = page.getSize().height;
+    
+    // Get unique colors used
+    const colorsUsed = new Map<string, string>();
+    
+    // Add default garment color if specified
+    if (defaultGarmentColor) {
+      const colorName = this.getColorName(defaultGarmentColor);
+      if (colorName) {
+        colorsUsed.set(defaultGarmentColor, colorName);
+      }
+    }
+    
+    // Add individual element colors
+    for (const element of elements) {
+      if (element.garmentColor) {
+        const colorName = this.getColorName(element.garmentColor);
+        if (colorName) {
+          colorsUsed.set(element.garmentColor, colorName);
+        }
+      }
+    }
+    
+    // Draw color labels at the bottom of the page
+    let xOffset = 20;
+    const yOffset = 20;
+    const squareSize = 15;
+    const padding = 10;
+    
+    Array.from(colorsUsed.entries()).forEach(([colorHex, colorName]) => {
+      // Draw color square
+      const rgbColor = this.hexToRgb(colorHex);
+      if (rgbColor) {
+        page.drawRectangle({
+          x: xOffset,
+          y: yOffset,
+          width: squareSize,
+          height: squareSize,
+          color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 0.5,
+        });
+      }
+      
+      // Draw label text
+      page.drawText(colorName, {
+        x: xOffset + squareSize + 5,
+        y: yOffset + 3,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      
+      // Move to next position
+      const textWidth = font.widthOfTextAtSize(colorName, fontSize);
+      xOffset += squareSize + textWidth + padding + 10;
+    });
+  }
+
+  private getColorName(hexColor: string): string | null {
+    // Search through all manufacturer colors to find the name
+    for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
+      for (const group of colorGroups) {
+        for (const color of group.colors) {
+          if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+            return color.name;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
