@@ -102,185 +102,120 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
                 print-ready PDFs. We do not edit your files once submitted to the order.
               </p>
 
-              <div className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Fonts */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/255309/Convert-to-curves.gif"
-                      alt="Convert fonts to curves"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75] flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        Fonts
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Fonts can cause problems if you've used a font or typeface that we don't have, the document will 
-                        print incorrectly. All fonts within your artwork need to be converted to outlines, or paths. 
-                        This effectively means that the text is no longer text - it has become a graphic, and the text 
-                        cannot be altered.
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/255309/Convert-to-curves.gif"
+                    alt="Convert fonts to curves"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75] flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Fonts
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Fonts can cause problems if you've used a font or typeface that we don't have, the document will 
+                    print incorrectly. All fonts within your artwork need to be converted to outlines, or paths. 
+                    This effectively means that the text is no longer text - it has become a graphic, and the text 
+                    cannot be altered.
+                  </p>
                 </div>
 
                 {/* Fine Details */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/255316/check2.gif"
-                      alt="Check fine details"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75] flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4" />
-                        Fine Details
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        To ensure fine details & small text in your image print clearly make sure that the smallest 
-                        areas are at least as thick as our minimum print tolerance of 0.35mm / 1pt
-                      </p>
-                      <img 
-                        src="https://www.completetransfers.com/web/image/255589/35mm.png"
-                        alt="0.35mm minimum thickness"
-                        className="h-8 w-auto"
-                      />
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/255316/check2.gif"
+                    alt="Check fine details"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75] flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Fine Details
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    To ensure fine details & small text in your image print clearly make sure that the smallest 
+                    areas are at least as thick as our minimum print tolerance of 0.35mm / 1pt
+                  </p>
+                  <img 
+                    src="https://www.completetransfers.com/web/image/255589/35mm.png"
+                    alt="0.35mm minimum thickness"
+                    className="h-8 w-auto"
+                  />
                 </div>
 
                 {/* Mirrored Artwork */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/503433/mirror.gif"
-                      alt="Do not mirror artwork"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75]">Mirrored Artwork</h3>
-                      <p className="text-sm text-muted-foreground">
-                        All artworks submitted should not be mirrored, they will be automatically mirrored for the 
-                        transfer process by our system. Submitting mirrored artwork may lead to your transfer being 
-                        printed backwards.
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/503433/mirror.gif"
+                    alt="Do not mirror artwork"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75]">Mirrored Artwork</h3>
+                  <p className="text-sm text-muted-foreground">
+                    All artworks submitted should not be mirrored, they will be automatically mirrored for the 
+                    transfer process by our system. Submitting mirrored artwork may lead to your transfer being 
+                    printed backwards.
+                  </p>
                 </div>
 
                 {/* Colours */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/254409/CB.png"
-                      alt="CMYK colours"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75]">Colours</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        All files should be <strong>CMYK</strong> colour mode. RGB colours or RGB files will be 
-                        automatically converted to CMYK which may lead to a colour shift in your artwork.
-                      </p>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        We use FOGRA 39 colour profile. We recommend you assign this colour profile to your file - 
-                        this can be set using European Prepress colour settings in your graphics package.
-                      </p>
-                      <p className="text-sm text-muted-foreground italic">
-                        <strong>Pantone Shades:</strong> Please assign any Pantone shades you require to your artwork. 
-                        Not all Pantone shades can be reproduced exactly by the CMYK process, we cannot guarantee exact matching.
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/254409/CB.png"
+                    alt="CMYK colours"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75]">Colours</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    All files should be <strong>CMYK</strong> colour mode. RGB colours or RGB files will be 
+                    automatically converted to CMYK which may lead to a colour shift in your artwork.
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    We use FOGRA 39 colour profile. We recommend you assign this colour profile to your file - 
+                    this can be set using European Prepress colour settings in your graphics package.
+                  </p>
+                  <p className="text-sm text-muted-foreground italic">
+                    <strong>Pantone Shades:</strong> Please assign any Pantone shades you require to your artwork. 
+                    Not all Pantone shades can be reproduced exactly by the CMYK process, we cannot guarantee exact matching.
+                  </p>
                 </div>
 
                 {/* File Type */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/255437/export-pdf.png"
-                      alt="Export as PDF"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75]">File Type</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Our artwork system for our transfers is a semi-automated system and requires all files to be PDF. 
-                        Please submit all artwork as High Quality PDF in CMYK colour mode.
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/255437/export-pdf.png"
+                    alt="Export as PDF"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75]">File Type</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Our artwork system for our transfers is a semi-automated system and requires all files to be PDF. 
+                    Please submit all artwork as High Quality PDF in CMYK colour mode.
+                  </p>
                 </div>
 
                 {/* Backgrounds */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src="https://www.completetransfers.com/web/image/255439/background.gif"
-                      alt="No backgrounds"
-                      className="w-24 h-24 object-contain rounded"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2 text-[#961E75]">Backgrounds and White Elements</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Any white elements that are to be printed should be left as white in your file.
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Please don't put a coloured background in your file, our system detects any white elements 
-                        in the file automatically. You can add a separate visual of the artwork on the coloured 
-                        garment for reference on a second page of the PDF that you upload.
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-6">
+                  <img 
+                    src="https://www.completetransfers.com/web/image/255439/background.gif"
+                    alt="No backgrounds"
+                    className="w-full h-48 object-contain rounded mb-4"
+                  />
+                  <h3 className="font-semibold mb-2 text-[#961E75]">Backgrounds and White Elements</h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Any white elements that are to be printed should be left as white in your file.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Please don't put a coloured background in your file, our system detects any white elements 
+                    in the file automatically. You can add a separate visual of the artwork on the coloured 
+                    garment for reference on a second page of the PDF that you upload.
+                  </p>
                 </div>
               </div>
             </section>
 
-            {/* File Prep Steps */}
-            <section>
-              <h2 className="text-lg font-semibold mb-4 text-[#961E75]">File Prep for Custom Cut Transfers</h2>
-              
-              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                <ol className="space-y-3">
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-green-700 dark:text-green-300">1.</span>
-                    <span className="text-sm">Create a new CMYK document or art-board in your graphic design program. Make the size of the document the size of the transfer you need to order.</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-green-700 dark:text-green-300">2.</span>
-                    <div className="text-sm">
-                      <p>Import your vector graphic.</p>
-                      <ul className="list-disc list-inside mt-1 space-y-1 text-muted-foreground">
-                        <li>Convert all fonts to outlines / curves</li>
-                        <li>Check fine detail is not smaller than our minimum line thickness</li>
-                        <li>Remove any backgrounds or white elements that are not needed</li>
-                        <li>Do not mirror your artwork</li>
-                      </ul>
-                    </div>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-green-700 dark:text-green-300">3.</span>
-                    <span className="text-sm">Size the graphic to the exact size you need it to print</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-semibold text-green-700 dark:text-green-300">4.</span>
-                    <span className="text-sm">Export as a High Quality PDF.</span>
-                  </li>
-                </ol>
-              </div>
 
-              {/* Custom Cut Process Image */}
-              <div className="flex justify-center mt-4">
-                <img 
-                  src="https://www.completetransfers.com/web/image/255303/CustomCut.gif"
-                  alt="Custom Cut Transfer Process"
-                  className="max-w-full h-auto rounded-lg shadow-sm"
-                />
-              </div>
-            </section>
           </div>
         </ScrollArea>
       </DialogContent>
