@@ -599,9 +599,9 @@ export default function UploadTool() {
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
+      <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="text-xl font-semibold text-foreground">Artwork Uploader & Gang Sheet Builder</div>
           <div className="flex items-center space-x-4">
@@ -662,7 +662,7 @@ export default function UploadTool() {
       </div>
 
       {/* Main Workspace */}
-      <div className="flex h-[calc(100vh-180px)]">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <ToolsSidebar
           currentStep={currentStep}
@@ -711,8 +711,8 @@ export default function UploadTool() {
         />
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="bg-background border-t border-border px-6 py-4">
+      {/* Bottom Action Bar - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1}>
@@ -728,17 +728,15 @@ export default function UploadTool() {
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
-            {currentStep >= 3 && (
-              <Button 
-                variant="outline"
-                onClick={handleGeneratePDF}
-                disabled={generatePDFMutation.isPending}
-                size="sm"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Generate PDF
-              </Button>
-            )}
+            <Button 
+              variant="outline"
+              onClick={handleGeneratePDF}
+              disabled={generatePDFMutation.isPending}
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Generate PDF
+            </Button>
             <Button onClick={handleNextStep} disabled={currentStep === 5}>
               {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
               <ArrowRight className="w-4 h-4 ml-2" />

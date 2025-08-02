@@ -73,6 +73,7 @@ function getColorName(hex: string): string {
 export default function GarmentColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: GarmentColorModalProps) {
   const [open, setOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const [expandedManufacturers, setExpandedManufacturers] = useState<string[]>([]);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
 
   // Auto-open modal when autoOpen is true and no color is selected (only once)
@@ -176,24 +177,44 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Manufacturer Colors</h4>
             <div className="space-y-3">
               {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
-                <div key={manufacturerName} className="border border-gray-200 rounded-lg">
-                  <div className="p-3 bg-gray-50 border-b border-gray-200 flex justify-center">
-                    {manufacturerName === "Gildan" && (
-                      <img 
-                        src={gildanLogoPath} 
-                        alt="Gildan" 
-                        className="h-6 w-auto object-contain"
-                      />
-                    )}
-                    {manufacturerName === "Fruit of the Loom" && (
-                      <img 
-                        src={fruitOfTheLoomLogoPath} 
-                        alt="Fruit of the Loom" 
-                        className="h-8 w-auto object-contain"
-                      />
-                    )}
-                  </div>
-                  <div className="p-2 space-y-1">
+                <Collapsible 
+                  key={manufacturerName}
+                  open={expandedManufacturers.includes(manufacturerName)}
+                  onOpenChange={() => {
+                    setExpandedManufacturers(prev => 
+                      prev.includes(manufacturerName) 
+                        ? prev.filter(m => m !== manufacturerName)
+                        : [...prev, manufacturerName]
+                    );
+                  }}
+                >
+                  <div className="border border-gray-200 rounded-lg">
+                    <CollapsibleTrigger className="w-full p-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center justify-center flex-1">
+                        {manufacturerName === "Gildan" && (
+                          <img 
+                            src={gildanLogoPath} 
+                            alt="Gildan" 
+                            className="h-6 w-auto object-contain"
+                          />
+                        )}
+                        {manufacturerName === "Fruit of the Loom" && (
+                          <img 
+                            src={fruitOfTheLoomLogoPath} 
+                            alt="Fruit of the Loom" 
+                            className="h-8 w-auto object-contain"
+                          />
+                        )}
+                      </div>
+                      <div className="ml-2">
+                        {expandedManufacturers.includes(manufacturerName) 
+                          ? <ChevronDown className="w-5 h-5 text-gray-600" />
+                          : <ChevronRight className="w-5 h-5 text-gray-600" />
+                        }
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-2 space-y-1">
                     {colorGroups.map((group) => (
                       <Collapsible 
                         key={group.name}
@@ -250,8 +271,10 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                         </CollapsibleContent>
                       </Collapsible>
                     ))}
+                      </div>
+                    </CollapsibleContent>
                   </div>
-                </div>
+                </Collapsible>
               ))}
             </div>
           </div>
