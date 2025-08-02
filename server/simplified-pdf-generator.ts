@@ -122,6 +122,8 @@ export class SimplifiedPDFGenerator {
     templateSize: any,
     defaultGarmentColor?: string
   ) {
+    console.log('🎨 Adding color labels to PDF page 2');
+    
     // Get font for labels
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontSize = 10;
@@ -133,6 +135,7 @@ export class SimplifiedPDFGenerator {
     // Add default garment color if specified
     if (defaultGarmentColor) {
       const colorName = this.getColorName(defaultGarmentColor);
+      console.log(`🎨 Default garment color: ${defaultGarmentColor}, name: ${colorName}`);
       if (colorName) {
         colorsUsed.set(defaultGarmentColor, colorName);
       }
@@ -142,11 +145,14 @@ export class SimplifiedPDFGenerator {
     for (const element of elements) {
       if (element.garmentColor) {
         const colorName = this.getColorName(element.garmentColor);
+        console.log(`🎨 Element ${element.id} garment color: ${element.garmentColor}, name: ${colorName}`);
         if (colorName) {
           colorsUsed.set(element.garmentColor, colorName);
         }
       }
     }
+    
+    console.log(`🎨 Total unique colors found: ${colorsUsed.size}`);
     
     // Draw color labels at the bottom of the page
     let xOffset = 20;
@@ -185,16 +191,21 @@ export class SimplifiedPDFGenerator {
   }
 
   private getColorName(hexColor: string): string | null {
+    console.log(`🔍 Looking for color name for hex: ${hexColor}`);
+    
     // Search through all manufacturer colors to find the name
     for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
       for (const group of colorGroups) {
         for (const color of group.colors) {
           if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+            console.log(`✅ Found color: ${color.name} from ${manufacturer}`);
             return color.name;
           }
         }
       }
     }
+    
+    console.log(`❌ No color name found for hex: ${hexColor}`);
     return null;
   }
 

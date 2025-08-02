@@ -143,6 +143,12 @@ export async function registerRoutes(app: express.Application) {
         garmentColor: project.garmentColor,
         appliqueBadgesForm: project.appliqueBadgesForm
       };
+      
+      // Debug: Log canvas elements with garment colors
+      console.log('📊 Canvas elements with garment colors:');
+      canvasElements.forEach(element => {
+        console.log(`  - Element ${element.id}: garmentColor = ${element.garmentColor || 'none'}`);
+      });
 
       console.log(`🔄 Generating PDF with original file preservation...`);
       const pdfBuffer = await generator.generatePDF(pdfData);
