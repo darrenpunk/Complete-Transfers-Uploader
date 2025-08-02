@@ -72,17 +72,17 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
               </div>
 
               {/* Vector vs Raster Header */}
-              <div className="flex justify-center gap-8 my-4 text-[16px]">
-                <h3 className="text-lg font-semibold text-[#961E75]">Vector Artwork</h3>
-                <h3 className="text-lg font-semibold text-[#961E75]">Raster Artwork</h3>
+              <div className="flex justify-around items-center mt-2 mb-1">
+                <h3 className="text-lg font-semibold text-[#961E75] text-center flex-1">Vector Artwork</h3>
+                <h3 className="text-lg font-semibold text-[#961E75] text-center flex-1">Raster Artwork</h3>
               </div>
 
               {/* Vector vs Raster Comparison Image */}
-              <div className="flex justify-center my-6">
+              <div className="flex justify-center">
                 <img 
                   src="https://www.completetransfers.com/web/image/503384/Vector_bitmap.jpg"
                   alt="Vectorised vs Bitmap/Raster Comparison"
-                  className="max-w-full h-auto rounded-lg shadow-sm"
+                  className="max-w-md h-auto rounded-lg shadow-sm"
                 />
               </div>
             </section>
