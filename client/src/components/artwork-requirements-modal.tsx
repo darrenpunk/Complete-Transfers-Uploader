@@ -166,10 +166,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
                     All files should be <strong className="text-[#961e75]">CMYK</strong> colour mode. RGB colours or RGB files will be 
                     automatically converted to CMYK which may lead to a colour shift in your artwork.
                   </p>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    We use FOGRA 39 colour profile. We recommend you assign this colour profile to your file - 
-                    this can be set using European Prepress colour settings in your graphics package.
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">We use FOGRA 51 colour profile. We recommend you assign this colour profile to your file - this can be set using European Prepress colour settings in your graphics package.</p>
                   <p className="text-sm text-muted-foreground italic">
                     <strong className="text-[#b806ad]">Pantone Shades:</strong> Please assign any Pantone shades you require to your artwork. 
                     Not all Pantone shades can be reproduced exactly by the CMYK process, we cannot guarantee exact matching.
