@@ -370,9 +370,19 @@ export default function PDFPreviewModal({
                           // Get unique colors to display with name and CMYK
                           const colorsToShow = new Map<string, { name: string; cmyk: string }>();
                           
+                          // Helper function to convert hex to RGB
+                          const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+                            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                            return result ? {
+                              r: parseInt(result[1], 16),
+                              g: parseInt(result[2], 16),
+                              b: parseInt(result[3], 16)
+                            } : null;
+                          };
+                          
                           // Helper function to get color info
                           const getColorInfo = (hexColor: string): { name: string; cmyk: string } => {
-                            // Search through manufacturer colors
+                            // First try exact match
                             const manufacturers = ['gildan', 'fruitOfTheLoom'];
                             for (const manufacturer of manufacturers) {
                               const colorGroups = manufacturer === 'gildan' ? gildanColors : fruitOfTheLoomColors;
@@ -385,6 +395,41 @@ export default function PDFPreviewModal({
                                 }
                               }
                             }
+                            
+                            // If no exact match, find closest color
+                            let closestColor: any = null;
+                            let closestDistance = Infinity;
+                            
+                            const targetRgb = hexToRgb(hexColor);
+                            if (!targetRgb) return { name: hexColor.toUpperCase(), cmyk: '' };
+                            
+                            for (const manufacturer of manufacturers) {
+                              const colorGroups = manufacturer === 'gildan' ? gildanColors : fruitOfTheLoomColors;
+                              for (const group of colorGroups) {
+                                for (const color of group.colors) {
+                                  const colorRgb = hexToRgb(color.hex);
+                                  if (!colorRgb) continue;
+                                  
+                                  // Calculate color distance
+                                  const distance = Math.sqrt(
+                                    Math.pow(targetRgb.r - colorRgb.r, 2) +
+                                    Math.pow(targetRgb.g - colorRgb.g, 2) +
+                                    Math.pow(targetRgb.b - colorRgb.b, 2)
+                                  );
+                                  
+                                  if (distance < closestDistance) {
+                                    closestDistance = distance;
+                                    closestColor = color;
+                                  }
+                                }
+                              }
+                            }
+                            
+                            if (closestColor && closestDistance < 100) {
+                              const cmyk = `(${closestColor.cmyk.c}, ${closestColor.cmyk.m}, ${closestColor.cmyk.y}, ${closestColor.cmyk.k})`;
+                              return { name: closestColor.name, cmyk };
+                            }
+                            
                             return { name: hexColor.toUpperCase(), cmyk: '' };
                           };
                           
