@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -192,14 +192,16 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     return colorOverrides[originalColor] || originalColor;
   };
 
+  // Reset warning state when logo changes - use useEffect to avoid state changes during render
+  useEffect(() => {
+    if (logoIdForWarning !== logo.id) {
+      setLogoIdForWarning(logo.id);
+      setHasShownRGBWarning(false);
+    }
+  }, [logo.id, logoIdForWarning]);
+
   if (!shouldShow) {
     return null;
-  }
-
-  // Reset warning state when logo changes
-  if (logoIdForWarning !== logo.id) {
-    setLogoIdForWarning(logo.id);
-    setHasShownRGBWarning(false);
   }
 
   // Check if any colors are RGB (not CMYK)
