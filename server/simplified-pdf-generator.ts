@@ -38,15 +38,15 @@ export class SimplifiedPDFGenerator {
     // Don't draw any background for the first page
     await this.embedLogos(pdfDoc, page1, data.canvasElements, data.logos, data.templateSize);
 
-    // Page 2: Design on garment color (if specified)
-    if (data.garmentColor && data.garmentColor !== 'white') {
-      const page2 = pdfDoc.addPage([
-        data.templateSize.width * 2.834,
-        data.templateSize.height * 2.834
-      ]);
-      this.drawBackground(page2, data.garmentColor);
-      await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
-    }
+    // Page 2: Always create page 2 with garment backgrounds
+    const page2 = pdfDoc.addPage([
+      data.templateSize.width * 2.834,
+      data.templateSize.height * 2.834
+    ]);
+    
+    // Draw individual element backgrounds
+    await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
+    await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
 
     const pdfBytes = await pdfDoc.save();
     console.log('✅ Simplified PDF generated successfully');
@@ -75,6 +75,38 @@ export class SimplifiedPDFGenerator {
           height,
           color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
         });
+      }
+    }
+  }
+
+  private async drawElementBackgrounds(
+    page: PDFPage,
+    elements: any[],
+    templateSize: any,
+    defaultGarmentColor?: string
+  ) {
+    // First draw the default background if specified
+    if (defaultGarmentColor) {
+      this.drawBackground(page, defaultGarmentColor);
+    }
+    
+    // Then draw individual element backgrounds
+    for (const element of elements) {
+      if (element.garmentColor && element.garmentColor !== defaultGarmentColor) {
+        const scale = this.calculateScale(element, templateSize);
+        const position = this.calculatePosition(element, templateSize, page);
+        
+        const rgbColor = this.hexToRgb(element.garmentColor);
+        if (rgbColor) {
+          page.drawRectangle({
+            x: position.x,
+            y: position.y,
+            width: element.width * scale,
+            height: element.height * scale,
+            color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+        }
       }
     }
   }

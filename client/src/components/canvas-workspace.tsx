@@ -1239,12 +1239,12 @@ export default function CanvasWorkspace({
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
-                  {/* Element Content */}
+                  {/* Element Content with Garment Background */}
                   <div 
                     className="w-full h-full flex items-center justify-center border border-gray-200 rounded overflow-hidden" 
                     style={{ 
-                      background: 'transparent', 
-                      backgroundColor: 'transparent'
+                      background: element.garmentColor || 'transparent', 
+                      backgroundColor: element.garmentColor || 'transparent'
                     }}
                   >
                     {/* Logo Elements */}
