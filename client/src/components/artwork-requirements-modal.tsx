@@ -168,7 +168,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
                   />
                   <h3 className="font-semibold mb-2 text-[#961E75]">Colours</h3>
                   <p className="text-sm text-muted-foreground mb-2">
-                    All files should be <strong>CMYK</strong> colour mode. RGB colours or RGB files will be 
+                    All files should be <strong className="text-[#961e75]">CMYK</strong> colour mode. RGB colours or RGB files will be 
                     automatically converted to CMYK which may lead to a colour shift in your artwork.
                   </p>
                   <p className="text-sm text-muted-foreground mb-2">
@@ -176,7 +176,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
                     this can be set using European Prepress colour settings in your graphics package.
                   </p>
                   <p className="text-sm text-muted-foreground italic">
-                    <strong>Pantone Shades:</strong> Please assign any Pantone shades you require to your artwork. 
+                    <strong className="text-[#b806ad]">Pantone Shades:</strong> Please assign any Pantone shades you require to your artwork. 
                     Not all Pantone shades can be reproduced exactly by the CMYK process, we cannot guarantee exact matching.
                   </p>
                 </div>
