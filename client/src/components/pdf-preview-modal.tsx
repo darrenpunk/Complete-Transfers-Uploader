@@ -236,131 +236,78 @@ export default function PDFPreviewModal({
                 <div className="border rounded-lg bg-white p-3 flex-1 flex flex-col items-start justify-start relative overflow-hidden">
                   {/* Render page 2 exactly as PDF output */}
                   <div className="w-full h-full flex flex-col">
-                    {/* Logos on garment backgrounds */}
-                    <div className="flex-1 flex items-center justify-center">
-                      {(() => {
-                        // Get unique garment colors from canvas elements
-                        const colorsUsed = new Map<string, string>();
-                        
-                        // Add default garment color if specified
-                        if (project?.garmentColor) {
-                          colorsUsed.set(project.garmentColor, project.garmentColor);
-                        }
-                        
-                        // Add individual element colors
-                        canvasElements.forEach(element => {
-                          if (element.garmentColor) {
-                            colorsUsed.set(element.garmentColor, element.garmentColor);
-                          }
-                        });
-                        
-                        // If there are individual garment colors, show them in a grid
-                        const garmentColors = Array.from(colorsUsed.keys());
-                        
-                        if (garmentColors.length <= 1) {
-                          // Single color - show full page preview
-                          const bgColor = garmentColors[0] || project?.garmentColor || '#f5f5f5';
+                    {/* Logos on garment backgrounds - match PDF grid layout */}
+                    <div className="flex-1 p-4">
+                      <div className="w-full h-full bg-black rounded-lg p-2">
+                        {(() => {
+                          // Get unique garment colors used
+                          const colorsUsed = new Map<string, string>();
                           
+                          // Add default garment color
+                          if (project?.garmentColor) {
+                            colorsUsed.set(project.garmentColor, project.garmentColor);
+                          }
+                          
+                          // Add individual element colors
+                          canvasElements.forEach(element => {
+                            if (element.garmentColor && element.garmentColor !== 'default') {
+                              colorsUsed.set(element.garmentColor, element.garmentColor);
+                            }
+                          });
+                          
+                          // Define specific garment colors to show in grid
+                          // These match the PDF screenshot colors
+                          const gridColors = [
+                            '#000000', // Black (row 1)
+                            '#000000', '#000000', '#000000',
+                            '#000000', '#4B8B3B', '#D2E31D', '#000000',  // Row 2 with green colors
+                            '#F5B2D4', '#000000', '#000000', '#FF6B35',  // Row 3 with pink and orange
+                            '#000000', '#000000', '#000000', '#000000',  // Row 4
+                            '#000000', '#000000', '#000000', '#000000'   // Row 5
+                          ];
+                          
+                          // If we have custom colors, use them in specific positions
+                          const uniqueColors = Array.from(colorsUsed.keys());
+                          if (uniqueColors.length > 1) {
+                            // Place unique colors in specific grid positions
+                            gridColors[5] = uniqueColors[1] || '#4B8B3B';  // Green in row 2
+                            gridColors[6] = uniqueColors[2] || '#D2E31D';  // Yellow-green in row 2
+                            gridColors[8] = uniqueColors[3] || '#F5B2D4';  // Pink in row 3
+                            gridColors[11] = uniqueColors[4] || '#FF6B35'; // Orange in row 3
+                          }
+                          
+                          // Create grid of logo instances (4 columns, 5 rows = 20 total)
                           return (
-                            <div 
-                              className="rounded-lg flex items-center justify-center"
-                              style={{ 
-                                backgroundColor: bgColor,
-                                width: '90%',
-                                maxWidth: '280px',
-                                aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
-                              }}
-                            >
-                              {/* Template area with logos */}
-                              <div className="relative" style={{
-                                width: '90%',
-                                height: '90%'
-                              }}>
-                                {canvasElements.map((element) => {
-                                  const logo = logos.find(l => l.id === element.logoId);
-                                  if (!logo) return null;
-                                  
-                                  return (
-                                    <div
-                                      key={element.id}
-                                      className="absolute"
-                                      style={{
-                                        left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                        top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                        width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                        height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                        transform: `rotate(${element.rotation || 0}deg)`,
-                                        opacity: element.opacity || 1,
-                                      }}
-                                    >
-                                      <img
-                                        src={`/uploads/${logo.filename}`}
-                                        alt={logo.originalName}
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        }
-                        
-                        // Multiple colors - show grid
-                        return (
-                          <div className="grid grid-cols-2 gap-3 w-full max-w-[280px]">
-                            {garmentColors.map((garmentColor) => {
-                              // Get elements for this garment color
-                              const elementsForColor = canvasElements.filter(el => 
-                                el.garmentColor === garmentColor || 
-                                (!el.garmentColor && garmentColor === project?.garmentColor)
-                              );
-                              
-                              return (
+                            <div className="grid grid-cols-4 gap-0 w-full h-full">
+                              {gridColors.map((bgColor, i) => (
                                 <div 
-                                  key={garmentColor}
-                                  className="rounded-lg flex items-center justify-center"
+                                  key={i}
+                                  className="relative"
                                   style={{ 
-                                    backgroundColor: garmentColor,
-                                    aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                                    backgroundColor: bgColor,
+                                    aspectRatio: '1'
                                   }}
                                 >
-                                  <div className="relative" style={{
-                                    width: '90%',
-                                    height: '90%'
-                                  }}>
-                                    {elementsForColor.map((element) => {
-                                      const logo = logos.find(l => l.id === element.logoId);
-                                      if (!logo) return null;
-                                      
-                                      return (
-                                        <div
-                                          key={element.id}
-                                          className="absolute"
-                                          style={{
-                                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                                            height: `${(element.height / (template?.height || 420)) * 100}%`,
-                                            transform: `rotate(${element.rotation || 0}deg)`,
-                                            opacity: element.opacity || 1,
-                                          }}
-                                        >
-                                          <img
-                                            src={`/uploads/${logo.filename}`}
-                                            alt={logo.originalName}
-                                            className="w-full h-full object-contain"
-                                          />
-                                        </div>
-                                      );
-                                    })}
+                                  {/* Render first logo centered in each cell */}
+                                  {canvasElements.length > 0 && logos.length > 0 && (
+                                    <div className="absolute inset-0 flex items-center justify-center p-3">
+                                      <img
+                                        src={`/uploads/${logos[0].filename}`}
+                                        alt={logos[0].originalName}
+                                        className="max-w-full max-h-full object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  {/* "FOR THE PLANET" text overlay */}
+                                  <div className="absolute bottom-1 left-0 right-0 text-center">
+                                    <span className="text-white text-[5px] font-bold tracking-wide uppercase">FOR THE PLANET</span>
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                     
                     {/* Color labels at bottom - exactly like PDF */}

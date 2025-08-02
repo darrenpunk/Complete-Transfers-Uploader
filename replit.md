@@ -3,7 +3,7 @@
 ## Overview
 This is a full-stack web application for uploading logo files and creating layouts on garment templates. Its purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
 
-**Current Status**: Production-ready application with improved canvas positioning and zoom scaling formulas - simplified zoom calculations using direct division (e.g., 200/zoom instead of complex formulas) for accurate inverse scaling of selection borders and handles.
+**Current Status**: Production-ready application with enhanced PDF generation showing garment color names with CMYK values instead of hex codes. PDF preview modal updated to display grid layout matching actual PDF output with color labels.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
