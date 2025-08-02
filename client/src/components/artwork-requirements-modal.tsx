@@ -81,18 +81,7 @@ export function ArtworkRequirementsModal({ open, onOpenChange }: ArtworkRequirem
               </div>
             </section>
 
-            {/* Vectorising Service */}
-            <section className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-3 text-[#961E75]">Our Vectorising & Background Removal Service</h3>
-              <p className="text-muted-foreground mb-4">
-                We can vector your artwork from any file format, giving you a high-quality vector that you can save on file 
-                and use again in the future. We can also remove backgrounds in Photographs for you cleanly and precisely.
-              </p>
-              <Button className="bg-[#961E75] hover:bg-[#7a1860]">
-                <Download className="w-4 h-4 mr-2" />
-                GET A VECTORISING QUOTE
-              </Button>
-            </section>
+
 
             {/* Main Requirements Grid */}
             <section>
