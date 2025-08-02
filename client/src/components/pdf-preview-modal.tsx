@@ -382,17 +382,19 @@ export default function PDFPreviewModal({
                           
                           // Helper function to get color info
                           const getColorInfo = (hexColor: string): { name: string; cmyk: string } => {
+                            console.log('Preview - Looking for color info for hex:', hexColor);
+                            
                             // First try exact match
-                            const manufacturers = ['gildan', 'fruitOfTheLoom'];
-                            for (const manufacturer of manufacturers) {
-                              const colorGroups = manufacturer === 'gildan' ? gildanColors : fruitOfTheLoomColors;
-                              for (const group of colorGroups) {
-                                for (const color of group.colors) {
-                                  if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
-                                    const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
-                                    return { name: color.name, cmyk };
-                                  }
-                                }
+                            const allColors = [
+                              ...gildanColors.flatMap(group => group.colors),
+                              ...fruitOfTheLoomColors.flatMap(group => group.colors)
+                            ];
+                            
+                            for (const color of allColors) {
+                              if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+                                const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
+                                console.log('Preview - Found exact match:', color.name, cmyk);
+                                return { name: color.name, cmyk };
                               }
                             }
                             
@@ -401,46 +403,48 @@ export default function PDFPreviewModal({
                             let closestDistance = Infinity;
                             
                             const targetRgb = hexToRgb(hexColor);
-                            if (!targetRgb) return { name: hexColor.toUpperCase(), cmyk: '' };
+                            if (!targetRgb) {
+                              console.log('Preview - Invalid hex color:', hexColor);
+                              return { name: hexColor.toUpperCase(), cmyk: '' };
+                            }
                             
-                            for (const manufacturer of manufacturers) {
-                              const colorGroups = manufacturer === 'gildan' ? gildanColors : fruitOfTheLoomColors;
-                              for (const group of colorGroups) {
-                                for (const color of group.colors) {
-                                  const colorRgb = hexToRgb(color.hex);
-                                  if (!colorRgb) continue;
-                                  
-                                  // Calculate color distance
-                                  const distance = Math.sqrt(
-                                    Math.pow(targetRgb.r - colorRgb.r, 2) +
-                                    Math.pow(targetRgb.g - colorRgb.g, 2) +
-                                    Math.pow(targetRgb.b - colorRgb.b, 2)
-                                  );
-                                  
-                                  if (distance < closestDistance) {
-                                    closestDistance = distance;
-                                    closestColor = color;
-                                  }
-                                }
+                            for (const color of allColors) {
+                              const colorRgb = hexToRgb(color.hex);
+                              if (!colorRgb) continue;
+                              
+                              // Calculate color distance
+                              const distance = Math.sqrt(
+                                Math.pow(targetRgb.r - colorRgb.r, 2) +
+                                Math.pow(targetRgb.g - colorRgb.g, 2) +
+                                Math.pow(targetRgb.b - colorRgb.b, 2)
+                              );
+                              
+                              if (distance < closestDistance) {
+                                closestDistance = distance;
+                                closestColor = color;
                               }
                             }
                             
                             if (closestColor && closestDistance < 100) {
                               const cmyk = `(${closestColor.cmyk.c}, ${closestColor.cmyk.m}, ${closestColor.cmyk.y}, ${closestColor.cmyk.k})`;
+                              console.log('Preview - Found closest color:', closestColor.name, 'distance:', closestDistance.toFixed(2), cmyk);
                               return { name: closestColor.name, cmyk };
                             }
                             
+                            console.log('Preview - No close match found, using hex');
                             return { name: hexColor.toUpperCase(), cmyk: '' };
                           };
                           
                           if (project?.garmentColor) {
                             const info = getColorInfo(project.garmentColor);
+                            console.log('Preview - Default garment color:', project.garmentColor, 'Info:', info);
                             colorsToShow.set(project.garmentColor, info);
                           }
                           
                           canvasElements.forEach(element => {
                             if (element.garmentColor) {
                               const info = getColorInfo(element.garmentColor);
+                              console.log('Preview - Element garment color:', element.garmentColor, 'Info:', info);
                               colorsToShow.set(element.garmentColor, info);
                             }
                           });
