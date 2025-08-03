@@ -138,11 +138,16 @@ export default function ToolsSidebar({
 
   // Handle raster file uploads
   const handleFilesSelected = (files: File[]) => {
+    console.log('handleFilesSelected called with files:', files);
     const rasterFiles = files.filter(isRasterFile);
     const vectorFiles = files.filter(file => !isRasterFile(file));
     
+    console.log('Raster files:', rasterFiles.length, rasterFiles);
+    console.log('Vector files:', vectorFiles.length, vectorFiles);
+    
     // Process vector files immediately
     if (vectorFiles.length > 0) {
+      console.log('Calling uploadLogosMutation.mutate with vector files');
       uploadLogosMutation.mutate(vectorFiles);
     }
     
