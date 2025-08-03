@@ -570,8 +570,17 @@ export default function UploadTool() {
         const blob = await response.blob();
         console.log('Received blob:', blob.size, blob.type);
         
-        const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: 'image/png' });
-        console.log('Created file object:', file.name, file.size, file.type);
+        // Validate blob
+        if (blob.size === 0) {
+          throw new Error('Extracted image is empty');
+        }
+        
+        const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: blob.type || 'image/png' });
+        console.log('Created file object:', {
+          name: file.name,
+          size: file.size,
+          type: file.type
+        });
         
         // Update the pending file with the actual image
         setPendingRasterFile(prev => ({ ...prev!, file }));
@@ -667,10 +676,23 @@ export default function UploadTool() {
             (async () => {
               try {
                 const response = await fetch(`/api/logos/${pdfWithRasterOnly.id}/raster-image`);
+                console.log('Raster extraction response:', response.status, response.statusText);
+                
                 if (response.ok) {
                   const blob = await response.blob();
-                  const file = new File([blob], pdfWithRasterOnly.originalName.replace('.pdf', '.png'), { type: 'image/png' });
-                  console.log('Extracted PNG from PDF:', file.name, file.size);
+                  console.log('Received blob:', blob.size, blob.type);
+                  
+                  // Validate blob
+                  if (blob.size === 0) {
+                    throw new Error('Extracted image is empty');
+                  }
+                  
+                  const file = new File([blob], pdfWithRasterOnly.originalName.replace('.pdf', '.png'), { type: blob.type || 'image/png' });
+                  console.log('Created File object:', {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                  });
                   
                   // Show raster warning with the extracted PNG
                   setPendingRasterFile({ 
@@ -681,18 +703,17 @@ export default function UploadTool() {
                   });
                   setShowRasterWarning(true);
                 } else {
-                  throw new Error('Failed to extract raster image');
+                  const errorText = await response.text();
+                  console.error('Server error:', errorText);
+                  throw new Error(`Failed to extract raster image: ${response.status} ${errorText}`);
                 }
               } catch (error) {
                 console.error('Failed to extract PNG from PDF:', error);
-                // Fallback to placeholder if extraction fails
-                setPendingRasterFile({ 
-                  file: new File([], pdfWithRasterOnly.originalName),
-                  fileName: pdfWithRasterOnly.originalName,
-                  logoId: pdfWithRasterOnly.id,
-                  url: pdfWithRasterOnly.url
+                toast({
+                  title: "Error",
+                  description: "Failed to extract image from PDF. Please try uploading a different file.",
+                  variant: "destructive",
                 });
-                setShowRasterWarning(true);
               }
             })();
           } else if (regularRasterFile) {

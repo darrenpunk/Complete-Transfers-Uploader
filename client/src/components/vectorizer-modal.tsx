@@ -186,6 +186,19 @@ export function VectorizerModal({
         type: imageFile.type,
         size: imageFile.size
       });
+      
+      // Validate that imageFile is a valid File/Blob
+      if (!imageFile || !(imageFile instanceof File || imageFile instanceof Blob)) {
+        console.error('Invalid image file:', imageFile);
+        throw new Error('Invalid image file provided');
+      }
+      
+      // Check if file has content
+      if (imageFile.size === 0) {
+        console.error('Image file is empty');
+        throw new Error('Image file is empty');
+      }
+      
       const imageUrl = URL.createObjectURL(imageFile);
       console.log('Created preview URL:', imageUrl);
       setPreviewUrl(imageUrl);
