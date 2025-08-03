@@ -123,6 +123,26 @@ img[alt*="vectorized"] {
 
 /* Note: Removed aggressive white element hiding to preserve white content in logos */
 
+/* Canvas element SVG rendering - ensure zero padding */
+.canvas-element svg {
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Ensure SVG container has zero padding */
+.canvas-element > div > div {
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  display: block !important;
+}
+
 /* Ensure canvas workspace has proper dark mode styling */
 .canvas-workspace {
   background: hsl(240, 5%, 12%) !important;

@@ -1227,7 +1227,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
-                  className={`absolute cursor-move`}
+                  className={`canvas-element absolute cursor-move`}
                   style={{
                     left: elementX,
                     top: elementY,
@@ -1247,11 +1247,14 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="absolute inset-0 flex items-center justify-center overflow-hidden" 
+                    className="absolute inset-0 overflow-hidden" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent',
                       padding: 0,
-                      margin: 0
+                      margin: 0,
+                      display: 'block',
+                      lineHeight: 0,
+                      fontSize: 0
                     }}
                   >
                     {/* Logo Elements */}

@@ -49,11 +49,7 @@ export default function SvgInlineRenderer({
         if (viewBoxMatch) {
           // Add width="100%" height="100%" for full container fit
           if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%">');
-          }
-          // Ensure preserveAspectRatio is set to maintain aspect ratio
-          if (!cleanedSvg.includes('preserveAspectRatio')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 preserveAspectRatio="xMidYMid meet">');
+            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" style="display:block">');
           }
         }
         
@@ -99,11 +95,11 @@ export default function SvgInlineRenderer({
     <div 
       className="w-full h-full"
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'block',
         padding: 0,
-        margin: 0
+        margin: 0,
+        lineHeight: 0,
+        fontSize: 0
       }}
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
