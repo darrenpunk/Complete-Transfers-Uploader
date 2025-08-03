@@ -372,6 +372,7 @@ export default function ToolsSidebar({
 
   const uploadLogosMutation = useMutation({
     mutationFn: async (files: File[]) => {
+      console.log('Starting upload mutation...');
       const formData = new FormData();
       files.forEach(file => formData.append('files', file));
       
@@ -380,11 +381,15 @@ export default function ToolsSidebar({
         body: formData,
       });
       
+      console.log('Upload response status:', response.status);
+      
       if (!response.ok) {
         throw new Error('Upload failed');
       }
       
-      return response.json();
+      const data = await response.json();
+      console.log('Upload response data:', data);
+      return data;
     },
     onSuccess: (newLogos) => {
       console.log('=== UPLOAD SUCCESS CALLBACK ===');
@@ -442,7 +447,8 @@ export default function ToolsSidebar({
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to upload logos. Please try again.",
