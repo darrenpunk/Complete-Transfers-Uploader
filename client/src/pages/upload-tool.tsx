@@ -21,6 +21,7 @@ import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
+import { RasterWarningModal } from "@/components/raster-warning-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -45,6 +46,10 @@ export default function UploadTool() {
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
+  const [showRasterWarning, setShowRasterWarning] = useState(false);
+  const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -519,11 +524,62 @@ export default function UploadTool() {
     });
   };
 
+  // Raster warning modal handlers
+  const handlePhotographicApprove = async () => {
+    if (pendingRasterFile && pendingRasterFile.logoId) {
+      // Mark the uploaded PDF as photographic
+      try {
+        await fetch(`/api/logos/${pendingRasterFile.logoId}/photographic`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isPhotographic: true })
+        });
+        
+        // Refresh logos to get updated data
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "logos"] });
+        
+        toast({
+          title: "Success",
+          description: "PDF marked as photographic content",
+        });
+      } catch (error) {
+        console.error('Failed to mark logo as photographic:', error);
+      }
+    }
+    setPendingRasterFile(null);
+    setShowRasterWarning(false);
+  };
+
+  const handleVectorizeWithAI = async () => {
+    if (pendingRasterFile) {
+      // For PDFs with raster only, we need to extract the actual image
+      // This would open the vectorizer modal
+      toast({
+        title: "Vectorization",
+        description: "AI vectorization feature coming soon",
+      });
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleVectorizeWithService = () => {
+    if (pendingRasterFile) {
+      // Open vectorization form for the PDF
+      setShowVectorizationForm(true);
+      setPendingRasterFile(null);
+      setShowRasterWarning(false);
+    }
+  };
+
+  const handleCloseRasterWarning = () => {
+    setPendingRasterFile(null);
+    setShowRasterWarning(false);
+  };
 
 
-  // Upload state
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+
+
 
   // Upload logos handler for canvas toolbar with progress tracking
   const handleFilesUpload = (files: File[]) => {
@@ -553,6 +609,7 @@ export default function UploadTool() {
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           const newLogos = JSON.parse(xhr.responseText);
+          console.log('Upload completed, checking for PDFs with raster content:', newLogos);
           
           // Update logos cache directly
           queryClient.setQueryData(
@@ -563,10 +620,25 @@ export default function UploadTool() {
           // Invalidate canvas elements to fetch new ones
           queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
           
-          toast({
-            title: "Success",
-            description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
-          });
+          // Check if any uploaded logo is a PDF with raster only content
+          const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
+          
+          if (pdfWithRasterOnly) {
+            console.log('PDF with raster content detected, showing vectorization options');
+            // Show raster warning for PDFs with embedded images
+            setPendingRasterFile({ 
+              file: new File([], pdfWithRasterOnly.originalName), // Placeholder file
+              fileName: pdfWithRasterOnly.originalName,
+              logoId: pdfWithRasterOnly.id, // Store logo ID for later use
+              url: pdfWithRasterOnly.url // Store URL for fetching
+            });
+            setShowRasterWarning(true);
+          } else {
+            toast({
+              title: "Success",
+              description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
+            });
+          }
         } catch (error) {
           console.error('Upload response parsing error:', error);
           console.log('Response text:', xhr.responseText);
@@ -874,6 +946,18 @@ export default function UploadTool() {
         open={showOnboardingTutorial}
         onOpenChange={setShowOnboardingTutorial}
       />
+
+      {/* Raster Warning Modal */}
+      {pendingRasterFile && (
+        <RasterWarningModal
+          open={showRasterWarning}
+          onClose={handleCloseRasterWarning}
+          fileName={pendingRasterFile.fileName}
+          onPhotographicApprove={handlePhotographicApprove}
+          onVectorizeWithAI={handleVectorizeWithAI}
+          onVectorizeWithService={handleVectorizeWithService}
+        />
+      )}
 
     </div>
   );
