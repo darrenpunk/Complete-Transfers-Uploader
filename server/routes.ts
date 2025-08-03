@@ -396,10 +396,32 @@ export async function registerRoutes(app: express.Application) {
         const { MixedContentDetector } = await import('./mixed-content-detector');
         
         // Analyze file content for mixed raster/vector content
-        let fileType = ColorWorkflowManager.getFileType(finalMimeType, finalFilename);
+        let fileType = ColorWorkflowManager.getFileType(file.mimetype, file.filename);
         
-        // For PDFs and SVGs, check if they contain mixed content
-        if (fileType === FileType.VECTOR_PDF || fileType === FileType.VECTOR_SVG) {
+        // For PDFs, analyze the original PDF file before conversion
+        if (file.mimetype === 'application/pdf') {
+          const originalPdfPath = path.join(uploadDir, file.filename);
+          const contentAnalysis = await MixedContentDetector.analyzeFile(originalPdfPath, file.mimetype);
+          
+          console.log(`📊 Content analysis for ${file.filename}:`, {
+            hasRaster: contentAnalysis.hasRasterContent,
+            hasVector: contentAnalysis.hasVectorContent,
+            isMixed: contentAnalysis.isMixedContent,
+            rasterCount: contentAnalysis.rasterImages.count,
+            vectorTypes: contentAnalysis.vectorElements.types,
+            recommendation: contentAnalysis.recommendation
+          });
+          
+          // Override file type based on content analysis
+          if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
+            // PDF contains only raster content, treat as raster
+            fileType = FileType.RASTER_PNG; // Treat as raster workflow
+            console.log(`📷 PDF contains only raster content, switching to raster workflow`);
+          } else if (contentAnalysis.isMixedContent) {
+            fileType = FileType.MIXED_CONTENT;
+          }
+        } else if (fileType === FileType.VECTOR_SVG) {
+          // For SVGs, check the converted file for mixed content
           const filePath = path.join(uploadDir, finalFilename);
           const contentAnalysis = await MixedContentDetector.analyzeFile(filePath, finalMimeType);
           
