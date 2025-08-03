@@ -1202,10 +1202,10 @@ export default function CanvasWorkspace({
               const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
               
               // Always use the database dimensions directly - they're already swapped by the backend
-              const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
-              const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
-              const elementX = element.x * mmToPixelRatio * (zoom / 100);
-              const elementY = element.y * mmToPixelRatio * (zoom / 100);
+              const elementWidth = element.width * mmToPixelRatio;
+              const elementHeight = element.height * mmToPixelRatio;
+              const elementX = element.x * mmToPixelRatio;
+              const elementY = element.y * mmToPixelRatio;
               
               // Debug: Log element dimensions when selected
               if (isSelected) {
