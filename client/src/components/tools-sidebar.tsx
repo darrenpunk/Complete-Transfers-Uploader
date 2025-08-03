@@ -213,18 +213,31 @@ export default function ToolsSidebar({
   };
 
   const handleVectorizeWithAI = async () => {
+    console.log('handleVectorizeWithAI called with pendingRasterFile:', pendingRasterFile);
+    
     if (pendingRasterFile) {
       // Check if this is a PDF with raster only (needs to fetch actual file)
       if (pendingRasterFile.logoId) {
+        console.log('Fetching raster image from PDF, logoId:', pendingRasterFile.logoId);
         // For PDFs with raster only, extract the actual raster image
         try {
           const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image`);
+          console.log('Raster image fetch response:', response.status, response.ok);
+          
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to extract raster image:', errorText);
             throw new Error('Failed to extract raster image');
           }
           const blob = await response.blob();
+          console.log('Received blob:', blob.size, blob.type);
+          
           const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: 'image/png' });
+          console.log('Created file object:', file.name, file.size, file.type);
+          
           setPendingRasterFile({ ...pendingRasterFile, file });
+          // Small delay to ensure state update
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error('Failed to fetch PDF for vectorization:', error);
           toast({
@@ -236,6 +249,7 @@ export default function ToolsSidebar({
         }
       }
       
+      console.log('Opening vectorizer modal with pendingRasterFile:', pendingRasterFile);
       setShowRasterWarning(false);
       setShowVectorizer(true);
     }

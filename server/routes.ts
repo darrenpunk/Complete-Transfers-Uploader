@@ -1431,36 +1431,61 @@ export async function registerRoutes(app: express.Application) {
 
   // Get raster image from PDF with raster only
   app.get('/api/logos/:id/raster-image', async (req, res) => {
+    console.log('🖼️ Raster image extraction requested for logo:', req.params.id);
+    
     try {
       const logo = await storage.getLogo(req.params.id);
       if (!logo) {
+        console.error('Logo not found:', req.params.id);
         return res.status(404).json({ error: 'Logo not found' });
       }
 
+      console.log('📄 Logo details:', {
+        id: logo.id,
+        filename: logo.filename,
+        originalFilename: logo.originalFilename,
+        isPdfWithRasterOnly: logo.isPdfWithRasterOnly
+      });
+
       // Check if this is a PDF with raster only
       if (!logo.isPdfWithRasterOnly) {
+        console.error('Logo is not a PDF with raster only');
         return res.status(400).json({ error: 'Not a PDF with raster only' });
       }
 
       // Extract the first image from the PDF
       const pdfPath = path.join(uploadDir, logo.originalFilename || logo.filename);
-      const outputPath = path.join(uploadDir, `${logo.filename}_extracted.png`);
+      console.log('📂 PDF path:', pdfPath);
+      
+      if (!fs.existsSync(pdfPath)) {
+        console.error('PDF file not found at path:', pdfPath);
+        return res.status(404).json({ error: 'PDF file not found' });
+      }
       
       try {
         // Use pdfimages to extract the first image
-        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${path.join(uploadDir, logo.filename)}_extracted"`;
-        await execAsync(extractCommand);
+        const outputPrefix = path.join(uploadDir, `${logo.filename}_extracted`);
+        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefix}"`;
+        console.log('🏃 Running extraction command:', extractCommand);
+        
+        const { stdout, stderr } = await execAsync(extractCommand);
+        console.log('📤 Extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ Extraction stderr:', stderr);
         
         // Find the extracted image (it will have a number suffix)
         const possibleFiles = [
           `${logo.filename}_extracted-000.png`,
           `${logo.filename}_extracted-001.png`,
-          outputPath
+          `${logo.filename}_extracted-0.png`,
+          `${logo.filename}_extracted-1.png`
         ];
+        
+        console.log('🔍 Looking for extracted files:', possibleFiles);
         
         let extractedFile = null;
         for (const file of possibleFiles) {
           const filePath = path.join(uploadDir, file);
+          console.log('Checking:', filePath, fs.existsSync(filePath));
           if (fs.existsSync(filePath)) {
             extractedFile = filePath;
             break;
@@ -1468,24 +1493,31 @@ export async function registerRoutes(app: express.Application) {
         }
         
         if (!extractedFile) {
+          console.error('❌ No extracted files found');
           throw new Error('No image extracted from PDF');
         }
         
+        console.log('✅ Found extracted file:', extractedFile);
+        
         // Send the extracted image
         res.sendFile(extractedFile, (err) => {
+          if (err) {
+            console.error('Error sending file:', err);
+          }
           // Clean up extracted file after sending
           if (extractedFile && fs.existsSync(extractedFile)) {
             fs.unlinkSync(extractedFile);
+            console.log('🗑️ Cleaned up extracted file');
           }
         });
         
       } catch (error) {
-        console.error('Error extracting image from PDF:', error);
+        console.error('❌ Error extracting image from PDF:', error);
         res.status(500).json({ error: 'Failed to extract image from PDF' });
       }
       
     } catch (error) {
-      console.error('Error processing raster image request:', error);
+      console.error('❌ Error processing raster image request:', error);
       res.status(500).json({ error: 'Failed to process request' });
     }
   });
