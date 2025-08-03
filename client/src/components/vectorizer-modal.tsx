@@ -98,9 +98,11 @@ export function VectorizerModal({
             console.log('SVG element found:', !!svgElement);
             
             if (svgElement) {
-              // Style the SVG for proper display
-              svgElement.style.width = '100%';
-              svgElement.style.height = '100%';
+              // Style the SVG for proper display - let it use its natural dimensions
+              svgElement.style.width = 'auto';
+              svgElement.style.height = 'auto';
+              svgElement.style.maxWidth = '100%';
+              svgElement.style.maxHeight = '100%';
               svgElement.style.cursor = 'crosshair';
               svgElement.style.display = 'block';
               
@@ -1201,21 +1203,16 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper"
                           style={{ 
-                            width: '100%',
-                            height: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: 'transparent',
-                            overflow: 'hidden',
                             position: 'relative'
                           }}
                         >
                           <div 
                             ref={svgContainerRef}
                             style={{
-                              width: '100%',
-                              height: '100%',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
