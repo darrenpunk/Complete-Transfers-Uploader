@@ -574,11 +574,13 @@ export default function UploadTool() {
         console.log('Created file object:', file.name, file.size, file.type);
         
         // Update the pending file with the actual image
-        setPendingRasterFile({ ...pendingRasterFile, file });
+        setPendingRasterFile(prev => ({ ...prev!, file }));
         
-        // Close raster warning and open vectorizer
-        setShowRasterWarning(false);
-        setShowVectorizer(true);
+        // Use setTimeout to ensure state update completes before changing modals
+        setTimeout(() => {
+          setShowRasterWarning(false);
+          setShowVectorizer(true);
+        }, 100);
       } catch (error) {
         console.error('Failed to fetch PDF for vectorization:', error);
         toast({

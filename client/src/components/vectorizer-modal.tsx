@@ -1188,7 +1188,7 @@ export function VectorizerModal({
                   </div>
                   <div 
                     className={`flex-1 border rounded-lg overflow-auto ${
-                      showGrid ? 'transparency-grid' : 'bg-white'
+                      showGrid ? 'transparency-grid' : 'bg-gray-100'
                     }`}
                   >
                     {(highlightedSvg || coloredSvg || vectorSvg) ? (
@@ -1209,15 +1209,17 @@ export function VectorizerModal({
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: 'transparent',
-                            position: 'relative'
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%'
                           }}
                         >
                           <div 
                             ref={svgContainerRef}
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
+                              display: 'block',
+                              width: '100%',
+                              height: '100%',
                               backgroundColor: 'transparent'
                             }}
                           />
