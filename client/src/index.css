@@ -20,6 +20,15 @@
   max-height: 100%;
 }
 
+/* Ensure images in vectorizer modal maintain aspect ratio */
+.vectorizer-modal img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
+}
+
 /* Ensure proper SVG display in vectorizer */
 .vector-preview-wrapper {
   display: flex;

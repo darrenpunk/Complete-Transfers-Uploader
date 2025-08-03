@@ -971,7 +971,7 @@ export function VectorizerModal({
   return (
     <TooltipProvider>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
+        <DialogContent className="vectorizer-modal w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
           <DialogHeader className="flex-shrink-0">
             <CompleteTransferLogo size="md" className="mb-4" />
             <div className="flex items-center justify-between">
@@ -1150,8 +1150,9 @@ export function VectorizerModal({
                       }`}
                     >
                       <div 
-                        className="p-8 flex items-center justify-center min-h-full"
+                        className="flex items-center justify-center min-h-full"
                         style={{ 
+                          padding: '2rem',
                           transform: `scale(${zoom / 100})`,
                           transformOrigin: 'center',
                           transition: 'transform 0.2s ease'
@@ -1160,13 +1161,13 @@ export function VectorizerModal({
                         <img 
                           src={previewUrl} 
                           alt="Original" 
-                          className="max-w-none"
                           style={{ 
                             imageRendering: zoom > 200 ? 'pixelated' : 'auto',
+                            width: 'auto',
+                            height: 'auto',
                             maxWidth: '100%',
                             maxHeight: '100%',
-                            objectFit: 'contain',
-                            backgroundColor: showGrid ? 'transparent' : '#f0f0f0'
+                            display: 'block'
                           }}
                         />
                       </div>
@@ -1193,8 +1194,9 @@ export function VectorizerModal({
                     {(highlightedSvg || coloredSvg || vectorSvg) ? (
                       <div 
                         key={`preview-wrapper-${(highlightedSvg || coloredSvg || vectorSvg || '').length}-${svgRevision}`}
-                        className="p-8 flex items-center justify-center min-h-full"
+                        className="flex items-center justify-center min-h-full"
                         style={{ 
+                          padding: '2rem',
                           transform: `scale(${zoom / 100})`,
                           transformOrigin: 'center',
                           transition: 'transform 0.2s ease'
