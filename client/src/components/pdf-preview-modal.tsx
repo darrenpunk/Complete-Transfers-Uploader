@@ -276,31 +276,47 @@ export default function PDFPreviewModal({
                             }
                           }
                           
-                          // Create grid of logo instances (4 columns, 5 rows = 20 total)
+                          // Show actual canvas layout with garment background, not a grid
                           return (
-                            <div className="grid grid-cols-4 gap-0 w-full h-full">
-                              {gridColors.map((bgColor, i) => (
-                                <div 
-                                  key={i}
-                                  className="relative"
-                                  style={{ 
-                                    backgroundColor: bgColor,
-                                    aspectRatio: '1'
-                                  }}
-                                >
-                                  {/* Render first logo centered in each cell */}
-                                  {canvasElements.length > 0 && logos.length > 0 && (
-                                    <div className="absolute inset-0 flex items-center justify-center p-3">
-                                      <img
-                                        key={`${project?.id}-${logos[0].id}-${i}`}
-                                        src={`/uploads/${logos[0].filename}?t=${Date.now()}`}
-                                        alt={logos[0].originalName}
-                                        className="max-w-full max-h-full object-contain"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                            <div 
+                              className="w-full h-full relative"
+                              style={{ 
+                                backgroundColor: project?.garmentColor || '#000000',
+                                aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                              }}
+                            >
+                              {/* Render positioned logos on garment background */}
+                              {canvasElements.map((element) => {
+                                const logo = logos.find(l => l.id === element.logoId);
+                                if (!logo) return null;
+                                
+                                // Use element-specific color if set, otherwise use default
+                                const elementBgColor = element.garmentColor && element.garmentColor !== 'default' 
+                                  ? element.garmentColor 
+                                  : project?.garmentColor || '#000000';
+                                
+                                return (
+                                  <div
+                                    key={element.id}
+                                    className="absolute"
+                                    style={{
+                                      left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                      top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                      width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                      height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                      transform: `rotate(${element.rotation || 0}deg)`,
+                                      backgroundColor: elementBgColor
+                                    }}
+                                  >
+                                    <img
+                                      src={`/uploads/${logo.filename}?t=${Date.now()}`}
+                                      alt={logo.originalName}
+                                      className="w-full h-full object-contain"
+                                      style={{ opacity: element.opacity || 1 }}
+                                    />
+                                  </div>
+                                );
+                              })}
                             </div>
                           );
                         })()}
