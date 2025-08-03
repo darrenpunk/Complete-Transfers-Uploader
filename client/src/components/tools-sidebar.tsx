@@ -398,7 +398,14 @@ export default function ToolsSidebar({
       
       // Check if any uploaded logo is a PDF with raster only content
       const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly);
+      console.log('Upload success - PDF with raster only check:', {
+        newLogos,
+        pdfWithRasterOnly,
+        isPdfWithRasterOnly: pdfWithRasterOnly?.isPdfWithRasterOnly
+      });
+      
       if (pdfWithRasterOnly) {
+        console.log('Showing raster warning for PDF with embedded images');
         // Show raster warning for PDFs with embedded images
         // For PDFs with raster only, we'll fetch the file when needed for AI vectorization
         setPendingRasterFile({ 
@@ -408,6 +415,7 @@ export default function ToolsSidebar({
           url: pdfWithRasterOnly.url // Store URL for fetching
         });
         setShowRasterWarning(true);
+        console.log('Raster warning state set to true');
       } else {
         toast({
           title: "Success",
@@ -1136,6 +1144,7 @@ export default function ToolsSidebar({
       />
 
       {/* Raster Warning Modal */}
+      {console.log('RasterWarningModal render check:', { pendingRasterFile, showRasterWarning })}
       {pendingRasterFile && (
         <RasterWarningModal
           open={showRasterWarning}
