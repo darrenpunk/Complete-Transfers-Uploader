@@ -13,6 +13,8 @@ This is a full-stack web application for uploading logo files and creating layou
 
 **Bounding Box Fix (2025-08-03)**: Fixed bounding box padding issue that increased with zoom levels. Problem was caused by SVG viewBox containing extra space around content that became more visible at higher zoom. Solution: Modified SVG rendering to use block display with zero padding/margin, removed flexbox spacing from containers, and added specific CSS rules to ensure tight fit. Server already crops SVGs to exact content bounds during upload.
 
+**Vectorizer Scaling Fix (2025-08-03)**: Fixed issue where AI vectorizer was creating multiple scaled copies in the background. Problem was caused by aggressive viewBox normalization that forced all SVGs to 400x400, causing vectorized content to appear scaled down with duplicate patterns. Solution: Removed viewBox normalization logic and extreme coordinate detection, allowing SVGs to maintain their original dimensions and aspect ratios.
+
 **Deployment Strategy**: User plans to convert this into an Odoo 16 module. Two separate projects will be created:
 1. Odoo Module Project - Port the artwork uploader functionality to Odoo 16 module format with full webcart integration (add to cart, checkout, order tracking)
 2. Odoo Website Redesign Project - Create a modern, SEO-optimized website design that integrates seamlessly with the artwork uploader module

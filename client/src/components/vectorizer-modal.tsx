@@ -104,26 +104,12 @@ export function VectorizerModal({
               svgElement.style.cursor = 'crosshair';
               svgElement.style.display = 'block';
               
-              // Force proper viewBox if it has extreme values
+              // Keep the original viewBox - don't force normalization
               const viewBox = svgElement.getAttribute('viewBox');
               console.log('Current viewBox:', viewBox);
               
-              // If viewBox has extreme values, normalize it
-              if (viewBox) {
-                const values = viewBox.split(' ').map(Number);
-                if (values.length === 4) {
-                  const [x, y, width, height] = values;
-                  // Check if coordinates are way off
-                  if (Math.abs(x) > 1000 || Math.abs(y) > 1000 || width > 2000 || height > 2000) {
-                    console.log('Detected extreme viewBox values, normalizing...');
-                    // Set a reasonable viewBox
-                    svgElement.setAttribute('viewBox', '0 0 400 400');
-                    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-                  }
-                }
-              } else {
-                // No viewBox, set a default
-                svgElement.setAttribute('viewBox', '0 0 400 400');
+              // Only set preserveAspectRatio if not already set
+              if (!svgElement.hasAttribute('preserveAspectRatio')) {
                 svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
               }
               
@@ -216,34 +202,8 @@ export function VectorizerModal({
       console.log('SVG contains svg tag:', result.svg?.includes('<svg'));
       console.log('SVG contains viewBox:', result.svg?.includes('viewBox'));
       
-      // Fix SVG with extreme coordinates
-      let fixedSvg = result.svg;
-      if (fixedSvg) {
-        // Parse the SVG to check for extreme coordinates
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(fixedSvg, 'image/svg+xml');
-        const svgEl = doc.querySelector('svg');
-        
-        if (svgEl) {
-          // Check all path elements for extreme coordinates
-          const paths = doc.querySelectorAll('path');
-          let hasExtremeCoords = false;
-          
-          paths.forEach(path => {
-            const d = path.getAttribute('d') || '';
-            // Check if any coordinate is > 500
-            const coords = d.match(/[-\d.]+/g) || [];
-            if (coords.some(coord => Math.abs(parseFloat(coord)) > 500)) {
-              hasExtremeCoords = true;
-            }
-          });
-          
-          if (hasExtremeCoords) {
-            // Skip the scaling transformation - let the viewBox handle it
-            console.log('Large coordinates detected but skipping transformation to preserve proper rendering');
-          }
-        }
-      }
+      // Use the SVG as-is without modifications
+      const fixedSvg = result.svg;
       
       setVectorSvg(fixedSvg);
       setColoredSvg(null); // Don't initialize colored SVG
