@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Top menu -->
+        <menuitem id="menu_artwork_root"
+                  name="Artwork"
+                  sequence="10"/>
+
+        <!-- Main menu -->
+        <menuitem id="menu_artwork_projects"
+                  name="Projects"
+                  parent="menu_artwork_root"
+                  action="action_artwork_project"
+                  sequence="10"/>
+
+        <!-- Configuration menu -->
+        <menuitem id="menu_artwork_config"
+                  name="Configuration"
+                  parent="menu_artwork_root"
+                  sequence="100"/>
+
+    </data>
+</odoo>

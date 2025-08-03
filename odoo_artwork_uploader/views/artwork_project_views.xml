@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Artwork Project Form View -->
+        <record id="view_artwork_project_form" model="ir.ui.view">
+            <field name="name">artwork.project.form</field>
+            <field name="model">artwork.project</field>
+            <field name="arch" type="xml">
+                <form string="Artwork Project">
+                    <header>
+                        <button name="action_confirm" string="Confirm" type="object" class="oe_highlight" states="draft"/>
+                        <button name="action_generate_pdf" string="Generate PDF" type="object" states="confirmed"/>
+                        <button name="action_cancel" string="Cancel" type="object" states="draft,confirmed"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="name"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="uuid" readonly="1"/>
+                                <field name="partner_id"/>
+                                <field name="template_size"/>
+                                <field name="template_width" readonly="1"/>
+                                <field name="template_height" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="garment_color" widget="color"/>
+                                <field name="garment_color_name"/>
+                                <field name="ink_color" widget="color" attrs="{'invisible': [('template_size', 'not ilike', 'single')]}"/>
+                                <field name="ink_color_name" attrs="{'invisible': [('template_size', 'not ilike', 'single')]}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Logos">
+                                <field name="logo_ids" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="filename"/>
+                                        <field name="file_type"/>
+                                        <field name="file_size"/>
+                                        <field name="is_vector"/>
+                                        <field name="color_count"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Canvas Elements">
+                                <field name="canvas_element_ids" readonly="1">
+                                    <tree>
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="name"/>
+                                        <field name="logo_id"/>
+                                        <field name="x"/>
+                                        <field name="y"/>
+                                        <field name="width"/>
+                                        <field name="height"/>
+                                        <field name="rotation"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Pricing">
+                                <group>
+                                    <group>
+                                        <field name="quantity"/>
+                                        <field name="price_unit"/>
+                                    </group>
+                                    <group>
+                                        <field name="price_total"/>
+                                        <field name="sale_order_id" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Artwork Project Tree View -->
+        <record id="view_artwork_project_tree" model="ir.ui.view">
+            <field name="name">artwork.project.tree</field>
+            <field name="model">artwork.project</field>
+            <field name="arch" type="xml">
+                <tree string="Artwork Projects">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="template_size"/>
+                    <field name="quantity"/>
+                    <field name="price_total"/>
+                    <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'confirmed'"/>
+                    <field name="create_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Artwork Project Search View -->
+        <record id="view_artwork_project_search" model="ir.ui.view">
+            <field name="name">artwork.project.search</field>
+            <field name="model">artwork.project</field>
+            <field name="arch" type="xml">
+                <search string="Search Artwork Projects">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+                    <filter string="Confirmed" name="confirmed" domain="[('state','=','confirmed')]"/>
+                    <filter string="Done" name="done" domain="[('state','=','done')]"/>
+                    <separator/>
+                    <filter string="My Projects" name="my_projects" domain="[('partner_id.user_ids','in',uid)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Customer" name="group_partner" context="{'group_by':'partner_id'}"/>
+                        <filter string="Template" name="group_template" context="{'group_by':'template_size'}"/>
+                        <filter string="State" name="group_state" context="{'group_by':'state'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by':'create_date:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_artwork_project" model="ir.actions.act_window">
+            <field name="name">Artwork Projects</field>
+            <field name="res_model">artwork.project</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_artwork_project_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new artwork project
+                </p>
+                <p>
+                    Manage customer artwork uploads and designs.
+                </p>
+            </field>
+        </record>
+
+    </data>
+</odoo>

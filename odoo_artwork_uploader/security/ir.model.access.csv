@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_artwork_project_user,artwork.project.user,model_artwork_project,base.group_user,1,1,1,1
+access_artwork_project_public,artwork.project.public,model_artwork_project,,1,1,1,0
+access_artwork_logo_user,artwork.logo.user,model_artwork_logo,base.group_user,1,1,1,1
+access_artwork_logo_public,artwork.logo.public,model_artwork_logo,,1,1,1,0
+access_artwork_canvas_element_user,artwork.canvas.element.user,model_artwork_canvas_element,base.group_user,1,1,1,1
+access_artwork_canvas_element_public,artwork.canvas.element.public,model_artwork_canvas_element,,1,1,1,0

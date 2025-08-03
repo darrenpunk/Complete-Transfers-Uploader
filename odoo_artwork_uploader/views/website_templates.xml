@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Main Upload Page Template -->
+        <template id="upload_page" name="Artwork Uploader">
+            <t t-call="website.layout">
+                <div id="wrap" class="oe_structure">
+                    <div class="container-fluid artwork-uploader-container">
+                        <div class="row">
+                            <div class="col-12">
+                                <h1 class="text-center my-4">Artwork Uploader &amp; Design Tool</h1>
+                                <div id="artwork-uploader-root" 
+                                     data-templates='<t t-esc="json.dumps(templates.mapped(lambda t: {&quot;id&quot;: t.id, &quot;name&quot;: t.name, &quot;type&quot;: t.artwork_template_type}))" />'
+                                     data-garment-colors='<t t-esc="json.dumps(garment_colors)" />'
+                                     data-ink-colors='<t t-esc="json.dumps(ink_colors)" />'>
+                                    <!-- React app will mount here -->
+                                    <div class="text-center p-5">
+                                        <i class="fa fa-spinner fa-spin fa-3x"></i>
+                                        <p class="mt-3">Loading artwork uploader...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- Add to Website Menu -->
+        <record id="menu_artwork_uploader" model="website.menu">
+            <field name="name">Design Tool</field>
+            <field name="url">/artwork/upload</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence">50</field>
+        </record>
+
+    </data>
+</odoo>
