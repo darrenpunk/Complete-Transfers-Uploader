@@ -1221,9 +1221,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
-                  className={`absolute cursor-move ${
-                    isSelected ? '' : 'hover:border-gray-400'
-                  }`}
+                  className={`absolute cursor-move`}
                   style={{
                     left: elementX,
                     top: elementY,
@@ -1232,9 +1230,10 @@ export default function CanvasWorkspace({
                     zIndex: element.zIndex,
                     transform: `rotate(${element.rotation || 0}deg)`,
                     transformOrigin: 'center',
-                    border: isSelected 
-                      ? `2px solid hsl(var(--primary))` 
+                    outline: isSelected 
+                      ? `2px solid #961E75` 
                       : `1px solid #d1d5db`,
+                    outlineOffset: '-2px',
                     boxSizing: 'border-box'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
@@ -1242,7 +1241,7 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="w-full h-full flex items-center justify-center overflow-hidden" 
+                    className="absolute inset-0 flex items-center justify-center overflow-hidden" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent'
                     }}
