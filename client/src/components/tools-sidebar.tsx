@@ -157,39 +157,84 @@ export default function ToolsSidebar({
   // Raster warning modal handlers
   const handlePhotographicApprove = async () => {
     if (pendingRasterFile) {
-      // Store the file name to mark as photographic after upload
-      const fileName = pendingRasterFile.file.name;
+      // Check if this is a PDF with raster only (already uploaded)
+      const existingLogo = logos.find(logo => logo.originalName === pendingRasterFile.fileName && logo.isPdfWithRasterOnly);
       
-      uploadLogosMutation.mutate([pendingRasterFile.file]);
-      
-      // Wait a moment for upload to complete, then mark as photographic
-      setTimeout(async () => {
+      if (existingLogo) {
+        // PDF with raster only - just mark as photographic
         try {
-          // Find the uploaded logo by filename
-          const uploadedLogo = logos.find(logo => logo.originalName === fileName);
-          if (uploadedLogo) {
-            // Mark the logo as photographic
-            await fetch(`/api/logos/${uploadedLogo.id}/photographic`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ isPhotographic: true })
-            });
-            
-            // Refresh logos to get updated data
-            queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
-          }
+          await fetch(`/api/logos/${existingLogo.id}/photographic`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isPhotographic: true })
+          });
+          
+          // Refresh logos to get updated data
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+          
+          toast({
+            title: "Success",
+            description: "PDF marked as photographic content",
+          });
         } catch (error) {
           console.error('Failed to mark logo as photographic:', error);
         }
-      }, 1000);
+      } else {
+        // Regular raster file - upload it
+        const fileName = pendingRasterFile.file.name;
+        
+        uploadLogosMutation.mutate([pendingRasterFile.file]);
+        
+        // Wait a moment for upload to complete, then mark as photographic
+        setTimeout(async () => {
+          try {
+            // Find the uploaded logo by filename
+            const uploadedLogo = logos.find(logo => logo.originalName === fileName);
+            if (uploadedLogo) {
+              // Mark the logo as photographic
+              await fetch(`/api/logos/${uploadedLogo.id}/photographic`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPhotographic: true })
+              });
+              
+              // Refresh logos to get updated data
+              queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+            }
+          } catch (error) {
+            console.error('Failed to mark logo as photographic:', error);
+          }
+        }, 1000);
+      }
       
       setPendingRasterFile(null);
       setShowRasterWarning(false);
     }
   };
 
-  const handleVectorizeWithAI = () => {
+  const handleVectorizeWithAI = async () => {
     if (pendingRasterFile) {
+      // Check if this is a PDF with raster only (already uploaded)
+      const existingLogo = logos.find(logo => logo.originalName === pendingRasterFile.fileName && logo.isPdfWithRasterOnly);
+      
+      if (existingLogo) {
+        // For PDFs with raster only, we need to fetch the image data
+        try {
+          const response = await fetch(existingLogo.url);
+          const blob = await response.blob();
+          const file = new File([blob], pendingRasterFile.fileName, { type: blob.type });
+          setPendingRasterFile({ file, fileName: pendingRasterFile.fileName });
+        } catch (error) {
+          console.error('Failed to fetch PDF for vectorization:', error);
+          toast({
+            title: "Error",
+            description: "Failed to prepare file for vectorization",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
       setShowRasterWarning(false);
       setShowVectorizer(true);
     }
@@ -197,12 +242,22 @@ export default function ToolsSidebar({
 
   const handleVectorizeWithService = () => {
     if (pendingRasterFile) {
-      // Create vectorization placeholder - this would add a charge to the order
-      // For now, we'll just show a toast message
-      toast({
-        title: "Vectorization Service Requested",
-        description: "A vectorization charge has been added to your order. You can upload your logo after service completion.",
-      });
+      // Check if this is a PDF with raster only (already uploaded)
+      const existingLogo = logos.find(logo => logo.originalName === pendingRasterFile.fileName && logo.isPdfWithRasterOnly);
+      
+      if (existingLogo) {
+        // Open vectorization form for the PDF
+        if (onOpenVectorizationForm) {
+          onOpenVectorizationForm();
+        }
+      } else {
+        // Create vectorization placeholder - this would add a charge to the order
+        // For now, we'll just show a toast message
+        toast({
+          title: "Vectorization Service Requested",
+          description: "A vectorization charge has been added to your order. You can upload your logo after service completion.",
+        });
+      }
       setPendingRasterFile(null);
       setShowRasterWarning(false);
     }
@@ -326,10 +381,21 @@ export default function ToolsSidebar({
       // Only invalidate canvas elements to fetch new ones
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
       
-      toast({
-        title: "Success",
-        description: "Logos uploaded successfully!",
-      });
+      // Check if any uploaded logo is a PDF with raster only content
+      const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly);
+      if (pdfWithRasterOnly) {
+        // Show raster warning for PDFs with embedded images
+        setPendingRasterFile({ 
+          file: new File([], pdfWithRasterOnly.originalName), 
+          fileName: pdfWithRasterOnly.originalName 
+        });
+        setShowRasterWarning(true);
+      } else {
+        toast({
+          title: "Success",
+          description: "Logos uploaded successfully!",
+        });
+      }
     },
     onError: () => {
       toast({
