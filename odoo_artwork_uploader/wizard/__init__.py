@@ -1,0 +1,1 @@
+from . import artwork_template_mapping_wizard

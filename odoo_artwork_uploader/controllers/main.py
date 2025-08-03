@@ -165,14 +165,11 @@ class ArtworkUploaderController(http.Controller):
         # Get or create sale order
         sale_order = request.website.sale_get_order(force_create=True)
         
-        # Find artwork product
-        product = request.env['product.product'].sudo().search([
-            ('is_artwork_product', '=', True),
-            ('artwork_template_type', '=', self._get_template_type(project.template_size))
-        ], limit=1)
+        # Find mapped product for the template
+        product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
         
         if not product:
-            return {'error': 'Product not found'}
+            return {'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'}
         
         # Add to cart
         sale_order.sudo()._cart_update(

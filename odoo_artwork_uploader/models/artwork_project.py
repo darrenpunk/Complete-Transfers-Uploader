@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 import json
 import uuid
 
@@ -204,6 +205,16 @@ class ArtworkProject(models.Model):
     def action_add_to_cart(self):
         """Add the artwork project to cart"""
         self.ensure_one()
+        
+        # Find mapped product for this template
+        product = self.env['artwork.template.mapping'].get_product_for_template(self.template_size)
+        
+        if not product:
+            raise UserError('No product mapped for this template. Please configure template mappings.')
+        
+        # Update project with product
+        self.product_id = product
+        
         # Create sale order line with the artwork product
         # This would integrate with website_sale
         return True
