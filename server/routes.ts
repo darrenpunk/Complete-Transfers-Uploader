@@ -1589,6 +1589,15 @@ export async function registerRoutes(app: express.Application) {
         const stats = fs.statSync(extractedFile);
         console.log('📊 Extracted file size:', stats.size, 'bytes');
         
+        if (stats.size === 0) {
+          console.error('❌ Extracted file is empty!');
+          throw new Error('Extracted file is empty');
+        }
+        
+        // Set appropriate headers
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Length', stats.size);
+        
         // Send the extracted image
         res.sendFile(extractedFile, (err) => {
           if (err) {
