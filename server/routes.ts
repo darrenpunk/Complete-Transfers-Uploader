@@ -1561,8 +1561,8 @@ export async function registerRoutes(app: express.Application) {
       // Set only the essential parameters that the API accepts
       formData.append('output.format', 'svg'); // Explicitly set SVG format
       
-      // Disable non-scaling stroke to prevent rendering issues
-      formData.append('output.vectorizeNonScalingStroke', 'false');
+      // Set non-scaling stroke to 2.0px as per vectorizer.ai web app settings
+      formData.append('output.vectorizeNonScalingStroke', '2.0');
       
       // Production mode
       if (!isPreview) {
