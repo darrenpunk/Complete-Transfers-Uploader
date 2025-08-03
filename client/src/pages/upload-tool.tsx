@@ -551,15 +551,40 @@ export default function UploadTool() {
   };
 
   const handleVectorizeWithAI = async () => {
-    if (pendingRasterFile) {
-      // For PDFs with raster only, we need to extract the actual image
-      // This would open the vectorizer modal
-      toast({
-        title: "Vectorization",
-        description: "AI vectorization feature coming soon",
-      });
-      setPendingRasterFile(null);
-      setShowRasterWarning(false);
+    console.log('handleVectorizeWithAI called with pendingRasterFile:', pendingRasterFile);
+    
+    if (pendingRasterFile && pendingRasterFile.logoId) {
+      console.log('Fetching raster image from PDF, logoId:', pendingRasterFile.logoId);
+      // For PDFs with raster only, extract the actual raster image
+      try {
+        const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image`);
+        console.log('Raster image fetch response:', response.status, response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to extract raster image:', errorText);
+          throw new Error('Failed to extract raster image');
+        }
+        const blob = await response.blob();
+        console.log('Received blob:', blob.size, blob.type);
+        
+        const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: 'image/png' });
+        console.log('Created file object:', file.name, file.size, file.type);
+        
+        // Update the pending file with the actual image
+        setPendingRasterFile({ ...pendingRasterFile, file });
+        
+        // Close raster warning and open vectorizer
+        setShowRasterWarning(false);
+        setShowVectorizer(true);
+      } catch (error) {
+        console.error('Failed to fetch PDF for vectorization:', error);
+        toast({
+          title: "Error",
+          description: "Failed to prepare file for vectorization",
+          variant: "destructive",
+        });
+      }
     }
   };
 
