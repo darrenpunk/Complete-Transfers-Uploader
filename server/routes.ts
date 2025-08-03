@@ -567,7 +567,8 @@ export async function registerRoutes(app: express.Application) {
           svgColors: analysisData,
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT,
-          isCMYKPreserved: (file as any).isCMYKPreserved || false
+          isCMYKPreserved: (file as any).isCMYKPreserved || false,
+          isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false
         };
         
         // Add preview filename if it exists (for CMYK PDFs)

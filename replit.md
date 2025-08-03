@@ -7,6 +7,8 @@ This is a full-stack web application for uploading logo files and creating layou
 
 **Recent CMYK Fix (2025-08-03)**: Fixed critical CMYK color detection issue where uploaded CMYK PDFs were being incorrectly detected as RGB. The issue occurred during PDF-to-SVG conversion for canvas display, where conversion tools (pdf2svg, Inkscape) automatically convert CMYK to RGB. Solution: Added CMYK preservation markers to converted SVGs and database tracking via `isCMYKPreserved` flag, ensuring original CMYK colors are maintained in final PDF output.
 
+**PDF Raster Detection Fix (2025-08-03)**: Fixed issue where PDFs containing only embedded PNG/JPEG images were incorrectly classified as vector files. Solution: Added dual file storage approach - SVG for canvas display and original PDF for final embedding when raster-only content is detected. Added `isPdfWithRasterOnly` database flag to properly track and display these files as "Raster" in the UI.
+
 **Bounding Box Fix (2025-08-03)**: Fixed bounding box padding issue that increased with zoom levels. Problem was caused by SVG viewBox containing extra space around content that became more visible at higher zoom. Solution: Modified SVG rendering to use block display with zero padding/margin, removed flexbox spacing from containers, and added specific CSS rules to ensure tight fit. Server already crops SVGs to exact content bounds during upload.
 
 **Deployment Strategy**: User plans to convert this into an Odoo 16 module. Two separate projects will be created:

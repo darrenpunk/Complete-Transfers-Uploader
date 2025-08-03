@@ -40,6 +40,7 @@ export const logos = pgTable("logos", {
   isMixedContent: boolean("is_mixed_content").default(false), // Track if file contains both raster and vector content
   isPhotographic: boolean("is_photographic").default(false), // Track if raster file was marked as photographic
   isCMYKPreserved: boolean("is_cmyk_preserved").default(false), // Track if original file had CMYK colors preserved
+  isPdfWithRasterOnly: boolean("is_pdf_with_raster_only").default(false), // Track if PDF contains only raster images
   previewFilename: text("preview_filename"), // PNG preview filename for CMYK PDFs
 });
 

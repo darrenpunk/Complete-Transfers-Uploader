@@ -738,7 +738,12 @@ export default function ToolsSidebar({
           
           // File Resolution Check - skip for vector files
           if (logo) {
-            const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+            // Check if it's a PDF with raster only (should be treated as raster)
+            const isPdfWithRasterOnly = logo.originalMimeType === 'application/pdf' && 
+                                       logo.mimeType === 'image/svg+xml' && 
+                                       (logo as any).isPdfWithRasterOnly;
+            const isVector = !isPdfWithRasterOnly && 
+                           (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
             
             if (isVector) {
               checks.push({
