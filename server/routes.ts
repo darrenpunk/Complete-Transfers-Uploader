@@ -759,6 +759,14 @@ export async function registerRoutes(app: express.Application) {
         await storage.createCanvasElement(canvasElementData);
       }
 
+      console.log('🚀 Returning logos to client:', logos.map(logo => ({
+        id: logo.id,
+        filename: logo.filename,
+        originalName: logo.originalName,
+        isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
+        isCMYKPreserved: logo.isCMYKPreserved,
+        mimeType: logo.mimeType
+      })));
       res.json(logos);
     } catch (error) {
       console.error('Upload error:', error);

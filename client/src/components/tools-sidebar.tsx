@@ -406,6 +406,8 @@ export default function ToolsSidebar({
           filename: logo.filename,
           originalName: logo.originalName,
           isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
+          isCMYKPreserved: logo.isCMYKPreserved,
+          mimeType: logo.mimeType,
           fileType: logo.fileType
         });
       });
