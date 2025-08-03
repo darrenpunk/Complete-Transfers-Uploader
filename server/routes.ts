@@ -1592,6 +1592,11 @@ export async function registerRoutes(app: express.Application) {
       // Set non-scaling stroke to 2.0px as per vectorizer.ai web app settings
       formData.append('output.vectorizeNonScalingStroke', '2.0');
       
+      // Add parameters to preserve small details like dots
+      formData.append('processing.despeckle_tol', '0.1'); // Low tolerance to keep small dots
+      formData.append('processing.curve_fitting', 'true'); // Enable shape fitting for dots/circles
+      formData.append('processing.corner_threshold', '60'); // Sensitive corner detection
+      
       // Production mode
       if (!isPreview) {
         formData.append('mode', 'production');

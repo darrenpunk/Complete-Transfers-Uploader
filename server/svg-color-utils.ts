@@ -1334,6 +1334,12 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
 function removeVectorizedBackgroundsRegex(svgContent: string): string {
   let modifiedSvg = svgContent;
   
+  // Count all elements before processing
+  const pathCount = (modifiedSvg.match(/<path[^>]*>/gi) || []).length;
+  const circleCount = (modifiedSvg.match(/<circle[^>]*>/gi) || []).length;
+  const rectCount = (modifiedSvg.match(/<rect[^>]*>/gi) || []).length;
+  console.log(`📊 SVG element counts - paths: ${pathCount}, circles: ${circleCount}, rects: ${rectCount}`);
+  
   // Remove ALL stroke attributes completely - vectorized files should only have fills
   const strokeCount = (modifiedSvg.match(/\s*stroke[^=]*=\s*["'][^"']+["']/gi) || []).length;
   if (strokeCount > 0) {
@@ -1403,13 +1409,13 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     }
     
     if (hasStroke && !hasFill && !isSmallElement) {
-      console.log(`🎨 Removing stroke-only element`);
+      console.log(`🎨 Removing stroke-only element: ${tag}`);
       return '';
     }
     
     // If it's a small element without fill, convert it to filled
     if (!hasFill && isSmallElement) {
-      console.log(`🔍 Found small element without fill, converting to filled element`);
+      console.log(`🔍 Found small element without fill, converting to filled element: ${tag}`);
       // Add a black fill to preserve the element
       let newMatch = match.replace(/>$/, ' fill="#000000">');
       // Remove stroke attributes since we're converting to fill
@@ -1428,8 +1434,45 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     return match;
   });
   
+  // Step 4: Check for any very small filled elements that might have been missed
+  // Sometimes dots (like in the letter i) are created as tiny filled paths
+  modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse)([^>]*)>/gi, (match, tag, attrs) => {
+    // Check if this has a fill
+    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    
+    if (hasFill && tag === 'path') {
+      // Check if this is a tiny path (potential dot)
+      const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
+      if (dMatch) {
+        const pathData = dMatch[1];
+        // Look for very small paths - these could be dots
+        const coords = pathData.match(/[\d.]+/g);
+        if (coords && coords.length >= 4) {
+          const x1 = parseFloat(coords[0]);
+          const y1 = parseFloat(coords[1]);
+          const x2 = parseFloat(coords[2]);
+          const y2 = parseFloat(coords[3]);
+          const width = Math.abs(x2 - x1);
+          const height = Math.abs(y2 - y1);
+          
+          if (width < 10 && height < 10 && width > 0 && height > 0) {
+            console.log(`🔵 Preserving small filled element (potential dot): ${width}x${height}`);
+          }
+        }
+      }
+    }
+    
+    return match;
+  });
+  
   // Remove empty groups that might be left after cleaning
   modifiedSvg = modifiedSvg.replace(/<g[^>]*>\s*<\/g>/gi, '');
+  
+  // Count elements after processing
+  const finalPathCount = (modifiedSvg.match(/<path[^>]*>/gi) || []).length;
+  const finalCircleCount = (modifiedSvg.match(/<circle[^>]*>/gi) || []).length;
+  const finalRectCount = (modifiedSvg.match(/<rect[^>]*>/gi) || []).length;
+  console.log(`📊 Final element counts - paths: ${finalPathCount}, circles: ${finalCircleCount}, rects: ${finalRectCount}`);
   
   console.log(`🎨 Vectorized SVG cleaning complete - all strokes removed, only fills remain`);
   return modifiedSvg;
