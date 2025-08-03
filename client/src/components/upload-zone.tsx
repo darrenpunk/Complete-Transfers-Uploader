@@ -58,6 +58,7 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/svg+xml': ['.svg'],
       'application/pdf': ['.pdf'],
+      'application/postscript': ['.ai', '.eps'],
     },
     multiple: true,
     maxSize: 200 * 1024 * 1024, // 200MB for large artwork files

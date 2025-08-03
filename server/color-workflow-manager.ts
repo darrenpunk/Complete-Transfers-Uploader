@@ -8,7 +8,9 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 export enum FileType {
   VECTOR_SVG = 'vector-svg',
-  VECTOR_PDF = 'vector-pdf', 
+  VECTOR_PDF = 'vector-pdf',
+  VECTOR_AI = 'vector-ai',
+  VECTOR_EPS = 'vector-eps',
   RASTER_PNG = 'raster-png',
   RASTER_JPEG = 'raster-jpeg',
   MIXED_CONTENT = 'mixed-content',
@@ -40,6 +42,11 @@ export class ColorWorkflowManager {
         return FileType.VECTOR_SVG;
       case 'application/pdf':
         return FileType.VECTOR_PDF;
+      case 'application/postscript':
+      case 'application/illustrator':
+      case 'application/x-illustrator':
+        // Check extension to differentiate between AI and EPS
+        return extension === 'ai' ? FileType.VECTOR_AI : FileType.VECTOR_EPS;
       case 'image/png':
         return FileType.RASTER_PNG;
       case 'image/jpeg':
@@ -52,6 +59,10 @@ export class ColorWorkflowManager {
             return FileType.VECTOR_SVG;
           case 'pdf':
             return FileType.VECTOR_PDF;
+          case 'ai':
+            return FileType.VECTOR_AI;
+          case 'eps':
+            return FileType.VECTOR_EPS;
           case 'png':
             return FileType.RASTER_PNG;
           case 'jpg':
@@ -70,6 +81,8 @@ export class ColorWorkflowManager {
     switch (fileType) {
       case FileType.VECTOR_SVG:
       case FileType.VECTOR_PDF:
+      case FileType.VECTOR_AI:
+      case FileType.VECTOR_EPS:
         // Vector files: preserve original structure and colors
         return {
           preserveCMYK: true,

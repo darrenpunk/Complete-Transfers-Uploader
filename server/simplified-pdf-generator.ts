@@ -297,7 +297,8 @@ export class SimplifiedPDFGenerator {
   ) {
     const uploadPath = path.join(process.cwd(), 'uploads', logo.filename);
     
-    // PRIORITY: If this was originally a PDF (even if converted to SVG), use the original PDF directly
+    // PRIORITY: If this was originally a PDF, AI, or EPS file (even if converted to SVG), handle appropriately
+    // Handle original PDF files
     if (logo.originalMimeType === 'application/pdf' && logo.originalFilename) {
       console.log(`📄 Using original PDF for direct embedding: ${logo.originalFilename}`);
       
@@ -323,6 +324,53 @@ export class SimplifiedPDFGenerator {
         return;
       } else {
         console.log(`⚠️ Original PDF not found: ${originalPdfPath}, falling back to converted file`);
+      }
+    }
+    
+    // Handle original AI/EPS files - convert to PDF for embedding
+    if ((logo.originalMimeType === 'application/postscript' || 
+         logo.originalMimeType === 'application/illustrator' || 
+         logo.originalMimeType === 'application/x-illustrator') && 
+        logo.originalFilename) {
+      console.log(`🎨 Converting original AI/EPS file to PDF for embedding: ${logo.originalFilename}`);
+      
+      const originalVectorPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+      
+      if (fs.existsSync(originalVectorPath)) {
+        try {
+          // Convert AI/EPS to PDF using Ghostscript
+          const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
+          const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="${tempPdfPath}" "${originalVectorPath}"`;
+          
+          const { execSync } = require('child_process');
+          execSync(gsCommand);
+          
+          if (fs.existsSync(tempPdfPath)) {
+            const existingPdfBytes = fs.readFileSync(tempPdfPath);
+            const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+            
+            // Calculate position and scale
+            const scale = this.calculateScale(element, templateSize);
+            const position = this.calculatePosition(element, templateSize, page);
+            
+            page.drawPage(embeddedPage, {
+              x: position.x,
+              y: position.y,
+              width: element.width * scale,
+              height: element.height * scale,
+              rotate: element.rotation ? degrees(element.rotation) : undefined,
+            });
+            
+            // Clean up temp file
+            fs.unlinkSync(tempPdfPath);
+            
+            console.log(`✅ Successfully embedded AI/EPS file as PDF: ${logo.originalFilename}`);
+            return;
+          }
+        } catch (error) {
+          console.error(`Failed to convert AI/EPS to PDF:`, error);
+          // Fall through to SVG handling
+        }
       }
     }
     

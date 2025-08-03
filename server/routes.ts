@@ -84,7 +84,8 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
-      'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf'
+      'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf',
+      'application/postscript', 'application/illustrator', 'application/x-illustrator'
     ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
@@ -194,6 +195,62 @@ export async function registerRoutes(app: express.Application) {
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
+
+        // Handle AI/EPS files - convert to SVG for display
+        if (file.mimetype === 'application/postscript' || 
+            file.mimetype === 'application/illustrator' || 
+            file.mimetype === 'application/x-illustrator') {
+          try {
+            const sourcePath = path.join(uploadDir, file.filename);
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
+            const extension = file.filename.toLowerCase().split('.').pop();
+            
+            console.log(`🎨 Processing ${extension?.toUpperCase()} file: ${file.filename}`);
+            
+            // Convert AI/EPS to SVG using Ghostscript
+            const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=svg -sOutputFile="${svgPath}" "${sourcePath}"`;
+            
+            try {
+              await execAsync(gsCommand);
+              
+              if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                // Store original file info for later embedding
+                (file as any).originalVectorPath = sourcePath;
+                (file as any).originalVectorType = extension;
+                (file as any).isCMYKPreserved = true;
+                
+                // Use SVG for display but remember to use original for output
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
+                
+                console.log(`✅ Created SVG preview for ${extension?.toUpperCase()} file: ${svgFilename}`);
+              }
+            } catch (gsError) {
+              console.log(`⚠️ Ghostscript conversion failed, trying Inkscape...`);
+              
+              // Fallback to Inkscape
+              const inkscapeCommand = `inkscape "${sourcePath}" --export-type=svg --export-filename="${svgPath}"`;
+              await execAsync(inkscapeCommand);
+              
+              if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                (file as any).originalVectorPath = sourcePath;
+                (file as any).originalVectorType = extension;
+                (file as any).isCMYKPreserved = true;
+                
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
+                
+                console.log(`✅ Created SVG preview using Inkscape for ${extension?.toUpperCase()} file`);
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to convert ${file.filename} to SVG:`, error);
+            // Continue with original file
+          }
+        }
 
         // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
@@ -420,6 +477,12 @@ export async function registerRoutes(app: express.Application) {
         if ((file as any).originalPdfPath && (file as any).isCMYKPreserved) {
           logoData.originalFilename = file.filename; // Store the original PDF filename
           logoData.originalMimeType = 'application/pdf';
+        }
+        
+        // Add original AI/EPS info for vector files
+        if ((file as any).originalVectorPath && (file as any).originalVectorType) {
+          logoData.originalFilename = file.filename; // Store the original AI/EPS filename
+          logoData.originalMimeType = file.mimetype; // Keep original mime type
         }
         
         const logo = await storage.createLogo(logoData);
