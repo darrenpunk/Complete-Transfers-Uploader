@@ -3,7 +3,11 @@
 ## Overview
 This is a full-stack web application for uploading logo files and creating layouts on garment templates. Its purpose is to provide a streamlined workflow for users to upload logos, accurately position them on various canvas templates, and generate production-ready outputs that preserve vector graphics. The application aims to offer a professional and intuitive design experience, bridging the gap between digital design and physical production, with potential for broad market adoption in the custom apparel industry.
 
-**Current Status**: Production-ready application with enhanced PDF generation showing garment color names with CMYK values instead of hex codes. PDF preview modal updated to display grid layout matching actual PDF output with color labels. Added educational "Learn More about Colour Modes" feature with content from CompleteTransfers.com explaining CMYK vs RGB differences. Added "Artwork Requirements" button in the header that opens a comprehensive modal with artwork guidelines and imagery from CompleteTransfers.com/artwork page.
+**Current Status**: Production-ready application with enhanced PDF generation showing garment color names with CMYK values instead of hex codes. PDF preview modal updated to display grid layout matching actual PDF output with color labels. Added educational "Learn More about Colour Modes" feature with content from CompleteTransfers.com explaining CMYK vs RGB differences. Added "Artwork Requirements" button in the header that opens a comprehensive modal with artwork guidelines and imagery from CompleteTransfers.com/artwork page. Enhanced artwork requirements modal with "Vector Artwork" and "Raster Artwork" headers above comparison image.
+
+**Deployment Strategy**: User plans to convert this into an Odoo 16 module. Two separate projects will be created:
+1. Odoo Module Project - Port the artwork uploader functionality to Odoo 16 module format
+2. Odoo Website Redesign Project - Create a modern, SEO-optimized website design that integrates seamlessly with the artwork uploader module
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
