@@ -1340,6 +1340,20 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   const rectCount = (modifiedSvg.match(/<rect[^>]*>/gi) || []).length;
   console.log(`📊 SVG element counts - paths: ${pathCount}, circles: ${circleCount}, rects: ${rectCount}`);
   
+  // First, let's analyze what narrow elements exist before any processing
+  const allRects = modifiedSvg.match(/<rect[^>]*>/gi) || [];
+  allRects.forEach((rect, index) => {
+    const widthMatch = rect.match(/width\s*=\s*["']([^"']+)["']/);
+    const heightMatch = rect.match(/height\s*=\s*["']([^"']+)["']/);
+    if (widthMatch && heightMatch) {
+      const width = parseFloat(widthMatch[1]);
+      const height = parseFloat(heightMatch[1]);
+      if (width < 20 && height > 20) {
+        console.log(`🎯 NARROW RECT #${index}: ${width}×${height} - ${rect.substring(0, 150)}`);
+      }
+    }
+  });
+  
   // Remove ALL stroke attributes completely - vectorized files should only have fills
   const strokeCount = (modifiedSvg.match(/\s*stroke[^=]*=\s*["'][^"']+["']/gi) || []).length;
   if (strokeCount > 0) {
@@ -1374,12 +1388,26 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   let preservedCount = 0;
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
     // Check if element has stroke but no fill (or fill="none")
-    const hasStroke = match.includes('stroke=');
+    const hasStroke = match.includes('stroke=') || (match.includes('style=') && match.includes('stroke:'));
     const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
     
-    // Log element details for debugging
-    if (tag === 'circle' || tag === 'ellipse') {
-      console.log(`🔍 Found ${tag}: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 100)}`);
+    // Additional check for elements with no fill attribute at all
+    if (!match.includes('fill=')) {
+      // SVG elements without fill attribute default to black fill, so they have fill
+      // Unless they're in a group with fill:none
+      const isInNoFillGroup = attrs.includes('inherit') || attrs.includes('currentColor');
+      if (!isInNoFillGroup) {
+        // Element has implicit fill
+        const updatedHasFill = true;
+        if (tag === 'path' || tag === 'rect') {
+          console.log(`📌 Element ${tag} has no fill attribute (defaults to black)`);
+        }
+      }
+    }
+    
+    // Log element details for debugging narrow elements
+    if ((tag === 'rect' || tag === 'path') && !hasFill) {
+      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 200)}`);
     }
     
     // Try to detect if this is a small element (like a dot)
@@ -1416,15 +1444,15 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
       const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
       if (dMatch) {
         const pathData = dMatch[1];
-        // Check for narrow vertical elements (like letter "I")
-        const coords = pathData.match(/[\d.]+/g) || [];
-        if (coords.length >= 4) {
-          const x1 = parseFloat(coords[0]);
-          const y1 = parseFloat(coords[1]);
-          const x2 = parseFloat(coords[2]);
-          const y2 = parseFloat(coords[3]);
-          const width = Math.abs(x2 - x1);
-          const height = Math.abs(y2 - y1);
+        // Extract bounding box from path data
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          const minX = Math.min(...coords.map(c => c.x));
+          const maxX = Math.max(...coords.map(c => c.x));
+          const minY = Math.min(...coords.map(c => c.y));
+          const maxY = Math.max(...coords.map(c => c.y));
+          const width = maxX - minX;
+          const height = maxY - minY;
           
           // Detect narrow vertical elements (like "I") or small dots
           if ((width < 15 && height > 20) || (width < 15 && height < 15 && height > 0)) {
@@ -1432,6 +1460,13 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
             if (width < 15 && height > 20) {
               console.log(`🔤 Detected narrow vertical path (potential letter "I"): ${width.toFixed(2)}×${height.toFixed(2)}`);
             }
+          }
+          
+          // Also check if it looks like text based on path complexity
+          const commandCount = (pathData.match(/[MLHVCSQTAZmlhvcsqtaz]/g) || []).length;
+          if (commandCount > 10 && pathData.length < 1000) {
+            isSmallElement = true;
+            console.log(`📝 Complex path preserved (potential text with ${commandCount} commands)`);
           }
         }
         // Also check if it's a short path
@@ -1450,12 +1485,22 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     // If it's a small element without fill, convert it to filled
     if (!hasFill && isSmallElement) {
       console.log(`🔍 Found small element without fill, converting to filled element: ${tag}`);
-      // Add a black fill to preserve the element
-      let newMatch = match.replace(/>$/, ' fill="#000000">');
-      // Remove stroke attributes since we're converting to fill
-      newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
       preservedCount++;
-      return newMatch;
+      
+      // Check if element already has fill="none" or fill="transparent"
+      if (match.includes('fill="none"') || match.includes('fill="transparent"')) {
+        // Replace the fill attribute with black
+        let newMatch = match.replace(/fill\s*=\s*["'](none|transparent)["']/gi, 'fill="#000000"');
+        // Remove stroke attributes since we're converting to fill
+        newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+        return newMatch;
+      } else {
+        // Add a black fill to preserve the element
+        let newMatch = match.replace(/>$/, ' fill="#000000">');
+        // Remove stroke attributes since we're converting to fill
+        newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+        return newMatch;
+      }
     }
     
     // For elements with both stroke and fill, remove stroke attributes
