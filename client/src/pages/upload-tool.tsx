@@ -575,25 +575,26 @@ export default function UploadTool() {
           throw new Error('Extracted image is empty');
         }
         
-        const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: blob.type || 'image/png' });
+        const pngFileName = pendingRasterFile.fileName.replace('.pdf', '.png');
+        const file = new File([blob], pngFileName, { type: blob.type || 'image/png' });
         console.log('Created file object:', {
           name: file.name,
           size: file.size,
           type: file.type
         });
         
-        // Update the pending file with the actual image AND the new filename
-        setPendingRasterFile(prev => ({ 
-          ...prev!, 
-          file,
-          fileName: file.name // Update fileName to match the PNG
-        }));
+        // Create a new pending file object with the extracted PNG
+        const extractedPendingFile = {
+          file: file,
+          fileName: pngFileName,
+          logoId: pendingRasterFile.logoId,
+          url: URL.createObjectURL(file)
+        };
         
-        // Use setTimeout to ensure state update completes before changing modals
-        setTimeout(() => {
-          setShowRasterWarning(false);
-          setShowVectorizer(true);
-        }, 100);
+        // Update state and open vectorizer with the extracted PNG
+        setPendingRasterFile(extractedPendingFile);
+        setShowRasterWarning(false);
+        setShowVectorizer(true);
       } catch (error) {
         console.error('Failed to fetch PDF for vectorization:', error);
         toast({
@@ -675,51 +676,16 @@ export default function UploadTool() {
           );
           
           if (pdfWithRasterOnly) {
-            console.log('PDF with raster content detected, extracting PNG image');
-            // Extract the PNG image from the PDF immediately
-            (async () => {
-              try {
-                const response = await fetch(`/api/logos/${pdfWithRasterOnly.id}/raster-image`);
-                console.log('Raster extraction response:', response.status, response.statusText);
-                
-                if (response.ok) {
-                  const blob = await response.blob();
-                  console.log('Received blob:', blob.size, blob.type);
-                  
-                  // Validate blob
-                  if (blob.size === 0) {
-                    throw new Error('Extracted image is empty');
-                  }
-                  
-                  const file = new File([blob], pdfWithRasterOnly.originalName.replace('.pdf', '.png'), { type: blob.type || 'image/png' });
-                  console.log('Created File object:', {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type
-                  });
-                  
-                  // Show raster warning with the extracted PNG
-                  setPendingRasterFile({ 
-                    file: file,
-                    fileName: pdfWithRasterOnly.originalName,
-                    logoId: pdfWithRasterOnly.id,
-                    url: pdfWithRasterOnly.url
-                  });
-                  setShowRasterWarning(true);
-                } else {
-                  const errorText = await response.text();
-                  console.error('Server error:', errorText);
-                  throw new Error(`Failed to extract raster image: ${response.status} ${errorText}`);
-                }
-              } catch (error) {
-                console.error('Failed to extract PNG from PDF:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to extract image from PDF. Please try uploading a different file.",
-                  variant: "destructive",
-                });
-              }
-            })();
+            console.log('PDF with raster content detected, will show raster warning');
+            // Store the PDF info and show raster warning
+            // The actual PNG extraction will happen when user clicks "Vectorize with AI"
+            setPendingRasterFile({ 
+              file: new File([], pdfWithRasterOnly.originalName), // Placeholder file
+              fileName: pdfWithRasterOnly.originalName,
+              logoId: pdfWithRasterOnly.id,
+              url: pdfWithRasterOnly.url
+            });
+            setShowRasterWarning(true);
           } else if (regularRasterFile) {
             console.log('Regular raster file detected:', regularRasterFile.originalName, regularRasterFile.filetype);
             // For regular raster files (JPEG/PNG), show vectorization options immediately
@@ -1085,7 +1051,7 @@ export default function UploadTool() {
             setShowVectorizer(false);
             setPendingRasterFile(null);
           }}
-          fileName={pendingRasterFile.fileName}
+          fileName={pendingRasterFile.file.name || pendingRasterFile.fileName}
           imageFile={pendingRasterFile.file}
           onVectorDownload={async (vectorSvg) => {
             console.log('Vector download handler called with SVG');
