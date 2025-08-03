@@ -398,6 +398,17 @@ export default function ToolsSidebar({
       
       // Check if any uploaded logo is a PDF with raster only content
       const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly);
+      console.log('Upload success - newLogos:', newLogos);
+      console.log('Upload success - checking each logo:');
+      newLogos.forEach((logo: any) => {
+        console.log('Logo:', {
+          id: logo.id,
+          filename: logo.filename,
+          originalName: logo.originalName,
+          isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
+          fileType: logo.fileType
+        });
+      });
       console.log('Upload success - PDF with raster only check:', {
         newLogos,
         pdfWithRasterOnly,

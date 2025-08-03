@@ -218,6 +218,8 @@ export class MemStorage implements IStorage {
       contentBounds: insertLogo.contentBounds || null,
       isMixedContent: insertLogo.isMixedContent || false,
       isPhotographic: insertLogo.isPhotographic || false,
+      isCMYKPreserved: insertLogo.isCMYKPreserved || false,
+      isPdfWithRasterOnly: insertLogo.isPdfWithRasterOnly || false,
       previewFilename: insertLogo.previewFilename || null
     };
     this.logos.set(id, logo);
