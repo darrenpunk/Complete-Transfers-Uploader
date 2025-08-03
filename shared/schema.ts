@@ -39,6 +39,7 @@ export const logos = pgTable("logos", {
   contentBounds: jsonb("content_bounds"), // Store actual content boundaries for proper cropping {minX, minY, maxX, maxY}
   isMixedContent: boolean("is_mixed_content").default(false), // Track if file contains both raster and vector content
   isPhotographic: boolean("is_photographic").default(false), // Track if raster file was marked as photographic
+  isCMYKPreserved: boolean("is_cmyk_preserved").default(false), // Track if original file had CMYK colors preserved
   previewFilename: text("preview_filename"), // PNG preview filename for CMYK PDFs
 });
 

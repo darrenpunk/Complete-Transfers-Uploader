@@ -463,7 +463,27 @@ export async function registerRoutes(app: express.Application) {
             const svgPath = path.join(uploadDir, finalFilename);
             console.log(`📁 SVG path: ${svgPath}`);
             
-            const analysis = analyzeSVGWithStrokeWidths(svgPath);
+            // Special handling for CMYK PDFs - mark the SVG as containing CMYK colors
+            let analysis = analyzeSVGWithStrokeWidths(svgPath);
+            
+            // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
+            if ((file as any).isCMYKPreserved && (file as any).originalPdfPath) {
+              console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
+              
+              // Update the SVG file to include CMYK marker
+              const svgContent = fs.readFileSync(svgPath, 'utf8');
+              if (!svgContent.includes('data-vectorized-cmyk="true"')) {
+                const updatedSvg = svgContent.replace(
+                  /<svg/,
+                  '<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
+                );
+                fs.writeFileSync(svgPath, updatedSvg);
+              }
+              
+              // Re-analyze with the CMYK marker
+              analysis = analyzeSVGWithStrokeWidths(svgPath);
+            }
+            
             console.log(`🎨 Analysis results:`, {
               colors: analysis.colors?.length || 0,
               fonts: analysis.fonts?.length || 0,
@@ -520,7 +540,8 @@ export async function registerRoutes(app: express.Application) {
           url: finalUrl,
           svgColors: analysisData,
           svgFonts: analysisData?.fonts || null,
-          isMixedContent: fileType === FileType.MIXED_CONTENT
+          isMixedContent: fileType === FileType.MIXED_CONTENT,
+          isCMYKPreserved: (file as any).isCMYKPreserved || false
         };
         
         // Add preview filename if it exists (for CMYK PDFs)

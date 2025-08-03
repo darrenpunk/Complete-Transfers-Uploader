@@ -5,6 +5,8 @@ This is a full-stack web application for uploading logo files and creating layou
 
 **Current Status**: Standalone application 100% complete and production-ready. Odoo 16 module development completed with full project structure including models (artwork_project, artwork_logo, canvas_element, artwork_template_mapping), controllers with API endpoints, website templates, security access rules, static assets (JavaScript/SCSS), product data, comprehensive migration guide, and deployment documentation. The module now includes a flexible template-to-product mapping system that allows users to map artwork templates to their existing Odoo products, with a configuration wizard for easy setup. This ensures seamless integration with existing product catalogs without requiring new product creation.
 
+**Recent CMYK Fix (2025-08-03)**: Fixed critical CMYK color detection issue where uploaded CMYK PDFs were being incorrectly detected as RGB. The issue occurred during PDF-to-SVG conversion for canvas display, where conversion tools (pdf2svg, Inkscape) automatically convert CMYK to RGB. Solution: Added CMYK preservation markers to converted SVGs and database tracking via `isCMYKPreserved` flag, ensuring original CMYK colors are maintained in final PDF output.
+
 **Deployment Strategy**: User plans to convert this into an Odoo 16 module. Two separate projects will be created:
 1. Odoo Module Project - Port the artwork uploader functionality to Odoo 16 module format with full webcart integration (add to cart, checkout, order tracking)
 2. Odoo Website Redesign Project - Create a modern, SEO-optimized website design that integrates seamlessly with the artwork uploader module
