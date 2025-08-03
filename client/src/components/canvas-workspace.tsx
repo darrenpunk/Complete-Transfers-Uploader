@@ -1234,17 +1234,17 @@ export default function CanvasWorkspace({
                     transformOrigin: 'center',
                     border: isSelected 
                       ? `2px solid hsl(var(--primary))` 
-                      : `1px solid #d1d5db`
+                      : `1px solid #d1d5db`,
+                    boxSizing: 'border-box'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="w-full h-full flex items-center justify-center rounded overflow-hidden" 
+                    className="w-full h-full flex items-center justify-center overflow-hidden" 
                     style={{ 
-                      backgroundColor: element.garmentColor || 'transparent',
-                      border: '1px solid #e5e7eb'
+                      backgroundColor: element.garmentColor || 'transparent'
                     }}
                   >
                     {/* Logo Elements */}
