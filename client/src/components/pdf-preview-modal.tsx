@@ -214,7 +214,8 @@ export default function PDFPreviewModal({
                             }}
                           >
                             <img
-                              src={`/uploads/${logo.filename}`}
+                              key={`page1-${element.id}-${logo.id}`}
+                              src={`/uploads/${logo.filename}?t=${Date.now()}`}
                               alt={logo.originalName}
                               className="w-full h-full object-contain"
                               style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
@@ -298,10 +299,6 @@ export default function PDFPreviewModal({
                                       />
                                     </div>
                                   )}
-                                  {/* "FOR THE PLANET" text overlay */}
-                                  <div className="absolute bottom-1 left-0 right-0 text-center">
-                                    <span className="text-white text-[5px] font-bold tracking-wide uppercase">FOR THE PLANET</span>
-                                  </div>
                                 </div>
                               ))}
                             </div>
