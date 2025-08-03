@@ -1161,8 +1161,8 @@ export function VectorizerModal({
                           className="max-w-none"
                           style={{ 
                             imageRendering: zoom > 200 ? 'pixelated' : 'auto',
-                            width: '400px',
-                            height: '400px',
+                            maxWidth: '100%',
+                            maxHeight: '100%',
                             objectFit: 'contain',
                             backgroundColor: showGrid ? 'transparent' : '#f0f0f0'
                           }}
@@ -1201,8 +1201,8 @@ export function VectorizerModal({
                         <div 
                           className="vector-preview-wrapper"
                           style={{ 
-                            width: '400px',
-                            height: '400px',
+                            width: '100%',
+                            height: '100%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
