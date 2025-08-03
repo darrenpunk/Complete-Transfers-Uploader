@@ -1363,14 +1363,58 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   });
   
   // Remove elements that are stroke-only (paths/shapes with stroke but no fill)
-  modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)[^>]*>/gi, (match) => {
+  // BUT preserve small elements that might be important details like dots
+  modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
     // Check if element has stroke but no fill (or fill="none")
     const hasStroke = match.includes('stroke=');
     const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
     
-    if (hasStroke && !hasFill) {
+    // Try to detect if this is a small element (like a dot)
+    let isSmallElement = false;
+    
+    // For circles, check the radius
+    if (tag === 'circle') {
+      const radiusMatch = attrs.match(/r\s*=\s*["']([^"']+)["']/);
+      if (radiusMatch) {
+        const radius = parseFloat(radiusMatch[1]);
+        isSmallElement = radius < 10 && radius > 0;
+      }
+    }
+    
+    // For rectangles, check width and height
+    if (tag === 'rect') {
+      const widthMatch = attrs.match(/width\s*=\s*["']([^"']+)["']/);
+      const heightMatch = attrs.match(/height\s*=\s*["']([^"']+)["']/);
+      if (widthMatch && heightMatch) {
+        const width = parseFloat(widthMatch[1]);
+        const height = parseFloat(heightMatch[1]);
+        isSmallElement = width < 20 && height < 20 && width > 0 && height > 0;
+      }
+    }
+    
+    // For paths, check if it's a small path by looking at the d attribute
+    if (tag === 'path') {
+      const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
+      if (dMatch) {
+        const pathData = dMatch[1];
+        // Simple heuristic: if the path is very short, it might be a dot
+        isSmallElement = pathData.length < 100 && !pathData.includes('C') && !pathData.includes('Q');
+      }
+    }
+    
+    if (hasStroke && !hasFill && !isSmallElement) {
       console.log(`🎨 Removing stroke-only element`);
       return '';
+    }
+    
+    // If it's a small element without fill, convert it to filled
+    if (!hasFill && isSmallElement) {
+      console.log(`🔍 Found small element without fill, converting to filled element`);
+      // Add a black fill to preserve the element
+      let newMatch = match.replace(/>$/, ' fill="#000000">');
+      // Remove stroke attributes since we're converting to fill
+      newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+      return newMatch;
     }
     
     // For elements with both stroke and fill, remove stroke attributes
