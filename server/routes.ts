@@ -208,11 +208,29 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎨 Processing ${extension?.toUpperCase()} file: ${file.filename}`);
             
-            // Convert AI/EPS to SVG using Ghostscript
-            const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=svg -sOutputFile="${svgPath}" "${sourcePath}"`;
+            // Convert AI/EPS to SVG using Ghostscript (use pdf2svg as SVG device might not work)
+            // First convert to PDF, then to SVG
+            const tempPdfPath = path.join(uploadDir, `temp_${file.filename}.pdf`);
+            const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dEPSCrop -sOutputFile="${tempPdfPath}" "${sourcePath}"`;
             
             try {
               await execAsync(gsCommand);
+              
+              // Now convert PDF to SVG
+              if (fs.existsSync(tempPdfPath)) {
+                const pdf2svgCommand = `pdf2svg "${tempPdfPath}" "${svgPath}"`;
+                try {
+                  await execAsync('which pdf2svg');
+                  await execAsync(pdf2svgCommand);
+                } catch {
+                  // Fallback to Inkscape
+                  const inkscapeCommand = `inkscape "${tempPdfPath}" --export-type=svg --export-filename="${svgPath}"`;
+                  await execAsync(inkscapeCommand);
+                }
+                
+                // Clean up temp PDF
+                fs.unlinkSync(tempPdfPath);
+              }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                 // Store original file info for later embedding
@@ -229,10 +247,25 @@ export async function registerRoutes(app: express.Application) {
               }
             } catch (gsError) {
               console.log(`⚠️ Ghostscript conversion failed, trying Inkscape...`);
+              console.error('Ghostscript error:', gsError);
               
-              // Fallback to Inkscape
-              const inkscapeCommand = `inkscape "${sourcePath}" --export-type=svg --export-filename="${svgPath}"`;
-              await execAsync(inkscapeCommand);
+              // Fallback to Inkscape - try direct conversion first
+              try {
+                const inkscapeCommand = `inkscape "${sourcePath}" --export-type=svg --export-filename="${svgPath}"`;
+                await execAsync(inkscapeCommand);
+              } catch (inkscapeError) {
+                console.log(`⚠️ Direct Inkscape conversion failed, trying PDF intermediate...`);
+                // Try converting to PDF first, then to SVG
+                const tempPdfPath2 = path.join(uploadDir, `temp2_${file.filename}.pdf`);
+                const inkscapePdfCommand = `inkscape "${sourcePath}" --export-type=pdf --export-filename="${tempPdfPath2}"`;
+                await execAsync(inkscapePdfCommand);
+                
+                if (fs.existsSync(tempPdfPath2)) {
+                  const inkscapeSvgCommand = `inkscape "${tempPdfPath2}" --export-type=svg --export-filename="${svgPath}"`;
+                  await execAsync(inkscapeSvgCommand);
+                  fs.unlinkSync(tempPdfPath2);
+                }
+              }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                 (file as any).originalVectorPath = sourcePath;
@@ -244,6 +277,28 @@ export async function registerRoutes(app: express.Application) {
                 finalUrl = `/uploads/${finalFilename}`;
                 
                 console.log(`✅ Created SVG preview using Inkscape for ${extension?.toUpperCase()} file`);
+              } else {
+                // If all conversions fail, create a placeholder SVG
+                console.log(`⚠️ All conversions failed for ${file.filename}, creating placeholder`);
+                const placeholderSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#f0f0f0" stroke="#999" stroke-width="2"/>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">
+    ${extension?.toUpperCase()} File
+  </text>
+  <text x="100" y="120" text-anchor="middle" font-family="Arial" font-size="12" fill="#999">
+    (Preview unavailable)
+  </text>
+</svg>`;
+                fs.writeFileSync(svgPath, placeholderSvg);
+                
+                (file as any).originalVectorPath = sourcePath;
+                (file as any).originalVectorType = extension;
+                (file as any).isCMYKPreserved = true;
+                
+                finalFilename = svgFilename;
+                finalMimeType = 'image/svg+xml';
+                finalUrl = `/uploads/${finalFilename}`;
               }
             }
           } catch (error) {
