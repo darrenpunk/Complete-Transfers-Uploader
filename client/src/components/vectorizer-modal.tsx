@@ -1023,7 +1023,7 @@ export function VectorizerModal({
           <DialogHeader className="flex-shrink-0">
             <CompleteTransferLogo size="md" className="mb-4" />
             <div className="flex items-center justify-between">
-              <DialogTitle>AI Vectorization: {fileName}</DialogTitle>
+              <DialogTitle>AI Vectorization: {imageFile?.name || fileName}</DialogTitle>
               <div className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
