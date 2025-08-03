@@ -1532,15 +1532,15 @@ export default function CanvasWorkspace({
                         <RotateCw style={{ width: '16px', height: '16px' }} className="text-primary" />
                       </div>
 
-                      {/* Delete Handle - show for all elements when selected */}
+                      {/* Delete Handle - positioned at bottom-right, away from resize handles */}
                       <div 
-                        className="absolute bg-red-500 hover:bg-red-600 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
+                        className="absolute bg-red-600 hover:bg-red-700 border-2 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
                         style={{
-                          top: '-8px',
-                          right: '-8px',
-                          width: '24px',
-                          height: '24px',
-                          borderWidth: '2px',
+                          bottom: '-36px',
+                          right: '50%',
+                          transform: 'translateX(50%)',
+                          width: '28px',
+                          height: '28px',
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1551,7 +1551,7 @@ export default function CanvasWorkspace({
                         }}
                         title="Delete element"
                       >
-                        <Trash2 style={{ width: '12px', height: '12px' }} className="text-white" />
+                        <Trash2 style={{ width: '14px', height: '14px' }} className="text-white" />
                       </div>
                     </>
                     );
