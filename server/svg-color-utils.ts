@@ -1328,54 +1328,60 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
   try {
     let modifiedSvg = svgContent;
     
-    // Remove ALL stroke-width attributes from vectorized files to prevent scaling issues
-    // The vectorizer.ai API sometimes adds stroke-width values that scale incorrectly
-    const strokeWidthCount = (modifiedSvg.match(/stroke-width\s*=\s*["'][^"']+["']/gi) || []).length;
-    if (strokeWidthCount > 0) {
-      modifiedSvg = modifiedSvg.replace(/\s*stroke-width\s*=\s*["'][^"']+["']/gi, '');
-      console.log(`🎨 Removed ${strokeWidthCount} stroke-width attributes to prevent scaling issues`);
+    // Remove ALL stroke attributes completely - vectorized files should only have fills
+    const strokeCount = (modifiedSvg.match(/\s*stroke[^=]*=\s*["'][^"']+["']/gi) || []).length;
+    if (strokeCount > 0) {
+      // Remove all stroke-related attributes (stroke, stroke-width, stroke-opacity, etc.)
+      modifiedSvg = modifiedSvg.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+      console.log(`🎨 Removed ${strokeCount} stroke attributes - vectorized files should only have fills`);
     }
     
-    // Remove stroke attributes from elements (but keep stroke color information)
-    // This helps prevent stroke scaling artifacts while preserving color data
-    const strokeAttrCount = (modifiedSvg.match(/\s+stroke\s*=\s*["'][^"']+["']/gi) || []).length;
-    if (strokeAttrCount > 0) {
-      // Only remove if it's not a color value (hex, rgb, or color name)
-      modifiedSvg = modifiedSvg.replace(/\s+stroke\s*=\s*["'](?!#|rgb|none)[^"']+["']/gi, '');
-      console.log(`🎨 Removed non-color stroke attributes`);
-    }
-    
-    // Remove vector-effect="non-scaling-stroke" attributes which can cause rendering issues
-    const vectorEffectCount = (modifiedSvg.match(/vector-effect\s*=\s*["']non-scaling-stroke["']/gi) || []).length;
+    // Remove vector-effect attributes
+    const vectorEffectCount = (modifiedSvg.match(/vector-effect\s*=\s*["'][^"']+["']/gi) || []).length;
     if (vectorEffectCount > 0) {
-      modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["']non-scaling-stroke["']/gi, '');
-      console.log(`🎨 Removed ${vectorEffectCount} non-scaling-stroke attributes`);
+      modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["'][^"']+["']/gi, '');
+      console.log(`🎨 Removed ${vectorEffectCount} vector-effect attributes`);
     }
     
-    // Remove stroke-related style properties from style attributes
+    // Remove ALL stroke-related properties from style attributes
     modifiedSvg = modifiedSvg.replace(/style\s*=\s*["']([^"']+)["']/gi, (match, styles) => {
       const cleanedStyles = styles
         .split(';')
-        .filter((style: string) => !style.trim().startsWith('stroke-width'))
+        .filter((style: string) => {
+          const prop = style.trim().toLowerCase();
+          // Remove any style that starts with 'stroke'
+          return !prop.startsWith('stroke');
+        })
         .join(';');
       return cleanedStyles ? `style="${cleanedStyles}"` : '';
     });
     
-    // Remove groups that only contain strokes (common vectorizer artifact)
-    const strokeGroupRegex = /<g[^>]*>[\s\S]*?<\/g>/gi;
-    modifiedSvg = modifiedSvg.replace(strokeGroupRegex, (match) => {
-      // Check if this group only contains stroke elements without fills
-      const hasFill = match.includes('fill=') && !match.includes('fill="none"');
-      const hasOnlyStrokes = match.includes('stroke=') && !hasFill;
+    // Remove elements that are stroke-only (paths/shapes with stroke but no fill)
+    modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)[^>]*>/gi, (match) => {
+      // Check if element has stroke but no fill (or fill="none")
+      const hasStroke = match.includes('stroke=');
+      const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
       
-      if (hasOnlyStrokes) {
-        console.log(`🎨 Removing stroke-only group`);
+      if (hasStroke && !hasFill) {
+        console.log(`🎨 Removing stroke-only element`);
         return '';
       }
+      
+      // For elements with both stroke and fill, remove stroke attributes
+      if (hasStroke && hasFill) {
+        let cleaned = match;
+        // Remove stroke attributes
+        cleaned = cleaned.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+        return cleaned;
+      }
+      
       return match;
     });
     
-    console.log(`🎨 Vectorized SVG cleaning complete`);
+    // Remove empty groups that might be left after cleaning
+    modifiedSvg = modifiedSvg.replace(/<g[^>]*>\s*<\/g>/gi, '');
+    
+    console.log(`🎨 Vectorized SVG cleaning complete - all strokes removed, only fills remain`);
     return modifiedSvg;
     
   } catch (error) {
