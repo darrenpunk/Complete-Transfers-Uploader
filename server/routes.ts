@@ -417,6 +417,10 @@ export async function registerRoutes(app: express.Application) {
             // PDF contains only raster content, treat as raster
             fileType = FileType.RASTER_PNG; // Treat as raster workflow
             console.log(`📷 PDF contains only raster content, switching to raster workflow`);
+            
+            // Store original PDF path for later embedding
+            (file as any).originalPdfPath = originalPdfPath;
+            (file as any).isPdfWithRasterOnly = true;
           } else if (contentAnalysis.isMixedContent) {
             fileType = FileType.MIXED_CONTENT;
           }
@@ -571,8 +575,8 @@ export async function registerRoutes(app: express.Application) {
           logoData.previewFilename = (file as any).previewFilename;
         }
         
-        // Add original PDF info for CMYK PDFs
-        if ((file as any).originalPdfPath && (file as any).isCMYKPreserved) {
+        // Add original PDF info for CMYK PDFs or PDFs with raster only
+        if ((file as any).originalPdfPath && ((file as any).isCMYKPreserved || (file as any).isPdfWithRasterOnly)) {
           logoData.originalFilename = file.filename; // Store the original PDF filename
           logoData.originalMimeType = 'application/pdf';
         }
