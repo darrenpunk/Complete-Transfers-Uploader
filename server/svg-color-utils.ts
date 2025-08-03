@@ -1370,10 +1370,17 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   
   // Remove elements that are stroke-only (paths/shapes with stroke but no fill)
   // BUT preserve small elements that might be important details like dots
+  let removedCount = 0;
+  let preservedCount = 0;
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
     // Check if element has stroke but no fill (or fill="none")
     const hasStroke = match.includes('stroke=');
     const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    
+    // Log element details for debugging
+    if (tag === 'circle' || tag === 'ellipse') {
+      console.log(`🔍 Found ${tag}: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 100)}`);
+    }
     
     // Try to detect if this is a small element (like a dot)
     let isSmallElement = false;
@@ -1410,6 +1417,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     
     if (hasStroke && !hasFill && !isSmallElement) {
       console.log(`🎨 Removing stroke-only element: ${tag}`);
+      removedCount++;
       return '';
     }
     
@@ -1420,6 +1428,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
       let newMatch = match.replace(/>$/, ' fill="#000000">');
       // Remove stroke attributes since we're converting to fill
       newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+      preservedCount++;
       return newMatch;
     }
     
@@ -1475,5 +1484,32 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   console.log(`📊 Final element counts - paths: ${finalPathCount}, circles: ${finalCircleCount}, rects: ${finalRectCount}`);
   
   console.log(`🎨 Vectorized SVG cleaning complete - all strokes removed, only fills remain`);
+  console.log(`🎨 Removed ${removedCount} stroke-only elements, preserved ${preservedCount} small elements`);
+  
+  // Final check for dot-like elements in cleaned SVG
+  const finalSmallPaths = modifiedSvg.match(/<path[^>]*d="[^"]+"/g) || [];
+  let dotCount = 0;
+  finalSmallPaths.forEach((pathMatch) => {
+    const dMatch = pathMatch.match(/d="([^"]+)"/);
+    if (dMatch) {
+      const pathData = dMatch[1];
+      const coords = pathData.match(/[\d.]+/g) || [];
+      if (coords.length >= 4) {
+        const x1 = parseFloat(coords[0]);
+        const y1 = parseFloat(coords[1]);
+        const x2 = parseFloat(coords[2]);
+        const y2 = parseFloat(coords[3]);
+        const width = Math.abs(x2 - x1);
+        const height = Math.abs(y2 - y1);
+        
+        if (width < 5 && height < 5 && width > 0 && height > 0) {
+          dotCount++;
+          console.log(`✅ Final dot-like element preserved: ${width.toFixed(2)}×${height.toFixed(2)}`);
+        }
+      }
+    }
+  });
+  console.log(`✅ Total dot-like elements in final SVG: ${dotCount}`);
+  
   return modifiedSvg;
 }

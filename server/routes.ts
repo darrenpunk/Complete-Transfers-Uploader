@@ -1664,6 +1664,58 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
+      // Log the raw SVG to check if dot exists
+      const dotPatterns = [
+        /d="[^"]*[Mm]\s*\d+[\d.]*\s*,?\s*\d+[\d.]*\s*[^"]*[Zz]"/g, // closed paths
+        /<circle[^>]*r=["'][0-9.]+["'][^>]*>/g, // circles
+        /<ellipse[^>]*rx=["'][0-9.]+["'][^>]*>/g // ellipses
+      ];
+      
+      let smallElementCount = 0;
+      dotPatterns.forEach(pattern => {
+        const matches = result.match(pattern) || [];
+        matches.forEach(match => {
+          // Check if it's a small element
+          if (match.includes('circle') || match.includes('ellipse')) {
+            const radiusMatch = match.match(/r[xy]?=["']([0-9.]+)["']/);
+            if (radiusMatch && parseFloat(radiusMatch[1]) < 5) {
+              smallElementCount++;
+              console.log(`🔵 Found small circle/ellipse in raw SVG: ${match.substring(0, 100)}`);
+            }
+          }
+        });
+      });
+      
+      console.log(`📊 Raw SVG small element count: ${smallElementCount}`);
+      
+      // Also check for paths that might be dots
+      const pathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
+      console.log(`📊 Total paths in raw SVG: ${pathMatches.length}`);
+      
+      // Look for very small closed paths that could be dots
+      pathMatches.forEach((pathMatch, index) => {
+        const dMatch = pathMatch.match(/d="([^"]+)"/);
+        if (dMatch) {
+          const pathData = dMatch[1];
+          // Check if it's a small closed path
+          if (pathData.includes('Z') || pathData.includes('z')) {
+            const coords = pathData.match(/[\d.]+/g) || [];
+            if (coords.length >= 4) {
+              const x1 = parseFloat(coords[0]);
+              const y1 = parseFloat(coords[1]);
+              const x2 = parseFloat(coords[2]);
+              const y2 = parseFloat(coords[3]);
+              const approxWidth = Math.abs(x2 - x1);
+              const approxHeight = Math.abs(y2 - y1);
+              
+              if (approxWidth < 10 && approxHeight < 10 && approxWidth > 0 && approxHeight > 0) {
+                console.log(`🔵 Path ${index + 1}: Small closed path detected (${approxWidth.toFixed(2)}×${approxHeight.toFixed(2)}): ${pathData.substring(0, 60)}...`);
+              }
+            }
+          }
+        }
+      });
+      
       // Clean SVG content to remove stroke scaling issues
       let cleanedSvg = result;
       try {
