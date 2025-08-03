@@ -227,11 +227,11 @@ export default function CanvasWorkspace({
   });
 
   const handleZoomIn = () => {
-    setZoom(Math.min(zoom + 25, 400));
+    setZoom(Math.min(zoom + 10, 400));
   };
 
   const handleZoomOut = () => {
-    setZoom(Math.max(zoom - 25, 10));
+    setZoom(Math.max(zoom - 10, 25));
   };
 
   const handleUndo = useCallback(() => {
@@ -684,10 +684,16 @@ export default function CanvasWorkspace({
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
     // Get the actual workspace dimensions
-    // Account for padding (8px * 2), toolbar height (~80px), and some margin
-    const workspaceElement = canvasRef.current?.parentElement;
-    const maxWorkspaceWidth = (workspaceElement?.clientWidth || window.innerWidth * 0.6) - 64; // 64px for padding
-    const maxWorkspaceHeight = (window.innerHeight - 140 - 80 - 100); // 140px header, 80px toolbar, 100px bottom bar
+    const workspaceElement = canvasRef.current?.parentElement?.parentElement;
+    if (!workspaceElement) return 100;
+    
+    // Get the available workspace area
+    const workspaceRect = workspaceElement.getBoundingClientRect();
+    
+    // Account for padding and margins
+    const padding = 40; // Total padding around canvas
+    const maxWorkspaceWidth = workspaceRect.width - padding;
+    const maxWorkspaceHeight = workspaceRect.height - padding;
     
     // Calculate scale factors for width and height
     const scaleX = maxWorkspaceWidth / template.pixelWidth;
@@ -696,8 +702,14 @@ export default function CanvasWorkspace({
     // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage - allow wider range from 25% to 400%
-    const optimalZoom = Math.min(Math.max(optimalScale * 100, 25), 400);
+    // Convert to percentage with a more aggressive approach for smaller templates
+    // Aim to fill at least 80% of the available space
+    const targetScale = optimalScale * 0.9; // Use 90% of available space
+    
+    // Allow wider range from 50% to 400% for better flexibility
+    const optimalZoom = Math.min(Math.max(targetScale * 100, 50), 400);
+    
+    console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Zoom: ${Math.round(optimalZoom)}%`);
     
     return Math.round(optimalZoom);
   };
@@ -705,13 +717,37 @@ export default function CanvasWorkspace({
   // Auto-adjust zoom when template changes
   useEffect(() => {
     if (template) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
+      // Small delay to ensure DOM is ready and measurements are accurate
+      const timeoutId = setTimeout(() => {
         const optimalZoom = calculateOptimalZoom(template);
         setZoom(optimalZoom);
-      }, 100);
+      }, 150);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [template?.id]);
+  
+  // Also recalculate zoom when window resizes
+  useEffect(() => {
+    if (!template) return;
+    
+    let resizeTimeout: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const optimalZoom = calculateOptimalZoom(template);
+        setZoom(optimalZoom);
+      }, 300);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [template]);
 
 
 
