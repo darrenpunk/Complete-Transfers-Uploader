@@ -1429,6 +1429,67 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Get raster image from PDF with raster only
+  app.get('/api/logos/:id/raster-image', async (req, res) => {
+    try {
+      const logo = await storage.getLogo(req.params.id);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+
+      // Check if this is a PDF with raster only
+      if (!logo.isPdfWithRasterOnly) {
+        return res.status(400).json({ error: 'Not a PDF with raster only' });
+      }
+
+      // Extract the first image from the PDF
+      const pdfPath = path.join(uploadDir, logo.originalFilename || logo.filename);
+      const outputPath = path.join(uploadDir, `${logo.filename}_extracted.png`);
+      
+      try {
+        // Use pdfimages to extract the first image
+        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${path.join(uploadDir, logo.filename)}_extracted"`;
+        await execAsync(extractCommand);
+        
+        // Find the extracted image (it will have a number suffix)
+        const possibleFiles = [
+          `${logo.filename}_extracted-000.png`,
+          `${logo.filename}_extracted-001.png`,
+          outputPath
+        ];
+        
+        let extractedFile = null;
+        for (const file of possibleFiles) {
+          const filePath = path.join(uploadDir, file);
+          if (fs.existsSync(filePath)) {
+            extractedFile = filePath;
+            break;
+          }
+        }
+        
+        if (!extractedFile) {
+          throw new Error('No image extracted from PDF');
+        }
+        
+        // Send the extracted image
+        res.sendFile(extractedFile, (err) => {
+          // Clean up extracted file after sending
+          if (extractedFile && fs.existsSync(extractedFile)) {
+            fs.unlinkSync(extractedFile);
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error extracting image from PDF:', error);
+        res.status(500).json({ error: 'Failed to extract image from PDF' });
+      }
+      
+    } catch (error) {
+      console.error('Error processing raster image request:', error);
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {
     try {

@@ -117,7 +117,7 @@ export default function ToolsSidebar({
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [convertingLogo, setConvertingLogo] = useState<string | null>(null);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
-  const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
+  const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
   const [colorModesModalOpen, setColorModesModalOpen] = useState(false);
@@ -214,16 +214,17 @@ export default function ToolsSidebar({
 
   const handleVectorizeWithAI = async () => {
     if (pendingRasterFile) {
-      // Check if this is a PDF with raster only (already uploaded)
-      const existingLogo = logos.find(logo => logo.originalName === pendingRasterFile.fileName && logo.isPdfWithRasterOnly);
-      
-      if (existingLogo) {
-        // For PDFs with raster only, we need to fetch the image data
+      // Check if this is a PDF with raster only (needs to fetch actual file)
+      if (pendingRasterFile.logoId) {
+        // For PDFs with raster only, extract the actual raster image
         try {
-          const response = await fetch(existingLogo.url);
+          const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image`);
+          if (!response.ok) {
+            throw new Error('Failed to extract raster image');
+          }
           const blob = await response.blob();
-          const file = new File([blob], pendingRasterFile.fileName, { type: blob.type });
-          setPendingRasterFile({ file, fileName: pendingRasterFile.fileName });
+          const file = new File([blob], pendingRasterFile.fileName.replace('.pdf', '.png'), { type: 'image/png' });
+          setPendingRasterFile({ ...pendingRasterFile, file });
         } catch (error) {
           console.error('Failed to fetch PDF for vectorization:', error);
           toast({
@@ -385,9 +386,12 @@ export default function ToolsSidebar({
       const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly);
       if (pdfWithRasterOnly) {
         // Show raster warning for PDFs with embedded images
+        // For PDFs with raster only, we'll fetch the file when needed for AI vectorization
         setPendingRasterFile({ 
-          file: new File([], pdfWithRasterOnly.originalName), 
-          fileName: pdfWithRasterOnly.originalName 
+          file: new File([], pdfWithRasterOnly.originalName), // Placeholder file
+          fileName: pdfWithRasterOnly.originalName,
+          logoId: pdfWithRasterOnly.id, // Store logo ID for later use
+          url: pdfWithRasterOnly.url // Store URL for fetching
         });
         setShowRasterWarning(true);
       } else {
