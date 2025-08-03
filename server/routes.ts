@@ -1688,16 +1688,53 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📊 Raw SVG small element count: ${smallElementCount}`);
       
-      // Also check for paths that might be dots
-      const pathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
-      console.log(`📊 Total paths in raw SVG: ${pathMatches.length}`);
+      // Check if SVG contains "FRIENDLY" text in any form
+      const svgLower = result.toLowerCase();
+      if (svgLower.includes('friendly')) {
+        console.log(`✅ Found "FRIENDLY" text reference in SVG`);
+      } else {
+        console.log(`❌ No "FRIENDLY" text found in SVG - vectorizer may have missed letters`);
+      }
       
-      // Look for very small closed paths that could be dots
+      // Look for any narrow vertical paths that might be the letter "I"
+      let narrowVerticalPaths = 0;
+      pathMatches.forEach((pathMatch) => {
+        const dMatch = pathMatch.match(/d="([^"]+)"/);
+        if (dMatch) {
+          const pathData = dMatch[1];
+          const coords = pathData.match(/[\d.]+/g) || [];
+          let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          
+          // Get bounding box of path
+          for (let i = 0; i < coords.length; i += 2) {
+            const x = parseFloat(coords[i]);
+            const y = parseFloat(coords[i + 1]);
+            if (!isNaN(x) && !isNaN(y)) {
+              minX = Math.min(minX, x);
+              maxX = Math.max(maxX, x);
+              minY = Math.min(minY, y);
+              maxY = Math.max(maxY, y);
+            }
+          }
+          
+          const width = maxX - minX;
+          const height = maxY - minY;
+          
+          // Check for narrow vertical elements (width < 15px, height > 20px)
+          if (width < 15 && height > 20 && width > 0) {
+            narrowVerticalPaths++;
+            console.log(`🔤 Narrow vertical path found: ${width.toFixed(2)}×${height.toFixed(2)} at position ${minX.toFixed(1)},${minY.toFixed(1)}`);
+          }
+        }
+      });
+      console.log(`📊 Total narrow vertical paths (potential "I" letters): ${narrowVerticalPaths}`);
+      
+      // Look for very small closed paths that could be dots or letters
       pathMatches.forEach((pathMatch, index) => {
         const dMatch = pathMatch.match(/d="([^"]+)"/);
         if (dMatch) {
           const pathData = dMatch[1];
-          // Check if it's a small closed path
+          // Check if it's a closed path
           if (pathData.includes('Z') || pathData.includes('z')) {
             const coords = pathData.match(/[\d.]+/g) || [];
             if (coords.length >= 4) {
@@ -1708,13 +1745,23 @@ export async function registerRoutes(app: express.Application) {
               const approxWidth = Math.abs(x2 - x1);
               const approxHeight = Math.abs(y2 - y1);
               
-              if (approxWidth < 10 && approxHeight < 10 && approxWidth > 0 && approxHeight > 0) {
-                console.log(`🔵 Path ${index + 1}: Small closed path detected (${approxWidth.toFixed(2)}×${approxHeight.toFixed(2)}): ${pathData.substring(0, 60)}...`);
+              // Check for small letters like "I" (narrow but tall)
+              if ((approxWidth < 10 && approxHeight > 0) || (approxHeight < 10 && approxWidth > 0)) {
+                console.log(`🔵 Path ${index + 1}: Potential letter/dot detected (${approxWidth.toFixed(2)}×${approxHeight.toFixed(2)}): ${pathData.substring(0, 100)}...`);
               }
             }
           }
         }
       });
+      
+      // Also check text elements in case vectorizer created text
+      const textElements = result.match(/<text[^>]*>.*?<\/text>/gi) || [];
+      if (textElements.length > 0) {
+        console.log(`📝 Found ${textElements.length} text elements in vectorized SVG`);
+        textElements.forEach((text, i) => {
+          console.log(`📝 Text ${i + 1}: ${text.substring(0, 100)}...`);
+        });
+      }
       
       // Clean SVG content to remove stroke scaling issues
       let cleanedSvg = result;

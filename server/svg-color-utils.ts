@@ -1410,8 +1410,26 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
       const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
       if (dMatch) {
         const pathData = dMatch[1];
-        // Simple heuristic: if the path is very short, it might be a dot
-        isSmallElement = pathData.length < 100 && !pathData.includes('C') && !pathData.includes('Q');
+        // Check for narrow vertical elements (like letter "I")
+        const coords = pathData.match(/[\d.]+/g) || [];
+        if (coords.length >= 4) {
+          const x1 = parseFloat(coords[0]);
+          const y1 = parseFloat(coords[1]);
+          const x2 = parseFloat(coords[2]);
+          const y2 = parseFloat(coords[3]);
+          const width = Math.abs(x2 - x1);
+          const height = Math.abs(y2 - y1);
+          
+          // Detect narrow vertical elements (like "I") or small dots
+          if (width < 15 && height > 0) {
+            isSmallElement = true;
+            console.log(`🔤 Detected narrow element (potential letter): ${width.toFixed(2)}×${height.toFixed(2)}`);
+          }
+        }
+        // Also check if it's a short path
+        if (!isSmallElement && pathData.length < 100 && !pathData.includes('C') && !pathData.includes('Q')) {
+          isSmallElement = true;
+        }
       }
     }
     
