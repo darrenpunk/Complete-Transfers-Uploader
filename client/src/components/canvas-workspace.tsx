@@ -1222,7 +1222,7 @@ export default function CanvasWorkspace({
                 <div
                   key={element.id}
                   className={`absolute cursor-move ${
-                    isSelected ? 'bg-blue-50 bg-opacity-50' : 'hover:border-gray-400'
+                    isSelected ? '' : 'hover:border-gray-400'
                   }`}
                   style={{
                     left: elementX,
@@ -1233,8 +1233,8 @@ export default function CanvasWorkspace({
                     transform: `rotate(${element.rotation || 0}deg)`,
                     transformOrigin: 'center',
                     border: isSelected 
-                      ? `${200 / zoom}px solid hsl(var(--primary))` 
-                      : `${100 / zoom}px solid #d1d5db`
+                      ? `2px solid hsl(var(--primary))` 
+                      : `1px solid #d1d5db`
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
