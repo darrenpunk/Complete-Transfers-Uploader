@@ -29,6 +29,23 @@
   object-fit: contain !important;
 }
 
+/* Ensure SVG strokes scale properly on canvas */
+.canvas-element svg {
+  /* Remove any non-scaling-stroke effects to allow proper stroke scaling */
+  vector-effect: none !important;
+}
+
+/* Force strokes to scale with the SVG */
+.canvas-element svg path,
+.canvas-element svg line,
+.canvas-element svg polyline,
+.canvas-element svg polygon,
+.canvas-element svg circle,
+.canvas-element svg ellipse,
+.canvas-element svg rect {
+  vector-effect: none !important;
+}
+
 /* Ensure proper SVG display in vectorizer */
 .vector-preview-wrapper {
   display: flex;

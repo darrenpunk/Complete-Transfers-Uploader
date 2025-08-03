@@ -233,6 +233,13 @@ export async function registerRoutes(app: express.Application) {
               }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                // Clean SVG content to remove stroke scaling issues
+                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                const svgContent = fs.readFileSync(svgPath, 'utf8');
+                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                fs.writeFileSync(svgPath, cleanedSvg);
+                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                
                 // Store original file info for later embedding
                 (file as any).originalVectorPath = sourcePath;
                 (file as any).originalVectorType = extension;
@@ -268,6 +275,13 @@ export async function registerRoutes(app: express.Application) {
               }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                // Clean SVG content to remove stroke scaling issues
+                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                const svgContent = fs.readFileSync(svgPath, 'utf8');
+                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                fs.writeFileSync(svgPath, cleanedSvg);
+                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                
                 (file as any).originalVectorPath = sourcePath;
                 (file as any).originalVectorType = extension;
                 (file as any).isCMYKPreserved = true;
@@ -337,6 +351,13 @@ export async function registerRoutes(app: express.Application) {
                 await execAsync(svgCommand);
                 
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                  // Clean SVG content to remove stroke scaling issues
+                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                  fs.writeFileSync(svgPath, cleanedSvg);
+                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                  
                   // Store original PDF info for later embedding
                   (file as any).originalPdfPath = pdfPath;
                   (file as any).isCMYKPreserved = true;
@@ -380,6 +401,13 @@ export async function registerRoutes(app: express.Application) {
               await execAsync(svgCommand);
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                // Clean SVG content to remove stroke scaling issues
+                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                const svgContent = fs.readFileSync(svgPath, 'utf8');
+                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                fs.writeFileSync(svgPath, cleanedSvg);
+                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                
                 finalFilename = svgFilename;
                 finalMimeType = 'image/svg+xml';
                 finalUrl = `/uploads/${finalFilename}`;
@@ -1631,10 +1659,21 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
-      // Convert vectorized SVG to full CMYK format to avoid RGB warnings
-      let cmykSvg = result;
+      // Clean SVG content to remove stroke scaling issues
+      let cleanedSvg = result;
       try {
-        cmykSvg = convertVectorizedSvgToFullCmyk(result);
+        const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+        cleanedSvg = removeVectorizedBackgrounds(result);
+        console.log(`🧹 Cleaned vectorized SVG content`);
+      } catch (error) {
+        console.error('Failed to clean vectorized SVG:', error);
+        // Continue with uncleaned version if cleaning fails
+      }
+      
+      // Convert vectorized SVG to full CMYK format to avoid RGB warnings
+      let cmykSvg = cleanedSvg;
+      try {
+        cmykSvg = convertVectorizedSvgToFullCmyk(cleanedSvg);
         console.log(`🎨 Converted vectorized SVG to CMYK format`);
       } catch (error) {
         console.error('Failed to convert vectorized SVG to CMYK:', error);
