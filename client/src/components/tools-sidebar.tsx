@@ -783,12 +783,15 @@ export default function ToolsSidebar({
               // Check if file was auto-converted to CMYK during upload
               const hasConvertedColors = svgColors.some(color => color.converted);
               
+              // Check if file has CMYK colors (either original or preserved)
+              const hasCMYKColors = svgColors.some(color => color.isCMYK === true);
+              
               // Check if element has manual color overrides 
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
 
-              if (hasConvertedColors) {
-                // File was automatically converted to CMYK during upload
+              if (hasConvertedColors || hasCMYKColors) {
+                // File was automatically converted to CMYK during upload or has CMYK colors
                 colorValue = `CMYK Vector`;
                 colorStatus = "pass";
               } else if (hasColorOverrides) {
