@@ -1334,9 +1334,9 @@ export default function CanvasWorkspace({
                   {/* Transformation Handles */}
                   {isSelected && (() => {
                     // Calculate scaled handle size and positioning
-                    const handleSize = 1200 / zoom; // 12px at 100% zoom
-                    const handleOffset = 400 / zoom; // 4px offset at 100% zoom
-                    const borderWidth = 100 / zoom; // 1px border at 100% zoom
+                    const handleSize = 12; // Fixed 12px size
+                    const handleOffset = 6; // Fixed 6px offset
+                    const borderWidth = 2; // Fixed 2px border
                     
                     const handleStyle = {
                       width: `${handleSize}px`,
@@ -1428,12 +1428,12 @@ export default function CanvasWorkspace({
                       <div 
                         className="absolute left-1/2 cursor-grab z-20 bg-white shadow-lg rounded-full border-primary flex items-center justify-center"
                         style={{ 
-                          top: `-${3000 / zoom}px`,
-                          width: `${3200 / zoom}px`,
-                          height: `${3200 / zoom}px`,
+                          top: '-30px',
+                          width: '32px',
+                          height: '32px',
                           transform: 'translateX(-50%)',
-                          padding: `${800 / zoom}px`,
-                          borderWidth: `${200 / zoom}px`,
+                          padding: '8px',
+                          borderWidth: '2px',
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -1477,18 +1477,18 @@ export default function CanvasWorkspace({
                           document.addEventListener('mouseup', handleRotationMouseUp);
                         }}
                       >
-                        <RotateCw style={{ width: `${1600 / zoom}px`, height: `${1600 / zoom}px` }} className="text-primary" />
+                        <RotateCw style={{ width: '16px', height: '16px' }} className="text-primary" />
                       </div>
 
                       {/* Delete Handle - show for all elements when selected */}
                       <div 
                         className="absolute bg-red-500 hover:bg-red-600 border-white rounded-full cursor-pointer flex items-center justify-center shadow-lg z-10"
                         style={{
-                          top: `-${800 / zoom}px`,
-                          right: `-${800 / zoom}px`,
-                          width: `${2400 / zoom}px`,
-                          height: `${2400 / zoom}px`,
-                          borderWidth: `${200 / zoom}px`,
+                          top: '-8px',
+                          right: '-8px',
+                          width: '24px',
+                          height: '24px',
+                          borderWidth: '2px',
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1499,7 +1499,7 @@ export default function CanvasWorkspace({
                         }}
                         title="Delete element"
                       >
-                        <Trash2 style={{ width: `${1200 / zoom}px`, height: `${1200 / zoom}px` }} className="text-white" />
+                        <Trash2 style={{ width: '12px', height: '12px' }} className="text-white" />
                       </div>
                     </>
                     );
