@@ -1644,10 +1644,17 @@ export async function registerRoutes(app: express.Application) {
       // Set non-scaling stroke to 2.0px as per vectorizer.ai web app settings
       formData.append('output.vectorizeNonScalingStroke', '2.0');
       
-      // Add parameters to preserve small details like dots
+      // Add parameters to preserve small details and text
       formData.append('processing.despeckle_tol', '0.1'); // Low tolerance to keep small dots
       formData.append('processing.curve_fitting', 'true'); // Enable shape fitting for dots/circles
       formData.append('processing.corner_threshold', '60'); // Sensitive corner detection
+      
+      // Additional parameters to help with text detection
+      formData.append('processing.min_area', '1'); // Keep very small areas (for dots and thin letters)
+      formData.append('processing.simplify_tolerance', '0.1'); // Keep shape detail
+      formData.append('output.gap_filler', '0'); // Don't fill gaps that might be part of letters
+      formData.append('processing.smoothing', '0'); // Disable smoothing to preserve sharp edges
+      formData.append('processing.group_by', 'none'); // Don't group paths (preserves individual letters)
       
       // Production mode
       if (!isPreview) {

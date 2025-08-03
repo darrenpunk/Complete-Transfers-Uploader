@@ -1401,7 +1401,13 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
       if (widthMatch && heightMatch) {
         const width = parseFloat(widthMatch[1]);
         const height = parseFloat(heightMatch[1]);
-        isSmallElement = width < 20 && height < 20 && width > 0 && height > 0;
+        // Check for narrow vertical rectangles (like letter "I")
+        if (width < 20 && height > 20 && width > 0) {
+          isSmallElement = true;
+          console.log(`🔤 Detected narrow vertical rect (potential letter "I"): ${width.toFixed(2)}×${height.toFixed(2)}`);
+        } else if (width < 20 && height < 20 && width > 0 && height > 0) {
+          isSmallElement = true;
+        }
       }
     }
     
@@ -1421,9 +1427,11 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
           const height = Math.abs(y2 - y1);
           
           // Detect narrow vertical elements (like "I") or small dots
-          if (width < 15 && height > 0) {
+          if ((width < 15 && height > 20) || (width < 15 && height < 15 && height > 0)) {
             isSmallElement = true;
-            console.log(`🔤 Detected narrow element (potential letter): ${width.toFixed(2)}×${height.toFixed(2)}`);
+            if (width < 15 && height > 20) {
+              console.log(`🔤 Detected narrow vertical path (potential letter "I"): ${width.toFixed(2)}×${height.toFixed(2)}`);
+            }
           }
         }
         // Also check if it's a short path
