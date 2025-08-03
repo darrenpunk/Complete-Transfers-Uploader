@@ -683,33 +683,43 @@ export default function CanvasWorkspace({
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
-    // Get the actual workspace dimensions
-    const workspaceElement = canvasRef.current?.parentElement?.parentElement;
-    if (!workspaceElement) return 100;
+    // Use window dimensions as fallback
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    // Get the available workspace area
-    const workspaceRect = workspaceElement.getBoundingClientRect();
+    // Calculate available workspace area
+    // Account for sidebars (320px each), header (64px), toolbar (80px), bottom bar (80px)
+    const sidebarWidth = 320 * 2; // Left and right sidebars
+    const headerHeight = 64;
+    const toolbarHeight = 80;
+    const bottomBarHeight = 80;
+    const padding = 80; // Extra padding for comfortable viewing
     
-    // Account for padding and margins
-    const padding = 40; // Total padding around canvas
-    const maxWorkspaceWidth = workspaceRect.width - padding;
-    const maxWorkspaceHeight = workspaceRect.height - padding;
+    const maxWorkspaceWidth = viewportWidth - sidebarWidth - padding;
+    const maxWorkspaceHeight = viewportHeight - headerHeight - toolbarHeight - bottomBarHeight - padding;
+    
+    // Ensure minimum workspace size
+    const workspaceWidth = Math.max(maxWorkspaceWidth, 400);
+    const workspaceHeight = Math.max(maxWorkspaceHeight, 300);
     
     // Calculate scale factors for width and height
-    const scaleX = maxWorkspaceWidth / template.pixelWidth;
-    const scaleY = maxWorkspaceHeight / template.pixelHeight;
+    const scaleX = workspaceWidth / template.pixelWidth;
+    const scaleY = workspaceHeight / template.pixelHeight;
     
     // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage with a more aggressive approach for smaller templates
-    // Aim to fill at least 80% of the available space
-    const targetScale = optimalScale * 0.9; // Use 90% of available space
+    // Convert to percentage with a more aggressive approach
+    // For smaller templates, aim to fill more of the available space
+    const sizeRatio = (template.pixelWidth * template.pixelHeight) / (600 * 600); // Compare to A3 size
+    const fillFactor = sizeRatio < 0.5 ? 0.95 : 0.85; // Fill more aggressively for smaller templates
+    
+    const targetScale = optimalScale * fillFactor;
     
     // Allow wider range from 50% to 400% for better flexibility
     const optimalZoom = Math.min(Math.max(targetScale * 100, 50), 400);
     
-    console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Zoom: ${Math.round(optimalZoom)}%`);
+    console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Workspace: ${workspaceWidth}x${workspaceHeight}, Zoom: ${Math.round(optimalZoom)}%`);
     
     return Math.round(optimalZoom);
   };
@@ -717,11 +727,11 @@ export default function CanvasWorkspace({
   // Auto-adjust zoom when template changes
   useEffect(() => {
     if (template) {
-      // Small delay to ensure DOM is ready and measurements are accurate
+      // Longer delay to ensure DOM is fully ready and measurements are accurate
       const timeoutId = setTimeout(() => {
         const optimalZoom = calculateOptimalZoom(template);
         setZoom(optimalZoom);
-      }, 150);
+      }, 300);
       
       return () => clearTimeout(timeoutId);
     }
@@ -972,6 +982,23 @@ export default function CanvasWorkspace({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Zoom in (400% maximum)</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const optimalZoom = calculateOptimalZoom(template);
+                      setZoom(optimalZoom);
+                    }}
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Fit template to workspace</p>
                 </TooltipContent>
               </Tooltip>
             </div>
