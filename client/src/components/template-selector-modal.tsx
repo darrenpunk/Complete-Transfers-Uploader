@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 
@@ -144,6 +144,8 @@ export default function TemplateSelectorModal({
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [copies, setCopies] = useState<number>(1); // Start at 1, will be adjusted based on template
+  const [inputValue, setInputValue] = useState<string>('1'); // Separate state for input display
+  const [debouncedCopies, setDebouncedCopies] = useState<number>(1);
 
   // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
@@ -167,9 +169,18 @@ export default function TemplateSelectorModal({
   
   const minQuantity = getMinQuantity(selectedTemplateData || null);
   
+  // Debounce effect for copies
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedCopies(copies);
+    }, 300); // 300ms delay
+    
+    return () => clearTimeout(timer);
+  }, [copies]);
+  
   const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
-    queryKey: ['/api/pricing', selectedTemplate, copies],
-    enabled: !!selectedTemplate && copies > 0,
+    queryKey: ['/api/pricing', selectedTemplate, debouncedCopies],
+    enabled: !!selectedTemplate && debouncedCopies > 0,
     staleTime: 30000, // Cache for 30 seconds
   });
 
@@ -181,6 +192,7 @@ export default function TemplateSelectorModal({
       const newMinQuantity = getMinQuantity(template);
       // Always set to minimum quantity when selecting a template
       setCopies(newMinQuantity);
+      setInputValue(String(newMinQuantity));
     }
   };
 
@@ -290,8 +302,18 @@ export default function TemplateSelectorModal({
                     type="number"
                     min={minQuantity}
                     max="10000"
-                    value={copies}
-                    onChange={(e) => setCopies(Math.max(minQuantity, parseInt(e.target.value) || minQuantity))}
+                    value={inputValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setInputValue(value);
+                      const numValue = parseInt(value) || minQuantity;
+                      const validValue = Math.max(minQuantity, Math.min(10000, numValue));
+                      setCopies(validValue);
+                    }}
+                    onBlur={() => {
+                      // Ensure input shows valid value on blur
+                      setInputValue(String(copies));
+                    }}
                     className="w-24 text-center"
                   />
                   <p className="text-xs text-muted-foreground">
