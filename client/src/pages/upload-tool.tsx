@@ -587,6 +587,10 @@ export default function UploadTool() {
           variant: "destructive",
         });
       }
+    } else if (pendingRasterFile) {
+      // For regular raster files, just open the vectorizer
+      setShowRasterWarning(false);
+      setShowVectorizer(true);
     }
   };
 
@@ -651,15 +655,39 @@ export default function UploadTool() {
           const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
           
           if (pdfWithRasterOnly) {
-            console.log('PDF with raster content detected, showing vectorization options');
-            // Show raster warning for PDFs with embedded images
-            setPendingRasterFile({ 
-              file: new File([], pdfWithRasterOnly.originalName), // Placeholder file
-              fileName: pdfWithRasterOnly.originalName,
-              logoId: pdfWithRasterOnly.id, // Store logo ID for later use
-              url: pdfWithRasterOnly.url // Store URL for fetching
-            });
-            setShowRasterWarning(true);
+            console.log('PDF with raster content detected, extracting PNG image');
+            // Extract the PNG image from the PDF immediately
+            (async () => {
+              try {
+                const response = await fetch(`/api/logos/${pdfWithRasterOnly.id}/raster-image`);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const file = new File([blob], pdfWithRasterOnly.originalName.replace('.pdf', '.png'), { type: 'image/png' });
+                  console.log('Extracted PNG from PDF:', file.name, file.size);
+                  
+                  // Show raster warning with the extracted PNG
+                  setPendingRasterFile({ 
+                    file: file,
+                    fileName: pdfWithRasterOnly.originalName,
+                    logoId: pdfWithRasterOnly.id,
+                    url: pdfWithRasterOnly.url
+                  });
+                  setShowRasterWarning(true);
+                } else {
+                  throw new Error('Failed to extract raster image');
+                }
+              } catch (error) {
+                console.error('Failed to extract PNG from PDF:', error);
+                // Fallback to placeholder if extraction fails
+                setPendingRasterFile({ 
+                  file: new File([], pdfWithRasterOnly.originalName),
+                  fileName: pdfWithRasterOnly.originalName,
+                  logoId: pdfWithRasterOnly.id,
+                  url: pdfWithRasterOnly.url
+                });
+                setShowRasterWarning(true);
+              }
+            })();
           } else {
             toast({
               title: "Success",

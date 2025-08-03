@@ -1328,25 +1328,54 @@ export function removeVectorizedBackgrounds(svgContent: string): string {
   try {
     let modifiedSvg = svgContent;
     
-    // Vectorized files have a specific structure with stroke outlines
-    // Look for g elements with excessive stroke-width and remove just that group
-    const strokeGroupRegex = /<g[^>]*stroke-width\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/g>/gi;
+    // Remove ALL stroke-width attributes from vectorized files to prevent scaling issues
+    // The vectorizer.ai API sometimes adds stroke-width values that scale incorrectly
+    const strokeWidthCount = (modifiedSvg.match(/stroke-width\s*=\s*["'][^"']+["']/gi) || []).length;
+    if (strokeWidthCount > 0) {
+      modifiedSvg = modifiedSvg.replace(/\s*stroke-width\s*=\s*["'][^"']+["']/gi, '');
+      console.log(`🎨 Removed ${strokeWidthCount} stroke-width attributes to prevent scaling issues`);
+    }
     
-    modifiedSvg = modifiedSvg.replace(strokeGroupRegex, (match, strokeWidth) => {
-      const width = parseFloat(strokeWidth);
-      // Only remove groups with abnormally large stroke widths (vectorizer artifacts)
-      if (width > 100) {
-        console.log(`🎨 Removing stroke outline group with width: ${width}`);
-        return ''; // Remove the entire stroke group
+    // Remove stroke attributes from elements (but keep stroke color information)
+    // This helps prevent stroke scaling artifacts while preserving color data
+    const strokeAttrCount = (modifiedSvg.match(/\s+stroke\s*=\s*["'][^"']+["']/gi) || []).length;
+    if (strokeAttrCount > 0) {
+      // Only remove if it's not a color value (hex, rgb, or color name)
+      modifiedSvg = modifiedSvg.replace(/\s+stroke\s*=\s*["'](?!#|rgb|none)[^"']+["']/gi, '');
+      console.log(`🎨 Removed non-color stroke attributes`);
+    }
+    
+    // Remove vector-effect="non-scaling-stroke" attributes which can cause rendering issues
+    const vectorEffectCount = (modifiedSvg.match(/vector-effect\s*=\s*["']non-scaling-stroke["']/gi) || []).length;
+    if (vectorEffectCount > 0) {
+      modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["']non-scaling-stroke["']/gi, '');
+      console.log(`🎨 Removed ${vectorEffectCount} non-scaling-stroke attributes`);
+    }
+    
+    // Remove stroke-related style properties from style attributes
+    modifiedSvg = modifiedSvg.replace(/style\s*=\s*["']([^"']+)["']/gi, (match, styles) => {
+      const cleanedStyles = styles
+        .split(';')
+        .filter((style: string) => !style.trim().startsWith('stroke-width'))
+        .join(';');
+      return cleanedStyles ? `style="${cleanedStyles}"` : '';
+    });
+    
+    // Remove groups that only contain strokes (common vectorizer artifact)
+    const strokeGroupRegex = /<g[^>]*>[\s\S]*?<\/g>/gi;
+    modifiedSvg = modifiedSvg.replace(strokeGroupRegex, (match) => {
+      // Check if this group only contains stroke elements without fills
+      const hasFill = match.includes('fill=') && !match.includes('fill="none"');
+      const hasOnlyStrokes = match.includes('stroke=') && !hasFill;
+      
+      if (hasOnlyStrokes) {
+        console.log(`🎨 Removing stroke-only group`);
+        return '';
       }
       return match;
     });
     
-    // Also remove vector-effect="non-scaling-stroke" attributes which can cause rendering issues
-    modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["']non-scaling-stroke["']/gi, '');
-    console.log(`🎨 Removed non-scaling-stroke attributes`);
-    
-    console.log(`🎨 Background removal complete for vectorized SVG`);
+    console.log(`🎨 Vectorized SVG cleaning complete`);
     return modifiedSvg;
     
   } catch (error) {
