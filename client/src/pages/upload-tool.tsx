@@ -582,8 +582,12 @@ export default function UploadTool() {
           type: file.type
         });
         
-        // Update the pending file with the actual image
-        setPendingRasterFile(prev => ({ ...prev!, file }));
+        // Update the pending file with the actual image AND the new filename
+        setPendingRasterFile(prev => ({ 
+          ...prev!, 
+          file,
+          fileName: file.name // Update fileName to match the PNG
+        }));
         
         // Use setTimeout to ensure state update completes before changing modals
         setTimeout(() => {

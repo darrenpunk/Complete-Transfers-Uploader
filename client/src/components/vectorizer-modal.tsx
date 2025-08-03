@@ -57,7 +57,14 @@ export function VectorizerModal({
   // Removed size editor state - users will resize on canvas
 
   // Debug logging
-  console.log('VectorizerModal render:', { open, fileName, hasImageFile: !!imageFile });
+  console.log('VectorizerModal render:', { 
+    open, 
+    fileName, 
+    hasImageFile: !!imageFile,
+    fileSize: imageFile?.size,
+    fileType: imageFile?.type,
+    fileInstance: imageFile instanceof File ? 'File' : imageFile instanceof Blob ? 'Blob' : typeof imageFile
+  });
 
   // Removed sizing functions - users will resize on canvas
 
