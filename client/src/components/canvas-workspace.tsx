@@ -519,12 +519,18 @@ export default function CanvasWorkspace({
         if (isDragging && selectedElement && template) {
           // Convert pixels back to mm for storage
           const mmToPixelRatio = template.pixelWidth / template.width;
+          const safetyMargin = 3; // 3mm safety margin
+          
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
+          
+          // Constrain to safe zone
+          const maxX = template.width - safetyMargin - selectedElement.width;
+          const maxY = template.height - safetyMargin - selectedElement.height;
 
           updateElementDirect(selectedElement.id, { 
-            x: Math.max(0, newX), 
-            y: Math.max(0, newY) 
+            x: Math.max(safetyMargin, Math.min(newX, maxX)), 
+            y: Math.max(safetyMargin, Math.min(newY, maxY)) 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage

@@ -383,8 +383,52 @@ export default function UploadTool() {
 
 
 
-  // Handle element alignment
-  const handleAlignElement = (elementId: string, alignment: { x?: number; y?: number }) => {
+  // Handle element alignment from ToolsSidebar (string-based)
+  const handleAlignElement = (elementId: string, alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+    if (!currentProject || !canvasElements) return;
+    
+    const element = canvasElements.find(el => el.id === elementId);
+    if (!element) return;
+    
+    const template = templateSizes.find(t => t.id === currentProject.templateSize);
+    if (!template) return;
+    
+    const safetyMargin = 3; // 3mm safety margin
+    const safetyMarginPx = safetyMargin / 0.35; // Convert to pixels
+    
+    let updates: { x?: number; y?: number } = {};
+    
+    switch (alignment) {
+      case 'left':
+        updates.x = safetyMarginPx;
+        break;
+      case 'center':
+        const safeZoneWidth = template.pixelWidth - (2 * safetyMarginPx);
+        updates.x = safetyMarginPx + (safeZoneWidth - element.width) / 2;
+        break;
+      case 'right':
+        updates.x = template.pixelWidth - safetyMarginPx - element.width;
+        break;
+      case 'top':
+        updates.y = safetyMarginPx;
+        break;
+      case 'middle':
+        const safeZoneHeight = template.pixelHeight - (2 * safetyMarginPx);
+        updates.y = safetyMarginPx + (safeZoneHeight - element.height) / 2;
+        break;
+      case 'bottom':
+        updates.y = template.pixelHeight - safetyMarginPx - element.height;
+        break;
+    }
+    
+    updateElementMutation.mutate({
+      id: elementId,
+      updates
+    });
+  };
+
+  // Handle element alignment from PropertiesPanel (coordinate-based)
+  const handleAlignElementByCoordinates = (elementId: string, alignment: { x?: number; y?: number }) => {
     if (!currentProject) return;
     
     updateElementMutation.mutate({
@@ -410,12 +454,20 @@ export default function UploadTool() {
     const groupWidth = maxX - minX;
     const groupHeight = maxY - minY;
     
-    // Calculate offset to center the group
+    // Calculate offset to center the group within safe zone
+    const safetyMargin = 3; // 3mm safety margin
     const templateWidth = 297; // A3 width in mm
     const templateHeight = 420; // A3 height in mm
     
-    const targetCenterX = templateWidth / 2;
-    const targetCenterY = templateHeight / 2;
+    // Safe zone dimensions
+    const safeZoneX = safetyMargin;
+    const safeZoneY = safetyMargin;
+    const safeZoneWidth = templateWidth - (2 * safetyMargin);
+    const safeZoneHeight = templateHeight - (2 * safetyMargin);
+    
+    // Center of safe zone
+    const targetCenterX = safeZoneX + (safeZoneWidth / 2);
+    const targetCenterY = safeZoneY + (safeZoneHeight / 2);
     const currentCenterX = minX + groupWidth / 2;
     const currentCenterY = minY + groupHeight / 2;
     
@@ -715,7 +767,7 @@ export default function UploadTool() {
             project={currentProject}
             templateSizes={templateSizes}
             onTemplateChange={handleTemplateChange}
-            onAlignElement={handleAlignElement}
+            onAlignElement={handleAlignElementByCoordinates}
             onCenterAllElements={handleCenterAllElements}
             maintainAspectRatio={maintainAspectRatio}
             onMaintainAspectRatioChange={setMaintainAspectRatio}

@@ -205,48 +205,55 @@ export default function PropertiesPanel({
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     if (!currentTemplate) return;
     
+    const safetyMargin = 3; // 3mm safety margin
     const templateWidth = currentTemplate.width;
     const templateHeight = currentTemplate.height;
+    
+    // Calculate safe zone dimensions
+    const safeZoneX = safetyMargin;
+    const safeZoneY = safetyMargin;
+    const safeZoneWidth = templateWidth - (2 * safetyMargin);
+    const safeZoneHeight = templateHeight - (2 * safetyMargin);
     
     let x = currentElement.x;
     let y = currentElement.y;
     
     switch (alignment) {
       case 'top-left':
-        x = 0;
-        y = 0;
+        x = safeZoneX;
+        y = safeZoneY;
         break;
       case 'top-center':
-        x = (templateWidth - currentElement.width) / 2;
-        y = 0;
+        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
+        y = safeZoneY;
         break;
       case 'top-right':
-        x = templateWidth - currentElement.width;
-        y = 0;
+        x = safeZoneX + safeZoneWidth - currentElement.width;
+        y = safeZoneY;
         break;
       case 'middle-left':
-        x = 0;
-        y = (templateHeight - currentElement.height) / 2;
+        x = safeZoneX;
+        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
         break;
       case 'center':
-        x = (templateWidth - currentElement.width) / 2;
-        y = (templateHeight - currentElement.height) / 2;
+        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
+        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
         break;
       case 'middle-right':
-        x = templateWidth - currentElement.width;
-        y = (templateHeight - currentElement.height) / 2;
+        x = safeZoneX + safeZoneWidth - currentElement.width;
+        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
         break;
       case 'bottom-left':
-        x = 0;
-        y = templateHeight - currentElement.height;
+        x = safeZoneX;
+        y = safeZoneY + safeZoneHeight - currentElement.height;
         break;
       case 'bottom-center':
-        x = (templateWidth - currentElement.width) / 2;
-        y = templateHeight - currentElement.height;
+        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
+        y = safeZoneY + safeZoneHeight - currentElement.height;
         break;
       case 'bottom-right':
-        x = templateWidth - currentElement.width;
-        y = templateHeight - currentElement.height;
+        x = safeZoneX + safeZoneWidth - currentElement.width;
+        y = safeZoneY + safeZoneHeight - currentElement.height;
         break;
     }
     

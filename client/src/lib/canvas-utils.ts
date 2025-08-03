@@ -32,10 +32,14 @@ export const snapToGrid = (value: number, gridSize: number = 10): number => {
 
 export const constrainToCanvas = (
   transform: Transform,
-  canvasSize: Size
+  canvasSize: Size,
+  safetyMarginMm: number = 3
 ): Transform => {
-  const constrainedX = Math.max(0, Math.min(transform.x, canvasSize.width - transform.width));
-  const constrainedY = Math.max(0, Math.min(transform.y, canvasSize.height - transform.height));
+  // Convert safety margin from mm to pixels (using 0.35mm per pixel)
+  const safetyMarginPx = safetyMarginMm / 0.35;
+  
+  const constrainedX = Math.max(safetyMarginPx, Math.min(transform.x, canvasSize.width - transform.width - safetyMarginPx));
+  const constrainedY = Math.max(safetyMarginPx, Math.min(transform.y, canvasSize.height - transform.height - safetyMarginPx));
   
   return {
     ...transform,
@@ -108,32 +112,46 @@ export const getBoundingBox = (transforms: Transform[]): Transform | null => {
 export const alignElements = (
   elements: Transform[],
   alignType: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom',
-  canvasSize?: Size
+  canvasSize?: Size,
+  safetyMarginMm: number = 3
 ): Transform[] => {
   if (elements.length === 0) return elements;
   
   const boundingBox = getBoundingBox(elements);
   if (!boundingBox) return elements;
   
+  // Convert safety margin from mm to pixels (using 0.35mm per pixel)
+  const safetyMarginPx = safetyMarginMm / 0.35;
+  
   return elements.map(element => {
     switch (alignType) {
       case 'left':
-        return { ...element, x: boundingBox.x };
+        return { ...element, x: safetyMarginPx };
       case 'center':
         if (canvasSize) {
-          return { ...element, x: (canvasSize.width - element.width) / 2 };
+          const safeZoneWidth = canvasSize.width - (2 * safetyMarginPx);
+          const safeZoneCenterX = safetyMarginPx + (safeZoneWidth / 2);
+          return { ...element, x: safeZoneCenterX - (element.width / 2) };
         }
         return { ...element, x: boundingBox.x + (boundingBox.width - element.width) / 2 };
       case 'right':
+        if (canvasSize) {
+          return { ...element, x: canvasSize.width - safetyMarginPx - element.width };
+        }
         return { ...element, x: boundingBox.x + boundingBox.width - element.width };
       case 'top':
-        return { ...element, y: boundingBox.y };
+        return { ...element, y: safetyMarginPx };
       case 'middle':
         if (canvasSize) {
-          return { ...element, y: (canvasSize.height - element.height) / 2 };
+          const safeZoneHeight = canvasSize.height - (2 * safetyMarginPx);
+          const safeZoneCenterY = safetyMarginPx + (safeZoneHeight / 2);
+          return { ...element, y: safeZoneCenterY - (element.height / 2) };
         }
         return { ...element, y: boundingBox.y + (boundingBox.height - element.height) / 2 };
       case 'bottom':
+        if (canvasSize) {
+          return { ...element, y: canvasSize.height - safetyMarginPx - element.height };
+        }
         return { ...element, y: boundingBox.y + boundingBox.height - element.height };
       default:
         return element;
