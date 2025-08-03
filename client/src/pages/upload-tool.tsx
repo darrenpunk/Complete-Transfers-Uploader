@@ -22,6 +22,7 @@ import { VectorizationServiceForm } from "@/components/vectorization-service-for
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
 import { RasterWarningModal } from "@/components/raster-warning-modal";
+import { VectorizerModal } from "@/components/vectorizer-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -48,6 +49,7 @@ export default function UploadTool() {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
+  const [showVectorizer, setShowVectorizer] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -981,6 +983,39 @@ export default function UploadTool() {
           onPhotographicApprove={handlePhotographicApprove}
           onVectorizeWithAI={handleVectorizeWithAI}
           onVectorizeWithService={handleVectorizeWithService}
+        />
+      )}
+
+      {/* Vectorizer Modal */}
+      {pendingRasterFile && pendingRasterFile.file && (
+        <VectorizerModal
+          open={showVectorizer}
+          onClose={() => {
+            setShowVectorizer(false);
+            setPendingRasterFile(null);
+          }}
+          fileName={pendingRasterFile.fileName}
+          imageFile={pendingRasterFile.file}
+          onVectorDownload={async (vectorSvg) => {
+            console.log('Vector download handler called with SVG');
+            // Close the vectorizer modal
+            setShowVectorizer(false);
+            
+            // Create a blob from the SVG string
+            const blob = new Blob([vectorSvg], { type: 'image/svg+xml' });
+            const file = new File([blob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg|pdf)$/i, '.svg'), { type: 'image/svg+xml' });
+            
+            // Upload the vectorized file
+            handleFilesUpload([file]);
+            
+            // Clean up
+            setPendingRasterFile(null);
+            
+            toast({
+              title: "Success",
+              description: "Vectorized file has been uploaded to your project",
+            });
+          }}
         />
       )}
 
