@@ -786,11 +786,22 @@ export default function ToolsSidebar({
               // Check if file has CMYK colors (either original or preserved)
               const hasCMYKColors = svgColors.some(color => color.isCMYK === true);
               
+              // Check if logo itself has isCMYKPreserved flag
+              const isCMYKPreserved = logo.isCMYKPreserved === true;
+              
               // Check if element has manual color overrides 
               const hasColorOverrides = selectedElement.colorOverrides && 
                 Object.keys(selectedElement.colorOverrides).length > 0;
 
-              if (hasConvertedColors || hasCMYKColors) {
+              console.log('Preflight CMYK Check:', {
+                hasConvertedColors,
+                hasCMYKColors,
+                isCMYKPreserved,
+                hasColorOverrides,
+                svgColors: svgColors.map(c => ({ isCMYK: c.isCMYK, converted: c.converted }))
+              });
+
+              if (hasConvertedColors || hasCMYKColors || isCMYKPreserved) {
                 // File was automatically converted to CMYK during upload or has CMYK colors
                 colorValue = `CMYK Vector`;
                 colorStatus = "pass";
