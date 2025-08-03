@@ -52,6 +52,7 @@ export function VectorizerModal({
   const [deletedColors, setDeletedColors] = useState<Set<string>>(new Set()); // Track deleted colors
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
+  const [removeWhiteBackground, setRemoveWhiteBackground] = useState(false); // Toggle for white background removal
   
   // Removed size editor state - users will resize on canvas
 
@@ -193,6 +194,7 @@ export function VectorizerModal({
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('preview', 'true'); // This ensures no credits are consumed
+      formData.append('removeBackground', removeWhiteBackground.toString());
       
       const response = await fetch('/api/vectorize?preview=true', {
         method: 'POST',
@@ -271,6 +273,7 @@ export function VectorizerModal({
         const formData = new FormData();
         formData.append('image', imageFile);
         formData.append('preview', 'false'); // Production mode
+        formData.append('removeBackground', removeWhiteBackground.toString());
         
         const response = await fetch('/api/vectorize', {
           method: 'POST',
@@ -1093,22 +1096,24 @@ export function VectorizerModal({
           {previewUrl && !isProcessing && !error && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Zoom Controls */}
-              <div className="flex items-center justify-center gap-4 mb-4 flex-shrink-0">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setZoom(Math.max(25, zoom - 25))}
-                      disabled={zoom <= 25}
-                    >
-                      <ZoomOut className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Zoom out (min 25%)</p>
-                  </TooltipContent>
-                </Tooltip>
+              <div className="flex items-center justify-between gap-4 mb-4 flex-shrink-0">
+                {/* Zoom Controls */}
+                <div className="flex items-center gap-4">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setZoom(Math.max(25, zoom - 25))}
+                        disabled={zoom <= 25}
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Zoom out (min 25%)</p>
+                    </TooltipContent>
+                  </Tooltip>
                 
                 <div className="flex items-center gap-2 min-w-[200px]">
                   <Tooltip>
@@ -1161,6 +1166,36 @@ export function VectorizerModal({
                     <p>Reset to 100% zoom</p>
                   </TooltipContent>
                 </Tooltip>
+                </div>
+                
+                {/* White Background Toggle */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="remove-white-bg" className="text-sm font-medium cursor-pointer">
+                    Remove White Background
+                  </label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <input
+                          id="remove-white-bg"
+                          type="checkbox"
+                          checked={removeWhiteBackground}
+                          onChange={(e) => {
+                            setRemoveWhiteBackground(e.target.checked);
+                            // Re-process with new setting
+                            if (imageFile) {
+                              processVectorization();
+                            }
+                          }}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Automatically remove white backgrounds during vectorization</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
 
 

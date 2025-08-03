@@ -1255,13 +1255,15 @@ export async function registerRoutes(app: express.Application) {
   });
 
   // Function to convert SVG to full CMYK format for vectorized files
-  function convertVectorizedSvgToFullCmyk(svgContent: string): string {
+  function convertVectorizedSvgToFullCmyk(svgContent: string, removeBackground: boolean = true): string {
     try {
       let modifiedSvg = svgContent;
       
-      // Remove any background rectangles or fills that cover the entire canvas
-      // This helps preserve transparency in vectorized files
-      modifiedSvg = removeBackgroundFills(modifiedSvg);
+      // Only remove background if explicitly requested
+      // This helps preserve transparency in vectorized files when needed
+      if (removeBackground) {
+        modifiedSvg = removeBackgroundFills(modifiedSvg);
+      }
       
       // Find all hex color values in the SVG
       const hexColorRegex = /#[0-9a-fA-F]{6}/g;
@@ -1618,7 +1620,8 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const isPreview = req.body.preview === 'true';
-      console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview})`);
+      const removeBackground = req.body.removeBackground !== 'false'; // Default to true for backward compatibility
+      console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground})`);
       console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
 
       // Check if we have vectorizer API credentials
@@ -1840,7 +1843,7 @@ export async function registerRoutes(app: express.Application) {
       // Convert vectorized SVG to full CMYK format to avoid RGB warnings
       let cmykSvg = cleanedSvg;
       try {
-        cmykSvg = convertVectorizedSvgToFullCmyk(cleanedSvg);
+        cmykSvg = convertVectorizedSvgToFullCmyk(cleanedSvg, removeBackground);
         console.log(`🎨 Converted vectorized SVG to CMYK format`);
       } catch (error) {
         console.error('Failed to convert vectorized SVG to CMYK:', error);
