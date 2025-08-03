@@ -1749,8 +1749,11 @@ export async function registerRoutes(app: express.Application) {
       }
       
       // Look for any narrow vertical paths that might be the letter "I"
+      const allPathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
+      console.log(`📊 Total paths in raw SVG: ${allPathMatches.length}`);
+      
       let narrowVerticalPaths = 0;
-      pathMatches.forEach((pathMatch) => {
+      allPathMatches.forEach((pathMatch) => {
         const dMatch = pathMatch.match(/d="([^"]+)"/);
         if (dMatch) {
           const pathData = dMatch[1];
@@ -1782,7 +1785,7 @@ export async function registerRoutes(app: express.Application) {
       console.log(`📊 Total narrow vertical paths (potential "I" letters): ${narrowVerticalPaths}`);
       
       // Look for very small closed paths that could be dots or letters
-      pathMatches.forEach((pathMatch, index) => {
+      allPathMatches.forEach((pathMatch, index) => {
         const dMatch = pathMatch.match(/d="([^"]+)"/);
         if (dMatch) {
           const pathData = dMatch[1];
