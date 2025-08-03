@@ -1208,6 +1208,11 @@ export default function CanvasWorkspace({
               const elementX = element.x * mmToPixelRatio * (zoom / 100);
               const elementY = element.y * mmToPixelRatio * (zoom / 100);
               
+              // For the bounding box, we need the exact content size without extra padding
+              // The element dimensions from the database should already be cropped to content
+              const boundingBoxWidth = elementWidth;
+              const boundingBoxHeight = elementHeight;
+              
               // Debug: Log element dimensions when selected
               if (isSelected) {
                 console.log(`Canvas element ${element.id} dimensions:`, {
@@ -1244,7 +1249,9 @@ export default function CanvasWorkspace({
                   <div 
                     className="absolute inset-0 flex items-center justify-center overflow-hidden" 
                     style={{ 
-                      backgroundColor: element.garmentColor || 'transparent'
+                      backgroundColor: element.garmentColor || 'transparent',
+                      padding: 0,
+                      margin: 0
                     }}
                   >
                     {/* Logo Elements */}
