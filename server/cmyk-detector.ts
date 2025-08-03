@@ -50,7 +50,14 @@ export class CMYKDetector {
           '/CMYK',
           'cmyk(',
           '/ColorSpace /DeviceCMYK',
-          '/CS /DeviceCMYK'
+          '/CS /DeviceCMYK',
+          '<xmpG:mode>CMYK</xmpG:mode>',  // XMP metadata CMYK indicator
+          'CMYK Red',                      // CMYK swatch names
+          'CMYK Yellow',
+          'CMYK Green',
+          'CMYK Cyan',
+          'CMYK Magenta',
+          'CMYK Black'
         ];
         
         for (const indicator of cmykIndicators) {
