@@ -387,6 +387,8 @@ export default function ToolsSidebar({
       return response.json();
     },
     onSuccess: (newLogos) => {
+      console.log('Raw response from server:', JSON.stringify(newLogos, null, 2));
+      
       // Update logos cache directly
       queryClient.setQueryData(
         ["/api/projects", project.id, "logos"],
@@ -397,7 +399,7 @@ export default function ToolsSidebar({
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
       
       // Check if any uploaded logo is a PDF with raster only content
-      const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly);
+      const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
       console.log('Upload success - newLogos:', newLogos);
       console.log('Upload success - checking each logo:');
       newLogos.forEach((logo: any) => {
