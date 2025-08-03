@@ -255,25 +255,24 @@ export default function PDFPreviewModal({
                             }
                           });
                           
-                          // Define specific garment colors to show in grid
-                          // These match the PDF screenshot colors
-                          const gridColors = [
-                            '#000000', // Black (row 1)
-                            '#000000', '#000000', '#000000',
-                            '#000000', '#4B8B3B', '#D2E31D', '#000000',  // Row 2 with green colors
-                            '#F5B2D4', '#000000', '#000000', '#FF6B35',  // Row 3 with pink and orange
-                            '#000000', '#000000', '#000000', '#000000',  // Row 4
-                            '#000000', '#000000', '#000000', '#000000'   // Row 5
-                          ];
+                          // Create grid colors based on actual project garment colors
+                          const defaultColor = project?.garmentColor || '#000000';
+                          const gridColors = Array(20).fill(defaultColor);
                           
-                          // If we have custom colors, use them in specific positions
+                          // If we have element-specific colors, place them in the grid
                           const uniqueColors = Array.from(colorsUsed.keys());
                           if (uniqueColors.length > 1) {
-                            // Place unique colors in specific grid positions
-                            gridColors[5] = uniqueColors[1] || '#4B8B3B';  // Green in row 2
-                            gridColors[6] = uniqueColors[2] || '#D2E31D';  // Yellow-green in row 2
-                            gridColors[8] = uniqueColors[3] || '#F5B2D4';  // Pink in row 3
-                            gridColors[11] = uniqueColors[4] || '#FF6B35'; // Orange in row 3
+                            // Distribute unique colors across the grid
+                            // Place them in a pattern similar to the PDF output
+                            if (uniqueColors[1]) gridColors[5] = uniqueColors[1];   // Row 2, col 2
+                            if (uniqueColors[2]) gridColors[6] = uniqueColors[2];   // Row 2, col 3
+                            if (uniqueColors[3]) gridColors[8] = uniqueColors[3];   // Row 3, col 1
+                            if (uniqueColors[4]) gridColors[11] = uniqueColors[4];  // Row 3, col 4
+                            // Continue pattern for more colors
+                            for (let i = 5; i < uniqueColors.length && i < 20; i++) {
+                              const gridIndex = 12 + (i - 5);
+                              if (gridIndex < 20) gridColors[gridIndex] = uniqueColors[i];
+                            }
                           }
                           
                           // Create grid of logo instances (4 columns, 5 rows = 20 total)
@@ -292,7 +291,8 @@ export default function PDFPreviewModal({
                                   {canvasElements.length > 0 && logos.length > 0 && (
                                     <div className="absolute inset-0 flex items-center justify-center p-3">
                                       <img
-                                        src={`/uploads/${logos[0].filename}`}
+                                        key={`${project?.id}-${logos[0].id}-${i}`}
+                                        src={`/uploads/${logos[0].filename}?t=${Date.now()}`}
                                         alt={logos[0].originalName}
                                         className="max-w-full max-h-full object-contain"
                                       />
