@@ -6,8 +6,10 @@ This is a full-stack web application for uploading logo files and creating layou
 **Current Status**: 98% complete. Production-ready application with enhanced PDF generation showing garment color names with CMYK values instead of hex codes. PDF preview modal updated to display grid layout matching actual PDF output with color labels. Added educational "Learn More about Colour Modes" feature with content from CompleteTransfers.com explaining CMYK vs RGB differences. Added "Artwork Requirements" button in the header that opens a comprehensive modal with artwork guidelines and imagery from CompleteTransfers.com/artwork page. Enhanced artwork requirements modal with "Vector Artwork" and "Raster Artwork" headers above comparison image. Pending: Final image assets and ink color adjustments.
 
 **Deployment Strategy**: User plans to convert this into an Odoo 16 module. Two separate projects will be created:
-1. Odoo Module Project - Port the artwork uploader functionality to Odoo 16 module format
+1. Odoo Module Project - Port the artwork uploader functionality to Odoo 16 module format with full webcart integration (add to cart, checkout, order tracking)
 2. Odoo Website Redesign Project - Create a modern, SEO-optimized website design that integrates seamlessly with the artwork uploader module
+
+**E-commerce Integration**: Full cart functionality will be implemented in the Odoo module version to leverage Odoo's existing e-commerce infrastructure, rather than adding it to this standalone proof-of-concept.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
