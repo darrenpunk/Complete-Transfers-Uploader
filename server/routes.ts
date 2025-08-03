@@ -1499,41 +1499,93 @@ export async function registerRoutes(app: express.Application) {
       }
       
       try {
-        // Use pdfimages to extract the first image
-        const outputPrefix = path.join(uploadDir, `${logo.filename}_extracted`);
-        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefix}"`;
-        console.log('🏃 Running extraction command:', extractCommand);
-        
-        const { stdout, stderr } = await execAsync(extractCommand);
-        console.log('📤 Extraction stdout:', stdout);
-        if (stderr) console.log('⚠️ Extraction stderr:', stderr);
-        
-        // Find the extracted image (it will have a number suffix)
-        const possibleFiles = [
-          `${logo.filename}_extracted-000.png`,
-          `${logo.filename}_extracted-001.png`,
-          `${logo.filename}_extracted-0.png`,
-          `${logo.filename}_extracted-1.png`
-        ];
-        
-        console.log('🔍 Looking for extracted files:', possibleFiles);
-        
+        // Try multiple extraction methods to ensure we get a proper PNG
         let extractedFile = null;
-        for (const file of possibleFiles) {
-          const filePath = path.join(uploadDir, file);
-          console.log('Checking:', filePath, fs.existsSync(filePath));
-          if (fs.existsSync(filePath)) {
-            extractedFile = filePath;
-            break;
+        
+        // Method 1: Try pdfimages first
+        try {
+          const outputPrefix = path.join(uploadDir, `${logo.filename}_extracted`);
+          const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefix}"`;
+          console.log('🏃 Method 1: Running pdfimages extraction:', extractCommand);
+          
+          const { stdout, stderr } = await execAsync(extractCommand);
+          console.log('📤 Extraction stdout:', stdout);
+          if (stderr) console.log('⚠️ Extraction stderr:', stderr);
+          
+          // Find the extracted image
+          const possibleFiles = [
+            `${logo.filename}_extracted-000.png`,
+            `${logo.filename}_extracted-001.png`,
+            `${logo.filename}_extracted-0.png`,
+            `${logo.filename}_extracted-1.png`
+          ];
+          
+          for (const file of possibleFiles) {
+            const filePath = path.join(uploadDir, file);
+            if (fs.existsSync(filePath)) {
+              extractedFile = filePath;
+              console.log('✅ Found extracted file via pdfimages:', extractedFile);
+              break;
+            }
+          }
+        } catch (err) {
+          console.log('⚠️ pdfimages method failed:', err);
+        }
+        
+        // Method 2: If pdfimages failed, try Ghostscript to render the PDF as PNG
+        if (!extractedFile) {
+          try {
+            extractedFile = path.join(uploadDir, `${logo.filename}_rendered.png`);
+            const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+            console.log('🏃 Method 2: Running Ghostscript rendering:', gsCommand);
+            
+            const { stdout, stderr } = await execAsync(gsCommand);
+            console.log('📤 GS stdout:', stdout);
+            if (stderr) console.log('⚠️ GS stderr:', stderr);
+            
+            if (fs.existsSync(extractedFile)) {
+              console.log('✅ Successfully rendered PDF to PNG with Ghostscript');
+            } else {
+              extractedFile = null;
+            }
+          } catch (err) {
+            console.log('⚠️ Ghostscript method failed:', err);
+            extractedFile = null;
+          }
+        }
+        
+        // Method 3: If both failed, try ImageMagick
+        if (!extractedFile) {
+          try {
+            extractedFile = path.join(uploadDir, `${logo.filename}_convert.png`);
+            const convertCommand = `convert -density 300 "${pdfPath}[0]" -background white -alpha remove -alpha off "${extractedFile}"`;
+            console.log('🏃 Method 3: Running ImageMagick conversion:', convertCommand);
+            
+            const { stdout, stderr } = await execAsync(convertCommand);
+            console.log('📤 Convert stdout:', stdout);
+            if (stderr) console.log('⚠️ Convert stderr:', stderr);
+            
+            if (fs.existsSync(extractedFile)) {
+              console.log('✅ Successfully converted PDF to PNG with ImageMagick');
+            } else {
+              extractedFile = null;
+            }
+          } catch (err) {
+            console.log('⚠️ ImageMagick method failed:', err);
+            extractedFile = null;
           }
         }
         
         if (!extractedFile) {
-          console.error('❌ No extracted files found');
+          console.error('❌ All extraction methods failed');
           throw new Error('No image extracted from PDF');
         }
         
-        console.log('✅ Found extracted file:', extractedFile);
+        console.log('✅ Final extracted file:', extractedFile);
+        
+        // Verify the PNG is valid before sending
+        const stats = fs.statSync(extractedFile);
+        console.log('📊 Extracted file size:', stats.size, 'bytes');
         
         // Send the extracted image
         res.sendFile(extractedFile, (err) => {
