@@ -833,7 +833,7 @@ export default function ToolsSidebar({
             }
             
             checks.push({
-              name: "Edit Colours",
+              name: "Colour Mode",
               status: colorStatus,
               value: colorValue
             });
