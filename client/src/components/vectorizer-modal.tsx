@@ -180,7 +180,13 @@ export function VectorizerModal({
     
     try {
       // Show preview of original image
+      console.log('Creating preview for image:', {
+        name: imageFile.name,
+        type: imageFile.type,
+        size: imageFile.size
+      });
       const imageUrl = URL.createObjectURL(imageFile);
+      console.log('Created preview URL:', imageUrl);
       setPreviewUrl(imageUrl);
       
       // Call our backend API in preview mode (no credits consumed)
@@ -193,19 +199,31 @@ export function VectorizerModal({
         body: formData,
       });
       
+      console.log('Vectorize API response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Vectorization error:', errorData);
         throw new Error(errorData.error || 'Vectorization failed');
       }
       
       const result = await response.json();
-      console.log('Received SVG:', result.svg?.substring(0, 200) + '...');
-      console.log('Full SVG length:', result.svg?.length);
-      console.log('SVG contains svg tag:', result.svg?.includes('<svg'));
-      console.log('SVG contains viewBox:', result.svg?.includes('viewBox'));
+      console.log('Vectorization result:', {
+        hasSvg: !!result.svg,
+        svgPreview: result.svg?.substring(0, 200) + '...',
+        svgLength: result.svg?.length,
+        containsSvgTag: result.svg?.includes('<svg'),
+        containsViewBox: result.svg?.includes('viewBox')
+      });
       
       // Use the SVG as-is without modifications
       const fixedSvg = result.svg;
+      
+      console.log('Setting vector SVG:', {
+        svgLength: fixedSvg?.length,
+        isString: typeof fixedSvg === 'string',
+        svgPreview: fixedSvg?.substring(0, 100)
+      });
       
       setVectorSvg(fixedSvg);
       setColoredSvg(null); // Don't initialize colored SVG
@@ -220,6 +238,13 @@ export function VectorizerModal({
       
       // Color palette always visible now
       setIsProcessing(false);
+      
+      console.log('Vectorization complete. States set:', {
+        hasVectorSvg: !!fixedSvg,
+        hasPreviewUrl: !!previewUrl,
+        colorsDetected: colors.length,
+        isProcessing: false
+      });
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Vectorization failed');
@@ -1064,6 +1089,7 @@ export function VectorizerModal({
           )}
 
           {/* Preview State */}
+          {console.log('Preview state check:', { previewUrl: !!previewUrl, isProcessing, error, vectorSvg: !!vectorSvg })}
           {previewUrl && !isProcessing && !error && (
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Zoom Controls */}

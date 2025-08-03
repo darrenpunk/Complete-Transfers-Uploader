@@ -1619,6 +1619,7 @@ export async function registerRoutes(app: express.Application) {
 
       const isPreview = req.body.preview === 'true';
       console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview})`);
+      console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
 
       // Check if we have vectorizer API credentials
       const vectorizerApiId = process.env.VECTORIZER_API_ID;
@@ -1846,6 +1847,7 @@ export async function registerRoutes(app: express.Application) {
         // Continue with RGB version if conversion fails
       }
       
+      console.log(`📤 Sending response: svg length = ${cmykSvg.length}, mode = ${isPreview ? 'preview' : 'production'}`);
       res.json({ 
         svg: cmykSvg,
         mode: isPreview ? 'preview' : 'production'

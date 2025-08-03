@@ -653,8 +653,13 @@ export default function UploadTool() {
           // Invalidate canvas elements to fetch new ones
           queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
           
-          // Check if any uploaded logo is a PDF with raster only content
+          // Check if any uploaded logo is a PDF with raster only content OR a regular raster image
           const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
+          const regularRasterFile = newLogos.find((logo: any) => 
+            logo.filetype === 'image/jpeg' || 
+            logo.filetype === 'image/jpg' || 
+            logo.filetype === 'image/png'
+          );
           
           if (pdfWithRasterOnly) {
             console.log('PDF with raster content detected, extracting PNG image');
@@ -688,6 +693,37 @@ export default function UploadTool() {
                   url: pdfWithRasterOnly.url
                 });
                 setShowRasterWarning(true);
+              }
+            })();
+          } else if (regularRasterFile) {
+            console.log('Regular raster file detected:', regularRasterFile.originalName, regularRasterFile.filetype);
+            // For regular raster files (JPEG/PNG), show vectorization options immediately
+            // Download the file first to create a File object
+            (async () => {
+              try {
+                const response = await fetch(regularRasterFile.url);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const file = new File([blob], regularRasterFile.originalName, { type: regularRasterFile.filetype });
+                  console.log('Downloaded raster file for vectorization:', file.name, file.size, file.type);
+                  
+                  // Show raster warning with the file
+                  setPendingRasterFile({ 
+                    file: file,
+                    fileName: regularRasterFile.originalName,
+                    logoId: regularRasterFile.id,
+                    url: regularRasterFile.url
+                  });
+                  setShowRasterWarning(true);
+                } else {
+                  throw new Error('Failed to download raster file');
+                }
+              } catch (error) {
+                console.error('Failed to prepare raster file for vectorization:', error);
+                toast({
+                  title: "Success",
+                  description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
+                });
               }
             })();
           } else {
