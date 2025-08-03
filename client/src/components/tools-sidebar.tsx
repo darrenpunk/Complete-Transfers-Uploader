@@ -387,7 +387,11 @@ export default function ToolsSidebar({
       return response.json();
     },
     onSuccess: (newLogos) => {
+      console.log('=== UPLOAD SUCCESS CALLBACK ===');
       console.log('Raw response from server:', JSON.stringify(newLogos, null, 2));
+      console.log('Response type:', typeof newLogos);
+      console.log('Is array:', Array.isArray(newLogos));
+      console.log('Length:', newLogos.length);
       
       // Update logos cache directly
       queryClient.setQueryData(
@@ -402,15 +406,15 @@ export default function ToolsSidebar({
       const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
       console.log('Upload success - newLogos:', newLogos);
       console.log('Upload success - checking each logo:');
-      newLogos.forEach((logo: any) => {
-        console.log('Logo:', {
+      newLogos.forEach((logo: any, index: number) => {
+        console.log(`Logo ${index}:`, {
           id: logo.id,
           filename: logo.filename,
           originalName: logo.originalName,
           isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
           isCMYKPreserved: logo.isCMYKPreserved,
           mimeType: logo.mimeType,
-          fileType: logo.fileType
+          allProperties: Object.keys(logo)
         });
       });
       console.log('Upload success - PDF with raster only check:', {
