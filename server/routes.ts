@@ -52,9 +52,9 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
       // Use Ghostscript to render PDF directly as PNG without extraction
-      // This maintains the PDF layout exactly as designed
-      // Using 200 DPI to preserve original embedded image dimensions (user's PDF is 102x102 at 200 DPI)
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r200 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      // CRITICAL: NO ANTI-ALIASING for vectorization - sharp edges are essential for Vector.AI
+      // Using 300 DPI for maximum detail and NO anti-aliasing to preserve crisp edges
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       const { stdout, stderr } = await execAsync(gsCommand);
@@ -66,7 +66,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
         // Check dimensions to ensure quality
         const dimensions = await getPNGDimensions(outputPath);
         if (dimensions) {
-          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at 200 DPI (preserves original PDF size)`);
+          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at 300 DPI (crisp edges for vectorization)`);
         }
         
         return outputPath;
@@ -2352,18 +2352,31 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // RESET TO MINIMAL VECTORIZER: Back to basic working parameters
-      console.log('🎯 MINIMAL VECTORIZER: Using basic parameters only');
+      // DEBUG VECTORIZER: Investigate why we get same results 
+      console.log('🎯 DEBUG VECTORIZER: Investigating image quality issue');
       console.log('📁 Sending file:', processedImagePath);
-      console.log('📊 File size:', fs.statSync(processedImagePath).size, 'bytes');
       
-      // Production mode for quality results
-      if (!isPreview) {
+      const imageStats = fs.statSync(processedImagePath);
+      console.log('📊 File size:', imageStats.size, 'bytes');
+      console.log('📊 File modified:', imageStats.mtime.toISOString());
+      console.log('📁 Original name:', req.file.originalname);
+      console.log('📁 MIME type:', req.file.mimetype);
+      
+      // Let's try forcing test mode to see if we get different results
+      const useTestMode = req.body.testMode === 'true';
+      if (useTestMode) {
+        formData.append('mode', 'test');
+        console.log('🧪 Using TEST mode for debugging');
+      } else if (!isPreview) {
         formData.append('mode', 'production');
         console.log('✅ Using production mode');
       } else {
         console.log('📋 Using preview mode (isPreview=true)');
       }
+      
+      // DEBUG: Let's check if the image quality is the issue
+      console.log('🔍 DEBUG: Image preprocessing path:', req.file.path, '→', processedImagePath);
+      console.log('🔍 DEBUG: Same file?', req.file.path === processedImagePath);
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
