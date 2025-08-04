@@ -1589,7 +1589,9 @@ export async function registerRoutes(app: express.Application) {
         
         // Advanced duplication pattern detection and removal
         try {
-          console.log('🔍 Analyzing image for duplication patterns...');
+          console.log('🔍 DUPLICATION ANALYSIS STARTING for file:', extractedFile);
+          console.log('📁 Current working directory:', process.cwd());
+          console.log('📂 Upload directory:', uploadDir);
           
           // Get image dimensions to understand the layout
           const identifyCommand = `identify -format "%wx%h" "${extractedFile}"`;

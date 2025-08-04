@@ -131,8 +131,8 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
           throw new Error('No logo ID returned from upload');
         }
         
-        // Extract the raster image from the PDF
-        const rasterResponse = await fetch(`/api/logos/${logoId}/raster-image`);
+        // Extract the raster image from the PDF with cache busting
+        const rasterResponse = await fetch(`/api/logos/${logoId}/raster-image?t=${Date.now()}`);
         
         if (!rasterResponse.ok) {
           throw new Error('Failed to extract raster image from PDF');
