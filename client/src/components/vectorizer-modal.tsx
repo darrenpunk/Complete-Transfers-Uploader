@@ -1752,54 +1752,7 @@ export function VectorizerModal({
                 
                 {/* White Color Management */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const currentSvg = coloredSvg || vectorSvg;
-                          if (currentSvg) {
-                            // Save current state for undo
-                            setDeletionHistory(prev => [...prev, {
-                              svg: currentSvg,
-                              colors: [...detectedColors]
-                            }]);
-                            
-                            // Remove white color and update states immediately
-                            const updatedSvg = removeColorFromSvg(currentSvg, '#ffffff');
-                            const newColors = detectColorsInSvg(updatedSvg);
-                            
-                            console.log('Before white removal:', currentSvg.substring(0, 200));
-                            console.log('After white removal:', updatedSvg.substring(0, 200));
-                            console.log('SVG length changed from', currentSvg.length, 'to', updatedSvg.length);
-                            
-                            // Clear all highlighting first
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
-                            
-                            // Update immediately like individual color deletion does
-                            setColoredSvg(updatedSvg);
-                            setDetectedColors(newColors);
-                            setDeletedColors(prev => new Set([...prev, '#ffffff']));
-                            setSvgRevision(prev => prev + 1); // Force re-render
-                            
-                            toast({
-                              title: "White Removed",
-                              description: "Removed white color from the image.",
-                            });
-                          }
-                        }}
-                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                        disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
-                      >
-                        Remove White
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Remove pure white color from the vectorized image</p>
-                    </TooltipContent>
-                  </Tooltip>
+
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
