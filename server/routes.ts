@@ -578,12 +578,20 @@ export async function registerRoutes(app: express.Application) {
               }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                // Clean SVG content to remove stroke scaling issues
-                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                // Check if this is an AI-vectorized file that should not be re-processed
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                fs.writeFileSync(svgPath, cleanedSvg);
-                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
+                                      svgContent.includes('AI_VECTORIZED_FILE');
+                
+                if (isAIVectorized) {
+                  console.log(`🤖 Skipping aggressive cleaning for AI-vectorized file: ${svgFilename}`);
+                } else {
+                  // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
+                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                  fs.writeFileSync(svgPath, cleanedSvg);
+                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                }
                 
                 // Store original file info for later embedding
                 (file as any).originalVectorPath = sourcePath;
@@ -746,12 +754,20 @@ export async function registerRoutes(app: express.Application) {
               await execAsync(svgCommand);
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                // Clean SVG content to remove stroke scaling issues
-                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                // Check if this is an AI-vectorized file that should not be re-processed
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                fs.writeFileSync(svgPath, cleanedSvg);
-                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
+                                      svgContent.includes('AI_VECTORIZED_FILE');
+                
+                if (isAIVectorized) {
+                  console.log(`🤖 Skipping aggressive cleaning for AI-vectorized file: ${svgFilename}`);
+                } else {
+                  // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
+                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                  fs.writeFileSync(svgPath, cleanedSvg);
+                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                }
                 
                 finalFilename = svgFilename;
                 finalMimeType = 'image/svg+xml';
@@ -2240,14 +2256,24 @@ export async function registerRoutes(app: express.Application) {
         // Continue with uncleaned version if cleaning fails
       }
       
-      // Convert vectorized SVG to full CMYK format to avoid RGB warnings
+      // Add AI-vectorized marker to prevent aggressive processing on re-upload
       let cmykSvg = cleanedSvg;
+      
+      // Add special marker to indicate this is a clean AI-vectorized file
+      if (!cmykSvg.includes('data-ai-vectorized="true"')) {
+        cmykSvg = cmykSvg.replace('<svg', '<svg data-ai-vectorized="true"');
+        console.log(`🤖 Added AI-vectorized marker to prevent re-processing`);
+      }
+      
+      // Skip CMYK conversion that removes backgrounds - we want to preserve the clean vectorized result
+      console.log(`🎨 Skipping CMYK conversion to preserve clean vectorized content`);
+      
+      // Just add basic metadata without aggressive processing
       try {
-        cmykSvg = convertVectorizedSvgToFullCmyk(cleanedSvg, removeBackground);
-        console.log(`🎨 Converted vectorized SVG to CMYK format`);
+        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->\n';
+        cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
       } catch (error) {
-        console.error('Failed to convert vectorized SVG to CMYK:', error);
-        // Continue with RGB version if conversion fails
+        console.error('Failed to add metadata to vectorized SVG:', error);
       }
       
       console.log(`📤 Sending response: svg length = ${cmykSvg.length}, mode = ${isPreview ? 'preview' : 'production'}`);
