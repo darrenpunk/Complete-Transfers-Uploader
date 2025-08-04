@@ -48,6 +48,9 @@
             'artwork_uploader/static/src/js/color_picker.js',
             'artwork_uploader/static/src/js/pdf_preview.js',
         ],
+        'web.assets_backend': [
+            'artwork_uploader/static/src/js/deployment_client.js',
+        ],
     },
     'installable': True,
     'application': True,

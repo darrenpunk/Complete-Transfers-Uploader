@@ -1,312 +1,287 @@
-# Odoo Module Deployment Guide
+# Hot Deployment Guide for Artwork Uploader Module
 
-## Prerequisites
+## Overview
+The Artwork Uploader module includes a comprehensive hot deployment system that allows you to deploy fixes and new features without reinstalling the entire module.
 
-### System Requirements
-- Odoo 16.0 Community or Enterprise
-- PostgreSQL 12+
-- Python 3.8+
-- 4GB RAM minimum (8GB recommended)
-- 20GB disk space
+## Features
 
-### Required System Packages
+### 1. Hot Reload Capabilities
+- **Views**: Reload XML views without restart
+- **Models**: Refresh Python models and clear caches
+- **Controllers**: Update API endpoints on the fly
+- **Full Reload**: Complete system refresh
+
+### 2. File Management
+- **Update Files**: Replace any module file with new content
+- **Automatic Backup**: Creates backups before updates
+- **Security**: Prevents access outside module directory
+
+### 3. Database Updates
+- **SQL Execution**: Run schema updates safely
+- **Allowed Operations**: ALTER TABLE, CREATE INDEX, DROP INDEX, UPDATE, INSERT
+- **Transaction Safety**: Automatic commit/rollback
+
+### 4. Backup System
+- **Module Backup**: Complete module state backup
+- **Timestamped**: Automatic timestamp in backup names
+- **Zip Format**: Compressed backups for easy storage
+
+## API Endpoints
+
+### Status Check
 ```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install -y \
-    ghostscript \
-    inkscape \
-    imagemagick \
-    librsvg2-bin \
-    poppler-utils \
-    python3-pip \
-    python3-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    libldap2-dev \
-    libsasl2-dev \
-    libssl-dev
+curl -X GET /artwork/deploy/status
 ```
 
-### Python Dependencies
+### Reload Views
 ```bash
-pip3 install \
-    pdf2image \
-    cairosvg \
-    Pillow \
-    PyPDF2
+curl -X POST /artwork/deploy/reload-views
 ```
 
-## Installation Steps
-
-### 1. Module Installation
-
+### Reload Models
 ```bash
-# Navigate to Odoo addons directory
-cd /opt/odoo/addons/
-
-# Clone or copy the module
-cp -r /path/to/odoo_artwork_uploader .
-
-# Set proper permissions
-sudo chown -R odoo:odoo odoo_artwork_uploader
-sudo chmod -R 755 odoo_artwork_uploader
+curl -X POST /artwork/deploy/reload-models
 ```
 
-### 2. Update Odoo Configuration
-
-Edit `/etc/odoo/odoo.conf`:
-
-```ini
-[options]
-addons_path = /opt/odoo/odoo/addons,/opt/odoo/addons
-limit_request = 209715200  # 200MB for file uploads
-limit_memory_hard = 2684354560  # 2.5GB
-limit_memory_soft = 2147483648  # 2GB
-workers = 4  # Adjust based on CPU cores
-max_cron_threads = 2
-```
-
-### 3. Database Configuration
-
-```sql
--- Create required extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Increase connection limits if needed
-ALTER SYSTEM SET max_connections = 200;
-```
-
-### 4. Nginx Configuration
-
-```nginx
-server {
-    listen 80;
-    server_name artwork.completetransfers.com;
-    
-    # Increase upload size
-    client_max_body_size 200M;
-    
-    # Increase timeouts
-    proxy_read_timeout 720s;
-    proxy_connect_timeout 720s;
-    proxy_send_timeout 720s;
-    
-    # Headers
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
-    add_header X-XSS-Protection "1; mode=block";
-    
-    location / {
-        proxy_pass http://127.0.0.1:8069;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-    
-    # Static files
-    location ~* /web/static/ {
-        proxy_cache_valid 200 90m;
-        proxy_buffering on;
-        expires 864000;
-        proxy_pass http://127.0.0.1:8069;
-    }
-}
-```
-
-### 5. SSL Configuration (Production)
-
+### Update File
 ```bash
-# Install certbot
-sudo apt-get install certbot python3-certbot-nginx
-
-# Get SSL certificate
-sudo certbot --nginx -d artwork.completetransfers.com
+curl -X POST /artwork/deploy/update-file \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file_path": "models/artwork_project.py",
+    "content": "# Updated model code here"
+  }'
 ```
 
-## Module Activation
-
-### 1. Update Apps List
-```
-1. Log in to Odoo as Administrator
-2. Go to Apps menu
-3. Click "Update Apps List"
-4. Search for "Artwork Uploader"
-5. Click Install
-```
-
-### 2. Initial Configuration
-```
-1. Go to Settings > Technical > System Parameters
-2. Add these parameters:
-   - artwork.max_file_size: 209715200
-   - artwork.allowed_formats: png,jpg,jpeg,svg,pdf,ai,eps
-   - artwork.ghostscript_path: /usr/bin/gs
-   - artwork.inkscape_path: /usr/bin/inkscape
-```
-
-### 3. Create Default Products
-```
-1. Go to Artwork > Configuration
-2. Run "Create Default Products" action
-3. Review and adjust pricing
-```
-
-## Security Setup
-
-### 1. User Groups
-```xml
-<!-- Create in Settings > Users & Companies > Groups -->
-<record id="group_artwork_user" model="res.groups">
-    <field name="name">Artwork User</field>
-    <field name="category_id" ref="base.module_category_sales_sales"/>
-</record>
-
-<record id="group_artwork_manager" model="res.groups">
-    <field name="name">Artwork Manager</field>
-    <field name="category_id" ref="base.module_category_sales_sales"/>
-    <field name="implied_ids" eval="[(4, ref('group_artwork_user'))]"/>
-</record>
-```
-
-### 2. Access Rights
-- Regular users: Can create and view their own projects
-- Managers: Can view all projects and modify settings
-
-## Performance Optimization
-
-### 1. Database Indexes
-```sql
--- Add indexes for better performance
-CREATE INDEX idx_artwork_project_uuid ON artwork_project(uuid);
-CREATE INDEX idx_artwork_project_state ON artwork_project(state);
-CREATE INDEX idx_artwork_logo_project ON artwork_logo(project_id);
-```
-
-### 2. Caching
-```python
-# Enable caching in odoo.conf
-[options]
-ormcache_size = 200000
-ormcache_context_size = 8192
-```
-
-### 3. Background Jobs
-Configure workers for PDF generation:
-```python
-# In odoo.conf
-[queue_job]
-channels = root:4
-```
-
-## Monitoring
-
-### 1. Health Checks
+### Run SQL
 ```bash
-# Create monitoring script
-#!/bin/bash
-# /opt/scripts/check_artwork_module.sh
-
-# Check if module is installed
-psql -U odoo -d artwork_db -c "SELECT state FROM ir_module_module WHERE name='artwork_uploader';"
-
-# Check disk space
-df -h /opt/odoo/filestore
-
-# Check service status
-systemctl status odoo
+curl -X POST /artwork/deploy/run-sql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sql": ["ALTER TABLE artwork_project ADD COLUMN new_field VARCHAR(255);"]
+  }'
 ```
 
-### 2. Log Monitoring
+### Full Reload
 ```bash
-# Monitor logs
-tail -f /var/log/odoo/odoo.log | grep artwork
-
-# Set up log rotation
-cat > /etc/logrotate.d/odoo << EOF
-/var/log/odoo/*.log {
-    daily
-    rotate 7
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 0640 odoo odoo
-}
-EOF
+curl -X POST /artwork/deploy/full-reload
 ```
 
-## Backup Strategy
-
-### 1. Database Backup
+### Create Backup
 ```bash
-#!/bin/bash
-# Daily backup script
-BACKUP_DIR="/backup/odoo"
-DATE=$(date +%Y%m%d_%H%M%S)
-
-# Backup database
-pg_dump -U odoo artwork_db > $BACKUP_DIR/artwork_db_$DATE.sql
-
-# Backup filestore
-tar -czf $BACKUP_DIR/filestore_$DATE.tar.gz /opt/odoo/filestore/
-
-# Keep only 7 days of backups
-find $BACKUP_DIR -type f -mtime +7 -delete
+curl -X POST /artwork/deploy/backup-module
 ```
 
-### 2. Automated Backups
-```bash
-# Add to crontab
-0 2 * * * /opt/scripts/backup_odoo.sh
+## JavaScript Client
+
+The module includes a JavaScript client for easy deployment from the browser console:
+
+```javascript
+// Check status
+await deploy.status()
+
+// Reload views
+await deploy.views()
+
+// Reload models  
+await deploy.models()
+
+// Full reload
+await deploy.full()
+
+// Update a file
+await deploy.file('models/artwork_project.py', 'new content')
+
+// Run SQL
+await deploy.sql(['ALTER TABLE artwork_project ADD COLUMN test VARCHAR(255);'])
+
+// Create backup
+await deploy.backup()
 ```
 
-## Troubleshooting
+## Common Deployment Scenarios
 
-### Common Issues
+### 1. Fix a Bug in Model
+```javascript
+// Create backup first
+await deploy.backup()
 
-1. **Module not appearing in Apps**
-   - Clear browser cache
-   - Restart Odoo service
-   - Check module permissions
+// Update model file
+await deploy.file('models/artwork_project.py', updatedModelCode)
 
-2. **PDF generation fails**
-   ```bash
-   # Test Ghostscript
-   gs --version
-   
-   # Test Inkscape
-   inkscape --version
-   ```
+// Reload models
+await deploy.models()
+```
 
-3. **Upload errors**
+### 2. Update View Template
+```javascript
+// Update view file
+await deploy.file('views/artwork_project_views.xml', updatedViewXML)
+
+// Reload views
+await deploy.views()
+```
+
+### 3. Add New API Endpoint
+```javascript
+// Update controller
+await deploy.file('controllers/main.py', updatedControllerCode)
+
+// Full reload needed for controllers
+await deploy.full()
+```
+
+### 4. Database Schema Change
+```javascript
+// Add new field
+await deploy.sql([
+  'ALTER TABLE artwork_project ADD COLUMN new_field VARCHAR(255);'
+])
+
+// Update model to include new field
+await deploy.file('models/artwork_project.py', updatedModelWithNewField)
+
+// Reload models
+await deploy.models()
+```
+
+## Security Considerations
+
+### 1. User Permissions
+- Requires authenticated user
+- Only users with appropriate permissions can deploy
+- Admin users recommended for production deployments
+
+### 2. File Security
+- Files must be within module directory
+- Path traversal attacks prevented
+- Automatic backups before changes
+
+### 3. SQL Security
+- Only specific SQL operations allowed
+- No DROP TABLE or dangerous operations
+- Transaction safety with automatic rollback on error
+
+## Best Practices
+
+### 1. Always Backup First
+```javascript
+await deploy.backup()
+```
+
+### 2. Test Changes in Development
+- Use deployment system in development environment first
+- Verify changes work as expected
+- Only then deploy to production
+
+### 3. Use Version Control
+- Keep track of changes in Git
+- Tag deployments for easy rollback
+- Document deployment reasons
+
+### 4. Monitor After Deployment
+- Check logs for errors
+- Verify functionality works
+- Have rollback plan ready
+
+## Error Handling
+
+### Common Errors and Solutions
+
+1. **File Update Failed**
    - Check file permissions
-   - Verify nginx upload limits
-   - Check Odoo logs
+   - Verify file path is correct
+   - Ensure content is valid
 
-### Debug Mode
-```python
-# Enable debug logging
-import logging
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
+2. **View Reload Failed**
+   - Check XML syntax
+   - Verify view references exist
+   - Clear browser cache
+
+3. **Model Reload Failed**
+   - Check Python syntax
+   - Verify model dependencies
+   - Check for circular imports
+
+4. **SQL Execution Failed**
+   - Verify SQL syntax
+   - Check table/column exists
+   - Ensure operation is allowed
+
+## Rollback Procedures
+
+### 1. File Rollback
+Each file update creates a .backup file. To rollback:
+```bash
+cp file.backup original_file
 ```
 
-## Production Checklist
+### 2. Database Rollback
+For database changes, you may need to:
+- Reverse the SQL operations
+- Restore from database backup
+- Use Odoo's built-in migration tools
 
-- [ ] SSL certificate installed
-- [ ] Firewall configured
-- [ ] Backup system tested
-- [ ] Monitoring alerts set up
-- [ ] User permissions configured
-- [ ] Performance testing completed
-- [ ] Documentation provided to users
-- [ ] Support contact information updated
+### 3. Full Module Rollback
+1. Restore from module backup zip
+2. Restart Odoo service
+3. Clear all caches
 
-## Support
+## Production Deployment Checklist
 
-For technical support:
-- Email: support@completetransfers.com
-- Documentation: /artwork/help
-- System Status: /artwork/status
+- [ ] Create backup before deployment
+- [ ] Test changes in development environment
+- [ ] Verify user permissions
+- [ ] Check for dependent modules
+- [ ] Monitor system after deployment
+- [ ] Document changes made
+- [ ] Prepare rollback plan
+- [ ] Notify team of deployment
+
+## Example Deployment Script
+
+```python
+import requests
+
+class ProductionDeployer:
+    def __init__(self, base_url, session_id):
+        self.base_url = base_url
+        self.session = requests.Session()
+        self.session.cookies['session_id'] = session_id
+    
+    def deploy_hotfix(self, file_path, content, description):
+        # Create backup
+        backup_result = self.session.post(f'{self.base_url}/artwork/deploy/backup-module')
+        print(f"Backup created: {backup_result.json()}")
+        
+        # Update file
+        update_result = self.session.post(f'{self.base_url}/artwork/deploy/update-file', 
+                                        json={'file_path': file_path, 'content': content})
+        print(f"File updated: {update_result.json()}")
+        
+        # Reload appropriate components
+        reload_result = self.session.post(f'{self.base_url}/artwork/deploy/full-reload')
+        print(f"System reloaded: {reload_result.json()}")
+        
+        return True
+
+# Usage
+deployer = ProductionDeployer('https://your-odoo-instance.com', 'your-session-id')
+deployer.deploy_hotfix('models/artwork_project.py', new_model_code, 'Fix comment field validation')
+```
+
+## Monitoring and Logging
+
+All deployment operations are logged with:
+- Timestamp
+- User who performed action
+- Files modified
+- Success/failure status
+- Error details (if any)
+
+Check Odoo logs for deployment activity:
+```bash
+tail -f /var/log/odoo/odoo.log | grep "Deployment"
+```
+
+This hot deployment system significantly reduces downtime and makes it easy to push urgent fixes and incremental improvements to your Artwork Uploader module.
