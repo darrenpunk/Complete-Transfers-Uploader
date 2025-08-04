@@ -47,8 +47,8 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
       const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs-${timestamp}.png`);
-      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
-      console.log('🎯 Method 1: FRESH EXTRACTION with 150 DPI to prevent oversized images:', gsCommand);
+      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
+      console.log('🎯 Method 1: FRESH EXTRACTION at 200 DPI for vectorization quality:', gsCommand);
       
       const { stdout, stderr } = await execAsync(gsCommand);
       console.log('📤 GS stdout:', stdout);
@@ -68,8 +68,8 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
       const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im-${timestamp}.png`);
-      const imCommand = `convert -density 150 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
-      console.log('🎯 Method 2: FRESH EXTRACTION with 150 DPI to prevent oversized images:', imCommand);
+      const imCommand = `convert -density 200 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
+      console.log('🎯 Method 2: FRESH EXTRACTION at 200 DPI for vectorization quality:', imCommand);
       
       const { stdout, stderr } = await execAsync(imCommand);
       console.log('📤 IM stdout:', stdout);
@@ -1320,12 +1320,14 @@ export async function registerRoutes(app: express.Application) {
           const pngPath = path.join(uploadDir, finalFilename);
           const directDimensions = await getPNGDimensions(pngPath);
           if (directDimensions) {
-            // For PDF extraction at 300 DPI, use proper DPI conversion: 25.4mm/300px = 0.0847mm per pixel
-            const PDF_EXTRACTION_DPI = 300;
-            const mmPerPixel = 25.4 / PDF_EXTRACTION_DPI; // 0.0847mm per pixel
+            // For PDF extraction at 200 DPI, target 102x102mm size for vectorization
+            // Calculate scale factor to achieve 102mm width regardless of extracted pixel size
+            const TARGET_WIDTH_MM = 102;
+            const TARGET_HEIGHT_MM = 102;
+            const mmPerPixel = TARGET_WIDTH_MM / Math.max(directDimensions.width, directDimensions.height);
             displayWidth = directDimensions.width * mmPerPixel;
             displayHeight = directDimensions.height * mmPerPixel;
-            console.log(`📐 Using PDF extraction DPI conversion: ${directDimensions.width}×${directDimensions.height}px at ${PDF_EXTRACTION_DPI} DPI = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm`);
+            console.log(`📐 Using PDF extraction target sizing: ${directDimensions.width}×${directDimensions.height}px → ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (targeting ${TARGET_WIDTH_MM}mm)`);
           }
         } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
