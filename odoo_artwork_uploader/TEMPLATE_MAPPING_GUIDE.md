@@ -46,36 +46,82 @@ Instead of creating new products, the module uses your existing product catalog.
 
 ## Template ID Reference
 
-### Standard Templates
-- `template-A3` → A3 size (297×420mm)
+### Available Templates in Current System (42 Total)
+
+**Screen Printed Transfers - Standard:**
+- `template-A3` → A3 size (297×420mm) 
 - `template-A4` → A4 size (210×297mm)
 - `template-A5` → A5 size (148×210mm)
+- `template-A6` → A6 size (105×148mm)
+- `template-transfer-size` → 295×100mm
+- `template-square` → 95×95mm
+- `template-badge` → 100×70mm 
+- `template-small` → 60×60mm
 
-### DTF Templates
-- `template-dtf-a3` → DTF A3
-- `template-dtf-a4` → DTF A4
-- `template-uv-dtf-a3` → UV DTF A3
-- `template-uv-dtf-a4` → UV DTF A4
+**Screen Printed Transfers - Metallic:**
+- `metallic-A3` → A3 Metallic
+- `metallic-A4` → A4 Metallic
+- `metallic-A5` → A5 Metallic
+- `metallic-A6` → A6 Metallic
+- `metallic-transfer-size` → 295×100mm Metallic
+- `metallic-square` → 95×95mm Metallic
+- `metallic-badge` → 100×70mm Metallic
+- `metallic-small` → 60×60mm Metallic
 
-### Special Effects
-- `template-glitter-a3` → Glitter A3
-- `template-metallic-a3` → Metallic A3
-- `template-holographic-a3` → Holographic A3
-- `template-glow-in-dark-a3` → Glow in Dark A3
-- `template-puff-a3` → Puff A3
-- `template-foil-a3` → Foil A3
+**Screen Printed Transfers - HD:**
+- `hd-A3` → A3 HD
+- `hd-A4` → A4 HD
 
-### Vinyl Templates
-- `template-vinyl-a3` → Vinyl A3
-- `template-vinyl-flock-a3` → Vinyl Flock A3
-- `template-reflective-a3` → Reflective A3
-- `template-hi-viz-a3` → Hi Viz A3
+**Screen Printed Transfers - Single Colour:**
+- `single-A3` → A3 Single Colour
+- `single-A4` → A4 Single Colour
+- `single-A5` → A5 Single Colour
+- `single-A6` → A6 Single Colour
+- `single-transfer-size` → 295×100mm Single Colour
+- `single-square` → 95×95mm Single Colour
+- `single-badge` → 100×70mm Single Colour
+- `single-small` → 60×60mm Single Colour
 
-### Badge Templates
-- `template-embroidery-badges-a3` → Embroidery Badges A3
-- `template-applique-badges-a3` → Applique Badges A3
-- `template-laser-cut-badges-a3` → Laser Cut Badges A3
-- `template-woven-badges-a3` → Woven Badges A3
+**Screen Printed Transfers - Zero:**
+- `zero-A3` → A3 Zero
+- `zero-A4` → A4 Zero
+- `zero-transfer-size` → 295×100mm Zero
+- `zero-square` → 95×95mm Zero
+- `zero-badge` → 100×70mm Zero
+- `zero-small` → 60×60mm Zero
+
+**Screen Printed Transfers - Reflective:**
+- `reflective-A3` → A3 Reflective
+
+**Digital Transfers - DTF:**
+- `dtf-A3` → DTF A3
+- `dtf-A4` → DTF A4
+- `dtf-transfer-size` → DTF 295×100mm
+- `dtf-square` → DTF 95×95mm
+- `dtf-badge` → DTF 100×70mm
+- `dtf-small` → DTF 60×60mm
+
+**Digital Transfers - UV DTF:**
+- `uv-dtf-square` → UV DTF 95×95mm
+
+**Digital Transfers - Woven Badges:**
+- `woven-square` → Woven Badge 95×95mm
+
+**Digital Transfers - Applique:**
+- `applique-A3` → A3 Applique
+- `applique-A4` → A4 Applique
+- `applique-A5` → A5 Applique
+- `applique-A6` → A6 Applique
+- `applique-square` → 95×95mm Applique
+- `applique-badge` → 100×70mm Applique
+- `applique-small` → 60×60mm Applique
+
+**Digital Transfers - Sublimation:**
+- `sublimation-A3` → A3 Sublimation
+- `sublimation-A4` → A4 Sublimation
+- `sublimation-mug` → Mug Sized (240×100mm) Sublimation
+
+*Note: All 42 templates are available for mapping to your products. Templates are organized by printing method and size.*
 
 ## Product Requirements
 
@@ -90,13 +136,17 @@ Your existing products should have:
 ### Scenario 1: Simple Product Structure
 If you have products like:
 - "Heat Transfer A3"
-- "Heat Transfer A4"
+- "Heat Transfer A4" 
 - "DTF Transfer A3"
+- "295×100mm Transfer"
+- "Metallic Transfer A3"
 
 Map them as:
 - `template-A3` → "Heat Transfer A3"
 - `template-A4` → "Heat Transfer A4"
-- `template-dtf-a3` → "DTF Transfer A3"
+- `dtf-A3` → "DTF Transfer A3"
+- `template-transfer-size` → "295×100mm Transfer"
+- `metallic-A3` → "Metallic Transfer A3"
 
 ### Scenario 2: Product Variants
 If using product variants:
