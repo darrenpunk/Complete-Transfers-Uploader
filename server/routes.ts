@@ -25,42 +25,67 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // Method 1: Try pdfimages first
-    try {
-      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
-      const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-      console.log('🏃 Method 1: Running pdfimages extraction:', extractCommand);
-      
-      const { stdout, stderr } = await execAsync(extractCommand);
-      console.log('📤 Extraction stdout:', stdout);
-      if (stderr) console.log('⚠️ Extraction stderr:', stderr);
-      
-      // Find the extracted image
-      const possibleFiles = [
-        `${outputPrefix}-000.png`,
-        `${outputPrefix}-001.png`,
-        `${outputPrefix}-0.png`,
-        `${outputPrefix}-1.png`
-      ];
-      
-      for (const file of possibleFiles) {
-        const filePath = path.join(path.dirname(pdfPath), file);
-        if (fs.existsSync(filePath)) {
-          extractedFile = filePath;
-          console.log('✅ Found extracted file via pdfimages:', extractedFile);
-          break;
+    // Method 1: For vectorization, try clean logo extraction first
+    if (skipDeduplication) {
+      try {
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
+        // Use lower resolution and sharper rendering for clean logo extraction suitable for vectorization
+        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r96 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log('🏃 Method 1: Running clean logo extraction for vectorization:', cleanLogoCommand);
+        
+        const { stdout, stderr } = await execAsync(cleanLogoCommand);
+        console.log('📤 Clean logo extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ Clean logo extraction stderr:', stderr);
+        
+        if (!fs.existsSync(extractedFile)) {
+          extractedFile = null;
+        } else {
+          console.log('✅ Clean logo extraction successful');
         }
+      } catch (err) {
+        console.log('⚠️ Clean logo extraction failed:', err);
+        extractedFile = null;
       }
-    } catch (err) {
-      console.log('⚠️ pdfimages method failed:', err);
     }
     
-    // Method 2: If pdfimages failed, try Ghostscript
+    // Method 2: Try pdfimages (fallback or regular processing)
+    if (!extractedFile) {
+      try {
+        const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+          console.log('🏃 Method 2: Running pdfimages extraction:', extractCommand);
+        
+        const { stdout, stderr } = await execAsync(extractCommand);
+        console.log('📤 Extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ Extraction stderr:', stderr);
+        
+        // Find the extracted image
+        const possibleFiles = [
+          `${outputPrefix}-000.png`,
+          `${outputPrefix}-001.png`,
+          `${outputPrefix}-0.png`,
+          `${outputPrefix}-1.png`
+        ];
+        
+        for (const file of possibleFiles) {
+          const filePath = path.join(path.dirname(pdfPath), file);
+          if (fs.existsSync(filePath)) {
+            extractedFile = filePath;
+            console.log('✅ Found extracted file via pdfimages:', extractedFile);
+            break;
+          }
+        }
+      } catch (err) {
+        console.log('⚠️ pdfimages method failed:', err);
+      }
+    }
+    
+    // Method 3: If pdfimages failed, try Ghostscript
     if (!extractedFile) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_rendered.png`);
         const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 2: Running Ghostscript rendering (anti-duplication):', gsCommand);
+        console.log('🏃 Method 3: Running Ghostscript rendering (anti-duplication):', gsCommand);
         
         const { stdout, stderr } = await execAsync(gsCommand);
         console.log('📤 GS stdout:', stdout);
@@ -75,12 +100,12 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       }
     }
     
-    // Method 3: Fallback to ImageMagick
+    // Method 4: Fallback to ImageMagick
     if (!extractedFile) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_magick.png`);
         const magickCommand = `convert -density 150 "${pdfPath}[0]" -trim +repage -resize '2000x2000>' "${extractedFile}"`;
-        console.log('🏃 Method 3: Running ImageMagick extraction (anti-duplication):', magickCommand);
+        console.log('🏃 Method 4: Running ImageMagick extraction (anti-duplication):', magickCommand);
         
         const { stdout, stderr } = await execAsync(magickCommand);
         console.log('📤 ImageMagick stdout:', stdout);
