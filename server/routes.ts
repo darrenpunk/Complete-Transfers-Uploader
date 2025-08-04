@@ -25,58 +25,70 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // Method 1: For vectorization, always use clean logo extraction at 200 DPI
+    // For vectorization requests, add debug info about the request
     if (skipDeduplication) {
+      console.log('🎯 VECTORIZATION REQUEST: Prioritizing original embedded images for clean vectorization');
+    }
+    
+    // Method 1: First priority - try pdfimages to get original embedded PNG at native resolution
+    try {
+      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+      const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+      console.log('🏃 Method 1: Running pdfimages extraction (original embedded PNG):', extractCommand);
+      
+      const { stdout, stderr } = await execAsync(extractCommand);
+      console.log('📤 pdfimages stdout:', stdout);
+      if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
+      
+      // Find the extracted image
+      const possibleFiles = [
+        `${outputPrefix}-000.png`,
+        `${outputPrefix}-001.png`,
+        `${outputPrefix}-0.png`,
+        `${outputPrefix}-1.png`
+      ];
+      
+      for (const file of possibleFiles) {
+        const filePath = path.join(path.dirname(pdfPath), file);
+        if (fs.existsSync(filePath)) {
+          extractedFile = filePath;
+          const stats = fs.statSync(filePath);
+          console.log('✅ Found original embedded PNG via pdfimages:', extractedFile, `(${stats.size} bytes)`);
+          
+          // For vectorization, check if this is a good quality extraction
+          if (skipDeduplication && stats.size > 100000) { // Over 100KB indicates good quality
+            console.log('🎯 HIGH QUALITY original PNG found for vectorization - using immediately');
+            return extractedFile; // Return immediately for vectorization with good quality original
+          }
+          break;
+        }
+      }
+    } catch (err) {
+      console.log('⚠️ pdfimages method failed:', err);
+    }
+    
+    // Method 2: If pdfimages failed, try high-quality extraction
+    if (!extractedFile) {
       try {
-        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
-        // Use 200 DPI resolution with sharper rendering for clean vectorization
-        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 1: Running clean logo extraction for vectorization (200 DPI):', cleanLogoCommand);
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_high_quality.png`);
+        // Use higher resolution for better quality - especially important for vectorization
+        const resolution = skipDeduplication ? 300 : 200; // Higher res for vectorization
+        const highQualityCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r${resolution} -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log(`🏃 Method 2: Running high-quality extraction (${resolution} DPI):`, highQualityCommand);
         
-        const { stdout, stderr } = await execAsync(cleanLogoCommand);
-        console.log('📤 Clean logo extraction stdout:', stdout);
-        if (stderr) console.log('⚠️ Clean logo extraction stderr:', stderr);
+        const { stdout, stderr } = await execAsync(highQualityCommand);
+        console.log('📤 High-quality extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ High-quality extraction stderr:', stderr);
         
         if (!fs.existsSync(extractedFile)) {
           extractedFile = null;
         } else {
-          console.log('✅ Clean logo extraction successful at 200 DPI');
+          const stats = fs.statSync(extractedFile);
+          console.log(`✅ High-quality extraction successful at ${resolution} DPI`, `(${stats.size} bytes)`);
         }
       } catch (err) {
-        console.log('⚠️ Clean logo extraction failed:', err);
+        console.log('⚠️ High-quality extraction failed:', err);
         extractedFile = null;
-      }
-    }
-    
-    // Method 2: For regular processing, try pdfimages to get original embedded PNG
-    if (!extractedFile) {
-      try {
-        const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
-        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-        console.log('🏃 Method 2: Running pdfimages extraction (regular processing):', extractCommand);
-        
-        const { stdout, stderr } = await execAsync(extractCommand);
-        console.log('📤 Extraction stdout:', stdout);
-        if (stderr) console.log('⚠️ Extraction stderr:', stderr);
-        
-        // Find the extracted image
-        const possibleFiles = [
-          `${outputPrefix}-000.png`,
-          `${outputPrefix}-001.png`,
-          `${outputPrefix}-0.png`,
-          `${outputPrefix}-1.png`
-        ];
-        
-        for (const file of possibleFiles) {
-          const filePath = path.join(path.dirname(pdfPath), file);
-          if (fs.existsSync(filePath)) {
-            extractedFile = filePath;
-            console.log('✅ Found extracted file via pdfimages:', extractedFile);
-            break;
-          }
-        }
-      } catch (err) {
-        console.log('⚠️ pdfimages method failed:', err);
       }
     }
 
