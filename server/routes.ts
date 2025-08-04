@@ -25,44 +25,79 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // Method 1: First priority - try pdfimages to get original embedded PNG at native resolution
-    try {
-      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
-      const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-      console.log('🏃 Method 1: Running pdfimages extraction (original embedded PNG):', extractCommand);
-      
-      const { stdout, stderr } = await execAsync(extractCommand);
-      console.log('📤 pdfimages stdout:', stdout);
-      if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
-      
-      // Find the extracted image
-      const possibleFiles = [
-        `${outputPrefix}-000.png`,
-        `${outputPrefix}-001.png`,
-        `${outputPrefix}-0.png`,
-        `${outputPrefix}-1.png`
-      ];
-      
-      for (const file of possibleFiles) {
-        const filePath = path.join(path.dirname(pdfPath), file);
-        if (fs.existsSync(filePath)) {
-          extractedFile = filePath;
-          const stats = fs.statSync(filePath);
-          console.log('✅ Found original embedded PNG via pdfimages:', extractedFile, `(${stats.size} bytes)`);
-          break;
+    // Method 1: For vectorization, prioritize original embedded PNG extraction
+    if (skipDeduplication) {
+      try {
+        const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+        console.log('🏃 Method 1: Running pdfimages extraction for vectorization (original embedded PNG):', extractCommand);
+        
+        const { stdout, stderr } = await execAsync(extractCommand);
+        console.log('📤 pdfimages stdout:', stdout);
+        if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
+        
+        // Find the extracted image
+        const possibleFiles = [
+          `${outputPrefix}-000.png`,
+          `${outputPrefix}-001.png`,
+          `${outputPrefix}-0.png`,
+          `${outputPrefix}-1.png`
+        ];
+        
+        for (const file of possibleFiles) {
+          const filePath = path.join(path.dirname(pdfPath), file);
+          if (fs.existsSync(filePath)) {
+            extractedFile = filePath;
+            const stats = fs.statSync(filePath);
+            console.log('✅ Found original embedded PNG via pdfimages for vectorization:', extractedFile, `(${stats.size} bytes)`);
+            break;
+          }
         }
+      } catch (err) {
+        console.log('⚠️ pdfimages method failed for vectorization:', err);
       }
-    } catch (err) {
-      console.log('⚠️ pdfimages method failed:', err);
     }
     
-    // Method 2: Clean extraction at 200 DPI specifically for vectorization when pdfimages fails
+    // Method 2: For regular processing, try pdfimages to get original embedded PNG
+    if (!extractedFile) {
+      try {
+        const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+        const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+        console.log('🏃 Method 2: Running pdfimages extraction (regular processing):', extractCommand);
+        
+        const { stdout, stderr } = await execAsync(extractCommand);
+        console.log('📤 pdfimages stdout:', stdout);
+        if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
+        
+        // Find the extracted image
+        const possibleFiles = [
+          `${outputPrefix}-000.png`,
+          `${outputPrefix}-001.png`,
+          `${outputPrefix}-0.png`,
+          `${outputPrefix}-1.png`
+        ];
+        
+        for (const file of possibleFiles) {
+          const filePath = path.join(path.dirname(pdfPath), file);
+          if (fs.existsSync(filePath)) {
+            extractedFile = filePath;
+            const stats = fs.statSync(filePath);
+            console.log('✅ Found original embedded PNG via pdfimages:', extractedFile, `(${stats.size} bytes)`);
+            break;
+          }
+        }
+      } catch (err) {
+        console.log('⚠️ pdfimages method failed:', err);
+      }
+    }
+    
+    // Method 3: Clean extraction fallback specifically for vectorization when original PNG isn't suitable
     if (!extractedFile && skipDeduplication) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
         // Use 200 DPI resolution with sharper rendering for clean vectorization
         const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 2: Running clean logo extraction for vectorization (200 DPI fallback):', cleanLogoCommand);
+        console.log('🏃 Method 3: Running clean logo extraction for vectorization (200 DPI fallback):', cleanLogoCommand);
         
         const { stdout, stderr } = await execAsync(cleanLogoCommand);
         console.log('📤 Clean logo extraction stdout:', stdout);
