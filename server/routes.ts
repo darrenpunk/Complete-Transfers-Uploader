@@ -817,7 +817,7 @@ export async function registerRoutes(app: express.Application) {
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
