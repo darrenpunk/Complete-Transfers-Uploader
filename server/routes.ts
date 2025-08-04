@@ -2352,19 +2352,44 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // SIMPLE VECTORIZER: Back to working state that gave good results
+      // HIGH-DETAIL VECTORIZER: Optimized for high-resolution images with fine details
       formData.append('format', 'svg');
       
-      console.log('🎯 SIMPLE VECTORIZER: Using minimal parameters for fresh results');
+      // Enhanced quality parameters for detailed images
+      const fileStats = fs.statSync(processedImagePath);
+      const isHighRes = fileStats.size > 50000; // Files larger than 50KB likely have fine details
+      
+      console.log(`🎯 HIGH-DETAIL VECTORIZER: File size ${fileStats.size} bytes (high-res: ${isHighRes})`);
       console.log('📁 Sending file:', processedImagePath);
-      console.log('📊 File size:', fs.statSync(processedImagePath).size, 'bytes');
       
       // Production mode for high-quality results
       if (!isPreview) {
         formData.append('mode', 'production');
-        console.log('✅ Using production mode for high-quality results');
+        console.log('✅ Using production mode for maximum quality');
       } else {
         console.log('📋 Using preview mode (isPreview=true)');
+      }
+      
+      // Add quality parameters for detailed preservation
+      if (isHighRes) {
+        // Higher quality settings for detailed images
+        formData.append('processing.max_colors', '256');  // Preserve more colors
+        formData.append('shapes.fitting', 'true');        // Better shape detection
+        formData.append('shapes.mode', 'spline');          // Smoother curves for text
+        formData.append('curves.line', 'true');           // Preserve line details
+        formData.append('curves.arc', 'true');            // Preserve arc details
+        formData.append('curves.cubic', 'true');          // Smooth cubic curves
+        formData.append('curves.quadratic', 'true');      // Quadratic curves
+        formData.append('gap_filler', 'true');            // Fill small gaps for clean edges
+        formData.append('processing.detail_preservation', 'high');  // Preserve fine details
+        console.log('🔧 Added high-detail parameters for crisp text and gradients');
+      } else {
+        // Standard quality for smaller images
+        formData.append('processing.max_colors', '128');
+        formData.append('shapes.fitting', 'true');
+        formData.append('curves.line', 'true');
+        formData.append('curves.cubic', 'true');
+        console.log('🔧 Added standard quality parameters');
       }
 
       // Call vectorizer.ai API with comprehensive debugging
