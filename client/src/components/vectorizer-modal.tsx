@@ -1497,7 +1497,24 @@ export function VectorizerModal({
                                 }]);
                               }
                               
-                              const updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                              // Special handling for white colors - use smart background removal
+                              let updatedSvg;
+                              const isWhiteColor = colorItem.color.toLowerCase() === '#ffffff' || 
+                                                  colorItem.color.toLowerCase() === '#fefefe' || 
+                                                  colorItem.color.toLowerCase() === '#fdfdfd' || 
+                                                  colorItem.color.toLowerCase() === '#fcfcfc' || 
+                                                  colorItem.color.toLowerCase() === '#fbfbfb' ||
+                                                  colorItem.color.toLowerCase() === 'white' ||
+                                                  colorItem.color.toLowerCase() === 'rgb(255,255,255)' ||
+                                                  colorItem.color.toLowerCase() === 'rgb(100%,100%,100%)';
+                              
+                              if (isWhiteColor) {
+                                // Use smart background removal for white colors
+                                updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
+                              } else {
+                                // Use normal color removal for non-white colors
+                                updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                              }
                               setColoredSvg(updatedSvg);
                               
                               // Track deleted color
