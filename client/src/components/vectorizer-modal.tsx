@@ -1713,6 +1713,64 @@ export function VectorizerModal({
                   </Tooltip>
                 </div>
                 
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsEyedropperActive(!isEyedropperActive);
+                          if (!isEyedropperActive) {
+                            setEyedropperColor(null);
+                            toast({
+                              title: "Eyedropper Activated",
+                              description: "Click a color to pick it, then click another to apply it.",
+                            });
+                          } else {
+                            setEyedropperColor(null);
+                            toast({
+                              title: "Eyedropper Deactivated",
+                              description: "Color picking mode disabled.",
+                            });
+                          }
+                        }}
+                        className={`border-gray-600 text-gray-100 hover:bg-gray-700 ${
+                          isEyedropperActive ? 'bg-blue-600 border-blue-500' : ''
+                        }`}
+                      >
+                        <Pipette className="w-3 h-3 mr-1" />
+                        Eyedropper
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Toggle eyedropper mode to pick and apply colors</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsEyedropperActive(false);
+                          setEyedropperColor(null);
+                          setHighlightedColor(null);
+                          setHighlightedSvg(null);
+                          setSvgRevision(prev => prev + 1);
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                      >
+                        Clear
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear all selections and modes</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                
                 
                 
                 {/* White Color Management */}
