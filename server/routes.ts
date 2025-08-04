@@ -727,7 +727,7 @@ export async function registerRoutes(app: express.Application) {
               const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`);
               if (extractedPngPath) {
                 console.log('✅ Extracted deduplicated PNG during upload:', extractedPngPath);
-                // Store the path for later use
+                // Store the path for later use in database
                 (file as any).extractedRasterPath = extractedPngPath;
               }
             } catch (extractError) {
@@ -886,6 +886,11 @@ export async function registerRoutes(app: express.Application) {
         // Add preview filename if it exists (for CMYK PDFs)
         if ((file as any).previewFilename) {
           logoData.previewFilename = (file as any).previewFilename;
+        }
+        
+        // Add extracted raster path if it exists (for PDFs with raster only)
+        if ((file as any).extractedRasterPath) {
+          logoData.extractedRasterPath = (file as any).extractedRasterPath;
         }
         
         // Add original PDF info for CMYK PDFs or PDFs with raster only
@@ -1776,9 +1781,9 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Check if we already have an extracted raster image from upload
-      if ((logo as any).extractedRasterPath && fs.existsSync((logo as any).extractedRasterPath)) {
-        console.log('✅ Using pre-extracted deduplicated PNG from upload:', (logo as any).extractedRasterPath);
-        const imageData = fs.readFileSync((logo as any).extractedRasterPath);
+      if (logo.extractedRasterPath && fs.existsSync(logo.extractedRasterPath)) {
+        console.log('✅ Using pre-extracted deduplicated PNG from upload:', logo.extractedRasterPath);
+        const imageData = fs.readFileSync(logo.extractedRasterPath);
         res.set({
           'Content-Type': 'image/png',
           'Content-Length': imageData.length.toString(),

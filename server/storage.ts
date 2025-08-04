@@ -220,6 +220,7 @@ export class MemStorage implements IStorage {
       isPhotographic: insertLogo.isPhotographic || false,
       isCMYKPreserved: insertLogo.isCMYKPreserved || false,
       isPdfWithRasterOnly: insertLogo.isPdfWithRasterOnly || false,
+      extractedRasterPath: insertLogo.extractedRasterPath ?? null,
       previewFilename: insertLogo.previewFilename || null
     };
     this.logos.set(id, logo);
@@ -263,9 +264,19 @@ export class MemStorage implements IStorage {
       isVisible: insertElement.isVisible !== undefined ? insertElement.isVisible : true,
       isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false,
       colorOverrides: insertElement.colorOverrides || null,
-      garmentColor: insertElement.garmentColor || null,
-      logoId: insertElement.logoId || null,
-      opacity: insertElement.opacity || null
+      garmentColor: insertElement.garmentColor ?? null,
+      logoId: insertElement.logoId ?? null,
+      textContent: insertElement.textContent ?? null,
+      fontSize: insertElement.fontSize ?? null,
+      fontFamily: insertElement.fontFamily ?? null,
+      textColor: insertElement.textColor ?? null,
+      textAlign: insertElement.textAlign ?? null,
+      fontWeight: insertElement.fontWeight ?? null,
+      fontStyle: insertElement.fontStyle ?? null,
+      fillColor: insertElement.fillColor ?? null,
+      strokeColor: insertElement.strokeColor ?? null,
+      strokeWidth: insertElement.strokeWidth ?? null,
+      opacity: insertElement.opacity ?? null
     };
     this.canvasElements.set(id, element);
     return element;
@@ -347,7 +358,11 @@ export class MemStorage implements IStorage {
 
   async createTemplateSize(insertTemplateSize: InsertTemplateSize): Promise<TemplateSize> {
     const id = randomUUID();
-    const templateSize: TemplateSize = { ...insertTemplateSize, id };
+    const templateSize: TemplateSize = { 
+      ...insertTemplateSize, 
+      id,
+      description: insertTemplateSize.description ?? null
+    };
     this.templateSizes.set(id, templateSize);
     return templateSize;
   }
@@ -371,8 +386,8 @@ export class MemStorage implements IStorage {
       charge: insertRequest.charge || 15,
       status: insertRequest.status || "pending",
       createdAt: new Date().toISOString(),
-      webcartOrderId: insertRequest.webcartOrderId || null,
-      completedAt: insertRequest.completedAt || null
+      webcartOrderId: insertRequest.webcartOrderId ?? null,
+      completedAt: null
     };
     this.vectorizationRequests.set(id, request);
     return request;

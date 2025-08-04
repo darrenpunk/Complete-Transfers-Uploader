@@ -41,6 +41,7 @@ export const logos = pgTable("logos", {
   isPhotographic: boolean("is_photographic").default(false), // Track if raster file was marked as photographic
   isCMYKPreserved: boolean("is_cmyk_preserved").default(false), // Track if original file had CMYK colors preserved
   isPdfWithRasterOnly: boolean("is_pdf_with_raster_only").default(false), // Track if PDF contains only raster images
+  extractedRasterPath: text("extracted_raster_path"), // Path to deduplicated PNG extracted from PDF
   previewFilename: text("preview_filename"), // PNG preview filename for CMYK PDFs
 });
 
