@@ -2343,21 +2343,27 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // DEBUGGING: Check if we can see any response from Vector.AI API
-      const timestamp = Date.now();
-      
-      // Add mode=test to use free testing API
-      formData.append('mode', 'test');
+      // PRODUCTION MODE: Use professional Vector.AI parameters for high quality
       formData.append('format', 'svg');
+      formData.append('svg.version', '1.1');
+      formData.append('group_by', 'none');
+      formData.append('draw.style', 'fill_shapes');
+      formData.append('shape_stacking', 'cutout');
+      formData.append('curves', 'all');
+      formData.append('gap_filler', 'auto');
+      formData.append('stroke.non_scaling', 'false');
+      formData.append('svg.fixed_size', 'false');
       
-      console.log(`🔬 DIAGNOSTIC TEST: timestamp=${timestamp}`);
-      console.log('🎯 Using mode=test to check if API responds at all');
-      console.log('📋 Parameters: mode=test, format=svg');
+      console.log('🎯 PRODUCTION MODE: Using professional Vector.AI parameters');
+      console.log('📋 Parameters: format=svg, group_by=none, fill_shapes, cutout, curves=all, gap_filler=auto');
       
-      // OVERRIDE: Force test mode for debugging regardless of isPreview
-      // Remove the production mode override to ensure test mode works
-      console.log(`🔍 isPreview flag: ${isPreview}`);
-      console.log('🎯 Forcing test mode for debugging - ignoring production mode');
+      // Production mode for high-quality results
+      if (!isPreview) {
+        formData.append('mode', 'production');
+        console.log('✅ Using production mode for high-quality results');
+      } else {
+        console.log('📋 Using preview mode (isPreview=true)');
+      }
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
