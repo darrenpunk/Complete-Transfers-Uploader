@@ -25,11 +25,6 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // For vectorization requests, add debug info about the request
-    if (skipDeduplication) {
-      console.log('🎯 VECTORIZATION REQUEST: Prioritizing original embedded images for clean vectorization');
-    }
-    
     // Method 1: First priority - try pdfimages to get original embedded PNG at native resolution
     try {
       const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
@@ -54,12 +49,6 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
           extractedFile = filePath;
           const stats = fs.statSync(filePath);
           console.log('✅ Found original embedded PNG via pdfimages:', extractedFile, `(${stats.size} bytes)`);
-          
-          // For vectorization, check if this is a good quality extraction
-          if (skipDeduplication && stats.size > 100000) { // Over 100KB indicates good quality
-            console.log('🎯 HIGH QUALITY original PNG found for vectorization - using immediately');
-            return extractedFile; // Return immediately for vectorization with good quality original
-          }
           break;
         }
       }
@@ -67,27 +56,26 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       console.log('⚠️ pdfimages method failed:', err);
     }
     
-    // Method 2: If pdfimages failed, try high-quality extraction
-    if (!extractedFile) {
+    // Method 2: Clean extraction at 200 DPI specifically for vectorization when pdfimages fails
+    if (!extractedFile && skipDeduplication) {
       try {
-        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_high_quality.png`);
-        // Use higher resolution for better quality - especially important for vectorization
-        const resolution = skipDeduplication ? 300 : 200; // Higher res for vectorization
-        const highQualityCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r${resolution} -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log(`🏃 Method 2: Running high-quality extraction (${resolution} DPI):`, highQualityCommand);
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
+        // Use 200 DPI resolution with sharper rendering for clean vectorization
+        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log('🏃 Method 2: Running clean logo extraction for vectorization (200 DPI fallback):', cleanLogoCommand);
         
-        const { stdout, stderr } = await execAsync(highQualityCommand);
-        console.log('📤 High-quality extraction stdout:', stdout);
-        if (stderr) console.log('⚠️ High-quality extraction stderr:', stderr);
+        const { stdout, stderr } = await execAsync(cleanLogoCommand);
+        console.log('📤 Clean logo extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ Clean logo extraction stderr:', stderr);
         
         if (!fs.existsSync(extractedFile)) {
           extractedFile = null;
         } else {
           const stats = fs.statSync(extractedFile);
-          console.log(`✅ High-quality extraction successful at ${resolution} DPI`, `(${stats.size} bytes)`);
+          console.log('✅ Clean logo extraction successful at 200 DPI', `(${stats.size} bytes)`);
         }
       } catch (err) {
-        console.log('⚠️ High-quality extraction failed:', err);
+        console.log('⚠️ Clean logo extraction failed:', err);
         extractedFile = null;
       }
     }
