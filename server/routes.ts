@@ -1922,7 +1922,9 @@ export async function registerRoutes(app: express.Application) {
         console.log('📁 Original file path:', req.file.path);
         console.log('📁 Original file size:', req.file.size, 'bytes');
         try {
+          console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
           const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
+          console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
           if (deduplicatedPath) {
             processedImagePath = deduplicatedPath;
             console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
@@ -1931,6 +1933,7 @@ export async function registerRoutes(app: express.Application) {
           }
         } catch (err) {
           console.log('⚠️ Deduplication failed, using original:', err);
+          console.error('⚠️ Full deduplication error:', err);
         }
       }
 
