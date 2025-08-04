@@ -1587,47 +1587,93 @@ export async function registerRoutes(app: express.Application) {
         
         console.log('✅ Final extracted file:', extractedFile);
         
-        // Check for and fix potential duplication patterns
+        // Advanced duplication pattern detection and removal
         try {
-          console.log('🔍 Checking for duplication patterns in extracted image...');
+          console.log('🔍 Analyzing image for duplication patterns...');
           
-          // First, get image dimensions to understand the layout
+          // Get image dimensions to understand the layout
           const identifyCommand = `identify -format "%wx%h" "${extractedFile}"`;
           const { stdout: dimensions } = await execAsync(identifyCommand);
           console.log('📏 Image dimensions:', dimensions);
           
-          // Try a more conservative crop that looks for 2x2 grid patterns
-          const croppedFile = `${extractedFile}_dedup.png`;
-          // Crop from top-left quadrant instead of center to preserve full content
-          const cropCommand = `convert "${extractedFile}" -trim +repage -gravity northwest -crop 50%x50%+0+0 +repage "${croppedFile}"`;
-          console.log('🏃 Running duplication detection crop (conservative):', cropCommand);
+          const [width, height] = dimensions.split('x').map(Number);
           
-          const { stdout, stderr } = await execAsync(cropCommand);
-          if (stderr) console.log('⚠️ Crop stderr:', stderr);
+          // Test multiple crop strategies to detect duplication
+          const testCrops = [
+            { name: 'top-left-quarter', crop: '25%x25%+0+0' },
+            { name: 'top-left-half', crop: '50%x50%+0+0' },
+            { name: 'center-quarter', crop: '25%x25%+37.5%+37.5%' }
+          ];
           
-          if (fs.existsSync(croppedFile)) {
-            console.log('✅ Created cropped version to check for duplication');
-            
-            // Compare file sizes - more conservative threshold for duplication detection
-            const originalStats = fs.statSync(extractedFile);
-            const croppedStats = fs.statSync(croppedFile);
-            const sizeRatio = croppedStats.size / originalStats.size;
-            
-            console.log(`📊 Size comparison - Original: ${originalStats.size}, Cropped: ${croppedStats.size}, Ratio: ${sizeRatio.toFixed(2)}`);
-            
-            // Only treat as duplication if the crop is MUCH smaller (indicating clear 2x2+ grid)
-            if (sizeRatio < 0.28) {
-              console.log('🎯 Strong duplication pattern detected, using cropped version');
-              // Replace the extracted file with the cropped version
-              fs.unlinkSync(extractedFile);
-              fs.renameSync(croppedFile, extractedFile);
-            } else {
-              console.log('✅ No strong duplication pattern, using original');
-              fs.unlinkSync(croppedFile); // Clean up cropped version
+          let bestCrop = null;
+          let bestRatio = 1.0;
+          
+          for (const test of testCrops) {
+            try {
+              const testFile = `${extractedFile}_test_${test.name}.png`;
+              const cropCommand = `convert "${extractedFile}" -trim +repage -gravity northwest -crop ${test.crop} +repage "${testFile}"`;
+              
+              const { stdout, stderr } = await execAsync(cropCommand);
+              if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
+              
+              if (fs.existsSync(testFile)) {
+                const originalStats = fs.statSync(extractedFile);
+                const testStats = fs.statSync(testFile);
+                const ratio = testStats.size / originalStats.size;
+                
+                console.log(`📊 Test ${test.name}: ${testStats.size}/${originalStats.size} = ${ratio.toFixed(3)}`);
+                
+                // Look for very small ratios indicating duplication
+                if (ratio < bestRatio && ratio > 0.05) { // Avoid tiny artifacts
+                  bestRatio = ratio;
+                  bestCrop = testFile;
+                }
+                
+                // Clean up test file if not the best
+                if (testFile !== bestCrop && fs.existsSync(testFile)) {
+                  fs.unlinkSync(testFile);
+                }
+              }
+            } catch (testErr) {
+              console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
             }
           }
-        } catch (cropErr) {
-          console.log('⚠️ Duplication detection failed, using original:', cropErr);
+          
+          // Apply the best crop if duplication is detected
+          if (bestCrop && bestRatio < 0.25) {
+            console.log(`🎯 Duplication detected! Using crop with ratio ${bestRatio.toFixed(3)}`);
+            
+            // Enhance the cropped image and replace original
+            const enhancedCommand = `convert "${bestCrop}" -trim +repage -resize 200% -unsharp 1x1+1+0 "${extractedFile}_enhanced.png"`;
+            
+            try {
+              const { stdout, stderr } = await execAsync(enhancedCommand);
+              if (stderr) console.log('⚠️ Enhancement stderr:', stderr);
+              
+              if (fs.existsSync(`${extractedFile}_enhanced.png`)) {
+                fs.unlinkSync(extractedFile);
+                fs.renameSync(`${extractedFile}_enhanced.png`, extractedFile);
+                console.log('✅ Applied enhanced deduplication');
+              }
+            } catch (enhanceErr) {
+              console.log('⚠️ Enhancement failed, using basic crop:', enhanceErr);
+              fs.unlinkSync(extractedFile);
+              fs.renameSync(bestCrop, extractedFile);
+            }
+            
+            // Clean up
+            if (fs.existsSync(bestCrop)) {
+              fs.unlinkSync(bestCrop);
+            }
+          } else {
+            console.log('✅ No significant duplication detected');
+            // Clean up any remaining test files
+            if (bestCrop && fs.existsSync(bestCrop)) {
+              fs.unlinkSync(bestCrop);
+            }
+          }
+        } catch (dedupErr) {
+          console.log('⚠️ Duplication analysis failed, using original:', dedupErr);
         }
         
         // Verify the PNG is valid before sending
