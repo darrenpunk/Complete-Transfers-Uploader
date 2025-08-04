@@ -2287,9 +2287,17 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'No image file provided' });
       }
 
-      const isPreview = req.body.preview === 'true';
+      let isPreview = req.body.preview === 'true';
       const removeBackground = req.body.removeBackground !== 'false'; // Default to true for backward compatibility
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
+      
+      // Force production mode for high-quality PNG uploads
+      if (req.file.size > 20000 || req.file.originalname.toLowerCase().includes('text') || 
+          req.file.originalname.toLowerCase().includes('cmyk')) {
+        isPreview = false;
+        console.log('🎯 FORCING PRODUCTION MODE for high-quality PNG (overriding preview request)');
+      }
+      
       console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground}, fromPdfExtraction: ${fromPdfExtraction})`);
       console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
       console.log(`📋 Request body keys:`, Object.keys(req.body));
