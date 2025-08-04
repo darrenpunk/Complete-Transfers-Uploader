@@ -1292,10 +1292,24 @@ export async function registerRoutes(app: express.Application) {
           width: (file as any).extractedPngWidth,
           height: (file as any).extractedPngHeight,
           filename: file.filename,
-          mimetype: file.mimetype
+          mimetype: file.mimetype,
+          finalFilename: finalFilename,
+          finalMimeType: finalMimeType
         });
         
-        if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
+        // Try to get dimensions from extracted PNG file directly
+        if (finalMimeType === 'image/png' && finalFilename.includes('_raster-gs.png')) {
+          console.log('🔍 Detected extracted PNG file, querying dimensions directly');
+          const pngPath = path.join(uploadDir, finalFilename);
+          const directDimensions = await getPNGDimensions(pngPath);
+          if (directDimensions) {
+            const { calculatePreciseDimensions } = await import('./dimension-utils');
+            const dimensionResult = calculatePreciseDimensions(directDimensions.width, directDimensions.height, 'direct_query');
+            displayWidth = dimensionResult.widthMm;
+            displayHeight = dimensionResult.heightMm;
+            console.log(`📐 Using directly queried PNG dimensions: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+          }
+        } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
           const pngWidth = (file as any).extractedPngWidth;
           const pngHeight = (file as any).extractedPngHeight;
@@ -1311,7 +1325,11 @@ export async function registerRoutes(app: express.Application) {
         }
 
         try {
-          if (finalMimeType === 'image/svg+xml') {
+          if (finalMimeType === 'image/png' && (file as any).extractedPngWidth && (file as any).extractedPngHeight) {
+            // For extracted PNG files, use the detected dimensions
+            console.log('🖼️ Processing extracted PNG file with detected dimensions');
+            // Dimensions already set above, no additional processing needed
+          } else if (finalMimeType === 'image/svg+xml') {
             const svgPath = path.join(uploadDir, finalFilename);
             
             // Check viewBox first - most reliable for A3 detection
