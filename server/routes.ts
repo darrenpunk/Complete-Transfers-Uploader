@@ -2315,7 +2315,7 @@ export async function registerRoutes(app: express.Application) {
                                      req.file.originalname?.includes('extracted');
         
         if (isFromRasterExtraction) {
-          console.log('🎯 PNG extracted from PDF detected - skipping deduplication to preserve original quality');
+          console.log('🎯 DIRECT PNG UPLOAD detected - preserving original quality without deduplication');
           console.log('📁 Using original extracted PNG path:', req.file.path);
           
           // DEBUG: Check if we're always getting the same file
@@ -2362,30 +2362,12 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // Force production mode for direct PNG uploads to get maximum quality
-      if (!isPreview) {
-        formData.append('mode', 'production');
-        console.log('✅ Using production mode for high-quality PNG');
-      } else {
-        console.log('📋 Using preview mode (isPreview=true)');
-      }
+      // Always use production mode for high-quality PNG uploads
+      formData.append('mode', 'production');
+      console.log('✅ FORCING production mode for high-quality PNG (bypassing preview mode)');
       
-      // Add Vector.AI quality parameters for high-quality PNG uploads  
-      if (imageStats.size > 20000) { // High-quality PNGs need detailed vectorization
-        formData.append('output.curves.line', 'true');
-        formData.append('output.curves.cubic', 'true'); 
-        formData.append('output.gap_filler', 'true');
-        formData.append('output.tolerance', '1.0'); // Tighter fitting for better detail
-        console.log('🔧 Added precision parameters for high-quality PNG');
-      }
-      
-      // For very detailed PNGs with text, use maximum precision
-      if (req.file.originalname.toLowerCase().includes('text') || 
-          req.file.originalname.toLowerCase().includes('cmyk') ||
-          imageStats.size > 50000) {
-        formData.append('output.precision', '10'); // Maximum precision for text
-        console.log('🎯 Maximum precision enabled for detailed/text PNG');
-      }
+      // Use minimal parameters - back to working baseline
+      console.log('🎯 Using minimal Vector.AI parameters for consistent results');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
