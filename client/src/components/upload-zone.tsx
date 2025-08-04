@@ -95,14 +95,21 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       try {
         setShowRasterWarning(false);
         
+        console.log('handleVectorizeWithAI called with file:', {
+          fileName: pendingRasterFile.fileName,
+          fileType: pendingRasterFile.file.type,
+          fileSize: pendingRasterFile.file.size
+        });
+        
         // If the pending file is already a PNG/JPEG, use it directly
         if (pendingRasterFile.file.type.startsWith('image/')) {
+          console.log('File is already an image, opening vectorizer directly');
           setShowVectorizer(true);
           return;
         }
         
         // If it's a PDF, we need to extract the PNG first
-        console.log('Extracting PNG from PDF before vectorization...');
+        console.log('File is PDF, extracting PNG before vectorization...');
         
         // Upload the PDF first to get a logo ID
         const formData = new FormData();
