@@ -1841,9 +1841,13 @@ export async function registerRoutes(app: express.Application) {
       // Clean SVG content to remove stroke scaling issues
       let cleanedSvg = result;
       try {
-        const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-        cleanedSvg = removeVectorizedBackgrounds(result);
-        console.log(`🧹 Cleaned vectorized SVG content`);
+        const { removeVectorizedBackgroundsRegex } = await import('./svg-color-utils');
+        // TEMPORARY FIX: Skip the background removal that's causing duplication
+        // cleanedSvg = removeVectorizedBackgroundsRegex(result);
+        console.log(`🧹 Skipping background removal to prevent duplication issue`);
+        // Instead, just remove stroke attributes which was the main cause of scaling issues
+        cleanedSvg = result.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
+        cleanedSvg = cleanedSvg.replace(/\s*vector-effect\s*=\s*["'][^"']+["']/gi, '');
       } catch (error) {
         console.error('Failed to clean vectorized SVG:', error);
         // Continue with uncleaned version if cleaning fails
