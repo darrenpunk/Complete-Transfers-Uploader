@@ -1284,18 +1284,29 @@ export async function registerRoutes(app: express.Application) {
         });
         
         // Try to get dimensions from extracted PNG file directly
-        if (finalMimeType === 'image/png' && finalFilename.includes('_raster-gs.png')) {
+        if (finalMimeType === 'image/png' && (finalFilename.includes('_raster-gs.png') || finalFilename.includes('_raster-') && finalFilename.includes('.png'))) {
           console.log('🔍 Detected extracted PNG file, querying dimensions directly');
           const pngPath = path.join(uploadDir, finalFilename);
           const directDimensions = await getPNGDimensions(pngPath);
           if (directDimensions) {
-            // Use NATIVE extracted dimensions with proper DPI calculation
-            // pdfimages extracts at native resolution, calculate actual size
+            // For PDF-extracted PNGs, assume original was much smaller and scale down
+            // Common embedded logos are around 200-400px, not 809px
+            let scaledWidth = directDimensions.width;
+            let scaledHeight = directDimensions.height;
+            
+            // If dimensions are large (>600px), likely a rasterized version - scale down
+            if (directDimensions.width > 600 || directDimensions.height > 600) {
+              const scaleFactor = 0.35; // Scale down to approximate original size
+              scaledWidth = Math.round(directDimensions.width * scaleFactor);
+              scaledHeight = Math.round(directDimensions.height * scaleFactor);
+              console.log(`📐 Large PNG detected (${directDimensions.width}×${directDimensions.height}px), scaling down by ${scaleFactor}: ${scaledWidth}×${scaledHeight}px`);
+            }
+            
             const { calculatePreciseDimensions } = await import('./dimension-utils');
-            const dimensionResult = calculatePreciseDimensions(directDimensions.width, directDimensions.height, 'native_extraction');
+            const dimensionResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'scaled_extraction');
             displayWidth = dimensionResult.widthMm;
             displayHeight = dimensionResult.heightMm;
-            console.log(`📐 Using NATIVE extracted dimensions: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (native resolution)`);
+            console.log(`📐 Using SCALED extracted dimensions: ${scaledWidth}×${scaledHeight}px = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (scaled native)`);
           }
         } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
