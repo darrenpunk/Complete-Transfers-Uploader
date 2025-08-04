@@ -71,8 +71,18 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
         console.log('✅ VECTORIZATION: Selected largest/full-color file for vectorization:', extractedFile, `(${extractedFiles[0].size} bytes)`);
         console.log('📋 VECTORIZATION: All extracted files by size (largest first):', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
         
-        // For vectorization, return immediately with the selected original PNG - no further processing
-        return extractedFile;
+        // For vectorization, we still need to clean up any duplication artifacts from the selected file
+        console.log('🧹 VECTORIZATION: Applying deduplication to clean up artifacts in selected file...');
+        const deduplicatedFile = await applyIntelligentDeduplication(extractedFile, path.basename(extractedFile, '.png'));
+        
+        if (deduplicatedFile && fs.existsSync(deduplicatedFile)) {
+          const deduplicatedStats = fs.statSync(deduplicatedFile);
+          console.log('✅ VECTORIZATION: Successfully cleaned up duplication artifacts:', deduplicatedFile, `(${deduplicatedStats.size} bytes)`);
+          return deduplicatedFile;
+        } else {
+          console.log('ℹ️ VECTORIZATION: No deduplication needed, using original extracted file');
+          return extractedFile;
+        }
         
         console.log('❌ VECTORIZATION: pdfimages failed to extract original embedded PNG - returning null (no fallback)');
         return null;
