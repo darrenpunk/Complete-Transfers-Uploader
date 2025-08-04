@@ -1590,9 +1590,17 @@ export async function registerRoutes(app: express.Application) {
         // Check for and fix potential duplication patterns
         try {
           console.log('🔍 Checking for duplication patterns in extracted image...');
+          
+          // First, get image dimensions to understand the layout
+          const identifyCommand = `identify -format "%wx%h" "${extractedFile}"`;
+          const { stdout: dimensions } = await execAsync(identifyCommand);
+          console.log('📏 Image dimensions:', dimensions);
+          
+          // Try a more conservative crop that looks for 2x2 grid patterns
           const croppedFile = `${extractedFile}_dedup.png`;
-          const cropCommand = `convert "${extractedFile}" -trim +repage -gravity center -crop 50%x50%+0+0 +repage "${croppedFile}"`;
-          console.log('🏃 Running duplication detection crop:', cropCommand);
+          // Crop from top-left quadrant instead of center to preserve full content
+          const cropCommand = `convert "${extractedFile}" -trim +repage -gravity northwest -crop 50%x50%+0+0 +repage "${croppedFile}"`;
+          console.log('🏃 Running duplication detection crop (conservative):', cropCommand);
           
           const { stdout, stderr } = await execAsync(cropCommand);
           if (stderr) console.log('⚠️ Crop stderr:', stderr);
@@ -1600,21 +1608,21 @@ export async function registerRoutes(app: express.Application) {
           if (fs.existsSync(croppedFile)) {
             console.log('✅ Created cropped version to check for duplication');
             
-            // Compare file sizes - if cropped is more than 20% of original, likely not duplicated
+            // Compare file sizes - more conservative threshold for duplication detection
             const originalStats = fs.statSync(extractedFile);
             const croppedStats = fs.statSync(croppedFile);
             const sizeRatio = croppedStats.size / originalStats.size;
             
             console.log(`📊 Size comparison - Original: ${originalStats.size}, Cropped: ${croppedStats.size}, Ratio: ${sizeRatio.toFixed(2)}`);
             
-            // If the cropped version is small relative to original, likely duplicated pattern
-            if (sizeRatio < 0.35) {
-              console.log('🎯 Detected duplication pattern, using cropped version');
+            // Only treat as duplication if the crop is MUCH smaller (indicating clear 2x2+ grid)
+            if (sizeRatio < 0.28) {
+              console.log('🎯 Strong duplication pattern detected, using cropped version');
               // Replace the extracted file with the cropped version
               fs.unlinkSync(extractedFile);
               fs.renameSync(croppedFile, extractedFile);
             } else {
-              console.log('✅ No duplication detected, using original');
+              console.log('✅ No strong duplication pattern, using original');
               fs.unlinkSync(croppedFile); // Clean up cropped version
             }
           }
