@@ -2352,33 +2352,17 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // VECTOR.AI PROPER PARAMETERS: Using documented API parameters for maximum quality
-      const fileStats = fs.statSync(processedImagePath);
-      const isHighRes = fileStats.size > 50000; // Files larger than 50KB likely have fine details
-      
-      console.log(`🎯 VECTOR.AI VECTORIZER: File size ${fileStats.size} bytes (high-res: ${isHighRes})`);
+      // RESET TO MINIMAL VECTORIZER: Back to basic working parameters
+      console.log('🎯 MINIMAL VECTORIZER: Using basic parameters only');
       console.log('📁 Sending file:', processedImagePath);
+      console.log('📊 File size:', fs.statSync(processedImagePath).size, 'bytes');
       
-      // Force production mode for maximum quality (never use preview for actual vectorization)
-      formData.append('mode', 'production');
-      console.log('✅ Using production mode for maximum quality vectorization');
-      
-      // Add documented Vector.AI quality parameters for better results
-      if (isHighRes) {
-        // Enhanced settings for high-resolution images with text/gradients
-        formData.append('output.curves.line', 'true');           // Include line curves for sharp edges
-        formData.append('output.curves.arc', 'true');            // Include arc curves for smooth shapes  
-        formData.append('output.curves.cubic', 'true');          // Include cubic curves for complex shapes
-        formData.append('output.curves.quadratic', 'true');      // Include quadratic curves
-        formData.append('output.gap_filler', 'true');            // Fill gaps between adjacent shapes
-        formData.append('output.group_by', 'color');             // Group by color for better organization
-        console.log('🔧 Added high-detail parameters: all curve types, gap filler, color grouping');
+      // Production mode for quality results
+      if (!isPreview) {
+        formData.append('mode', 'production');
+        console.log('✅ Using production mode');
       } else {
-        // Standard quality settings for simpler images
-        formData.append('output.curves.line', 'true');
-        formData.append('output.curves.cubic', 'true');
-        formData.append('output.gap_filler', 'true');
-        console.log('🔧 Added standard quality parameters: lines, cubic curves, gap filler');
+        console.log('📋 Using preview mode (isPreview=true)');
       }
 
       // Call vectorizer.ai API with comprehensive debugging
