@@ -20,6 +20,59 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
+// Extract original PNG from PDF without any processing
+async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
+  try {
+    const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+    const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+    console.log('📸 Extracting original PNG from PDF:', extractCommand);
+    
+    const { stdout, stderr } = await execAsync(extractCommand);
+    console.log('📤 pdfimages stdout:', stdout);
+    if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
+    
+    // Find the extracted PNG files
+    const possibleFiles = [
+      `${outputPrefix}-000.png`,
+      `${outputPrefix}-001.png`,
+      `${outputPrefix}-0.png`,
+      `${outputPrefix}-1.png`
+    ];
+    
+    const extractedFiles = [];
+    for (const file of possibleFiles) {
+      const filePath = path.join(path.dirname(pdfPath), file);
+      if (fs.existsSync(filePath)) {
+        const stats = fs.statSync(filePath);
+        extractedFiles.push({
+          path: filePath,
+          size: stats.size,
+          file: file
+        });
+        console.log('🔍 Found extracted PNG:', file, `(${stats.size} bytes)`);
+      }
+    }
+    
+    if (extractedFiles.length === 0) {
+      console.log('❌ No PNG files extracted from PDF');
+      return null;
+    }
+    
+    // Select the largest file (full-color version)
+    extractedFiles.sort((a, b) => b.size - a.size);
+    const selectedFile = extractedFiles[0].path;
+    
+    console.log('✅ Selected original PNG:', selectedFile, `(${extractedFiles[0].size} bytes)`);
+    console.log('📋 All extracted files by size:', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
+    
+    return selectedFile;
+    
+  } catch (err) {
+    console.log('❌ PNG extraction failed:', err);
+    return null;
+  }
+}
+
 // Extract raster image from PDF with advanced duplication detection
 async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix: string, skipDeduplication = false): Promise<string | null> {
   try {
@@ -882,13 +935,13 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRasterOnly = true;
             
-            // Immediately extract original embedded PNG during upload and clean it
-            console.log('🔍 PDF has raster-only content, extracting and cleaning original embedded PNG...');
+            // Immediately extract original embedded PNG during upload (no processing)
+            console.log('🔍 PDF has raster-only content, extracting original embedded PNG at native resolution...');
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
-              console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
+              const extractedPngPath = await extractOriginalPNG(originalPdfPath, `${finalFilename}_raster`);
+              console.log('🔍 extractOriginalPNG returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
                 console.log('📂 Checking if extracted file exists:', fs.existsSync(extractedPngPath));
