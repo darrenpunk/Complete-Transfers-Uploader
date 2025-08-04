@@ -2352,8 +2352,8 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // DEBUG VECTORIZER: Investigate why we get same results 
-      console.log('🎯 DEBUG VECTORIZER: Investigating image quality issue');
+      // DIRECT PNG VECTORIZER: Optimized for high-quality PNG uploads
+      console.log('🎯 DIRECT PNG VECTORIZER: Processing high-quality PNG upload');
       console.log('📁 Sending file:', processedImagePath);
       
       const imageStats = fs.statSync(processedImagePath);
@@ -2362,21 +2362,30 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // Let's try forcing test mode to see if we get different results
-      const useTestMode = req.body.testMode === 'true';
-      if (useTestMode) {
-        formData.append('mode', 'test');
-        console.log('🧪 Using TEST mode for debugging');
-      } else if (!isPreview) {
+      // Force production mode for direct PNG uploads to get maximum quality
+      if (!isPreview) {
         formData.append('mode', 'production');
-        console.log('✅ Using production mode');
+        console.log('✅ Using production mode for high-quality PNG');
       } else {
         console.log('📋 Using preview mode (isPreview=true)');
       }
       
-      // DEBUG: Let's check if the image quality is the issue
-      console.log('🔍 DEBUG: Image preprocessing path:', req.file.path, '→', processedImagePath);
-      console.log('🔍 DEBUG: Same file?', req.file.path === processedImagePath);
+      // Add Vector.AI quality parameters for high-quality PNG uploads  
+      if (imageStats.size > 20000) { // High-quality PNGs need detailed vectorization
+        formData.append('output.curves.line', 'true');
+        formData.append('output.curves.cubic', 'true'); 
+        formData.append('output.gap_filler', 'true');
+        formData.append('output.tolerance', '1.0'); // Tighter fitting for better detail
+        console.log('🔧 Added precision parameters for high-quality PNG');
+      }
+      
+      // For very detailed PNGs with text, use maximum precision
+      if (req.file.originalname.toLowerCase().includes('text') || 
+          req.file.originalname.toLowerCase().includes('cmyk') ||
+          imageStats.size > 50000) {
+        formData.append('output.precision', '10'); // Maximum precision for text
+        console.log('🎯 Maximum precision enabled for detailed/text PNG');
+      }
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
