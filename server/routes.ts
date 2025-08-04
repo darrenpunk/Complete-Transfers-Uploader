@@ -25,35 +25,12 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // Method 1: For vectorization, try clean logo extraction first
-    if (skipDeduplication) {
-      try {
-        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
-        // Use lower resolution and sharper rendering for clean logo extraction suitable for vectorization
-        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r96 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 1: Running clean logo extraction for vectorization:', cleanLogoCommand);
-        
-        const { stdout, stderr } = await execAsync(cleanLogoCommand);
-        console.log('📤 Clean logo extraction stdout:', stdout);
-        if (stderr) console.log('⚠️ Clean logo extraction stderr:', stderr);
-        
-        if (!fs.existsSync(extractedFile)) {
-          extractedFile = null;
-        } else {
-          console.log('✅ Clean logo extraction successful');
-        }
-      } catch (err) {
-        console.log('⚠️ Clean logo extraction failed:', err);
-        extractedFile = null;
-      }
-    }
-    
-    // Method 2: Try pdfimages (fallback or regular processing)
+    // Method 1: Always try pdfimages first to get original embedded PNG at native resolution
     if (!extractedFile) {
       try {
         const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
         const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-          console.log('🏃 Method 2: Running pdfimages extraction:', extractCommand);
+        console.log('🏃 Method 1: Running pdfimages extraction (original embedded PNG):', extractCommand);
         
         const { stdout, stderr } = await execAsync(extractCommand);
         console.log('📤 Extraction stdout:', stdout);
@@ -80,12 +57,35 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       }
     }
     
-    // Method 3: If pdfimages failed, try Ghostscript
+    // Method 2: For vectorization, try clean logo extraction if pdfimages didn't work
+    if (!extractedFile && skipDeduplication) {
+      try {
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
+        // Use original 200 DPI resolution but with sharper rendering for clean vectorization
+        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log('🏃 Method 2: Running clean logo extraction for vectorization (200 DPI):', cleanLogoCommand);
+        
+        const { stdout, stderr } = await execAsync(cleanLogoCommand);
+        console.log('📤 Clean logo extraction stdout:', stdout);
+        if (stderr) console.log('⚠️ Clean logo extraction stderr:', stderr);
+        
+        if (!fs.existsSync(extractedFile)) {
+          extractedFile = null;
+        } else {
+          console.log('✅ Clean logo extraction successful at 200 DPI');
+        }
+      } catch (err) {
+        console.log('⚠️ Clean logo extraction failed:', err);
+        extractedFile = null;
+      }
+    }
+
+    // Method 3: If original extraction failed, try standard Ghostscript
     if (!extractedFile) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_rendered.png`);
         const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 3: Running Ghostscript rendering (anti-duplication):', gsCommand);
+        console.log('🏃 Method 3: Running standard Ghostscript rendering:', gsCommand);
         
         const { stdout, stderr } = await execAsync(gsCommand);
         console.log('📤 GS stdout:', stdout);
