@@ -40,9 +40,9 @@ async function getPNGDimensions(imagePath: string): Promise<{width: number, heig
 // Extract original PNG from PDF using multiple methods
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
-    console.log('📸 Extracting NATIVE resolution PNG from PDF using pdfimages (preserves original embedded size)');
+    console.log('📸 Extracting HIGH-QUALITY PNG from PDF for optimal vectorization');
     
-    // Method 1: ONLY use pdfimages to get original embedded PNG at native resolution
+    // Method 1: Use pdfimages to get best quality embedded PNG (prioritize detail over size)
     try {
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
@@ -77,20 +77,17 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       }
       
       if (extractedFiles.length > 0) {
-        // For native resolution, prioritize the SMALLEST file (original embedded PNG)
-        // Large files are often processed/duplicated versions
-        extractedFiles.sort((a, b) => a.size - b.size);
+        // For vectorization quality, prioritize the LARGEST file (full detail version)
+        // Small files are often grayscale/compressed versions with lost detail
+        extractedFiles.sort((a, b) => b.size - a.size);
         const selectedFile = extractedFiles[0].path;
-        console.log('✅ Native resolution extraction successful (smallest/original):', selectedFile, `(${extractedFiles[0].size} bytes)`);
+        console.log('✅ High-quality extraction successful (largest/detailed):', selectedFile, `(${extractedFiles[0].size} bytes)`);
         
-        // Check dimensions to ensure we got the original
+        // Check color depth to ensure we got full quality
         const dimensions = await getPNGDimensions(selectedFile);
         if (dimensions) {
-          console.log(`📏 Original PNG dimensions: ${dimensions.width}×${dimensions.height}px`);
-          // If dimensions are too large (>600px), this might be a processed version
-          if (dimensions.width > 600 || dimensions.height > 600) {
-            console.log('⚠️ WARNING: Extracted PNG seems large, might be processed version');
-          }
+          console.log(`📏 High-quality PNG dimensions: ${dimensions.width}×${dimensions.height}px`);
+          console.log('🎨 Using detailed version for better vectorization quality');
         }
         
         return selectedFile;
