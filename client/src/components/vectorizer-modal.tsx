@@ -214,7 +214,7 @@ export function VectorizerModal({
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('preview', 'true'); // This ensures no credits are consumed
-      formData.append('removeBackground', removeWhiteBackground.toString());
+      formData.append('removeBackground', 'false');
       
       // Mark if this PNG was extracted from a PDF (so server skips deduplication)
       // Check if filename suggests it was originally a PDF that was converted to PNG
@@ -303,7 +303,7 @@ export function VectorizerModal({
         const formData = new FormData();
         formData.append('image', imageFile);
         formData.append('preview', 'false'); // Production mode
-        formData.append('removeBackground', removeWhiteBackground.toString());
+        formData.append('removeBackground', 'false');
         
         // Mark if this PNG was extracted from a PDF (so server skips deduplication)
         const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
