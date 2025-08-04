@@ -1054,24 +1054,131 @@ export default function UploadTool() {
           fileName={pendingRasterFile.file.name || pendingRasterFile.fileName}
           imageFile={pendingRasterFile.file}
           onVectorDownload={async (vectorSvg) => {
-            console.log('Vector download handler called with SVG');
-            // Close the vectorizer modal
-            setShowVectorizer(false);
+            console.log('Vector download handler called with SVG for replacement');
             
-            // Create a blob from the SVG string
-            const blob = new Blob([vectorSvg], { type: 'image/svg+xml' });
-            const file = new File([blob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg|pdf)$/i, '.svg'), { type: 'image/svg+xml' });
-            
-            // Upload the vectorized file
-            handleFilesUpload([file]);
-            
-            // Clean up
-            setPendingRasterFile(null);
-            
-            toast({
-              title: "Success",
-              description: "Vectorized file has been uploaded to your project",
-            });
+            if (!currentProject || !pendingRasterFile?.logoId) {
+              console.error('Missing project or logoId for vector replacement');
+              return;
+            }
+
+            try {
+              // Create a blob from the SVG string
+              const blob = new Blob([vectorSvg], { type: 'image/svg+xml' });
+              const vectorFile = new File([blob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg|pdf)$/i, '.svg'), { type: 'image/svg+xml' });
+              
+              // Upload the vectorized file to get a new logo record
+              const formData = new FormData();
+              formData.append('files', vectorFile);
+              
+              const response = await fetch(`/api/projects/${currentProject.id}/logos`, {
+                method: 'POST',
+                body: formData,
+              });
+              
+              if (!response.ok) {
+                throw new Error('Failed to upload vectorized file');
+              }
+              
+              const newLogos = await response.json();
+              console.log('Vectorized file uploaded successfully:', newLogos);
+              
+              if (newLogos.length > 0) {
+                const newVectorLogo = newLogos[0];
+                
+                // Find canvas elements that reference the original logo
+                const elementsToUpdate = canvasElements?.filter(el => el.logoId === pendingRasterFile.logoId) || [];
+                console.log('Found canvas elements to update:', elementsToUpdate.length);
+                
+                // Update each canvas element to reference the new vectorized logo
+                for (const element of elementsToUpdate) {
+                  try {
+                    // Calculate auto-fit dimensions to prevent oversized vectors
+                    const template = templateSizes.find(t => t.id === currentProject.templateSize);
+                    if (template) {
+                      // Use a maximum of 80% of template size for auto-fit
+                      const maxWidth = template.width * 0.8;  // mm
+                      const maxHeight = template.height * 0.8; // mm
+                      
+                      // Get original element size
+                      let newWidth = element.width;
+                      let newHeight = element.height;
+                      
+                      // Auto-fit if current size is larger than reasonable canvas size
+                      if (newWidth > maxWidth || newHeight > maxHeight) {
+                        const widthScale = maxWidth / newWidth;
+                        const heightScale = maxHeight / newHeight;
+                        const scale = Math.min(widthScale, heightScale);
+                        
+                        newWidth = newWidth * scale;
+                        newHeight = newHeight * scale;
+                        
+                        console.log('Auto-fitting oversized vector:', {
+                          original: { width: element.width, height: element.height },
+                          fitted: { width: newWidth, height: newHeight },
+                          scale
+                        });
+                      }
+                      
+                      // Update the canvas element with new logo and fitted size
+                      await fetch(`/api/canvas-elements/${element.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          logoId: newVectorLogo.id,
+                          width: newWidth,
+                          height: newHeight
+                        })
+                      });
+                      
+                      console.log('Updated canvas element:', element.id, 'to use vectorized logo:', newVectorLogo.id);
+                    }
+                  } catch (error) {
+                    console.error('Failed to update canvas element:', element.id, error);
+                  }
+                }
+                
+                // Delete the original logo and its file
+                try {
+                  await fetch(`/api/logos/${pendingRasterFile.logoId}`, {
+                    method: 'DELETE'
+                  });
+                  console.log('Deleted original logo:', pendingRasterFile.logoId);
+                } catch (error) {
+                  console.error('Failed to delete original logo:', error);
+                }
+                
+                // Update query cache - remove old logo, add new one
+                queryClient.setQueryData(
+                  ["/api/projects", currentProject.id, "logos"],
+                  (oldLogos: any[] = []) => [
+                    ...oldLogos.filter(logo => logo.id !== pendingRasterFile.logoId),
+                    newVectorLogo
+                  ]
+                );
+                
+                // Refresh canvas elements to reflect the changes
+                queryClient.invalidateQueries({ 
+                  queryKey: ["/api/projects", currentProject.id, "canvas-elements"] 
+                });
+                
+                toast({
+                  title: "Vector Replacement Complete",
+                  description: "Original file replaced with vectorized version on canvas",
+                });
+              }
+              
+            } catch (error) {
+              console.error('Vector replacement failed:', error);
+              toast({
+                title: "Vector Replacement Failed",
+                description: "Failed to replace original with vectorized version",
+                variant: "destructive",
+              });
+            } finally {
+              // Close the vectorizer modal
+              setShowVectorizer(false);
+              setPendingRasterFile(null);
+            }
           }}
         />
       )}

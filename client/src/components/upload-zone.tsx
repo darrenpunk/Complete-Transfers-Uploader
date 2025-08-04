@@ -205,6 +205,7 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
   };
 
   const handleVectorDownload = (vectorSvg: string) => {
+    console.log('UploadZone: handleVectorDownload called - this is for new uploads, not replacements');
     // Convert SVG string to File object
     const svgBlob = new Blob([vectorSvg], { type: 'image/svg+xml' });
     const svgFile = new File([svgBlob], pendingRasterFile?.fileName.replace(/\.(png|jpg|jpeg)$/i, '.svg') || 'vectorized.svg', {
