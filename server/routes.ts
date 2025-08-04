@@ -77,10 +77,22 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       }
       
       if (extractedFiles.length > 0) {
-        // For vectorization, prioritize the largest file (full-color version with all details)
-        extractedFiles.sort((a, b) => b.size - a.size);
+        // For native resolution, prioritize the SMALLEST file (original embedded PNG)
+        // Large files are often processed/duplicated versions
+        extractedFiles.sort((a, b) => a.size - b.size);
         const selectedFile = extractedFiles[0].path;
-        console.log('✅ Native resolution extraction successful:', selectedFile, `(${extractedFiles[0].size} bytes)`);
+        console.log('✅ Native resolution extraction successful (smallest/original):', selectedFile, `(${extractedFiles[0].size} bytes)`);
+        
+        // Check dimensions to ensure we got the original
+        const dimensions = await getPNGDimensions(selectedFile);
+        if (dimensions) {
+          console.log(`📏 Original PNG dimensions: ${dimensions.width}×${dimensions.height}px`);
+          // If dimensions are too large (>600px), this might be a processed version
+          if (dimensions.width > 600 || dimensions.height > 600) {
+            console.log('⚠️ WARNING: Extracted PNG seems large, might be processed version');
+          }
+        }
+        
         return selectedFile;
       }
     } catch (pdfErr) {
