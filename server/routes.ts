@@ -40,9 +40,21 @@ async function getPNGDimensions(imagePath: string): Promise<{width: number, heig
 // Extract original PNG from PDF using multiple methods
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
-    console.log('📸 Extracting HIGH-QUALITY PNG from PDF for optimal vectorization');
+    console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF at original size and DPI');
     
-    // Method 1: Use pdfimages to get best quality embedded PNG (prioritize detail over size)
+    // Method 1: Try JavaScript-based native extraction first
+    try {
+      const { extractNativeEmbeddedImage } = await import('./native-pdf-extractor');
+      const nativeResult = await extractNativeEmbeddedImage(pdfPath, outputPrefix);
+      if (nativeResult && fs.existsSync(nativeResult)) {
+        console.log('✅ Native JavaScript extraction successful - preserving original embedded size');
+        return nativeResult;
+      }
+    } catch (error) {
+      console.log('⚠️ Native extraction failed, falling back to pdfimages:', error.message);
+    }
+    
+    // Method 2: Fallback to pdfimages (but this may still have sizing issues)
     try {
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
