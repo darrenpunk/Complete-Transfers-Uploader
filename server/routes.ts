@@ -882,12 +882,12 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRasterOnly = true;
             
-            // Immediately extract original embedded PNG during upload (no deduplication needed for single-file uploads)
-            console.log('🔍 PDF has raster-only content, extracting original embedded PNG...');
+            // Immediately extract original embedded PNG during upload and clean it
+            console.log('🔍 PDF has raster-only content, extracting and cleaning original embedded PNG...');
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
