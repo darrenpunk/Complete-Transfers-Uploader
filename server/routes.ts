@@ -2343,20 +2343,23 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // MINIMALIST APPROACH: Try with absolutely minimal parameters first to debug
+      // CACHE-BUSTING APPROACH: Add unique timestamp to force fresh results
+      const timestamp = Date.now();
       formData.append('format', 'svg');
+      formData.append('policy.retention_days', '0'); // Don't store results to avoid cache
+      formData.append('cache_buster', timestamp.toString()); // Force fresh processing
       
-      // Test if the issue is parameter overload - start with just format
-      console.log('🧪 TESTING: Using minimal parameters (format=svg only) to isolate issue');
+      console.log(`🧪 CACHE-BUSTING TEST: timestamp=${timestamp} to force fresh vectorization`);
+      console.log('📋 Parameters being sent: format=svg, retention_days=0, cache_buster=' + timestamp);
       
       // Production mode
       if (!isPreview) {
         formData.append('mode', 'production');
       }
 
-      // Call vectorizer.ai API with minimal debugging
-      console.log('🧪 MINIMALIST TEST: Sending to Vector.AI with ONLY format=svg parameter');
-      console.log('🔍 This will help determine if the issue is parameter complexity or API functionality');
+      // Call vectorizer.ai API with cache-busting and full debugging
+      console.log('🧪 CACHE-BUSTING TEST: Forcing fresh API call to Vector.AI');
+      console.log('🔍 This will determine if caching was preventing parameter changes from taking effect');
       
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
