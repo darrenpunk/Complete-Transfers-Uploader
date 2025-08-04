@@ -2343,23 +2343,26 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // CACHE-BUSTING APPROACH: Add unique timestamp to force fresh results
+      // DEBUGGING: Check if we can see any response from Vector.AI API
       const timestamp = Date.now();
+      
+      // Add mode=test to use free testing API
+      formData.append('mode', 'test');
       formData.append('format', 'svg');
-      formData.append('policy.retention_days', '0'); // Don't store results to avoid cache
-      formData.append('cache_buster', timestamp.toString()); // Force fresh processing
       
-      console.log(`🧪 CACHE-BUSTING TEST: timestamp=${timestamp} to force fresh vectorization`);
-      console.log('📋 Parameters being sent: format=svg, retention_days=0, cache_buster=' + timestamp);
+      console.log(`🔬 DIAGNOSTIC TEST: timestamp=${timestamp}`);
+      console.log('🎯 Using mode=test to check if API responds at all');
+      console.log('📋 Parameters: mode=test, format=svg');
       
-      // Production mode
-      if (!isPreview) {
-        formData.append('mode', 'production');
-      }
+      // OVERRIDE: Force test mode for debugging regardless of isPreview
+      // Remove the production mode override to ensure test mode works
+      console.log(`🔍 isPreview flag: ${isPreview}`);
+      console.log('🎯 Forcing test mode for debugging - ignoring production mode');
 
-      // Call vectorizer.ai API with cache-busting and full debugging
-      console.log('🧪 CACHE-BUSTING TEST: Forcing fresh API call to Vector.AI');
-      console.log('🔍 This will determine if caching was preventing parameter changes from taking effect');
+      // Call vectorizer.ai API with comprehensive debugging
+      console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
+      console.log('🔗 API URL: https://vectorizer.ai/api/v1/vectorize');
+      console.log('🔑 Using API credentials: ID exists =', !!vectorizerApiId, ', Secret exists =', !!vectorizerApiSecret);
       
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
@@ -2370,12 +2373,13 @@ export async function registerRoutes(app: express.Application) {
         body: formData as any
       });
       
-      console.log('✅ Vector.AI API Response status:', response.status, response.statusText);
-      console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📈 API RESPONSE RECEIVED:');
+      console.log('  Status:', response.status, response.statusText);
+      console.log('  Headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Vectorizer API error:', response.status, errorText);
+        console.error('❌ Vectorizer API error:', response.status, errorText);
         return res.status(response.status).json({ 
           error: `Vectorization failed: ${response.statusText}` 
         });
@@ -2388,6 +2392,8 @@ export async function registerRoutes(app: express.Application) {
       let result;
       if (contentType.includes('image/svg') || contentType.includes('text/') || contentType.includes('application/xml')) {
         result = await response.text(); // SVG content
+        console.log('📊 SVG Response size:', result.length, 'bytes');
+        console.log('📋 SVG Response preview (first 200 chars):', result.substring(0, 200));
       } else {
         // If we get binary data, it might be PNG despite our request
         const buffer = await response.arrayBuffer();
