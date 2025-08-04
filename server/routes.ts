@@ -1436,26 +1436,10 @@ export async function registerRoutes(app: express.Application) {
             displayWidth = dimensionResult.widthMm;
             displayHeight = dimensionResult.heightMm;
             
-            // AUTO-FIT LOGIC: For AI-vectorized content, constrain to reasonable canvas bounds
+            // For AI-vectorized content, use actual SVG viewBox dimensions without arbitrary scaling
             if (isAIVectorized) {
-              const maxReasonableWidth = 150; // Max 150mm (15cm) for vectorized logos
-              const maxReasonableHeight = 150; // Max 150mm (15cm) for vectorized logos
-              
-              if (displayWidth > maxReasonableWidth || displayHeight > maxReasonableHeight) {
-                const scaleFactor = Math.min(
-                  maxReasonableWidth / displayWidth,
-                  maxReasonableHeight / displayHeight
-                );
-                
-                console.log(`🎯 AUTO-FIT: AI-vectorized logo too large (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm), scaling by ${(scaleFactor * 100).toFixed(0)}%`);
-                
-                displayWidth = displayWidth * scaleFactor;
-                displayHeight = displayHeight * scaleFactor;
-                
-                console.log(`✅ AUTO-FIT: Resized to ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm for optimal canvas display`);
-              } else {
-                console.log(`✅ AUTO-FIT: AI-vectorized logo already within reasonable bounds (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
-              }
+              console.log(`✅ AI-VECTORIZED: Using actual SVG dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm for proper canvas display`);
+              // No arbitrary scaling - let the canvas handle display scaling appropriately based on actual vector bounds
             }
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
