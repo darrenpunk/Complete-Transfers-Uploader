@@ -2302,27 +2302,31 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
-      // Only apply deduplication to raw uploaded PNGs, not PNGs extracted from PDFs
+      // CRITICAL DISCOVERY: PDF extraction causes text distortion in Vector.AI
       let processedImagePath = req.file.path;
       
       if (req.file.mimetype === 'image/png') {
-        // Check if this PNG comes from a raster extraction endpoint (already clean)
-        const isFromRasterExtraction = fromPdfExtraction || 
-                                     req.file.originalname?.includes('_raster') || 
-                                     req.file.path?.includes('raster') ||
-                                     req.file.originalname?.includes('extracted');
+        // Check if this PNG comes from a raster extraction endpoint (PDF extracted content)
+        const isFromPdfExtraction = fromPdfExtraction || 
+                                   req.file.originalname?.includes('_raster') || 
+                                   req.file.path?.includes('raster') ||
+                                   req.file.originalname?.includes('extracted') ||
+                                   req.file.originalname?.includes('cmyk');
         
-        if (isFromRasterExtraction) {
-          console.log('🎯 DIRECT PNG UPLOAD detected - preserving original quality without deduplication');
-          console.log('📁 Using original extracted PNG path:', req.file.path);
+        if (isFromPdfExtraction) {
+          console.log('⚠️ PDF-EXTRACTED PNG DETECTED - This may cause text distortion in Vector.AI');
+          console.log('📁 PDF extraction path:', req.file.path);
+          console.log('🔍 Issue: Vector.AI webapp works perfectly because it processes clean original PNGs, not PDF extractions');
           
           // DEBUG: Check if we're always getting the same file
           const stats = fs.statSync(req.file.path);
           console.log('🔍 DEBUG: File modified time:', stats.mtime.toISOString());
           console.log('🔍 DEBUG: File size:', stats.size, 'bytes');
+          
+          console.log('💡 RECOMMENDATION: Upload original PNG/JPEG file directly to Vector.AI for best text quality');
         } else {
-          // Only apply deduplication to directly uploaded PNGs (not extracted from PDFs)
-          console.log('🔍 Applying intelligent deduplication to directly uploaded PNG...');
+          // Direct PNG upload - this should work perfectly like Vector.AI webapp
+          console.log('✅ DIRECT PNG UPLOAD detected - This should produce clean text like Vector.AI webapp');
           console.log('📁 Original file path:', req.file.path);
           console.log('📁 Original file size:', req.file.size, 'bytes');
           try {
