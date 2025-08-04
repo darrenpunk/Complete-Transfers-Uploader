@@ -766,15 +766,27 @@ export async function registerRoutes(app: express.Application) {
             
             // Immediately extract and deduplicate PNG during upload
             console.log('🔍 PDF has raster-only content, extracting PNG with deduplication...');
+            console.log('🔍 Original PDF path for extraction:', originalPdfPath);
+            console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
               const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`);
+              console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted deduplicated PNG during upload:', extractedPngPath);
+                console.log('📂 Checking if extracted file exists:', fs.existsSync(extractedPngPath));
+                if (fs.existsSync(extractedPngPath)) {
+                  const stats = fs.statSync(extractedPngPath);
+                  console.log('📊 Extracted file size:', stats.size, 'bytes');
+                }
                 // Store the path for later use in database
                 (file as any).extractedRasterPath = extractedPngPath;
+                console.log('💾 Stored extractedRasterPath in file object:', extractedPngPath);
+              } else {
+                console.log('❌ extractRasterImageWithDeduplication returned null/undefined');
               }
             } catch (extractError) {
               console.log('⚠️ PNG extraction during upload failed:', extractError);
+              console.error('⚠️ Full extraction error details:', extractError);
             }
           } else if (contentAnalysis.isMixedContent) {
             fileType = FileType.MIXED_CONTENT;
@@ -934,6 +946,9 @@ export async function registerRoutes(app: express.Application) {
         // Add extracted raster path if it exists (for PDFs with raster only)
         if ((file as any).extractedRasterPath) {
           logoData.extractedRasterPath = (file as any).extractedRasterPath;
+          console.log('💾 SAVING extractedRasterPath to database:', (file as any).extractedRasterPath);
+        } else {
+          console.log('💾 NO extractedRasterPath to save (file property not set)');
         }
         
         // Add original PDF info for CMYK PDFs or PDFs with raster only
@@ -949,6 +964,12 @@ export async function registerRoutes(app: express.Application) {
         }
         
         const logo = await storage.createLogo(logoData);
+        console.log('💾 CREATED logo record:', {
+          id: logo.id,
+          filename: logo.filename,
+          isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
+          extractedRasterPath: logo.extractedRasterPath
+        });
 
         // Auto-recolor for single colour templates with ink color
         if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
@@ -1824,15 +1845,23 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Check if we already have an extracted raster image from upload
+      console.log('🔍 CHECKING for pre-extracted raster:', {
+        hasExtractedPath: !!logo.extractedRasterPath,
+        path: logo.extractedRasterPath,
+        fileExists: logo.extractedRasterPath ? fs.existsSync(logo.extractedRasterPath) : false
+      });
       if (logo.extractedRasterPath && fs.existsSync(logo.extractedRasterPath)) {
         console.log('✅ Using pre-extracted deduplicated PNG from upload:', logo.extractedRasterPath);
         const imageData = fs.readFileSync(logo.extractedRasterPath);
+        console.log('📊 Pre-extracted file size:', imageData.length, 'bytes');
         res.set({
           'Content-Type': 'image/png',
           'Content-Length': imageData.length.toString(),
           'Cache-Control': 'no-cache'
         });
         return res.send(imageData);
+      } else {
+        console.log('❌ No pre-extracted PNG found, will extract fresh');
       }
 
       // Extract the first image from the PDF

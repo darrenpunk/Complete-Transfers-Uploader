@@ -111,11 +111,29 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
         // If it's a PDF, we need to extract the PNG first
         console.log('File is PDF, extracting PNG before vectorization...');
         
-        // Upload the PDF first to get a logo ID
-        const formData = new FormData();
-        formData.append('logos', pendingRasterFile.file);
+        // Upload the PDF first to get a logo ID - we need a temporary project
+        const tempProjectResponse = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'temp-extraction-project',
+            templateSize: 'template-square' // Use default template
+          })
+        });
         
-        const uploadResponse = await fetch('/api/logos', {
+        if (!tempProjectResponse.ok) {
+          throw new Error('Failed to create temporary project');
+        }
+        
+        const tempProject = await tempProjectResponse.json();
+        const tempProjectId = tempProject.id;
+        
+        const formData = new FormData();
+        formData.append('files', pendingRasterFile.file);
+        
+        const uploadResponse = await fetch(`/api/projects/${tempProjectId}/logos`, {
           method: 'POST',
           body: formData
         });
@@ -125,7 +143,7 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
         }
         
         const uploadResult = await uploadResponse.json();
-        const logoId = uploadResult.logos[0]?.id;
+        const logoId = uploadResult[0]?.id; // The response is an array of logos directly
         
         if (!logoId) {
           throw new Error('No logo ID returned from upload');
@@ -157,11 +175,11 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
         // Now open the vectorizer with the extracted PNG
         setShowVectorizer(true);
         
-        // Clean up the temporary logo from the database
+        // Clean up the temporary project and logo from the database
         try {
-          await fetch(`/api/logos/${logoId}`, { method: 'DELETE' });
+          await fetch(`/api/projects/${tempProjectId}`, { method: 'DELETE' });
         } catch (error) {
-          console.warn('Failed to clean up temporary logo:', error);
+          console.warn('Failed to clean up temporary project:', error);
         }
         
       } catch (error) {
