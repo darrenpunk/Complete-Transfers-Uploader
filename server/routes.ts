@@ -1846,226 +1846,16 @@ export async function registerRoutes(app: express.Application) {
       }
       
       try {
-        // Try multiple extraction methods to ensure we get a proper PNG
-        let extractedFile = null;
-        
-        // Method 1: Try pdfimages first
-        try {
-          const outputPrefix = path.join(uploadDir, `${logo.filename}_extracted`);
-          const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefix}"`;
-          console.log('🏃 Method 1: Running pdfimages extraction:', extractCommand);
-          
-          const { stdout, stderr } = await execAsync(extractCommand);
-          console.log('📤 Extraction stdout:', stdout);
-          if (stderr) console.log('⚠️ Extraction stderr:', stderr);
-          
-          // Find the extracted image
-          const possibleFiles = [
-            `${logo.filename}_extracted-000.png`,
-            `${logo.filename}_extracted-001.png`,
-            `${logo.filename}_extracted-0.png`,
-            `${logo.filename}_extracted-1.png`
-          ];
-          
-          for (const file of possibleFiles) {
-            const filePath = path.join(uploadDir, file);
-            if (fs.existsSync(filePath)) {
-              extractedFile = filePath;
-              console.log('✅ Found extracted file via pdfimages:', extractedFile);
-              break;
-            }
-          }
-        } catch (err) {
-          console.log('⚠️ pdfimages method failed:', err);
-        }
-        
-        // Method 2: If pdfimages failed, try Ghostscript to render the PDF as PNG
-        if (!extractedFile) {
-          try {
-            extractedFile = path.join(uploadDir, `${logo.filename}_rendered.png`);
-            // Use lower resolution and add parameters to prevent tiling/duplication
-            const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
-            console.log('🏃 Method 2: Running Ghostscript rendering (anti-duplication):', gsCommand);
-            
-            const { stdout, stderr } = await execAsync(gsCommand);
-            console.log('📤 GS stdout:', stdout);
-            if (stderr) console.log('⚠️ GS stderr:', stderr);
-            
-            if (fs.existsSync(extractedFile)) {
-              console.log('✅ Successfully rendered PDF to PNG with Ghostscript');
-            } else {
-              extractedFile = null;
-            }
-          } catch (err) {
-            console.log('⚠️ Ghostscript method failed:', err);
-            extractedFile = null;
-          }
-        }
-        
-        // Method 3: If both failed, try ImageMagick
-        if (!extractedFile) {
-          try {
-            extractedFile = path.join(uploadDir, `${logo.filename}_convert.png`);
-            // Use lower density and add crop/resize to prevent tiling patterns
-            const convertCommand = `convert -density 150 "${pdfPath}[0]" -background white -alpha remove -alpha off -trim +repage -resize '2000x2000>' "${extractedFile}"`;
-            console.log('🏃 Method 3: Running ImageMagick conversion (anti-duplication):', convertCommand);
-            
-            const { stdout, stderr } = await execAsync(convertCommand);
-            console.log('📤 Convert stdout:', stdout);
-            if (stderr) console.log('⚠️ Convert stderr:', stderr);
-            
-            if (fs.existsSync(extractedFile)) {
-              console.log('✅ Successfully converted PDF to PNG with ImageMagick');
-            } else {
-              extractedFile = null;
-            }
-          } catch (err) {
-            console.log('⚠️ ImageMagick method failed:', err);
-            extractedFile = null;
-          }
-        }
+        // Use the smart deduplication extraction function
+        console.log('🔍 Using smart deduplication extraction for raster endpoint');
+        const extractedFile = await extractRasterImageWithDeduplication(pdfPath, `${logo.filename}_raster_endpoint`);
         
         if (!extractedFile) {
-          console.error('❌ All extraction methods failed');
-          throw new Error('No image extracted from PDF');
+          console.error('❌ Smart extraction failed');
+          return res.status(500).json({ error: 'Failed to extract image from PDF' });
         }
         
-        console.log('✅ Final extracted file:', extractedFile);
-        
-        // Advanced duplication pattern detection and removal
-        try {
-          console.log('🔍 DUPLICATION ANALYSIS STARTING for file:', extractedFile);
-          console.log('📁 Current working directory:', process.cwd());
-          console.log('📂 Upload directory:', uploadDir);
-          
-          // Get image dimensions to understand the layout
-          const identifyCommand = `identify -format "%wx%h" "${extractedFile}"`;
-          const { stdout: dimensions } = await execAsync(identifyCommand);
-          console.log('📏 Image dimensions:', dimensions);
-          
-          const [width, height] = dimensions.split('x').map(Number);
-          
-          // Get original file size first
-          const originalStats = fs.statSync(extractedFile);
-          console.log(`📊 Original file size: ${originalStats.size} bytes`);
-          
-          // First, check if duplication actually exists by testing a quarter crop
-          // If a quarter crop is significantly smaller than expected (should be ~25% of original), 
-          // it indicates duplication
-          const quarterTestFile = `${extractedFile}_quarter_test.png`;
-          const quarterCropCommand = `convert "${extractedFile}" -crop 50%x50%+0+0 +repage "${quarterTestFile}"`;
-          console.log(`🧪 Testing for duplication with quarter crop: ${quarterCropCommand}`);
-          
-          const { stdout, stderr } = await execAsync(quarterCropCommand);
-          if (stderr) console.log(`⚠️ Quarter crop stderr:`, stderr);
-          
-          let hasDuplication = false;
-          let bestCrop = null;
-          let bestRatio = 1.0;
-          
-          if (fs.existsSync(quarterTestFile)) {
-            const testStats = fs.statSync(quarterTestFile);
-            const ratio = testStats.size / originalStats.size;
-            console.log(`📊 Quarter crop ratio: ${ratio.toFixed(3)} (expected: ~0.25 if no duplication)`);
-            
-            // If quarter crop is much smaller than expected (~25%), it indicates duplication
-            if (ratio < 0.15) { // Threshold for detecting duplication patterns
-              console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${ratio.toFixed(3)} indicates grid pattern`);
-              hasDuplication = true;
-              
-              // Test additional crop strategies to find the best one
-              const testCrops = [
-                { name: 'quarter', crop: '50%x50%+0+0', file: quarterTestFile },
-                { name: 'half-width', crop: '50%x100%+0+0' },
-                { name: 'half-height', crop: '100%x50%+0+0' }
-              ];
-              
-              for (const test of testCrops) {
-                try {
-                  let testFile;
-                  if (test.file) {
-                    testFile = test.file; // Use existing quarter test
-                  } else {
-                    testFile = `${extractedFile}_test_${test.name}.png`;
-                    const cropCommand = `convert "${extractedFile}" -crop ${test.crop} +repage "${testFile}"`;
-                    console.log(`🧪 Testing additional crop ${test.name}: ${cropCommand}`);
-                    
-                    const { stdout, stderr } = await execAsync(cropCommand);
-                    if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
-                  }
-                  
-                  if (fs.existsSync(testFile)) {
-                    const testStats = fs.statSync(testFile);
-                    const ratio = testStats.size / originalStats.size;
-                    
-                    console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
-                    
-                    if (ratio < bestRatio && ratio > 0.05) { // Find the best crop
-                      bestRatio = ratio;
-                      if (bestCrop && fs.existsSync(bestCrop) && bestCrop !== testFile) {
-                        fs.unlinkSync(bestCrop); // Clean up previous best
-                      }
-                      bestCrop = testFile;
-                      console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
-                    } else if (testFile !== bestCrop) {
-                      // Clean up non-best files
-                      fs.unlinkSync(testFile);
-                    }
-                  }
-                } catch (testErr) {
-                  console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
-                }
-              }
-            } else {
-              console.log(`✅ NO DUPLICATION DETECTED. Quarter crop ratio ${ratio.toFixed(3)} is normal - keeping original image`);
-              fs.unlinkSync(quarterTestFile); // Clean up test file
-            }
-          }
-          
-          // Apply deduplication ONLY if duplication was actually detected
-          if (hasDuplication && bestCrop) {
-            console.log(`🎯 DUPLICATION DETECTED! Ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
-            
-            // Replace original with the deduplicated crop
-            try {
-              console.log('🔄 Replacing original with deduplicated version...');
-              const backupFile = `${extractedFile}_backup.png`;
-              
-              // Backup original
-              fs.renameSync(extractedFile, backupFile);
-              
-              // Use the best crop as new original
-              fs.renameSync(bestCrop, extractedFile);
-              
-              // Verify the replacement worked
-              if (fs.existsSync(extractedFile)) {
-                const newStats = fs.statSync(extractedFile);
-                console.log(`✅ Deduplication complete! Size: ${originalStats.size} → ${newStats.size} bytes`);
-                
-                // Clean up backup
-                if (fs.existsSync(backupFile)) {
-                  fs.unlinkSync(backupFile);
-                }
-              } else {
-                console.log('❌ Replacement failed, restoring backup');
-                fs.renameSync(backupFile, extractedFile);
-              }
-            } catch (replaceErr) {
-              console.log('⚠️ Replacement failed:', replaceErr);
-              if (fs.existsSync(bestCrop)) {
-                fs.unlinkSync(bestCrop);
-              }
-            }
-          } else {
-            console.log(`✅ No duplication detected (ratio: ${bestRatio.toFixed(3)})`);
-            // Clean up test files
-            if (bestCrop && fs.existsSync(bestCrop)) {
-              fs.unlinkSync(bestCrop);
-            }
-          }
-        } catch (dedupErr) {
-          console.log('⚠️ Duplication analysis failed, using original:', dedupErr);
-        }
+        console.log('✅ Smart extraction completed:', extractedFile);
         
         // Verify the PNG is valid before sending
         const stats = fs.statSync(extractedFile);
@@ -2073,7 +1863,7 @@ export async function registerRoutes(app: express.Application) {
         
         if (stats.size === 0) {
           console.error('❌ Extracted file is empty!');
-          throw new Error('Extracted file is empty');
+          return res.status(500).json({ error: 'Extracted file is empty' });
         }
         
         // Set appropriate headers
