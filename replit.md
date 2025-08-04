@@ -65,3 +65,7 @@ Preferred communication style: Simple, everyday language.
 - **Build**: `esbuild` (backend), Vite (frontend).
 - **TypeScript**: Strict type checking.
 - **Linting**: ESLint with TypeScript rules.
+
+## Recent Changes
+
+**PDF Extraction Duplication Fix (2025-08-04)**: Fixed critical issue where PNG images extracted from PDF files were showing multiple duplicated copies in a grid pattern, affecting both the original image preview and vectorized results in the AI vectorization tool. The problem was in the PDF-to-PNG extraction methods (Ghostscript and ImageMagick) which were creating tiled patterns during conversion. Solution: Modified the Ghostscript command to use lower resolution (150 DPI instead of 300 DPI) and added `-dFitPage` and `-dAutoRotatePages=/None` parameters. Updated ImageMagick command to use lower density (150) and added `-trim +repage -resize '2000x2000>'` to prevent tiling and crop excess content. This ensures clean, single image extraction from PDFs without unwanted duplication patterns.

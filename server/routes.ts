@@ -1538,8 +1538,9 @@ export async function registerRoutes(app: express.Application) {
         if (!extractedFile) {
           try {
             extractedFile = path.join(uploadDir, `${logo.filename}_rendered.png`);
-            const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-            console.log('🏃 Method 2: Running Ghostscript rendering:', gsCommand);
+            // Use lower resolution and add parameters to prevent tiling/duplication
+            const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
+            console.log('🏃 Method 2: Running Ghostscript rendering (anti-duplication):', gsCommand);
             
             const { stdout, stderr } = await execAsync(gsCommand);
             console.log('📤 GS stdout:', stdout);
@@ -1560,8 +1561,9 @@ export async function registerRoutes(app: express.Application) {
         if (!extractedFile) {
           try {
             extractedFile = path.join(uploadDir, `${logo.filename}_convert.png`);
-            const convertCommand = `convert -density 300 "${pdfPath}[0]" -background white -alpha remove -alpha off "${extractedFile}"`;
-            console.log('🏃 Method 3: Running ImageMagick conversion:', convertCommand);
+            // Use lower density and add crop/resize to prevent tiling patterns
+            const convertCommand = `convert -density 150 "${pdfPath}[0]" -background white -alpha remove -alpha off -trim +repage -resize '2000x2000>' "${extractedFile}"`;
+            console.log('🏃 Method 3: Running ImageMagick conversion (anti-duplication):', convertCommand);
             
             const { stdout, stderr } = await execAsync(convertCommand);
             console.log('📤 Convert stdout:', stdout);
