@@ -20,52 +20,95 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
-// Extract original PNG from PDF without any processing
+// Extract original PNG from PDF using multiple methods
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
-    const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
-    const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-    console.log('📸 Extracting original PNG from PDF:', extractCommand);
+    console.log('📸 Extracting original PNG from PDF using multiple methods');
     
-    const { stdout, stderr } = await execAsync(extractCommand);
-    console.log('📤 pdfimages stdout:', stdout);
-    if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
-    
-    // Find the extracted PNG files
-    const possibleFiles = [
-      `${outputPrefix}-000.png`,
-      `${outputPrefix}-001.png`,
-      `${outputPrefix}-0.png`,
-      `${outputPrefix}-1.png`
-    ];
-    
-    const extractedFiles = [];
-    for (const file of possibleFiles) {
-      const filePath = path.join(path.dirname(pdfPath), file);
-      if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath);
-        extractedFiles.push({
-          path: filePath,
-          size: stats.size,
-          file: file
-        });
-        console.log('🔍 Found extracted PNG:', file, `(${stats.size} bytes)`);
+    // Method 1: Try Ghostscript with high-quality single image extraction
+    try {
+      const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs.png`);
+      const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
+      console.log('🎯 Method 1: Using Ghostscript for clean extraction:', gsCommand);
+      
+      const { stdout, stderr } = await execAsync(gsCommand);
+      console.log('📤 GS stdout:', stdout);
+      if (stderr) console.log('⚠️ GS stderr:', stderr);
+      
+      if (fs.existsSync(gsOutputPath)) {
+        const stats = fs.statSync(gsOutputPath);
+        console.log('✅ Ghostscript extraction successful:', gsOutputPath, `(${stats.size} bytes)`);
+        return gsOutputPath;
       }
+    } catch (gsErr) {
+      console.log('⚠️ Ghostscript method failed:', gsErr);
     }
     
-    if (extractedFiles.length === 0) {
-      console.log('❌ No PNG files extracted from PDF');
-      return null;
+    // Method 2: Try ImageMagick with quality settings
+    try {
+      const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im.png`);
+      const imCommand = `convert -density 300 "${pdfPath}[0]" -quality 100 -background white -alpha remove "${imOutputPath}"`;
+      console.log('🎯 Method 2: Using ImageMagick for clean extraction:', imCommand);
+      
+      const { stdout, stderr } = await execAsync(imCommand);
+      console.log('📤 IM stdout:', stdout);
+      if (stderr) console.log('⚠️ IM stderr:', stderr);
+      
+      if (fs.existsSync(imOutputPath)) {
+        const stats = fs.statSync(imOutputPath);
+        console.log('✅ ImageMagick extraction successful:', imOutputPath, `(${stats.size} bytes)`);
+        return imOutputPath;
+      }
+    } catch (imErr) {
+      console.log('⚠️ ImageMagick method failed:', imErr);
     }
     
-    // Select the largest file (full-color version)
-    extractedFiles.sort((a, b) => b.size - a.size);
-    const selectedFile = extractedFiles[0].path;
+    // Method 3: Try pdfimages as fallback but select carefully
+    try {
+      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+      const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+      console.log('🎯 Method 3: Using pdfimages as fallback:', extractCommand);
+      
+      const { stdout, stderr } = await execAsync(extractCommand);
+      console.log('📤 pdfimages stdout:', stdout);
+      if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
+      
+      // Find the extracted PNG files
+      const possibleFiles = [
+        `${outputPrefix}-000.png`,
+        `${outputPrefix}-001.png`,
+        `${outputPrefix}-0.png`,
+        `${outputPrefix}-1.png`
+      ];
+      
+      const extractedFiles = [];
+      for (const file of possibleFiles) {
+        const filePath = path.join(path.dirname(pdfPath), file);
+        if (fs.existsSync(filePath)) {
+          const stats = fs.statSync(filePath);
+          extractedFiles.push({
+            path: filePath,
+            size: stats.size,
+            file: file
+          });
+          console.log('🔍 Found extracted PNG:', file, `(${stats.size} bytes)`);
+        }
+      }
+      
+      if (extractedFiles.length > 0) {
+        // Select the smallest file (often the clean version without duplication)
+        extractedFiles.sort((a, b) => a.size - b.size);
+        const selectedFile = extractedFiles[0].path;
+        
+        console.log('✅ Selected smallest PNG (likely clean):', selectedFile, `(${extractedFiles[0].size} bytes)`);
+        return selectedFile;
+      }
+    } catch (pdfErr) {
+      console.log('⚠️ pdfimages method failed:', pdfErr);
+    }
     
-    console.log('✅ Selected original PNG:', selectedFile, `(${extractedFiles[0].size} bytes)`);
-    console.log('📋 All extracted files by size:', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
-    
-    return selectedFile;
+    console.log('❌ All extraction methods failed');
+    return null;
     
   } catch (err) {
     console.log('❌ PNG extraction failed:', err);
