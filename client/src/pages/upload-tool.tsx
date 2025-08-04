@@ -555,63 +555,77 @@ export default function UploadTool() {
   const handleVectorizeWithAI = async () => {
     console.log('handleVectorizeWithAI called with pendingRasterFile:', pendingRasterFile);
     
-    if (pendingRasterFile && pendingRasterFile.logoId) {
-      console.log('Fetching raster image from PDF, logoId:', pendingRasterFile.logoId);
-      // For PDFs with raster only, extract the actual raster image
-      try {
-        // Add header to indicate this is for vectorization (should preserve quality)
-        const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image?forVectorization=true`, {
-          headers: {
-            'X-Vectorization-Request': 'true'
+    if (pendingRasterFile) {
+      // Check if we already have a valid PNG/JPEG file ready for vectorization
+      if (pendingRasterFile.file && pendingRasterFile.file.size > 0 && pendingRasterFile.file.type.startsWith('image/')) {
+        console.log('Already have PNG/JPEG file ready, opening vectorizer directly:', {
+          fileName: pendingRasterFile.fileName,
+          fileSize: pendingRasterFile.file.size,
+          fileType: pendingRasterFile.file.type
+        });
+        setShowRasterWarning(false);  
+        setShowVectorizer(true);
+        return;
+      }
+      
+      // Only try to extract if we don't have a valid image file yet
+      if (pendingRasterFile.logoId) {
+        console.log('Need to fetch raster image from PDF, logoId:', pendingRasterFile.logoId);
+        try {
+          // Add header to indicate this is for vectorization (should preserve quality)
+          const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image?forVectorization=true`, {
+            headers: {
+              'X-Vectorization-Request': 'true'
+            }
+          });
+          console.log('Raster image fetch response:', response.status, response.ok);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to extract raster image:', errorText);
+            throw new Error('Failed to extract raster image');
           }
-        });
-        console.log('Raster image fetch response:', response.status, response.ok);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Failed to extract raster image:', errorText);
-          throw new Error('Failed to extract raster image');
+          const blob = await response.blob();
+          console.log('Received blob:', blob.size, blob.type);
+          
+          // Validate blob
+          if (blob.size === 0) {
+            throw new Error('Extracted image is empty');
+          }
+          
+          const pngFileName = pendingRasterFile.fileName.replace('.pdf', '.png');
+          const file = new File([blob], pngFileName, { type: blob.type || 'image/png' });
+          console.log('Created file object:', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+          });
+          
+          // Create a new pending file object with the extracted PNG
+          const extractedPendingFile = {
+            file: file,
+            fileName: pngFileName,
+            logoId: pendingRasterFile.logoId,
+            url: URL.createObjectURL(file)
+          };
+          
+          // Update state and open vectorizer with the extracted PNG
+          setPendingRasterFile(extractedPendingFile);
+          setShowRasterWarning(false);
+          setShowVectorizer(true);
+        } catch (error) {
+          console.error('Failed to fetch PDF for vectorization:', error);
+          toast({
+            title: "Error",
+            description: "Failed to prepare file for vectorization",
+            variant: "destructive",
+          });
         }
-        const blob = await response.blob();
-        console.log('Received blob:', blob.size, blob.type);
-        
-        // Validate blob
-        if (blob.size === 0) {
-          throw new Error('Extracted image is empty');
-        }
-        
-        const pngFileName = pendingRasterFile.fileName.replace('.pdf', '.png');
-        const file = new File([blob], pngFileName, { type: blob.type || 'image/png' });
-        console.log('Created file object:', {
-          name: file.name,
-          size: file.size,
-          type: file.type
-        });
-        
-        // Create a new pending file object with the extracted PNG
-        const extractedPendingFile = {
-          file: file,
-          fileName: pngFileName,
-          logoId: pendingRasterFile.logoId,
-          url: URL.createObjectURL(file)
-        };
-        
-        // Update state and open vectorizer with the extracted PNG
-        setPendingRasterFile(extractedPendingFile);
+      } else {
+        // Fallback - just open the vectorizer
         setShowRasterWarning(false);
         setShowVectorizer(true);
-      } catch (error) {
-        console.error('Failed to fetch PDF for vectorization:', error);
-        toast({
-          title: "Error",
-          description: "Failed to prepare file for vectorization",
-          variant: "destructive",
-        });
       }
-    } else if (pendingRasterFile) {
-      // For regular raster files, just open the vectorizer
-      setShowRasterWarning(false);
-      setShowVectorizer(true);
     }
   };
 
