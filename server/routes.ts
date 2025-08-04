@@ -2241,19 +2241,14 @@ export async function registerRoutes(app: express.Application) {
         });
       }
       
-      // Clean SVG content to remove stroke scaling issues
+      // Skip ALL aggressive cleaning for AI-vectorized content - preserve it exactly as-is
       let cleanedSvg = result;
-      try {
-        const { removeVectorizedBackgroundsRegex } = await import('./svg-color-utils');
-        // TEMPORARY FIX: Skip the background removal that's causing duplication
-        // cleanedSvg = removeVectorizedBackgroundsRegex(result);
-        console.log(`🧹 Skipping background removal to prevent duplication issue`);
-        // Instead, just remove stroke attributes which was the main cause of scaling issues
-        cleanedSvg = result.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-        cleanedSvg = cleanedSvg.replace(/\s*vector-effect\s*=\s*["'][^"']+["']/gi, '');
-      } catch (error) {
-        console.error('Failed to clean vectorized SVG:', error);
-        // Continue with uncleaned version if cleaning fails
+      console.log(`🤖 Preserving AI-vectorized content exactly as received - no cleaning applied`);
+      
+      // Only remove XML declaration if present for browser compatibility
+      if (cleanedSvg.includes('<?xml')) {
+        cleanedSvg = cleanedSvg.replace(/<\?xml[^>]*\?>\s*/, '').replace(/<!DOCTYPE[^>]*>\s*/, '');
+        console.log(`🧹 Removed XML declaration for browser compatibility`);
       }
       
       // Add AI-vectorized marker to prevent aggressive processing on re-upload
