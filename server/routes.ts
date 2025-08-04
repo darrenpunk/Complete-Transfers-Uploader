@@ -817,7 +817,7 @@ export async function registerRoutes(app: express.Application) {
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
@@ -1146,8 +1146,7 @@ export async function registerRoutes(app: express.Application) {
             validateDimensionAccuracy(dimensionResult);
             
             // Check if this is AI-vectorized content that needs auto-fitting
-            const isAIVectorized = updatedSvgContent2.includes('data-ai-vectorized="true"') || 
-                                   updatedSvgContent2.includes('vector-effect="non-scaling-stroke"');
+            const isAIVectorized = updatedSvgContent2.includes('data-ai-vectorized="true"');
             
             // Use the calculated mm dimensions directly
             displayWidth = dimensionResult.widthMm;
@@ -2188,15 +2187,25 @@ export async function registerRoutes(app: express.Application) {
         console.log('✅ Added AI-vectorized marker for proper processing');
       }
       
-      // CRITICAL: Remove ALL strokes from vectorized content - user requirement is fills only
-      result = result.replace(/<path([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<path$1$2>');
-      result = result.replace(/<path([^>]*?)stroke-width="[^"]*"([^>]*?)>/g, '<path$1$2>');
-      result = result.replace(/<circle([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<circle$1$2>');
-      result = result.replace(/<rect([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<rect$1$2>');
-      result = result.replace(/<ellipse([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<ellipse$1$2>');
-      result = result.replace(/<line([^>]*?)>/g, ''); // Remove line elements entirely
-      result = result.replace(/<polyline([^>]*?)>/g, ''); // Remove polyline elements entirely
-      console.log('✅ Removed ALL strokes from AI-vectorized content - fills only as required');
+      // CRITICAL: Remove ALL strokes and scaling effects from vectorized content - user requirement is fills only
+      result = result.replace(/<g[^>]*?stroke-width="[^"]*"[^>]*?>/g, '<g>'); // Remove stroke-width from g elements
+      result = result.replace(/<g[^>]*?fill="none"[^>]*?>/g, '<g>'); // Remove fill="none" from g elements
+      result = result.replace(/\s*vector-effect="[^"]*"/g, ''); // Remove all vector-effect attributes
+      result = result.replace(/\s*stroke="[^"]*"/g, ''); // Remove all stroke attributes
+      result = result.replace(/\s*stroke-width="[^"]*"/g, ''); // Remove all stroke-width attributes
+      result = result.replace(/\s*stroke-linecap="[^"]*"/g, ''); // Remove stroke-linecap attributes
+      result = result.replace(/\s*stroke-linejoin="[^"]*"/g, ''); // Remove stroke-linejoin attributes
+      result = result.replace(/\s*fill="none"/g, ''); // Remove fill="none" attributes
+      result = result.replace(/<line[^>]*>/g, ''); // Remove line elements entirely
+      result = result.replace(/<polyline[^>]*>/g, ''); // Remove polyline elements entirely
+      
+      // Ensure the AI-vectorized marker is preserved after cleaning
+      if (!result.includes('data-ai-vectorized="true"')) {
+        result = result.replace(/<svg([^>]*)>/, '<svg$1 data-ai-vectorized="true">');
+        console.log('✅ Ensured AI-vectorized marker is preserved after cleaning');
+      }
+      
+      console.log('✅ Removed ALL strokes, scaling effects, and problematic attributes from AI-vectorized content');
       
       // Re-calculate dimension after cleaning and applying vector effects
       const cleanedBounds = calculateSVGContentBounds(result);
