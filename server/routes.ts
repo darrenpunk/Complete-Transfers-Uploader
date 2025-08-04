@@ -2464,10 +2464,37 @@ export async function registerRoutes(app: express.Application) {
       result = result.replace(/<polyline([^>]*?)>/g, ''); // Remove polyline elements entirely
       console.log('✅ Removed ALL strokes from AI-vectorized content - fills only as required');
       
+      // Apply AI-vectorized cleaning to fix extended elements and bounding box issues
+      const { cleanAIVectorizedSVG } = await import('./dimension-utils');
+      result = cleanAIVectorizedSVG(result);
+      
       // Re-calculate dimension after cleaning and applying vector effects
       const cleanedBounds = calculateSVGContentBounds(result);
       if (cleanedBounds) {
         console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
+        
+        // Apply content bounds cropping to remove oversized viewBox
+        if (cleanedBounds.width > 0 && cleanedBounds.height > 0) {
+          // Extract current viewBox
+          const viewBoxMatch = result.match(/viewBox="([^"]*)"/);
+          if (viewBoxMatch) {
+            const currentViewBox = viewBoxMatch[1].split(' ').map(parseFloat);
+            console.log(`🔍 Current viewBox: ${currentViewBox.join(' ')}`);
+            
+            // Create new viewBox that crops to actual content bounds
+            const padding = 5; // Small padding around content
+            const newViewBox = `${Math.max(0, cleanedBounds.minX - padding)} ${Math.max(0, cleanedBounds.minY - padding)} ${cleanedBounds.width + padding * 2} ${cleanedBounds.height + padding * 2}`;
+            
+            // Update the SVG with the cropped viewBox
+            result = result.replace(/viewBox="[^"]*"/, `viewBox="${newViewBox}"`);
+            
+            // Also update width and height attributes to match content
+            result = result.replace(/width="[^"]*"/, `width="${cleanedBounds.width + padding * 2}"`);
+            result = result.replace(/height="[^"]*"/, `height="${cleanedBounds.height + padding * 2}"`);
+            
+            console.log(`✅ Applied content bounds cropping: ${newViewBox} (${cleanedBounds.width + padding * 2}×${cleanedBounds.height + padding * 2})`);
+          }
+        }
       }
       
       // Log the raw SVG to check if dot exists

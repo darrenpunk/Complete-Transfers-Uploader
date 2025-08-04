@@ -245,22 +245,36 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
  */
 export function cleanAIVectorizedSVG(svgContent: string): string {
   try {
+    console.log('🔍 DEBUG: cleanAIVectorizedSVG called');
+    console.log('🔍 DEBUG: SVG length:', svgContent.length);
+    console.log('🔍 DEBUG: SVG preview:', svgContent.substring(0, 200));
+    
     let cleanedSvg = svgContent;
     
     // Remove paths that are likely artifacts (very short, at edges, etc.)
-    const suspiciousPathRegex = /<path[^>]*d="[^"]{1,50}"[^>]*>/g;
     const allPaths = cleanedSvg.match(/<path[^>]*d="[^"]*"[^>]*>/g) || [];
     let removedPaths = 0;
     
-    allPaths.forEach(path => {
+    console.log(`🔍 DEBUG: Found ${allPaths.length} paths in SVG`);
+    
+    allPaths.forEach((path, index) => {
       const dMatch = path.match(/d="([^"]*)"/);
       if (dMatch) {
         const pathData = dMatch[1];
+        
+        // Log suspicious paths for debugging
+        if (pathData.length < 30 || 
+            pathData.includes('M 0') || pathData.includes('L 0') || 
+            pathData.includes('M 561') || pathData.includes('L 561') ||
+            pathData.includes('M 560') || pathData.includes('L 560')) {
+          console.log(`🔍 DEBUG: Suspicious path ${index}: ${pathData.substring(0, 100)}`);
+        }
         
         // Remove very short paths that might be artifacts
         if (pathData.length < 30) {
           cleanedSvg = cleanedSvg.replace(path, '');
           removedPaths++;
+          console.log(`🗑️ Removed short path: ${pathData}`);
         }
         
         // Remove paths with coordinates at the extreme edges (likely artifacts)
@@ -269,13 +283,12 @@ export function cleanAIVectorizedSVG(svgContent: string): string {
             pathData.includes('M 560') || pathData.includes('L 560')) {
           cleanedSvg = cleanedSvg.replace(path, '');
           removedPaths++;
+          console.log(`🗑️ Removed edge path: ${pathData.substring(0, 50)}`);
         }
       }
     });
     
-    if (removedPaths > 0) {
-      console.log(`🧹 Cleaned AI-vectorized SVG: removed ${removedPaths} suspicious paths`);
-    }
+    console.log(`🧹 DEBUG: Cleaned AI-vectorized SVG: processed ${allPaths.length} paths, removed ${removedPaths} suspicious paths`);
     
     return cleanedSvg;
   } catch (error) {
