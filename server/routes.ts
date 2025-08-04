@@ -812,12 +812,12 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRasterOnly = true;
             
-            // Immediately extract clean PNG during upload (skip deduplication to preserve original quality)
-            console.log('🔍 PDF has raster-only content, extracting clean PNG...');
+            // Immediately extract original embedded PNG during upload (no deduplication needed for single-file uploads)
+            console.log('🔍 PDF has raster-only content, extracting original embedded PNG...');
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
@@ -825,7 +825,34 @@ export async function registerRoutes(app: express.Application) {
                 if (fs.existsSync(extractedPngPath)) {
                   const stats = fs.statSync(extractedPngPath);
                   console.log('📊 Extracted file size:', stats.size, 'bytes');
+                  
+                  // Move the extracted PNG to the uploads directory with proper filename
+                  const extractedFilename = `${path.basename(extractedPngPath)}`;
+                  const targetPngPath = path.join(uploadDir, extractedFilename);
+                  
+                  // Copy the extracted PNG to uploads directory if it's not already there
+                  if (extractedPngPath !== targetPngPath) {
+                    fs.copyFileSync(extractedPngPath, targetPngPath);
+                    console.log('📁 Copied extracted PNG to uploads directory:', targetPngPath);
+                    
+                    // Clean up the temporary extracted file
+                    if (fs.existsSync(extractedPngPath)) {
+                      fs.unlinkSync(extractedPngPath);
+                      console.log('🗑️ Cleaned up temporary extracted file');
+                    }
+                  }
+                  
+                  // Update the file details to use the extracted PNG for canvas display
+                  finalFilename = extractedFilename;
+                  finalMimeType = 'image/png';
+                  finalUrl = `/uploads/${finalFilename}`;
+                  
+                  console.log('🔄 Updated file details to use extracted PNG:');
+                  console.log('  finalFilename:', finalFilename);
+                  console.log('  finalMimeType:', finalMimeType);
+                  console.log('  finalUrl:', finalUrl);
                 }
+                
                 // Store the path for later use in database
                 (file as any).extractedRasterPath = extractedPngPath;
                 console.log('💾 Stored extractedRasterPath in file object:', extractedPngPath);
