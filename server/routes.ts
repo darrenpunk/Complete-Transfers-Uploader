@@ -281,18 +281,17 @@ async function applyIntelligentDeduplication(imagePath: string, filename: string
       }
     }
     
-    // Apply deduplication ONLY if clear grid pattern detected based on initial quarter test
-    // First, check if the quarter crop indicates actual duplication
-    const quarterTest = cropTests.find(test => test.name === 'quarter');
-    const isQuarterCrop = bestCropName === 'quarter';
+    // Apply deduplication if ANY crop shows significant reduction indicating grid patterns
     let hasDuplication = false;
     
-    if (isQuarterCrop && bestRatio < 0.15) {
-      // Quarter crop is much smaller than expected (~25%), indicating duplication
+    // For uploaded PNGs, be more aggressive in detecting duplication
+    // Quarter crop should be ~25% of original if no duplication
+    // Half crops should be ~50% of original if no duplication  
+    if (bestRatio < 0.20) { // More lenient threshold for uploaded PNGs
       hasDuplication = true;
-      console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
+      console.log(`🎯 DUPLICATION DETECTED! ${bestCropName} crop ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
     } else {
-      console.log(`✅ NO DUPLICATION DETECTED. Best crop ratio ${bestRatio.toFixed(3)} is normal for ${bestCropName}`);
+      console.log(`✅ NO DUPLICATION DETECTED. Best crop ${bestCropName} ratio ${bestRatio.toFixed(3)} is normal`);
     }
     
     if (hasDuplication && bestCrop) {
@@ -1920,11 +1919,15 @@ export async function registerRoutes(app: express.Application) {
       
       if (req.file.mimetype === 'image/png') {
         console.log('🔍 Applying intelligent deduplication before AI vectorization...');
+        console.log('📁 Original file path:', req.file.path);
+        console.log('📁 Original file size:', req.file.size, 'bytes');
         try {
-          const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename);
+          const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
           if (deduplicatedPath) {
             processedImagePath = deduplicatedPath;
-            console.log('✅ Using deduplicated PNG for AI vectorization');
+            console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
+          } else {
+            console.log('📄 No deduplication needed - using original PNG');
           }
         } catch (err) {
           console.log('⚠️ Deduplication failed, using original:', err);
