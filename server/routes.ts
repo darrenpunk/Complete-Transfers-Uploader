@@ -1144,9 +1144,35 @@ export async function registerRoutes(app: express.Application) {
             // Validate accuracy and log any issues
             validateDimensionAccuracy(dimensionResult);
             
+            // Check if this is AI-vectorized content that needs auto-fitting
+            const isAIVectorized = updatedSvgContent2.includes('data-ai-vectorized="true"') || 
+                                   updatedSvgContent2.includes('vector-effect="non-scaling-stroke"');
+            
             // Use the calculated mm dimensions directly
             displayWidth = dimensionResult.widthMm;
             displayHeight = dimensionResult.heightMm;
+            
+            // AUTO-FIT LOGIC: For AI-vectorized content, constrain to reasonable canvas bounds
+            if (isAIVectorized) {
+              const maxReasonableWidth = 150; // Max 150mm (15cm) for vectorized logos
+              const maxReasonableHeight = 150; // Max 150mm (15cm) for vectorized logos
+              
+              if (displayWidth > maxReasonableWidth || displayHeight > maxReasonableHeight) {
+                const scaleFactor = Math.min(
+                  maxReasonableWidth / displayWidth,
+                  maxReasonableHeight / displayHeight
+                );
+                
+                console.log(`🎯 AUTO-FIT: AI-vectorized logo too large (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm), scaling by ${(scaleFactor * 100).toFixed(0)}%`);
+                
+                displayWidth = displayWidth * scaleFactor;
+                displayHeight = displayHeight * scaleFactor;
+                
+                console.log(`✅ AUTO-FIT: Resized to ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm for optimal canvas display`);
+              } else {
+                console.log(`✅ AUTO-FIT: AI-vectorized logo already within reasonable bounds (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
+              }
+            }
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
@@ -2154,11 +2180,27 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🧹 Cleaned corrupted elements, SVG now ${result.length} bytes`);
       }
       
-      // Add AI-vectorized marker to ensure proper processing downstream
+      // Add AI-vectorized marker and ensure proper stroke settings
       if (!result.includes('data-ai-vectorized="true"')) {
         // Add the marker to the root SVG element
         result = result.replace(/<svg([^>]*)>/, '<svg$1 data-ai-vectorized="true">');
         console.log('✅ Added AI-vectorized marker for proper processing');
+      }
+      
+      // CRITICAL: Remove ALL strokes from vectorized content - user requirement is fills only
+      result = result.replace(/<path([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<path$1$2>');
+      result = result.replace(/<path([^>]*?)stroke-width="[^"]*"([^>]*?)>/g, '<path$1$2>');
+      result = result.replace(/<circle([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<circle$1$2>');
+      result = result.replace(/<rect([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<rect$1$2>');
+      result = result.replace(/<ellipse([^>]*?)stroke="[^"]*"([^>]*?)>/g, '<ellipse$1$2>');
+      result = result.replace(/<line([^>]*?)>/g, ''); // Remove line elements entirely
+      result = result.replace(/<polyline([^>]*?)>/g, ''); // Remove polyline elements entirely
+      console.log('✅ Removed ALL strokes from AI-vectorized content - fills only as required');
+      
+      // Re-calculate dimension after cleaning and applying vector effects
+      const cleanedBounds = calculateSVGContentBounds(result);
+      if (cleanedBounds) {
+        console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
       }
       
       // Log the raw SVG to check if dot exists
