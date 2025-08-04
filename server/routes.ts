@@ -2139,6 +2139,28 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       
+      // CRITICAL FIX: Clean up corrupted path elements immediately after receiving from AI service
+      if (result.includes('pathnon-scaling-')) {
+        console.log('🔧 Detected corrupted pathnon-scaling- elements, cleaning up...');
+        
+        // Remove all corrupted pathnon-scaling- elements that break SVG structure
+        result = result.replace(/<pathnon-scaling-[^>]*>/g, '');
+        result = result.replace(/<\/pathnon-scaling->/g, '');
+        result = result.replace(/<pathnon-scaling-\s*\/>/g, '');
+        
+        // Also clean up any broken path elements that might be missing closing tags
+        result = result.replace(/<path([^>]*?)pathnon-scaling-([^>]*?)>/g, '<path$1$2>');
+        
+        console.log(`🧹 Cleaned corrupted elements, SVG now ${result.length} bytes`);
+      }
+      
+      // Add AI-vectorized marker to ensure proper processing downstream
+      if (!result.includes('data-ai-vectorized="true"')) {
+        // Add the marker to the root SVG element
+        result = result.replace(/<svg([^>]*)>/, '<svg$1 data-ai-vectorized="true">');
+        console.log('✅ Added AI-vectorized marker for proper processing');
+      }
+      
       // Log the raw SVG to check if dot exists
       const dotPatterns = [
         /d="[^"]*[Mm]\s*\d+[\d.]*\s*,?\s*\d+[\d.]*\s*[^"]*[Zz]"/g, // closed paths

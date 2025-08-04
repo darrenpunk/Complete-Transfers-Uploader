@@ -800,6 +800,16 @@ function offsetPathCoordinates(pathData: string, offsetX: number, offsetY: numbe
 // Specialized function for calculating bounds of vectorized SVG files from AI services
 function calculateVectorizedSVGBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
+    console.log('🔍 Starting vectorized SVG bounds calculation');
+    
+    // Clean any residual corrupted elements before processing
+    let cleanedContent = svgContent;
+    if (cleanedContent.includes('pathnon-scaling-')) {
+      console.log('🧹 Cleaning residual corrupted elements in bounds calculation');
+      cleanedContent = cleanedContent.replace(/<pathnon-scaling-[^>]*>/g, '');
+      cleanedContent = cleanedContent.replace(/<\/pathnon-scaling->/g, '');
+    }
+    
     const allCoordinates = [];
     
     // Extract coordinates from path elements with fill colors (skip stroke-only elements)
@@ -808,7 +818,7 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     let fillMatchCount = 0;
     const maxFillMatches = 100; // Reduced limit to prevent timeouts
     
-    while ((pathMatch = fillPathRegex.exec(svgContent)) !== null && fillMatchCount < maxFillMatches) {
+    while ((pathMatch = fillPathRegex.exec(cleanedContent)) !== null && fillMatchCount < maxFillMatches) {
       fillMatchCount++;
       const fillColor = pathMatch[1];
       const pathData = pathMatch[2];
@@ -837,7 +847,7 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     let strokeMatchCount = 0;
     const maxStrokeMatches = 50; // Reduced limit to prevent timeouts
     
-    while ((strokeMatch = strokePathRegex.exec(svgContent)) !== null && strokeMatchCount < maxStrokeMatches) {
+    while ((strokeMatch = strokePathRegex.exec(cleanedContent)) !== null && strokeMatchCount < maxStrokeMatches) {
       strokeMatchCount++;
       const pathData = strokeMatch[1];
       try {
@@ -872,14 +882,9 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     const rawWidth = maxX - minX;
     const rawHeight = maxY - minY;
     
-    // Add reasonable padding for tight bounds
-    const paddedWidth = Math.max(100, Math.ceil(rawWidth * 1.1)); // 10% padding
-    const paddedHeight = Math.max(80, Math.ceil(rawHeight * 1.1)); // 10% padding
-    
-    // For vectorized SVGs, use the actual content dimensions without limiting
-    // These files come from vectorizer.ai and have large viewBoxes but represent normal logo sizes
-    const finalWidth = paddedWidth;
-    const finalHeight = paddedHeight;
+    // Use exact dimensions for vectorized content (AI has already optimized)
+    const finalWidth = Math.max(10, rawWidth); // Minimum 10px width
+    const finalHeight = Math.max(10, rawHeight); // Minimum 10px height
     
     console.log(`Vectorized SVG bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (content: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
     
@@ -913,13 +918,15 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Check if this is a vectorized SVG (has vector-effect attribute and large viewBox)
-    const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"');
+    // Check if this is a vectorized SVG (has vector-effect attribute, AI markers, or large viewBox)
+    const isVectorizedSVG = svgContent.includes('vector-effect="non-scaling-stroke"') || 
+                            svgContent.includes('data-ai-vectorized="true"') ||
+                            svgContent.includes('AI_VECTORIZED_FILE');
     const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
     const hasLargeViewBox = viewBoxMatch && viewBoxMatch[1].split(' ').some(val => parseFloat(val) > 1000);
     
     if (isVectorizedSVG && hasLargeViewBox) {
-      console.log('Detected vectorized SVG with large viewBox, using optimized content bounds calculation');
+      console.log('Detected AI-vectorized SVG with large viewBox, using optimized content bounds calculation');
       return calculateVectorizedSVGBounds(svgContent);
     }
 
