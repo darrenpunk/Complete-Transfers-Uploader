@@ -44,9 +44,11 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     
     // Method 1: Try Ghostscript with high-quality single image extraction preserving transparency
     try {
-      const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs.png`);
+      // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
+      const timestamp = Date.now();
+      const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs-${timestamp}.png`);
       const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
-      console.log('🎯 Method 1: Using Ghostscript with transparency preservation:', gsCommand);
+      console.log('🎯 Method 1: FRESH EXTRACTION with timestamp to avoid caching:', gsCommand);
       
       const { stdout, stderr } = await execAsync(gsCommand);
       console.log('📤 GS stdout:', stdout);
@@ -63,9 +65,11 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     
     // Method 2: Try ImageMagick with quality settings preserving transparency
     try {
-      const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im.png`);
+      // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
+      const timestamp = Date.now();
+      const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im-${timestamp}.png`);
       const imCommand = `convert -density 300 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
-      console.log('🎯 Method 2: Using ImageMagick with transparency preservation:', imCommand);
+      console.log('🎯 Method 2: FRESH EXTRACTION with timestamp to avoid caching:', imCommand);
       
       const { stdout, stderr } = await execAsync(imCommand);
       console.log('📤 IM stdout:', stdout);
@@ -82,20 +86,22 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     
     // Method 3: Try pdfimages as fallback but select carefully
     try {
-      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+      // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
+      const timestamp = Date.now();
+      const outputPrefixPath = path.join(path.dirname(pdfPath), `${outputPrefix}-${timestamp}`);
       const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-      console.log('🎯 Method 3: Using pdfimages as fallback:', extractCommand);
+      console.log('🎯 Method 3: FRESH EXTRACTION with timestamp to avoid caching:', extractCommand);
       
       const { stdout, stderr } = await execAsync(extractCommand);
       console.log('📤 pdfimages stdout:', stdout);
       if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
       
-      // Find the extracted PNG files
+      // Find the extracted PNG files with timestamp
       const possibleFiles = [
-        `${outputPrefix}-000.png`,
-        `${outputPrefix}-001.png`,
-        `${outputPrefix}-0.png`,
-        `${outputPrefix}-1.png`
+        `${outputPrefix}-${timestamp}-000.png`,
+        `${outputPrefix}-${timestamp}-001.png`,
+        `${outputPrefix}-${timestamp}-0.png`,
+        `${outputPrefix}-${timestamp}-1.png`
       ];
       
       const extractedFiles = [];
