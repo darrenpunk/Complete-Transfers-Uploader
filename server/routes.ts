@@ -40,63 +40,21 @@ async function getPNGDimensions(imagePath: string): Promise<{width: number, heig
 // Extract original PNG from PDF using multiple methods
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
-    console.log('📸 Extracting original PNG from PDF using multiple methods');
+    console.log('📸 Extracting NATIVE resolution PNG from PDF using pdfimages (preserves original embedded size)');
     
-    // Method 1: Try Ghostscript with high-quality single image extraction preserving transparency
-    try {
-      // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
-      const timestamp = Date.now();
-      const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs-${timestamp}.png`);
-      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
-      console.log('🎯 Method 1: FRESH EXTRACTION at 200 DPI for vectorization quality:', gsCommand);
-      
-      const { stdout, stderr } = await execAsync(gsCommand);
-      console.log('📤 GS stdout:', stdout);
-      if (stderr) console.log('⚠️ GS stderr:', stderr);
-      
-      if (fs.existsSync(gsOutputPath)) {
-        const stats = fs.statSync(gsOutputPath);
-        console.log('✅ Ghostscript extraction successful:', gsOutputPath, `(${stats.size} bytes)`);
-        return gsOutputPath;
-      }
-    } catch (gsErr) {
-      console.log('⚠️ Ghostscript method failed:', gsErr);
-    }
-    
-    // Method 2: Try ImageMagick with quality settings preserving transparency
-    try {
-      // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
-      const timestamp = Date.now();
-      const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im-${timestamp}.png`);
-      const imCommand = `convert -density 200 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
-      console.log('🎯 Method 2: FRESH EXTRACTION at 200 DPI for vectorization quality:', imCommand);
-      
-      const { stdout, stderr } = await execAsync(imCommand);
-      console.log('📤 IM stdout:', stdout);
-      if (stderr) console.log('⚠️ IM stderr:', stderr);
-      
-      if (fs.existsSync(imOutputPath)) {
-        const stats = fs.statSync(imOutputPath);
-        console.log('✅ ImageMagick extraction successful:', imOutputPath, `(${stats.size} bytes)`);
-        return imOutputPath;
-      }
-    } catch (imErr) {
-      console.log('⚠️ ImageMagick method failed:', imErr);
-    }
-    
-    // Method 3: Try pdfimages as fallback but select carefully
+    // Method 1: ONLY use pdfimages to get original embedded PNG at native resolution
     try {
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
       const outputPrefixPath = path.join(path.dirname(pdfPath), `${outputPrefix}-${timestamp}`);
       const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-      console.log('🎯 Method 3: FRESH EXTRACTION with timestamp to avoid caching:', extractCommand);
+      console.log('🎯 Method 1: NATIVE RESOLUTION extraction with pdfimages (no DPI scaling):', extractCommand);
       
       const { stdout, stderr } = await execAsync(extractCommand);
       console.log('📤 pdfimages stdout:', stdout);
       if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
       
-      // Find the extracted PNG files with timestamp
+      // Find the extracted PNG files with timestamp  
       const possibleFiles = [
         `${outputPrefix}-${timestamp}-000.png`,
         `${outputPrefix}-${timestamp}-001.png`,
@@ -119,18 +77,17 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       }
       
       if (extractedFiles.length > 0) {
-        // Select the smallest file (often the clean version without duplication)
-        extractedFiles.sort((a, b) => a.size - b.size);
+        // For vectorization, prioritize the largest file (full-color version with all details)
+        extractedFiles.sort((a, b) => b.size - a.size);
         const selectedFile = extractedFiles[0].path;
-        
-        console.log('✅ Selected smallest PNG (likely clean):', selectedFile, `(${extractedFiles[0].size} bytes)`);
+        console.log('✅ Native resolution extraction successful:', selectedFile, `(${extractedFiles[0].size} bytes)`);
         return selectedFile;
       }
     } catch (pdfErr) {
       console.log('⚠️ pdfimages method failed:', pdfErr);
     }
     
-    console.log('❌ All extraction methods failed');
+    console.log('❌ Native resolution PNG extraction failed');
     return null;
     
   } catch (err) {
@@ -1320,14 +1277,13 @@ export async function registerRoutes(app: express.Application) {
           const pngPath = path.join(uploadDir, finalFilename);
           const directDimensions = await getPNGDimensions(pngPath);
           if (directDimensions) {
-            // For PDF extraction at 200 DPI, target 102x102mm size for vectorization
-            // Calculate scale factor to achieve 102mm width regardless of extracted pixel size
-            const TARGET_WIDTH_MM = 102;
-            const TARGET_HEIGHT_MM = 102;
-            const mmPerPixel = TARGET_WIDTH_MM / Math.max(directDimensions.width, directDimensions.height);
-            displayWidth = directDimensions.width * mmPerPixel;
-            displayHeight = directDimensions.height * mmPerPixel;
-            console.log(`📐 Using PDF extraction target sizing: ${directDimensions.width}×${directDimensions.height}px → ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (targeting ${TARGET_WIDTH_MM}mm)`);
+            // Use NATIVE extracted dimensions with proper DPI calculation
+            // pdfimages extracts at native resolution, calculate actual size
+            const { calculatePreciseDimensions } = await import('./dimension-utils');
+            const dimensionResult = calculatePreciseDimensions(directDimensions.width, directDimensions.height, 'native_extraction');
+            displayWidth = dimensionResult.widthMm;
+            displayHeight = dimensionResult.heightMm;
+            console.log(`📐 Using NATIVE extracted dimensions: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (native resolution)`);
           }
         } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
