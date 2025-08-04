@@ -2520,31 +2520,9 @@ export async function registerRoutes(app: express.Application) {
       if (cleanedBounds) {
         console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
         
-        // Apply content bounds cropping to remove oversized viewBox
-        if (cleanedBounds.width > 0 && cleanedBounds.height > 0 && 
-            typeof cleanedBounds.minX === 'number' && typeof cleanedBounds.minY === 'number') {
-          // Extract current viewBox
-          const viewBoxMatch = result.match(/viewBox="([^"]*)"/);
-          if (viewBoxMatch) {
-            const currentViewBox = viewBoxMatch[1].split(' ').map(parseFloat);
-            console.log(`🔍 Current viewBox: ${currentViewBox.join(' ')}`);
-            
-            // Create new viewBox that crops to actual content bounds
-            const padding = 5; // Small padding around content
-            const newViewBox = `${Math.max(0, cleanedBounds.minX - padding)} ${Math.max(0, cleanedBounds.minY - padding)} ${cleanedBounds.width + padding * 2} ${cleanedBounds.height + padding * 2}`;
-            
-            // Update the SVG with the cropped viewBox
-            result = result.replace(/viewBox="[^"]*"/, `viewBox="${newViewBox}"`);
-            
-            // Also update width and height attributes to match content
-            result = result.replace(/width="[^"]*"/, `width="${cleanedBounds.width + padding * 2}"`);
-            result = result.replace(/height="[^"]*"/, `height="${cleanedBounds.height + padding * 2}"`);
-            
-            console.log(`✅ Applied content bounds cropping: ${newViewBox} (${cleanedBounds.width + padding * 2}×${cleanedBounds.height + padding * 2})`);
-          }
-        } else {
-          console.log(`⚠️ Could not apply bounds cropping - invalid bounds:`, cleanedBounds);
-        }
+        // DISABLED: Content bounds cropping was cutting off parts of the logo
+        // Keep Vector.AI's original viewBox to preserve the complete logo
+        console.log(`✅ Preserving Vector.AI original viewBox to keep complete logo intact`);
       }
       
       // Log the raw SVG to check if dot exists
