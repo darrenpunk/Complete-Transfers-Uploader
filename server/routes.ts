@@ -926,14 +926,16 @@ export async function registerRoutes(app: express.Application) {
           });
           
           // Override file type based on content analysis
-          if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
-            // PDF contains only raster content, treat as raster
-            fileType = FileType.RASTER_PNG; // Treat as raster workflow
-            console.log(`📷 PDF contains only raster content, switching to raster workflow`);
+          if (contentAnalysis.hasRasterContent) {
+            // PDF contains raster content (logo/images), extract PNG for canvas display
+            console.log(`📷 PDF contains raster content, extracting PNG for canvas display`);
             
             // Store original PDF path for later embedding
             (file as any).originalPdfPath = originalPdfPath;
-            (file as any).isPdfWithRasterOnly = true;
+            (file as any).isPdfWithRaster = true;
+            
+            // Treat as raster workflow for canvas display
+            fileType = FileType.RASTER_PNG;
             
             // Immediately extract original embedded PNG during upload (no processing)
             console.log('🔍 PDF has raster-only content, extracting original embedded PNG at native resolution...');
