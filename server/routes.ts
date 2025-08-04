@@ -1598,11 +1598,15 @@ export async function registerRoutes(app: express.Application) {
           
           const [width, height] = dimensions.split('x').map(Number);
           
+          // Get original file size first
+          const originalStats = fs.statSync(extractedFile);
+          console.log(`📊 Original file size: ${originalStats.size} bytes`);
+          
           // Test multiple crop strategies to detect duplication
           const testCrops = [
-            { name: 'top-left-quarter', crop: '25%x25%+0+0' },
-            { name: 'top-left-half', crop: '50%x50%+0+0' },
-            { name: 'center-quarter', crop: '25%x25%+37.5%+37.5%' }
+            { name: 'quarter', crop: '50%x50%+0+0' },
+            { name: 'half-width', crop: '50%x100%+0+0' },
+            { name: 'half-height', crop: '100%x50%+0+0' }
           ];
           
           let bestCrop = null;
@@ -1611,26 +1615,28 @@ export async function registerRoutes(app: express.Application) {
           for (const test of testCrops) {
             try {
               const testFile = `${extractedFile}_test_${test.name}.png`;
-              const cropCommand = `convert "${extractedFile}" -trim +repage -gravity northwest -crop ${test.crop} +repage "${testFile}"`;
+              const cropCommand = `convert "${extractedFile}" -crop ${test.crop} +repage "${testFile}"`;
+              console.log(`🧪 Testing crop ${test.name}: ${cropCommand}`);
               
               const { stdout, stderr } = await execAsync(cropCommand);
               if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
               
               if (fs.existsSync(testFile)) {
-                const originalStats = fs.statSync(extractedFile);
                 const testStats = fs.statSync(testFile);
                 const ratio = testStats.size / originalStats.size;
                 
                 console.log(`📊 Test ${test.name}: ${testStats.size}/${originalStats.size} = ${ratio.toFixed(3)}`);
                 
-                // Look for very small ratios indicating duplication
-                if (ratio < bestRatio && ratio > 0.05) { // Avoid tiny artifacts
+                // Look for very small ratios indicating duplication (crop should be ~25% if no duplication)
+                if (ratio < bestRatio && ratio > 0.08) { // More generous threshold
                   bestRatio = ratio;
+                  if (bestCrop && fs.existsSync(bestCrop)) {
+                    fs.unlinkSync(bestCrop); // Clean up previous best
+                  }
                   bestCrop = testFile;
-                }
-                
-                // Clean up test file if not the best
-                if (testFile !== bestCrop && fs.existsSync(testFile)) {
+                  console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
+                } else {
+                  // Clean up non-best files
                   fs.unlinkSync(testFile);
                 }
               }
@@ -1639,35 +1645,45 @@ export async function registerRoutes(app: express.Application) {
             }
           }
           
-          // Apply the best crop if duplication is detected
-          if (bestCrop && bestRatio < 0.25) {
-            console.log(`🎯 Duplication detected! Using crop with ratio ${bestRatio.toFixed(3)}`);
+          // Apply deduplication if clear pattern detected
+          // For a 50% crop, we expect ~25% file size if no duplication
+          // If much smaller, it indicates duplication pattern
+          if (bestCrop && bestRatio < 0.20) {
+            console.log(`🎯 DUPLICATION DETECTED! Ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
             
-            // Enhance the cropped image and replace original
-            const enhancedCommand = `convert "${bestCrop}" -trim +repage -resize 200% -unsharp 1x1+1+0 "${extractedFile}_enhanced.png"`;
-            
+            // Replace original with the deduplicated crop
             try {
-              const { stdout, stderr } = await execAsync(enhancedCommand);
-              if (stderr) console.log('⚠️ Enhancement stderr:', stderr);
+              console.log('🔄 Replacing original with deduplicated version...');
+              const backupFile = `${extractedFile}_backup.png`;
               
-              if (fs.existsSync(`${extractedFile}_enhanced.png`)) {
-                fs.unlinkSync(extractedFile);
-                fs.renameSync(`${extractedFile}_enhanced.png`, extractedFile);
-                console.log('✅ Applied enhanced deduplication');
-              }
-            } catch (enhanceErr) {
-              console.log('⚠️ Enhancement failed, using basic crop:', enhanceErr);
-              fs.unlinkSync(extractedFile);
+              // Backup original
+              fs.renameSync(extractedFile, backupFile);
+              
+              // Use the best crop as new original
               fs.renameSync(bestCrop, extractedFile);
-            }
-            
-            // Clean up
-            if (fs.existsSync(bestCrop)) {
-              fs.unlinkSync(bestCrop);
+              
+              // Verify the replacement worked
+              if (fs.existsSync(extractedFile)) {
+                const newStats = fs.statSync(extractedFile);
+                console.log(`✅ Deduplication complete! Size: ${originalStats.size} → ${newStats.size} bytes`);
+                
+                // Clean up backup
+                if (fs.existsSync(backupFile)) {
+                  fs.unlinkSync(backupFile);
+                }
+              } else {
+                console.log('❌ Replacement failed, restoring backup');
+                fs.renameSync(backupFile, extractedFile);
+              }
+            } catch (replaceErr) {
+              console.log('⚠️ Replacement failed:', replaceErr);
+              if (fs.existsSync(bestCrop)) {
+                fs.unlinkSync(bestCrop);
+              }
             }
           } else {
-            console.log('✅ No significant duplication detected');
-            // Clean up any remaining test files
+            console.log(`✅ No duplication detected (ratio: ${bestRatio.toFixed(3)})`);
+            // Clean up test files
             if (bestCrop && fs.existsSync(bestCrop)) {
               fs.unlinkSync(bestCrop);
             }
