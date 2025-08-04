@@ -307,26 +307,26 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
                         svgContent.includes('AI_VECTORIZED_FILE');
   
-  // For AI-vectorized content, prioritize actual content bounds over viewBox
+  // For AI-vectorized content, use the cleaned viewBox dimensions directly
   if (isAIVectorized) {
-    console.log('🤖 Detected AI-vectorized SVG, calculating actual content bounds...');
+    console.log('🤖 Detected AI-vectorized SVG, using cleaned viewBox dimensions...');
     
-    // Method 1: Calculate actual content bounds from path data
-    const calculatedBounds = calculateSVGContentBounds(svgContent);
-    if (calculatedBounds && calculatedBounds.width > 0 && calculatedBounds.height > 0) {
-      const contentResult = calculatePreciseDimensions(calculatedBounds.width, calculatedBounds.height, 'content_bounds');
-      console.log(`✅ Using calculated content bounds for AI-vectorized SVG: ${calculatedBounds.width.toFixed(1)}×${calculatedBounds.height.toFixed(1)}px`);
-      return contentResult;
+    // Method 1: Use the cleaned viewBox that was already cropped to content bounds in the vectorization API
+    const viewBoxDims = extractViewBoxDimensions(svgContent);
+    if (viewBoxDims && viewBoxDims.width > 0 && viewBoxDims.height > 0) {
+      const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'ai_vectorized_viewbox');
+      console.log(`✅ Using cleaned viewBox for AI-vectorized SVG: ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px`);
+      return viewBoxResult;
     }
     
-    // Method 2: Use provided content bounds if available
+    // Method 2: Use provided content bounds as fallback
     if (contentBounds && contentBounds.width && contentBounds.height) {
       const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
       console.log(`✅ Using provided content bounds for AI-vectorized SVG: ${contentBounds.width}×${contentBounds.height}px`);
       return contentResult;
     }
     
-    console.log('⚠️ Could not calculate content bounds for AI-vectorized SVG, falling back to viewBox');
+    console.log('⚠️ Could not get dimensions for AI-vectorized SVG, falling back to standard processing');
   }
   
   // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
