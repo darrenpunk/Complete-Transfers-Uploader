@@ -2313,6 +2313,11 @@ export async function registerRoutes(app: express.Application) {
         if (isFromRasterExtraction) {
           console.log('🎯 PNG extracted from PDF detected - skipping deduplication to preserve original quality');
           console.log('📁 Using original extracted PNG path:', req.file.path);
+          
+          // DEBUG: Check if we're always getting the same file
+          const stats = require('fs').statSync(req.file.path);
+          console.log('🔍 DEBUG: File modified time:', stats.mtime.toISOString());
+          console.log('🔍 DEBUG: File size:', stats.size, 'bytes');
         } else {
           // Only apply deduplication to directly uploaded PNGs (not extracted from PDFs)
           console.log('🔍 Applying intelligent deduplication to directly uploaded PNG...');
@@ -2343,18 +2348,12 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // CORRECT VECTORIZER.AI PARAMETERS: Use authentic API parameters from official documentation
+      // SIMPLE VECTORIZER: Back to working state that gave good results
       formData.append('format', 'svg');
-      formData.append('svg.version', '1.1');
-      formData.append('group.by', 'none');           // Correct: group.by not group_by
-      formData.append('draw.style', 'fill_shapes');   // Correct: fill shapes for clean results
-      formData.append('shape.stacking', 'stacked');   // Correct: shape.stacking not shape_stacking, using stacked for better text
-      formData.append('curves', 'all');               // Correct: all curve types for quality
-      formData.append('gap.filler', 'auto');          // Correct: gap.filler not gap_filler
-      formData.append('svg.fixed_size', 'false');     // Scalable SVG output
       
-      console.log('🎯 AUTHENTIC API PARAMETERS: Using correct Vectorizer.AI parameter names');
-      console.log('📋 Parameters: draw.style=fill_shapes, shape.stacking=stacked, group.by=none, gap.filler=auto');
+      console.log('🎯 SIMPLE VECTORIZER: Using minimal parameters for fresh results');
+      console.log('📁 Sending file:', processedImagePath);
+      console.log('📊 File size:', require('fs').statSync(processedImagePath).size, 'bytes');
       
       // Production mode for high-quality results
       if (!isPreview) {
