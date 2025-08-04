@@ -13,48 +13,98 @@ import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.pn
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 
-// Two main product groups 
+// All individual product types as shown in the deployed version
 const productCategories = [
   {
-    id: "screen-printed-transfers",
-    name: "Screen Printed Transfers",
-    description: "Full-Colour & Single Colour screen printed heat applied transfers",
+    id: "full-colour-transfers",
+    name: "Full Colour Transfers",
+    description: "Full-Colour screen printed heat applied transfers",
     icon: fullColourIconPath,
-    templateTypes: [
-      'template-A3', 'template-A4', 'template-A5',
-      'template-FOTLA3', 'template-FOTLA4', 
-      'template-metallic-a3', 'template-metallic-a4',
-      'template-reflective-a3', 'template-reflective-a4',
-      'template-hi-viz-a3', 'template-hi-viz-a4',
-      'template-glitter-a3', 'template-glitter-a4',
-      'template-holographic-a3', 'template-holographic-a4',
-      'template-glow-in-dark-a3', 'template-glow-in-dark-a4',
-      'template-puff-a3', 'template-puff-a4',
-      'template-foil-a3', 'template-foil-a4',
-      'template-photographic-a3', 'template-photographic-a4'
-    ]
+    group: "Screen Printed Transfers"
   },
   {
-    id: "digital-transfers",
-    name: "Digital Transfers",
-    description: "DTF, UV DTF, Sublimation, and Badges",
+    id: "full-colour-metallic",
+    name: "Full Colour Metallic", 
+    description: "Full-Colour screen printed with metallic finish",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
+  },
+  {
+    id: "full-colour-hd",
+    name: "Full Colour HD",
+    description: "High-definition full-colour screen printed transfers",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
+  },
+  {
+    id: "single-colour-transfers",
+    name: "Single Colour Transfers",
+    description: "Screen printed using our off-the-shelf colour range",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
+  },
+  {
+    id: "dtf-transfers",
+    name: "DTF - Digital Film Transfers",
+    description: "Small order digital heat transfers",
     icon: dtfIconPath,
-    templateTypes: [
-      'template-dtf-a3', 'template-dtf-a4',
-      'template-uv-dtf-a3', 'template-uv-dtf-a4',
-      'template-sublimation-a3', 'template-sublimation-a4',
-      'template-embroidery-badges-a3', 'template-embroidery-badges-a4',
-      'template-applique-badges-a3', 'template-applique-badges-a4',
-      'template-laser-cut-badges-a3', 'template-laser-cut-badges-a4',
-      'template-woven-badges-a3', 'template-woven-badges-a4'
-    ]
+    group: "Digital Transfers"
+  },
+  {
+    id: "uv-dtf",
+    name: "UV DTF",
+    description: "Hard Surface Transfers",
+    icon: uvdtfIconPath,
+    group: "Digital Transfers"
+  },
+  {
+    id: "custom-badges",
+    name: "Custom Badges",
+    description: "Polyester textile woven badges",
+    icon: wovenBadgeIconPath,
+    group: "Digital Transfers"
+  },
+  {
+    id: "applique-badges",
+    name: "Applique Badges",
+    description: "Fabric applique badges",
+    icon: wovenBadgeIconPath,
+    group: "Digital Transfers"
+  },
+  {
+    id: "reflective-transfers",
+    name: "Reflective Transfers",
+    description: "Our silver reflective helps enhance the visibility of the wearer at night",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
+  },
+  {
+    id: "zero-single-colour",
+    name: "ZERO Single Colour Transfers",
+    description: "Zero inks are super stretchy and do not bleed!",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
+  },
+  {
+    id: "sublimation-transfers",
+    name: "Sublimation Transfers",
+    description: "Sublimation heat transfers are designed for full colour decoration of white, 100% polyester",
+    icon: fullColourIconPath,
+    group: "Digital Transfers"
+  },
+  {
+    id: "zero-silicone-transfers",
+    name: "Zero Silicone Transfers",
+    description: "Silicone-free transfers",
+    icon: fullColourIconPath,
+    group: "Screen Printed Transfers"
   }
 ];
 
 interface ProductLauncherModalProps {
   open: boolean;
   onClose: () => void;
-  onSelectProduct: (group: string, templateTypes: string[]) => void;
+  onSelectProduct: (productId: string) => void;
 }
 
 export default function ProductLauncherModal({ 
@@ -63,8 +113,8 @@ export default function ProductLauncherModal({
   onSelectProduct 
 }: ProductLauncherModalProps) {
   
-  const handleProductSelect = (product: any) => {
-    onSelectProduct(product.name, product.templateTypes);
+  const handleProductSelect = (productId: string) => {
+    onSelectProduct(productId);
   };
 
   return (
@@ -80,15 +130,15 @@ export default function ProductLauncherModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
           {productCategories.map((product) => (
             <Card 
               key={product.id}
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"
-              onClick={() => handleProductSelect(product)}
+              onClick={() => handleProductSelect(product.id)}
             >
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="mx-auto w-20 h-20 flex items-center justify-center">
+              <CardContent className="p-4 text-center space-y-3">
+                <div className="mx-auto w-16 h-16 flex items-center justify-center">
                   <img 
                     src={product.icon} 
                     alt={product.name}
@@ -96,25 +146,25 @@ export default function ProductLauncherModal({
                   />
                 </div>
                 
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg text-white">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm text-white">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
+                  <p className="text-xs text-gray-400 leading-relaxed">
                     {product.description}
                   </p>
                 </div>
                 
                 <Button 
                   variant="outline" 
-                  size="default"
-                  className="w-full bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800"
+                  size="sm"
+                  className="w-full text-xs bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleProductSelect(product);
+                    handleProductSelect(product.id);
                   }}
                 >
-                  Select Templates
+                  Select
                 </Button>
               </CardContent>
             </Card>
