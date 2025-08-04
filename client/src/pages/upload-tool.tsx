@@ -672,12 +672,19 @@ export default function UploadTool() {
           // Invalidate canvas elements to fetch new ones
           queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
           
-          // Check if any uploaded logo is a PDF with raster only content OR a regular raster image
+          // Check if any uploaded logo is a PDF with raster only content OR a regular raster image OR extracted PNG from PDF
           const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
           const regularRasterFile = newLogos.find((logo: any) => 
             logo.filetype === 'image/jpeg' || 
             logo.filetype === 'image/jpg' || 
-            logo.filetype === 'image/png'
+            logo.filetype === 'image/png' ||
+            logo.mimeType === 'image/jpeg' ||
+            logo.mimeType === 'image/png'
+          );
+          const extractedPngFromPdf = newLogos.find((logo: any) => 
+            logo.originalName?.endsWith('.pdf') && 
+            logo.mimeType === 'image/png' && 
+            logo.filename?.includes('_raster-gs.png')
           );
           
           if (pdfWithRasterOnly) {
@@ -691,6 +698,36 @@ export default function UploadTool() {
               url: pdfWithRasterOnly.url
             });
             setShowRasterWarning(true);
+          } else if (extractedPngFromPdf) {
+            console.log('Extracted PNG from PDF detected, will show raster warning:', extractedPngFromPdf.originalName);
+            // Download the extracted PNG and show vectorization options
+            (async () => {
+              try {
+                const response = await fetch(extractedPngFromPdf.url);
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const file = new File([blob], extractedPngFromPdf.originalName.replace('.pdf', '.png'), { type: 'image/png' });
+                  console.log('Downloaded extracted PNG for vectorization:', file.name, file.size, file.type);
+                  
+                  // Show raster warning with the extracted PNG file
+                  setPendingRasterFile({ 
+                    file: file,
+                    fileName: extractedPngFromPdf.originalName.replace('.pdf', '.png'),
+                    logoId: extractedPngFromPdf.id,
+                    url: extractedPngFromPdf.url
+                  });
+                  setShowRasterWarning(true);
+                } else {
+                  throw new Error('Failed to download extracted PNG file');
+                }
+              } catch (error) {
+                console.error('Failed to prepare extracted PNG for vectorization:', error);
+                toast({
+                  title: "Success",
+                  description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
+                });
+              }
+            })();
           } else if (regularRasterFile) {
             console.log('Regular raster file detected:', regularRasterFile.originalName, regularRasterFile.filetype);
             // For regular raster files (JPEG/PNG), show vectorization options immediately
