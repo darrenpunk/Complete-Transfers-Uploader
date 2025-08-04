@@ -1146,48 +1146,39 @@ export default function UploadTool() {
                 console.log('Found canvas elements to update:', elementsToUpdate.length);
                 
                 // Update each canvas element to reference the new vectorized logo
+                // Use the server-calculated dimensions from the logo upload response
+                console.log('🎯 Using server-calculated dimensions for vectorized logo:', {
+                  logoId: newVectorLogo.id,
+                  displayWidth: newVectorLogo.displayWidth,
+                  displayHeight: newVectorLogo.displayHeight
+                });
+                
                 for (const element of elementsToUpdate) {
                   try {
-                    // Calculate auto-fit dimensions to prevent oversized vectors
-                    const template = templateSizes.find(t => t.id === currentProject.templateSize);
-                    if (template) {
-                      // Use a maximum of 80% of template size for auto-fit
-                      const maxWidth = template.width * 0.8;  // mm
-                      const maxHeight = template.height * 0.8; // mm
+                    // Use the server-calculated dimensions from the vectorized logo
+                    // The server has already calculated the correct dimensions from the SVG
+                    const logoWidth = newVectorLogo.displayWidth || element.width;
+                    const logoHeight = newVectorLogo.displayHeight || element.height;
+                    
+                    console.log('🔄 Updating canvas element to use server dimensions:', {
+                      elementId: element.id,
+                      oldDimensions: { width: element.width, height: element.height },
+                      newDimensions: { width: logoWidth, height: logoHeight },
+                      logoId: newVectorLogo.id
+                    });
                       
-                      // Get original element size
-                      let newWidth = element.width;
-                      let newHeight = element.height;
-                      
-                      // Auto-fit if current size is larger than reasonable canvas size
-                      if (newWidth > maxWidth || newHeight > maxHeight) {
-                        const widthScale = maxWidth / newWidth;
-                        const heightScale = maxHeight / newHeight;
-                        const scale = Math.min(widthScale, heightScale);
-                        
-                        newWidth = newWidth * scale;
-                        newHeight = newHeight * scale;
-                        
-                        console.log('Auto-fitting oversized vector:', {
-                          original: { width: element.width, height: element.height },
-                          fitted: { width: newWidth, height: newHeight },
-                          scale
-                        });
-                      }
-                      
-                      // Update the canvas element with new logo and fitted size
-                      await fetch(`/api/canvas-elements/${element.id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          logoId: newVectorLogo.id,
-                          width: newWidth,
-                          height: newHeight
-                        })
-                      });
-                      
-                      console.log('Updated canvas element:', element.id, 'to use vectorized logo:', newVectorLogo.id);
-                    }
+                    // Update the canvas element with new logo and server-calculated dimensions
+                    await fetch(`/api/canvas-elements/${element.id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        logoId: newVectorLogo.id,
+                        width: logoWidth,
+                        height: logoHeight
+                      })
+                    });
+                    
+                    console.log('✅ Updated canvas element:', element.id, 'with vectorized logo and server dimensions');
                   } catch (error) {
                     console.error('Failed to update canvas element:', element.id, error);
                   }
