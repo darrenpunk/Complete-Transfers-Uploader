@@ -125,8 +125,8 @@ export class MemStorage implements IStorage {
       { id: "applique-badge", name: "applique_badge", label: "100×70mm Applique", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Fabric applique badges" },
       { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges" },
       
-      // Digital Transfers - Reflective
-      { id: "reflective-A3", name: "reflective_A3", label: "A3 Reflective", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      // Digital Transfers - Reflective (moved to Screen Printed Transfers)
+      { id: "reflective-A3", name: "reflective_A3", label: "A3 Reflective", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
       
       // Digital Transfers - Sublimation
       { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Sublimation", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
