@@ -311,6 +311,8 @@ export function cleanAIVectorizedSVG(svgContent: string): string {
   }
 }
 
+
+
 /**
  * Comprehensive dimension detection with multiple fallbacks
  */
@@ -321,33 +323,73 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
                         svgContent.includes('AI_VECTORIZED_FILE');
   
-  // For AI-vectorized content, use the cleaned viewBox dimensions directly
+  // For AI-vectorized content, prioritize actual content bounds over full viewBox
   if (isAIVectorized) {
-    console.log('🤖 Detected AI-vectorized SVG, using cleaned viewBox dimensions...');
+    console.log('🤖 Detected AI-vectorized SVG, calculating actual content dimensions...');
     
-    // Method 1: Use the cleaned viewBox that was already cropped to content bounds in the vectorization API
-    const viewBoxDims = extractViewBoxDimensions(svgContent);
-    if (viewBoxDims && viewBoxDims.width > 0 && viewBoxDims.height > 0) {
-      const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'ai_vectorized_viewbox');
-      console.log(`✅ Using cleaned viewBox for AI-vectorized SVG: ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px`);
-      return viewBoxResult;
+    // Method 1: Calculate actual content bounds from SVG paths (more accurate than viewBox)
+    const actualContentBounds = calculateSVGContentBounds(svgContent);
+    if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
+      let contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'ai_vectorized_content');
+      
+      // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
+      const maxCanvasSize = 300; // mm
+      if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
+        const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
+        const scaledWidth = actualContentBounds.width * scaleFactor;
+        const scaledHeight = actualContentBounds.height * scaleFactor;
+        contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_scaled');
+        console.log(`🔽 Auto-scaled oversized AI-vectorized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
+      } else {
+        console.log(`✅ Using actual content bounds for AI-vectorized SVG: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px`);
+      }
+      return contentResult;
     }
     
     // Method 2: Use provided content bounds as fallback
     if (contentBounds && contentBounds.width && contentBounds.height) {
-      const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
-      console.log(`✅ Using provided content bounds for AI-vectorized SVG: ${contentBounds.width}×${contentBounds.height}px`);
+      let contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
+      
+      // Apply auto-scaling for provided content bounds too
+      const maxCanvasSize = 300; // mm
+      if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
+        const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
+        const scaledWidth = contentBounds.width * scaleFactor;
+        const scaledHeight = contentBounds.height * scaleFactor;
+        contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'content_bounds_scaled');
+        console.log(`🔽 Auto-scaled provided content bounds: ${contentBounds.width}×${contentBounds.height}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px`);
+      } else {
+        console.log(`✅ Using provided content bounds for AI-vectorized SVG: ${contentBounds.width}×${contentBounds.height}px`);
+      }
       return contentResult;
     }
     
-    // Method 3: For AI-vectorized content, use reasonable default dimensions if extraction fails
-    // This prevents logos from being too small to see on canvas
+    // Method 3: Use viewBox as last resort (may include extra whitespace)
+    const viewBoxDims = extractViewBoxDimensions(svgContent);
+    if (viewBoxDims && viewBoxDims.width > 0 && viewBoxDims.height > 0) {
+      let viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'ai_vectorized_viewbox');
+      
+      // Apply auto-scaling for viewBox dimensions too
+      const maxCanvasSize = 300; // mm
+      if (viewBoxResult.widthMm > maxCanvasSize || viewBoxResult.heightMm > maxCanvasSize) {
+        const scaleFactor = Math.min(maxCanvasSize / viewBoxResult.widthMm, maxCanvasSize / viewBoxResult.heightMm);
+        const scaledWidth = viewBoxDims.width * scaleFactor;
+        const scaledHeight = viewBoxDims.height * scaleFactor;
+        viewBoxResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_viewbox_scaled');
+        console.log(`🔽 Auto-scaled viewBox: ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px`);
+      } else {
+        console.log(`⚠️ Using viewBox for AI-vectorized SVG (may include whitespace): ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px`);
+      }
+      return viewBoxResult;
+    }
+    
+    // Method 4: For AI-vectorized content, use reasonable default dimensions if extraction fails
     console.warn('⚠️ Could not extract dimensions from AI-vectorized SVG, using reasonable defaults');
     const defaultResult = calculatePreciseDimensions(200, 200, 'ai_vectorized_fallback');
     console.log(`🎯 Using AI-vectorized fallback dimensions: 200×200px = ${defaultResult.widthMm.toFixed(1)}×${defaultResult.heightMm.toFixed(1)}mm`);
     return defaultResult;
   }
-  
+
   // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
   const viewBoxDims = extractViewBoxDimensions(svgContent);
   if (viewBoxDims) {

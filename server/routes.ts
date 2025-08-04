@@ -53,8 +53,8 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       
       // Use Ghostscript to render PDF directly as PNG without extraction
       // This maintains the PDF layout exactly as designed
-      // Using 150 DPI for optimal vectorization balance (300 DPI causes distortion)
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      // Using 200 DPI to preserve original embedded image dimensions (user's PDF is 102x102 at 200 DPI)
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r200 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       const { stdout, stderr } = await execAsync(gsCommand);
@@ -66,7 +66,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
         // Check dimensions to ensure quality
         const dimensions = await getPNGDimensions(outputPath);
         if (dimensions) {
-          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px (clean, no duplication)`);
+          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at 200 DPI (preserves original PDF size)`);
         }
         
         return outputPath;
@@ -265,7 +265,7 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
     if (!extractedFile) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_rendered.png`);
-        const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
         console.log('🏃 Method 3: Running standard Ghostscript rendering:', gsCommand);
         
         const { stdout, stderr } = await execAsync(gsCommand);
