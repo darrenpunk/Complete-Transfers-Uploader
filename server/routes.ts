@@ -36,7 +36,7 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
         console.log('📤 pdfimages stdout:', stdout);
         if (stderr) console.log('⚠️ pdfimages stderr:', stderr);
         
-        // Find the extracted image
+        // Find all extracted images and select the best one for vectorization
         const possibleFiles = [
           `${outputPrefix}-000.png`,
           `${outputPrefix}-001.png`,
@@ -44,16 +44,35 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
           `${outputPrefix}-1.png`
         ];
         
+        const extractedFiles = [];
         for (const file of possibleFiles) {
           const filePath = path.join(path.dirname(pdfPath), file);
           if (fs.existsSync(filePath)) {
-            extractedFile = filePath;
             const stats = fs.statSync(filePath);
-            console.log('✅ VECTORIZATION: Found original embedded PNG via pdfimages (native resolution):', extractedFile, `(${stats.size} bytes)`);
-            // For vectorization, return immediately with the original embedded PNG - no further processing
-            return extractedFile;
+            extractedFiles.push({
+              path: filePath,
+              size: stats.size,
+              file: file
+            });
+            console.log('🔍 VECTORIZATION: Found extracted file:', file, `(${stats.size} bytes)`);
           }
         }
+        
+        if (extractedFiles.length === 0) {
+          console.log('❌ VECTORIZATION: No files extracted by pdfimages');
+          return null;
+        }
+        
+        // For vectorization, prioritize the smallest file (likely the original clean embedded PNG)
+        // The original embedded PNG from Illustrator should be smaller and cleaner than processed versions
+        extractedFiles.sort((a, b) => a.size - b.size);
+        extractedFile = extractedFiles[0].path;
+        
+        console.log('✅ VECTORIZATION: Selected smallest/cleanest file for vectorization:', extractedFile, `(${extractedFiles[0].size} bytes)`);
+        console.log('📋 VECTORIZATION: All extracted files by size:', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
+        
+        // For vectorization, return immediately with the selected original PNG - no further processing
+        return extractedFile;
         
         console.log('❌ VECTORIZATION: pdfimages failed to extract original embedded PNG - returning null (no fallback)');
         return null;
