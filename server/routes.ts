@@ -2360,52 +2360,18 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // Use working baseline parameters from backup
+      // BARE MINIMUM: Use absolute minimal parameters
       if (!isPreview) {
-        formData.append('mode', 'production'); // Only use production mode when consuming credits
+        formData.append('mode', 'production');
       }
       
-      // File Format
+      // Only the required format parameter
       formData.append('output_format', 'svg');
       
-      // SVG Options
-      formData.append('svg_version', '1.1');
-      // Enable Adobe compatibility mode for proper Illustrator support
-      formData.append('svg_adobe_compatibility_mode', 'true');
+      // NO PROCESSING PARAMETERS AT ALL - let Vector.AI use defaults
+      // This prevents ALL enhancement features that cause text distortion
       
-      // Shape Stacking - Stack shapes on top of each other
-      formData.append('shape_stacking_mode', 'stack_on_top');
-      
-      // Allowed Curve Types
-      formData.append('curve_fitting_lines', 'true');
-      formData.append('curve_fitting_cubic_bezier_curves', 'true');
-      
-      // CRITICAL FIX: Disable gap filler to prevent letter extensions
-      formData.append('gap_filler_enabled', 'false');
-      
-      // CRITICAL FIX: Disable non-scaling stroke to prevent text distortion
-      formData.append('stroke_style_non_scaling_stroke', 'false');
-      formData.append('stroke_style_stroke_width', '0.5');
-      
-      // Group By
-      formData.append('output_group_by', 'color');
-      
-      // CRITICAL FIX: Use medium tolerance to prevent over-simplification of text
-      formData.append('line_fit_tolerance', 'medium');
-      
-      // Draw Style - Fill shapes (not stroke)
-      formData.append('draw_style', 'fill');
-      
-      // CRITICAL FIX: Lower DPI to prevent text artifacts - 72 DPI is better for text
-      formData.append('processing_dpi', '72');
-      
-      // CRITICAL FIX: Text-optimized parameters to prevent extensions
-      formData.append('curve_fitting_corners', 'true');
-      formData.append('corner_threshold', '90'); // Lower threshold for cleaner text
-      formData.append('length_threshold', '2.0'); // Higher threshold to ignore small artifacts
-      formData.append('max_iterations', '5'); // Fewer iterations to prevent over-processing
-      
-      console.log('✅ Using FIXED Vector.AI parameters to prevent letter extensions and text artifacts');
+      console.log('✅ Using BARE MINIMUM parameters - letting Vector.AI use default settings without ANY processing options');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
