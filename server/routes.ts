@@ -1587,9 +1587,44 @@ export async function registerRoutes(app: express.Application) {
         
         console.log('✅ Final extracted file:', extractedFile);
         
+        // Check for and fix potential duplication patterns
+        try {
+          console.log('🔍 Checking for duplication patterns in extracted image...');
+          const croppedFile = `${extractedFile}_dedup.png`;
+          const cropCommand = `convert "${extractedFile}" -trim +repage -gravity center -crop 50%x50%+0+0 +repage "${croppedFile}"`;
+          console.log('🏃 Running duplication detection crop:', cropCommand);
+          
+          const { stdout, stderr } = await execAsync(cropCommand);
+          if (stderr) console.log('⚠️ Crop stderr:', stderr);
+          
+          if (fs.existsSync(croppedFile)) {
+            console.log('✅ Created cropped version to check for duplication');
+            
+            // Compare file sizes - if cropped is more than 20% of original, likely not duplicated
+            const originalStats = fs.statSync(extractedFile);
+            const croppedStats = fs.statSync(croppedFile);
+            const sizeRatio = croppedStats.size / originalStats.size;
+            
+            console.log(`📊 Size comparison - Original: ${originalStats.size}, Cropped: ${croppedStats.size}, Ratio: ${sizeRatio.toFixed(2)}`);
+            
+            // If the cropped version is small relative to original, likely duplicated pattern
+            if (sizeRatio < 0.35) {
+              console.log('🎯 Detected duplication pattern, using cropped version');
+              // Replace the extracted file with the cropped version
+              fs.unlinkSync(extractedFile);
+              fs.renameSync(croppedFile, extractedFile);
+            } else {
+              console.log('✅ No duplication detected, using original');
+              fs.unlinkSync(croppedFile); // Clean up cropped version
+            }
+          }
+        } catch (cropErr) {
+          console.log('⚠️ Duplication detection failed, using original:', cropErr);
+        }
+        
         // Verify the PNG is valid before sending
         const stats = fs.statSync(extractedFile);
-        console.log('📊 Extracted file size:', stats.size, 'bytes');
+        console.log('📊 Final extracted file size:', stats.size, 'bytes');
         
         if (stats.size === 0) {
           console.error('❌ Extracted file is empty!');
