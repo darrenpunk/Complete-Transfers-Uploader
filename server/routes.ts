@@ -124,18 +124,9 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
         console.log('✅ VECTORIZATION: Selected largest/full-color file for vectorization:', extractedFile, `(${extractedFiles[0].size} bytes)`);
         console.log('📋 VECTORIZATION: All extracted files by size (largest first):', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
         
-        // For vectorization, we still need to clean up any duplication artifacts from the selected file
-        console.log('🧹 VECTORIZATION: Applying deduplication to clean up artifacts in selected file...');
-        const deduplicatedFile = await applyIntelligentDeduplication(extractedFile, path.basename(extractedFile, '.png'));
-        
-        if (deduplicatedFile && fs.existsSync(deduplicatedFile)) {
-          const deduplicatedStats = fs.statSync(deduplicatedFile);
-          console.log('✅ VECTORIZATION: Successfully cleaned up duplication artifacts:', deduplicatedFile, `(${deduplicatedStats.size} bytes)`);
-          return deduplicatedFile;
-        } else {
-          console.log('ℹ️ VECTORIZATION: No deduplication needed, using original extracted file');
-          return extractedFile;
-        }
+        // For vectorization, use the original extracted PNG without any processing
+        console.log('✅ VECTORIZATION: Using original extracted PNG without processing:', extractedFile);
+        return extractedFile;
         
         console.log('❌ VECTORIZATION: pdfimages failed to extract original embedded PNG - returning null (no fallback)');
         return null;
@@ -940,9 +931,12 @@ export async function registerRoutes(app: express.Application) {
             // Immediately extract original embedded PNG during upload (no processing)
             console.log('🔍 PDF has raster-only content, extracting original embedded PNG at native resolution...');
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
-            console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
+            
+            // Create clean prefix without .svg extension to avoid MIME type issues
+            const cleanPrefix = finalFilename.replace(/\.svg$/, '') + '_raster';
+            console.log('🔍 Output prefix for extraction:', cleanPrefix);
             try {
-              const extractedPngPath = await extractOriginalPNG(originalPdfPath, `${finalFilename}_raster`);
+              const extractedPngPath = await extractOriginalPNG(originalPdfPath, cleanPrefix);
               console.log('🔍 extractOriginalPNG returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
@@ -951,31 +945,24 @@ export async function registerRoutes(app: express.Application) {
                   const stats = fs.statSync(extractedPngPath);
                   console.log('📊 Extracted file size:', stats.size, 'bytes');
                   
-                  // Move the extracted PNG to the uploads directory with proper filename
-                  const extractedFilename = `${path.basename(extractedPngPath)}`;
-                  const targetPngPath = path.join(uploadDir, extractedFilename);
+                  // Use the extracted PNG directly (it's already in uploads directory)
+                  const extractedFilename = path.basename(extractedPngPath);
                   
-                  // Copy the extracted PNG to uploads directory if it's not already there
-                  if (extractedPngPath !== targetPngPath) {
-                    fs.copyFileSync(extractedPngPath, targetPngPath);
-                    console.log('📁 Copied extracted PNG to uploads directory:', targetPngPath);
-                    
-                    // Clean up the temporary extracted file
-                    if (fs.existsSync(extractedPngPath)) {
-                      fs.unlinkSync(extractedPngPath);
-                      console.log('🗑️ Cleaned up temporary extracted file');
-                    }
-                  }
+                  // Verify the file is accessible 
+                  console.log('🔍 Extracted PNG path:', extractedPngPath);
+                  console.log('🔍 Uploads directory:', uploadDir);
+                  console.log('🔍 File is in uploads dir:', extractedPngPath.includes(uploadDir));
                   
                   // Update the file details to use the extracted PNG for canvas display
                   finalFilename = extractedFilename;
                   finalMimeType = 'image/png';
-                  finalUrl = `/uploads/${finalFilename}`;
+                  finalUrl = `/uploads/${extractedFilename}`;
                   
                   console.log('🔄 Updated file details to use extracted PNG:');
                   console.log('  finalFilename:', finalFilename);
                   console.log('  finalMimeType:', finalMimeType);
                   console.log('  finalUrl:', finalUrl);
+                  console.log('🔍 Final file exists check:', fs.existsSync(path.join(uploadDir, extractedFilename)));
                 }
                 
                 // Store the path for later use in database
