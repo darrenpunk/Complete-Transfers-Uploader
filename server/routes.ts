@@ -2603,9 +2603,9 @@ export async function registerRoutes(app: express.Application) {
         });
       }
       
-      // Skip ALL aggressive cleaning for AI-vectorized content - preserve it exactly as-is
+      // Use the cleaned and cropped result from our AI-vectorized processing above
       let cleanedSvg = result;
-      console.log(`🤖 Preserving AI-vectorized content exactly as received - no cleaning applied`);
+      console.log(`🤖 Using cleaned AI-vectorized content with cropped viewBox`);
       
       // Only remove XML declaration if present for browser compatibility
       if (cleanedSvg.includes('<?xml')) {
