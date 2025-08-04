@@ -25,12 +25,12 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   try {
     let extractedFile = null;
     
-    // Method 1: For vectorization, prioritize original embedded PNG extraction
+    // Method 1: For vectorization, ONLY use pdfimages to get original embedded PNG (no fallback)
     if (skipDeduplication) {
       try {
         const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
         const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
-        console.log('🏃 Method 1: Running pdfimages extraction for vectorization (original embedded PNG):', extractCommand);
+        console.log('🎯 VECTORIZATION: Using pdfimages ONLY to extract original embedded PNG at native resolution:', extractCommand);
         
         const { stdout, stderr } = await execAsync(extractCommand);
         console.log('📤 pdfimages stdout:', stdout);
@@ -49,12 +49,18 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
           if (fs.existsSync(filePath)) {
             extractedFile = filePath;
             const stats = fs.statSync(filePath);
-            console.log('✅ Found original embedded PNG via pdfimages for vectorization:', extractedFile, `(${stats.size} bytes)`);
-            break;
+            console.log('✅ VECTORIZATION: Found original embedded PNG via pdfimages (native resolution):', extractedFile, `(${stats.size} bytes)`);
+            // For vectorization, return immediately with the original embedded PNG - no further processing
+            return extractedFile;
           }
         }
+        
+        console.log('❌ VECTORIZATION: pdfimages failed to extract original embedded PNG - returning null (no fallback)');
+        return null;
+        
       } catch (err) {
-        console.log('⚠️ pdfimages method failed for vectorization:', err);
+        console.log('❌ VECTORIZATION: pdfimages extraction failed:', err);
+        return null;
       }
     }
     
@@ -2028,7 +2034,8 @@ export async function registerRoutes(app: express.Application) {
           console.log('🔍 Regular raster request - applying standard deduplication');
         }
         
-        // Use the smart deduplication extraction function
+        // Use the smart deduplication extraction function with correct skipDeduplication parameter
+        // For vectorization, we want to skip deduplication to get the original embedded PNG
         const extractedFile = await extractRasterImageWithDeduplication(pdfPath, `${logo.filename}_raster_endpoint`, isForVectorization);
         
         if (!extractedFile) {
