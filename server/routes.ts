@@ -2343,26 +2343,18 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // Use correct Vector.AI API parameters from official documentation
+      // Use AUTHENTIC Vector.AI API parameters from official documentation
       formData.append('format', 'svg');
       formData.append('svg.version', '1.1');
-      formData.append('svg.group_by', 'none'); // Group By: None as shown in Vector.AI
+      formData.append('group_by', 'none'); // NOT svg.group_by - correct parameter name
+      formData.append('draw.style', 'fill_shapes'); // Fill shapes for professional results
+      formData.append('shape_stacking', 'cutout'); // Cut-out shapes for clean results
+      formData.append('curves', 'all'); // All curve types: lines, arcs, and splines
+      formData.append('gap_filler', 'auto'); // Auto gap filler to prevent artifacts
       
-      // Enable high-quality shape recognition
-      formData.append('shapes.fitting', 'true'); // Enable special shape identification
-      formData.append('shapes.mode', 'cutout'); // Cut-out shapes for clean results
-      
-      // Enable all curve types for best quality
-      formData.append('curves.line', 'true'); // Allow straight lines
-      formData.append('curves.arc', 'true'); // Allow circular/elliptical arcs  
-      formData.append('curves.cubic', 'true'); // Allow cubic Bézier curves
-      formData.append('curves.quadratic', 'true'); // Allow quadratic Bézier curves
-      
-      // Enable gap filler to prevent artifacts
-      formData.append('gap_filler', 'true');
-      
-      // Limit colors for cleaner result
-      formData.append('processing.max_colors', '256');
+      // Additional quality parameters
+      formData.append('stroke.non_scaling', 'false'); // Regular scaling strokes
+      formData.append('svg.fixed_size', 'false'); // Scalable SVG output
       
       // Production mode
       if (!isPreview) {
