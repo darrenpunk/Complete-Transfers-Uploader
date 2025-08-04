@@ -2343,19 +2343,18 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // PRODUCTION MODE: Use professional Vector.AI parameters for high quality
+      // CORRECT VECTORIZER.AI PARAMETERS: Use authentic API parameters from official documentation
       formData.append('format', 'svg');
       formData.append('svg.version', '1.1');
-      formData.append('group_by', 'none');
-      formData.append('draw.style', 'fill_shapes');
-      formData.append('shape_stacking', 'cutout');
-      formData.append('curves', 'all');
-      formData.append('gap_filler', 'auto');
-      formData.append('stroke.non_scaling', 'false');
-      formData.append('svg.fixed_size', 'false');
+      formData.append('group.by', 'none');           // Correct: group.by not group_by
+      formData.append('draw.style', 'fill_shapes');   // Correct: fill shapes for clean results
+      formData.append('shape.stacking', 'stacked');   // Correct: shape.stacking not shape_stacking, using stacked for better text
+      formData.append('curves', 'all');               // Correct: all curve types for quality
+      formData.append('gap.filler', 'auto');          // Correct: gap.filler not gap_filler
+      formData.append('svg.fixed_size', 'false');     // Scalable SVG output
       
-      console.log('🎯 PRODUCTION MODE: Using professional Vector.AI parameters');
-      console.log('📋 Parameters: format=svg, group_by=none, fill_shapes, cutout, curves=all, gap_filler=auto');
+      console.log('🎯 AUTHENTIC API PARAMETERS: Using correct Vectorizer.AI parameter names');
+      console.log('📋 Parameters: draw.style=fill_shapes, shape.stacking=stacked, group.by=none, gap.filler=auto');
       
       // Production mode for high-quality results
       if (!isPreview) {
