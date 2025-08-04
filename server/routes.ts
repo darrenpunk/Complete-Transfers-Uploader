@@ -20,16 +20,33 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
+// Get actual dimensions from PNG file
+async function getPNGDimensions(imagePath: string): Promise<{width: number, height: number} | null> {
+  try {
+    const { stdout } = await execAsync(`identify -format "%wx%h" "${imagePath}"`);
+    const dimensions = stdout.trim().split('x');
+    if (dimensions.length === 2) {
+      const width = parseInt(dimensions[0]);
+      const height = parseInt(dimensions[1]);
+      console.log(`📏 PNG dimensions detected: ${width}×${height}px from ${path.basename(imagePath)}`);
+      return { width, height };
+    }
+  } catch (err) {
+    console.log('⚠️ Failed to detect PNG dimensions:', err);
+  }
+  return null;
+}
+
 // Extract original PNG from PDF using multiple methods
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
     console.log('📸 Extracting original PNG from PDF using multiple methods');
     
-    // Method 1: Try Ghostscript with high-quality single image extraction
+    // Method 1: Try Ghostscript with high-quality single image extraction preserving transparency
     try {
       const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs.png`);
-      const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
-      console.log('🎯 Method 1: Using Ghostscript for clean extraction:', gsCommand);
+      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
+      console.log('🎯 Method 1: Using Ghostscript with transparency preservation:', gsCommand);
       
       const { stdout, stderr } = await execAsync(gsCommand);
       console.log('📤 GS stdout:', stdout);
@@ -44,11 +61,11 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       console.log('⚠️ Ghostscript method failed:', gsErr);
     }
     
-    // Method 2: Try ImageMagick with quality settings
+    // Method 2: Try ImageMagick with quality settings preserving transparency
     try {
       const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im.png`);
-      const imCommand = `convert -density 300 "${pdfPath}[0]" -quality 100 -background white -alpha remove "${imOutputPath}"`;
-      console.log('🎯 Method 2: Using ImageMagick for clean extraction:', imCommand);
+      const imCommand = `convert -density 300 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
+      console.log('🎯 Method 2: Using ImageMagick with transparency preservation:', imCommand);
       
       const { stdout, stderr } = await execAsync(imCommand);
       console.log('📤 IM stdout:', stdout);
@@ -1011,6 +1028,16 @@ export async function registerRoutes(app: express.Application) {
                 // Store the path for later use in database
                 (file as any).extractedRasterPath = extractedPngPath;
                 console.log('💾 Stored extractedRasterPath in file object:', extractedPngPath);
+                
+                // Calculate actual dimensions of the extracted PNG
+                const pngDimensions = await getPNGDimensions(extractedPngPath);
+                if (pngDimensions) {
+                  (file as any).extractedPngWidth = pngDimensions.width;
+                  (file as any).extractedPngHeight = pngDimensions.height;
+                  console.log('📐 Stored extracted PNG dimensions:', pngDimensions);
+                } else {
+                  console.log('⚠️ Could not detect extracted PNG dimensions, will use fallback');
+                }
               } else {
                 console.log('❌ extractRasterImageWithDeduplication returned null/undefined');
               }
@@ -1257,6 +1284,20 @@ export async function registerRoutes(app: express.Application) {
         // Create canvas element with proper sizing
         let displayWidth = 200;
         let displayHeight = 150;
+
+        // Use actual extracted PNG dimensions if available
+        if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
+          const { calculatePreciseDimensions } = await import('./dimension-utils');
+          const pngWidth = (file as any).extractedPngWidth;
+          const pngHeight = (file as any).extractedPngHeight;
+          
+          // Calculate dimensions using standard conversion factor
+          const dimensionResult = calculatePreciseDimensions(pngWidth, pngHeight, 'extracted_png');
+          displayWidth = dimensionResult.widthMm;
+          displayHeight = dimensionResult.heightMm;
+          
+          console.log(`📐 Using extracted PNG dimensions: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        }
 
         try {
           if (finalMimeType === 'image/svg+xml') {
