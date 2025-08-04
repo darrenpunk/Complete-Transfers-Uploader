@@ -867,20 +867,28 @@ export default function UploadTool() {
         {/* Template Selector Modal */}
         <TemplateSelectorModal
           open={showTemplateSelector}
-          templates={templateSizes.filter(t => !selectedProductGroup || 
-            (selectedProductGroup === "Full Colour Transfers" && t.group === "Screen Printed Transfers" && !t.label?.includes("Single Colour") && !t.label?.includes("Zero")) ||
-            (selectedProductGroup === "Full Colour Metallic" && t.group === "Screen Printed Transfers" && t.label?.includes("Metallic")) ||
-            (selectedProductGroup === "Full Colour HD" && t.group === "Screen Printed Transfers" && t.label?.includes("HD")) ||
-            (selectedProductGroup === "Single Colour Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Single Colour")) ||
-            (selectedProductGroup === "DTF - Digital Film Transfers" && t.group === "Digital Transfers" && t.label?.includes("DTF")) ||
-            (selectedProductGroup === "UV DTF" && t.group === "Digital Transfers" && t.label?.includes("UV DTF")) ||
-            (selectedProductGroup === "Custom Badges" && t.group === "Digital Transfers" && t.label?.includes("Woven")) ||
-            (selectedProductGroup === "Applique Badges" && t.group === "Digital Transfers" && t.label?.includes("Applique")) ||
-            (selectedProductGroup === "Reflective Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Reflective")) ||
-            (selectedProductGroup === "ZERO Single Colour Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Zero")) ||
-            (selectedProductGroup === "Sublimation Transfers" && t.group === "Digital Transfers" && t.label?.includes("Sublimation")) ||
-            (selectedProductGroup === "Zero Silicone Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Silicone"))
-          )}
+          templates={templateSizes.filter(t => {
+            if (!selectedProductGroup) return true;
+            
+            // Define exact template IDs for each product type as shown in deployed version
+            const productTemplates: { [key: string]: string[] } = {
+              "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
+              "Full Colour Metallic": ["template-metallic-a3", "template-metallic-a4"],
+              "Full Colour HD": ["template-hd-a3", "template-hd-a4"],
+              "Single Colour Transfers": ["template-single-a3", "template-single-a4"],
+              "DTF - Digital Film Transfers": ["template-dtf-a3", "template-dtf-a4"],
+              "UV DTF": ["template-uv-dtf-a3", "template-uv-dtf-a4"],
+              "Custom Badges": ["template-woven-badges-a3", "template-woven-badges-a4"],
+              "Applique Badges": ["template-applique-badges-a3", "template-applique-badges-a4"],
+              "Reflective Transfers": ["template-reflective-a3", "template-reflective-a4"],
+              "ZERO Single Colour Transfers": ["template-zero-a3", "template-zero-a4"],
+              "Sublimation Transfers": ["template-sublimation-a3", "template-sublimation-a4"],
+              "Zero Silicone Transfers": ["template-zero-silicone-a3", "template-zero-silicone-a4"]
+            };
+            
+            const allowedTemplates = productTemplates[selectedProductGroup] || [];
+            return allowedTemplates.includes(t.id);
+          })}
           onSelectTemplate={handleTemplateSelect}
           onClose={() => setShowTemplateSelector(false)}
           onBack={() => {
@@ -1063,20 +1071,28 @@ export default function UploadTool() {
       {/* Template Selector Modal */}
       <TemplateSelectorModal
         open={showTemplateSelector}
-        templates={templateSizes.filter(t => !selectedProductGroup || 
-          (selectedProductGroup === "Full Colour Transfers" && t.group === "Screen Printed Transfers" && !t.label?.includes("Single Colour") && !t.label?.includes("Zero")) ||
-          (selectedProductGroup === "Full Colour Metallic" && t.group === "Screen Printed Transfers" && t.label?.includes("Metallic")) ||
-          (selectedProductGroup === "Full Colour HD" && t.group === "Screen Printed Transfers" && t.label?.includes("HD")) ||
-          (selectedProductGroup === "Single Colour Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Single Colour")) ||
-          (selectedProductGroup === "DTF - Digital Film Transfers" && t.group === "Digital Transfers" && t.label?.includes("DTF")) ||
-          (selectedProductGroup === "UV DTF" && t.group === "Digital Transfers" && t.label?.includes("UV DTF")) ||
-          (selectedProductGroup === "Custom Badges" && t.group === "Digital Transfers" && t.label?.includes("Woven")) ||
-          (selectedProductGroup === "Applique Badges" && t.group === "Digital Transfers" && t.label?.includes("Applique")) ||
-          (selectedProductGroup === "Reflective Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Reflective")) ||
-          (selectedProductGroup === "ZERO Single Colour Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Zero")) ||
-          (selectedProductGroup === "Sublimation Transfers" && t.group === "Digital Transfers" && t.label?.includes("Sublimation")) ||
-          (selectedProductGroup === "Zero Silicone Transfers" && t.group === "Screen Printed Transfers" && t.label?.includes("Silicone"))
-        )}
+        templates={templateSizes.filter(t => {
+          if (!selectedProductGroup) return true;
+          
+          // Define exact template IDs for each product type as shown in deployed version
+          const productTemplates: { [key: string]: string[] } = {
+            "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
+            "Full Colour Metallic": ["template-metallic-a3", "template-metallic-a4"],
+            "Full Colour HD": ["template-hd-a3", "template-hd-a4"],
+            "Single Colour Transfers": ["template-single-a3", "template-single-a4"],
+            "DTF - Digital Film Transfers": ["template-dtf-a3", "template-dtf-a4"],
+            "UV DTF": ["template-uv-dtf-a3", "template-uv-dtf-a4"],
+            "Custom Badges": ["template-woven-badges-a3", "template-woven-badges-a4"],
+            "Applique Badges": ["template-applique-badges-a3", "template-applique-badges-a4"],
+            "Reflective Transfers": ["template-reflective-a3", "template-reflective-a4"],
+            "ZERO Single Colour Transfers": ["template-zero-a3", "template-zero-a4"],
+            "Sublimation Transfers": ["template-sublimation-a3", "template-sublimation-a4"],
+            "Zero Silicone Transfers": ["template-zero-silicone-a3", "template-zero-silicone-a4"]
+          };
+          
+          const allowedTemplates = productTemplates[selectedProductGroup] || [];
+          return allowedTemplates.includes(t.id);
+        })}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
         onBack={() => {
