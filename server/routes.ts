@@ -42,16 +42,31 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
   try {
     console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF at original size and DPI');
     
-    // Method 1: Try JavaScript-based native extraction first
+    // Method 1: Try direct PDF rendering without extraction
     try {
-      const { extractNativeEmbeddedImage } = await import('./native-pdf-extractor');
-      const nativeResult = await extractNativeEmbeddedImage(pdfPath, outputPrefix);
-      if (nativeResult && fs.existsSync(nativeResult)) {
-        console.log('✅ Native JavaScript extraction successful - preserving original embedded size');
-        return nativeResult;
+      console.log('🎯 DIRECT PDF RENDERING: Converting PDF page to PNG at optimal resolution');
+      const pdf2pic = (await import('pdf2pic')).default;
+      
+      // Use pdf2pic to render the PDF page directly as PNG
+      // This preserves the PDF content without extraction artifacts
+      const convert = pdf2pic.fromPath(pdfPath, {
+        density: 150,           // 150 DPI for good quality
+        saveFilename: `${path.basename(outputPrefix)}_direct`,
+        savePath: path.dirname(pdfPath),
+        format: "png",
+        width: 800,            // Max width to prevent oversizing
+        height: 800            // Max height to prevent oversizing
+      });
+      
+      const result = await convert(1); // Convert first page
+      if (result && result.path && fs.existsSync(result.path)) {
+        console.log('✅ DIRECT PDF RENDERING SUCCESS - no extraction artifacts:', result.path);
+        return result.path;
       }
-    } catch (error) {
-      console.log('⚠️ Native extraction failed, falling back to pdfimages:', error.message);
+      
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log('⚠️ Direct PDF rendering failed:', errorMessage);
     }
     
     // Method 2: Fallback to pdfimages (but this may still have sizing issues)
