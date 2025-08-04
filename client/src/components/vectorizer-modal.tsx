@@ -1716,51 +1716,7 @@ export function VectorizerModal({
                 
                 
                 {/* White Color Management */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const currentSvg = coloredSvg || vectorSvg;
-                          if (currentSvg) {
-                            // Save current state for undo
-                            setDeletionHistory(prev => [...prev, {
-                              svg: currentSvg,
-                              colors: [...detectedColors]
-                            }]);
-                            
-                            // Use the smart background white removal function
-                            const updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
-                            const newColors = detectColorsInSvg(updatedSvg);
-                            
-                            // Clear all highlighting first
-                            setHighlightedColor(null);
-                            setHighlightedSvg(null);
-                            
-                            // Update state
-                            setColoredSvg(updatedSvg);
-                            setDetectedColors(newColors);
-                            setSvgRevision(prev => prev + 1);
-                            
-                            toast({
-                              title: "Background White Removed",
-                              description: "Removed background white elements while preserving text/details.",
-                            });
-                          }
-                        }}
-                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
-                        disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
-                      >
-                        Remove White
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Remove white background elements only (preserves text and details)</p>
-                    </TooltipContent>
-                  </Tooltip>
+                <div className="grid grid-cols-1 gap-2 mb-3">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
