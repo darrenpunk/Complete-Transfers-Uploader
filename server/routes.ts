@@ -157,7 +157,7 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       console.log(`📊 Test file sizes: original=${originalStats.size} bytes, quarter=${testStats.size} bytes`);
       
       // If quarter crop is much smaller than expected (~25%), it indicates duplication
-      if (ratio < 0.20) { // Threshold for detecting duplication patterns (adjusted for better detection)
+      if (ratio < 0.22) { // More sensitive threshold for detecting duplication patterns
         console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${ratio.toFixed(3)} indicates grid pattern`);
         hasDuplication = true;
         
@@ -319,7 +319,7 @@ async function applyIntelligentDeduplication(imagePath: string, filename: string
     // For uploaded PNGs, be more aggressive in detecting duplication
     // Quarter crop should be ~25% of original if no duplication
     // Half crops should be ~50% of original if no duplication  
-    if (bestRatio < 0.20) { // More lenient threshold for uploaded PNGs
+    if (bestRatio < 0.22) { // More sensitive threshold for uploaded PNGs
       hasDuplication = true;
       console.log(`🎯 DUPLICATION DETECTED! ${bestCropName} crop ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
     } else {
@@ -2046,26 +2046,23 @@ export async function registerRoutes(app: express.Application) {
                                      req.file.path?.includes('raster') ||
                                      req.file.originalname?.includes('extracted');
         
-        if (isFromRasterExtraction) {
-          console.log('📄 PNG is from raster extraction - skipping deduplication (already handled)');
-        } else {
-          console.log('🔍 Applying intelligent deduplication to raw uploaded PNG...');
-          console.log('📁 Original file path:', req.file.path);
-          console.log('📁 Original file size:', req.file.size, 'bytes');
-          try {
-            console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
-            const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
-            console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
-            if (deduplicatedPath) {
-              processedImagePath = deduplicatedPath;
-              console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
-            } else {
-              console.log('📄 No deduplication needed - using original PNG');
-            }
-          } catch (err) {
-            console.log('⚠️ Deduplication failed, using original:', err);
-            console.error('⚠️ Full deduplication error:', err);
+        // Always apply deduplication to ensure clean results
+        console.log('🔍 Applying intelligent deduplication to PNG (includes raster extractions)...');
+        console.log('📁 Original file path:', req.file.path);
+        console.log('📁 Original file size:', req.file.size, 'bytes');
+        try {
+          console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
+          const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
+          console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
+          if (deduplicatedPath) {
+            processedImagePath = deduplicatedPath;
+            console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
+          } else {
+            console.log('📄 No deduplication needed - using original PNG');
           }
+        } catch (err) {
+          console.log('⚠️ Deduplication failed, using original:', err);
+          console.error('⚠️ Full deduplication error:', err);
         }
       }
 
