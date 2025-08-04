@@ -1843,11 +1843,14 @@ export function VectorizerModal({
                             let updatedSvg = currentSvg;
                             let totalRemoved = 0;
                             
-                            // Only remove colors that are actually detected as white variations
+                            // Use smart background removal that only removes background white elements
+                            console.log('Applying smart white background removal');
+                            updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
+                            
+                            // Mark white colors as deleted for UI purposes
                             const whiteVariations = detectedColors
                               .filter(colorItem => {
                                 const color = colorItem.color.toLowerCase();
-                                // Check for white variations
                                 return color === '#ffffff' || 
                                        color === '#fefefe' || 
                                        color === '#fdfdfd' || 
@@ -1859,13 +1862,10 @@ export function VectorizerModal({
                               })
                               .map(colorItem => colorItem.color);
                             
-                            console.log('Removing white variations:', whiteVariations);
-                            
                             whiteVariations.forEach(whiteColor => {
-                              updatedSvg = removeColorFromSvg(updatedSvg, whiteColor);
                               setDeletedColors(prev => new Set([...prev, whiteColor.toLowerCase()]));
-                              totalRemoved++;
                             });
+                            totalRemoved = whiteVariations.length;
                             
                             const newColors = detectColorsInSvg(updatedSvg);
                             
