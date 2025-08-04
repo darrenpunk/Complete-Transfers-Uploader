@@ -2343,25 +2343,21 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // Use AUTHENTIC Vector.AI API parameters from official documentation
+      // MINIMALIST APPROACH: Try with absolutely minimal parameters first to debug
       formData.append('format', 'svg');
-      formData.append('svg.version', '1.1');
-      formData.append('group_by', 'none'); // NOT svg.group_by - correct parameter name
-      formData.append('draw.style', 'fill_shapes'); // Fill shapes for professional results
-      formData.append('shape_stacking', 'cutout'); // Cut-out shapes for clean results
-      formData.append('curves', 'all'); // All curve types: lines, arcs, and splines
-      formData.append('gap_filler', 'auto'); // Auto gap filler to prevent artifacts
       
-      // Additional quality parameters
-      formData.append('stroke.non_scaling', 'false'); // Regular scaling strokes
-      formData.append('svg.fixed_size', 'false'); // Scalable SVG output
+      // Test if the issue is parameter overload - start with just format
+      console.log('🧪 TESTING: Using minimal parameters (format=svg only) to isolate issue');
       
       // Production mode
       if (!isPreview) {
         formData.append('mode', 'production');
       }
 
-      // Call vectorizer.ai API
+      // Call vectorizer.ai API with minimal debugging
+      console.log('🧪 MINIMALIST TEST: Sending to Vector.AI with ONLY format=svg parameter');
+      console.log('🔍 This will help determine if the issue is parameter complexity or API functionality');
+      
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
         headers: {
@@ -2370,6 +2366,9 @@ export async function registerRoutes(app: express.Application) {
         },
         body: formData as any
       });
+      
+      console.log('✅ Vector.AI API Response status:', response.status, response.statusText);
+      console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
