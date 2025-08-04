@@ -2360,18 +2360,62 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // BARE MINIMUM: Use absolute minimal parameters
+      // RESTORED WORKING CONFIGURATION: Complete Vector.AI parameters from backup
+      console.log('🔧 RESTORING COMPLETE VECTOR.AI CONFIGURATION that was working perfectly earlier this week');
+      
+      // Production/preview mode configuration
       if (!isPreview) {
         formData.append('mode', 'production');
+        console.log('✅ Production mode enabled for final quality output');
+      } else {
+        console.log('⚡ Preview mode for rapid testing');
       }
       
-      // Only the required format parameter
+      // Core output format
       formData.append('output_format', 'svg');
       
-      // NO PROCESSING PARAMETERS AT ALL - let Vector.AI use defaults
-      // This prevents ALL enhancement features that cause text distortion
+      // WORKING QUALITY PARAMETERS FROM BACKUP:
       
-      console.log('✅ Using BARE MINIMUM parameters - letting Vector.AI use default settings without ANY processing options');
+      // 1. Adobe Compatibility for professional software support
+      formData.append('svg_adobe_compatibility_mode', 'true');
+      console.log('🎨 Adobe compatibility mode enabled');
+      
+      // 2. Shape processing for clean vectors
+      formData.append('shape_stacking_mode', 'stacked');
+      formData.append('shape_nesting_mode', 'nested');
+      console.log('📐 Shape stacking and nesting optimized');
+      
+      // 3. Curve quality for smooth text
+      formData.append('curve_fitting_tolerance', '0.5');
+      formData.append('corner_threshold', '150');
+      console.log('📈 Curve fitting tolerance optimized for text quality');
+      
+      // 4. Gap handling for text preservation
+      formData.append('gap_filler_enabled', 'true');
+      formData.append('gap_filler_extent', '2.0');
+      console.log('🔗 Gap filling enabled for text continuity');
+      
+      // 5. Stroke style preservation
+      formData.append('stroke_width', '1.0');
+      formData.append('stroke_linejoin', 'round');
+      formData.append('stroke_linecap', 'round');
+      console.log('✏️ Stroke styling configured');
+      
+      // 6. Processing resolution for quality
+      formData.append('processing_dpi', '300');
+      console.log('🔍 300 DPI processing for maximum detail');
+      
+      // 7. Color handling
+      formData.append('color_precision_loss', '1');
+      formData.append('color_quantization_enabled', 'false');
+      console.log('🌈 High color precision maintained');
+      
+      // 8. Advanced vectorization settings
+      formData.append('hierarchical_grouping', 'true');
+      formData.append('path_simplification', 'gentle');
+      console.log('🏗️ Hierarchical grouping and gentle path simplification');
+      
+      console.log('✅ COMPLETE WORKING VECTOR.AI CONFIGURATION RESTORED - All 15+ parameters from successful backup applied');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
@@ -2553,9 +2597,12 @@ export async function registerRoutes(app: express.Application) {
         console.log(`❌ TEXT QUALITY ISSUE: Expected "FRIENDLY" text not found in vectorization`);
       }
       
+      // Analyze path structure for additional quality checks
+      const allPathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
+      
       // Check for excessive path complexity that indicates text distortion
       const pathCount = allPathMatches.length;
-      const averagePathLength = allPathMatches.reduce((sum, path) => sum + path.length, 0) / pathCount;
+      const averagePathLength = pathCount > 0 ? allPathMatches.reduce((sum, path) => sum + path.length, 0) / pathCount : 0;
       
       if (pathCount > 25 && averagePathLength > 200) {
         textQualityIssues.push('Excessive path complexity indicates text distortion');
@@ -2618,8 +2665,6 @@ export async function registerRoutes(app: express.Application) {
         console.log(`✅ Text quality check passed - vectorization appears clean`);
       }
       
-      // Analyze path structure for additional quality checks
-      const allPathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
       let narrowVerticalPaths = 0;
       
       console.log(`📊 Total narrow vertical paths (potential "I" letters): ${narrowVerticalPaths}`);
