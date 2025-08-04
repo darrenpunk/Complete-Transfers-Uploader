@@ -1303,11 +1303,12 @@ export async function registerRoutes(app: express.Application) {
           const pngPath = path.join(uploadDir, finalFilename);
           const directDimensions = await getPNGDimensions(pngPath);
           if (directDimensions) {
-            const { calculatePreciseDimensions } = await import('./dimension-utils');
-            const dimensionResult = calculatePreciseDimensions(directDimensions.width, directDimensions.height, 'direct_query');
-            displayWidth = dimensionResult.widthMm;
-            displayHeight = dimensionResult.heightMm;
-            console.log(`📐 Using directly queried PNG dimensions: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+            // For PDF extraction at 300 DPI, use proper DPI conversion: 25.4mm/300px = 0.0847mm per pixel
+            const PDF_EXTRACTION_DPI = 300;
+            const mmPerPixel = 25.4 / PDF_EXTRACTION_DPI; // 0.0847mm per pixel
+            displayWidth = directDimensions.width * mmPerPixel;
+            displayHeight = directDimensions.height * mmPerPixel;
+            console.log(`📐 Using PDF extraction DPI conversion: ${directDimensions.width}×${directDimensions.height}px at ${PDF_EXTRACTION_DPI} DPI = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm`);
           }
         } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
