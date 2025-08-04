@@ -1713,42 +1713,7 @@ export function VectorizerModal({
                   </Tooltip>
                 </div>
                 
-                {/* Eyedropper Tool */}
-                <div className="mb-3">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={isEyedropperActive ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setIsEyedropperActive(!isEyedropperActive);
-                          if (!isEyedropperActive) {
-                            setEyedropperColor(null);
-                            toast({
-                              title: "Eyedropper Mode",
-                              description: "Click a color below to pick it, then click another color to apply it.",
-                            });
-                          }
-                        }}
-                        className={`w-full ${
-                          isEyedropperActive 
-                            ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600" 
-                            : "border-gray-600 text-gray-100 hover:bg-gray-700"
-                        }`}
-                      >
-                        <Pipette className="w-4 h-4 mr-2" />
-                        {isEyedropperActive 
-                          ? (eyedropperColor 
-                            ? `Apply ${eyedropperColor}` 
-                            : "Pick a Color") 
-                          : "Eyedropper"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Use eyedropper to copy colors from one element to another</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                
                 
                 {/* White Color Management */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
