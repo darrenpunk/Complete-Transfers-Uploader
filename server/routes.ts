@@ -2352,36 +2352,15 @@ export async function registerRoutes(app: express.Application) {
       // Use timestamp to force fresh API call
       const timestamp = Date.now();
       
-      // Force Vector.AI to bypass any caching by modifying the file slightly
-      try {
-        // Create a modified copy of the image with a single pixel change to force fresh processing
-        const originalBuffer = fs.readFileSync(processedImagePath);
-        const modifiedPath = processedImagePath + '_modified_' + timestamp;
-        
-        // For PNG files, we can modify the last few bytes safely without affecting the image visually
-        const modifiedBuffer = Buffer.from(originalBuffer);
-        if (modifiedBuffer.length > 10) {
-          // Change a non-critical byte in the PNG to force Vector.AI to see it as new
-          modifiedBuffer[modifiedBuffer.length - 5] = (modifiedBuffer[modifiedBuffer.length - 5] + 1) % 256;
-        }
-        
-        fs.writeFileSync(modifiedPath, modifiedBuffer);
-        processedImagePath = modifiedPath;
-        console.log('🔧 Created modified image file to bypass Vector.AI caching:', modifiedPath);
-      } catch (modifyError) {
-        console.log('⚠️ Could not modify image for cache bypass, using original:', modifyError);
-      }
+      // Use original file without modification to avoid corruption
+      console.log('🔧 Using original file without modification to preserve PNG integrity');
       
       // FIXED: Prepare form data for vectorizer.ai API (matching working debug version)
       const formData = new FormData();
       const fileStream = fs.createReadStream(processedImagePath);
       
-      // Use simple filename without complex options + timestamp to force fresh API call
-      formData.append('image', fileStream, `test_${timestamp}.png`);
-      
-      // Add multiple unique parameters to force Vector.AI to process as completely new request
-      formData.append('comment', `Test_${timestamp}_ForceNewResult`);
-      formData.append('timestamp', timestamp.toString());
+      // Use simple filename exactly like Vector.AI webapp
+      formData.append('image', fileStream, 'image.png');
       // DIRECT PNG VECTORIZER: Optimized for high-quality PNG uploads
       console.log('🎯 DIRECT PNG VECTORIZER: Processing high-quality PNG upload');
       console.log('📁 Sending file:', processedImagePath);
