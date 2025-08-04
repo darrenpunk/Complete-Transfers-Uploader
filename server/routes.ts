@@ -107,48 +107,79 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
     const originalStats = fs.statSync(extractedFile);
     console.log('📊 Original extracted file size:', originalStats.size, 'bytes');
     
-    // Test multiple crop strategies
-    const cropTests = [
-      { name: 'quarter', crop: '50%x50%+0+0' },        // Top-left quarter
-      { name: 'half-width', crop: '50%x100%+0+0' },   // Left half
-      { name: 'half-height', crop: '100%x50%+0+0' }   // Top half
-    ];
+    // First, check if duplication actually exists by testing a quarter crop
+    const quarterTestFile = `${extractedFile}_quarter_test.png`;
+    const quarterCropCommand = `convert "${extractedFile}" -crop 50%x50%+0+0 +repage "${quarterTestFile}"`;
+    console.log(`🧪 Testing for duplication with quarter crop: ${quarterCropCommand}`);
     
+    const { stdout, stderr } = await execAsync(quarterCropCommand);
+    if (stderr) console.log(`⚠️ Quarter crop stderr:`, stderr);
+    
+    let hasDuplication = false;
     let bestCrop = null;
     let bestRatio = 1.0;
     
-    for (const test of cropTests) {
-      try {
-        const testFile = `${extractedFile}_test_${test.name}.png`;
-        const cropCommand = `convert "${extractedFile}" -crop ${test.crop} "${testFile}"`;
+    if (fs.existsSync(quarterTestFile)) {
+      const testStats = fs.statSync(quarterTestFile);
+      const ratio = testStats.size / originalStats.size;
+      console.log(`📊 Quarter crop ratio: ${ratio.toFixed(3)} (expected: ~0.25 if no duplication)`);
+      
+      // If quarter crop is much smaller than expected (~25%), it indicates duplication
+      if (ratio < 0.15) { // Threshold for detecting duplication patterns
+        console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${ratio.toFixed(3)} indicates grid pattern`);
+        hasDuplication = true;
         
-        console.log(`🧪 Testing ${test.name} crop:`, cropCommand);
-        const { stdout, stderr } = await execAsync(cropCommand);
-        if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
+        // Test additional crop strategies to find the best one
+        const testCrops = [
+          { name: 'quarter', crop: '50%x50%+0+0', file: quarterTestFile },
+          { name: 'half-width', crop: '50%x100%+0+0' },
+          { name: 'half-height', crop: '100%x50%+0+0' }
+        ];
         
-        if (fs.existsSync(testFile)) {
-          const testStats = fs.statSync(testFile);
-          const ratio = testStats.size / originalStats.size;
-          
-          console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
-          
-          if (ratio < bestRatio) {
-            bestRatio = ratio;
-            if (bestCrop && fs.existsSync(bestCrop)) {
-              fs.unlinkSync(bestCrop);
+        for (const test of testCrops) {
+          try {
+            let testFile;
+            if (test.file) {
+              testFile = test.file; // Use existing quarter test
+            } else {
+              testFile = `${extractedFile}_test_${test.name}.png`;
+              const cropCommand = `convert "${extractedFile}" -crop ${test.crop} +repage "${testFile}"`;
+              console.log(`🧪 Testing additional crop ${test.name}: ${cropCommand}`);
+              
+              const { stdout, stderr } = await execAsync(cropCommand);
+              if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
             }
-            bestCrop = testFile;
-          } else {
-            fs.unlinkSync(testFile);
+            
+            if (fs.existsSync(testFile)) {
+              const testStats = fs.statSync(testFile);
+              const ratio = testStats.size / originalStats.size;
+              
+              console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
+              
+              if (ratio < bestRatio && ratio > 0.05) { // Find the best crop
+                bestRatio = ratio;
+                if (bestCrop && fs.existsSync(bestCrop) && bestCrop !== testFile) {
+                  fs.unlinkSync(bestCrop); // Clean up previous best
+                }
+                bestCrop = testFile;
+                console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
+              } else if (testFile !== bestCrop) {
+                // Clean up non-best files
+                fs.unlinkSync(testFile);
+              }
+            }
+          } catch (testErr) {
+            console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
           }
         }
-      } catch (testErr) {
-        console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
+      } else {
+        console.log(`✅ NO DUPLICATION DETECTED. Quarter crop ratio ${ratio.toFixed(3)} is normal - keeping original image`);
+        fs.unlinkSync(quarterTestFile); // Clean up test file
       }
     }
     
-    // Apply deduplication if clear pattern detected
-    if (bestCrop && bestRatio < 0.20) {
+    // Apply deduplication ONLY if duplication was actually detected
+    if (hasDuplication && bestCrop) {
       console.log(`🎯 DUPLICATION DETECTED! Ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
       
       try {
@@ -250,8 +281,21 @@ async function applyIntelligentDeduplication(imagePath: string, filename: string
       }
     }
     
-    // Apply deduplication if clear grid pattern detected
-    if (bestCrop && bestRatio < 0.30) {
+    // Apply deduplication ONLY if clear grid pattern detected based on initial quarter test
+    // First, check if the quarter crop indicates actual duplication
+    const quarterTest = cropTests.find(test => test.name === 'quarter');
+    const isQuarterCrop = bestCropName === 'quarter';
+    let hasDuplication = false;
+    
+    if (isQuarterCrop && bestRatio < 0.15) {
+      // Quarter crop is much smaller than expected (~25%), indicating duplication
+      hasDuplication = true;
+      console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
+    } else {
+      console.log(`✅ NO DUPLICATION DETECTED. Best crop ratio ${bestRatio.toFixed(3)} is normal for ${bestCropName}`);
+    }
+    
+    if (hasDuplication && bestCrop) {
       console.log(`🎯 GRID PATTERN DETECTED! ${bestCropName} ratio ${bestRatio.toFixed(3)} indicates duplication`);
       
       try {
@@ -1905,53 +1949,81 @@ export async function registerRoutes(app: express.Application) {
           const originalStats = fs.statSync(extractedFile);
           console.log(`📊 Original file size: ${originalStats.size} bytes`);
           
-          // Test multiple crop strategies to detect duplication
-          const testCrops = [
-            { name: 'quarter', crop: '50%x50%+0+0' },
-            { name: 'half-width', crop: '50%x100%+0+0' },
-            { name: 'half-height', crop: '100%x50%+0+0' }
-          ];
+          // First, check if duplication actually exists by testing a quarter crop
+          // If a quarter crop is significantly smaller than expected (should be ~25% of original), 
+          // it indicates duplication
+          const quarterTestFile = `${extractedFile}_quarter_test.png`;
+          const quarterCropCommand = `convert "${extractedFile}" -crop 50%x50%+0+0 +repage "${quarterTestFile}"`;
+          console.log(`🧪 Testing for duplication with quarter crop: ${quarterCropCommand}`);
           
+          const { stdout, stderr } = await execAsync(quarterCropCommand);
+          if (stderr) console.log(`⚠️ Quarter crop stderr:`, stderr);
+          
+          let hasDuplication = false;
           let bestCrop = null;
           let bestRatio = 1.0;
           
-          for (const test of testCrops) {
-            try {
-              const testFile = `${extractedFile}_test_${test.name}.png`;
-              const cropCommand = `convert "${extractedFile}" -crop ${test.crop} +repage "${testFile}"`;
-              console.log(`🧪 Testing crop ${test.name}: ${cropCommand}`);
+          if (fs.existsSync(quarterTestFile)) {
+            const testStats = fs.statSync(quarterTestFile);
+            const ratio = testStats.size / originalStats.size;
+            console.log(`📊 Quarter crop ratio: ${ratio.toFixed(3)} (expected: ~0.25 if no duplication)`);
+            
+            // If quarter crop is much smaller than expected (~25%), it indicates duplication
+            if (ratio < 0.15) { // Threshold for detecting duplication patterns
+              console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${ratio.toFixed(3)} indicates grid pattern`);
+              hasDuplication = true;
               
-              const { stdout, stderr } = await execAsync(cropCommand);
-              if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
+              // Test additional crop strategies to find the best one
+              const testCrops = [
+                { name: 'quarter', crop: '50%x50%+0+0', file: quarterTestFile },
+                { name: 'half-width', crop: '50%x100%+0+0' },
+                { name: 'half-height', crop: '100%x50%+0+0' }
+              ];
               
-              if (fs.existsSync(testFile)) {
-                const testStats = fs.statSync(testFile);
-                const ratio = testStats.size / originalStats.size;
-                
-                console.log(`📊 Test ${test.name}: ${testStats.size}/${originalStats.size} = ${ratio.toFixed(3)}`);
-                
-                // Look for very small ratios indicating duplication (crop should be ~25% if no duplication)
-                if (ratio < bestRatio && ratio > 0.08) { // More generous threshold
-                  bestRatio = ratio;
-                  if (bestCrop && fs.existsSync(bestCrop)) {
-                    fs.unlinkSync(bestCrop); // Clean up previous best
+              for (const test of testCrops) {
+                try {
+                  let testFile;
+                  if (test.file) {
+                    testFile = test.file; // Use existing quarter test
+                  } else {
+                    testFile = `${extractedFile}_test_${test.name}.png`;
+                    const cropCommand = `convert "${extractedFile}" -crop ${test.crop} +repage "${testFile}"`;
+                    console.log(`🧪 Testing additional crop ${test.name}: ${cropCommand}`);
+                    
+                    const { stdout, stderr } = await execAsync(cropCommand);
+                    if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
                   }
-                  bestCrop = testFile;
-                  console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
-                } else {
-                  // Clean up non-best files
-                  fs.unlinkSync(testFile);
+                  
+                  if (fs.existsSync(testFile)) {
+                    const testStats = fs.statSync(testFile);
+                    const ratio = testStats.size / originalStats.size;
+                    
+                    console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
+                    
+                    if (ratio < bestRatio && ratio > 0.05) { // Find the best crop
+                      bestRatio = ratio;
+                      if (bestCrop && fs.existsSync(bestCrop) && bestCrop !== testFile) {
+                        fs.unlinkSync(bestCrop); // Clean up previous best
+                      }
+                      bestCrop = testFile;
+                      console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
+                    } else if (testFile !== bestCrop) {
+                      // Clean up non-best files
+                      fs.unlinkSync(testFile);
+                    }
+                  }
+                } catch (testErr) {
+                  console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
                 }
               }
-            } catch (testErr) {
-              console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
+            } else {
+              console.log(`✅ NO DUPLICATION DETECTED. Quarter crop ratio ${ratio.toFixed(3)} is normal - keeping original image`);
+              fs.unlinkSync(quarterTestFile); // Clean up test file
             }
           }
           
-          // Apply deduplication if clear pattern detected
-          // For a 50% crop, we expect ~25% file size if no duplication
-          // If much smaller, it indicates duplication pattern
-          if (bestCrop && bestRatio < 0.20) {
+          // Apply deduplication ONLY if duplication was actually detected
+          if (hasDuplication && bestCrop) {
             console.log(`🎯 DUPLICATION DETECTED! Ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
             
             // Replace original with the deduplicated crop
