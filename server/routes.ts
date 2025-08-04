@@ -1946,7 +1946,9 @@ export async function registerRoutes(app: express.Application) {
       // Only remove background if explicitly requested
       // This helps preserve transparency in vectorized files when needed
       if (removeBackground) {
-        modifiedSvg = removeBackgroundFills(modifiedSvg);
+        // DISABLED: User wants more colors detected, manual cleanup preferred
+        // modifiedSvg = removeBackgroundFills(modifiedSvg);
+        console.log('✅ Skipped aggressive background removal to preserve all colors');
       }
       
       // Find all hex color values in the SVG
@@ -2278,7 +2280,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       let isPreview = req.body.preview === 'true';
-      const removeBackground = req.body.removeBackground !== 'false'; // Default to true for backward compatibility
+      const removeBackground = false; // DISABLED: User wants more colors detected, manual cleanup preferred
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
       
       // Force production mode for high-quality PNG uploads
@@ -2530,9 +2532,11 @@ export async function registerRoutes(app: express.Application) {
       result = result.replace(/<polyline([^>]*?)>/g, ''); // Remove polyline elements entirely
       console.log('✅ Removed ALL strokes from AI-vectorized content - fills only as required');
       
-      // Apply AI-vectorized cleaning to fix extended elements and bounding box issues
-      const { cleanAIVectorizedSVG } = await import('./dimension-utils');
-      result = cleanAIVectorizedSVG(result);
+      // DISABLED: Apply AI-vectorized cleaning to fix extended elements and bounding box issues
+      // User wants more colors detected, aggressive cleaning removes important elements
+      // const { cleanAIVectorizedSVG } = await import('./dimension-utils');
+      // result = cleanAIVectorizedSVG(result);
+      console.log('✅ Skipped aggressive AI-vectorized cleaning to preserve all colors and elements');
       
       // Re-calculate dimension after cleaning and applying vector effects
       const cleanedBounds = calculateSVGContentBounds(result);
