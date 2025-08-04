@@ -260,8 +260,8 @@ export default function UploadTool() {
     }
   }, [id, templateSizes, currentProject, hasInitialized]);
 
-  // Handle product selection from launcher modal
-  const handleProductSelect = (group: string) => {
+  // Handle product selection from launcher modal (now selects template directly)
+  const handleProductSelectOld = (group: string) => {
     setSelectedProductGroup(group);
     setShowProductLauncher(false);
     setShowTemplateSelector(true);
@@ -273,6 +273,7 @@ export default function UploadTool() {
     if (selectedTemplate) {
       console.log('Template selected:', { templateId, selectedTemplate, group: selectedTemplate.group });
       setShowTemplateSelector(false);
+      setShowProductLauncher(false); // Close product launcher if open
       setHasInitialized(true); // Prevent reopening
       
       const isFullColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
@@ -842,7 +843,7 @@ export default function UploadTool() {
         <ProductLauncherModal
           open={showProductLauncher}
           onClose={() => setShowProductLauncher(false)}
-          onSelectProduct={handleProductSelect}
+          onSelectProduct={handleTemplateSelect}
         />
         
         {/* Template Selector Modal */}
