@@ -2346,14 +2346,16 @@ export async function registerRoutes(app: express.Application) {
         }
       }
 
-      // Prepare form data for vectorizer.ai API
+      // FIXED: Prepare form data for vectorizer.ai API (matching working debug version)
       const formData = new FormData();
       const fileStream = fs.createReadStream(processedImagePath);
       
-      formData.append('image', fileStream, {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype
-      });
+      // Use simple filename without complex options + timestamp to force fresh API call
+      const timestamp = Date.now();
+      formData.append('image', fileStream, `test_${timestamp}.png`);
+      
+      // Add a unique comment to force Vector.AI to process as new request
+      formData.append('comment', `Test_${timestamp}_ForceNewResult`);
       // DIRECT PNG VECTORIZER: Optimized for high-quality PNG uploads
       console.log('🎯 DIRECT PNG VECTORIZER: Processing high-quality PNG upload');
       console.log('📁 Sending file:', processedImagePath);
@@ -2363,21 +2365,23 @@ export async function registerRoutes(app: express.Application) {
       console.log('📊 File modified:', imageStats.mtime.toISOString());
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
+      console.log('🔍 CRITICAL: File hash to verify uniqueness:', require('crypto').createHash('md5').update(fs.readFileSync(processedImagePath)).digest('hex').substring(0, 8));
       
       // WEBAPP IDENTICAL CONFIGURATION: Match their exact default behavior
       console.log('🎯 USING VECTOR.AI WEBAPP DEFAULT SETTINGS - Exactly matching vectorizer.ai webapp behavior');
       
-      // Use their exact default mode setting
+      // CRITICAL FIX: Vector.AI API expects specific mode values based on documentation
       if (!isPreview) {
-        console.log('✅ Production mode - using Vector.AI default quality settings');
+        // Production mode should NOT include mode parameter (uses default)
+        console.log('✅ Production mode - using Vector.AI default settings (no mode parameter)');
       } else {
         formData.append('mode', 'preview');
         console.log('⚡ Preview mode for testing');
       }
       
-      // ONLY essential parameters that their webapp uses
-      formData.append('output_format', 'svg');
-      console.log('📋 SVG output format specified');
+      // Based on Vector.AI docs, SVG is the default output format
+      // Let's test without specifying output_format to match their examples
+      console.log('📋 Using default SVG output format (not explicitly specified)');
       
       // NO CUSTOM PARAMETERS - Let Vector.AI use exact webapp defaults
       // The webapp works perfectly, so we use NO processing overrides
@@ -2385,17 +2389,27 @@ export async function registerRoutes(app: express.Application) {
       console.log('✅ WEBAPP DEFAULT CONFIGURATION - Using Vector.AI native defaults that work perfectly on their website');
 
       // Call vectorizer.ai API with comprehensive debugging
-      console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
+      console.log('🚀 MAKING API CALL TO VECTOR.AI NOW WITH FIXED IMPLEMENTATION...');
       console.log('🔗 API URL: https://vectorizer.ai/api/v1/vectorize');
       console.log('🔑 Using API credentials: ID exists =', !!vectorizerApiId, ', Secret exists =', !!vectorizerApiSecret);
+      console.log('📁 File being sent:', processedImagePath);
+      console.log('📋 FormData keys:', Object.keys(formData));
       
+      // FIXED: Use exact same request format as working debug version
       const response = await fetch('https://vectorizer.ai/api/v1/vectorize', {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${Buffer.from(`${vectorizerApiId}:${vectorizerApiSecret}`).toString('base64')}`,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           ...formData.getHeaders()
         },
-        body: formData as any
+        body: formData
+      });
+      
+      console.log('📋 CRITICAL DEBUG: Request headers sent:', {
+        'Authorization': 'Basic [REDACTED]',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ...Object.fromEntries(Object.entries(formData.getHeaders()).map(([k, v]) => [k, typeof v === 'string' ? v.substring(0, 50) + '...' : v]))
       });
       
       console.log('📈 API RESPONSE RECEIVED:');
