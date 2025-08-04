@@ -34,8 +34,19 @@ class ArtworkUploaderController(http.Controller):
             'name': data.get('name', 'Untitled Project'),
             'template_size': data.get('templateSize'),
             'garment_color': data.get('garmentColor', '#000000'),
+            'garment_color_name': data.get('garmentColorName', ''),
+            'project_comments': data.get('comments', ''),
             'partner_id': request.env.user.partner_id.id if request.env.user._is_public() else False,
         }
+        
+        # Handle multiple garment colors
+        if data.get('garmentColors'):
+            project_vals['garment_colors_json'] = json.dumps(data.get('garmentColors'))
+        
+        # Handle ink color
+        if data.get('inkColor'):
+            project_vals['ink_color'] = data.get('inkColor')
+            project_vals['ink_color_name'] = data.get('inkColorName', '')
         
         project = request.env['artwork.project'].sudo().create(project_vals)
         
@@ -44,6 +55,8 @@ class ArtworkUploaderController(http.Controller):
             'name': project.name,
             'templateSize': project.template_size,
             'garmentColor': project.garment_color,
+            'garmentColorName': project.garment_color_name,
+            'comments': project.project_comments,
         }
     
     @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['GET'], csrf=False)
@@ -54,14 +67,58 @@ class ArtworkUploaderController(http.Controller):
         if not project:
             return {'error': 'Project not found'}
         
+        # Parse garment colors JSON if available
+        garment_colors = []
+        if project.garment_colors_json:
+            try:
+                garment_colors = json.loads(project.garment_colors_json)
+            except (json.JSONDecodeError, TypeError):
+                pass
+        
         return {
             'id': project.uuid,
             'name': project.name,
             'templateSize': project.template_size,
             'garmentColor': project.garment_color,
+            'garmentColorName': project.garment_color_name,
+            'garmentColors': garment_colors,
             'inkColor': project.ink_color,
+            'inkColorName': project.ink_color_name,
+            'comments': project.project_comments,
             'state': project.state,
         }
+    
+    @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['PATCH'], csrf=False)
+    def update_project(self, project_uuid, **kwargs):
+        """Update project details"""
+        project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
+        
+        if not project:
+            return {'error': 'Project not found'}
+        
+        data = request.jsonrequest
+        update_vals = {}
+        
+        # Handle updateable fields
+        if 'name' in data:
+            update_vals['name'] = data['name']
+        if 'comments' in data:
+            update_vals['project_comments'] = data['comments']
+        if 'garmentColor' in data:
+            update_vals['garment_color'] = data['garmentColor']
+        if 'garmentColorName' in data:
+            update_vals['garment_color_name'] = data['garmentColorName']
+        if 'garmentColors' in data:
+            update_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
+        if 'inkColor' in data:
+            update_vals['ink_color'] = data['inkColor']
+        if 'inkColorName' in data:
+            update_vals['ink_color_name'] = data['inkColorName']
+        
+        if update_vals:
+            project.write(update_vals)
+        
+        return {'success': True, 'updated_fields': list(update_vals.keys())}
     
     @http.route('/artwork/api/projects/<string:project_uuid>/logos', type='json', auth='public', methods=['POST'], csrf=False)
     def upload_logo(self, project_uuid, **kwargs):
@@ -182,6 +239,12 @@ class ArtworkUploaderController(http.Controller):
         
         # Link project to order
         project.sale_order_id = sale_order.id
+        
+        # Find the created order line and link it to the project
+        order_line = sale_order.order_line.filtered(lambda l: l.product_id.id == product.id)[-1]
+        if order_line:
+            order_line.artwork_project_id = project.id
+            order_line._update_artwork_comments()
         
         return {
             'success': True,

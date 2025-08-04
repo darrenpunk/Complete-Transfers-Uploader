@@ -66,9 +66,15 @@ class ArtworkProject(models.Model):
     garment_color = fields.Char('Garment Color', default='#000000')
     garment_color_name = fields.Char('Garment Color Name')
     
+    # Multiple garment colors support
+    garment_colors_json = fields.Text('Garment Colors JSON', help='JSON array of selected garment colors')
+    
     # Ink color for single color templates
     ink_color = fields.Char('Ink Color')
     ink_color_name = fields.Char('Ink Color Name')
+    
+    # Comments section
+    project_comments = fields.Text('Project Comments', help='Additional comments for this project')
     
     # Canvas data
     canvas_data = fields.Text('Canvas Data', help='JSON data containing canvas state')
@@ -98,6 +104,24 @@ class ArtworkProject(models.Model):
     # PDF
     pdf_file = fields.Binary('Generated PDF')
     pdf_filename = fields.Char('PDF Filename')
+    
+    def write(self, vals):
+        """Override write to update sale order line comments when project is modified"""
+        result = super().write(vals)
+        
+        # Update sale order line comments if relevant fields changed
+        comment_fields = ['project_comments', 'garment_color', 'garment_color_name', 
+                         'garment_colors_json', 'ink_color', 'ink_color_name', 'template_size']
+        
+        if any(field in vals for field in comment_fields):
+            for project in self:
+                sale_lines = self.env['sale.order.line'].sudo().search([
+                    ('artwork_project_id', '=', project.id)
+                ])
+                for line in sale_lines:
+                    line._update_artwork_comments()
+        
+        return result
     
     @api.depends('template_size')
     def _compute_template_dimensions(self):
