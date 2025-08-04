@@ -176,7 +176,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const y = parseFloat(coordMatch[2]);
           
           // Skip coordinates that are clearly outside the main content area
-          if (x < 0 || x > 600 || y < 0 || y > 600) {
+          // For AI-vectorized logos, use much tighter bounds to ignore outlier artifacts
+          if (x < -50 || x > 500 || y < -50 || y > 500) {
             continue;
           }
           
@@ -188,8 +189,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           // H or V commands with single coordinate
           const coord = parseFloat(coordMatch[3]);
           
-          // Skip extreme coordinates
-          if (coord < 0 || coord > 600) {
+          // Skip extreme coordinates  
+          if (coord < -50 || coord > 500) {
             continue;
           }
           
@@ -209,7 +210,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
               const y = coords[i + 1];
               
               // Skip extreme coordinates
-              if (x < 0 || x > 600 || y < 0 || y > 600) {
+              if (x < -50 || x > 500 || y < -50 || y > 500) {
                 continue;
               }
               
