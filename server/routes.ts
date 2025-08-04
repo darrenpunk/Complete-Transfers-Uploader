@@ -2542,20 +2542,29 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📊 Raw SVG small element count: ${smallElementCount}`);
       
-      // Check if SVG contains "FRIENDLY" text in any form
+      // CRITICAL: Text Quality Detection System
       const svgLower = result.toLowerCase();
-      if (svgLower.includes('friendly')) {
-        console.log(`✅ Found "FRIENDLY" text reference in SVG`);
-      } else {
-        console.log(`❌ No "FRIENDLY" text found in SVG - vectorizer may have missed letters`);
+      const originalFileName = req.file.originalname.toLowerCase();
+      let textQualityIssues = [];
+      
+      // Check for expected text content
+      if (originalFileName.includes('friendly') && !svgLower.includes('friendly')) {
+        textQualityIssues.push('Missing expected "FRIENDLY" text');
+        console.log(`❌ TEXT QUALITY ISSUE: Expected "FRIENDLY" text not found in vectorization`);
       }
       
-      // Look for any narrow vertical paths that might be the letter "I"
-      const allPathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
-      console.log(`📊 Total paths in raw SVG: ${allPathMatches.length}`);
+      // Check for excessive path complexity that indicates text distortion
+      const pathCount = allPathMatches.length;
+      const averagePathLength = allPathMatches.reduce((sum, path) => sum + path.length, 0) / pathCount;
       
-      let narrowVerticalPaths = 0;
-      allPathMatches.forEach((pathMatch) => {
+      if (pathCount > 25 && averagePathLength > 200) {
+        textQualityIssues.push('Excessive path complexity indicates text distortion');
+        console.log(`❌ TEXT QUALITY ISSUE: High complexity detected - ${pathCount} paths, avg length ${averagePathLength.toFixed(0)}`);
+      }
+      
+      // Check for suspicious narrow vertical paths (letter extensions)
+      let suspiciousExtensions = 0;
+      allPathMatches.forEach((pathMatch, index) => {
         const dMatch = pathMatch.match(/d="([^"]+)"/);
         if (dMatch) {
           const pathData = dMatch[1];
@@ -2577,13 +2586,42 @@ export async function registerRoutes(app: express.Application) {
           const width = maxX - minX;
           const height = maxY - minY;
           
-          // Check for narrow vertical elements (width < 15px, height > 20px)
-          if (width < 15 && height > 20 && width > 0) {
-            narrowVerticalPaths++;
-            console.log(`🔤 Narrow vertical path found: ${width.toFixed(2)}×${height.toFixed(2)} at position ${minX.toFixed(1)},${minY.toFixed(1)}`);
+          // Detect potential letter fragments or extensions
+          if (width > 0 && height > 0 && (width < 20 || height < 20)) {
+            suspiciousExtensions++;
+            console.log(`🔵 Path ${index + 1}: Potential letter/dot detected (${width.toFixed(2)}×${height.toFixed(2)}): ${pathData.substring(0, 100)}...`);
           }
         }
       });
+      
+      if (suspiciousExtensions > 15) {
+        textQualityIssues.push(`Too many small fragments (${suspiciousExtensions}) indicating poor text recognition`);
+        console.log(`❌ TEXT QUALITY ISSUE: Excessive fragmentation - ${suspiciousExtensions} small path fragments detected`);
+      }
+      
+      // If significant quality issues detected, add warning metadata
+      let qualityWarning = null;
+      if (textQualityIssues.length > 0) {
+        qualityWarning = {
+          issues: textQualityIssues,
+          recommendation: 'Consider using alternative vectorization method or manual text conversion',
+          originalFileName: req.file.originalname
+        };
+        console.log(`⚠️ VECTORIZATION QUALITY WARNING:`, qualityWarning);
+        
+        // Add quality warning as SVG comment
+        result = result.replace(
+          '<!-- AI_VECTORIZED_FILE:',
+          `<!-- AI_VECTORIZED_FILE: QUALITY WARNING - ${textQualityIssues.join(', ')} -->\n<!-- Original AI_VECTORIZED_FILE:`
+        );
+      } else {
+        console.log(`✅ Text quality check passed - vectorization appears clean`);
+      }
+      
+      // Analyze path structure for additional quality checks
+      const allPathMatches = result.match(/<path[^>]*d="[^"]+"/g) || [];
+      let narrowVerticalPaths = 0;
+      
       console.log(`📊 Total narrow vertical paths (potential "I" letters): ${narrowVerticalPaths}`);
       
       // Look for very small closed paths that could be dots or letters
@@ -2661,10 +2699,16 @@ export async function registerRoutes(app: express.Application) {
         fs.unlinkSync(processedImagePath);
       }
       
-      res.json({ 
+      // Send response with quality metadata
+      const responseData: any = { 
         svg: cmykSvg,
         mode: isPreview ? 'preview' : 'production'
-      });
+      };
+      if (qualityWarning) {
+        responseData.qualityWarning = qualityWarning;
+      }
+      
+      res.json(responseData);
 
     } catch (error) {
       console.error('Vectorization error:', error);

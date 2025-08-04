@@ -50,6 +50,11 @@ export function VectorizerModal({
   const [lockedColors, setLockedColors] = useState<Set<string>>(new Set()); // Track locked colors
   const [showHelp, setShowHelp] = useState(false); // Show help dialog
   const [deletedColors, setDeletedColors] = useState<Set<string>>(new Set()); // Track deleted colors
+  const [qualityWarning, setQualityWarning] = useState<{
+    issues: string[];
+    recommendation: string;
+    originalFileName: string;
+  } | null>(null); // Track vectorization quality issues
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
 
@@ -247,6 +252,19 @@ export function VectorizerModal({
         containsSvgTag: result.svg?.includes('<svg'),
         containsViewBox: result.svg?.includes('viewBox')
       });
+      
+      // Check for quality warning from backend
+      if (result.qualityWarning) {
+        console.log('Quality warning received:', result.qualityWarning);
+        setQualityWarning(result.qualityWarning);
+        toast({
+          title: "Vectorization Quality Warning",
+          description: `${result.qualityWarning.issues.length} issues detected. Check the quality notice below.`,
+          variant: "destructive",
+        });
+      } else {
+        setQualityWarning(null);
+      }
       
       // Use the SVG as-is without modifications
       const fixedSvg = result.svg;
@@ -1106,6 +1124,29 @@ export function VectorizerModal({
                 <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. $2.50 ex VAT will only be charged when you approve and download the final result.
               </p>
             </div>
+
+            {/* Quality Warning */}
+            {qualityWarning && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex-shrink-0">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">Vectorization Quality Warning</h4>
+                    <div className="text-sm text-yellow-700 space-y-1">
+                      {qualityWarning.issues.map((issue, index) => (
+                        <div key={index} className="flex items-start">
+                          <span className="inline-block w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
+                          <span>{issue}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-yellow-600 mt-2 font-medium">
+                      {qualityWarning.recommendation}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
           {/* Processing State */}
           {isProcessing && (
