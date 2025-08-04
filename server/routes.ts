@@ -770,15 +770,15 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRasterOnly = true;
             
-            // Immediately extract and deduplicate PNG during upload
-            console.log('🔍 PDF has raster-only content, extracting PNG with deduplication...');
+            // Immediately extract clean PNG during upload (skip deduplication to preserve original quality)
+            console.log('🔍 PDF has raster-only content, extracting clean PNG...');
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
-                console.log('✅ Extracted deduplicated PNG during upload:', extractedPngPath);
+                console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
                 console.log('📂 Checking if extracted file exists:', fs.existsSync(extractedPngPath));
                 if (fs.existsSync(extractedPngPath)) {
                   const stats = fs.statSync(extractedPngPath);
