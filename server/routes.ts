@@ -1286,6 +1286,15 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150;
 
         // Use actual extracted PNG dimensions if available
+        console.log('🔍 DEBUG: Checking for extracted PNG dimensions:', {
+          hasExtractedPngWidth: !!(file as any).extractedPngWidth,
+          hasExtractedPngHeight: !!(file as any).extractedPngHeight,
+          width: (file as any).extractedPngWidth,
+          height: (file as any).extractedPngHeight,
+          filename: file.filename,
+          mimetype: file.mimetype
+        });
+        
         if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           const { calculatePreciseDimensions } = await import('./dimension-utils');
           const pngWidth = (file as any).extractedPngWidth;
@@ -1297,6 +1306,8 @@ export async function registerRoutes(app: express.Application) {
           displayHeight = dimensionResult.heightMm;
           
           console.log(`📐 Using extracted PNG dimensions: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        } else {
+          console.log('⚠️ DEBUG: No extracted PNG dimensions found, using defaults:', displayWidth + 'x' + displayHeight);
         }
 
         try {
