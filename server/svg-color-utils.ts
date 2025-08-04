@@ -1442,7 +1442,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     // For paths, check if it's a small path by looking at the d attribute
     if (tag === 'path') {
       const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
-      if (dMatch) {
+      if (dMatch && dMatch[1]) {
         const pathData = dMatch[1];
         // Extract bounding box from path data
         const coords = extractPathCoordinates(pathData);
@@ -1523,7 +1523,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     if (hasFill && tag === 'path') {
       // Check if this is a tiny path (potential dot)
       const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
-      if (dMatch) {
+      if (dMatch && dMatch[1]) {
         const pathData = dMatch[1];
         // Look for very small paths - these could be dots
         const coords = pathData.match(/[\d.]+/g);
@@ -1562,7 +1562,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   let dotCount = 0;
   finalSmallPaths.forEach((pathMatch) => {
     const dMatch = pathMatch.match(/d="([^"]+)"/);
-    if (dMatch) {
+    if (dMatch && dMatch[1]) {
       const pathData = dMatch[1];
       const coords = pathData.match(/[\d.]+/g) || [];
       if (coords.length >= 4) {
