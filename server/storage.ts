@@ -69,69 +69,69 @@ export class MemStorage implements IStorage {
 
   private initializeTemplateSizes() {
     const standardSizes = [
-      // Full Colour Transfers
-      { id: "template-A3", name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-A4", name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-A5", name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-A6", name: "A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-transfer-size", name: "transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-square", name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-badge", name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
-      { id: "template-small", name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      // Screen Printed Transfers - Full Colour
+      { id: "template-A3", name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-A4", name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-A5", name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-A6", name: "A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-transfer-size", name: "transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-square", name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-badge", name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-small", name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
       
-      // Full Colour Metallic
-      { id: "metallic-A3", name: "metallic_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-A4", name: "metallic_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-A5", name: "metallic_A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-A6", name: "metallic_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-transfer-size", name: "metallic_transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-square", name: "metallic_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-badge", name: "metallic_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
-      { id: "metallic-small", name: "metallic_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Full Colour Metallic", description: "Full-Colour screen printed with metallic finish" },
+      // Screen Printed Transfers - Full Colour Metallic
+      { id: "metallic-A3", name: "metallic_A3", label: "A3 Metallic", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-A4", name: "metallic_A4", label: "A4 Metallic", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-A5", name: "metallic_A5", label: "A5 Metallic", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-A6", name: "metallic_A6", label: "A6 Metallic", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-transfer-size", name: "metallic_transfer_size", label: "295×100mm Metallic", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-square", name: "metallic_square", label: "95×95mm Metallic", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-badge", name: "metallic_badge", label: "100×70mm Metallic", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-small", name: "metallic_small", label: "60×60mm Metallic", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
       
-      // Full Colour HD
-      { id: "hd-A3", name: "hd_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Full Colour HD", description: "High-definition full-colour screen printed transfers" },
-      { id: "hd-A4", name: "hd_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Full Colour HD", description: "High-definition full-colour screen printed transfers" },
+      // Screen Printed Transfers - Full Colour HD
+      { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers" },
+      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers" },
       
-      // Single Colour Transfers
-      { id: "single-A3", name: "single_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-A4", name: "single_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-A5", name: "single_A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-A6", name: "single_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-transfer-size", name: "single_transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-square", name: "single_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-badge", name: "single_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
-      { id: "single-small", name: "single_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Single Colour Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      // Screen Printed Transfers - Single Colour
+      { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-A4", name: "single_A4", label: "A4 Single Colour", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-A5", name: "single_A5", label: "A5 Single Colour", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-A6", name: "single_A6", label: "A6 Single Colour", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-transfer-size", name: "single_transfer_size", label: "295×100mm Single Colour", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-square", name: "single_square", label: "95×95mm Single Colour", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-badge", name: "single_badge", label: "100×70mm Single Colour", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-small", name: "single_small", label: "60×60mm Single Colour", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
       
-      // DTF - Digital Film Transfers
-      { id: "dtf-SRA3", name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "DTF - Digital Film Transfers", description: "Small order digital heat transfers" },
-      { id: "dtf-large", name: "large_dtf", label: "1000×550mm", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "DTF - Digital Film Transfers", description: "Small order digital heat transfers" },
+      // Screen Printed Transfers - Zero
+      { id: "zero-silicone-A3", name: "zero_silicone_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
       
-      // UV DTF
-      { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "UV DTF", description: "Hard Surface Transfers" },
+      // Digital Transfers - DTF
+      { id: "dtf-SRA3", name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "Digital Transfers", description: "Small order digital heat transfers" },
+      { id: "dtf-large", name: "large_dtf", label: "1000×550mm DTF", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "Digital Transfers", description: "Small order digital heat transfers" },
       
-      // Custom Badges
-      { id: "woven-A6", name: "woven_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Custom Badges", description: "Polyester textile woven badges" },
-      { id: "woven-square", name: "woven_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Custom Badges", description: "Polyester textile woven badges" },
-      { id: "woven-badge", name: "woven_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Custom Badges", description: "Polyester textile woven badges" },
-      { id: "woven-small", name: "woven_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Custom Badges", description: "Polyester textile woven badges" },
+      // Digital Transfers - UV DTF
+      { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3 UV DTF", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Hard Surface Transfers" },
       
-      // Applique Badges (keeping as separate group)
-      { id: "applique-A6", name: "applique_A6", label: "A6", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Applique Badges", description: "Fabric applique badges" },
-      { id: "applique-square", name: "applique_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Applique Badges", description: "Fabric applique badges" },
-      { id: "applique-badge", name: "applique_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Applique Badges", description: "Fabric applique badges" },
-      { id: "applique-small", name: "applique_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Applique Badges", description: "Fabric applique badges" },
+      // Digital Transfers - Custom Badges
+      { id: "woven-A6", name: "woven_A6", label: "A6 Woven", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Digital Transfers", description: "Polyester textile woven badges" },
+      { id: "woven-square", name: "woven_square", label: "95×95mm Woven", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Polyester textile woven badges" },
+      { id: "woven-badge", name: "woven_badge", label: "100×70mm Woven", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Polyester textile woven badges" },
+      { id: "woven-small", name: "woven_small", label: "60×60mm Woven", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Polyester textile woven badges" },
       
-      // Reflective Transfers
-      { id: "reflective-A3", name: "reflective_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Reflective Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      // Digital Transfers - Applique Badges
+      { id: "applique-A6", name: "applique_A6", label: "A6 Applique", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Digital Transfers", description: "Fabric applique badges" },
+      { id: "applique-square", name: "applique_square", label: "95×95mm Applique", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Fabric applique badges" },
+      { id: "applique-badge", name: "applique_badge", label: "100×70mm Applique", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Fabric applique badges" },
+      { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges" },
       
-      // ZERO Single Colour Transfers
-      { id: "zero-silicone-A3", name: "zero_silicone_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "ZERO Single Colour Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      // Digital Transfers - Reflective
+      { id: "reflective-A3", name: "reflective_A3", label: "A3 Reflective", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
       
-      // Sublimation Transfers
-      { id: "sublimation-A3", name: "sublimation_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Sublimation Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
-      { id: "sublimation-A4", name: "sublimation_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Sublimation Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
-      { id: "sublimation-mug", name: "sublimation_mug", label: "Mug Sized (240×100mm)", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Sublimation Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      // Digital Transfers - Sublimation
+      { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Sublimation", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-A4", name: "sublimation_A4", label: "A4 Sublimation", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-mug", name: "sublimation_mug", label: "Mug Sized (240×100mm) Sublimation", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
     ];
 
     standardSizes.forEach(size => {

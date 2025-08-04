@@ -606,7 +606,8 @@ export default function ToolsSidebar({
       {/* Garment Color Selection - Only for Full Colour Transfer Sizes */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isFullColourTemplate = selectedTemplate?.group === "Full Colour Transfers" || selectedTemplate?.group === "Full Colour Metallic" || selectedTemplate?.group === "Full Colour HD";
+        const isFullColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
+          !selectedTemplate?.label?.includes("Single Colour") && !selectedTemplate?.label?.includes("Zero");
         return isFullColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -681,7 +682,8 @@ export default function ToolsSidebar({
       {/* Ink Color Selection - Only for Single Colour Transfers */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfers";
+        const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
+          selectedTemplate?.label?.includes("Single Colour");
         return isSingleColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -756,7 +758,8 @@ export default function ToolsSidebar({
       {/* Garment Color Selection - Also for Single Colour Transfer templates */}
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
-        const isSingleColourTemplate = selectedTemplate?.group === "Single Colour Transfers";
+        const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
+          selectedTemplate?.label?.includes("Single Colour");
         return isSingleColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -842,9 +845,8 @@ export default function ToolsSidebar({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="px-6 pb-6">
-        {(() => {
-
-          
+              {(() => {
+                
           if (!selectedElement) {
             return (
               <div className="text-center text-gray-500 py-4">

@@ -560,20 +560,10 @@ function calculateTemplatePrice(template: any, copies: number): number {
     'dtf_1000x550': 3.0, // Large DTF format
   };
 
-  // Group-based multipliers
+  // Group-based multipliers - updated for new structure
   const groupMultipliers: Record<string, number> = {
-    'Full Colour Transfers': 1.0,
-    'Full Colour Transfer Sizes': 1.0,
-    'Single Colour Transfers': 0.7,
-    'DTF Transfer Sizes': 1.2,
-    'UV DTF Transfers': 1.8,
-    'Woven Badges': 2.5,
-    'Applique Badges': 3.0,
-    'Reflective Transfers': 1.5,
-    'Full Colour HD': 1.3,
-    'Zero Silicone Transfers': 1.1,
-    'Sublimation Transfers': 0.9,
-    'Full Colour Metallic': 1.4,
+    'Screen Printed Transfers': 1.0,
+    'Digital Transfers': 1.5,
   };
 
   // Quantity discounts

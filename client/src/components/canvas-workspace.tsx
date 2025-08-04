@@ -1259,7 +1259,8 @@ export default function CanvasWorkspace({
               const isSelected = selectedElement?.id === element.id;
               
               // Check if this is a Single Colour Transfer template requiring ink color recoloring
-              const isSingleColourTemplate = template?.group === "Single Colour Transfers";
+              const isSingleColourTemplate = template?.group === "Screen Printed Transfers" && 
+                template?.label?.includes("Single Colour");
               const shouldRecolorForInk = isSingleColourTemplate && !!project.inkColor && !!logo;
               
               // Debug: Log color overrides for this element

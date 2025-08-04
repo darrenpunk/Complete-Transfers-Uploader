@@ -17,101 +17,23 @@ import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.pn
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 
-// Template group icons - using same icons as sidebar
+// Template group icons - updated for new grouping structure
 const getTemplateGroupIcon = (group: string) => {
   switch (group) {
-    case "Full Colour Transfer Sizes":
-    case "Full Colour Transfers":
+    case "Screen Printed Transfers":
       return (
         <img 
           src={fullColourIconPath} 
-          alt="Full Colour Transfer" 
+          alt="Screen Printed Transfers" 
           className="h-10 w-10 object-contain"
         />
       );
-    case "Full Colour Metallic":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Full Colour Metallic" 
-          className="h-10 w-10 object-contain"
-          style={{ filter: "contrast(1.3) brightness(1.1) saturate(1.2)" }}
-        />
-      );
-    case "Single Colour Transfers":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Single Colour Transfer" 
-          className="h-10 w-10 object-contain filter grayscale"
-        />
-      );
-    case "DTF Transfer Sizes":
+    case "Digital Transfers":
       return (
         <img 
           src={dtfIconPath} 
-          alt="DTF Transfer" 
+          alt="Digital Transfers" 
           className="h-10 w-10 object-contain"
-        />
-      );
-    case "UV DTF Transfers":
-      return (
-        <img 
-          src={uvdtfIconPath} 
-          alt="UV DTF Transfer" 
-          className="h-10 w-10 object-contain"
-        />
-      );
-    case "Woven Badges":
-      return (
-        <img 
-          src={wovenBadgeIconPath} 
-          alt="Woven Badge" 
-          className="h-10 w-10 object-contain"
-        />
-      );
-    case "Applique Badges":
-      return (
-        <img 
-          src={wovenBadgeIconPath} 
-          alt="Applique Badge" 
-          className="h-10 w-10 object-contain filter sepia"
-        />
-      );
-    case "Reflective Transfers":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Reflective Transfer" 
-          className="h-10 w-10 object-contain"
-          style={{ filter: "brightness(1.2) saturate(0.8)" }}
-        />
-      );
-    case "Full Colour HD":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Full Colour HD" 
-          className="h-10 w-10 object-contain"
-          style={{ filter: "contrast(1.4) saturate(1.3) brightness(1.05)" }}
-        />
-      );
-    case "Zero Silicone Transfers":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Zero Silicone Transfer" 
-          className="h-10 w-10 object-contain"
-          style={{ filter: "hue-rotate(20deg)" }}
-        />
-      );
-    case "Sublimation Transfers":
-      return (
-        <img 
-          src={fullColourIconPath} 
-          alt="Sublimation Transfer" 
-          className="h-10 w-10 object-contain"
-          style={{ filter: "hue-rotate(180deg) saturate(0.9)" }}
         />
       );
     default:
@@ -163,8 +85,9 @@ export default function TemplateSelectorModal({
   // Determine minimum quantity based on template group
   const getMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
-    const dtfGroups = ['DTF Transfer Sizes', 'UV DTF Transfers', 'DTF - Digital Film Transfers', 'UV DTF - Select Template Size'];
-    return dtfGroups.includes(template.group || '') ? 1 : 10;
+    // Digital transfers typically have lower minimum quantities
+    const digitalTransferGroups = ['Digital Transfers'];
+    return digitalTransferGroups.includes(template.group || '') ? 1 : 10;
   };
   
   const minQuantity = getMinQuantity(selectedTemplateData || null);

@@ -317,7 +317,8 @@ export class EnhancedCMYKGenerator {
     // Check if this is a Single Colour Transfer template for recoloring
     const project = await storage.getProject(projectId);
     const template = project?.templateSize ? await storage.getTemplateSize(project.templateSize) : null;
-    const isSingleColourTransfer = template?.group === 'Single Colour Transfers';
+    const isSingleColourTransfer = template?.group === 'Screen Printed Transfers' && 
+      template?.label?.includes('Single Colour');
     const inkColor = project?.inkColor;
     
     // Get ICC profile info

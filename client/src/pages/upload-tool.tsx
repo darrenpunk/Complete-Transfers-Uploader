@@ -275,9 +275,12 @@ export default function UploadTool() {
       setShowTemplateSelector(false);
       setHasInitialized(true); // Prevent reopening
       
-      const isFullColourTemplate = selectedTemplate.group === "Full Colour Transfers" || selectedTemplate.group === "Full Colour Metallic" || selectedTemplate.group === "Full Colour HD";
-      const isSingleColourTemplate = selectedTemplate.group === "Single Colour Transfers";
-      const isCustomBadgesTemplate = selectedTemplate.group === "Custom Badges" || selectedTemplate.group === "Applique Badges";
+      const isFullColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
+        !selectedTemplate.label?.includes("Single Colour") && !selectedTemplate.label?.includes("Zero");
+      const isSingleColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
+        selectedTemplate.label?.includes("Single Colour");
+      const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
+        (selectedTemplate.label?.includes("Applique") || selectedTemplate.label?.includes("Woven"));
       
       console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, actualGroup: selectedTemplate.group });
       

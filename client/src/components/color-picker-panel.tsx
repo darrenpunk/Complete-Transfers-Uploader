@@ -126,7 +126,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
 
   // Check if this is a single colour template
   const isSingleColourTemplate = templateSizes && project 
-    ? templateSizes.find(t => t.id === project.templateSize)?.group === "Single Colour Transfers"
+    ? templateSizes.find(t => t.id === project.templateSize)?.group === "Screen Printed Transfers" && 
+      templateSizes.find(t => t.id === project.templateSize)?.label?.includes("Single Colour")
     : false;
 
   // Only show for SVG logos with detected colors
@@ -248,7 +249,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
       <RGBWarningModal 
         hasRGBColors={hasRGBColors && !hasShownWarningForThisLogo} 
         onClose={() => {
-          const newSet = new Set([...shownRGBWarningLogos, logoFilename]);
+          const newSet = new Set([...Array.from(shownRGBWarningLogos), logoFilename]);
           setShownRGBWarningLogos(newSet);
           // Persist to localStorage
           localStorage.setItem('shownRGBWarningLogos', JSON.stringify(Array.from(newSet)));

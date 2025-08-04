@@ -11,99 +11,21 @@ import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.pn
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 
-// Product categories with icons and descriptions
+// Product categories with icons and descriptions - reorganized into two main groups
 const productCategories = [
   {
-    id: "full-colour",
-    name: "Full Colour Transfers",
-    description: "Full-Colour screen printed heat applied transfers",
+    id: "screen-printed-transfers",
+    name: "Screen Printed Transfers",
+    description: "Full Colour, Single Colour, and Zero screen printed heat applied transfers",
     icon: fullColourIconPath,
-    group: "Full Colour Transfers"
+    group: "Screen Printed Transfers"
   },
   {
-    id: "full-colour-metallic",
-    name: "Full Colour Metallic",
-    description: "Full-Colour screen printed with metallic finish",
-    icon: fullColourIconPath,
-    group: "Full Colour Metallic",
-    filter: "contrast(1.3) brightness(1.1) saturate(1.2)"
-  },
-  {
-    id: "full-colour-hd",
-    name: "Full Colour HD",
-    description: "High-definition full-colour screen printed transfers",
-    icon: fullColourIconPath,
-    group: "Full Colour HD",
-    filter: "contrast(1.4) saturate(1.3) brightness(1.05)"
-  },
-  {
-    id: "single-colour", 
-    name: "Single Colour Transfers",
-    description: "Screen printed using our off-the-shelf colour range",
-    icon: fullColourIconPath,
-    group: "Single Colour Transfers",
-    grayscale: true
-  },
-  {
-    id: "dtf",
-    name: "DTF - Digital Film Transfers", 
-    description: "Small order digital heat transfers",
+    id: "digital-transfers",
+    name: "Digital Transfers", 
+    description: "DTF, UV DTF, Sublimation, Badges, and Reflective transfers",
     icon: dtfIconPath,
-    group: "DTF - Digital Film Transfers"
-  },
-  {
-    id: "uv-dtf",
-    name: "UV DTF",
-    description: "Hard Surface Transfers",
-    icon: uvdtfIconPath,
-    group: "UV DTF"
-  },
-  {
-    id: "woven-badges",
-    name: "Custom Badges",
-    description: "Polyester textile woven badges",
-    icon: wovenBadgeIconPath,
-    group: "Custom Badges"
-  },
-  {
-    id: "applique-badges",
-    name: "Applique Badges", 
-    description: "Fabric applique badges",
-    icon: wovenBadgeIconPath,
-    group: "Applique Badges",
-    sepia: true
-  },
-  {
-    id: "reflective-transfers",
-    name: "Reflective Transfers",
-    description: "Our silver reflective helps enhance the visibility of the wearer at night",
-    icon: fullColourIconPath,
-    group: "Reflective Transfers",
-    filter: "brightness(1.2) saturate(0.8)"
-  },
-  {
-    id: "zero-single-colour",
-    name: "ZERO Single Colour Transfers",
-    description: "Zero inks are super stretchy and do not bleed!",
-    icon: fullColourIconPath,
-    group: "ZERO Single Colour Transfers",
-    filter: "contrast(1.1) saturate(1.1)"
-  },
-  {
-    id: "sublimation-transfers",
-    name: "Sublimation Transfers",
-    description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester",
-    icon: fullColourIconPath,
-    group: "Sublimation Transfers",
-    filter: "hue-rotate(180deg) saturate(1.2)"
-  },
-  {
-    id: "zero-silicone",
-    name: "Zero Silicone Transfers",
-    description: "Silicone-free transfers",
-    icon: fullColourIconPath,
-    group: "Zero Silicone Transfers",
-    filter: "hue-rotate(20deg)"
+    group: "Digital Transfers"
   }
 ];
 
@@ -136,34 +58,27 @@ export default function ProductLauncherModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 max-w-4xl mx-auto">
           {productCategories.map((product) => (
             <Card 
               key={product.id}
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-primary"
               onClick={() => handleProductSelect(product.group)}
             >
-              <CardContent className="p-4 text-center space-y-3">
-                <div className="mx-auto w-16 h-16 flex items-center justify-center">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="mx-auto w-20 h-20 flex items-center justify-center">
                   <img 
                     src={product.icon} 
                     alt={product.name}
-                    className={`w-full h-full object-contain ${
-                      product.grayscale ? 'filter grayscale' : ''
-                    } ${
-                      product.sepia ? 'filter sepia' : ''
-                    }`}
-                    style={{
-                      filter: product.filter || (product.grayscale ? 'grayscale(100%)' : product.sepia ? 'sepia(100%)' : 'none')
-                    }}
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-base text-gray-900">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg text-gray-900">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-600 leading-relaxed">
+                  <p className="text-sm text-gray-600 leading-relaxed">
                     {product.description}
                   </p>
                 </div>
