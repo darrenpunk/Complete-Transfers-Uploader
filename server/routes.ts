@@ -2370,12 +2370,48 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // Always use production mode for high-quality PNG uploads
-      formData.append('mode', 'production');
-      console.log('✅ FORCING production mode for high-quality PNG (bypassing preview mode)');
+      // Use working baseline parameters from backup
+      if (!isPreview) {
+        formData.append('mode', 'production'); // Only use production mode when consuming credits
+      }
       
-      // Use minimal parameters - back to working baseline
-      console.log('🎯 Using minimal Vector.AI parameters for consistent results');
+      // File Format
+      formData.append('output_format', 'svg');
+      
+      // SVG Options
+      formData.append('svg_version', '1.1');
+      // Enable Adobe compatibility mode for proper Illustrator support
+      formData.append('svg_adobe_compatibility_mode', 'true');
+      
+      // Shape Stacking - Stack shapes on top of each other
+      formData.append('shape_stacking_mode', 'stack_on_top');
+      
+      // Allowed Curve Types
+      formData.append('curve_fitting_lines', 'true');
+      formData.append('curve_fitting_cubic_bezier_curves', 'true');
+      
+      // Gap Filler
+      formData.append('gap_filler_enabled', 'true');
+      formData.append('gap_filler_non_scaling_stroke', 'true');
+      formData.append('gap_filler_stroke_width', '2.0');
+      
+      // Stroke Style
+      formData.append('stroke_style_non_scaling_stroke', 'true');
+      formData.append('stroke_style_stroke_width', '1.0');
+      
+      // Group By
+      formData.append('output_group_by', 'color');
+      
+      // Line Fit Tolerance
+      formData.append('line_fit_tolerance', 'medium');
+      
+      // Draw Style - Fill shapes (not stroke)
+      formData.append('draw_style', 'fill');
+      
+      // Processing DPI
+      formData.append('processing_dpi', '300');
+      
+      console.log('✅ Using COMPLETE working Vector.AI parameters from backup configuration');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
