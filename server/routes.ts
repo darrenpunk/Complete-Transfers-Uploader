@@ -2315,7 +2315,7 @@ export async function registerRoutes(app: express.Application) {
           console.log('📁 Using original extracted PNG path:', req.file.path);
           
           // DEBUG: Check if we're always getting the same file
-          const stats = require('fs').statSync(req.file.path);
+          const stats = fs.statSync(req.file.path);
           console.log('🔍 DEBUG: File modified time:', stats.mtime.toISOString());
           console.log('🔍 DEBUG: File size:', stats.size, 'bytes');
         } else {
@@ -2353,7 +2353,7 @@ export async function registerRoutes(app: express.Application) {
       
       console.log('🎯 SIMPLE VECTORIZER: Using minimal parameters for fresh results');
       console.log('📁 Sending file:', processedImagePath);
-      console.log('📊 File size:', require('fs').statSync(processedImagePath).size, 'bytes');
+      console.log('📊 File size:', fs.statSync(processedImagePath).size, 'bytes');
       
       // Production mode for high-quality results
       if (!isPreview) {
