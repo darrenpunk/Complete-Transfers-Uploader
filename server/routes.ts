@@ -38,9 +38,11 @@ async function getPNGDimensions(imagePath: string): Promise<{width: number, heig
 }
 
 // Extract original PNG from PDF using multiple methods
+// ⚠️ IMPORTANT: This function should ONLY be called for PDF files containing raster/bitmap content
+// Pure vector PDFs should be handled through regular SVG conversion, not this extraction method
 async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promise<string | null> {
   try {
-    console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF at original size and DPI');
+    console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF RASTER FILE at original size and DPI');
     
     // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
