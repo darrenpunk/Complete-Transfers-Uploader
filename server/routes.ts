@@ -2343,19 +2343,26 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // CRITICAL: Disable background removal to preserve all content
-      formData.append('processing.background_removal', 'false');
-      formData.append('processing.remove_background', 'false');
+      // Use correct Vector.AI API parameters from official documentation
+      formData.append('format', 'svg');
+      formData.append('svg.version', '1.1');
+      formData.append('svg.group_by', 'none'); // Group By: None as shown in Vector.AI
       
-      // Use EXACT Vector.AI web app settings from screenshot
-      formData.append('output.format', 'svg');
-      formData.append('output.svg_version', 'svg_1.1');
-      formData.append('output.group_by', 'none'); // Group By: None as shown
-      formData.append('processing.curve_fitting', 'true'); // Enable curve fitting
-      formData.append('processing.corner_threshold', '60'); // Corner threshold from settings
-      formData.append('processing.line_fit_tolerance', 'medium'); // Line fit tolerance
-      formData.append('processing.gap_filler', 'super_fine'); // Gap filler from settings  
-      formData.append('processing.despeckle_tol', '2.0'); // Clean up artifacts but preserve content
+      // Enable high-quality shape recognition
+      formData.append('shapes.fitting', 'true'); // Enable special shape identification
+      formData.append('shapes.mode', 'cutout'); // Cut-out shapes for clean results
+      
+      // Enable all curve types for best quality
+      formData.append('curves.line', 'true'); // Allow straight lines
+      formData.append('curves.arc', 'true'); // Allow circular/elliptical arcs  
+      formData.append('curves.cubic', 'true'); // Allow cubic Bézier curves
+      formData.append('curves.quadratic', 'true'); // Allow quadratic Bézier curves
+      
+      // Enable gap filler to prevent artifacts
+      formData.append('gap_filler', 'true');
+      
+      // Limit colors for cleaner result
+      formData.append('processing.max_colors', '256');
       
       // Production mode
       if (!isPreview) {
