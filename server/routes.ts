@@ -1930,8 +1930,10 @@ export async function registerRoutes(app: express.Application) {
 
       const isPreview = req.body.preview === 'true';
       const removeBackground = req.body.removeBackground !== 'false'; // Default to true for backward compatibility
-      console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground})`);
+      const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
+      console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground}, fromPdfExtraction: ${fromPdfExtraction})`);
       console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
+      console.log(`📋 Request body keys:`, Object.keys(req.body));
 
       // Check if we have vectorizer API credentials
       const vectorizerApiId = process.env.VECTORIZER_API_ID;
@@ -1948,13 +1950,10 @@ export async function registerRoutes(app: express.Application) {
       
       if (req.file.mimetype === 'image/png') {
         // Check if this PNG comes from a raster extraction endpoint (already deduplicated)
-        const isFromRasterExtraction = req.file.originalname?.includes('_raster') || 
+        const isFromRasterExtraction = fromPdfExtraction || 
+                                     req.file.originalname?.includes('_raster') || 
                                      req.file.path?.includes('raster') ||
-                                     req.file.originalname?.includes('extracted') ||
-                                     // PNGs extracted from PDFs will have .png extension but may have been .pdf originally
-                                     (req.file.originalname?.endsWith('.png') && 
-                                      req.headers?.referer?.includes('/') && 
-                                      req.body?.fromPdfExtraction === 'true');
+                                     req.file.originalname?.includes('extracted');
         
         if (isFromRasterExtraction) {
           console.log('📄 PNG is from raster extraction - skipping deduplication (already handled)');
