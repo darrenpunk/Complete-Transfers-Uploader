@@ -260,8 +260,8 @@ export default function UploadTool() {
     }
   }, [id, templateSizes, currentProject, hasInitialized]);
 
-  // Handle product selection from launcher modal (now selects template directly)
-  const handleProductSelectOld = (group: string) => {
+  // Handle product selection from launcher modal
+  const handleProductSelect = (group: string) => {
     setSelectedProductGroup(group);
     setShowProductLauncher(false);
     setShowTemplateSelector(true);
@@ -843,7 +843,7 @@ export default function UploadTool() {
         <ProductLauncherModal
           open={showProductLauncher}
           onClose={() => setShowProductLauncher(false)}
-          onSelectProduct={handleTemplateSelect}
+          onSelectProduct={handleProductSelect}
         />
         
         {/* Template Selector Modal */}
