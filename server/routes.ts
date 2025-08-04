@@ -196,6 +196,101 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
   }
 }
 
+// Apply intelligent deduplication to PNG files before AI vectorization
+async function applyIntelligentDeduplication(imagePath: string, filename: string): Promise<string | null> {
+  try {
+    console.log('🔍 DEDUPLICATION ANALYSIS STARTING for:', imagePath);
+    
+    // Get original file size for comparison
+    const originalStats = fs.statSync(imagePath);
+    console.log('📊 Original PNG file size:', originalStats.size, 'bytes');
+    
+    // Test multiple crop strategies to detect grid patterns
+    const cropTests = [
+      { name: 'center_50', crop: '50%x50%+25%+25%' },     // Center 50%
+      { name: 'quarter', crop: '50%x50%+0+0' },           // Top-left quarter
+      { name: 'half-width', crop: '50%x100%+0+0' },       // Left half
+      { name: 'half-height', crop: '100%x50%+0+0' },      // Top half
+    ];
+    
+    let bestCrop = null;
+    let bestRatio = 1.0;
+    let bestCropName = '';
+    
+    for (const test of cropTests) {
+      try {
+        const testFile = `${imagePath}_test_${test.name}.png`;
+        const cropCommand = `convert "${imagePath}" -crop ${test.crop} +repage "${testFile}"`;
+        
+        console.log(`🧪 Testing ${test.name} crop: ${cropCommand}`);
+        const { stdout, stderr } = await execAsync(cropCommand);
+        if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
+        
+        if (fs.existsSync(testFile)) {
+          const testStats = fs.statSync(testFile);
+          const ratio = testStats.size / originalStats.size;
+          
+          console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
+          
+          // For grid patterns, a crop should be significantly smaller
+          if (ratio < bestRatio && ratio > 0.05) {
+            bestRatio = ratio;
+            if (bestCrop && fs.existsSync(bestCrop)) {
+              fs.unlinkSync(bestCrop);
+            }
+            bestCrop = testFile;
+            bestCropName = test.name;
+            console.log(`🎯 New best crop: ${test.name} with ratio ${ratio.toFixed(3)}`);
+          } else {
+            fs.unlinkSync(testFile);
+          }
+        }
+      } catch (testErr) {
+        console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
+      }
+    }
+    
+    // Apply deduplication if clear grid pattern detected
+    if (bestCrop && bestRatio < 0.30) {
+      console.log(`🎯 GRID PATTERN DETECTED! ${bestCropName} ratio ${bestRatio.toFixed(3)} indicates duplication`);
+      
+      try {
+        // Create a new deduplicated file
+        const deduplicatedPath = `${imagePath}_deduplicated.png`;
+        
+        // Copy the best crop to the new file
+        fs.copyFileSync(bestCrop, deduplicatedPath);
+        
+        // Clean up test file
+        fs.unlinkSync(bestCrop);
+        
+        if (fs.existsSync(deduplicatedPath)) {
+          const newStats = fs.statSync(deduplicatedPath);
+          console.log(`✅ Deduplication complete! Size: ${originalStats.size} → ${newStats.size} bytes`);
+          return deduplicatedPath;
+        }
+      } catch (replaceErr) {
+        console.log('⚠️ Deduplication failed:', replaceErr);
+        if (bestCrop && fs.existsSync(bestCrop)) {
+          fs.unlinkSync(bestCrop);
+        }
+      }
+    } else {
+      console.log(`✅ No grid pattern detected (best ratio: ${bestRatio.toFixed(3)})`);
+      // Clean up test files
+      if (bestCrop && fs.existsSync(bestCrop)) {
+        fs.unlinkSync(bestCrop);
+      }
+    }
+    
+    return null; // Return null if no deduplication needed
+    
+  } catch (error) {
+    console.error('❌ Deduplication analysis failed:', error);
+    return null;
+  }
+}
+
 // Pricing calculation function (simulates Odoo pricelist logic)
 function calculateTemplatePrice(template: any, copies: number): number {
   // Base price per template size (in EUR)
@@ -629,7 +724,7 @@ export async function registerRoutes(app: express.Application) {
             // Immediately extract and deduplicate PNG during upload
             console.log('🔍 PDF has raster-only content, extracting PNG with deduplication...');
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${filename}_raster`);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`);
               if (extractedPngPath) {
                 console.log('✅ Extracted deduplicated PNG during upload:', extractedPngPath);
                 // Store the path for later use
@@ -1953,9 +2048,25 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
+      // Apply intelligent deduplication to PNG before sending to AI vectorizer
+      let processedImagePath = req.file.path;
+      
+      if (req.file.mimetype === 'image/png') {
+        console.log('🔍 Applying intelligent deduplication before AI vectorization...');
+        try {
+          const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename);
+          if (deduplicatedPath) {
+            processedImagePath = deduplicatedPath;
+            console.log('✅ Using deduplicated PNG for AI vectorization');
+          }
+        } catch (err) {
+          console.log('⚠️ Deduplication failed, using original:', err);
+        }
+      }
+
       // Prepare form data for vectorizer.ai API
       const formData = new FormData();
-      const fileStream = fs.createReadStream(req.file.path);
+      const fileStream = fs.createReadStream(processedImagePath);
       
       formData.append('image', fileStream, {
         filename: req.file.originalname,
@@ -2039,9 +2150,13 @@ export async function registerRoutes(app: express.Application) {
         });
       }
       
-      // Clean up uploaded file
+      // Clean up uploaded files
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
+      }
+      // Clean up deduplicated file if it was created
+      if (processedImagePath !== req.file.path && fs.existsSync(processedImagePath)) {
+        fs.unlinkSync(processedImagePath);
       }
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
@@ -2174,6 +2289,16 @@ export async function registerRoutes(app: express.Application) {
       }
       
       console.log(`📤 Sending response: svg length = ${cmykSvg.length}, mode = ${isPreview ? 'preview' : 'production'}`);
+      
+      // Clean up uploaded files after successful processing
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      // Clean up deduplicated file if it was created
+      if (processedImagePath !== req.file.path && fs.existsSync(processedImagePath)) {
+        fs.unlinkSync(processedImagePath);
+      }
+      
       res.json({ 
         svg: cmykSvg,
         mode: isPreview ? 'preview' : 'production'
