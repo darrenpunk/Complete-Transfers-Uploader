@@ -2310,11 +2310,8 @@ export async function registerRoutes(app: express.Application) {
       
       if (req.file.mimetype === 'image/png') {
         // Check if this PNG comes from a raster extraction endpoint (PDF extracted content)
-        const isFromPdfExtraction = fromPdfExtraction || 
-                                   req.file.originalname?.includes('_raster') || 
-                                   req.file.path?.includes('raster') ||
-                                   req.file.originalname?.includes('extracted') ||
-                                   req.file.originalname?.includes('cmyk');
+        // DISABLED: Filename-based detection was causing false positives
+        const isFromPdfExtraction = false; // Always treat as direct upload for best Vector.AI results
         
         if (isFromPdfExtraction) {
           console.log('⚠️ PDF-EXTRACTED PNG DETECTED - This may cause text distortion in Vector.AI');
