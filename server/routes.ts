@@ -20,6 +20,182 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
 const execAsync = promisify(exec);
 
+// Extract raster image from PDF with advanced duplication detection
+async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix: string): Promise<string | null> {
+  try {
+    let extractedFile = null;
+    
+    // Method 1: Try pdfimages first
+    try {
+      const outputPrefixPath = path.join(path.dirname(pdfPath), outputPrefix);
+      const extractCommand = `pdfimages -f 1 -l 1 -png "${pdfPath}" "${outputPrefixPath}"`;
+      console.log('🏃 Method 1: Running pdfimages extraction:', extractCommand);
+      
+      const { stdout, stderr } = await execAsync(extractCommand);
+      console.log('📤 Extraction stdout:', stdout);
+      if (stderr) console.log('⚠️ Extraction stderr:', stderr);
+      
+      // Find the extracted image
+      const possibleFiles = [
+        `${outputPrefix}-000.png`,
+        `${outputPrefix}-001.png`,
+        `${outputPrefix}-0.png`,
+        `${outputPrefix}-1.png`
+      ];
+      
+      for (const file of possibleFiles) {
+        const filePath = path.join(path.dirname(pdfPath), file);
+        if (fs.existsSync(filePath)) {
+          extractedFile = filePath;
+          console.log('✅ Found extracted file via pdfimages:', extractedFile);
+          break;
+        }
+      }
+    } catch (err) {
+      console.log('⚠️ pdfimages method failed:', err);
+    }
+    
+    // Method 2: If pdfimages failed, try Ghostscript
+    if (!extractedFile) {
+      try {
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_rendered.png`);
+        const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log('🏃 Method 2: Running Ghostscript rendering (anti-duplication):', gsCommand);
+        
+        const { stdout, stderr } = await execAsync(gsCommand);
+        console.log('📤 GS stdout:', stdout);
+        if (stderr) console.log('⚠️ GS stderr:', stderr);
+        
+        if (!fs.existsSync(extractedFile)) {
+          extractedFile = null;
+        }
+      } catch (err) {
+        console.log('⚠️ Ghostscript method failed:', err);
+        extractedFile = null;
+      }
+    }
+    
+    // Method 3: Fallback to ImageMagick
+    if (!extractedFile) {
+      try {
+        extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_magick.png`);
+        const magickCommand = `convert -density 150 "${pdfPath}[0]" -trim +repage -resize '2000x2000>' "${extractedFile}"`;
+        console.log('🏃 Method 3: Running ImageMagick extraction (anti-duplication):', magickCommand);
+        
+        const { stdout, stderr } = await execAsync(magickCommand);
+        console.log('📤 ImageMagick stdout:', stdout);
+        if (stderr) console.log('⚠️ ImageMagick stderr:', stderr);
+        
+        if (!fs.existsSync(extractedFile)) {
+          extractedFile = null;
+        }
+      } catch (err) {
+        console.log('⚠️ ImageMagick method failed:', err);
+        extractedFile = null;
+      }
+    }
+    
+    if (!extractedFile) {
+      console.error('❌ All extraction methods failed');
+      return null;
+    }
+    
+    // Advanced duplication pattern detection and removal
+    console.log('🔍 DUPLICATION ANALYSIS STARTING for file:', extractedFile);
+    
+    // Get original file size for comparison
+    const originalStats = fs.statSync(extractedFile);
+    console.log('📊 Original extracted file size:', originalStats.size, 'bytes');
+    
+    // Test multiple crop strategies
+    const cropTests = [
+      { name: 'quarter', crop: '50%x50%+0+0' },        // Top-left quarter
+      { name: 'half-width', crop: '50%x100%+0+0' },   // Left half
+      { name: 'half-height', crop: '100%x50%+0+0' }   // Top half
+    ];
+    
+    let bestCrop = null;
+    let bestRatio = 1.0;
+    
+    for (const test of cropTests) {
+      try {
+        const testFile = `${extractedFile}_test_${test.name}.png`;
+        const cropCommand = `convert "${extractedFile}" -crop ${test.crop} "${testFile}"`;
+        
+        console.log(`🧪 Testing ${test.name} crop:`, cropCommand);
+        const { stdout, stderr } = await execAsync(cropCommand);
+        if (stderr) console.log(`⚠️ Test crop ${test.name} stderr:`, stderr);
+        
+        if (fs.existsSync(testFile)) {
+          const testStats = fs.statSync(testFile);
+          const ratio = testStats.size / originalStats.size;
+          
+          console.log(`📏 ${test.name} crop: ${originalStats.size} → ${testStats.size} bytes (ratio: ${ratio.toFixed(3)})`);
+          
+          if (ratio < bestRatio) {
+            bestRatio = ratio;
+            if (bestCrop && fs.existsSync(bestCrop)) {
+              fs.unlinkSync(bestCrop);
+            }
+            bestCrop = testFile;
+          } else {
+            fs.unlinkSync(testFile);
+          }
+        }
+      } catch (testErr) {
+        console.log(`⚠️ Test crop ${test.name} failed:`, testErr);
+      }
+    }
+    
+    // Apply deduplication if clear pattern detected
+    if (bestCrop && bestRatio < 0.20) {
+      console.log(`🎯 DUPLICATION DETECTED! Ratio ${bestRatio.toFixed(3)} indicates grid pattern`);
+      
+      try {
+        console.log('🔄 Replacing original with deduplicated version...');
+        const backupFile = `${extractedFile}_backup.png`;
+        
+        // Backup original
+        fs.renameSync(extractedFile, backupFile);
+        
+        // Use the best crop as new original
+        fs.renameSync(bestCrop, extractedFile);
+        
+        // Verify the replacement worked
+        if (fs.existsSync(extractedFile)) {
+          const newStats = fs.statSync(extractedFile);
+          console.log(`✅ Deduplication complete! Size: ${originalStats.size} → ${newStats.size} bytes`);
+          
+          // Clean up backup
+          if (fs.existsSync(backupFile)) {
+            fs.unlinkSync(backupFile);
+          }
+        } else {
+          console.log('❌ Replacement failed, restoring backup');
+          fs.renameSync(backupFile, extractedFile);
+        }
+      } catch (replaceErr) {
+        console.log('⚠️ Replacement failed:', replaceErr);
+        if (fs.existsSync(bestCrop)) {
+          fs.unlinkSync(bestCrop);
+        }
+      }
+    } else {
+      console.log(`✅ No duplication detected (ratio: ${bestRatio.toFixed(3)})`);
+      // Clean up test files
+      if (bestCrop && fs.existsSync(bestCrop)) {
+        fs.unlinkSync(bestCrop);
+      }
+    }
+    
+    return extractedFile;
+    
+  } catch (error) {
+    console.error('❌ Extraction with deduplication failed:', error);
+    return null;
+  }
+}
+
 // Pricing calculation function (simulates Odoo pricelist logic)
 function calculateTemplatePrice(template: any, copies: number): number {
   // Base price per template size (in EUR)
@@ -449,6 +625,19 @@ export async function registerRoutes(app: express.Application) {
             // Store original PDF path for later embedding
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRasterOnly = true;
+            
+            // Immediately extract and deduplicate PNG during upload
+            console.log('🔍 PDF has raster-only content, extracting PNG with deduplication...');
+            try {
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${filename}_raster`);
+              if (extractedPngPath) {
+                console.log('✅ Extracted deduplicated PNG during upload:', extractedPngPath);
+                // Store the path for later use
+                (file as any).extractedRasterPath = extractedPngPath;
+              }
+            } catch (extractError) {
+              console.log('⚠️ PNG extraction during upload failed:', extractError);
+            }
           } else if (contentAnalysis.isMixedContent) {
             fileType = FileType.MIXED_CONTENT;
           }
@@ -1489,6 +1678,18 @@ export async function registerRoutes(app: express.Application) {
       if (!logo.isPdfWithRasterOnly) {
         console.error('Logo is not a PDF with raster only');
         return res.status(400).json({ error: 'Not a PDF with raster only' });
+      }
+
+      // Check if we already have an extracted raster image from upload
+      if ((logo as any).extractedRasterPath && fs.existsSync((logo as any).extractedRasterPath)) {
+        console.log('✅ Using pre-extracted deduplicated PNG from upload:', (logo as any).extractedRasterPath);
+        const imageData = fs.readFileSync((logo as any).extractedRasterPath);
+        res.set({
+          'Content-Type': 'image/png',
+          'Content-Length': imageData.length.toString(),
+          'Cache-Control': 'no-cache'
+        });
+        return res.send(imageData);
       }
 
       // Extract the first image from the PDF
