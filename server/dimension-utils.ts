@@ -121,15 +121,28 @@ export function formatDimensionsForDisplay(widthMm: number, heightMm: number): {
  * Extract viewBox dimensions with validation
  */
 export function extractViewBoxDimensions(svgContent: string): { width: number; height: number } | null {
-  const viewBoxMatch = svgContent.match(/viewBox="[^"]*\s([0-9.]+)\s([0-9.]+)"/);
+  // ViewBox format: "x y width height" - we need the 3rd and 4th values
+  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
   
   if (viewBoxMatch) {
-    const width = parseFloat(viewBoxMatch[1]);
-    const height = parseFloat(viewBoxMatch[2]);
+    const viewBoxValues = viewBoxMatch[1].trim().split(/\s+/);
     
-    if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
-      return { width, height };
+    if (viewBoxValues.length >= 4) {
+      const width = parseFloat(viewBoxValues[2]);  // 3rd value is width
+      const height = parseFloat(viewBoxValues[3]); // 4th value is height
+      
+      console.log(`📐 ViewBox extracted: "${viewBoxMatch[1]}" → width: ${width}, height: ${height}`);
+      
+      if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+        return { width, height };
+      } else {
+        console.warn(`⚠️ Invalid viewBox dimensions: width=${width}, height=${height}`);
+      }
+    } else {
+      console.warn(`⚠️ ViewBox has insufficient values: ${viewBoxValues.length} (expected 4)`);
     }
+  } else {
+    console.warn(`⚠️ No viewBox found in SVG content`);
   }
   
   return null;
@@ -327,7 +340,12 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
       return contentResult;
     }
     
-    console.log('⚠️ Could not get dimensions for AI-vectorized SVG, falling back to standard processing');
+    // Method 3: For AI-vectorized content, use reasonable default dimensions if extraction fails
+    // This prevents logos from being too small to see on canvas
+    console.warn('⚠️ Could not extract dimensions from AI-vectorized SVG, using reasonable defaults');
+    const defaultResult = calculatePreciseDimensions(200, 200, 'ai_vectorized_fallback');
+    console.log(`🎯 Using AI-vectorized fallback dimensions: 200×200px = ${defaultResult.widthMm.toFixed(1)}×${defaultResult.heightMm.toFixed(1)}mm`);
+    return defaultResult;
   }
   
   // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
