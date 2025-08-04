@@ -2329,20 +2329,9 @@ export async function registerRoutes(app: express.Application) {
           console.log('✅ DIRECT PNG UPLOAD detected - This should produce clean text like Vector.AI webapp');
           console.log('📁 Original file path:', req.file.path);
           console.log('📁 Original file size:', req.file.size, 'bytes');
-          try {
-            console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
-            const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
-            console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
-            if (deduplicatedPath) {
-              processedImagePath = deduplicatedPath;
-              console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
-            } else {
-              console.log('📄 No deduplication needed - using original PNG');
-            }
-          } catch (err) {
-            console.log('⚠️ Deduplication failed, using original:', err);
-            console.error('⚠️ Full deduplication error:', err);
-          }
+          // DISABLED: Deduplication may be cropping the logo content
+          console.log('🔧 Skipping deduplication to preserve complete logo content');
+          // Use original file to ensure Vector.AI gets the full image
         }
       }
 
