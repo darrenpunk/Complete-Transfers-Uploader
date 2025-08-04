@@ -2431,6 +2431,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
+      console.log(`🔍 DEBUG: Starting AI-vectorized SVG cleaning process...`);
       
       // CRITICAL FIX: Clean up corrupted path elements immediately after receiving from AI service
       if (result.includes('pathnon-scaling-')) {
@@ -2474,7 +2475,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
         
         // Apply content bounds cropping to remove oversized viewBox
-        if (cleanedBounds.width > 0 && cleanedBounds.height > 0) {
+        if (cleanedBounds.width > 0 && cleanedBounds.height > 0 && 
+            typeof cleanedBounds.minX === 'number' && typeof cleanedBounds.minY === 'number') {
           // Extract current viewBox
           const viewBoxMatch = result.match(/viewBox="([^"]*)"/);
           if (viewBoxMatch) {
@@ -2494,6 +2496,8 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`✅ Applied content bounds cropping: ${newViewBox} (${cleanedBounds.width + padding * 2}×${cleanedBounds.height + padding * 2})`);
           }
+        } else {
+          console.log(`⚠️ Could not apply bounds cropping - invalid bounds:`, cleanedBounds);
         }
       }
       
