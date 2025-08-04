@@ -2402,16 +2402,22 @@ export async function registerRoutes(app: express.Application) {
       // Group By
       formData.append('output_group_by', 'color');
       
-      // Line Fit Tolerance
-      formData.append('line_fit_tolerance', 'medium');
+      // Line Fit Tolerance - try higher precision for text
+      formData.append('line_fit_tolerance', 'high');
       
       // Draw Style - Fill shapes (not stroke)
       formData.append('draw_style', 'fill');
       
-      // Processing DPI
-      formData.append('processing_dpi', '300');
+      // Processing DPI - try different values for better text recognition
+      formData.append('processing_dpi', '150');
       
-      console.log('✅ Using COMPLETE working Vector.AI parameters from backup configuration');
+      // Try text-optimized parameters
+      formData.append('curve_fitting_corners', 'true');
+      formData.append('corner_threshold', '134');
+      formData.append('length_threshold', '1.0');
+      formData.append('max_iterations', '10');
+      
+      console.log('✅ Using ENHANCED Vector.AI parameters optimized for text recognition');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
