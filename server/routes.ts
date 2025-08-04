@@ -47,8 +47,8 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
       const gsOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-gs-${timestamp}.png`);
-      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r300 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
-      console.log('🎯 Method 1: FRESH EXTRACTION with timestamp to avoid caching:', gsCommand);
+      const gsCommand = `gs -sDEVICE=pngalpha -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -sOutputFile="${gsOutputPath}" "${pdfPath}"`;
+      console.log('🎯 Method 1: FRESH EXTRACTION with 150 DPI to prevent oversized images:', gsCommand);
       
       const { stdout, stderr } = await execAsync(gsCommand);
       console.log('📤 GS stdout:', stdout);
@@ -68,8 +68,8 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       // FORCE FRESH EXTRACTION: Add timestamp to prevent cached PNG reuse
       const timestamp = Date.now();
       const imOutputPath = path.join(path.dirname(pdfPath), `${outputPrefix}-im-${timestamp}.png`);
-      const imCommand = `convert -density 300 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
-      console.log('🎯 Method 2: FRESH EXTRACTION with timestamp to avoid caching:', imCommand);
+      const imCommand = `convert -density 150 "${pdfPath}[0]" -quality 100 "${imOutputPath}"`;
+      console.log('🎯 Method 2: FRESH EXTRACTION with 150 DPI to prevent oversized images:', imCommand);
       
       const { stdout, stderr } = await execAsync(imCommand);
       console.log('📤 IM stdout:', stdout);
@@ -1000,6 +1000,7 @@ export async function registerRoutes(app: express.Application) {
             // Store original PDF path for later embedding
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRaster = true;
+            (file as any).isPdfWithRasterOnly = true;  // Fix vectorizer issue
             
             // Treat as raster workflow for canvas display
             fileType = FileType.RASTER_PNG;
