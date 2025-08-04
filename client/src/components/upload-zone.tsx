@@ -90,10 +90,79 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
     }
   };
 
-  const handleVectorizeWithAI = () => {
+  const handleVectorizeWithAI = async () => {
     if (pendingRasterFile) {
-      setShowRasterWarning(false);
-      setShowVectorizer(true);
+      try {
+        setShowRasterWarning(false);
+        
+        // If the pending file is already a PNG/JPEG, use it directly
+        if (pendingRasterFile.file.type.startsWith('image/')) {
+          setShowVectorizer(true);
+          return;
+        }
+        
+        // If it's a PDF, we need to extract the PNG first
+        console.log('Extracting PNG from PDF before vectorization...');
+        
+        // Upload the PDF first to get a logo ID
+        const formData = new FormData();
+        formData.append('logos', pendingRasterFile.file);
+        
+        const uploadResponse = await fetch('/api/logos', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload PDF for extraction');
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        const logoId = uploadResult.logos[0]?.id;
+        
+        if (!logoId) {
+          throw new Error('No logo ID returned from upload');
+        }
+        
+        // Extract the raster image from the PDF
+        const rasterResponse = await fetch(`/api/logos/${logoId}/raster-image`);
+        
+        if (!rasterResponse.ok) {
+          throw new Error('Failed to extract raster image from PDF');
+        }
+        
+        const imageBlob = await rasterResponse.blob();
+        const extractedFileName = pendingRasterFile.fileName.replace(/\.pdf$/i, '.png');
+        const extractedFile = new File([imageBlob], extractedFileName, { type: 'image/png' });
+        
+        console.log('PNG extracted successfully:', { 
+          originalName: pendingRasterFile.fileName,
+          extractedName: extractedFileName,
+          size: imageBlob.size 
+        });
+        
+        // Update the pending raster file with the extracted PNG
+        setPendingRasterFile({
+          fileName: extractedFileName,
+          file: extractedFile
+        });
+        
+        // Now open the vectorizer with the extracted PNG
+        setShowVectorizer(true);
+        
+        // Clean up the temporary logo from the database
+        try {
+          await fetch(`/api/logos/${logoId}`, { method: 'DELETE' });
+        } catch (error) {
+          console.warn('Failed to clean up temporary logo:', error);
+        }
+        
+      } catch (error) {
+        console.error('Error extracting PNG from PDF:', error);
+        // Show error and close the warning modal
+        setPendingRasterFile(null);
+        setShowRasterWarning(false);
+      }
     }
   };
 
