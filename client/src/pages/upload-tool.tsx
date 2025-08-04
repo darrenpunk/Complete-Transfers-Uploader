@@ -559,7 +559,12 @@ export default function UploadTool() {
       console.log('Fetching raster image from PDF, logoId:', pendingRasterFile.logoId);
       // For PDFs with raster only, extract the actual raster image
       try {
-        const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image`);
+        // Add header to indicate this is for vectorization (should preserve quality)
+        const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image?forVectorization=true`, {
+          headers: {
+            'X-Vectorization-Request': 'true'
+          }
+        });
         console.log('Raster image fetch response:', response.status, response.ok);
         
         if (!response.ok) {

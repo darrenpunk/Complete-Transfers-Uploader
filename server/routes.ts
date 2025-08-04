@@ -154,9 +154,10 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       const testStats = fs.statSync(quarterTestFile);
       const ratio = testStats.size / originalStats.size;
       console.log(`📊 Quarter crop ratio: ${ratio.toFixed(3)} (expected: ~0.25 if no duplication)`);
+      console.log(`📊 Test file sizes: original=${originalStats.size} bytes, quarter=${testStats.size} bytes`);
       
       // If quarter crop is much smaller than expected (~25%), it indicates duplication
-      if (ratio < 0.15) { // Threshold for detecting duplication patterns
+      if (ratio < 0.20) { // Threshold for detecting duplication patterns (adjusted for better detection)
         console.log(`🎯 DUPLICATION DETECTED! Quarter crop ratio ${ratio.toFixed(3)} indicates grid pattern`);
         hasDuplication = true;
         
@@ -816,7 +817,7 @@ export async function registerRoutes(app: express.Application) {
             console.log('🔍 Original PDF path for extraction:', originalPdfPath);
             console.log('🔍 Output prefix for extraction:', `${finalFilename}_raster`);
             try {
-              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, true);
+              const extractedPngPath = await extractRasterImageWithDeduplication(originalPdfPath, `${finalFilename}_raster`, false);
               console.log('🔍 extractRasterImageWithDeduplication returned:', extractedPngPath);
               if (extractedPngPath) {
                 console.log('✅ Extracted clean PNG during upload:', extractedPngPath);
