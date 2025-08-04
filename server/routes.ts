@@ -759,7 +759,12 @@ export async function registerRoutes(app: express.Application) {
                                       svgContent.includes('AI_VECTORIZED_FILE');
                 
                 if (isAIVectorized) {
-                  console.log(`🤖 Skipping aggressive cleaning for AI-vectorized file: ${svgFilename}`);
+                  console.log(`🤖 AI-vectorized file detected: ${svgFilename}, applying specialized cleaning...`);
+                  // Apply specialized cleaning for AI-vectorized content to fix extended elements and bounding box issues
+                  const { cleanAIVectorizedSVG } = await import('./dimension-utils');
+                  const cleanedSvg = cleanAIVectorizedSVG(svgContent);
+                  fs.writeFileSync(svgPath, cleanedSvg);
+                  console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
                 } else {
                   // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
                   const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
@@ -935,7 +940,12 @@ export async function registerRoutes(app: express.Application) {
                                       svgContent.includes('AI_VECTORIZED_FILE');
                 
                 if (isAIVectorized) {
-                  console.log(`🤖 Skipping aggressive cleaning for AI-vectorized file: ${svgFilename}`);
+                  console.log(`🤖 AI-vectorized file detected: ${svgFilename}, applying specialized cleaning...`);
+                  // Apply specialized cleaning for AI-vectorized content to fix extended elements and bounding box issues
+                  const { cleanAIVectorizedSVG } = await import('./dimension-utils');
+                  const cleanedSvg = cleanAIVectorizedSVG(svgContent);
+                  fs.writeFileSync(svgPath, cleanedSvg);
+                  console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
                 } else {
                   // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
                   const { removeVectorizedBackgrounds } = await import('./svg-color-utils');

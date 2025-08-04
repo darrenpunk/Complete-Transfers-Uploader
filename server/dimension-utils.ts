@@ -136,30 +136,205 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
 }
 
 /**
+ * Calculate actual content bounds from SVG paths for AI-vectorized content
+ */
+export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
+  try {
+    // Extract all path data and coordinates to find actual content bounds
+    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/g;
+    const coordinateRegex = /[ML]\s*([\d.]+)[,\s]+([\d.]+)|[HV]\s*([\d.]+)|[CSQTA]\s*([\d.,\s]+)/g;
+    
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let hasCoordinates = false;
+    let pathCount = 0;
+    let suspiciousPaths = 0;
+    
+    let pathMatch;
+    while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
+      const pathData = pathMatch[1];
+      const fullPath = pathMatch[0];
+      pathCount++;
+      
+      // Check for suspicious paths (very long, minimal data, likely artifacts)
+      const isSuspicious = pathData.length < 50 && 
+                          (pathData.includes('M 0') || pathData.includes('L 0') || 
+                           pathData.includes('M 561') || pathData.includes('L 561'));
+      
+      if (isSuspicious) {
+        suspiciousPaths++;
+        console.log(`🔍 Skipping suspicious path #${pathCount}: ${pathData.substring(0, 100)}...`);
+        continue;
+      }
+      
+      let coordMatch;
+      while ((coordMatch = coordinateRegex.exec(pathData)) !== null) {
+        hasCoordinates = true;
+        
+        if (coordMatch[1] && coordMatch[2]) {
+          // M or L commands with x,y coordinates
+          const x = parseFloat(coordMatch[1]);
+          const y = parseFloat(coordMatch[2]);
+          
+          // Skip coordinates that are clearly outside the main content area
+          if (x < 0 || x > 600 || y < 0 || y > 600) {
+            continue;
+          }
+          
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        } else if (coordMatch[3]) {
+          // H or V commands with single coordinate
+          const coord = parseFloat(coordMatch[3]);
+          
+          // Skip extreme coordinates
+          if (coord < 0 || coord > 600) {
+            continue;
+          }
+          
+          if (coordMatch[0].startsWith('H')) {
+            minX = Math.min(minX, coord);
+            maxX = Math.max(maxX, coord);
+          } else {
+            minY = Math.min(minY, coord);
+            maxY = Math.max(maxY, coord);
+          }
+        } else if (coordMatch[4]) {
+          // C, S, Q, T, A commands with multiple coordinates
+          const coords = coordMatch[4].split(/[,\s]+/).map(c => parseFloat(c)).filter(c => !isNaN(c));
+          for (let i = 0; i < coords.length; i += 2) {
+            if (i + 1 < coords.length) {
+              const x = coords[i];
+              const y = coords[i + 1];
+              
+              // Skip extreme coordinates
+              if (x < 0 || x > 600 || y < 0 || y > 600) {
+                continue;
+              }
+              
+              minX = Math.min(minX, x);
+              maxX = Math.max(maxX, x);
+              minY = Math.min(minY, y);
+              maxY = Math.max(maxY, y);
+            }
+          }
+        }
+      }
+    }
+    
+    if (!hasCoordinates || !isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) {
+      return null;
+    }
+    
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    console.log(`📐 Analyzed ${pathCount} paths (${suspiciousPaths} suspicious skipped)`);
+    console.log(`📐 Calculated content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${width.toFixed(1)}×${height.toFixed(1)}px`);
+    
+    return { width, height };
+  } catch (error) {
+    console.warn('⚠️ Failed to calculate SVG content bounds:', error);
+    return null;
+  }
+}
+
+/**
+ * Clean AI-vectorized SVG to remove problematic elements that cause extended characters
+ */
+export function cleanAIVectorizedSVG(svgContent: string): string {
+  try {
+    let cleanedSvg = svgContent;
+    
+    // Remove paths that are likely artifacts (very short, at edges, etc.)
+    const suspiciousPathRegex = /<path[^>]*d="[^"]{1,50}"[^>]*>/g;
+    const allPaths = cleanedSvg.match(/<path[^>]*d="[^"]*"[^>]*>/g) || [];
+    let removedPaths = 0;
+    
+    allPaths.forEach(path => {
+      const dMatch = path.match(/d="([^"]*)"/);
+      if (dMatch) {
+        const pathData = dMatch[1];
+        
+        // Remove very short paths that might be artifacts
+        if (pathData.length < 30) {
+          cleanedSvg = cleanedSvg.replace(path, '');
+          removedPaths++;
+        }
+        
+        // Remove paths with coordinates at the extreme edges (likely artifacts)
+        if (pathData.includes('M 0') || pathData.includes('L 0') || 
+            pathData.includes('M 561') || pathData.includes('L 561') ||
+            pathData.includes('M 560') || pathData.includes('L 560')) {
+          cleanedSvg = cleanedSvg.replace(path, '');
+          removedPaths++;
+        }
+      }
+    });
+    
+    if (removedPaths > 0) {
+      console.log(`🧹 Cleaned AI-vectorized SVG: removed ${removedPaths} suspicious paths`);
+    }
+    
+    return cleanedSvg;
+  } catch (error) {
+    console.warn('⚠️ Failed to clean AI-vectorized SVG:', error);
+    return svgContent;
+  }
+}
+
+/**
  * Comprehensive dimension detection with multiple fallbacks
  */
 export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any): DimensionResult {
   let bestResult: DimensionResult | null = null;
   
-  // Method 1: Try viewBox dimensions (most reliable for PDF conversions)
+  // Check if this is an AI-vectorized SVG
+  const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
+                        svgContent.includes('AI_VECTORIZED_FILE');
+  
+  // For AI-vectorized content, prioritize actual content bounds over viewBox
+  if (isAIVectorized) {
+    console.log('🤖 Detected AI-vectorized SVG, calculating actual content bounds...');
+    
+    // Method 1: Calculate actual content bounds from path data
+    const calculatedBounds = calculateSVGContentBounds(svgContent);
+    if (calculatedBounds && calculatedBounds.width > 0 && calculatedBounds.height > 0) {
+      const contentResult = calculatePreciseDimensions(calculatedBounds.width, calculatedBounds.height, 'content_bounds');
+      console.log(`✅ Using calculated content bounds for AI-vectorized SVG: ${calculatedBounds.width.toFixed(1)}×${calculatedBounds.height.toFixed(1)}px`);
+      return contentResult;
+    }
+    
+    // Method 2: Use provided content bounds if available
+    if (contentBounds && contentBounds.width && contentBounds.height) {
+      const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
+      console.log(`✅ Using provided content bounds for AI-vectorized SVG: ${contentBounds.width}×${contentBounds.height}px`);
+      return contentResult;
+    }
+    
+    console.log('⚠️ Could not calculate content bounds for AI-vectorized SVG, falling back to viewBox');
+  }
+  
+  // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
   const viewBoxDims = extractViewBoxDimensions(svgContent);
   if (viewBoxDims) {
     const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'viewbox');
-    if (viewBoxResult.accuracy === 'perfect' || viewBoxResult.accuracy === 'high') {
+    if (!isAIVectorized && (viewBoxResult.accuracy === 'perfect' || viewBoxResult.accuracy === 'high')) {
       return viewBoxResult;
     }
     bestResult = viewBoxResult;
   }
   
-  // Method 2: Use content bounds if available
-  if (contentBounds && contentBounds.width && contentBounds.height) {
+  // Method 4: Use content bounds if available (for non-AI-vectorized content)
+  if (!isAIVectorized && contentBounds && contentBounds.width && contentBounds.height) {
     const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
     if (!bestResult || contentResult.accuracy > bestResult.accuracy) {
       bestResult = contentResult;
     }
   }
   
-  // Method 3: Fallback to conservative dimensions
+  // Method 5: Fallback to conservative dimensions
   if (!bestResult) {
     console.warn('⚠️ No reliable dimensions found, using fallback');
     bestResult = calculatePreciseDimensions(350, 250, 'fallback');
