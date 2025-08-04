@@ -63,13 +63,13 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
           return null;
         }
         
-        // For vectorization, prioritize the smallest file (likely the original clean embedded PNG)
-        // The original embedded PNG from Illustrator should be smaller and cleaner than processed versions
-        extractedFiles.sort((a, b) => a.size - b.size);
+        // For vectorization, prioritize the largest file (full-color version with all details)
+        // The largest file contains all the colors and details needed for proper vectorization
+        extractedFiles.sort((a, b) => b.size - a.size);
         extractedFile = extractedFiles[0].path;
         
-        console.log('✅ VECTORIZATION: Selected smallest/cleanest file for vectorization:', extractedFile, `(${extractedFiles[0].size} bytes)`);
-        console.log('📋 VECTORIZATION: All extracted files by size:', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
+        console.log('✅ VECTORIZATION: Selected largest/full-color file for vectorization:', extractedFile, `(${extractedFiles[0].size} bytes)`);
+        console.log('📋 VECTORIZATION: All extracted files by size (largest first):', extractedFiles.map(f => `${f.file}(${f.size}b)`).join(', '));
         
         // For vectorization, return immediately with the selected original PNG - no further processing
         return extractedFile;
