@@ -35,6 +35,7 @@ export default function UploadTool() {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showProductLauncher, setShowProductLauncher] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
+  const [selectedTemplateTypes, setSelectedTemplateTypes] = useState<string[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
   const [showPDFPreviewModal, setShowPDFPreviewModal] = useState(false);
@@ -261,8 +262,9 @@ export default function UploadTool() {
   }, [id, templateSizes, currentProject, hasInitialized]);
 
   // Handle product selection from launcher modal
-  const handleProductSelect = (group: string) => {
+  const handleProductSelect = (group: string, templateTypes: string[]) => {
     setSelectedProductGroup(group);
+    setSelectedTemplateTypes(templateTypes);
     setShowProductLauncher(false);
     setShowTemplateSelector(true);
   };
@@ -849,9 +851,13 @@ export default function UploadTool() {
         {/* Template Selector Modal */}
         <TemplateSelectorModal
           open={showTemplateSelector}
-          templates={templateSizes.filter(t => !selectedProductGroup || t.group === selectedProductGroup)}
+          templates={templateSizes.filter(t => selectedTemplateTypes.length === 0 || selectedTemplateTypes.includes(t.id))}
           onSelectTemplate={handleTemplateSelect}
           onClose={() => setShowTemplateSelector(false)}
+          onBack={() => {
+            setShowTemplateSelector(false);
+            setShowProductLauncher(true);
+          }}
           selectedGroup={selectedProductGroup}
         />
         
@@ -1028,7 +1034,7 @@ export default function UploadTool() {
       {/* Template Selector Modal */}
       <TemplateSelectorModal
         open={showTemplateSelector}
-        templates={templateSizes}
+        templates={templateSizes.filter(t => selectedTemplateTypes.length === 0 || selectedTemplateTypes.includes(t.id))}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
         onBack={() => {
