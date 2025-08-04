@@ -2343,23 +2343,27 @@ export async function registerRoutes(app: express.Application) {
         filename: req.file.originalname,
         contentType: req.file.mimetype
       });
-      // Set only the essential parameters that the API accepts
-      formData.append('output.format', 'svg'); // Explicitly set SVG format
+      // Match Vector.AI web app professional settings exactly
+      formData.append('output.format', 'svg');
+      formData.append('output.size', 'fixed'); // Fixed Size as shown in Vector.AI
+      formData.append('output.svg_version', 'svg_1.1'); // SVG 1.1 for compatibility
       
-      // Set non-scaling stroke to 2.0px as per vectorizer.ai web app settings
-      formData.append('output.vectorizeNonScalingStroke', '2.0');
+      // Adobe Compatibility settings
+      formData.append('output.svg_adobe_compatibility', 'true');
       
-      // Add parameters to preserve small details and text
-      formData.append('processing.despeckle_tol', '0.1'); // Low tolerance to keep small dots
-      formData.append('processing.curve_fitting', 'true'); // Enable shape fitting for dots/circles
-      formData.append('processing.corner_threshold', '60'); // Sensitive corner detection
+      // Shape optimization settings from Vector.AI
+      formData.append('shapes.group_by', 'none'); // Group By: None 
+      formData.append('shapes.stroke_style', 'stroke_outlines'); // Stroke the outlines
+      formData.append('shapes.curve_types', 'cubic_bezier'); // Cubic Bezier Curves
+      formData.append('shapes.circular_arcs', 'true'); // Enable Circular Arcs
+      formData.append('shapes.elliptical_arcs', 'true'); // Enable Elliptical Arcs
       
-      // Additional parameters to help with text detection
-      formData.append('processing.min_area', '1'); // Keep very small areas (for dots and thin letters)
-      formData.append('processing.simplify_tolerance', '0.1'); // Keep shape detail
-      formData.append('output.gap_filler', '0'); // Don't fill gaps that might be part of letters
-      formData.append('processing.smoothing', '0'); // Disable smoothing to preserve sharp edges
-      formData.append('processing.group_by', 'none'); // Don't group paths (preserves individual letters)
+      // Quality settings for clean professional output
+      formData.append('shapes.line_fit_tolerance', 'medium'); // Medium quality
+      formData.append('shapes.gap_filler', 'super_fine'); // Super Fine gap filling
+      formData.append('processing.corner_threshold', '60'); // 60 degree corner detection
+      formData.append('processing.despeckle_tol', '2.0'); // Remove small artifacts
+      formData.append('processing.smoothing', '0'); // No smoothing to preserve sharp edges
       
       // Production mode
       if (!isPreview) {
