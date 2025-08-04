@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import FormData from 'form-data';
@@ -2390,7 +2391,7 @@ export async function registerRoutes(app: express.Application) {
       console.log('📊 File modified:', imageStats.mtime.toISOString());
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
-      console.log('🔍 CRITICAL: File hash to verify uniqueness:', require('crypto').createHash('md5').update(fs.readFileSync(processedImagePath)).digest('hex').substring(0, 8));
+      console.log('🔍 CRITICAL: File hash to verify uniqueness:', crypto.createHash('md5').update(fs.readFileSync(processedImagePath)).digest('hex').substring(0, 8));
       
       // WEBAPP IDENTICAL CONFIGURATION: Match their exact default behavior
       console.log('🎯 USING VECTOR.AI WEBAPP DEFAULT SETTINGS - Exactly matching vectorizer.ai webapp behavior');
