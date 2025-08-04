@@ -150,7 +150,12 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
         }
         
         // Extract the raster image from the PDF with cache busting
-        const rasterResponse = await fetch(`/api/logos/${logoId}/raster-image?t=${Date.now()}`);
+        // Add header to indicate this is for vectorization (skip deduplication)
+        const rasterResponse = await fetch(`/api/logos/${logoId}/raster-image?t=${Date.now()}`, {
+          headers: {
+            'X-Vectorization-Request': 'true'
+          }
+        });
         
         if (!rasterResponse.ok) {
           throw new Error('Failed to extract raster image from PDF');

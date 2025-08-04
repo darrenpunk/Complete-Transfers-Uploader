@@ -21,7 +21,7 @@ import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 const execAsync = promisify(exec);
 
 // Extract raster image from PDF with advanced duplication detection
-async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix: string): Promise<string | null> {
+async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix: string, skipDeduplication = false): Promise<string | null> {
   try {
     let extractedFile = null;
     
@@ -98,6 +98,12 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
     if (!extractedFile) {
       console.error('❌ All extraction methods failed');
       return null;
+    }
+    
+    // Skip deduplication if requested (e.g., for vectorization)
+    if (skipDeduplication) {
+      console.log('🔄 SKIPPING DEDUPLICATION as requested - returning clean extracted image');
+      return extractedFile;
     }
     
     // Advanced duplication pattern detection and removal
@@ -1874,9 +1880,26 @@ export async function registerRoutes(app: express.Application) {
       }
       
       try {
+        // Check if this request is for vectorization (skip deduplication)
+        const isForVectorization = req.headers['x-vectorization-request'] === 'true' || 
+                                   req.headers.referer?.includes('vectorizer') ||
+                                   req.query.forVectorization === 'true';
+        
+        console.log('🔍 Raster extraction context:', {
+          isForVectorization,
+          hasVectorizationHeader: req.headers['x-vectorization-request'],
+          referer: req.headers.referer,
+          query: req.query
+        });
+        
+        if (isForVectorization) {
+          console.log('🔄 VECTORIZATION REQUEST DETECTED - Skipping deduplication to preserve original image quality');
+        } else {
+          console.log('🔍 Regular raster request - applying standard deduplication');
+        }
+        
         // Use the smart deduplication extraction function
-        console.log('🔍 Using smart deduplication extraction for raster endpoint');
-        const extractedFile = await extractRasterImageWithDeduplication(pdfPath, `${logo.filename}_raster_endpoint`);
+        const extractedFile = await extractRasterImageWithDeduplication(pdfPath, `${logo.filename}_raster_endpoint`, isForVectorization);
         
         if (!extractedFile) {
           console.error('❌ Smart extraction failed');
