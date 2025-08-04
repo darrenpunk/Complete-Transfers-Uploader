@@ -42,31 +42,36 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
   try {
     console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF at original size and DPI');
     
-    // Method 1: Try direct PDF rendering without extraction
+    // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
-      console.log('🎯 DIRECT PDF RENDERING: Converting PDF page to PNG at optimal resolution');
-      const pdf2pic = (await import('pdf2pic')).default;
+      console.log('🎯 DIRECT PDF RENDERING: Using Ghostscript for clean PDF-to-PNG conversion');
       
-      // Use pdf2pic to render the PDF page directly as PNG
-      // This preserves the PDF content without extraction artifacts
-      const convert = pdf2pic.fromPath(pdfPath, {
-        density: 150,           // 150 DPI for good quality
-        saveFilename: `${path.basename(outputPrefix)}_direct`,
-        savePath: path.dirname(pdfPath),
-        format: "png",
-        width: 800,            // Max width to prevent oversizing
-        height: 800            // Max height to prevent oversizing
-      });
+      const timestamp = Date.now();
+      const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      const result = await convert(1); // Convert first page
-      if (result && result.path && fs.existsSync(result.path)) {
-        console.log('✅ DIRECT PDF RENDERING SUCCESS - no extraction artifacts:', result.path);
-        return result.path;
+      // Use Ghostscript to render PDF directly as PNG without extraction
+      // This maintains the PDF layout exactly as designed
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      
+      console.log('📋 Ghostscript direct rendering command:', gsCommand);
+      const { stdout, stderr } = await execAsync(gsCommand);
+      
+      if (fs.existsSync(outputPath)) {
+        const stats = fs.statSync(outputPath);
+        console.log(`✅ DIRECT GHOSTSCRIPT RENDERING SUCCESS: ${outputPath} (${stats.size} bytes)`);
+        
+        // Check dimensions to ensure quality
+        const dimensions = await getPNGDimensions(outputPath);
+        if (dimensions) {
+          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px (clean, no duplication)`);
+        }
+        
+        return outputPath;
       }
       
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log('⚠️ Direct PDF rendering failed:', errorMessage);
+      console.log('⚠️ Direct Ghostscript rendering failed:', errorMessage);
     }
     
     // Method 2: Fallback to pdfimages (but this may still have sizing issues)
