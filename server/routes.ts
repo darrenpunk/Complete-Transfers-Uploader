@@ -2360,62 +2360,25 @@ export async function registerRoutes(app: express.Application) {
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
       
-      // RESTORED WORKING CONFIGURATION: Complete Vector.AI parameters from backup
-      console.log('🔧 RESTORING COMPLETE VECTOR.AI CONFIGURATION that was working perfectly earlier this week');
+      // WEBAPP IDENTICAL CONFIGURATION: Match their exact default behavior
+      console.log('🎯 USING VECTOR.AI WEBAPP DEFAULT SETTINGS - Exactly matching vectorizer.ai webapp behavior');
       
-      // Production/preview mode configuration
+      // Use their exact default mode setting
       if (!isPreview) {
-        formData.append('mode', 'production');
-        console.log('✅ Production mode enabled for final quality output');
+        console.log('✅ Production mode - using Vector.AI default quality settings');
       } else {
-        console.log('⚡ Preview mode for rapid testing');
+        formData.append('mode', 'preview');
+        console.log('⚡ Preview mode for testing');
       }
       
-      // Core output format
+      // ONLY essential parameters that their webapp uses
       formData.append('output_format', 'svg');
+      console.log('📋 SVG output format specified');
       
-      // WORKING QUALITY PARAMETERS FROM BACKUP:
+      // NO CUSTOM PARAMETERS - Let Vector.AI use exact webapp defaults
+      // The webapp works perfectly, so we use NO processing overrides
       
-      // 1. Adobe Compatibility for professional software support
-      formData.append('svg_adobe_compatibility_mode', 'true');
-      console.log('🎨 Adobe compatibility mode enabled');
-      
-      // 2. Shape processing for clean vectors
-      formData.append('shape_stacking_mode', 'stacked');
-      formData.append('shape_nesting_mode', 'nested');
-      console.log('📐 Shape stacking and nesting optimized');
-      
-      // 3. Curve quality for smooth text
-      formData.append('curve_fitting_tolerance', '0.5');
-      formData.append('corner_threshold', '150');
-      console.log('📈 Curve fitting tolerance optimized for text quality');
-      
-      // 4. Gap handling for text preservation
-      formData.append('gap_filler_enabled', 'true');
-      formData.append('gap_filler_extent', '2.0');
-      console.log('🔗 Gap filling enabled for text continuity');
-      
-      // 5. Stroke style preservation
-      formData.append('stroke_width', '1.0');
-      formData.append('stroke_linejoin', 'round');
-      formData.append('stroke_linecap', 'round');
-      console.log('✏️ Stroke styling configured');
-      
-      // 6. Processing resolution for quality
-      formData.append('processing_dpi', '300');
-      console.log('🔍 300 DPI processing for maximum detail');
-      
-      // 7. Color handling
-      formData.append('color_precision_loss', '1');
-      formData.append('color_quantization_enabled', 'false');
-      console.log('🌈 High color precision maintained');
-      
-      // 8. Advanced vectorization settings
-      formData.append('hierarchical_grouping', 'true');
-      formData.append('path_simplification', 'gentle');
-      console.log('🏗️ Hierarchical grouping and gentle path simplification');
-      
-      console.log('✅ COMPLETE WORKING VECTOR.AI CONFIGURATION RESTORED - All 15+ parameters from successful backup applied');
+      console.log('✅ WEBAPP DEFAULT CONFIGURATION - Using Vector.AI native defaults that work perfectly on their website');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
