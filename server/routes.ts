@@ -46,14 +46,15 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     
     // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
-      console.log('🎯 DIRECT PDF RENDERING: Using Ghostscript for clean PDF-to-PNG conversion');
+      console.log('🎯 DIRECT PDF RENDERING: Using Ghostscript at 300 DPI for high-quality vectorization');
       
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
       // Use Ghostscript to render PDF directly as PNG without extraction
       // This maintains the PDF layout exactly as designed
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      // Using 300 DPI for optimal vectorization quality
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       const { stdout, stderr } = await execAsync(gsCommand);
