@@ -1103,7 +1103,7 @@ export function VectorizerModal({
             {/* Cost Information */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
               <p className="text-sm text-blue-800">
-                <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. ${cost.toFixed(2)} ex VAT will only be charged when you approve and download the final result.
+                <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. $2.50 ex VAT will only be charged when you approve and download the final result.
               </p>
             </div>
 
