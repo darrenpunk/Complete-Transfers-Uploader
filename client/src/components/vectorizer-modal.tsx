@@ -52,7 +52,7 @@ export function VectorizerModal({
   const [deletedColors, setDeletedColors] = useState<Set<string>>(new Set()); // Track deleted colors
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
-  const [removeWhiteBackground, setRemoveWhiteBackground] = useState(false); // Toggle for white background removal
+
   
   // Removed size editor state - users will resize on canvas
 
@@ -1207,34 +1207,7 @@ export function VectorizerModal({
                 </Tooltip>
                 </div>
                 
-                {/* White Background Toggle */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="remove-white-bg" className="text-sm font-medium cursor-pointer">
-                    Remove White Background
-                  </label>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <input
-                          id="remove-white-bg"
-                          type="checkbox"
-                          checked={removeWhiteBackground}
-                          onChange={(e) => {
-                            setRemoveWhiteBackground(e.target.checked);
-                            // Re-process with new setting
-                            if (imageFile) {
-                              processVectorization();
-                            }
-                          }}
-                          className="w-4 h-4 cursor-pointer"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Automatically remove white backgrounds during vectorization</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+
               </div>
 
 
@@ -1808,6 +1781,49 @@ export function VectorizerModal({
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>Remove pure white color from the vectorized image</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentSvg = coloredSvg || vectorSvg;
+                          if (currentSvg) {
+                            // Save current state for undo
+                            setDeletionHistory(prev => [...prev, {
+                              svg: currentSvg,
+                              colors: [...detectedColors]
+                            }]);
+                            
+                            // Use the smart background white removal function
+                            const updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
+                            const newColors = detectColorsInSvg(updatedSvg);
+                            
+                            // Clear all highlighting first
+                            setHighlightedColor(null);
+                            setHighlightedSvg(null);
+                            
+                            // Update state
+                            setColoredSvg(updatedSvg);
+                            setDetectedColors(newColors);
+                            setSvgRevision(prev => prev + 1);
+                            
+                            toast({
+                              title: "Background White Removed",
+                              description: "Removed background white elements while preserving text/details.",
+                            });
+                          }
+                        }}
+                        className="border-gray-600 text-gray-100 hover:bg-gray-700"
+                        disabled={!detectedColors.some(c => c.color.toLowerCase() === '#ffffff')}
+                      >
+                        Remove White
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove white background elements only (preserves text and details)</p>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
