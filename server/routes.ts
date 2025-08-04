@@ -2380,34 +2380,32 @@ export async function registerRoutes(app: express.Application) {
       formData.append('curve_fitting_lines', 'true');
       formData.append('curve_fitting_cubic_bezier_curves', 'true');
       
-      // Gap Filler
-      formData.append('gap_filler_enabled', 'true');
-      formData.append('gap_filler_non_scaling_stroke', 'true');
-      formData.append('gap_filler_stroke_width', '2.0');
+      // CRITICAL FIX: Disable gap filler to prevent letter extensions
+      formData.append('gap_filler_enabled', 'false');
       
-      // Stroke Style
-      formData.append('stroke_style_non_scaling_stroke', 'true');
-      formData.append('stroke_style_stroke_width', '1.0');
+      // CRITICAL FIX: Disable non-scaling stroke to prevent text distortion
+      formData.append('stroke_style_non_scaling_stroke', 'false');
+      formData.append('stroke_style_stroke_width', '0.5');
       
       // Group By
       formData.append('output_group_by', 'color');
       
-      // Line Fit Tolerance - try higher precision for text
-      formData.append('line_fit_tolerance', 'high');
+      // CRITICAL FIX: Use medium tolerance to prevent over-simplification of text
+      formData.append('line_fit_tolerance', 'medium');
       
       // Draw Style - Fill shapes (not stroke)
       formData.append('draw_style', 'fill');
       
-      // Processing DPI - try different values for better text recognition
-      formData.append('processing_dpi', '150');
+      // CRITICAL FIX: Lower DPI to prevent text artifacts - 72 DPI is better for text
+      formData.append('processing_dpi', '72');
       
-      // Try text-optimized parameters
+      // CRITICAL FIX: Text-optimized parameters to prevent extensions
       formData.append('curve_fitting_corners', 'true');
-      formData.append('corner_threshold', '134');
-      formData.append('length_threshold', '1.0');
-      formData.append('max_iterations', '10');
+      formData.append('corner_threshold', '90'); // Lower threshold for cleaner text
+      formData.append('length_threshold', '2.0'); // Higher threshold to ignore small artifacts
+      formData.append('max_iterations', '5'); // Fewer iterations to prevent over-processing
       
-      console.log('✅ Using ENHANCED Vector.AI parameters optimized for text recognition');
+      console.log('✅ Using FIXED Vector.AI parameters to prevent letter extensions and text artifacts');
 
       // Call vectorizer.ai API with comprehensive debugging
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW...');
