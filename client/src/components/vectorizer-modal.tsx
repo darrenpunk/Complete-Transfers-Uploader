@@ -216,6 +216,16 @@ export function VectorizerModal({
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', removeWhiteBackground.toString());
       
+      // Mark if this PNG was extracted from a PDF (so server skips deduplication)
+      // Check if filename suggests it was originally a PDF that was converted to PNG
+      const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
+                                  (imageFile.name.includes('_raster') || 
+                                   imageFile.name.replace('.png', '.pdf') !== imageFile.name);
+      if (wasExtractedFromPdf) {
+        formData.append('fromPdfExtraction', 'true');
+        console.log('🔍 Marking PNG as extracted from PDF, will skip deduplication');
+      }
+      
       const response = await fetch('/api/vectorize?preview=true', {
         method: 'POST',
         body: formData,
@@ -294,6 +304,15 @@ export function VectorizerModal({
         formData.append('image', imageFile);
         formData.append('preview', 'false'); // Production mode
         formData.append('removeBackground', removeWhiteBackground.toString());
+        
+        // Mark if this PNG was extracted from a PDF (so server skips deduplication)
+        const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
+                                    (imageFile.name.includes('_raster') || 
+                                     imageFile.name.replace('.png', '.pdf') !== imageFile.name);
+        if (wasExtractedFromPdf) {
+          formData.append('fromPdfExtraction', 'true');
+          console.log('🔍 Production call: Marking PNG as extracted from PDF, will skip deduplication');
+        }
         
         const response = await fetch('/api/vectorize', {
           method: 'POST',

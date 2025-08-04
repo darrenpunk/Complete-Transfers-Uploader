@@ -1943,26 +1943,39 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
-      // Apply intelligent deduplication to PNG before sending to AI vectorizer
+      // Only apply deduplication to raw uploaded PNGs, not PNGs extracted from PDFs
       let processedImagePath = req.file.path;
       
       if (req.file.mimetype === 'image/png') {
-        console.log('🔍 Applying intelligent deduplication before AI vectorization...');
-        console.log('📁 Original file path:', req.file.path);
-        console.log('📁 Original file size:', req.file.size, 'bytes');
-        try {
-          console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
-          const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
-          console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
-          if (deduplicatedPath) {
-            processedImagePath = deduplicatedPath;
-            console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
-          } else {
-            console.log('📄 No deduplication needed - using original PNG');
+        // Check if this PNG comes from a raster extraction endpoint (already deduplicated)
+        const isFromRasterExtraction = req.file.originalname?.includes('_raster') || 
+                                     req.file.path?.includes('raster') ||
+                                     req.file.originalname?.includes('extracted') ||
+                                     // PNGs extracted from PDFs will have .png extension but may have been .pdf originally
+                                     (req.file.originalname?.endsWith('.png') && 
+                                      req.headers?.referer?.includes('/') && 
+                                      req.body?.fromPdfExtraction === 'true');
+        
+        if (isFromRasterExtraction) {
+          console.log('📄 PNG is from raster extraction - skipping deduplication (already handled)');
+        } else {
+          console.log('🔍 Applying intelligent deduplication to raw uploaded PNG...');
+          console.log('📁 Original file path:', req.file.path);
+          console.log('📁 Original file size:', req.file.size, 'bytes');
+          try {
+            console.log('🔍 Calling applyIntelligentDeduplication with:', req.file.path, req.file.filename);
+            const deduplicatedPath = await applyIntelligentDeduplication(req.file.path, req.file.filename || '');
+            console.log('🔍 applyIntelligentDeduplication returned:', deduplicatedPath);
+            if (deduplicatedPath) {
+              processedImagePath = deduplicatedPath;
+              console.log('✅ Using deduplicated PNG for AI vectorization:', deduplicatedPath);
+            } else {
+              console.log('📄 No deduplication needed - using original PNG');
+            }
+          } catch (err) {
+            console.log('⚠️ Deduplication failed, using original:', err);
+            console.error('⚠️ Full deduplication error:', err);
           }
-        } catch (err) {
-          console.log('⚠️ Deduplication failed, using original:', err);
-          console.error('⚠️ Full deduplication error:', err);
         }
       }
 
