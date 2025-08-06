@@ -1411,14 +1411,17 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // Check if we have recalculated bounds from font outlining
-            if ((file as any).outlinedContentBounds) {
-              const bounds = (file as any).outlinedContentBounds;
-              const { calculatePreciseDimensions } = await import('./dimension-utils');
+            // Always try to recalculate content bounds for outlined fonts first
+            const { calculateSVGContentBounds, calculatePreciseDimensions } = await import('./dimension-utils');
+            const contentBounds = calculateSVGContentBounds(svgContent);
+            
+            // Check if we have recalculated bounds from font outlining OR detect them now
+            if ((file as any).outlinedContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600)) {
+              const bounds = (file as any).outlinedContentBounds || contentBounds;
               const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
               displayWidth = dimensionResult.widthMm;
               displayHeight = dimensionResult.heightMm;
-              console.log(`📐 Using recalculated outlined content bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+              console.log(`📐 Using ${(file as any).outlinedContentBounds ? 'recalculated' : 'detected'} content bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
               
               // Also update the SVG viewBox to match the content bounds for outlined fonts
               const newViewBox = `${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`;
@@ -1436,7 +1439,7 @@ export async function registerRoutes(app: express.Application) {
               );
               
               fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
-              console.log(`✂️ Updated SVG viewBox to match outlined content bounds: ${newViewBox}`);
+              console.log(`✂️ Updated SVG viewBox to match content bounds: ${newViewBox}`);
               
             } else {
               const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
