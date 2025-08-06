@@ -364,12 +364,25 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             // Final fallback: ensure all colors are in hex format for CSS
             if (!originalDisplayColor.startsWith('#')) {
+              console.log(`🎨 Color conversion failed for: ${colorInfo.originalColor}, originalFormat: ${colorInfo.originalFormat}`);
+              
               // If it's still not hex, try to use the original format as a fallback
               if (colorInfo.originalFormat && colorInfo.originalFormat.startsWith('#')) {
                 originalDisplayColor = colorInfo.originalFormat;
               } else {
-                // Last resort: default to black for any remaining non-hex colors
-                originalDisplayColor = '#000000';
+                // Try one more time with direct RGB parsing
+                const directRgb = colorInfo.originalColor.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+                if (directRgb) {
+                  const r = parseInt(directRgb[1]);
+                  const g = parseInt(directRgb[2]);
+                  const b = parseInt(directRgb[3]);
+                  originalDisplayColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                  console.log(`🎨 Direct RGB conversion: rgb(${r},${g},${b}) → ${originalDisplayColor}`);
+                } else {
+                  // Last resort: default to black for any remaining non-hex colors
+                  console.log(`🎨 FALLBACK TO BLACK: Could not parse color: ${colorInfo.originalColor}`);
+                  originalDisplayColor = '#000000';
+                }
               }
             }
             
