@@ -9,13 +9,16 @@ export async function outlineFonts(svgPath: string): Promise<string> {
   try {
     const svgContent = fs.readFileSync(svgPath, 'utf8');
     
-    // Check if SVG has text elements
+    // Check if SVG has text elements or glyph references
     const hasText = /<text[^>]*>|<tspan[^>]*>/i.test(svgContent);
+    const hasGlyphs = /<use[^>]*xlink:href[^>]*#glyph-/i.test(svgContent);
     
-    if (!hasText) {
-      console.log('No text elements found in SVG, returning original');
+    if (!hasText && !hasGlyphs) {
+      console.log('No text elements or glyph references found in SVG, returning original');
       return svgPath;
     }
+    
+    console.log(`🔤 Found text elements: ${hasText}, glyph references: ${hasGlyphs}`);
 
     // Create output path for outlined version
     const baseName = path.basename(svgPath, '.svg');
