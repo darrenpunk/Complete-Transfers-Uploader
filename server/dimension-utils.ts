@@ -153,8 +153,8 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
  */
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
-    // Extract coordinates from multiple SVG elements
-    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/g;
+    // Extract coordinates from multiple SVG elements - handle multiline paths
+    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gs;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
     const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
     const coordinateRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)|[HV]\s*([-\d.]+)|[CSQTA]\s*([-\d.,\s]+)/g;
@@ -224,6 +224,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const pathData = pathMatch[1];
       pathCount++;
       
+      console.log(`📍 Processing path ${pathCount}: "${pathData.substring(0, 80)}..."`);
+      console.log(`📍 Path length: ${pathData.length} chars`);
+      
       // For large format documents, be less aggressive about filtering paths
       // Only skip obviously empty or single-coordinate paths
       if (isLargeFormat) {
@@ -245,11 +248,15 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       }
       
       let coordMatch;
-      while ((coordMatch = coordinateRegex.exec(pathData)) !== null) {
+      let coordCount = 0;
+      coordinateRegex.lastIndex = 0; // Reset regex state
+      while ((coordMatch = coordinateRegex.exec(pathData)) !== null && coordCount < 50) {
+        coordCount++;
         if (coordMatch[1] && coordMatch[2]) {
           // M or L commands with x,y coordinates
           const x = parseFloat(coordMatch[1]);
           const y = parseFloat(coordMatch[2]);
+          console.log(`📍 Found coordinate ${coordCount}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
           updateBounds(x, y);
         } else if (coordMatch[3]) {
           // H or V commands with single coordinate
@@ -275,7 +282,15 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           }
         }
       }
+      
+      if (coordCount === 0) {
+        console.log(`⚠️ No coordinates found in path: "${pathData.substring(0, 150)}"`);
+      } else {
+        console.log(`📍 Found ${coordCount} coordinates in path ${pathCount}`);
+      }
     }
+    
+    console.log(`📍 Path processing complete: ${pathCount} paths processed, ${hasCoordinates ? 'coordinates found' : 'NO COORDINATES'}`);
     
     // For large format documents with no valid coordinates, try a more aggressive approach
     if (!hasCoordinates && isLargeFormat) {
