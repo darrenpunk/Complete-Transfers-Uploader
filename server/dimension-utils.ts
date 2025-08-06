@@ -277,12 +277,69 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       }
     }
     
+    // For large format documents with no valid coordinates, try a more aggressive approach
+    if (!hasCoordinates && isLargeFormat) {
+      console.log(`⚠️ No coordinates found with current bounds, trying relaxed bounds for large format...`);
+      
+      // Reset bounds with much more relaxed limits
+      minX = Infinity;
+      maxX = -Infinity;
+      minY = Infinity;
+      maxY = -Infinity;
+      hasCoordinates = false;
+      
+      const relaxedUpdateBounds = (x: number, y: number) => {
+        if (isNaN(x) || isNaN(y)) return;
+        // Much more relaxed bounds for outlined fonts
+        if (Math.abs(x) > 10000 || Math.abs(y) > 10000) return;
+        
+        hasCoordinates = true;
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      };
+      
+      // Reprocess paths with relaxed bounds
+      pathRegex.lastIndex = 0; // Reset regex
+      let relaxedPathMatch;
+      while ((relaxedPathMatch = pathRegex.exec(svgContent)) !== null) {
+        const pathData = relaxedPathMatch[1];
+        coordinateRegex.lastIndex = 0; // Reset regex
+        
+        let coordMatch;
+        while ((coordMatch = coordinateRegex.exec(pathData)) !== null) {
+          if (coordMatch[1] && coordMatch[2]) {
+            const x = parseFloat(coordMatch[1]);
+            const y = parseFloat(coordMatch[2]);
+            relaxedUpdateBounds(x, y);
+          } else if (coordMatch[4]) {
+            const coords = coordMatch[4].split(/[,\s]+/).map(c => parseFloat(c)).filter(c => !isNaN(c));
+            for (let i = 0; i < coords.length; i += 2) {
+              if (i + 1 < coords.length) {
+                relaxedUpdateBounds(coords[i], coords[i + 1]);
+              }
+            }
+          }
+        }
+      }
+      
+      console.log(`🔍 Relaxed bounds search found coordinates: ${hasCoordinates}`);
+    }
+    
     if (!hasCoordinates || !isFinite(minX) || !isFinite(maxX) || !isFinite(minY) || !isFinite(maxY)) {
+      console.log(`⚠️ Still no valid coordinates found: hasCoords=${hasCoordinates}, bounds=${minX},${minY} → ${maxX},${maxY}`);
       return null;
     }
     
     const width = maxX - minX;
     const height = maxY - minY;
+    
+    // Sanity check dimensions
+    if (width <= 0 || height <= 0 || width > 2000 || height > 2000) {
+      console.log(`⚠️ Invalid dimensions calculated: ${width.toFixed(1)}×${height.toFixed(1)}px`);
+      return null;
+    }
     
     console.log(`📐 Analyzed ${pathCount} paths (${suspiciousPaths} suspicious skipped)`);
     console.log(`📐 Calculated content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${width.toFixed(1)}×${height.toFixed(1)}px`);
