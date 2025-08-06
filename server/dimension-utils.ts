@@ -513,16 +513,27 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
 
   // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
   const viewBoxDims = extractViewBoxDimensions(svgContent);
+  
+  // Check if this is a PDF-derived SVG (large format documents should preserve original layout)
+  const isPdfDerived = svgContent.includes('pdf2svg') || svgContent.includes('inkscape') || 
+                      (viewBoxDims && ((viewBoxDims.width > 800 && viewBoxDims.height > 1100) || (viewBoxDims.width > 1100 && viewBoxDims.height > 800)));
   if (viewBoxDims) {
     const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'viewbox');
+    
+    // For PDF-derived SVGs, always prioritize viewBox over content bounds to preserve original layout
+    if (isPdfDerived) {
+      console.log(`📄 PDF-derived SVG detected, using viewBox dimensions to preserve layout: ${viewBoxDims.width}×${viewBoxDims.height}px`);
+      return viewBoxResult;
+    }
+    
     if (!isAIVectorized && (viewBoxResult.accuracy === 'perfect' || viewBoxResult.accuracy === 'high')) {
       return viewBoxResult;
     }
     bestResult = viewBoxResult;
   }
   
-  // Method 4: Use content bounds if available (for non-AI-vectorized content)
-  if (!isAIVectorized && contentBounds && contentBounds.width && contentBounds.height) {
+  // Method 4: Use content bounds if available (for non-AI-vectorized, non-PDF content)
+  if (!isAIVectorized && !isPdfDerived && contentBounds && contentBounds.width && contentBounds.height) {
     const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
     if (!bestResult || contentResult.accuracy > bestResult.accuracy) {
       bestResult = contentResult;
