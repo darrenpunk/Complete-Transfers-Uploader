@@ -290,7 +290,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       
       const relaxedUpdateBounds = (x: number, y: number) => {
         if (isNaN(x) || isNaN(y)) return;
-        // Much more relaxed bounds for outlined fonts
+        // Much more relaxed bounds for outlined fonts - allow negative coordinates
         if (Math.abs(x) > 10000 || Math.abs(y) > 10000) return;
         
         hasCoordinates = true;
@@ -298,6 +298,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         maxX = Math.max(maxX, x);
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y);
+        
+        console.log(`📍 Found coordinate: (${x.toFixed(1)}, ${y.toFixed(1)}) → bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)}`);
       };
       
       // Reprocess paths with relaxed bounds
@@ -335,8 +337,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const width = maxX - minX;
     const height = maxY - minY;
     
-    // Sanity check dimensions
-    if (width <= 0 || height <= 0 || width > 2000 || height > 2000) {
+    // Sanity check dimensions - outlined fonts may have larger dimensions
+    if (width <= 0 || height <= 0 || width > 5000 || height > 5000) {
       console.log(`⚠️ Invalid dimensions calculated: ${width.toFixed(1)}×${height.toFixed(1)}px`);
       return null;
     }
