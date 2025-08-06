@@ -5,10 +5,10 @@ import { Badge } from '@/components/ui/badge';
 
 export default function DownloadOdooModule() {
   const handleDownload = () => {
-    // Create download link using the public file
+    // Create download link using the fixed public file
     const link = document.createElement('a');
-    link.href = '/artwork_uploader_module.zip';
-    link.download = 'artwork_uploader_module.zip';
+    link.href = '/artwork_uploader_module_fixed.zip';
+    link.download = 'artwork_uploader_module_fixed.zip';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -21,7 +21,15 @@ export default function DownloadOdooModule() {
           <Package className="w-16 h-16 mx-auto mb-4 text-blue-400" />
           <h1 className="text-4xl font-bold mb-2">Artwork Uploader Odoo Module</h1>
           <p className="text-xl text-gray-300">Complete module package ready for installation</p>
-          <Badge variant="secondary" className="mt-2">Version 16.0.1.0.0</Badge>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <Badge variant="secondary">Version 16.0.1.0.0</Badge>
+            <Badge className="bg-green-600 hover:bg-green-700">Installation Fix Applied</Badge>
+          </div>
+          <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg max-w-2xl mx-auto">
+            <p className="text-green-300 text-sm">
+              ✅ Fixed: Menu reference error resolved - Module now installs correctly on fresh databases
+            </p>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
