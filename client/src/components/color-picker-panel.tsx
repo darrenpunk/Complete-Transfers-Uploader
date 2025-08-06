@@ -43,6 +43,18 @@ function parseRGBPercentage(rgbString: string): { r: number; g: number; b: numbe
   return { r, g, b };
 }
 
+// Parse standard RGB format rgb(255, 255, 255)
+function parseRGBStandard(rgbString: string): { r: number; g: number; b: number } | null {
+  const match = rgbString.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+  if (!match) return null;
+
+  const r = parseInt(match[1]);
+  const g = parseInt(match[2]);
+  const b = parseInt(match[3]);
+
+  return { r, g, b };
+}
+
 // Parse CMYK from the cmykColor string in the analysis (which uses Adobe conversion)
 function parseCMYKString(cmykString: string): CMYKColor | null {
   const match = cmykString.match(/C:(\d+) M:(\d+) Y:(\d+) K:(\d+)/);
@@ -62,8 +74,11 @@ function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
     return parseCMYKString(colorInfo.cmykColor);
   }
   
-  // Fallback for percentage RGB parsing if needed
-  const rgb = parseRGBPercentage(colorInfo.originalFormat || colorInfo.originalColor);
+  // Fallback for percentage or standard RGB parsing if needed
+  let rgb = parseRGBPercentage(colorInfo.originalFormat || colorInfo.originalColor);
+  if (!rgb) {
+    rgb = parseRGBStandard(colorInfo.originalFormat || colorInfo.originalColor);
+  }
   if (!rgb) return null;
   
   // This is a basic fallback - should not be used for vector files
@@ -288,6 +303,12 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             let originalDisplayColor = colorInfo.originalColor;
             if (rgbPercent) {
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
+            } else {
+              // Try parsing standard RGB format rgb(255, 255, 255)
+              const rgbStandard = parseRGBStandard(colorInfo.originalColor);
+              if (rgbStandard) {
+                originalDisplayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
+              }
             }
             
             // Get the correct Adobe CMYK values
