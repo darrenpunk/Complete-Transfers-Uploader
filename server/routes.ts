@@ -1183,6 +1183,42 @@ export async function registerRoutes(app: express.Application) {
             };
             
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
+            
+            // Automatic font outlining for PDFs with text elements
+            if (analysis.hasText && (file as any).originalVectorType === 'pdf') {
+              try {
+                console.log(`🔤 Text detected in PDF-converted SVG, outlining fonts for: ${finalFilename}`);
+                const { outlineFonts } = await import('./font-outliner');
+                const outlinedPath = await outlineFonts(svgPath);
+                
+                if (outlinedPath !== svgPath && fs.existsSync(outlinedPath)) {
+                  // Replace the original SVG with the outlined version
+                  const outlinedContent = fs.readFileSync(outlinedPath, 'utf8');
+                  fs.writeFileSync(svgPath, outlinedContent);
+                  
+                  // Clean up the temporary outlined file
+                  fs.unlinkSync(outlinedPath);
+                  
+                  console.log(`✅ Fonts successfully outlined and SVG updated: ${finalFilename}`);
+                  
+                  // Re-analyze the outlined SVG to update text status
+                  analysis = analyzeSVGWithStrokeWidths(svgPath);
+                  analysisData = {
+                    colors: analysis.colors,
+                    fonts: analysis.fonts,
+                    strokeWidths: analysis.strokeWidths,
+                    minStrokeWidth: analysis.minStrokeWidth,
+                    maxStrokeWidth: analysis.maxStrokeWidth,
+                    hasText: analysis.hasText
+                  };
+                } else {
+                  console.log(`⚠️ Font outlining returned same path or failed for: ${finalFilename}`);
+                }
+              } catch (fontError) {
+                console.error('⚠️ Font outlining failed during upload:', fontError);
+                // Continue without outlining - don't break upload
+              }
+            }
           } catch (analysisError) {
             console.error('❌ SVG analysis failed during upload:', analysisError);
             console.error('Stack trace:', analysisError.stack);
