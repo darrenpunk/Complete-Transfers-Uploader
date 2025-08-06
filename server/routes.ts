@@ -1425,7 +1425,9 @@ export async function registerRoutes(app: express.Application) {
             const contentBounds = calculateSVGContentBounds(svgContent);
             
             // Check if we have recalculated bounds from font outlining OR detect them now
-            if ((file as any).outlinedContentBounds || (file as any).forceContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600)) {
+            // BUT skip cropping for PDF-derived SVGs to preserve original layout
+            const isPdfDerived = file.mimetype === 'application/pdf';
+            if (!isPdfDerived && ((file as any).outlinedContentBounds || (file as any).forceContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600))) {
               const bounds = (file as any).outlinedContentBounds || contentBounds;
               const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
               displayWidth = dimensionResult.widthMm;
