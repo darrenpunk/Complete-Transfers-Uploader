@@ -1201,7 +1201,7 @@ export async function registerRoutes(app: express.Application) {
                   
                   console.log(`✅ Fonts successfully outlined and SVG updated: ${finalFilename}`);
                   
-                  // Re-analyze the outlined SVG to update text status
+                  // Re-analyze the outlined SVG to update text status and recalculate bounds
                   analysis = analyzeSVGWithStrokeWidths(svgPath);
                   analysisData = {
                     colors: analysis.colors,
@@ -1211,6 +1211,24 @@ export async function registerRoutes(app: express.Application) {
                     maxStrokeWidth: analysis.maxStrokeWidth,
                     hasText: analysis.hasText
                   };
+                  
+                  console.log(`🔄 Font outlining completed, recalculating content bounds for outlined paths`);
+                  
+                  // Force recalculation of content bounds after outlining
+                  try {
+                    const { calculateSVGContentBounds } = await import('./dimension-utils');
+                    const outlinedSvgContent = fs.readFileSync(svgPath, 'utf8');
+                    const newContentBounds = calculateSVGContentBounds(outlinedSvgContent);
+                    
+                    if (newContentBounds && newContentBounds.width > 0 && newContentBounds.height > 0) {
+                      console.log(`📐 Recalculated content bounds after outlining: ${newContentBounds.width.toFixed(1)}×${newContentBounds.height.toFixed(1)}px`);
+                      
+                      // Store the updated bounds for dimension calculation
+                      (file as any).outlinedContentBounds = newContentBounds;
+                    }
+                  } catch (boundsError) {
+                    console.warn('⚠️ Failed to recalculate content bounds after outlining:', boundsError);
+                  }
                 } else {
                   console.log(`⚠️ Font outlining returned same path or failed for: ${finalFilename}`);
                 }
@@ -1392,8 +1410,37 @@ export async function registerRoutes(app: express.Application) {
             
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
-            const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-            let isA3Document = false;
+            
+            // Check if we have recalculated bounds from font outlining
+            if ((file as any).outlinedContentBounds) {
+              const bounds = (file as any).outlinedContentBounds;
+              const { calculatePreciseDimensions } = await import('./dimension-utils');
+              const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
+              displayWidth = dimensionResult.widthMm;
+              displayHeight = dimensionResult.heightMm;
+              console.log(`📐 Using recalculated outlined content bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+              
+              // Also update the SVG viewBox to match the content bounds for outlined fonts
+              const newViewBox = `${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`;
+              let updatedSvgContent = svgContent.replace(
+                /viewBox="[^"]*"/,
+                `viewBox="${newViewBox}"`
+              );
+              updatedSvgContent = updatedSvgContent.replace(
+                /width="[^"]*"/,
+                `width="${bounds.width}"`
+              );
+              updatedSvgContent = updatedSvgContent.replace(
+                /height="[^"]*"/,
+                `height="${bounds.height}"`
+              );
+              
+              fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
+              console.log(`✂️ Updated SVG viewBox to match outlined content bounds: ${newViewBox}`);
+              
+            } else {
+              const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+              let isA3Document = false;
             
             if (viewBoxMatch) {
               const viewBoxValues = viewBoxMatch[1].split(' ').map(parseFloat);
@@ -1477,11 +1524,12 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
-            } else {
-              // Fallback: for large documents with no detectable content bounds
-              console.log(`Large format document with no detectable content bounds, using conservative sizing`);
-              displayWidth = 200;
-              displayHeight = 150;
+            }
+          } else {
+            // Fallback: for large documents with no detectable content bounds
+            console.log(`Large format document with no detectable content bounds, using conservative sizing`);
+            displayWidth = 200;
+            displayHeight = 150;
           }
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
