@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Debug Test</title>
+</head>
+<body>
+    <h3>Color Display Test</h3>
+    <div id="test-colors"></div>
+    
+    <script>
+        // Test the color parsing functions
+        function parseRGBStandard(rgbString) {
+            const match = rgbString.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+            if (!match) return null;
+            
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            
+            return { r, g, b };
+        }
+        
+        const testColors = [
+            'rgb(255, 255, 255)',
+            'rgb(0, 0, 0)',
+            'CMYK(0, 0, 0, 100)',
+            'CMYK(97, 1, 0, 51)',
+            '#ffffff',
+            '#000000'
+        ];
+        
+        const container = document.getElementById('test-colors');
+        
+        testColors.forEach((color, index) => {
+            const div = document.createElement('div');
+            div.style.display = 'inline-block';
+            div.style.margin = '10px';
+            div.style.textAlign = 'center';
+            
+            // Test conversion
+            const rgbStandard = parseRGBStandard(color);
+            let displayColor = color;
+            
+            if (rgbStandard) {
+                displayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
+            }
+            
+            div.innerHTML = `
+                <div style="width: 50px; height: 50px; background-color: ${displayColor}; border: 2px solid #ccc; margin-bottom: 5px;"></div>
+                <div style="font-size: 12px;">Original: ${color}</div>
+                <div style="font-size: 12px;">Display: ${displayColor}</div>
+            `;
+            
+            container.appendChild(div);
+        });
+    </script>
+</body>
+</html>

@@ -55,6 +55,19 @@ function parseRGBStandard(rgbString: string): { r: number; g: number; b: number 
   return { r, g, b };
 }
 
+// Parse CMYK format CMYK(0, 0, 0, 100)
+function parseCMYKStandard(cmykString: string): CMYKColor | null {
+  const match = cmykString.match(/CMYK\((\d+),?\s*(\d+),?\s*(\d+),?\s*(\d+)\)/);
+  if (!match) return null;
+
+  return {
+    c: parseInt(match[1]),
+    m: parseInt(match[2]),
+    y: parseInt(match[3]),
+    k: parseInt(match[4])
+  };
+}
+
 // Parse CMYK from the cmykColor string in the analysis (which uses Adobe conversion)
 function parseCMYKString(cmykString: string): CMYKColor | null {
   const match = cmykString.match(/C:(\d+) M:(\d+) Y:(\d+) K:(\d+)/);
@@ -301,6 +314,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             // Convert original color to hex for display
             let originalDisplayColor = colorInfo.originalColor;
+            
             if (rgbPercent) {
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             } else {
@@ -308,13 +322,27 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
               const rgbStandard = parseRGBStandard(colorInfo.originalColor);
               if (rgbStandard) {
                 originalDisplayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
+              } else if (colorInfo.originalColor.startsWith('CMYK(')) {
+                // Handle CMYK colors by converting to hex
+                const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
+                if (cmykStandard) {
+                  const previewRGB = cmykToRGB(cmykStandard);
+                  originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                } else {
+                  // Fallback to getCMYKFromColorInfo
+                  const adobeCMYKForDisplay = getCMYKFromColorInfo(colorInfo);
+                  if (adobeCMYKForDisplay) {
+                    const previewRGB = cmykToRGB(adobeCMYKForDisplay);
+                    originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                  }
+                }
               }
             }
             
             // Get the correct Adobe CMYK values
             const adobeCMYK = getCMYKFromColorInfo(colorInfo);
             
-            // Use override color if exists, otherwise original display color
+            // Use override color if exists, otherwise use converted display color
             let displayColor = hasOverride ? currentColor : originalDisplayColor;
             
             // Apply CMYK preview filter if enabled and color is RGB
