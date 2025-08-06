@@ -153,8 +153,8 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
  */
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
-    // Extract coordinates from multiple SVG elements - handle multiline paths
-    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gs;
+    // Extract coordinates from multiple SVG elements - handle multiline paths and attributes
+    const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/gs;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
     const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
     const coordinateRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)|[HV]\s*([-\d.]+)|[CSQTA]\s*([-\d.,\s]+)/g;
