@@ -412,20 +412,9 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
 
     // Function to detect white colors that are likely conversion artifacts from PDF text
     const isWhiteConversionArtifact = (colorValue: string, elementType: string): boolean => {
-      // Check if this is a white color in any format
-      const isWhite = 
-        colorValue === '#ffffff' || 
-        colorValue === '#FFFFFF' || 
-        colorValue === 'white' ||
-        colorValue === 'rgb(255, 255, 255)' ||
-        colorValue === 'rgb(100%, 100%, 100%)' ||
-        colorValue.toLowerCase() === 'white';
-      
-      // White colors on group elements are usually conversion artifacts from PDF text
-      if (isWhite && elementType === 'g') {
-        return true;
-      }
-      
+      // PRESERVE ALL COLORS - Do not filter out any white colors
+      // The white elements are needed for proper text rendering on the canvas
+      console.log(`🎨 PRESERVING ALL COLORS: ${colorValue} on ${elementType} - no filtering applied`);
       return false;
     };
 
