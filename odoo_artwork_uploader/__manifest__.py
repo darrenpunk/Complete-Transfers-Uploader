@@ -35,10 +35,10 @@
         'security/ir.model.access.csv',
         'data/product_data.xml',
         'views/artwork_project_views.xml',
+        'views/menu_views.xml',
         'views/artwork_template_mapping_views.xml',
         'views/artwork_template_mapping_wizard_views.xml',
         'views/website_templates.xml',
-        'views/menu_views.xml',
     ],
     'assets': {
         'web.assets_frontend': [
