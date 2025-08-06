@@ -419,6 +419,25 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       return undefined;
     };
 
+    // Function to detect white colors that are likely conversion artifacts from PDF text
+    const isWhiteConversionArtifact = (colorValue: string, elementType: string): boolean => {
+      // Check if this is a white color in any format
+      const isWhite = 
+        colorValue === '#ffffff' || 
+        colorValue === '#FFFFFF' || 
+        colorValue === 'white' ||
+        colorValue === 'rgb(255, 255, 255)' ||
+        colorValue === 'rgb(100%, 100%, 100%)' ||
+        colorValue.toLowerCase() === 'white';
+      
+      // White colors on group elements are usually conversion artifacts from PDF text
+      if (isWhite && elementType === 'g') {
+        return true;
+      }
+      
+      return false;
+    };
+
     // Function to get CMYK values from color string
     const getColorInfo = (colorString: string) => {
       let rgbColor = colorString;
@@ -597,10 +616,18 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     elementMatches.forEach((elementMatch, index) => {
       const elementType = elementMatch.match(/<(\w+)/)?.[1] || 'unknown';
       
-      // Check for fill colors (including white colors)
+      // Check for fill colors (excluding white conversion artifacts)
       const fillMatch = elementMatch.match(/fill\s*=\s*["']([^"']+)["']/i);
       if (fillMatch && fillMatch[1] !== 'none' && fillMatch[1] !== 'transparent') {
-        const colorInfo = getColorInfo(fillMatch[1]);
+        const colorValue = fillMatch[1];
+        
+        // Skip white colors that are likely conversion artifacts from PDF text
+        if (isWhiteConversionArtifact(colorValue, elementType)) {
+          console.log(`🎨 Skipping white conversion artifact: ${colorValue} on ${elementType}`);
+          return;
+        }
+        
+        const colorInfo = getColorInfo(colorValue);
         const colorData: SVGColorInfo = {
           id: `color_${colorId++}`,
           originalColor: colorInfo.display,     // Standardized format for UI
@@ -638,10 +665,18 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       if (styleMatch) {
         const style = styleMatch[1];
         
-        // Extract fill from style (including white colors)
+        // Extract fill from style (excluding white conversion artifacts)
         const styleFillMatch = style.match(/fill\s*:\s*([^;]+)/i);
         if (styleFillMatch && styleFillMatch[1] !== 'none' && styleFillMatch[1] !== 'transparent') {
-          const colorInfo = getColorInfo(styleFillMatch[1].trim());
+          const colorValue = styleFillMatch[1].trim();
+          
+          // Skip white colors that are likely conversion artifacts from PDF text
+          if (isWhiteConversionArtifact(colorValue, elementType)) {
+            console.log(`🎨 Skipping white conversion artifact in style: ${colorValue} on ${elementType}`);
+            return;
+          }
+          
+          const colorInfo = getColorInfo(colorValue);
           const styleFillColorData: SVGColorInfo = {
             id: `color_${colorId++}`,
             originalColor: colorInfo.display,
