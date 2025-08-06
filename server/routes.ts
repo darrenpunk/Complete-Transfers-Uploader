@@ -1377,11 +1377,15 @@ export async function registerRoutes(app: express.Application) {
               }
             }
             
-            // Always try to get actual content bounds first, regardless of document format
+            // Get content bounds, but only crop for small AI-vectorized content, not large format PDFs
             const contentBounds = calculateSVGContentBounds(svgContent);
             
-            // Crop SVG to actual content bounds to remove whitespace
-            if (contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
+            // Use the existing viewBox detection result from above
+            const isLargeFormat = isA3Document; // Already calculated above
+            
+            // Only crop SVG to content bounds for small format documents (AI-vectorized logos)
+            // Skip cropping for large format documents (PDFs) to prevent clipping
+            if (!isLargeFormat && contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
                 contentBounds.maxX !== undefined && contentBounds.maxY !== undefined) {
               
               const croppedWidth = contentBounds.maxX - contentBounds.minX;
@@ -1406,10 +1410,12 @@ export async function registerRoutes(app: express.Application) {
                 `height="${croppedHeight}"`
               );
               
-              console.log(`Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
+              console.log(`✂️ Small format: Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
               
               // Write the cropped SVG back to file
               fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
+            } else if (isLargeFormat) {
+              console.log(`📄 Large format: Preserving original viewBox to prevent content clipping`);
             }
             
             // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation

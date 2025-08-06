@@ -162,6 +162,25 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     let pathCount = 0;
     let suspiciousPaths = 0;
     
+    // Detect if this is a large format document (like A3 PDF) by checking viewBox
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    let isLargeFormat = false;
+    
+    if (viewBoxMatch) {
+      const viewBoxValues = viewBoxMatch[1].trim().split(/\s+/);
+      if (viewBoxValues.length >= 4) {
+        const vbWidth = parseFloat(viewBoxValues[2]);
+        const vbHeight = parseFloat(viewBoxValues[3]);
+        // Consider A3 (842x1190) or larger as large format
+        isLargeFormat = vbWidth > 600 || vbHeight > 600;
+        console.log(`📐 Content bounds detection: ${isLargeFormat ? 'Large format' : 'Standard'} document (${vbWidth}x${vbHeight})`);
+      }
+    }
+    
+    // Set coordinate bounds based on document type
+    const maxCoordinate = isLargeFormat ? 2000 : 500;  // Allow much larger bounds for PDF documents
+    const minCoordinate = isLargeFormat ? -100 : -50;
+    
     let pathMatch;
     while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
       const pathData = pathMatch[1];
@@ -188,9 +207,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const x = parseFloat(coordMatch[1]);
           const y = parseFloat(coordMatch[2]);
           
-          // Skip coordinates that are clearly outside the main content area
-          // For AI-vectorized logos, use much tighter bounds to ignore outlier artifacts
-          if (x < -50 || x > 500 || y < -50 || y > 500) {
+          // Skip coordinates that are clearly outside the content area
+          if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) {
             continue;
           }
           
@@ -203,7 +221,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const coord = parseFloat(coordMatch[3]);
           
           // Skip extreme coordinates  
-          if (coord < -50 || coord > 500) {
+          if (coord < minCoordinate || coord > maxCoordinate) {
             continue;
           }
           
@@ -223,7 +241,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
               const y = coords[i + 1];
               
               // Skip extreme coordinates
-              if (x < -50 || x > 500 || y < -50 || y > 500) {
+              if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) {
                 continue;
               }
               
