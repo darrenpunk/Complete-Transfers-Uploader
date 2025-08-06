@@ -157,7 +157,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/g;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
     const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
-    const coordinateRegex = /[ML]\s*([\d.]+)[,\s]+([\d.]+)|[HV]\s*([\d.]+)|[CSQTA]\s*([\d.,\s]+)/g;
+    const coordinateRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)|[HV]\s*([-\d.]+)|[CSQTA]\s*([-\d.,\s]+)/g;
     
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     let hasCoordinates = false;
@@ -181,7 +181,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     // Set coordinate bounds based on document type
     const maxCoordinate = isLargeFormat ? 2000 : 500;  // Allow much larger bounds for PDF documents
-    const minCoordinate = isLargeFormat ? -100 : -50;
+    const minCoordinate = isLargeFormat ? -2000 : -50;  // Allow negative coordinates for outlined fonts
     
     // Helper function to update bounds with coordinate validation
     const updateBounds = (x: number, y: number) => {
