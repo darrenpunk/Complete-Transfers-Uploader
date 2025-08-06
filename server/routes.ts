@@ -1218,13 +1218,22 @@ export async function registerRoutes(app: express.Application) {
                   try {
                     const { calculateSVGContentBounds } = await import('./dimension-utils');
                     const outlinedSvgContent = fs.readFileSync(svgPath, 'utf8');
+                    console.log(`🔍 DEBUG: Attempting to calculate content bounds for outlined SVG (${outlinedSvgContent.length} chars)`);
+                    
                     const newContentBounds = calculateSVGContentBounds(outlinedSvgContent);
+                    console.log(`🔍 DEBUG: Content bounds result:`, newContentBounds);
                     
                     if (newContentBounds && newContentBounds.width > 0 && newContentBounds.height > 0) {
                       console.log(`📐 Recalculated content bounds after outlining: ${newContentBounds.width.toFixed(1)}×${newContentBounds.height.toFixed(1)}px`);
                       
                       // Store the updated bounds for dimension calculation
                       (file as any).outlinedContentBounds = newContentBounds;
+                      
+                      // Force the outlined content bounds to bypass large format detection
+                      (file as any).forceContentBounds = true;
+                      console.log(`✅ Stored outlined content bounds and force flag`);
+                    } else {
+                      console.log(`⚠️ Invalid content bounds after outlining:`, newContentBounds);
                     }
                   } catch (boundsError) {
                     console.warn('⚠️ Failed to recalculate content bounds after outlining:', boundsError);
@@ -1416,7 +1425,7 @@ export async function registerRoutes(app: express.Application) {
             const contentBounds = calculateSVGContentBounds(svgContent);
             
             // Check if we have recalculated bounds from font outlining OR detect them now
-            if ((file as any).outlinedContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600)) {
+            if ((file as any).outlinedContentBounds || (file as any).forceContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600)) {
               const bounds = (file as any).outlinedContentBounds || contentBounds;
               const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
               displayWidth = dimensionResult.widthMm;
