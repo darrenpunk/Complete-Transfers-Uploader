@@ -1185,7 +1185,6 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
             
             // Automatic font outlining for PDFs with text elements
-            console.log(`🔤 FONT OUTLINING DEBUG - hasText: ${analysis.hasText}, originalVectorType: ${(file as any).originalVectorType}, mimetype: ${file.mimetype}`);
             if (analysis.hasText && (file.mimetype === 'application/pdf' || (file as any).originalVectorType === 'pdf')) {
               try {
                 console.log(`🔤 Text detected in PDF-converted SVG, outlining fonts for: ${finalFilename}`);
