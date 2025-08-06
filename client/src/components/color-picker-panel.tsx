@@ -68,6 +68,18 @@ function parseCMYKStandard(cmykString: string): CMYKColor | null {
   };
 }
 
+// Parse RGB percentage format rgb(100%, 100%, 100%)
+function parseRGBPercentageStandard(rgbString: string): { r: number; g: number; b: number } | null {
+  const match = rgbString.match(/rgb\((\d+(?:\.\d+)?)%,?\s*(\d+(?:\.\d+)?)%,?\s*(\d+(?:\.\d+)?)%\)/);
+  if (!match) return null;
+
+  const r = Math.round((parseFloat(match[1]) / 100) * 255);
+  const g = Math.round((parseFloat(match[2]) / 100) * 255);
+  const b = Math.round((parseFloat(match[3]) / 100) * 255);
+
+  return { r, g, b };
+}
+
 // Parse CMYK from the cmykColor string in the analysis (which uses Adobe conversion)
 function parseCMYKString(cmykString: string): CMYKColor | null {
   const match = cmykString.match(/C:(\d+) M:(\d+) Y:(\d+) K:(\d+)/);
@@ -315,6 +327,11 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             // Convert original color to hex for display
             let originalDisplayColor = colorInfo.originalColor;
             
+            // If it's already a hex color, use it directly
+            if (colorInfo.originalColor.startsWith('#')) {
+              originalDisplayColor = colorInfo.originalColor;
+            }
+            
             if (rgbPercent) {
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             } else {
@@ -322,20 +339,37 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
               const rgbStandard = parseRGBStandard(colorInfo.originalColor);
               if (rgbStandard) {
                 originalDisplayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
-              } else if (colorInfo.originalColor.startsWith('CMYK(')) {
-                // Handle CMYK colors by converting to hex
-                const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
-                if (cmykStandard) {
-                  const previewRGB = cmykToRGB(cmykStandard);
-                  originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
-                } else {
-                  // Fallback to getCMYKFromColorInfo
-                  const adobeCMYKForDisplay = getCMYKFromColorInfo(colorInfo);
-                  if (adobeCMYKForDisplay) {
-                    const previewRGB = cmykToRGB(adobeCMYKForDisplay);
+              } else {
+                // Try parsing originalFormat if it's RGB percentage format
+                const rgbPercentStandard = parseRGBPercentageStandard(colorInfo.originalFormat || '');
+                if (rgbPercentStandard) {
+                  originalDisplayColor = `#${rgbPercentStandard.r.toString(16).padStart(2, '0')}${rgbPercentStandard.g.toString(16).padStart(2, '0')}${rgbPercentStandard.b.toString(16).padStart(2, '0')}`;
+                } else if (colorInfo.originalColor.startsWith('CMYK(')) {
+                  // Handle CMYK colors by converting to hex
+                  const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
+                  if (cmykStandard) {
+                    const previewRGB = cmykToRGB(cmykStandard);
                     originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                  } else {
+                    // Fallback to getCMYKFromColorInfo
+                    const adobeCMYKForDisplay = getCMYKFromColorInfo(colorInfo);
+                    if (adobeCMYKForDisplay) {
+                      const previewRGB = cmykToRGB(adobeCMYKForDisplay);
+                      originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                    }
                   }
                 }
+              }
+            }
+            
+            // Final fallback: ensure all colors are in hex format for CSS
+            if (!originalDisplayColor.startsWith('#')) {
+              // If it's still not hex, try to use the original format as a fallback
+              if (colorInfo.originalFormat && colorInfo.originalFormat.startsWith('#')) {
+                originalDisplayColor = colorInfo.originalFormat;
+              } else {
+                // Last resort: default to black for any remaining non-hex colors
+                originalDisplayColor = '#000000';
               }
             }
             
