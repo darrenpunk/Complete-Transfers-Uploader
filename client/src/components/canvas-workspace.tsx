@@ -495,7 +495,13 @@ export default function CanvasWorkspace({
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
       // Convert mm to pixels for drag offset calculation
-      const mmToPixelRatio = template.pixelWidth / template.width;
+      let mmToPixelRatio = template.pixelWidth / template.width;
+      
+      // Use proper DPI for PDF-derived elements
+      const isPdfDerived = element.width > 200 || element.height > 200;
+      if (isPdfDerived) {
+        mmToPixelRatio = 2.834645669; // 72 DPI conversion
+      }
       setDragOffset({
         x: event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100),
         y: event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100)
@@ -518,7 +524,13 @@ export default function CanvasWorkspace({
       updateTimeout = setTimeout(() => {
         if (isDragging && selectedElement && template) {
           // Convert pixels back to mm for storage
-          const mmToPixelRatio = template.pixelWidth / template.width;
+          let mmToPixelRatio = template.pixelWidth / template.width;
+          
+          // Use proper DPI for PDF-derived elements
+          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          if (isPdfDerived) {
+            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          }
           const safetyMargin = 3; // 3mm safety margin
           
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
@@ -534,7 +546,13 @@ export default function CanvasWorkspace({
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
-          const mmToPixelRatio = template.pixelWidth / template.width;
+          let mmToPixelRatio = template.pixelWidth / template.width;
+          
+          // Use proper DPI for PDF-derived elements
+          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          if (isPdfDerived) {
+            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          }
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
@@ -1153,7 +1171,14 @@ export default function CanvasWorkspace({
               <div className="absolute inset-0 pointer-events-none">
                 {/* Calculate 3mm margin in pixels */}
                 {(() => {
-                  const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+                  let mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+                  
+                  // Check if we have any PDF-derived elements and use their ratio for margin consistency
+                  const hasPdfElements = canvasElements.some(el => el.width > 200 || el.height > 200);
+                  if (hasPdfElements) {
+                    mmToPixelRatio = 2.834645669; // 72 DPI conversion for consistency
+                  }
+                  
                   const marginInPixels = 3 * mmToPixelRatio * (zoom / 100); // 3mm margin
                   
                   return (
@@ -1191,7 +1216,14 @@ export default function CanvasWorkspace({
                         const hasElementsOutsideMargins = canvasElements.some(element => {
                           if (!element.isVisible) return false;
                           
-                          const mmToPixelRatio = template.pixelWidth / template.width;
+                          let mmToPixelRatio = template.pixelWidth / template.width;
+                          
+                          // Use proper DPI for PDF-derived elements
+                          const isPdfDerived = element.width > 200 || element.height > 200;
+                          if (isPdfDerived) {
+                            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+                          }
+                          
                           const marginInMm = 3; // 3mm safety margin
                           
                           // Convert element position and size from mm to check margins
@@ -1268,8 +1300,18 @@ export default function CanvasWorkspace({
                 console.log(`Element ${element.id} has color overrides:`, element.colorOverrides);
               }
               
-              // Convert mm to pixels for display (using template's pixel ratio)
-              const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
+              // Convert mm to pixels for display
+              // For PDF-derived large format elements, use proper DPI conversion instead of template workspace ratio
+              let mmToPixelRatio = template.pixelWidth / template.width; // Default template ratio
+              
+              // Check if this is a PDF-derived element (large format) by checking dimensions
+              const isPdfDerived = element.width > 200 || element.height > 200; // Large elements are likely PDF-derived
+              
+              if (isPdfDerived) {
+                // Use standard 72 DPI conversion for PDF-derived elements: 1mm = 2.834645669 pixels
+                mmToPixelRatio = 2.834645669; // 72 DPI conversion
+                console.log(`🔍 PDF-derived element detected, using 72 DPI conversion: ${mmToPixelRatio} px/mm`);
+              }
               
               // Always use the database dimensions directly - they're already swapped by the backend
               // Apply zoom to match the canvas scaling
