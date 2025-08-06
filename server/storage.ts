@@ -125,13 +125,25 @@ export class MemStorage implements IStorage {
       { id: "applique-badge", name: "applique_badge", label: "100×70mm Applique", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Fabric applique badges" },
       { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges" },
       
-      // Digital Transfers - Reflective (moved to Screen Printed Transfers)
+      // Screen Printed Transfers - Reflective
       { id: "reflective-A3", name: "reflective_A3", label: "A3 Reflective", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-A4", name: "reflective_A4", label: "A4 Reflective", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-A5", name: "reflective_A5", label: "A5 Reflective", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-A6", name: "reflective_A6", label: "A6 Reflective", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-transfer-size", name: "reflective_transfer_size", label: "295×100mm Reflective", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-square", name: "reflective_square", label: "95×95mm Reflective", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-badge", name: "reflective_badge", label: "100×70mm Reflective", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
+      { id: "reflective-small", name: "reflective_small", label: "60×60mm Reflective", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night" },
       
       // Digital Transfers - Sublimation
       { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Sublimation", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
       { id: "sublimation-A4", name: "sublimation_A4", label: "A4 Sublimation", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
-      { id: "sublimation-mug", name: "sublimation_mug", label: "Mug Sized (240×100mm) Sublimation", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-A5", name: "sublimation_A5", label: "A5 Sublimation", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-A6", name: "sublimation_A6", label: "A6 Sublimation", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-transfer-size", name: "sublimation_transfer_size", label: "295×100mm Sublimation", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-square", name: "sublimation_square", label: "95×95mm Sublimation", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-badge", name: "sublimation_badge", label: "100×70mm Sublimation", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
+      { id: "sublimation-small", name: "sublimation_small", label: "60×60mm Sublimation", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester" },
     ];
 
     standardSizes.forEach(size => {

@@ -870,20 +870,20 @@ export default function UploadTool() {
           templates={templateSizes.filter(t => {
             if (!selectedProductGroup) return true;
             
-            // Define exact template IDs for each product type as shown in deployed version
+            // Define exact template IDs for each product type matching actual storage data
             const productTemplates: { [key: string]: string[] } = {
               "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
-              "Full Colour Metallic": ["template-metallic-a3", "template-metallic-a4"],
-              "Full Colour HD": ["template-hd-a3", "template-hd-a4"],
-              "Single Colour Transfers": ["template-single-a3", "template-single-a4"],
-              "DTF - Digital Film Transfers": ["template-dtf-a3", "template-dtf-a4"],
-              "UV DTF": ["template-uv-dtf-a3", "template-uv-dtf-a4"],
-              "Custom Badges": ["template-woven-badges-a3", "template-woven-badges-a4"],
-              "Applique Badges": ["template-applique-badges-a3", "template-applique-badges-a4"],
-              "Reflective Transfers": ["template-reflective-a3", "template-reflective-a4"],
-              "ZERO Single Colour Transfers": ["template-zero-a3", "template-zero-a4"],
-              "Sublimation Transfers": ["template-sublimation-a3", "template-sublimation-a4"],
-              "Zero Silicone Transfers": ["template-zero-silicone-a3", "template-zero-silicone-a4"]
+              "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
+              "Full Colour HD": ["hd-A3", "hd-A4"],
+              "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
+              "DTF - Digital Film Transfers": ["dtf-SRA3", "dtf-large"],
+              "UV DTF": ["uvdtf-A3"],
+              "Custom Badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
+              "Applique Badges": ["applique-A6", "applique-square", "applique-badge"],
+              "Reflective Transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
+              "ZERO Single Colour Transfers": ["zero-silicone-A3"],
+              "Sublimation Transfers": ["sublimation-A3", "sublimation-A4", "sublimation-A5", "sublimation-A6", "sublimation-transfer-size", "sublimation-square", "sublimation-badge", "sublimation-small"],
+              "Zero Silicone Transfers": ["zero-silicone-A3"]
             };
             
             const allowedTemplates = productTemplates[selectedProductGroup] || [];
@@ -1074,20 +1074,20 @@ export default function UploadTool() {
         templates={templateSizes.filter(t => {
           if (!selectedProductGroup) return true;
           
-          // Define exact template IDs for each product type as shown in deployed version
+          // Define exact template IDs for each product type matching actual storage data
           const productTemplates: { [key: string]: string[] } = {
             "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
-            "Full Colour Metallic": ["template-metallic-a3", "template-metallic-a4"],
-            "Full Colour HD": ["template-hd-a3", "template-hd-a4"],
-            "Single Colour Transfers": ["template-single-a3", "template-single-a4"],
-            "DTF - Digital Film Transfers": ["template-dtf-a3", "template-dtf-a4"],
-            "UV DTF": ["template-uv-dtf-a3", "template-uv-dtf-a4"],
-            "Custom Badges": ["template-woven-badges-a3", "template-woven-badges-a4"],
-            "Applique Badges": ["template-applique-badges-a3", "template-applique-badges-a4"],
-            "Reflective Transfers": ["template-reflective-a3", "template-reflective-a4"],
-            "ZERO Single Colour Transfers": ["template-zero-a3", "template-zero-a4"],
-            "Sublimation Transfers": ["template-sublimation-a3", "template-sublimation-a4"],
-            "Zero Silicone Transfers": ["template-zero-silicone-a3", "template-zero-silicone-a4"]
+            "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
+            "Full Colour HD": ["hd-A3", "hd-A4"],
+            "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
+            "DTF - Digital Film Transfers": ["dtf-SRA3", "dtf-large"],
+            "UV DTF": ["uvdtf-A3"],
+            "Custom Badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
+            "Applique Badges": ["applique-A6", "applique-square", "applique-badge"],
+            "Reflective Transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
+            "ZERO Single Colour Transfers": ["zero-silicone-A3"],
+            "Sublimation Transfers": ["sublimation-A3", "sublimation-A4", "sublimation-A5", "sublimation-A6", "sublimation-transfer-size", "sublimation-square", "sublimation-badge", "sublimation-small"],
+            "Zero Silicone Transfers": ["zero-silicone-A3"]
           };
           
           const allowedTemplates = productTemplates[selectedProductGroup] || [];
