@@ -149,12 +149,14 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
 }
 
 /**
- * Calculate actual content bounds from SVG paths for AI-vectorized content
+ * Calculate actual content bounds from SVG elements (paths, rects, circles, etc.)
  */
-export function calculateSVGContentBounds(svgContent: string): { width: number; height: number } | null {
+export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
-    // Extract all path data and coordinates to find actual content bounds
+    // Extract coordinates from multiple SVG elements
     const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/g;
+    const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
+    const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
     const coordinateRegex = /[ML]\s*([\d.]+)[,\s]+([\d.]+)|[HV]\s*([\d.]+)|[CSQTA]\s*([\d.,\s]+)/g;
     
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -181,74 +183,94 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const maxCoordinate = isLargeFormat ? 2000 : 500;  // Allow much larger bounds for PDF documents
     const minCoordinate = isLargeFormat ? -100 : -50;
     
+    // Helper function to update bounds with coordinate validation
+    const updateBounds = (x: number, y: number) => {
+      if (isNaN(x) || isNaN(y)) return;
+      if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) return;
+      
+      hasCoordinates = true;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    };
+
+    // 1. Process rectangles
+    let rectMatch;
+    while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
+      const x = parseFloat(rectMatch[1]);
+      const y = parseFloat(rectMatch[2]);
+      const width = parseFloat(rectMatch[3]);
+      const height = parseFloat(rectMatch[4]);
+      
+      updateBounds(x, y);
+      updateBounds(x + width, y + height);
+    }
+
+    // 2. Process circles
+    let circleMatch;
+    while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
+      const cx = parseFloat(circleMatch[1]);
+      const cy = parseFloat(circleMatch[2]);
+      const r = parseFloat(circleMatch[3]);
+      
+      updateBounds(cx - r, cy - r);
+      updateBounds(cx + r, cy + r);
+    }
+
+    // 3. Process paths
     let pathMatch;
     while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
       const pathData = pathMatch[1];
-      const fullPath = pathMatch[0];
       pathCount++;
       
-      // Check for suspicious paths (very long, minimal data, likely artifacts)
-      const isSuspicious = pathData.length < 50 && 
-                          (pathData.includes('M 0') || pathData.includes('L 0') || 
-                           pathData.includes('M 561') || pathData.includes('L 561'));
-      
-      if (isSuspicious) {
-        suspiciousPaths++;
-        console.log(`🔍 Skipping suspicious path #${pathCount}: ${pathData.substring(0, 100)}...`);
-        continue;
+      // For large format documents, be less aggressive about filtering paths
+      // Only skip obviously empty or single-coordinate paths
+      if (isLargeFormat) {
+        if (pathData.length < 10) {
+          suspiciousPaths++;
+          continue;
+        }
+      } else {
+        // Original filtering for small AI-vectorized content
+        const isSuspicious = pathData.length < 50 && 
+                            (pathData.includes('M 0') || pathData.includes('L 0') || 
+                             pathData.includes('M 561') || pathData.includes('L 561'));
+        
+        if (isSuspicious) {
+          suspiciousPaths++;
+          console.log(`🔍 Skipping suspicious path #${pathCount}: ${pathData.substring(0, 100)}...`);
+          continue;
+        }
       }
       
       let coordMatch;
       while ((coordMatch = coordinateRegex.exec(pathData)) !== null) {
-        hasCoordinates = true;
-        
         if (coordMatch[1] && coordMatch[2]) {
           // M or L commands with x,y coordinates
           const x = parseFloat(coordMatch[1]);
           const y = parseFloat(coordMatch[2]);
-          
-          // Skip coordinates that are clearly outside the content area
-          if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) {
-            continue;
-          }
-          
-          minX = Math.min(minX, x);
-          maxX = Math.max(maxX, x);
-          minY = Math.min(minY, y);
-          maxY = Math.max(maxY, y);
+          updateBounds(x, y);
         } else if (coordMatch[3]) {
           // H or V commands with single coordinate
           const coord = parseFloat(coordMatch[3]);
           
-          // Skip extreme coordinates  
-          if (coord < minCoordinate || coord > maxCoordinate) {
-            continue;
-          }
-          
-          if (coordMatch[0].startsWith('H')) {
-            minX = Math.min(minX, coord);
-            maxX = Math.max(maxX, coord);
-          } else {
-            minY = Math.min(minY, coord);
-            maxY = Math.max(maxY, coord);
+          if (coord >= minCoordinate && coord <= maxCoordinate) {
+            hasCoordinates = true;
+            if (coordMatch[0].startsWith('H')) {
+              minX = Math.min(minX, coord);
+              maxX = Math.max(maxX, coord);
+            } else {
+              minY = Math.min(minY, coord);
+              maxY = Math.max(maxY, coord);
+            }
           }
         } else if (coordMatch[4]) {
           // C, S, Q, T, A commands with multiple coordinates
           const coords = coordMatch[4].split(/[,\s]+/).map(c => parseFloat(c)).filter(c => !isNaN(c));
           for (let i = 0; i < coords.length; i += 2) {
             if (i + 1 < coords.length) {
-              const x = coords[i];
-              const y = coords[i + 1];
-              
-              // Skip extreme coordinates
-              if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) {
-                continue;
-              }
-              
-              minX = Math.min(minX, x);
-              maxX = Math.max(maxX, x);
-              minY = Math.min(minY, y);
-              maxY = Math.max(maxY, y);
+              updateBounds(coords[i], coords[i + 1]);
             }
           }
         }
@@ -265,7 +287,14 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     console.log(`📐 Analyzed ${pathCount} paths (${suspiciousPaths} suspicious skipped)`);
     console.log(`📐 Calculated content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${width.toFixed(1)}×${height.toFixed(1)}px`);
     
-    return { width, height };
+    return { 
+      width, 
+      height, 
+      minX, 
+      minY, 
+      maxX, 
+      maxY 
+    };
   } catch (error) {
     console.warn('⚠️ Failed to calculate SVG content bounds:', error);
     return null;
