@@ -971,6 +971,10 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
                 }
                 
+                // This is an RGB PDF - explicitly mark as NOT CMYK preserved
+                (file as any).isCMYKPreserved = false;
+                console.log(`🎨 RGB PDF detected: ${file.filename} - marked as isCMYKPreserved=false`);
+                
                 finalFilename = svgFilename;
                 finalMimeType = 'image/svg+xml';
                 finalUrl = `/uploads/${finalFilename}`;
@@ -1191,12 +1195,17 @@ export async function registerRoutes(app: express.Application) {
               analysis = analyzeSVGWithStrokeWidths(svgPath);
             }
             
-            // CRITICAL FIX: If all detected colors are CMYK, set the preservation flag
+            // CRITICAL FIX: Set the preservation flag based on actual color analysis
             if (analysis.colors && analysis.colors.length > 0) {
               const allColorsAreCMYK = analysis.colors.every(color => (color as any).isCMYK === true);
+              const hasAnyRGBColors = analysis.colors.some(color => (color as any).isCMYK === false);
+              
               if (allColorsAreCMYK && file.mimetype === 'application/pdf') {
                 console.log(`🎨 CRITICAL FIX - All ${analysis.colors.length} colors are CMYK, setting isCMYKPreserved=true`);
                 (file as any).isCMYKPreserved = true;
+              } else if (hasAnyRGBColors && file.mimetype === 'application/pdf') {
+                console.log(`🎨 CRITICAL FIX - Found RGB colors in PDF, setting isCMYKPreserved=false`);
+                (file as any).isCMYKPreserved = false;
               }
             }
             
