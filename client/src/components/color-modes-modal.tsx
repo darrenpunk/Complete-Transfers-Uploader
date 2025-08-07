@@ -126,56 +126,6 @@ export function ColorModesModal({ open, onOpenChange }: ColorModesModalProps) {
                 This gives you a more accurate idea of how your colours will look once printed.
               </p>
               
-              <p className="text-muted-foreground">
-                We have put together a guide for colour settings and export settings for the main graphics programs that customers are using to create their artwork.
-              </p>
-            </section>
-
-            {/* Software Guides */}
-            <section>
-              <h3 className="text-lg font-semibold mb-4 text-[#961E75]">Software-Specific Guides</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
-                  <img 
-                    src="https://www.completetransfers.com/web/image/3491686-7ae8f8fc/corel.png"
-                    alt="Corel Draw"
-                    className="h-16 w-auto mb-3 object-contain"
-                  />
-                  <h4 className="font-semibold mb-1 text-[#961E75]">Corel Draw</h4>
-                  <p className="text-sm text-muted-foreground">Professional vector graphics editor</p>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
-                  <img 
-                    src="https://www.completetransfers.com/web/image/3491685-564fdf1e/illustrator.png"
-                    alt="Adobe Illustrator"
-                    className="h-16 w-auto mb-3 object-contain"
-                  />
-                  <h4 className="font-semibold mb-1 text-[#961E75]">Adobe Illustrator</h4>
-                  <p className="text-sm text-muted-foreground">Industry-standard vector design software</p>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
-                  <img 
-                    src="https://www.completetransfers.com/web/image/3491692-d5b8be60/Affinity_Designer_2-logo.svg.png"
-                    alt="Affinity Designer"
-                    className="h-16 w-auto mb-3 object-contain"
-                  />
-                  <h4 className="font-semibold mb-1 text-[#961E75]">Affinity Designer</h4>
-                  <p className="text-sm text-muted-foreground">Modern vector graphics application</p>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:bg-muted/50 transition-colors flex flex-col items-center text-center">
-                  <img 
-                    src="https://www.completetransfers.com/web/image/3491691-09157f12/Adobe_Photoshop_CC_icon.svg.png"
-                    alt="Adobe Photoshop"
-                    className="h-16 w-auto mb-3 object-contain"
-                  />
-                  <h4 className="font-semibold mb-1 text-[#961E75]">Adobe Photoshop</h4>
-                  <p className="text-sm text-muted-foreground">Raster graphics and photo editing</p>
-                </div>
-              </div>
             </section>
           </div>
         </ScrollArea>

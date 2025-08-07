@@ -7,6 +7,8 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 7, 2025)
+- **Software-Specific Guides Removed**: Removed the software application guides section from the Color Modes modal to simplify the interface.
+- **Color Mode Help Modal Restored**: Fixed the "Learn More about Colour Modes" help button in preflight checks to properly trigger when RGB colors are detected.
 - **CMYK Preview Toggle Removed**: Removed the CMYK Preview toggle from the Color Analysis section as requested. Colors now display in their original format without any preview conversion effects.
 - **✅ CRITICAL COLOR DETECTION FIX**: Fixed RGB files being incorrectly marked as CMYK in preflight checks. SVG color analysis now properly identifies RGB/hex colors as `isCMYK: false` and only marks actual CMYK colors (device-cmyk, cmyk formats) as `isCMYK: true`. Preflight now correctly shows "RGB Vector (Preserved)" for RGB files instead of incorrectly showing "CMYK Vector".
 - **Vector Import CMYK Notification Removed**: Eliminated CMYK conversion form notifications when importing vector files since colors are preserved exactly as uploaded without conversion.
