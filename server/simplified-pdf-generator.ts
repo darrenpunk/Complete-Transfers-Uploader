@@ -297,8 +297,52 @@ export class SimplifiedPDFGenerator {
   ) {
     const uploadPath = path.join(process.cwd(), 'uploads', logo.filename);
     
-    // PRIORITY: If this was originally a PDF, AI, or EPS file (even if converted to SVG), handle appropriately
-    // Handle original PDF files
+    console.log(`🔍 DEBUG: embedOriginalFile called for logo:`, {
+      filename: logo.filename,
+      originalName: logo.originalName,
+      mimeType: logo.mimeType,
+      isCMYKPreserved: logo.isCMYKPreserved
+    });
+    
+    // PRIORITY: Check for CMYK-preserved PDFs first
+    const isOriginalPDF = logo.isCMYKPreserved && logo.originalName && logo.originalName.toLowerCase().endsWith('.pdf');
+    
+    if (isOriginalPDF) {
+      console.log(`📄 CMYK-preserved PDF detected - using original PDF file: ${logo.filename}`);
+      
+      // For CMYK-preserved PDFs, the original PDF is stored as the filename (without extension)
+      const originalPdfPath = path.join(process.cwd(), 'uploads', logo.filename);
+      console.log(`🔍 DEBUG: Looking for CMYK-preserved PDF at: ${originalPdfPath}`);
+      
+      if (fs.existsSync(originalPdfPath)) {
+        console.log(`✅ Found CMYK-preserved PDF file, embedding directly`);
+        try {
+          const existingPdfBytes = fs.readFileSync(originalPdfPath);
+          const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+          
+          // Calculate position and scale
+          const scale = this.calculateScale(element, templateSize);
+          const position = this.calculatePosition(element, templateSize, page);
+          
+          page.drawPage(embeddedPage, {
+            x: position.x,
+            y: position.y,
+            width: element.width * scale,
+            height: element.height * scale,
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+          
+          console.log(`✅ Successfully embedded CMYK-preserved PDF: ${logo.filename}`);
+          return;
+        } catch (embedError) {
+          console.error(`❌ Failed to embed CMYK-preserved PDF:`, embedError);
+        }
+      } else {
+        console.log(`⚠️ CMYK-preserved PDF not found at: ${originalPdfPath}`);
+      }
+    }
+    
+    // Handle legacy originalMimeType format
     if (logo.originalMimeType === 'application/pdf' && logo.originalFilename) {
       console.log(`📄 Using original PDF for direct embedding: ${logo.originalFilename}`);
       
