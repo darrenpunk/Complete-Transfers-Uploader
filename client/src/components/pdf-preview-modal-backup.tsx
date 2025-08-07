@@ -1,0 +1,618 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import CompleteTransferLogo from "./complete-transfer-logo";
+import { 
+  FileText, 
+  AlertTriangle, 
+  CheckCircle, 
+  Eye, 
+  Copyright,
+  Palette,
+  Type,
+  Layers
+} from "lucide-react";
+import { gildanColors, fruitOfTheLoomColors } from "@shared/garment-colors";
+
+interface PDFPreviewModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApprove: () => void;
+  project: any;
+  logos: any[];
+  canvasElements: any[];
+  template: any;
+}
+
+export default function PDFPreviewModal({
+  open,
+  onOpenChange,
+  onApprove,
+  project,
+  logos,
+  canvasElements,
+  template
+}: PDFPreviewModalProps) {
+  const [designApproved, setDesignApproved] = useState(false);
+  const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  
+  console.log('PDFPreviewModal render:', { open, project: project?.name });
+
+  const canProceed = designApproved && rightsConfirmed;
+
+  const handleApprove = () => {
+    if (canProceed) {
+      onApprove();
+      onOpenChange(false);
+      // Reset checkboxes for next time
+      setDesignApproved(false);
+      setRightsConfirmed(false);
+    }
+  };
+
+  // Calculate preflight summary data
+  const totalLogos = logos.length;
+  const hasLowResLogos = logos.some(logo => {
+    const colorInfo = logo.svgColors as any;
+    // Check if it's a raster image with low resolution
+    return colorInfo && colorInfo.resolution && colorInfo.resolution < 300 && colorInfo.type === 'raster';
+  });
+  const hasFonts = logos.some(logo => {
+    const colorInfo = logo.svgColors as any;
+    return colorInfo && colorInfo.fonts && colorInfo.fonts.length > 0;
+  });
+  const hasUnconvertedColors = logos.some(logo => {
+    const colorInfo = logo.svgColors as any;
+    // Check if colors are converted to CMYK (converted flag or mode is CMYK)
+    return colorInfo && !colorInfo.converted && colorInfo.mode !== 'CMYK';
+  });
+
+  const preflightItems = [
+    {
+      icon: Layers,
+      label: "Design Elements",
+      value: `${totalLogos} logo${totalLogos !== 1 ? 's' : ''} uploaded`,
+      status: totalLogos > 0 ? "success" : "warning"
+    },
+    {
+      icon: Eye,
+      label: "Image Quality", 
+      value: hasLowResLogos ? "Low resolution detected" : "Vector graphics",
+      status: hasLowResLogos ? "warning" : "success"
+    },
+    {
+      icon: Type,
+      label: "Typography",
+      value: hasFonts ? "Fonts need outlining" : "Text properly outlined",
+      status: hasFonts ? "warning" : "success"
+    },
+    {
+      icon: Palette,
+      label: "Color Space",
+      value: (() => {
+        // Use same logic as tools sidebar preflight check - include color overrides
+        const hasCMYKLogos = logos.some(logo => {
+          // Try both logo.svgColors and logo.svgColors.colors (different data structures)
+          let svgColors = logo.svgColors as any;
+          if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+            svgColors = svgColors.colors; // Extract colors array from analysis object
+          }
+          
+          const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+          
+          // Check if any canvas element using this logo has color overrides
+          const logoElements = canvasElements.filter(el => el.logoId === logo.id);
+          const hasColorOverrides = logoElements.some(el => 
+            el.colorOverrides && Object.keys(el.colorOverrides).length > 0
+          );
+          
+          if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
+            // Show CMYK if explicitly converted OR has color overrides
+            const hasConvertedColors = svgColors.some(color => color.converted);
+            return hasConvertedColors || hasColorOverrides;
+          } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
+            // For raster images, check the mode or color overrides
+            return svgColors.mode === 'CMYK' || hasColorOverrides;
+          }
+          return hasColorOverrides;
+        });
+        return hasCMYKLogos ? "CMYK ready" : "RGB colors detected";
+      })(),
+      status: (() => {
+        // Use same logic as tools sidebar preflight check - include color overrides
+        const hasCMYKLogos = logos.some(logo => {
+          // Try both logo.svgColors and logo.svgColors.colors (different data structures)
+          let svgColors = logo.svgColors as any;
+          if (svgColors && svgColors.colors && Array.isArray(svgColors.colors)) {
+            svgColors = svgColors.colors; // Extract colors array from analysis object
+          }
+          
+          const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+          
+          // Check if any canvas element using this logo has color overrides
+          const logoElements = canvasElements.filter(el => el.logoId === logo.id);
+          const hasColorOverrides = logoElements.some(el => 
+            el.colorOverrides && Object.keys(el.colorOverrides).length > 0
+          );
+          
+          if (isVector && Array.isArray(svgColors) && svgColors.length > 0) {
+            const hasConvertedColors = svgColors.some(color => color.converted);
+            return hasConvertedColors || hasColorOverrides;
+          } else if (!isVector && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
+            return svgColors.mode === 'CMYK' || hasColorOverrides;
+          }
+          return hasColorOverrides;
+        });
+        return hasCMYKLogos ? "success" : "warning";
+      })()
+    }
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="flex items-center gap-2 justify-center">
+            <Eye className="w-5 h-5" />
+            PDF Preview & Approval
+          </DialogTitle>
+          <DialogDescription className="text-center">
+            Review your design and confirm approval before generating the final PDF
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="flex gap-6 flex-1 min-h-0 overflow-hidden relative">
+          {/* PDF Preview Mockup - Two Pages Side by Side */}
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
+            
+            <div className="flex gap-4 flex-1">
+              {/* Page 1 Preview */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
+                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
+                  {/* Canvas preview background */}
+                  <div 
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded"
+                    style={{
+                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                      width: '90%',
+                      maxWidth: '280px'
+                    }}
+                  >
+                    {/* Template background with garment color */}
+                    <div 
+                      className="w-full h-full relative"
+                      style={{
+                        backgroundColor: project?.garmentColor || '#D2E31D',
+                      }}
+                    >
+                      {/* Render positioned logos */}
+                      {canvasElements.map((element) => {
+                        const logo = logos.find(l => l.id === element.logoId);
+                        if (!logo) return null;
+                        
+                        return (
+                          <div
+                            key={element.id}
+                            className="absolute"
+                            style={{
+                              left: `${(element.x / (template?.width || 297)) * 100}%`,
+                              top: `${(element.y / (template?.height || 420)) * 100}%`,
+                              width: `${(element.width / (template?.width || 297)) * 100}%`,
+                              height: `${(element.height / (template?.height || 420)) * 100}%`,
+                              transform: `rotate(${element.rotation || 0}deg)`,
+                              opacity: element.opacity || 1,
+                            }}
+                          >
+                            <img
+                              src={`/uploads/${logo.filename}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ 
+                                filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Template size label */}
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                        {template?.name || 'A3'} - {template?.width || 297}×{template?.height || 420}mm
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Page 2 Preview */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Color Information</h4>
+                <div className="border rounded-lg bg-white p-4 flex-1 overflow-auto">
+                  <div className="space-y-4">
+                    {/* Project Info */}
+                    <div className="text-center border-b pb-4">
+                      <h3 className="font-bold text-lg">{project?.name || 'Untitled Project'}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Template: {template?.name || 'A3'} ({template?.width || 297}×{template?.height || 420}mm)
+                      </p>
+                    </div>
+                    
+                    {/* Logo Colors */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">Logo Colors:</h4>
+                      <div className="space-y-2">
+                        {logos.map((logo) => {
+                          const svgColors = logo.svgColors as any;
+                          const colors = svgColors?.colors || [];
+                          
+                          return (
+                            <div key={logo.id} className="bg-gray-50 p-2 rounded text-xs">
+                              <div className="font-medium truncate mb-1">{logo.originalName}</div>
+                              <div className="flex flex-wrap gap-1">
+                                {colors.slice(0, 6).map((color: any, idx: number) => (
+                                  <div key={idx} className="flex items-center gap-1">
+                                    <div
+                                      className="w-3 h-3 rounded border border-gray-300"
+                                      style={{ backgroundColor: color.originalColor }}
+                                    />
+                                    <span className="text-xs">{color.originalColor}</span>
+                                  </div>
+                                ))}
+                                {colors.length > 6 && (
+                                  <span className="text-xs text-gray-500">+{colors.length - 6} more</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* Garment Color */}
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">Garment Color:</h4>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-6 h-6 rounded border border-gray-300"
+                          style={{ backgroundColor: project?.garmentColor || '#D2E31D' }}
+                        />
+                        <span className="text-sm">{project?.garmentColor || '#D2E31D'}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Production Notes */}
+                    <div className="bg-blue-50 p-3 rounded text-xs">
+                      <h4 className="font-semibold mb-1">Production Notes:</h4>
+                      <ul className="space-y-1 text-gray-700">
+                        <li>• Colors preserved from original artwork</li>
+                        <li>• Vector graphics maintain quality at any size</li>
+                        <li>• CMYK color space for professional printing</li>
+                        <li>• Template positioned for optimal transfer placement</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Download PDF Button */}
+          <div className="absolute top-4 right-4">
+            <button
+              onClick={() => {
+                if (project) {
+                  window.open(`/api/projects/${project.id}/generate-pdf?t=${Date.now()}`, '_blank');
+                }
+              }}
+              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-2"
+              title="Download final PDF"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download PDF
+            </button>
+          </div>
+                            }}
+                          >
+                            <img
+                              key={`page1-${element.id}-${logo.id}`}
+                              src={`/uploads/${logo.filename}?t=${Date.now()}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ filter: 'brightness(0.98) contrast(1.02) saturate(0.95)' }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-white px-2 py-1 rounded">
+                    {template?.name} ({template?.width}×{template?.height}mm)
+                  </div>
+                </div>
+              </div>
+
+              {/* Page 2 Preview */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                <div className="border rounded-lg bg-white p-3 flex-1 flex flex-col items-start justify-start relative overflow-hidden">
+                  {/* Render page 2 exactly as PDF output */}
+                  <div className="w-full h-full flex flex-col">
+                    {/* Logos on garment backgrounds - match PDF grid layout */}
+                    <div className="flex-1 p-4">
+                      <div className="w-full h-full bg-black rounded-lg p-2">
+                        {(() => {
+                          // Get unique garment colors used
+                          const colorsUsed = new Map<string, string>();
+                          
+                          // Add default garment color
+                          if (project?.garmentColor) {
+                            colorsUsed.set(project.garmentColor, project.garmentColor);
+                          }
+                          
+                          // Add individual element colors
+                          canvasElements.forEach(element => {
+                            if (element.garmentColor && element.garmentColor !== 'default') {
+                              colorsUsed.set(element.garmentColor, element.garmentColor);
+                            }
+                          });
+                          
+                          // Create grid colors based on actual project garment colors
+                          const defaultColor = project?.garmentColor || '#000000';
+                          const gridColors = Array(20).fill(defaultColor);
+                          
+                          // If we have element-specific colors, place them in the grid
+                          const uniqueColors = Array.from(colorsUsed.keys());
+                          if (uniqueColors.length > 1) {
+                            // Distribute unique colors across the grid
+                            // Place them in a pattern similar to the PDF output
+                            if (uniqueColors[1]) gridColors[5] = uniqueColors[1];   // Row 2, col 2
+                            if (uniqueColors[2]) gridColors[6] = uniqueColors[2];   // Row 2, col 3
+                            if (uniqueColors[3]) gridColors[8] = uniqueColors[3];   // Row 3, col 1
+                            if (uniqueColors[4]) gridColors[11] = uniqueColors[4];  // Row 3, col 4
+                            // Continue pattern for more colors
+                            for (let i = 5; i < uniqueColors.length && i < 20; i++) {
+                              const gridIndex = 12 + (i - 5);
+                              if (gridIndex < 20) gridColors[gridIndex] = uniqueColors[i];
+                            }
+                          }
+                          
+                          // Show actual canvas layout with garment background, not a grid
+                          return (
+                            <div 
+                              className="w-full h-full relative"
+                              style={{ 
+                                backgroundColor: project?.garmentColor || '#000000',
+                                aspectRatio: template ? `${template.width}/${template.height}` : '297/420'
+                              }}
+                            >
+                              {/* Render positioned logos on garment background */}
+                              {canvasElements.map((element) => {
+                                const logo = logos.find(l => l.id === element.logoId);
+                                if (!logo) return null;
+                                
+                                // Use element-specific color if set, otherwise use default
+                                const elementBgColor = element.garmentColor && element.garmentColor !== 'default' 
+                                  ? element.garmentColor 
+                                  : project?.garmentColor || '#000000';
+                                
+                                return (
+                                  <div
+                                    key={element.id}
+                                    className="absolute"
+                                    style={{
+                                      left: `${(element.x / (template?.width || 297)) * 100}%`,
+                                      top: `${(element.y / (template?.height || 420)) * 100}%`,
+                                      width: `${(element.width / (template?.width || 297)) * 100}%`,
+                                      height: `${(element.height / (template?.height || 420)) * 100}%`,
+                                      transform: `rotate(${element.rotation || 0}deg)`,
+                                      backgroundColor: elementBgColor
+                                    }}
+                                  >
+                                    <img
+                                      src={`/uploads/${logo.filename}?t=${Date.now()}`}
+                                      alt={logo.originalName}
+                                      className="w-full h-full object-contain"
+                                      style={{ opacity: element.opacity || 1 }}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                    
+                    {/* Color labels at bottom - exactly like PDF */}
+                    <div className="mt-auto pt-2">
+                      <div className="flex items-center gap-3 flex-wrap px-4">
+                        {(() => {
+                          // Get unique colors to display with name and CMYK
+                          const colorsToShow = new Map<string, { name: string; cmyk: string }>();
+                          
+                          // Helper function to convert hex to RGB
+                          const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+                            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                            return result ? {
+                              r: parseInt(result[1], 16),
+                              g: parseInt(result[2], 16),
+                              b: parseInt(result[3], 16)
+                            } : null;
+                          };
+                          
+                          // Helper function to get color info
+                          const getColorInfo = (hexColor: string): { name: string; cmyk: string } => {
+                            console.log('Preview - Looking for color info for hex:', hexColor);
+                            
+                            // Only look for exact matches in garment colors
+                            const allColors = [
+                              ...gildanColors.flatMap(group => group.colors),
+                              ...fruitOfTheLoomColors.flatMap(group => group.colors)
+                            ];
+                            
+                            for (const color of allColors) {
+                              if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+                                const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
+                                console.log('Preview - Found exact match:', color.name, cmyk);
+                                return { name: color.name, cmyk };
+                              }
+                            }
+                            
+                            // If no exact match found, return the hex color as the name
+                            console.log('Preview - No exact match found, using hex');
+                            return { name: hexColor.toUpperCase(), cmyk: '' };
+                          };
+                          
+                          if (project?.garmentColor) {
+                            const info = getColorInfo(project.garmentColor);
+                            console.log('Preview - Default garment color:', project.garmentColor, 'Info:', info);
+                            colorsToShow.set(project.garmentColor, info);
+                          }
+                          
+                          canvasElements.forEach(element => {
+                            if (element.garmentColor) {
+                              const info = getColorInfo(element.garmentColor);
+                              console.log('Preview - Element garment color:', element.garmentColor, 'Info:', info);
+                              colorsToShow.set(element.garmentColor, info);
+                            }
+                          });
+                          
+                          return Array.from(colorsToShow.entries()).map(([color, info]) => (
+                            <div key={color} className="flex items-center gap-1.5">
+                              <div 
+                                className="w-3 h-3 rounded-sm border border-gray-400"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="text-xs" style={{ color: '#6D6D6D' }}>
+                                {info.cmyk ? `${info.name} ${info.cmyk}` : info.name}
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator orientation="vertical" />
+
+          {/* Preflight Summary Sidebar */}
+          <div className="w-80 space-y-4">
+            <h3 className="text-lg font-semibold">Preflight Summary</h3>
+            
+            <div className="space-y-2">
+              <div className="space-y-2">
+                {preflightItems.map((item, index) => (
+                  <div key={index} className="flex items-start gap-2 p-2 rounded border">
+                    <item.icon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{item.label}</p>
+                        {item.status === "success" ? (
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <AlertTriangle className="w-3 h-3 text-amber-500" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Project Details */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Project Details</h4>
+              <div className="text-xs space-y-1 text-muted-foreground">
+                <p><span className="font-medium">Template:</span> {template?.name}</p>
+                <p><span className="font-medium">Size:</span> {template?.width}×{template?.height}mm</p>
+                <p><span className="font-medium">Elements:</span> {canvasElements.length} positioned</p>
+                <p><span className="font-medium">Project:</span> {project?.name || "Untitled Project"}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Approval Checkboxes */}
+        <div className="space-y-3 pt-3 border-t mt-auto">
+          <div className="flex items-start space-x-3">
+            <Checkbox 
+              id="design-approval" 
+              checked={designApproved}
+              onCheckedChange={(checked) => setDesignApproved(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label 
+                htmlFor="design-approval"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                I approve this design layout and artwork positioning
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Confirm that the design appears as intended and all elements are correctly positioned
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-3">
+            <Checkbox 
+              id="rights-confirmation" 
+              checked={rightsConfirmed}
+              onCheckedChange={(checked) => setRightsConfirmed(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label 
+                htmlFor="rights-confirmation"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+              >
+                <Copyright className="w-3 h-3" />
+                I have the rights to use all images and artwork
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                I confirm that I own or have permission to use all uploaded images, logos, and artwork for commercial printing
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleApprove}
+            disabled={!canProceed}
+            className={!canProceed ? "opacity-50 cursor-not-allowed" : ""}
+          >
+            Approve & Continue
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
