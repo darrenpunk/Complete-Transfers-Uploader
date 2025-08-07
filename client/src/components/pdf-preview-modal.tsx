@@ -106,35 +106,57 @@ export default function PDFPreviewModal({
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Render positioned logos that contain the artwork with color grids */}
-                    {canvasElements.map((element) => {
-                      const logo = logos.find(l => l.id === element.logoId);
-                      if (!logo) return null;
-                      
-                      return (
-                        <div
-                          key={element.id}
-                          className="absolute"
-                          style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
-                            transform: `rotate(${element.rotation || 0}deg)`,
-                            opacity: element.opacity || 1,
-                          }}
-                        >
-                          <img
-                            src={`/uploads/${logo.filename}`}
-                            alt={logo.originalName}
-                            className="w-full h-full object-contain"
-                            style={{ 
-                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                    {/* DEBUG: Render positioned logos that contain the artwork with color grids */}
+                    {canvasElements.length === 0 ? (
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                        No logos positioned
+                      </div>
+                    ) : (
+                      canvasElements.map((element) => {
+                        const logo = logos.find(l => l.id === element.logoId);
+                        if (!logo) {
+                          console.warn(`Logo not found for element ${element.id}:`, { logoId: element.logoId, availableLogos: logos.map(l => l.id) });
+                          return null;
+                        }
+                        
+                        console.log(`🔍 Page 1 rendering:`, { logoFilename: logo.filename, elementId: element.id, position: { x: element.x, y: element.y } });
+                        
+                        return (
+                          <div
+                            key={element.id}
+                            className="absolute"
+                            style={{
+                              left: `${(element.x / (template?.width || 297)) * 100}%`,
+                              top: `${(element.y / (template?.height || 420)) * 100}%`,
+                              width: `${(element.width / (template?.width || 297)) * 100}%`,
+                              height: `${(element.height / (template?.height || 420)) * 100}%`,
+                              transform: `rotate(${element.rotation || 0}deg)`,
+                              opacity: element.opacity || 1,
+                              border: '1px dashed red', // DEBUG: Visible border
                             }}
-                          />
-                        </div>
-                      );
-                    })}
+                          >
+                            <img
+                              src={`/uploads/${logo.filename}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ 
+                                filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                              }}
+                              onLoad={() => console.log(`✅ Page 1 image loaded: ${logo.filename}`)}
+                              onError={(e) => {
+                                console.error(`❌ Page 1 image failed: ${logo.filename}`);
+                                e.currentTarget.style.display = 'none';
+                                // Show filename as fallback
+                                const fallback = document.createElement('div');
+                                fallback.textContent = logo.originalName || logo.filename;
+                                fallback.className = 'text-xs p-1 bg-gray-100 border border-gray-300 text-center';
+                                e.currentTarget.parentElement?.appendChild(fallback);
+                              }}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                   
                   {/* Template size label */}
@@ -158,35 +180,57 @@ export default function PDFPreviewModal({
                       backgroundColor: project?.garmentColor || '#D2E31D'
                     }}
                   >
-                    {/* Render positioned logos that contain the artwork with color grids */}
-                    {canvasElements.map((element) => {
-                      const logo = logos.find(l => l.id === element.logoId);
-                      if (!logo) return null;
-                      
-                      return (
-                        <div
-                          key={element.id}
-                          className="absolute"
-                          style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
-                            transform: `rotate(${element.rotation || 0}deg)`,
-                            opacity: element.opacity || 1,
-                          }}
-                        >
-                          <img
-                            src={`/uploads/${logo.filename}`}
-                            alt={logo.originalName}
-                            className="w-full h-full object-contain"
-                            style={{ 
-                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                    {/* DEBUG: Render positioned logos that contain the artwork with color grids */}
+                    {canvasElements.length === 0 ? (
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-700 text-sm">
+                        No logos positioned
+                      </div>
+                    ) : (
+                      canvasElements.map((element) => {
+                        const logo = logos.find(l => l.id === element.logoId);
+                        if (!logo) {
+                          console.warn(`Page 2 - Logo not found for element ${element.id}:`, { logoId: element.logoId, availableLogos: logos.map(l => l.id) });
+                          return null;
+                        }
+                        
+                        console.log(`🔍 Page 2 rendering:`, { logoFilename: logo.filename, elementId: element.id, position: { x: element.x, y: element.y } });
+                        
+                        return (
+                          <div
+                            key={element.id}
+                            className="absolute"
+                            style={{
+                              left: `${(element.x / (template?.width || 297)) * 100}%`,
+                              top: `${(element.y / (template?.height || 420)) * 100}%`,
+                              width: `${(element.width / (template?.width || 297)) * 100}%`,
+                              height: `${(element.height / (template?.height || 420)) * 100}%`,
+                              transform: `rotate(${element.rotation || 0}deg)`,
+                              opacity: element.opacity || 1,
+                              border: '1px dashed blue', // DEBUG: Visible border for Page 2
                             }}
-                          />
-                        </div>
-                      );
-                    })}
+                          >
+                            <img
+                              src={`/uploads/${logo.filename}`}
+                              alt={logo.originalName}
+                              className="w-full h-full object-contain"
+                              style={{ 
+                                filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                              }}
+                              onLoad={() => console.log(`✅ Page 2 image loaded: ${logo.filename}`)}
+                              onError={(e) => {
+                                console.error(`❌ Page 2 image failed: ${logo.filename}`);
+                                e.currentTarget.style.display = 'none';
+                                // Show filename as fallback
+                                const fallback = document.createElement('div');
+                                fallback.textContent = logo.originalName || logo.filename;
+                                fallback.className = 'text-xs p-1 bg-white/90 border border-gray-300 text-center rounded';
+                                e.currentTarget.parentElement?.appendChild(fallback);
+                              }}
+                            />
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                   
                   {/* Garment color label with CMYK values */}
