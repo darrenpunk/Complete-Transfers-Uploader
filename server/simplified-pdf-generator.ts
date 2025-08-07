@@ -634,6 +634,9 @@ export class SimplifiedPDFGenerator {
           const position = this.calculatePosition(element, templateSize, page);
           
           console.log(`📐 Embedding artwork with scale: ${scale}, position: ${position.x}, ${position.y}`);
+          console.log(`📐 Element dimensions: ${element.width} x ${element.height}`);
+          console.log(`📐 Template dimensions: ${templateSize.width} x ${templateSize.height}`);
+          console.log(`📐 Page dimensions: ${page.getSize().width} x ${page.getSize().height}`);
           
           page.drawPage(embeddedPage, {
             x: position.x,
@@ -804,20 +807,64 @@ export class SimplifiedPDFGenerator {
   }
 
   private calculateScale(element: any, templateSize: any): number {
-    // The element dimensions are already in mm from the database
-    // We need to convert mm to points: 1mm = 2.834 points
-    const mmToPoints = 2.834;
+    // Convert mm to points: 1mm = 2.834645669 points (72 DPI standard)
+    const mmToPoints = 2.834645669;
+    
+    // The scale should be consistent with the DPI conversion used in the frontend
+    // Since frontend uses 72 DPI conversion, we use the same scale
+    console.log(`📏 Scale calculation: mmToPoints=${mmToPoints}`);
     return mmToPoints;
   }
 
   private calculatePosition(element: any, templateSize: any, page: PDFPage): { x: number; y: number } {
-    const { height } = page.getSize();
+    const { width: pageWidth, height: pageHeight } = page.getSize();
     const scale = this.calculateScale(element, templateSize);
     
-    // Convert canvas pixel coordinates to PDF points
-    return {
-      x: element.x * scale,
-      y: height - (element.y * scale) - (element.height * scale)
-    };
+    // Canvas coordinates are in pixels, need to convert to mm then to points
+    // The element position from canvas is in pixels relative to canvas size
+    // Convert to mm first, then to points
+    
+    // For A3: template is 297x420mm, which converts to ~842x1191 points
+    // Canvas element position needs to be scaled proportionally
+    const templateWidthPoints = templateSize.width * scale;  // mm to points
+    const templateHeightPoints = templateSize.height * scale; // mm to points
+    
+    // Element position in mm (convert from pixels using template ratio)
+    const xInMm = (element.x / templateSize.pixelWidth) * templateSize.width;
+    const yInMm = (element.y / templateSize.pixelHeight) * templateSize.height;
+    
+    // Element size in mm 
+    const elementWidthMm = element.width / scale;  // Convert from points to mm
+    const elementHeightMm = element.height / scale; // Convert from points to mm
+    
+    // Convert to PDF points and flip Y coordinate (PDF origin is bottom-left)
+    const x = xInMm * scale;
+    const y = pageHeight - (yInMm * scale) - (elementHeightMm * scale);
+    
+    console.log(`📏 Position calculation details:`, {
+      canvasPos: { x: element.x, y: element.y },
+      templateSizeMm: { w: templateSize.width, h: templateSize.height },
+      templateSizePixels: { w: templateSize.pixelWidth, h: templateSize.pixelHeight },
+      positionMm: { x: xInMm, y: yInMm },
+      positionPoints: { x, y },
+      pageSize: { width: pageWidth, height: pageHeight },
+      elementSizeMm: { w: elementWidthMm, h: elementHeightMm }
+    });
+    
+    // CRITICAL DEBUG: Ensure artwork is positioned in visible area
+    // For A3 (841.698 x 1190.28 pts), position should be well within bounds
+    const minMargin = 50; // 50pt margin from edges
+    const maxX = pageWidth - (elementWidthMm * scale) - minMargin;
+    const maxY = pageHeight - (elementHeightMm * scale) - minMargin;
+    
+    const adjustedX = Math.max(minMargin, Math.min(x, maxX));
+    const adjustedY = Math.max(minMargin, Math.min(y, maxY));
+    
+    if (x !== adjustedX || y !== adjustedY) {
+      console.log(`⚠️ Position adjusted from (${x.toFixed(2)}, ${y.toFixed(2)}) to (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) for visibility`);
+    }
+    
+    console.log(`🎯 Final artwork position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
+    return { x: adjustedX, y: adjustedY };
   }
 }
