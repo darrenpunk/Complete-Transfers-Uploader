@@ -326,7 +326,9 @@ export class SimplifiedPDFGenerator {
           await this.embedWithColorChanges(pdfDoc, page, element, logo, templateSize);
         } else {
           console.log(`📦 Production Flow: No color changes - preserving original file exactly (Requirement 2)`);
+          console.log(`🔍 DEBUG: About to call embedOriginalFile for ${logo.filename}`);
           await this.embedOriginalFile(pdfDoc, page, element, logo, templateSize);
+          console.log(`🔍 DEBUG: embedOriginalFile completed for ${logo.filename}`);
         }
       } catch (error) {
         console.error(`❌ Error embedding logo ${logo.filename}:`, error);
@@ -386,7 +388,9 @@ export class SimplifiedPDFGenerator {
       filename: logo.filename,
       originalName: logo.originalName,
       mimeType: logo.mimeType,
-      isCMYKPreserved: logo.isCMYKPreserved
+      isCMYKPreserved: logo.isCMYKPreserved,
+      uploadPath: uploadPath,
+      exists: fs.existsSync(uploadPath)
     });
     
     // PRIORITY: Check for CMYK-preserved PDFs first
@@ -603,31 +607,60 @@ export class SimplifiedPDFGenerator {
       } else {
         // CRITICAL FIX: Use Inkscape instead of rsvg-convert to preserve colors exactly
         console.log(`🎨 CRITICAL: Using Inkscape for color-preserving SVG to PDF conversion`);
-        await execAsync(`inkscape "${tempSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
+        console.log(`📁 Converting: ${tempSvgPath} → ${tempPdfPath}`);
+        
+        try {
+          await execAsync(`inkscape "${tempSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
+          console.log(`✅ Inkscape conversion completed`);
+        } catch (inkscapeError) {
+          console.error(`❌ Inkscape conversion failed:`, inkscapeError);
+          throw inkscapeError;
+        }
       }
       
-      // Clean up temp SVG
-      if (fs.existsSync(tempSvgPath)) {
-        fs.unlinkSync(tempSvgPath);
-      }
+      // Clean up temp SVG AFTER PDF conversion is complete
+      // (moved to after PDF processing)
       
       if (fs.existsSync(tempPdfPath)) {
-        const pdfBytes = fs.readFileSync(tempPdfPath);
-        const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(pdfBytes));
+        console.log(`✅ Temp PDF created successfully: ${tempPdfPath}`);
+        console.log(`📏 Temp PDF size: ${fs.statSync(tempPdfPath).size} bytes`);
         
-        const scale = this.calculateScale(element, templateSize);
-        const position = this.calculatePosition(element, templateSize, page);
-        
-        page.drawPage(embeddedPage, {
-          x: position.x,
-          y: position.y,
-          width: element.width * scale,
-          height: element.height * scale,
-          rotate: element.rotation ? degrees(element.rotation) : undefined,
-        });
-        
-        // Clean up temp file
-        fs.unlinkSync(tempPdfPath);
+        try {
+          const pdfBytes = fs.readFileSync(tempPdfPath);
+          const loadedPdf = await PDFDocument.load(pdfBytes);
+          const [embeddedPage] = await pdfDoc.embedPdf(loadedPdf);
+          
+          const scale = this.calculateScale(element, templateSize);
+          const position = this.calculatePosition(element, templateSize, page);
+          
+          console.log(`📐 Embedding artwork with scale: ${scale}, position: ${position.x}, ${position.y}`);
+          
+          page.drawPage(embeddedPage, {
+            x: position.x,
+            y: position.y,
+            width: element.width * scale,
+            height: element.height * scale,
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+          
+          console.log(`✅ Successfully embedded artwork from temp PDF`);
+        } catch (embedError) {
+          console.error(`❌ Error embedding temp PDF:`, embedError);
+          throw embedError;
+        } finally {
+          // Clean up temp files
+          if (fs.existsSync(tempPdfPath)) {
+            fs.unlinkSync(tempPdfPath);
+            console.log(`🧹 Cleaned up temp PDF: ${tempPdfPath}`);
+          }
+          if (fs.existsSync(tempSvgPath)) {
+            fs.unlinkSync(tempSvgPath);
+            console.log(`🧹 Cleaned up temp SVG: ${tempSvgPath}`);
+          }
+        }
+      } else {
+        console.error(`❌ Temp PDF file not created: ${tempPdfPath}`);
+        console.error(`❌ SVG conversion failed for: ${logo.filename}`);
       }
     }
     // For raster images, embed as-is
