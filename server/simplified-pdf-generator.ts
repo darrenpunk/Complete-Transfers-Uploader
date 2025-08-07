@@ -5,6 +5,45 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { manufacturerColors } from '../shared/garment-colors';
 
+// SVG corruption fix function
+function fixSVGCorruption(svgContent: string): string {
+  console.log('🔧 Applying automatic SVG corruption fixes during PDF generation');
+  
+  let fixed = svgContent;
+  
+  // Fix 1: Remove invalid fill attributes from clipPath elements with malformed XML
+  fixed = fixed.replace(
+    /<path clip-rule="[^"]*" d="[^"]*"\s*\/\s*fill="#[0-9A-Fa-f]{6}">/g, 
+    function(match) {
+      const dMatch = match.match(/d="([^"]*)"/);
+      if (dMatch) {
+        return `<path clip-rule="nonzero" d="${dMatch[1]}"/>`;
+      }
+      return '<path clip-rule="nonzero" d=""/>';
+    }
+  );
+  
+  // Fix 2: Remove any remaining fill attributes from clipPath path elements
+  fixed = fixed.replace(
+    /<path ([^>]*) fill="#[0-9A-Fa-f]{6}"([^>]*?)>/g,
+    function(match, before, after) {
+      if (match.includes('clip-rule')) {
+        return `<path ${before}${after}>`;
+      }
+      return match; // Keep fill for non-clipPath elements
+    }
+  );
+  
+  // Fix 3: Remove any trailing "/" before fill attributes that cause XML errors
+  fixed = fixed.replace(/"\s*\/\s*fill="/g, '" fill="');
+  
+  if (fixed !== svgContent) {
+    console.log('✅ Applied SVG corruption fixes automatically');
+  }
+  
+  return fixed;
+}
+
 const execAsync = promisify(exec);
 
 interface SimplifiedPDFData {
@@ -531,6 +570,9 @@ export class SimplifiedPDFGenerator {
       // Check if SVG has embedded images for special handling
       let svgContent = fs.readFileSync(uploadPath, 'utf8');
       
+      // CRITICAL: Apply corruption fix before any processing
+      svgContent = fixSVGCorruption(svgContent);
+      
       // Check if this is a vectorized file and apply background removal
       if (svgContent.includes('data-vectorized-cmyk="true"')) {
         console.log(`🎨 Detected vectorized SVG, applying background removal`);
@@ -539,12 +581,13 @@ export class SimplifiedPDFGenerator {
         svgContent = removeVectorizedBackgrounds(svgContent);
         console.log(`🔍 Cleaned SVG has stroke-width="630.03": ${svgContent.includes('stroke-width="630.03"')}`);
         console.log(`📏 SVG size changed from ${fs.readFileSync(uploadPath, 'utf8').length} to ${svgContent.length}`);
-        // Save cleaned SVG
-        fs.writeFileSync(tempSvgPath, svgContent);
-      } else {
-        // Copy original SVG
-        fs.copyFileSync(uploadPath, tempSvgPath);
       }
+      
+      // CRITICAL: Always apply corruption fix again after background removal
+      svgContent = fixSVGCorruption(svgContent);
+      
+      // Save cleaned and corruption-fixed SVG
+      fs.writeFileSync(tempSvgPath, svgContent);
       
       const { SVGEmbeddedImageHandler } = await import('./svg-embedded-image-handler');
       const hasEmbeddedImages = SVGEmbeddedImageHandler.hasEmbeddedImages(svgContent);
