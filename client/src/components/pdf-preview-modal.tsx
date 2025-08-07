@@ -234,7 +234,7 @@ export default function PDFPreviewModal({
                   </div>
                   
                   {/* Garment color label with CMYK values */}
-                  <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
+                  <div className="absolute bottom-2 left-2 text-xs bg-white/80 px-2 py-1 rounded text-[#292828]">
                     Garment Color: {(() => {
                       const color = project?.garmentColor || '#D2E31D';
                       const colorData: { [key: string]: { name: string; cmyk: string } } = {
