@@ -147,7 +147,6 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   const [colorOverrides, setColorOverrides] = useState<Record<string, string>>(
     (selectedElement.colorOverrides as Record<string, string>) || {}
   );
-  const [showCMYKPreview, setShowCMYKPreview] = useState(false);
   // Use a global state or localStorage to persist RGB warnings across component re-renders
   const [shownRGBWarningLogos, setShownRGBWarningLogos] = useState<Set<string>>(() => {
     const stored = localStorage.getItem('shownRGBWarningLogos');
@@ -297,23 +296,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
       />
       <Card className="mt-4">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Logo Colors
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="cmyk-preview" className="text-xs text-gray-500">
-              CMYK Preview
-            </Label>
-            <Switch
-              id="cmyk-preview"
-              checked={showCMYKPreview}
-              onCheckedChange={setShowCMYKPreview}
-              className="scale-75"
-            />
-          </div>
-        </div>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Palette className="w-4 h-4" />
+          Logo Colors
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Color Grid - Same style as garment colors */}
@@ -390,15 +376,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             const adobeCMYK = getCMYKFromColorInfo(colorInfo);
             
             // Use override color if exists, otherwise use converted display color
-            let displayColor = hasOverride ? currentColor : originalDisplayColor;
-            
-            // Apply CMYK preview filter if enabled and color is RGB
-            const needsCMYKPreview = showCMYKPreview && !isCMYK && !hasOverride;
-            if (needsCMYKPreview && adobeCMYK) {
-              // Convert CMYK back to RGB for display (this simulates the color shift)
-              const previewRGB = cmykToRGB(adobeCMYK);
-              displayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
-            }
+            const displayColor = hasOverride ? currentColor : originalDisplayColor;
             
             return (
               <CMYKColorModal
