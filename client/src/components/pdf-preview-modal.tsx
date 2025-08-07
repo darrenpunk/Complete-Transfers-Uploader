@@ -97,7 +97,7 @@ export default function PDFPreviewModal({
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Color grid background with positioned artwork */}
+                  {/* Show actual artwork (which contains color grids) with positioned logos */}
                   <div 
                     className="relative bg-white border border-dashed border-gray-300"
                     style={{
@@ -106,31 +106,18 @@ export default function PDFPreviewModal({
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Render color grid background */}
-                    <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">
-                      {Array.from({ length: 50 }, (_, i) => (
-                        <div
-                          key={i}
-                          className="aspect-square rounded"
-                          style={{
-                            backgroundColor: [
-                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
-                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
-                              '#F56565', '#FF8C00', '#48BB78', '#4299E1', '#9F7AEA',
-                              '#FC8181', '#FFA500', '#68D391', '#63B3ED', '#B794F6',
-                              '#FEB2B2', '#FFB74D', '#9AE6B4', '#90CDF4', '#D6BCFA',
-                              '#D2E31D', '#F6E05E', '#C6F6D5', '#BEE3F8', '#E9D8FD',
-                              '#7FFFD4', '#40E0D0', '#48CAE4', '#6A4C93', '#C9ADA7',
-                              '#8B5CF6', '#F687B3', '#FCD34D', '#10B981', '#06B6D4',
-                              '#6366F1', '#EC4899', '#F59E0B', '#059669', '#0891B2',
-                              '#4F46E5', '#DB2777', '#D97706', '#047857', '#0E7490'
-                            ][i % 50]
-                          }}
-                        />
-                      ))}
-                    </div>
+                    {/* Render the actual uploaded artwork that contains color grids */}
+                    {logos.map((logo, index) => (
+                      <img
+                        key={`artwork-${index}`}
+                        src={`/uploads/${logo.filename}`}
+                        alt={logo.originalName}
+                        className="absolute inset-0 w-full h-full object-contain"
+                        style={{ zIndex: 1 }}
+                      />
+                    ))}
                     
-                    {/* Render positioned logos */}
+                    {/* Render positioned logos on top of the artwork */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
@@ -172,7 +159,7 @@ export default function PDFPreviewModal({
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Same color grid but with garment color background */}
+                  {/* Same artwork but with garment color background */}
                   <div 
                     className="relative border border-dashed border-gray-300"
                     style={{
@@ -182,31 +169,18 @@ export default function PDFPreviewModal({
                       backgroundColor: project?.garmentColor || '#D2E31D'
                     }}
                   >
-                    {/* Render color grid background */}
-                    <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">
-                      {Array.from({ length: 50 }, (_, i) => (
-                        <div
-                          key={i}
-                          className="aspect-square rounded"
-                          style={{
-                            backgroundColor: [
-                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
-                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
-                              '#F56565', '#FF8C00', '#48BB78', '#4299E1', '#9F7AEA',
-                              '#FC8181', '#FFA500', '#68D391', '#63B3ED', '#B794F6',
-                              '#FEB2B2', '#FFB74D', '#9AE6B4', '#90CDF4', '#D6BCFA',
-                              '#D2E31D', '#F6E05E', '#C6F6D5', '#BEE3F8', '#E9D8FD',
-                              '#7FFFD4', '#40E0D0', '#48CAE4', '#6A4C93', '#C9ADA7',
-                              '#8B5CF6', '#F687B3', '#FCD34D', '#10B981', '#06B6D4',
-                              '#6366F1', '#EC4899', '#F59E0B', '#059669', '#0891B2',
-                              '#4F46E5', '#DB2777', '#D97706', '#047857', '#0E7490'
-                            ][i % 50]
-                          }}
-                        />
-                      ))}
-                    </div>
+                    {/* Render the actual uploaded artwork that contains color grids */}
+                    {logos.map((logo, index) => (
+                      <img
+                        key={`artwork-bg-${index}`}
+                        src={`/uploads/${logo.filename}`}
+                        alt={logo.originalName}
+                        className="absolute inset-0 w-full h-full object-contain"
+                        style={{ zIndex: 1 }}
+                      />
+                    ))}
                     
-                    {/* Render positioned logos */}
+                    {/* Render positioned logos on top of the artwork */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
