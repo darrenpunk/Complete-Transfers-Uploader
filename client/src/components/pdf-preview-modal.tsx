@@ -219,7 +219,7 @@ export default function PDFPreviewModal({
                       };
                       
                       // Get unique garment colors from canvas elements
-                      const uniqueColors = [...new Set(canvasElements.map(el => el.garmentColor || project?.garmentColor || '#D2E31D'))];
+                      const uniqueColors = [...Array.from(new Set(canvasElements.map(el => el.garmentColor || project?.garmentColor || '#D2E31D')))];
                       return uniqueColors.map(color => {
                         const colorInfo = colorData[color];
                         return colorInfo ? `${colorInfo.name} ${colorInfo.cmyk}` : color;
@@ -269,7 +269,7 @@ export default function PDFPreviewModal({
                 <Checkbox 
                   id="design-approval" 
                   checked={designApproved}
-                  onCheckedChange={setDesignApproved}
+                  onCheckedChange={(checked: boolean) => setDesignApproved(checked)}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <label
@@ -288,7 +288,7 @@ export default function PDFPreviewModal({
                 <Checkbox 
                   id="rights-confirmation" 
                   checked={rightsConfirmed}
-                  onCheckedChange={setRightsConfirmed}
+                  onCheckedChange={(checked: boolean) => setRightsConfirmed(checked)}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <label
