@@ -96,11 +96,12 @@ export default function PDFPreviewModal({
               {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
                   {/* Show positioned logos (which contain color grids) */}
                   <div 
-                    className="relative bg-white border border-dashed border-gray-300"
+                    className="relative border border-dashed border-gray-400"
                     style={{
+                      backgroundColor: '#CDCECC',
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
                       maxWidth: '280px'

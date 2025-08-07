@@ -85,8 +85,8 @@ export class SimplifiedPDFGenerator {
       data.templateSize.height * 2.834
     ]);
 
-    // Page 1: Design with custom background color #CDCECC
-    this.drawBackground(page1, '#CDCECC');
+    // Page 1: Design without background (transparent)
+    // Don't draw any background for the first page
     await this.embedLogos(pdfDoc, page1, data.canvasElements, data.logos, data.templateSize);
 
     // Page 2: Always create page 2 with garment backgrounds
