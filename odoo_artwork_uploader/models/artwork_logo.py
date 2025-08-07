@@ -43,6 +43,7 @@ class ArtworkLogo(models.Model):
     has_cmyk = fields.Boolean('Has CMYK Colors', default=False)
     has_rgb = fields.Boolean('Has RGB Colors', default=False)
     has_pantone = fields.Boolean('Has Pantone Colors', default=False)
+    is_cmyk_preserved = fields.Boolean('CMYK Preserved', default=False, help='Original CMYK colors are preserved')
     
     # Dimensions
     width_px = fields.Float('Width (px)')
@@ -102,7 +103,139 @@ class ArtworkLogo(models.Model):
                 # Convert AI/EPS to SVG
                 self._convert_to_svg(tmp_path)
             elif self.file_type == 'pdf':
-                # Process PDF
+                # Process PDF - check for CMYK and handle accordingly
+                self._process_pdf(tmp_path)
+            elif self.file_type == 'svg':
+                # Process SVG for color analysis
+                self._process_svg(tmp_path)
+            elif self.file_type in ['png', 'jpeg']:
+                # Process raster images
+                self._process_raster(tmp_path)
+                
+            # Analyze colors after processing
+            self._analyze_colors()
+            
+        finally:
+            # Clean up temp file
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+    
+    def _process_pdf(self, file_path):
+        """Process PDF file and determine CMYK preservation"""
+        self.ensure_one()
+        try:
+            # Import color workflow manager
+            from ..lib.color_workflow import ColorWorkflowManager, FileType
+            
+            # Determine if this is a vector PDF that should preserve CMYK
+            file_type = ColorWorkflowManager.get_file_type('application/pdf', self.filename)
+            
+            # For now, mark PDFs as vector and potentially CMYK-preserved
+            self.is_vector = True
+            self.is_raster = False
+            
+            # Basic PDF analysis - in production, this would use more sophisticated tools
+            # For now, assume PDFs may contain CMYK colors
+            self.has_cmyk = True
+            self.is_cmyk_preserved = True
+            
+            # Set basic dimensions (A3 default)
+            self.width_mm = 420  # A3 width
+            self.height_mm = 297  # A3 height
+            self.width_px = self.width_mm * 2.834  # Convert to pixels at 72 DPI
+            self.height_px = self.height_mm * 2.834
+            
+        except Exception as e:
+            # Fallback values
+            self.is_vector = True
+            self.has_cmyk = False
+            self.is_cmyk_preserved = False
+    
+    def _process_svg(self, file_path):
+        """Process SVG file"""
+        self.ensure_one()
+        try:
+            # SVG is vector by definition
+            self.is_vector = True
+            self.is_raster = False
+            
+            # Read SVG content for basic analysis
+            with open(file_path, 'r', encoding='utf-8') as f:
+                svg_content = f.read()
+            
+            # Basic color detection (simplified)
+            has_cmyk_keywords = any(keyword in svg_content.lower() for keyword in ['cmyk', 'device-cmyk'])
+            has_rgb_keywords = any(keyword in svg_content.lower() for keyword in ['rgb', '#', 'fill='])
+            
+            self.has_cmyk = has_cmyk_keywords
+            self.has_rgb = has_rgb_keywords
+            self.is_cmyk_preserved = has_cmyk_keywords
+            
+            # Store processed SVG
+            with open(file_path, 'rb') as f:
+                self.svg_data = base64.b64encode(f.read())
+                self.svg_filename = self.filename.replace(os.path.splitext(self.filename)[1], '.svg')
+                
+        except Exception as e:
+            # Fallback
+            self.is_vector = True
+            self.has_cmyk = False
+    
+    def _process_raster(self, file_path):
+        """Process raster image files"""
+        self.ensure_one()
+        try:
+            # Raster files
+            self.is_vector = False
+            self.is_raster = True
+            self.has_rgb = True  # Assume raster images are RGB
+            self.has_cmyk = False
+            self.is_cmyk_preserved = False
+            
+            # Basic dimension detection would go here
+            # For now, use default values
+            self.width_px = 300
+            self.height_px = 300
+            
+        except Exception as e:
+            # Fallback
+            self.is_raster = True
+    
+    def _analyze_colors(self):
+        """Analyze colors in the processed file"""
+        self.ensure_one()
+        
+        # This would contain sophisticated color analysis
+        # For now, provide basic analysis based on file type
+        
+        if self.is_vector and self.has_cmyk:
+            # Vector file with CMYK colors
+            self.color_count = 5  # Example
+            color_analysis = {
+                'colors': [
+                    {'type': 'cmyk', 'values': [0, 100, 100, 0]},  # Red
+                    {'type': 'cmyk', 'values': [100, 0, 100, 0]},  # Green
+                    {'type': 'cmyk', 'values': [100, 100, 0, 0]},  # Blue
+                ]
+            }
+            self.color_data = json.dumps(color_analysis)
+        elif self.is_raster:
+            # Raster file - assume RGB
+            self.color_count = 10  # Example
+            color_analysis = {
+                'colors': [
+                    {'type': 'rgb', 'values': [255, 0, 0]},  # Red
+                    {'type': 'rgb', 'values': [0, 255, 0]},  # Green
+                ]
+            }
+            self.color_data = json.dumps(color_analysis)
+        
+    def _convert_to_svg(self, file_path):
+        """Convert AI/EPS to SVG"""
+        # This would use Inkscape or similar tool
+        # For now, just mark as vector
+        self.is_vector = True
+        pass
                 self._process_pdf(tmp_path)
             elif self.file_type == 'svg':
                 # Analyze SVG

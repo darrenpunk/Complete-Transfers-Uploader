@@ -135,12 +135,20 @@ class ArtworkUploaderController(http.Controller):
         if not file_data or not filename:
             return {'error': 'Missing file data or filename'}
         
+        # Decode and analyze file
+        try:
+            file_content = base64.b64decode(file_data)
+            file_size = len(file_content)
+        except Exception:
+            return {'error': 'Invalid file data'}
+        
         # Create logo record
         logo_vals = {
             'name': filename,
             'project_id': project.id,
             'filename': filename,
             'file_data': file_data,
+            'file_size': file_size,
         }
         
         logo = request.env['artwork.logo'].sudo().create(logo_vals)
@@ -154,6 +162,10 @@ class ArtworkUploaderController(http.Controller):
             'colorCount': logo.color_count,
             'width': logo.width_px,
             'height': logo.height_px,
+            'isCMYKPreserved': logo.is_cmyk_preserved,
+            'hasCMYK': logo.has_cmyk,
+            'hasRGB': logo.has_rgb,
+            'fileSize': logo.file_size,
         }
     
     @http.route('/artwork/api/projects/<string:project_uuid>/canvas-elements', type='json', auth='public', methods=['GET'], csrf=False)
@@ -200,16 +212,63 @@ class ArtworkUploaderController(http.Controller):
         if not project:
             return request.not_found()
         
-        # Generate PDF (simplified for now)
-        pdf_content = b'%PDF-1.4\n%%EOF'  # Placeholder PDF
-        
-        # Return PDF
-        headers = [
-            ('Content-Type', 'application/pdf'),
-            ('Content-Disposition', f'attachment; filename="{project.name}_artwork.pdf"'),
-        ]
-        
-        return request.make_response(pdf_content, headers)
+        try:
+            # Import PDF generator
+            from ..lib.pdf_generator import OdooPDFGenerator
+            
+            # Prepare project data
+            project_data = {
+                'project_id': project.uuid,
+                'template_size': {
+                    'name': project.template_size,
+                    'width': project.template_width,
+                    'height': project.template_height,
+                },
+                'canvas_elements': [],
+                'logos': [],
+                'garment_color': project.garment_color,
+            }
+            
+            # Get canvas elements
+            for element in project.canvas_element_ids:
+                element_data = element.get_canvas_data()
+                project_data['canvas_elements'].append(element_data)
+            
+            # Get logos
+            for logo in project.logo_ids:
+                logo_data = {
+                    'id': str(logo.id),
+                    'filename': logo.filename,
+                    'originalName': logo.name,
+                    'isCMYKPreserved': logo.is_cmyk_preserved,
+                    'fileType': logo.file_type,
+                    'isVector': logo.is_vector,
+                }
+                project_data['logos'].append(logo_data)
+            
+            # Generate PDF
+            generator = OdooPDFGenerator()
+            pdf_content = generator.generate_pdf(project_data)
+            
+            # Return PDF
+            headers = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Disposition', f'attachment; filename="{project.name}_artwork.pdf"'),
+            ]
+            
+            return request.make_response(pdf_content, headers)
+            
+        except Exception as e:
+            _logger.error(f"PDF generation failed: {str(e)}")
+            # Fallback to basic PDF
+            pdf_content = b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj xref\n0 4\n0000000000 65535 f \n0000000010 00000 n \n0000000053 00000 n \n0000000125 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n206\n%%EOF'
+            
+            headers = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Disposition', f'attachment; filename="{project.name}_artwork.pdf"'),
+            ]
+            
+            return request.make_response(pdf_content, headers)
     
     @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST'], csrf=False)
     def add_to_cart(self, project_uuid, **kwargs):
@@ -254,14 +313,31 @@ class ArtworkUploaderController(http.Controller):
     
     def _get_garment_colors(self):
         """Get available garment colors"""
-        return [
-            {'value': '#000000', 'label': 'Black', 'cmyk': 'C:0 M:0 Y:0 K:100'},
-            {'value': '#FFFFFF', 'label': 'White', 'cmyk': 'C:0 M:0 Y:0 K:0'},
-            {'value': '#FF0000', 'label': 'Red', 'cmyk': 'C:0 M:100 Y:100 K:0'},
-            {'value': '#00FF00', 'label': 'Green', 'cmyk': 'C:100 M:0 Y:100 K:0'},
-            {'value': '#0000FF', 'label': 'Blue', 'cmyk': 'C:100 M:100 Y:0 K:0'},
-            # Add more colors as needed
-        ]
+        try:
+            from ..lib.garment_colors import GarmentColorManager
+            
+            all_colors = GarmentColorManager.get_all_colors()
+            colors = []
+            
+            for color in all_colors:
+                colors.append({
+                    'value': color['hex'],
+                    'label': color['name'],
+                    'cmyk': GarmentColorManager.get_cmyk_string(color),
+                    'manufacturer': color.get('manufacturer', ''),
+                    'category': color.get('category', ''),
+                })
+            
+            return colors
+        except ImportError:
+            # Fallback colors if import fails
+            return [
+                {'value': '#000000', 'label': 'Black', 'cmyk': 'C:0 M:0 Y:0 K:100'},
+                {'value': '#FFFFFF', 'label': 'White', 'cmyk': 'C:0 M:0 Y:0 K:0'},
+                {'value': '#FF0000', 'label': 'Red', 'cmyk': 'C:0 M:100 Y:100 K:0'},
+                {'value': '#00FF00', 'label': 'Green', 'cmyk': 'C:100 M:0 Y:100 K:0'},
+                {'value': '#0000FF', 'label': 'Blue', 'cmyk': 'C:100 M:100 Y:0 K:0'},
+            ]
     
     def _get_ink_colors(self):
         """Get available ink colors for single color templates"""
