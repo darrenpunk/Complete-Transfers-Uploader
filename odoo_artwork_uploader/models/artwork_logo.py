@@ -124,11 +124,19 @@ class ArtworkLogo(models.Model):
         """Process PDF file and determine CMYK preservation"""
         self.ensure_one()
         try:
-            # Import color workflow manager
-            from ..lib.color_workflow import ColorWorkflowManager, FileType
+            # Import color workflow manager with proper error handling
+            try:
+                from ..lib.color_workflow import ColorWorkflowManager, FileType
+            except ImportError:
+                # Fallback if lib module not available
+                ColorWorkflowManager = None
+                FileType = None
             
             # Determine if this is a vector PDF that should preserve CMYK
-            file_type = ColorWorkflowManager.get_file_type('application/pdf', self.filename)
+            if ColorWorkflowManager:
+                file_type = ColorWorkflowManager.get_file_type('application/pdf', self.filename)
+            else:
+                file_type = 'vector-pdf'  # Fallback
             
             # For now, mark PDFs as vector and potentially CMYK-preserved
             self.is_vector = True

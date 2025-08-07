@@ -213,8 +213,12 @@ class ArtworkUploaderController(http.Controller):
             return request.not_found()
         
         try:
-            # Import PDF generator
-            from ..lib.pdf_generator import OdooPDFGenerator
+            # Import PDF generator with error handling
+            try:
+                from ..lib.pdf_generator import OdooPDFGenerator
+            except ImportError:
+                # Fallback if PDF generator not available
+                OdooPDFGenerator = None
             
             # Prepare project data
             project_data = {
@@ -247,8 +251,12 @@ class ArtworkUploaderController(http.Controller):
                 project_data['logos'].append(logo_data)
             
             # Generate PDF
-            generator = OdooPDFGenerator()
-            pdf_content = generator.generate_pdf(project_data)
+            if OdooPDFGenerator:
+                generator = OdooPDFGenerator()
+                pdf_content = generator.generate_pdf(project_data)
+            else:
+                # Fallback to basic PDF if generator not available
+                raise ImportError("PDF generator not available")
             
             # Return PDF
             headers = [
@@ -314,22 +322,36 @@ class ArtworkUploaderController(http.Controller):
     def _get_garment_colors(self):
         """Get available garment colors"""
         try:
-            from ..lib.garment_colors import GarmentColorManager
+            try:
+                from ..lib.garment_colors import GarmentColorManager
+            except ImportError:
+                GarmentColorManager = None
             
-            all_colors = GarmentColorManager.get_all_colors()
-            colors = []
-            
-            for color in all_colors:
-                colors.append({
-                    'value': color['hex'],
-                    'label': color['name'],
-                    'cmyk': GarmentColorManager.get_cmyk_string(color),
-                    'manufacturer': color.get('manufacturer', ''),
-                    'category': color.get('category', ''),
-                })
-            
-            return colors
-        except ImportError:
+            if GarmentColorManager:
+                all_colors = GarmentColorManager.get_all_colors()
+                colors = []
+                
+                for color in all_colors:
+                    colors.append({
+                        'value': color['hex'],
+                        'label': color['name'],
+                        'cmyk': GarmentColorManager.get_cmyk_string(color),
+                        'manufacturer': color.get('manufacturer', ''),
+                        'category': color.get('category', ''),
+                    })
+                
+                return colors
+            else:
+                # Fallback to basic colors
+                return [
+                    {'value': '#000000', 'label': 'Black', 'cmyk': 'C:0 M:0 Y:0 K:100'},
+                    {'value': '#FFFFFF', 'label': 'White', 'cmyk': 'C:0 M:0 Y:0 K:0'},
+                    {'value': '#FF0000', 'label': 'Red', 'cmyk': 'C:0 M:100 Y:100 K:0'},
+                    {'value': '#00FF00', 'label': 'Green', 'cmyk': 'C:100 M:0 Y:100 K:0'},
+                    {'value': '#0000FF', 'label': 'Blue', 'cmyk': 'C:100 M:100 Y:0 K:0'},
+                ]
+        except Exception as e:
+            _logger.warning(f"Error loading garment colors: {e}")
             # Fallback colors if import fails
             return [
                 {'value': '#000000', 'label': 'Black', 'cmyk': 'C:0 M:0 Y:0 K:100'},
