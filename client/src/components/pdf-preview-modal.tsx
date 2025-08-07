@@ -237,30 +237,31 @@ export default function PDFPreviewModal({
                     })}
                   </div>
                   
-                  {/* Garment color label */}
+                  {/* Garment color label with CMYK values */}
                   <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
                     Garment Color: {(() => {
                       const color = project?.garmentColor || '#D2E31D';
-                      const colorNames: { [key: string]: string } = {
-                        '#D2E31D': 'Lime Green',
-                        '#FFFFFF': 'White',
-                        '#000000': 'Black',
-                        '#FF0000': 'Red',
-                        '#0000FF': 'Blue',
-                        '#00FF00': 'Green',
-                        '#FFFF00': 'Yellow',
-                        '#FFA500': 'Orange',
-                        '#800080': 'Purple',
-                        '#FFC0CB': 'Pink',
-                        '#808080': 'Gray',
-                        '#A52A2A': 'Brown',
-                        '#00FFFF': 'Cyan',
-                        '#FF00FF': 'Magenta',
-                        '#800000': 'Maroon',
-                        '#008000': 'Dark Green',
-                        '#000080': 'Navy Blue'
+                      const colorData: { [key: string]: { name: string; cmyk: string } } = {
+                        '#D2E31D': { name: 'Lime Green', cmyk: '(25, 0, 95, 0)' },
+                        '#FFFFFF': { name: 'White', cmyk: '(0, 0, 0, 0)' },
+                        '#000000': { name: 'Black', cmyk: '(0, 0, 0, 100)' },
+                        '#FF0000': { name: 'Red', cmyk: '(0, 100, 100, 0)' },
+                        '#0000FF': { name: 'Blue', cmyk: '(100, 100, 0, 0)' },
+                        '#00FF00': { name: 'Green', cmyk: '(100, 0, 100, 0)' },
+                        '#FFFF00': { name: 'Yellow', cmyk: '(0, 0, 100, 0)' },
+                        '#FFA500': { name: 'Orange', cmyk: '(0, 35, 100, 0)' },
+                        '#800080': { name: 'Purple', cmyk: '(50, 100, 0, 20)' },
+                        '#FFC0CB': { name: 'Pink', cmyk: '(0, 25, 5, 0)' },
+                        '#808080': { name: 'Gray', cmyk: '(0, 0, 0, 50)' },
+                        '#A52A2A': { name: 'Brown', cmyk: '(0, 75, 75, 35)' },
+                        '#00FFFF': { name: 'Cyan', cmyk: '(100, 0, 0, 0)' },
+                        '#FF00FF': { name: 'Magenta', cmyk: '(0, 100, 0, 0)' },
+                        '#800000': { name: 'Maroon', cmyk: '(0, 100, 100, 50)' },
+                        '#008000': { name: 'Dark Green', cmyk: '(100, 0, 100, 50)' },
+                        '#000080': { name: 'Navy Blue', cmyk: '(100, 100, 0, 50)' }
                       };
-                      return colorNames[color] || color;
+                      const colorInfo = colorData[color];
+                      return colorInfo ? `${colorInfo.name} ${colorInfo.cmyk}` : color;
                     })()}
                   </div>
                 </div>
