@@ -596,12 +596,14 @@ export class SimplifiedPDFGenerator {
         console.log(`📌 SVG contains embedded images, using special handler for transparency`);
         const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(tempSvgPath, tempPdfPath);
         if (!converted) {
-          // Fallback to standard conversion
-          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`);
+          // Fallback to color-preserving conversion using Inkscape
+          console.log(`🎨 CRITICAL: Using Inkscape for color-preserving SVG to PDF conversion`);
+          await execAsync(`inkscape "${tempSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
         }
       } else {
-        // Standard conversion for SVGs without embedded images
-        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`);
+        // CRITICAL FIX: Use Inkscape instead of rsvg-convert to preserve colors exactly
+        console.log(`🎨 CRITICAL: Using Inkscape for color-preserving SVG to PDF conversion`);
+        await execAsync(`inkscape "${tempSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
       }
       
       // Clean up temp SVG
@@ -729,14 +731,16 @@ export class SimplifiedPDFGenerator {
         console.log(`📌 SVG contains embedded images, using special handler for transparency`);
         const converted = await SVGEmbeddedImageHandler.convertToPDFWithTransparency(modifiedSvgPath, tempPdfPath);
         if (!converted) {
-          // Fallback to standard conversion
-          await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${modifiedSvgPath}"`);
+          // Fallback to color-preserving conversion using Inkscape
+          console.log(`🎨 CRITICAL: Using Inkscape for color-preserving SVG to PDF conversion`);
+          await execAsync(`inkscape "${modifiedSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
         }
       } else {
-        // Standard conversion for SVGs without embedded images
-        console.log(`🔄 Converting modified SVG to PDF: ${modifiedSvgPath} -> ${tempPdfPath}`);
-        await execAsync(`rsvg-convert -f pdf -o "${tempPdfPath}" "${modifiedSvgPath}"`);
-        console.log(`✅ SVG to PDF conversion completed`);
+        // CRITICAL FIX: Use Inkscape instead of rsvg-convert to preserve colors exactly
+        console.log(`🔄 Converting modified SVG to PDF with color preservation: ${modifiedSvgPath} -> ${tempPdfPath}`);
+        console.log(`🎨 CRITICAL: Using Inkscape for color-preserving SVG to PDF conversion`);
+        await execAsync(`inkscape "${modifiedSvgPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-pdf-version=1.4`);
+        console.log(`✅ SVG to PDF conversion with color preservation completed`);
       }
       
       if (fs.existsSync(tempPdfPath)) {
