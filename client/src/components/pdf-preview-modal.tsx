@@ -93,126 +93,105 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             <div className="flex gap-4 flex-1">
-              {/* Page 1 Preview - Artwork Layout */}
+              {/* Page 1 Preview - Artwork Layout (Same as PDF Page 1) */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-black p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Dashed border container matching screenshot */}
+                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Canvas preview - exact same as PDF page 1 */}
                   <div 
-                    className="border-2 border-dashed border-gray-400 relative"
+                    className="relative bg-white"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Grid of colored squares with logos positioned on them */}
-                    <div className="w-full h-full grid grid-cols-5 gap-1 p-2">
-                      {(() => {
-                        // Create the color grid like in the screenshot
-                        const colors = [
-                          '#FF0000', '#FFFF00', '#00FF00', '#0000FF', '#800080', // Row 1
-                          '#FF00FF', '#800000', '#FFA500', '#FFA500', '#DAA520', '#FFFF00', // Row 2
-                          '#FFFF00', '#90EE90', '#00FF00', '#00FFFF', '#800080', // Row 3
-                          '#00FFFF', '#0000FF', '#000080', '#800080', '#8B4513', // Row 4
-                          '#8B4513', '#D2B48C', '#D2B48C', '#696969', '#000000', // Row 5
-                          '#C0C0C0', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF'  // Row 6
-                        ];
-                        
-                        return colors.map((color, idx) => (
-                          <div
-                            key={idx}
-                            className="relative aspect-square"
-                            style={{ backgroundColor: color }}
-                          >
-                            {/* Add logos positioned on specific squares */}
-                            {canvasElements.map((element, elemIdx) => {
-                              const logo = logos.find(l => l.id === element.logoId);
-                              if (!logo) return null;
-                              
-                              // Position logos on specific grid squares (like in screenshot)
-                              const logoSquares = [7, 12, 17]; // Middle column positions
-                              if (!logoSquares.includes(idx)) return null;
-                              
-                              return (
-                                <div key={elemIdx} className="absolute inset-1 flex items-center justify-center">
-                                  <img
-                                    src={`/uploads/${logo.filename}`}
-                                    alt={logo.originalName}
-                                    className="max-w-full max-h-full object-contain"
-                                    style={{ width: '80%', height: '80%' }}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                    
-                    {/* Template size label at bottom */}
-                    <div className="absolute -bottom-6 right-2 text-xs text-gray-400">
-                      {template?.name || 'A3'} ({template?.width || 297}×{template?.height || 420}mm)
-                    </div>
+                    {/* Render positioned logos exactly as they appear in PDF page 1 */}
+                    {canvasElements.map((element) => {
+                      const logo = logos.find(l => l.id === element.logoId);
+                      if (!logo) return null;
+                      
+                      return (
+                        <div
+                          key={element.id}
+                          className="absolute"
+                          style={{
+                            left: `${(element.x / (template?.width || 297)) * 100}%`,
+                            top: `${(element.y / (template?.height || 420)) * 100}%`,
+                            width: `${(element.width / (template?.width || 297)) * 100}%`,
+                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            transform: `rotate(${element.rotation || 0}deg)`,
+                            opacity: element.opacity || 1,
+                          }}
+                        >
+                          <img
+                            src={`/uploads/${logo.filename}`}
+                            alt={logo.originalName}
+                            className="w-full h-full object-contain"
+                            style={{ 
+                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Template size label */}
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+                    {template?.name || 'A3'} ({template?.width || 297}×{template?.height || 420}mm)
                   </div>
                 </div>
               </div>
 
-              {/* Page 2 Preview - Garment Background */}
+              {/* Page 2 Preview - Garment Background (Same artwork + garment color) */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg bg-black p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Dashed border container matching screenshot */}
+                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Canvas preview with garment color background */}
                   <div 
-                    className="border-2 border-dashed border-gray-400 relative"
+                    className="relative"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
-                      maxWidth: '280px'
+                      maxWidth: '280px',
+                      backgroundColor: project?.garmentColor || '#D2E31D'
                     }}
                   >
-                    {/* Same grid but showing garment background effect */}
-                    <div className="w-full h-full grid grid-cols-5 gap-1 p-2">
-                      {(() => {
-                        const colors = [
-                          '#FF0000', '#FFFF00', '#00FF00', '#0000FF', '#800080',
-                          '#FF00FF', '#800000', '#FFA500', '#FFA500', '#DAA520', '#FFFF00',
-                          '#FFFF00', '#90EE90', '#00FF00', '#00FFFF', '#800080',
-                          '#00FFFF', '#0000FF', '#000080', '#800080', '#8B4513',
-                          '#8B4513', '#D2B48C', '#D2B48C', '#696969', '#000000',
-                          '#C0C0C0', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#FFFFFF'
-                        ];
-                        
-                        return colors.map((color, idx) => (
-                          <div
-                            key={idx}
-                            className="relative aspect-square"
-                            style={{ backgroundColor: color }}
-                          >
-                            {/* Add logos positioned on specific squares */}
-                            {canvasElements.map((element, elemIdx) => {
-                              const logo = logos.find(l => l.id === element.logoId);
-                              if (!logo) return null;
-                              
-                              // Position logos on fewer squares for Page 2 (like in screenshot)
-                              const logoSquares = [7, 12]; // Two logos in middle column
-                              if (!logoSquares.includes(idx)) return null;
-                              
-                              return (
-                                <div key={elemIdx} className="absolute inset-1 flex items-center justify-center">
-                                  <img
-                                    src={`/uploads/${logo.filename}`}
-                                    alt={logo.originalName}
-                                    className="max-w-full max-h-full object-contain"
-                                    style={{ width: '80%', height: '80%' }}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ));
-                      })()}
-                    </div>
+                    {/* Render positioned logos exactly as they appear in PDF page 2 */}
+                    {canvasElements.map((element) => {
+                      const logo = logos.find(l => l.id === element.logoId);
+                      if (!logo) return null;
+                      
+                      return (
+                        <div
+                          key={element.id}
+                          className="absolute"
+                          style={{
+                            left: `${(element.x / (template?.width || 297)) * 100}%`,
+                            top: `${(element.y / (template?.height || 420)) * 100}%`,
+                            width: `${(element.width / (template?.width || 297)) * 100}%`,
+                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            transform: `rotate(${element.rotation || 0}deg)`,
+                            opacity: element.opacity || 1,
+                          }}
+                        >
+                          <img
+                            src={`/uploads/${logo.filename}`}
+                            alt={logo.originalName}
+                            className="w-full h-full object-contain"
+                            style={{ 
+                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Garment color label */}
+                  <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
+                    Garment Color: {project?.garmentColor || '#D2E31D'}
                   </div>
                 </div>
               </div>
