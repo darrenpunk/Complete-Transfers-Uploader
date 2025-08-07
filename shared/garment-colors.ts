@@ -25,6 +25,7 @@ export const gildanColors: ManufacturerColorGroup[] = [
       { code: "030", name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 }, pantoneTextile: "11-0601 TCX" },
       { code: "036", name: "Black", hex: "#25282A", cmyk: { c: 94, m: 77, y: 53, k: 94 }, pantone: "426", pantoneTextile: "19-4005 TCX" },
       { code: "093", name: "Ash Grey", hex: "#C8C9C7", cmyk: { c: 8, m: 5, y: 7, k: 16 }, pantone: "Cool Grey 3", pantoneTextile: "14-4201 TCX" },
+      { code: "custom4", name: "Charcoal Black", hex: "#171816", cmyk: { c: 78, m: 68, y: 62, k: 91 }, pantone: "Custom" },
       { code: "042", name: "Charcoal", hex: "#66676C", cmyk: { c: 40, m: 30, y: 20, k: 66 }, pantone: "Cool Grey 10", pantoneTextile: "18-0201 TCX" },
       { code: "032", name: "Navy", hex: "#263147", cmyk: { c: 95, m: 72, y: 15, k: 67 }, pantone: "533", pantoneTextile: "19-3921 TCX" },
     ]
@@ -38,6 +39,7 @@ export const gildanColors: ManufacturerColorGroup[] = [
       { code: "246", name: "Antique Cherry Red", hex: "#971B2F", cmyk: { c: 0, m: 100, y: 70, k: 33 }, pantone: "7427", pantoneTextile: "19-1862 TCX" },
       { code: "219", name: "Garnet", hex: "#7D2935", cmyk: { c: 16, m: 100, y: 65, k: 58 }, pantone: "188", pantoneTextile: "19-1650 TCX" },
       { code: "083", name: "Maroon", hex: "#5B2B42", cmyk: { c: 0, m: 81, y: 0, k: 79 }, pantone: "7644", pantoneTextile: "19-1522 TCX" },
+      { code: "custom1", name: "Dark Burgundy", hex: "#762009", cmyk: { c: 18, m: 95, y: 68, k: 56 }, pantone: "Custom" },
     ]
   },
   {
@@ -76,6 +78,7 @@ export const gildanColors: ManufacturerColorGroup[] = [
       { code: "035", name: "Tangerine", hex: "#FF8A3D", cmyk: { c: 0, m: 50, y: 71, k: 0 }, pantone: "2025", pantoneTextile: "16-1357 TCX" },
       { code: "025", name: "T. Orange", hex: "#B65A30", cmyk: { c: 0, m: 69, y: 85, k: 24 }, pantone: "7592", pantoneTextile: "18-1248 TCX" },
       { code: "285", name: "Sunset", hex: "#DC6B2F", cmyk: { c: 0, m: 67, y: 100, k: 0 }, pantone: "7578", pantoneTextile: "16-1440 TCX" },
+      { code: "custom2", name: "Golden Orange", hex: "#D98F17", cmyk: { c: 8, m: 38, y: 95, k: 2 }, pantone: "Custom" },
     ]
   },
   {
@@ -87,6 +90,7 @@ export const gildanColors: ManufacturerColorGroup[] = [
       { code: "019", name: "Vegas Gold", hex: "#F4D1A1", cmyk: { c: 0, m: 13, y: 35, k: 0 }, pantone: "7507", pantoneTextile: "12-0822 TCX" },
       { code: "475", name: "Cornsilk", hex: "#F0EC74", cmyk: { c: 0, m: 0, y: 55, k: 0 }, pantone: "393", pantoneTextile: "12-0740 TCX" },
       { code: "003", name: "Yellow Haze", hex: "#F5E1A4", cmyk: { c: 0, m: 4, y: 27, k: 0 }, pantone: "7401", pantoneTextile: "12-0720 TCX" },
+      { code: "custom3", name: "Light Yellow", hex: "#F3F590", cmyk: { c: 5, m: 0, y: 45, k: 0 }, pantone: "Custom" },
     ]
   },
   {
