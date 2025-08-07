@@ -1016,6 +1016,15 @@ export async function registerRoutes(app: express.Application) {
             recommendation: contentAnalysis.recommendation
           });
           
+          // DEBUG: Log which condition will be taken
+          if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
+            console.log('🚨 DEBUG: Taking RASTER-ONLY path - PDF will be flattened');
+          } else if (contentAnalysis.isMixedContent) {
+            console.log('🎨 DEBUG: Taking MIXED-CONTENT path - PDF will preserve vector');
+          } else {
+            console.log('📝 DEBUG: Taking VECTOR-ONLY path - PDF will be treated as vector');
+          }
+          
           // Override file type based on content analysis
           if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
             // PDF contains ONLY raster content (no vector elements), extract PNG for canvas display

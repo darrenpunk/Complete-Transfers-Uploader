@@ -95,24 +95,37 @@ export class MixedContentDetector {
       // Method 4: Check for vector graphics using pdf2svg
       try {
         const tempSvg = `/tmp/temp_${Date.now()}.svg`;
-        await execAsync(`pdf2svg "${pdfPath}" "${tempSvg}" 1 2>/dev/null || true`);
+        const pdf2svgCommand = `pdf2svg "${pdfPath}" "${tempSvg}" 1`;
+        console.log('🔍 Running pdf2svg command:', pdf2svgCommand);
+        await execAsync(`${pdf2svgCommand} 2>/dev/null || true`);
         
         if (fs.existsSync(tempSvg)) {
           const svgContent = fs.readFileSync(tempSvg, 'utf8');
+          console.log('🔍 SVG conversion successful, checking for vector elements...');
+          console.log('🔍 SVG content length:', svgContent.length);
+          console.log('🔍 Contains paths:', svgContent.includes('<path'));
+          console.log('🔍 Contains rects:', svgContent.includes('<rect'));
+          console.log('🔍 Contains circles:', svgContent.includes('<circle'));
+          console.log('🔍 Contains polygons:', svgContent.includes('<polygon'));
           
           // Check for vector elements in SVG
           if (svgContent.includes('<path') || svgContent.includes('<rect') || 
               svgContent.includes('<circle') || svgContent.includes('<polygon')) {
             analysis.hasVectorContent = true;
+            console.log('✅ Vector content detected in PDF via pdf2svg');
             
             if (svgContent.includes('<path')) analysis.vectorElements.types.push('paths');
             if (svgContent.includes('<rect')) analysis.vectorElements.types.push('rectangles');
             if (svgContent.includes('<circle')) analysis.vectorElements.types.push('circles');
             if (svgContent.includes('<text')) analysis.vectorElements.types.push('text');
+          } else {
+            console.log('❌ No vector elements found in converted SVG');
           }
           
           // Clean up temp file
           fs.unlinkSync(tempSvg);
+        } else {
+          console.log('❌ pdf2svg did not create output file');
         }
       } catch (error) {
         console.log('pdf2svg analysis failed:', error);
