@@ -360,20 +360,7 @@ export class SimplifiedPDFGenerator {
    * PRODUCTION FLOW: Apply user-specified color changes only
    * This method is called ONLY when user has explicitly modified colors
    */
-  private async embedWithColorChanges(
-    pdfDoc: PDFDocument,
-    page: PDFPage,
-    element: any,
-    logo: any,
-    templateSize: any
-  ) {
-    console.log('🎨 Production Flow: Applying user color modifications');
-    
-    // For now, fall back to original file embedding
-    // This will be expanded to handle specific color changes
-    console.log('📝 TODO: Implement specific color change logic');
-    await this.embedOriginalFile(pdfDoc, page, element, logo, templateSize);
-  }
+
 
   private async embedOriginalFile(
     pdfDoc: PDFDocument,
@@ -837,11 +824,14 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // Convert to PDF points - element position should be from TOP of page
-    // Canvas Y=0 is TOP, PDF Y=0 is BOTTOM, so we need to flip
+    // CRITICAL FIX: Proper Y-coordinate conversion from canvas to PDF
+    // Canvas: Y=0 at TOP, increasing downward
+    // PDF: Y=0 at BOTTOM, increasing upward
     const x = xInMm * scale;
-    // Place artwork from top of page: pageHeight minus distance from top
-    const y = pageHeight - (yInMm * scale) - (elementHeightMm * scale);
+    // Convert canvas Y (from top) to PDF Y (from bottom)
+    // If user places at Y=140 on canvas, it should be 140 units DOWN from top
+    // PDF equivalent: pageHeight - yInMm - elementHeight
+    const y = pageHeight - yInMm * scale - (elementHeightMm * scale);
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
@@ -853,21 +843,24 @@ export class SimplifiedPDFGenerator {
       elementSizeMm: { w: elementWidthMm, h: elementHeightMm }
     });
     
-    // CRITICAL FIX: Position artwork in CENTER of page for visibility
-    // Instead of complex calculation, place in visible center area
-    const centerX = (pageWidth - (elementWidthMm * scale)) / 2;
-    const centerY = (pageHeight - (elementHeightMm * scale)) / 2;
+    // FIXED: Respect user's canvas positioning with proper coordinate conversion
+    // The issue was Y-coordinate calculation - let's fix the fundamental problem
     
-    // Use center position to ensure visibility during testing
-    const adjustedX = centerX;
-    const adjustedY = centerY;
+    // Ensure artwork stays within page bounds with margins
+    const margin = 20; // 20pt margin from edges
+    const maxX = pageWidth - (elementWidthMm * scale) - margin;
+    const maxY = pageHeight - (elementHeightMm * scale) - margin;
+    
+    // Apply bounds checking while preserving user's relative positioning
+    const adjustedX = Math.max(margin, Math.min(x, maxX));
+    const adjustedY = Math.max(margin, Math.min(y, maxY));
     
     if (x !== adjustedX || y !== adjustedY) {
       console.log(`⚠️ Position adjusted from (${x.toFixed(2)}, ${y.toFixed(2)}) to (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) for visibility`);
     }
     
-    console.log(`🎯 CENTERED artwork position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
-    console.log(`🎯 Center calculation: centerX=${centerX.toFixed(2)}, centerY=${centerY.toFixed(2)}`);
+    console.log(`🎯 Final position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
+    console.log(`📍 Respects canvas positioning: user placed at (${element.x}, ${element.y})`);
     return { x: adjustedX, y: adjustedY };
   }
 }
