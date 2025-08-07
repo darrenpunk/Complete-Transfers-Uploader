@@ -1144,6 +1144,15 @@ export async function registerRoutes(app: express.Application) {
               analysis = analyzeSVGWithStrokeWidths(svgPath);
             }
             
+            // CRITICAL FIX: If all detected colors are CMYK, set the preservation flag
+            if (analysis.colors && analysis.colors.length > 0) {
+              const allColorsAreCMYK = analysis.colors.every(color => (color as any).isCMYK === true);
+              if (allColorsAreCMYK && file.mimetype === 'application/pdf') {
+                console.log(`🎨 CRITICAL FIX - All ${analysis.colors.length} colors are CMYK, setting isCMYKPreserved=true`);
+                (file as any).isCMYKPreserved = true;
+              }
+            }
+            
             console.log(`🎨 Analysis results:`, {
               colors: analysis.colors?.length || 0,
               fonts: analysis.fonts?.length || 0,
