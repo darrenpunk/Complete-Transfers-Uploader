@@ -303,6 +303,9 @@ export class SimplifiedPDFGenerator {
       console.log(`📄 Using original PDF for direct embedding: ${logo.originalFilename}`);
       
       const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+      console.log(`🔍 DEBUG: Looking for original PDF at: ${originalPdfPath}`);
+      console.log(`🔍 DEBUG: Logo object keys:`, Object.keys(logo));
+      console.log(`🔍 DEBUG: Logo filename: ${logo.filename}, originalFilename: ${logo.originalFilename}`);
       
       if (fs.existsSync(originalPdfPath)) {
         const existingPdfBytes = fs.readFileSync(originalPdfPath);
@@ -324,6 +327,36 @@ export class SimplifiedPDFGenerator {
         return;
       } else {
         console.log(`⚠️ Original PDF not found: ${originalPdfPath}, falling back to converted file`);
+        console.log(`🔍 DEBUG: Checking if filename without extension exists...`);
+        
+        // Check if file exists without extension (common in upload processing)
+        const pathWithoutExt = path.join(process.cwd(), 'uploads', logo.filename);
+        console.log(`🔍 DEBUG: Checking: ${pathWithoutExt}`);
+        
+        if (fs.existsSync(pathWithoutExt)) {
+          console.log(`✅ Found PDF file without extension, using: ${pathWithoutExt}`);
+          try {
+            const existingPdfBytes = fs.readFileSync(pathWithoutExt);
+            const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+            
+            // Calculate position and scale
+            const scale = this.calculateScale(element, templateSize);
+            const position = this.calculatePosition(element, templateSize, page);
+            
+            page.drawPage(embeddedPage, {
+              x: position.x,
+              y: position.y,
+              width: element.width * scale,
+              height: element.height * scale,
+              rotate: element.rotation ? degrees(element.rotation) : undefined,
+            });
+            
+            console.log(`✅ Successfully embedded original PDF from: ${pathWithoutExt}`);
+            return;
+          } catch (embedError) {
+            console.error(`❌ Failed to embed PDF from ${pathWithoutExt}:`, embedError);
+          }
+        }
       }
     }
     

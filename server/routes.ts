@@ -1128,6 +1128,7 @@ export async function registerRoutes(app: express.Application) {
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
             if ((file as any).isCMYKPreserved && (file as any).originalPdfPath) {
               console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
+              console.log(`🔍 DEBUG: File has isCMYKPreserved=${(file as any).isCMYKPreserved}, originalPdfPath=${(file as any).originalPdfPath}`);
               
               // Update the SVG file to include CMYK marker
               const svgContent = fs.readFileSync(svgPath, 'utf8');
