@@ -7,6 +7,8 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 7, 2025)
+- **CRITICAL MIXED CONTENT PDF FIX**: Fixed mixed PDFs being incorrectly flattened when uploaded. Mixed content PDFs now preserve vector content and bypass vectorization modal, maintaining original quality without forced rasterization.
+- **PDF Preview Individual Garment Colors**: Fixed Page 2 preview to show individual garment colors per logo instead of single background color, now matching actual PDF generation output.
 - **CRITICAL PDF PREVIEW FIX**: Fixed catastrophic SVG corruption affecting 824+ files with malformed XML syntax (`"/ fill="#000000">` → `fill="#000000"/>`). PDF preview modal now displays actual artwork images instead of filename text placeholders.
 - **SVG Corruption Issue Resolved**: Fixed critical XML parsing errors in 20 corrupted SVG files that were causing PDF generation failures. Implemented comprehensive SVG corruption detection and repair system.
 - **Production Flow Manager**: All 6 production requirements now fully enforced and verified working: color preservation, original content maintenance, proper color detection, content-based bounding boxes, raster file vectorization modals, and mixed content warnings.

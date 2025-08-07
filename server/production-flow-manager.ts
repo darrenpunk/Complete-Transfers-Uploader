@@ -77,7 +77,9 @@ export class ProductionFlowManager {
         result.requiresVectorization = true;
         result.warnings.push('PDF contains only raster content - vectorization recommended');
       } else if (contentAnalysis.isMixedContent) {
-        result.warnings.push('Mixed content detected - some raster elements may benefit from vectorization');
+        // Mixed content PDFs should NOT require vectorization - preserve as-is
+        result.requiresVectorization = false;
+        result.warnings.push('Mixed content detected - vector elements will be preserved, raster elements maintained as embedded');
       }
 
       // 3. Analyze colors and determine color space (for SVG and PDF)

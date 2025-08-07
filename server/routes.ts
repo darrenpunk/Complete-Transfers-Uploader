@@ -1017,14 +1017,14 @@ export async function registerRoutes(app: express.Application) {
           });
           
           // Override file type based on content analysis
-          if (contentAnalysis.hasRasterContent) {
-            // PDF contains raster content (logo/images), extract PNG for canvas display
-            console.log(`📷 PDF contains raster content, extracting PNG for canvas display`);
+          if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
+            // PDF contains ONLY raster content (no vector elements), extract PNG for canvas display
+            console.log(`📷 PDF contains raster-only content, extracting PNG for canvas display`);
             
             // Store original PDF path for later embedding
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isPdfWithRaster = true;
-            (file as any).isPdfWithRasterOnly = true;  // Fix vectorizer issue
+            (file as any).isPdfWithRasterOnly = true;  // True only for pure raster PDFs
             
             // Treat as raster workflow for canvas display
             fileType = FileType.RASTER_PNG;
@@ -1087,7 +1087,13 @@ export async function registerRoutes(app: express.Application) {
               console.error('⚠️ Full extraction error details:', extractError);
             }
           } else if (contentAnalysis.isMixedContent) {
-            fileType = FileType.MIXED_CONTENT;
+            // Mixed content PDF - preserve as vector workflow to maintain quality
+            console.log(`🎨 Mixed content PDF detected - preserving vector workflow to maintain quality`);
+            fileType = FileType.VECTOR_SVG; // Treat mixed content as vector to preserve quality
+            
+            // Store metadata about mixed content for warnings/processing
+            (file as any).originalPdfPath = originalPdfPath;
+            (file as any).isMixedContent = true;
           }
         } else if (fileType === FileType.VECTOR_SVG) {
           // For SVGs, check the converted file for mixed content
