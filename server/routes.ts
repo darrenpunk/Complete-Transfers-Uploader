@@ -674,7 +674,19 @@ export async function registerRoutes(app: express.Application) {
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'project'}_cmyk.pdf"`);
+      
+      // Check if this is for preview (inline viewing) or download
+      const isPreview = req.query.preview === 'true' || req.headers['user-agent']?.includes('iframe');
+      
+      if (isPreview) {
+        // For preview, use inline disposition so it displays in iframe
+        res.setHeader('Content-Disposition', `inline; filename="${project.name || 'project'}_cmyk.pdf"`);
+        res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow iframe from same origin
+      } else {
+        // For download, use attachment disposition
+        res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'project'}_cmyk.pdf"`);
+      }
+      
       res.send(pdfBuffer);
       
     } catch (error) {

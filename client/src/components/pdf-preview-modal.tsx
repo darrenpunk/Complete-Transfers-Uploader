@@ -178,7 +178,19 @@ export default function PDFPreviewModal({
           <div className="flex-1 flex flex-col">
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
-            {/* Two pages side by side */}
+            {/* Real PDF Preview */}
+            <div className="flex-1 border rounded-lg bg-white overflow-hidden">
+              <iframe
+                src={project ? `/api/projects/${project.id}/generate-pdf?preview=true` : ''}
+                className="w-full h-full border-0"
+                title="PDF Preview"
+                style={{ minHeight: '500px' }}
+              />
+            </div>
+          </div>
+
+          {/* Fallback: Two pages side by side (hidden by default) */}
+          <div className="hidden">
             <div className="flex gap-4 flex-1">
               {/* Page 1 Preview */}
               <div className="flex-1 flex flex-col">
