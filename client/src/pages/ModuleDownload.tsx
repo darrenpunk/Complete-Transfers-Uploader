@@ -8,7 +8,7 @@ export default function ModuleDownload() {
   const handleDownload = () => {
     const link = document.createElement('a');
     link.href = '/api/download/odoo-module';
-    link.download = 'artwork_uploader_module_final.zip';
+    link.download = 'artwork_uploader_module_error_fixed.zip';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -72,7 +72,7 @@ export default function ModuleDownload() {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
               >
                 <Download className="mr-2 h-5 w-5" />
-                Download artwork_uploader_module_final.zip
+                Download artwork_uploader_module_error_fixed.zip
               </Button>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">
                 File size: ~2.5MB | Compatible with Odoo 16.0+
