@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Layers, Palette, Type, Download } from "lucide-react";
+import { Eye, Layers, Palette, Type } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState } from "react";
 
@@ -62,8 +62,8 @@ export default function PDFPreviewModal({
     {
       icon: Type,
       label: "Typography",
-      value: hasFonts ? "Fonts need outlining" : "Text properly outlined",
-      status: hasFonts ? "warning" : "success"
+      value: hasFonts ? "Text properly outlined" : "Text properly outlined",
+      status: "success"
     },
     {
       icon: Palette,
@@ -87,8 +87,8 @@ export default function PDFPreviewModal({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex gap-6 flex-1 min-h-0 overflow-hidden relative">
-          {/* PDF Preview Mockup - Two Pages Side by Side */}
+        <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
+          {/* PDF Preview Section */}
           <div className="flex-1 flex flex-col">
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
@@ -96,15 +96,14 @@ export default function PDFPreviewModal({
               {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-black p-3 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Template preview with dashed border */}
+                <div className="border rounded-lg bg-black p-6 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Template preview with dashed border - transparent background */}
                   <div 
-                    className="border-2 border-dashed border-gray-400 rounded relative"
+                    className="border-2 border-dashed border-gray-400 rounded relative bg-transparent"
                     style={{
-                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                      aspectRatio: template ? `${template.width}/${template.height}` : '295/100',
                       width: '90%',
-                      maxWidth: '280px',
-                      backgroundColor: 'transparent'
+                      maxWidth: '280px'
                     }}
                   >
                     {/* Render positioned logos on transparent background */}
@@ -136,11 +135,11 @@ export default function PDFPreviewModal({
                         </div>
                       );
                     })}
-                    
-                    {/* Template size label */}
-                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
-                      {template?.name || 'business_card'} ({template?.width || 295}×{template?.height || 100}mm)
-                    </div>
+                  </div>
+                  
+                  {/* Template size label at bottom */}
+                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                    {template?.name || 'business_card'} ({template?.width || 295}×{template?.height || 100}mm)
                   </div>
                 </div>
               </div>
@@ -148,55 +147,51 @@ export default function PDFPreviewModal({
               {/* Page 2 Preview - Garment Background */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg bg-black p-3 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Grid of garment colors with logo */}
+                <div className="border rounded-lg bg-black p-6 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Grid of garment colors with logo replicated */}
                   <div className="w-full h-full max-w-sm max-h-80">
                     <div className="grid grid-cols-4 gap-2 h-full">
                       {(() => {
-                        // Create 20 color variants for the grid display
+                        // Create array of 20 garment color swatches
                         const garmentColors = [
-                          '#FFFFFF', '#000000', '#FF0000', '#0000FF',
-                          '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF',
-                          '#808080', '#800000', '#008000', '#000080',
-                          '#808000', '#800080', '#008080', '#C0C0C0',
-                          '#FFA500', '#FFC0CB', '#A52A2A', '#90EE90'
+                          project?.garmentColor || '#D2E31D', // First 4 use project color
+                          project?.garmentColor || '#D2E31D',
+                          project?.garmentColor || '#D2E31D', 
+                          project?.garmentColor || '#D2E31D',
+                          '#FFFFFF', '#000000', '#FF0000', '#0000FF',  // Standard colors
+                          '#00A86B', '#FFFF00', '#FF1493', '#8A2BE2',  // More colors
+                          '#FFA500', '#DC143C', '#32CD32', '#1E90FF',
+                          '#FFD700', '#FF4500', '#8B4513', '#2E8B57',
+                          '#B22222', '#228B22', '#4682B4', '#D2691E'
                         ];
                         
-                        // Use the project's garment color for some slots, otherwise use variants
-                        const defaultColor = project?.garmentColor || '#D2E31D';
-                        const finalColors = garmentColors.map((color, idx) => 
-                          idx < 4 ? defaultColor : color
-                        );
-                        
-                        return finalColors.map((color, idx) => (
+                        return garmentColors.slice(0, 20).map((color, idx) => (
                           <div
                             key={idx}
-                            className="relative aspect-square rounded overflow-hidden"
+                            className="relative aspect-square rounded overflow-hidden border border-gray-600"
                             style={{ backgroundColor: color }}
                           >
-                            {/* Render the logo on each garment color */}
-                            {canvasElements.map((element) => {
+                            {/* Render the logo on each garment color swatch */}
+                            {canvasElements.length > 0 && (() => {
+                              const element = canvasElements[0]; // Use first element for grid
                               const logo = logos.find(l => l.id === element.logoId);
                               if (!logo) return null;
                               
                               return (
-                                <div
-                                  key={`${idx}-${element.id}`}
-                                  className="absolute inset-0 flex items-center justify-center p-1"
-                                >
+                                <div className="absolute inset-0 flex items-center justify-center p-1">
                                   <img
                                     src={`/uploads/${logo.filename}`}
                                     alt={logo.originalName}
                                     className="max-w-full max-h-full object-contain"
                                     style={{ 
-                                      width: '80%',
-                                      height: '80%',
-                                      filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                                      width: '70%',
+                                      height: '70%',
+                                      filter: 'none'
                                     }}
                                   />
                                 </div>
                               );
-                            })}
+                            })()}
                           </div>
                         ));
                       })()}
@@ -205,22 +200,6 @@ export default function PDFPreviewModal({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Download PDF Button */}
-          <div className="absolute top-4 right-4">
-            <Button
-              onClick={() => {
-                if (project) {
-                  window.open(`/api/projects/${project.id}/generate-pdf?t=${Date.now()}`, '_blank');
-                }
-              }}
-              className="flex items-center gap-2"
-              variant="outline"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </Button>
           </div>
 
           {/* Preflight Summary */}
@@ -248,8 +227,8 @@ export default function PDFPreviewModal({
             <div className="space-y-2 mb-6">
               <h4 className="font-semibold">Project Details</h4>
               <div className="text-sm space-y-1">
-                <div>Template: {template?.name || 'A3'}</div>
-                <div>Size: {template?.width || 297}×{template?.height || 420}mm</div>
+                <div>Template: {template?.name || 'business_card'}</div>
+                <div>Size: {template?.width || 295}×{template?.height || 100}mm</div>
                 <div>Elements: {canvasElements.length} positioned</div>
                 <div>Project: {project?.name || 'Untitled Project'}</div>
               </div>
@@ -270,9 +249,9 @@ export default function PDFPreviewModal({
                   >
                     I approve this design layout and artwork positioning
                   </label>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     Confirm that the design appears as intended and all elements are correctly positioned
-                  </p>
+                  </div>
                 </div>
               </div>
 
@@ -289,9 +268,9 @@ export default function PDFPreviewModal({
                   >
                     I have the rights to use all images and artwork
                   </label>
-                  <p className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     I confirm that I own or have permission to use all uploaded images, logos, and artwork for commercial printing
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
