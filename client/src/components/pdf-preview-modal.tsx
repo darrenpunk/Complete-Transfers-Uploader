@@ -97,7 +97,7 @@ export default function PDFPreviewModal({
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Show actual artwork (which contains color grids) with positioned logos */}
+                  {/* Show positioned logos (which contain color grids) */}
                   <div 
                     className="relative bg-white border border-dashed border-gray-300"
                     style={{
@@ -106,18 +106,7 @@ export default function PDFPreviewModal({
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Render the actual uploaded artwork that contains color grids */}
-                    {logos.map((logo, index) => (
-                      <img
-                        key={`artwork-${index}`}
-                        src={`/uploads/${logo.filename}`}
-                        alt={logo.originalName}
-                        className="absolute inset-0 w-full h-full object-contain"
-                        style={{ zIndex: 1 }}
-                      />
-                    ))}
-                    
-                    {/* Render positioned logos on top of the artwork */}
+                    {/* Render positioned logos that contain the artwork with color grids */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
@@ -125,7 +114,7 @@ export default function PDFPreviewModal({
                       return (
                         <div
                           key={element.id}
-                          className="absolute z-10"
+                          className="absolute"
                           style={{
                             left: `${(element.x / (template?.width || 297)) * 100}%`,
                             top: `${(element.y / (template?.height || 420)) * 100}%`,
@@ -159,7 +148,7 @@ export default function PDFPreviewModal({
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Same artwork but with garment color background */}
+                  {/* Same positioned logos but with garment color background */}
                   <div 
                     className="relative border border-dashed border-gray-300"
                     style={{
@@ -169,18 +158,7 @@ export default function PDFPreviewModal({
                       backgroundColor: project?.garmentColor || '#D2E31D'
                     }}
                   >
-                    {/* Render the actual uploaded artwork that contains color grids */}
-                    {logos.map((logo, index) => (
-                      <img
-                        key={`artwork-bg-${index}`}
-                        src={`/uploads/${logo.filename}`}
-                        alt={logo.originalName}
-                        className="absolute inset-0 w-full h-full object-contain"
-                        style={{ zIndex: 1 }}
-                      />
-                    ))}
-                    
-                    {/* Render positioned logos on top of the artwork */}
+                    {/* Render positioned logos that contain the artwork with color grids */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
@@ -188,7 +166,7 @@ export default function PDFPreviewModal({
                       return (
                         <div
                           key={element.id}
-                          className="absolute z-10"
+                          className="absolute"
                           style={{
                             left: `${(element.x / (template?.width || 297)) * 100}%`,
                             top: `${(element.y / (template?.height || 420)) * 100}%`,
