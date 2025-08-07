@@ -99,7 +99,7 @@ export default function PDFPreviewModal({
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
                   {/* Canvas preview - exact same as PDF page 1 */}
                   <div 
-                    className="relative bg-white"
+                    className="relative bg-white border border-gray-200"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
@@ -150,7 +150,7 @@ export default function PDFPreviewModal({
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
                   {/* Canvas preview with garment color background */}
                   <div 
-                    className="relative"
+                    className="relative border border-gray-200"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
@@ -191,7 +191,30 @@ export default function PDFPreviewModal({
                   
                   {/* Garment color label */}
                   <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
-                    Garment Color: {project?.garmentColor || '#D2E31D'}
+                    Garment Color: {(() => {
+                      const color = project?.garmentColor || '#D2E31D';
+                      // Convert hex to color name
+                      const colorNames: { [key: string]: string } = {
+                        '#D2E31D': 'Lime Green',
+                        '#FFFFFF': 'White',
+                        '#000000': 'Black',
+                        '#FF0000': 'Red',
+                        '#0000FF': 'Blue',
+                        '#00FF00': 'Green',
+                        '#FFFF00': 'Yellow',
+                        '#FFA500': 'Orange',
+                        '#800080': 'Purple',
+                        '#FFC0CB': 'Pink',
+                        '#808080': 'Gray',
+                        '#A52A2A': 'Brown',
+                        '#00FFFF': 'Cyan',
+                        '#FF00FF': 'Magenta',
+                        '#800000': 'Maroon',
+                        '#008000': 'Dark Green',
+                        '#000080': 'Navy Blue'
+                      };
+                      return colorNames[color] || color;
+                    })()}
                   </div>
                 </div>
               </div>
