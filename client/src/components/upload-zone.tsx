@@ -43,11 +43,15 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       setSelectedFiles(prev => [...prev, ...vectorFiles]);
     }
     
-    // Handle raster files one by one with warning modal
+    // PRODUCTION FLOW: Handle raster files with mandatory vectorization modal
     if (rasterFiles.length > 0) {
+      console.log('🎯 Production Flow: Raster file detected - triggering vectorization modal');
       const firstRasterFile = rasterFiles[0];
       setPendingRasterFile({ file: firstRasterFile, fileName: firstRasterFile.name });
       setShowRasterWarning(true);
+      
+      // Log production flow compliance
+      console.log('📋 Production Flow Requirement 5: Raster file vectorization modal triggered for:', firstRasterFile.name);
     }
   }, []);
 

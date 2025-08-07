@@ -700,6 +700,9 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      // PRODUCTION FLOW: Import production flow manager
+      const { productionFlow } = await import('./production-flow-manager');
+
       // Get template information to check if this is a single colour template
       const templateSizes = await storage.getTemplateSizes();
       const templateSize = templateSizes.find(t => t.id === project.templateSize);
@@ -970,6 +973,19 @@ export async function registerRoutes(app: express.Application) {
         // Analyze file content for mixed raster/vector content
         let fileType = ColorWorkflowManager.getFileType(file.mimetype, file.filename);
         
+        // PRODUCTION FLOW: Run preflight check for each file
+        const filePath = path.join(uploadDir, file.filename);
+        const preflightResult = await productionFlow.runPreflightCheck(filePath, file.mimetype);
+        
+        console.log('🔍 Production Preflight:', {
+          file: file.filename,
+          colorSpace: preflightResult.colorSpaceDetected,
+          requiresVectorization: preflightResult.requiresVectorization,
+          hasRaster: preflightResult.hasRasterContent,
+          hasVector: preflightResult.hasVectorContent,
+          warnings: preflightResult.warnings.length
+        });
+
         // For PDFs, analyze the original PDF file before conversion
         if (file.mimetype === 'application/pdf') {
           const originalPdfPath = path.join(uploadDir, file.filename);
@@ -1262,7 +1278,7 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Create logo record with analysis data
+        // PRODUCTION FLOW: Store preflight results and enforce color preservation
         const logoData: any = {
           projectId,
           filename: finalFilename,
@@ -1274,7 +1290,19 @@ export async function registerRoutes(app: express.Application) {
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT,
           isCMYKPreserved: (file as any).isCMYKPreserved || false,
-          isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false
+          isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false,
+          // PRODUCTION FLOW: Add preflight results
+          preflightData: {
+            colorSpaceDetected: preflightResult.colorSpaceDetected,
+            hasRasterContent: preflightResult.hasRasterContent,
+            hasVectorContent: preflightResult.hasVectorContent,
+            isMixedContent: preflightResult.isMixedContent,
+            contentBounds: preflightResult.contentBounds,
+            colorsDetected: preflightResult.colorsDetected,
+            requiresVectorization: preflightResult.requiresVectorization,
+            warnings: preflightResult.warnings,
+            originalColorsPreserved: true // CRITICAL: Always true unless explicitly changed
+          }
         };
         
         // Add preview filename if it exists (for CMYK PDFs)

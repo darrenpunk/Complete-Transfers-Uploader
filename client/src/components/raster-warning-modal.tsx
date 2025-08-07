@@ -65,7 +65,7 @@ export function RasterWarningModal({
         <div className="space-y-6">
           <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
             <p className="text-sm text-orange-800 dark:text-orange-200 mb-3">
-              This file is a raster image (PNG/JPEG). For best print quality, vector files (SVG/PDF) are recommended.
+              <strong>Production Flow:</strong> This file is a raster image (PNG/JPEG). For best print quality, vector files (SVG/PDF) are recommended.
             </p>
             <div className="bg-white/50 dark:bg-gray-800/50 rounded p-3 border-l-4 border-orange-400">
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
