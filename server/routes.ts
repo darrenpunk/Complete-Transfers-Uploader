@@ -2913,7 +2913,7 @@ export async function registerRoutes(app: express.Application) {
 
   // Download Odoo module endpoint
   app.get('/api/download/odoo-module', (req, res) => {
-    const filePath = path.join(__dirname, '../artwork_uploader_module_final.zip');
+    const filePath = path.resolve('./artwork_uploader_module_final.zip');
     
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Module file not found' });
