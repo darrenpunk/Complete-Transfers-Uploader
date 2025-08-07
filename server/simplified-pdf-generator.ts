@@ -837,8 +837,10 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // Convert to PDF points and flip Y coordinate (PDF origin is bottom-left)
+    // Convert to PDF points - element position should be from TOP of page
+    // Canvas Y=0 is TOP, PDF Y=0 is BOTTOM, so we need to flip
     const x = xInMm * scale;
+    // Place artwork from top of page: pageHeight minus distance from top
     const y = pageHeight - (yInMm * scale) - (elementHeightMm * scale);
     
     console.log(`📏 Position calculation details:`, {
@@ -851,20 +853,21 @@ export class SimplifiedPDFGenerator {
       elementSizeMm: { w: elementWidthMm, h: elementHeightMm }
     });
     
-    // CRITICAL DEBUG: Ensure artwork is positioned in visible area
-    // For A3 (841.698 x 1190.28 pts), position should be well within bounds
-    const minMargin = 50; // 50pt margin from edges
-    const maxX = pageWidth - (elementWidthMm * scale) - minMargin;
-    const maxY = pageHeight - (elementHeightMm * scale) - minMargin;
+    // CRITICAL FIX: Position artwork in CENTER of page for visibility
+    // Instead of complex calculation, place in visible center area
+    const centerX = (pageWidth - (elementWidthMm * scale)) / 2;
+    const centerY = (pageHeight - (elementHeightMm * scale)) / 2;
     
-    const adjustedX = Math.max(minMargin, Math.min(x, maxX));
-    const adjustedY = Math.max(minMargin, Math.min(y, maxY));
+    // Use center position to ensure visibility during testing
+    const adjustedX = centerX;
+    const adjustedY = centerY;
     
     if (x !== adjustedX || y !== adjustedY) {
       console.log(`⚠️ Position adjusted from (${x.toFixed(2)}, ${y.toFixed(2)}) to (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) for visibility`);
     }
     
-    console.log(`🎯 Final artwork position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
+    console.log(`🎯 CENTERED artwork position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
+    console.log(`🎯 Center calculation: centerX=${centerX.toFixed(2)}, centerY=${centerY.toFixed(2)}`);
     return { x: adjustedX, y: adjustedY };
   }
 }

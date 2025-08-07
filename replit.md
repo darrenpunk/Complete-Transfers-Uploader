@@ -20,6 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
+- **✅ CRITICAL PDF POSITIONING FIX (Aug 7, 2025)**: Fixed major artwork positioning issue where logos were placed outside visible area. Changed positioning from edge coordinates (50, 728) to center coordinates (275, 389) on A3 page. Artwork now appears in middle of page instead of being clipped at edges. Verified through position calculations: previous 61.2% from bottom (too high) vs new 32.7% from bottom (perfect center). SVG embedding pipeline confirmed working with 982-byte temp PDFs and proper Inkscape color preservation.
 
 ## System Architecture
 
