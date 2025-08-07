@@ -504,7 +504,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           original: colorString,  // Keep the exact format from SVG
           display: rgbColor,      // Standardized format for UI
           cmyk: null,             // No CMYK conversion
-          isCMYK: true,           // Mark as CMYK since original PDF was CMYK format
+          isCMYK: false,          // RGB colors are RGB, not CMYK
           rgb: { r, g, b }        // Store RGB values as they exist in PDF
         };
       }
@@ -523,7 +523,7 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
           original: colorString,  // Keep the exact format from SVG
           display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
           cmyk: null,             // No CMYK conversion
-          isCMYK: true,           // Mark as CMYK since original PDF was CMYK format
+          isCMYK: false,          // Hex colors are RGB, not CMYK
           rgb: { r, g, b }        // Store RGB values as they exist in PDF
         };
       }
