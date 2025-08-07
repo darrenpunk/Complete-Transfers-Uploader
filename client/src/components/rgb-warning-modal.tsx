@@ -51,10 +51,10 @@ export function RGBWarningModal({ hasRGBColors, onClose }: RGBWarningModalProps)
                 This conversion may cause noticeable color shifts, especially with bright or vibrant colors.
               </p>
               
-              <p className="font-semibold">• Preview Feature:</p>
+              <p className="font-semibold">• Color Adjustment:</p>
               <p className="pl-4">
-                Use the "CMYK Preview" toggle in the color panel to see an approximation of how 
-                your colors will look after conversion.
+                Use the color picker in the "Logo Colors" panel to manually adjust colors 
+                to achieve your desired appearance after CMYK conversion.
               </p>
               
               <p className="font-semibold">• Recommendation:</p>

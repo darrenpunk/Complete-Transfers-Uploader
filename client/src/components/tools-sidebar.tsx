@@ -1070,7 +1070,7 @@ export default function ToolsSidebar({
                   )}
                   
                   {/* Learn More about Colour Modes button */}
-                  {check.name === "Edit Colours" && (
+                  {check.name === "Colour Mode" && (
                     <div className="ml-4 mt-2">
                       <Button
                         size="sm"
