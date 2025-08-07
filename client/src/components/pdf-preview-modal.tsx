@@ -93,20 +93,44 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             <div className="flex gap-4 flex-1">
-              {/* Page 1 Preview - Artwork Layout (Same as PDF Page 1) */}
+              {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Canvas preview - exact same as PDF page 1 */}
+                  {/* Color grid background with positioned artwork */}
                   <div 
-                    className="relative bg-white border border-gray-200"
+                    className="relative bg-white border border-dashed border-gray-300"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Render positioned logos exactly as they appear in PDF page 1 */}
+                    {/* Render color grid background */}
+                    <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">
+                      {Array.from({ length: 50 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="aspect-square rounded"
+                          style={{
+                            backgroundColor: [
+                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
+                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
+                              '#F56565', '#FF8C00', '#48BB78', '#4299E1', '#9F7AEA',
+                              '#FC8181', '#FFA500', '#68D391', '#63B3ED', '#B794F6',
+                              '#FEB2B2', '#FFB74D', '#9AE6B4', '#90CDF4', '#D6BCFA',
+                              '#D2E31D', '#F6E05E', '#C6F6D5', '#BEE3F8', '#E9D8FD',
+                              '#7FFFD4', '#40E0D0', '#48CAE4', '#6A4C93', '#C9ADA7',
+                              '#8B5CF6', '#F687B3', '#FCD34D', '#10B981', '#06B6D4',
+                              '#6366F1', '#EC4899', '#F59E0B', '#059669', '#0891B2',
+                              '#4F46E5', '#DB2777', '#D97706', '#047857', '#0E7490'
+                            ][i % 50]
+                          }}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Render positioned logos */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
@@ -114,7 +138,7 @@ export default function PDFPreviewModal({
                       return (
                         <div
                           key={element.id}
-                          className="absolute"
+                          className="absolute z-10"
                           style={{
                             left: `${(element.x / (template?.width || 297)) * 100}%`,
                             top: `${(element.y / (template?.height || 420)) * 100}%`,
@@ -138,19 +162,19 @@ export default function PDFPreviewModal({
                   </div>
                   
                   {/* Template size label */}
-                  <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white px-1 rounded">
                     {template?.name || 'A3'} ({template?.width || 297}×{template?.height || 420}mm)
                   </div>
                 </div>
               </div>
 
-              {/* Page 2 Preview - Garment Background (Same artwork + garment color) */}
+              {/* Page 2 Preview - Garment Background */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Canvas preview with garment color background */}
+                  {/* Same color grid but with garment color background */}
                   <div 
-                    className="relative border border-gray-200"
+                    className="relative border border-dashed border-gray-300"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
@@ -158,7 +182,31 @@ export default function PDFPreviewModal({
                       backgroundColor: project?.garmentColor || '#D2E31D'
                     }}
                   >
-                    {/* Render positioned logos exactly as they appear in PDF page 2 */}
+                    {/* Render color grid background */}
+                    <div className="absolute inset-0 grid grid-cols-5 gap-1 p-2">
+                      {Array.from({ length: 50 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="aspect-square rounded"
+                          style={{
+                            backgroundColor: [
+                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
+                              '#E53E3E', '#FBB040', '#38A169', '#3182CE', '#805AD5',
+                              '#F56565', '#FF8C00', '#48BB78', '#4299E1', '#9F7AEA',
+                              '#FC8181', '#FFA500', '#68D391', '#63B3ED', '#B794F6',
+                              '#FEB2B2', '#FFB74D', '#9AE6B4', '#90CDF4', '#D6BCFA',
+                              '#D2E31D', '#F6E05E', '#C6F6D5', '#BEE3F8', '#E9D8FD',
+                              '#7FFFD4', '#40E0D0', '#48CAE4', '#6A4C93', '#C9ADA7',
+                              '#8B5CF6', '#F687B3', '#FCD34D', '#10B981', '#06B6D4',
+                              '#6366F1', '#EC4899', '#F59E0B', '#059669', '#0891B2',
+                              '#4F46E5', '#DB2777', '#D97706', '#047857', '#0E7490'
+                            ][i % 50]
+                          }}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Render positioned logos */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
@@ -166,7 +214,7 @@ export default function PDFPreviewModal({
                       return (
                         <div
                           key={element.id}
-                          className="absolute"
+                          className="absolute z-10"
                           style={{
                             left: `${(element.x / (template?.width || 297)) * 100}%`,
                             top: `${(element.y / (template?.height || 420)) * 100}%`,
@@ -193,7 +241,6 @@ export default function PDFPreviewModal({
                   <div className="absolute bottom-2 left-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
                     Garment Color: {(() => {
                       const color = project?.garmentColor || '#D2E31D';
-                      // Convert hex to color name
                       const colorNames: { [key: string]: string } = {
                         '#D2E31D': 'Lime Green',
                         '#FFFFFF': 'White',
