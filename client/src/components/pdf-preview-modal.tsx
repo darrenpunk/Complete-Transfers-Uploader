@@ -148,20 +148,22 @@ export default function PDFPreviewModal({
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
                 <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Same positioned logos but with garment color background */}
+                  {/* Template container with individual garment color areas */}
                   <div 
-                    className="relative border border-dashed border-gray-300"
+                    className="relative border border-dashed border-gray-300 bg-gray-100"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
-                      maxWidth: '280px',
-                      backgroundColor: project?.garmentColor || '#D2E31D'
+                      maxWidth: '280px'
                     }}
                   >
-                    {/* Render positioned logos that contain the artwork with color grids */}
+                    {/* Render individual garment color backgrounds for each logo */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
+                      
+                      // Use element's individual garment color or fall back to project color
+                      const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
                       
                       return (
                         <div
@@ -174,12 +176,14 @@ export default function PDFPreviewModal({
                             height: `${(element.height / (template?.height || 420)) * 100}%`,
                             transform: `rotate(${element.rotation || 0}deg)`,
                             opacity: element.opacity || 1,
+                            backgroundColor: garmentColor,
+                            border: '1px solid rgba(0,0,0,0.1)'
                           }}
                         >
                           <img
                             src={`/uploads/${logo.filename}`}
                             alt={logo.originalName}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain relative z-10"
                             style={{ 
                               filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
                             }}
@@ -189,10 +193,9 @@ export default function PDFPreviewModal({
                     })}
                   </div>
                   
-                  {/* Garment color label with CMYK values */}
-                  <div className="absolute bottom-2 left-2 text-xs bg-white/80 px-2 py-1 rounded text-[#292828]">
-                    Garment Color: {(() => {
-                      const color = project?.garmentColor || '#D2E31D';
+                  {/* Individual garment color labels */}
+                  <div className="absolute bottom-2 left-2 text-xs bg-white/90 px-2 py-1 rounded text-[#292828] max-w-[200px]">
+                    Garment Colors: {(() => {
                       const colorData: { [key: string]: { name: string; cmyk: string } } = {
                         '#D2E31D': { name: 'Lime Green', cmyk: '(25, 0, 95, 0)' },
                         '#FFFFFF': { name: 'White', cmyk: '(0, 0, 0, 0)' },
@@ -206,14 +209,20 @@ export default function PDFPreviewModal({
                         '#FFC0CB': { name: 'Pink', cmyk: '(0, 25, 5, 0)' },
                         '#808080': { name: 'Gray', cmyk: '(0, 0, 0, 50)' },
                         '#A52A2A': { name: 'Brown', cmyk: '(0, 75, 75, 35)' },
+                        '#762009': { name: 'Brown', cmyk: '(0, 75, 85, 54)' },
                         '#00FFFF': { name: 'Cyan', cmyk: '(100, 0, 0, 0)' },
                         '#FF00FF': { name: 'Magenta', cmyk: '(0, 100, 0, 0)' },
                         '#800000': { name: 'Maroon', cmyk: '(0, 100, 100, 50)' },
                         '#008000': { name: 'Dark Green', cmyk: '(100, 0, 100, 50)' },
                         '#000080': { name: 'Navy Blue', cmyk: '(100, 100, 0, 50)' }
                       };
-                      const colorInfo = colorData[color];
-                      return colorInfo ? `${colorInfo.name} ${colorInfo.cmyk}` : color;
+                      
+                      // Get unique garment colors from canvas elements
+                      const uniqueColors = [...new Set(canvasElements.map(el => el.garmentColor || project?.garmentColor || '#D2E31D'))];
+                      return uniqueColors.map(color => {
+                        const colorInfo = colorData[color];
+                        return colorInfo ? `${colorInfo.name} ${colorInfo.cmyk}` : color;
+                      }).join(', ');
                     })()}
                   </div>
                 </div>
