@@ -179,13 +179,35 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             {/* Real PDF Preview */}
-            <div className="flex-1 border rounded-lg bg-white overflow-hidden">
+            <div className="flex-1 border rounded-lg bg-white overflow-hidden relative">
               <iframe
-                src={project ? `/api/projects/${project.id}/generate-pdf?preview=true` : ''}
+                src={project ? `/api/projects/${project.id}/generate-pdf?preview=true&t=${Date.now()}` : ''}
                 className="w-full h-full border-0"
                 title="PDF Preview"
                 style={{ minHeight: '500px' }}
+                sandbox="allow-same-origin allow-scripts"
+                referrerPolicy="same-origin"
+                loading="lazy"
+                onError={(e) => {
+                  console.error('PDF iframe failed to load:', e);
+                  // Show fallback message or button
+                }}
               />
+              
+              {/* Fallback button for Chrome blocking */}
+              <div className="absolute top-4 right-4">
+                <button
+                  onClick={() => {
+                    if (project) {
+                      window.open(`/api/projects/${project.id}/generate-pdf?preview=true&t=${Date.now()}`, '_blank');
+                    }
+                  }}
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  title="Open PDF in new tab"
+                >
+                  Open in New Tab
+                </button>
+              </div>
             </div>
           </div>
 
