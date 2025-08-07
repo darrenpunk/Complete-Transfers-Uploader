@@ -824,14 +824,13 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // CRITICAL FIX: Proper Y-coordinate conversion from canvas to PDF
-    // Canvas: Y=0 at TOP, increasing downward
-    // PDF: Y=0 at BOTTOM, increasing upward
+    // FINAL FIX: Correct Y-coordinate conversion from canvas to PDF
+    // Canvas: Y=0 at TOP, increasing downward (Y=140 means 140px down from top)
+    // PDF: Y=0 at BOTTOM, increasing upward 
     const x = xInMm * scale;
-    // Convert canvas Y (from top) to PDF Y (from bottom)
-    // If user places at Y=140 on canvas, it should be 140 units DOWN from top
-    // PDF equivalent: pageHeight - yInMm - elementHeight
-    const y = pageHeight - yInMm * scale - (elementHeightMm * scale);
+    // Convert properly: if canvas Y=140, it should appear 140 units DOWN from TOP
+    // PDF calculation: Start from top (pageHeight) and subtract the distance from top
+    const y = pageHeight - (yInMm * scale) - (elementHeightMm * scale);
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
