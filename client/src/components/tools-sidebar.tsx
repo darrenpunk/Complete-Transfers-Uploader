@@ -930,18 +930,19 @@ export default function ToolsSidebar({
                 svgColors: svgColors.map(c => ({ isCMYK: c.isCMYK, converted: c.converted }))
               });
 
-              if (hasConvertedColors || hasCMYKColors || isCMYKPreserved) {
-                // File was automatically converted to CMYK during upload or has CMYK colors
-                colorValue = `CMYK Vector`;
+              // Since we preserve all colors exactly as uploaded, always show pass status
+              if (hasCMYKColors || isCMYKPreserved) {
+                // File has CMYK colors - preserved exactly
+                colorValue = `CMYK Vector (Preserved)`;
                 colorStatus = "pass";
               } else if (hasColorOverrides) {
-                // Manual color changes applied (becomes CMYK)
-                colorValue = `CMYK Vector`;
+                // Manual color changes applied
+                colorValue = `Modified Colors`;
                 colorStatus = "pass";
               } else {
-                // Original RGB file - show conversion option
-                colorValue = `RGB Vector`;
-                colorStatus = "warning";
+                // RGB vector file - preserved exactly (no conversion notification)
+                colorValue = `RGB Vector (Preserved)`;
+                colorStatus = "pass";
               }
             } else if (isVector) {
               // Vector files without detected colors (might be single color or grayscale)
