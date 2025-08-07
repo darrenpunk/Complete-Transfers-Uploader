@@ -93,130 +93,113 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             <div className="flex gap-4 flex-1">
-              {/* Page 1 Preview */}
+              {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg bg-white p-3 flex-1 flex items-start justify-center relative overflow-hidden">
-                  {/* Canvas preview background */}
+                <div className="border rounded-lg bg-black p-3 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Template preview with dashed border */}
                   <div 
-                    className="mt-2 border-2 border-dashed border-gray-300 rounded"
+                    className="border-2 border-dashed border-gray-400 rounded relative"
                     style={{
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                       width: '90%',
-                      maxWidth: '280px'
+                      maxWidth: '280px',
+                      backgroundColor: 'transparent'
                     }}
                   >
-                    {/* Template background with garment color */}
-                    <div 
-                      className="w-full h-full relative"
-                      style={{
-                        backgroundColor: project?.garmentColor || '#D2E31D',
-                      }}
-                    >
-                      {/* Render positioned logos */}
-                      {canvasElements.map((element) => {
-                        const logo = logos.find(l => l.id === element.logoId);
-                        if (!logo) return null;
-                        
-                        return (
-                          <div
-                            key={element.id}
-                            className="absolute"
-                            style={{
-                              left: `${(element.x / (template?.width || 297)) * 100}%`,
-                              top: `${(element.y / (template?.height || 420)) * 100}%`,
-                              width: `${(element.width / (template?.width || 297)) * 100}%`,
-                              height: `${(element.height / (template?.height || 420)) * 100}%`,
-                              transform: `rotate(${element.rotation || 0}deg)`,
-                              opacity: element.opacity || 1,
-                            }}
-                          >
-                            <img
-                              src={`/uploads/${logo.filename}`}
-                              alt={logo.originalName}
-                              className="w-full h-full object-contain"
-                              style={{ 
-                                filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
-                              }}
-                            />
-                          </div>
-                        );
-                      })}
+                    {/* Render positioned logos on transparent background */}
+                    {canvasElements.map((element) => {
+                      const logo = logos.find(l => l.id === element.logoId);
+                      if (!logo) return null;
                       
-                      {/* Template size label */}
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                        {template?.name || 'A3'} - {template?.width || 297}×{template?.height || 420}mm
-                      </div>
+                      return (
+                        <div
+                          key={element.id}
+                          className="absolute"
+                          style={{
+                            left: `${(element.x / (template?.width || 297)) * 100}%`,
+                            top: `${(element.y / (template?.height || 420)) * 100}%`,
+                            width: `${(element.width / (template?.width || 297)) * 100}%`,
+                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            transform: `rotate(${element.rotation || 0}deg)`,
+                            opacity: element.opacity || 1,
+                          }}
+                        >
+                          <img
+                            src={`/uploads/${logo.filename}`}
+                            alt={logo.originalName}
+                            className="w-full h-full object-contain"
+                            style={{ 
+                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Template size label */}
+                    <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-400">
+                      {template?.name || 'business_card'} ({template?.width || 295}×{template?.height || 100}mm)
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Page 2 Preview */}
+              {/* Page 2 Preview - Garment Background */}
               <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Color Information</h4>
-                <div className="border rounded-lg bg-white p-4 flex-1 overflow-auto">
-                  <div className="space-y-4">
-                    {/* Project Info */}
-                    <div className="text-center border-b pb-4">
-                      <h3 className="font-bold text-lg">{project?.name || 'Untitled Project'}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Template: {template?.name || 'A3'} ({template?.width || 297}×{template?.height || 420}mm)
-                      </p>
-                    </div>
-                    
-                    {/* Logo Colors */}
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2">Logo Colors:</h4>
-                      <div className="space-y-2">
-                        {logos.map((logo) => {
-                          const svgColors = logo.svgColors as any;
-                          const colors = svgColors?.colors || [];
-                          
-                          return (
-                            <div key={logo.id} className="bg-gray-50 p-2 rounded text-xs">
-                              <div className="font-medium truncate mb-1">{logo.originalName}</div>
-                              <div className="flex flex-wrap gap-1">
-                                {colors.slice(0, 6).map((color: any, idx: number) => (
-                                  <div key={idx} className="flex items-center gap-1">
-                                    <div
-                                      className="w-3 h-3 rounded border border-gray-300"
-                                      style={{ backgroundColor: color.originalColor }}
-                                    />
-                                    <span className="text-xs">{color.originalColor}</span>
-                                  </div>
-                                ))}
-                                {colors.length > 6 && (
-                                  <span className="text-xs text-gray-500">+{colors.length - 6} more</span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    
-                    {/* Garment Color */}
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2">Garment Color:</h4>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-300"
-                          style={{ backgroundColor: project?.garmentColor || '#D2E31D' }}
-                        />
-                        <span className="text-sm">{project?.garmentColor || '#D2E31D'}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Production Notes */}
-                    <div className="bg-blue-50 p-3 rounded text-xs">
-                      <h4 className="font-semibold mb-1">Production Notes:</h4>
-                      <ul className="space-y-1 text-gray-700">
-                        <li>• Colors preserved from original artwork</li>
-                        <li>• Vector graphics maintain quality at any size</li>
-                        <li>• CMYK color space for professional printing</li>
-                        <li>• Template positioned for optimal transfer placement</li>
-                      </ul>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                <div className="border rounded-lg bg-black p-3 flex-1 flex items-center justify-center relative overflow-hidden">
+                  {/* Grid of garment colors with logo */}
+                  <div className="w-full h-full max-w-sm max-h-80">
+                    <div className="grid grid-cols-4 gap-2 h-full">
+                      {(() => {
+                        // Create 20 color variants for the grid display
+                        const garmentColors = [
+                          '#FFFFFF', '#000000', '#FF0000', '#0000FF',
+                          '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF',
+                          '#808080', '#800000', '#008000', '#000080',
+                          '#808000', '#800080', '#008080', '#C0C0C0',
+                          '#FFA500', '#FFC0CB', '#A52A2A', '#90EE90'
+                        ];
+                        
+                        // Use the project's garment color for some slots, otherwise use variants
+                        const defaultColor = project?.garmentColor || '#D2E31D';
+                        const finalColors = garmentColors.map((color, idx) => 
+                          idx < 4 ? defaultColor : color
+                        );
+                        
+                        return finalColors.map((color, idx) => (
+                          <div
+                            key={idx}
+                            className="relative aspect-square rounded overflow-hidden"
+                            style={{ backgroundColor: color }}
+                          >
+                            {/* Render the logo on each garment color */}
+                            {canvasElements.map((element) => {
+                              const logo = logos.find(l => l.id === element.logoId);
+                              if (!logo) return null;
+                              
+                              return (
+                                <div
+                                  key={`${idx}-${element.id}`}
+                                  className="absolute inset-0 flex items-center justify-center p-1"
+                                >
+                                  <img
+                                    src={`/uploads/${logo.filename}`}
+                                    alt={logo.originalName}
+                                    className="max-w-full max-h-full object-contain"
+                                    style={{ 
+                                      width: '80%',
+                                      height: '80%',
+                                      filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                                    }}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
