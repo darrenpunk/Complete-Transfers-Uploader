@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **✅ CRITICAL PDF POSITIONING FIX (Aug 8, 2025)**: Identified and resolved Y-coordinate conversion error. Canvas Y=161 was incorrectly converting to PDF Y=939 (placing logos too high). Fixed coordinate system conversion: Canvas Y=0 (top) to PDF Y=0 (bottom) now properly calculates as `pageHeight - distanceFromTop` instead of `pageHeight - distanceFromTop - elementHeight`. This ensures logos appear exactly where positioned on canvas.
+- **🔧 ONGOING PDF POSITIONING ISSUE (Aug 8, 2025)**: Identified core problem with Y-coordinate conversion. Canvas shows Y=165 (appears centered visually) but calculates to 58mm from top (14% down) instead of center (50% down). This suggests canvas visual positioning doesn't match stored coordinates. Investigation shows mathematical conversion is correct but visual vs. data positioning discrepancy exists. Multiple fixes attempted but positioning still incorrect.
 - **🔧 PDF Preview Display Issue**: PDF preview shows gray placeholder instead of actual artwork. Issue persists with iframe source URL not displaying generated PDF content correctly.
 
 ## System Architecture

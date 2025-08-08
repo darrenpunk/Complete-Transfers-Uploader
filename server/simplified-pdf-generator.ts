@@ -824,14 +824,16 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // CORRECTED: Y-coordinate conversion from canvas to PDF coordinate systems
-    // Canvas: Y=0 at TOP, user positioning Y=161 means 161px down from top
-    // PDF: Y=0 at BOTTOM, so we need to convert top-based to bottom-based
+    // FINAL CORRECTION: Proper coordinate system conversion
+    // Canvas: Y=0 at TOP, Y increases downward
+    // PDF: Y=0 at BOTTOM, Y increases upward
+    // When canvas shows Y=165 (center), PDF should show center too
     const x = xInMm * scale;
-    // For proper conversion: canvas Y=161 should place logo 161 units down from top
-    // PDF Y should be: pageHeight - (distance from top in points)
-    const distanceFromTopInPoints = yInMm * scale;
-    const y = pageHeight - distanceFromTopInPoints;
+    // Convert canvas position to PDF position:
+    // Canvas Y=165 on 420mm template = 39% down from top
+    // PDF should place at 39% up from bottom = pageHeight * 0.61
+    // Calculation: pageHeight - (yInMm * scale) gives distance from bottom
+    const y = pageHeight - (yInMm * scale);
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
@@ -840,7 +842,9 @@ export class SimplifiedPDFGenerator {
       positionMm: { x: xInMm, y: yInMm },
       positionPoints: { x, y },
       pageSize: { width: pageWidth, height: pageHeight },
-      elementSizeMm: { w: elementWidthMm, h: elementHeightMm }
+      elementSizeMm: { w: elementWidthMm, h: elementHeightMm },
+      percentageFromTop: `${((yInMm / templateSize.height) * 100).toFixed(1)}%`,
+      percentageFromBottom: `${(((templateSize.height - yInMm) / templateSize.height) * 100).toFixed(1)}%`
     });
     
     // FIXED: Respect user's canvas positioning with proper coordinate conversion
