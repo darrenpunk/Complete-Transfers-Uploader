@@ -419,28 +419,29 @@ export class OriginalWorkingGenerator {
     const scaleX = pageWidth / templateSize.pixelWidth;
     const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // Center the artwork properly on the page
-    const scaleDownFactor = 0.8; // Use same factor as size calculation
-    const elementWidthPoints = element.width * (pageWidth / templateSize.pixelWidth) * scaleDownFactor;
-    const elementHeightPoints = element.height * (pageHeight / templateSize.pixelHeight) * scaleDownFactor;
+    // Use EXACT canvas coordinates - no artificial centering
+    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
+    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Center the element on the page
-    const centerX = (pageWidth - elementWidthPoints) / 2;
-    const centerY = (pageHeight - elementHeightPoints) / 2;
+    // Convert canvas position directly to PDF position
+    const pdfX = element.x * canvasToPageScaleX;
+    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
+    const pdfY = pageHeight - (element.y * canvasToPageScaleY) - (element.height * canvasToPageScaleY);
     
-    const finalX = centerX;
-    const finalY = centerY;
+    const finalX = pdfX;
+    const finalY = pdfY;
     
-    console.log(`📐 Centered positioning calculation:`, {
-      elementWidth: element.width,
-      elementHeight: element.height,
-      elementWidthPoints: elementWidthPoints.toFixed(1),
-      elementHeightPoints: elementHeightPoints.toFixed(1),
+    console.log(`📐 Exact canvas coordinate conversion:`, {
+      canvasX: element.x,
+      canvasY: element.y,
+      canvasWidth: element.width,
+      canvasHeight: element.height,
       pageWidth: pageWidth.toFixed(1),
       pageHeight: pageHeight.toFixed(1),
-      scaleDownFactor: scaleDownFactor,
-      centerX: centerX.toFixed(1),
-      centerY: centerY.toFixed(1),
+      scaleX: canvasToPageScaleX.toFixed(4),
+      scaleY: canvasToPageScaleY.toFixed(4),
+      pdfX: pdfX.toFixed(1),
+      pdfY: pdfY.toFixed(1),
       finalX: finalX.toFixed(1),
       finalY: finalY.toFixed(1)
     });
@@ -455,25 +456,23 @@ export class OriginalWorkingGenerator {
     // Use the same scale factors as position calculation for consistency
     const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    // Use proper scaling that matches the positioning calculation
+    // Use EXACT canvas size - no artificial scaling
     const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
     const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Use 80% scaling to make artwork visible but not oversized
-    const scaleDownFactor = 0.8;
-    const width = element.width * canvasToPageScaleX * scaleDownFactor;
-    const height = element.height * canvasToPageScaleY * scaleDownFactor;
+    // Scale element dimensions exactly as they appear on canvas
+    const width = element.width * canvasToPageScaleX;
+    const height = element.height * canvasToPageScaleY;
     
-    console.log(`📏 Centered size calculation:`, {
-      elementWidth: element.width,
-      elementHeight: element.height,
+    console.log(`📏 Exact canvas size calculation:`, {
+      canvasWidth: element.width,
+      canvasHeight: element.height,
       templatePixelWidth: templateSize.pixelWidth,
       templatePixelHeight: templateSize.pixelHeight,
       pageWidth: pageWidth.toFixed(1),
       pageHeight: pageHeight.toFixed(1),
       scaleX: canvasToPageScaleX.toFixed(4),
       scaleY: canvasToPageScaleY.toFixed(4),
-      scaleDownFactor: scaleDownFactor,
       finalWidth: width.toFixed(1),
       finalHeight: height.toFixed(1)
     });
