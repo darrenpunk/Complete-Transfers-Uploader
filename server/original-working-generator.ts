@@ -333,7 +333,7 @@ export class OriginalWorkingGenerator {
     try {
       // Check if we have the original CMYK PDF file
       if (logo && logo.originalPdfPath) {
-        const originalPdfPath = path.resolve(process.cwd(), 'uploads', path.basename(logo.originalPdfPath));
+        const originalPdfPath = path.resolve(process.cwd(), 'uploads', logo.originalPdfPath);
         if (fs.existsSync(originalPdfPath)) {
           console.log(`🎨 Using original CMYK PDF instead of converted SVG: ${originalPdfPath}`);
           return this.embedPDFLogo(page, element, originalPdfPath, templateSize);
@@ -343,13 +343,25 @@ export class OriginalWorkingGenerator {
       // Check if this SVG was converted from a CMYK PDF
       const svgContent = fs.readFileSync(logoPath, 'utf8');
       const isCMYKConverted = svgContent.includes('data-vectorized-cmyk="true"') || 
-                              svgContent.includes('data-original-cmyk-pdf="true"');
+                              svgContent.includes('data-original-cmyk-pdf="true"') ||
+                              svgContent.includes('data-cmyk-preserved="true"');
       
       if (isCMYKConverted) {
-        // Try to find the original PDF file
+        // Extract the original PDF filename from SVG attributes
+        const originalPdfMatch = svgContent.match(/data-original-cmyk-pdf="([^"]+)"/);
+        if (originalPdfMatch) {
+          const originalPdfFilename = originalPdfMatch[1];
+          const originalPdfPath = path.resolve(process.cwd(), 'uploads', originalPdfFilename);
+          if (fs.existsSync(originalPdfPath)) {
+            console.log(`🎨 Found original CMYK PDF from SVG metadata: ${originalPdfPath}`);
+            return this.embedPDFLogo(page, element, originalPdfPath, templateSize);
+          }
+        }
+        
+        // Fallback: Try to find the original PDF file based on naming convention
         const pdfFilename = logoPath.replace('.svg', '').replace(/\.[^.]+\.svg$/, '');
         if (fs.existsSync(pdfFilename)) {
-          console.log(`🎨 Found original CMYK PDF, using it instead of SVG: ${pdfFilename}`);
+          console.log(`🎨 Found original CMYK PDF by name: ${pdfFilename}`);
           return this.embedPDFLogo(page, element, pdfFilename, templateSize);
         }
       }

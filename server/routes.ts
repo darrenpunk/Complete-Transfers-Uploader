@@ -900,6 +900,14 @@ export async function registerRoutes(app: express.Application) {
             if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
               
+              // IMPORTANT: Keep the original PDF file for later use
+              const originalPdfFilename = `original_${file.filename}`;
+              const originalPdfPath = path.join(uploadDir, originalPdfFilename);
+              
+              // Copy the original PDF to preserve it
+              fs.copyFileSync(pdfPath, originalPdfPath);
+              console.log(`📁 Preserved original CMYK PDF: ${originalPdfFilename}`);
+              
               // Convert to SVG for canvas display (vectors preserved)
               try {
                 const svgFilename = `${file.filename}.svg`;
@@ -920,13 +928,17 @@ export async function registerRoutes(app: express.Application) {
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                   // Clean SVG content to remove stroke scaling issues
                   const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  let svgContent = fs.readFileSync(svgPath, 'utf8');
+                  
+                  // Add markers to indicate this SVG came from a CMYK PDF
+                  svgContent = svgContent.replace('<svg', `<svg data-original-cmyk-pdf="${originalPdfFilename}" data-cmyk-preserved="true"`);
+                  
                   const cleanedSvg = removeVectorizedBackgrounds(svgContent);
                   fs.writeFileSync(svgPath, cleanedSvg);
                   console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
                   
                   // Store original PDF info for later embedding
-                  (file as any).originalPdfPath = pdfPath;
+                  (file as any).originalPdfPath = originalPdfFilename;
                   (file as any).isCMYKPreserved = true;
                   
                   // Use SVG for display but remember to use PDF for output

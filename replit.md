@@ -11,6 +11,7 @@ Preferred communication style: Simple, everyday language.
 - **✅ Two-Page PDF Format Enforced**: System now generates proper dual-page PDFs with Page 1 (transparent background) and Page 2 (garment color background + labels) exactly like user's working examples.
 - **🎨 Garment Color Labels & CMYK Values**: Added proper color labeling system matching user's PDF format with garment color names and hex values displayed at bottom of Page 2.
 - **🔧 Clean Architecture**: Eliminated all compilation cache issues, iframe problems, and broken generators. Fresh start with working fundamentals.
+- **CRITICAL FIX: CMYK PDF Preservation**: Fixed major regression where CMYK PDFs were being converted to RGB SVGs during upload, losing original color data. Now preserves original CMYK PDF files with `original_` prefix and embeds them directly during PDF generation to maintain vector paths and CMYK color accuracy.
 
 ## Previous Changes (August 7, 2025)
 - **Software-Specific Guides Removed**: Removed the software application guides section from the Color Modes modal to simplify the interface.
