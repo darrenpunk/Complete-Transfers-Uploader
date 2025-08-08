@@ -1779,8 +1779,8 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Static file serving with fallback
-  app.use('/uploads', express.static(uploadDir));
+  // Static file serving is already handled in server/index.ts
+  // Removed duplicate: app.use('/uploads', express.static(uploadDir));
 
   // Update canvas element endpoint
   app.patch('/api/canvas-elements/:elementId', async (req, res) => {
@@ -1934,25 +1934,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Ink recolor endpoint (simplified)
-  app.get('/uploads/:filename', (req, res, next) => {
-    const filename = req.params.filename;
-    const filePath = path.join(uploadDir, filename);
-    
-    if (fs.existsSync(filePath)) {
-      res.sendFile(filePath);
-    } else {
-      // Try fallback to original PDF if SVG doesn't exist
-      const pdfFilename = filename.replace('.svg', '');
-      const pdfPath = path.join(uploadDir, pdfFilename);
-      
-      if (fs.existsSync(pdfPath)) {
-        res.sendFile(pdfPath);
-      } else {
-        next();
-      }
-    }
-  });
+  // Removed duplicate /uploads route handler - already handled in server/index.ts
 
   // SVG Analysis endpoint for stroke width detection
   app.post('/api/logos/:logoId/analyze', async (req, res) => {
