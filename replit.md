@@ -20,9 +20,9 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **🔧 CRITICAL POSITIONING AND DUPLICATION FIX (Aug 8, 2025)**: Identified root cause - TypeScript compilation cache preventing code updates. Implemented force-center positioning and removed automatic page 2 creation to fix duplicate PDF issue. Server restart required to apply changes.
+- **🔧 CRITICAL COMPILATION CACHE ISSUE (Aug 8, 2025)**: TypeScript compilation cache causing errors in simplified-pdf-generator.ts despite code being correct. Variables like `canvasYPercentage` and `page2` showing as undefined even after being removed from code. Multiple restarts required to clear cache completely.
 - **✅ PDF Preview Content-Disposition Fixed**: Header correctly set to `inline` for preview mode, eliminating auto-download issues.
-- **⚠️ Compilation Cache Issue**: Development environment not applying TypeScript changes to positioning logic. Server restart clears both project data and forces code recompilation.
+- **⚠️ Development Environment Instability**: Code changes not being applied consistently due to TypeScript compilation pipeline issues.
 
 ## System Architecture
 

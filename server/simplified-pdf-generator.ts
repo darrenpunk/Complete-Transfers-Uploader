@@ -92,28 +92,6 @@ export class SimplifiedPDFGenerator {
     // CRITICAL FIX: Only create page 2 if explicitly requested
     // The duplicate PDF issue is caused by always creating 2 pages
     console.log('📄 Single page PDF generated - removing automatic page 2 creation');
-    
-    // Comment out page 2 creation to fix duplicate PDF issue
-    /*
-    const page2 = pdfDoc.addPage([
-      data.templateSize.width * 2.834,
-      data.templateSize.height * 2.834
-    ]);
-    
-    // Draw individual element backgrounds with labels
-    await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
-    await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
-    
-    // Add color labels to page 2
-    await this.addColorLabels(pdfDoc, page2, data.canvasElements, data.templateSize, data.garmentColor);
-    */
-    
-    // Draw individual element backgrounds with labels
-    await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
-    await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
-    
-    // Add color labels to page 2
-    await this.addColorLabels(pdfDoc, page2, data.canvasElements, data.templateSize, data.garmentColor);
 
     const pdfBytes = await pdfDoc.save();
     console.log('✅ Simplified PDF generated successfully');
@@ -855,8 +833,7 @@ export class SimplifiedPDFGenerator {
       templateSizeMm: { w: templateSize.width, h: templateSize.height },
       templateSizePixels: { w: templateSize.pixelWidth, h: templateSize.pixelHeight },
       positionMm: { x: xInMm, y: yInMm },
-      canvasYPercentage: canvasYPercentage,
-      pdfYFromBottom: pdfYFromBottom,
+      forcedCenterY: centerY,
       positionPoints: { x, y },
       pageSize: { width: pageWidth, height: pageHeight },
       elementSizeMm: { w: elementWidthMm, h: elementHeightMm },
