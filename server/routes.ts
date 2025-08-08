@@ -1388,9 +1388,12 @@ export async function registerRoutes(app: express.Application) {
         }
         
         // Add original PDF info for CMYK PDFs or PDFs with raster only
-        if ((file as any).originalPdfPath && ((file as any).isCMYKPreserved || (file as any).isPdfWithRasterOnly)) {
-          logoData.originalFilename = file.filename; // Store the original PDF filename
-          logoData.originalMimeType = 'application/pdf';
+        if ((file as any).originalPdfPath) {
+          logoData.originalPdfPath = (file as any).originalPdfPath;
+          if ((file as any).isCMYKPreserved || (file as any).isPdfWithRasterOnly) {
+            logoData.originalFilename = file.filename; // Store the original PDF filename
+            logoData.originalMimeType = 'application/pdf';
+          }
         }
         
         // Add original AI/EPS info for vector files

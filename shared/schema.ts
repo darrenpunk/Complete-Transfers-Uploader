@@ -33,6 +33,7 @@ export const logos = pgTable("logos", {
   originalFilename: text("original_filename"), // Store original PDF filename for vector output
   originalMimeType: text("original_mime_type"), // Store original PDF mime type
   originalUrl: text("original_url"), // Store original PDF URL for vector output
+  originalPdfPath: text("original_pdf_path"), // Store path to preserved CMYK PDF file
   svgColors: jsonb("svg_colors"), // Store detected SVG colors for color manipulation
   svgFonts: jsonb("svg_fonts"), // Store detected SVG fonts for font analysis
   fontsOutlined: boolean("fonts_outlined").default(false), // Track if fonts have been outlined
