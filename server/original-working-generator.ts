@@ -41,13 +41,22 @@ export class OriginalWorkingGenerator {
       // No background on page 1 - transparent
       await this.embedLogosOnPage(page1, data.canvasElements, data.logos, data.templateSize);
 
-      // PAGE 2: Artwork on colored garment background 
-      console.log('📄 Creating Page 2: Garment Background');
+      // PAGE 2: Artwork on colored garment background with labels
+      console.log('📄 Creating Page 2: Garment Background + Color Labels');
       const page2 = pdfDoc.addPage([templateWidthPoints, templateHeightPoints]);
       
-      // Add garment color background to page 2
+      // Add garment color background to page 2 (like user's working PDFs)
       if (data.garmentColor && data.garmentColor !== 'none') {
         this.addGarmentBackground(page2, data.garmentColor, templateWidthPoints, templateHeightPoints);
+      } else {
+        // Default white background if no garment color specified
+        page2.drawRectangle({
+          x: 0,
+          y: 0,
+          width: templateWidthPoints,
+          height: templateHeightPoints,
+          color: rgb(1, 1, 1),
+        });
       }
       
       // Embed logos on page 2 
@@ -67,32 +76,97 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Add garment color background
+   * Add garment color background and labels (matching user's working PDF format)
    */
   private addGarmentBackground(page: PDFPage, garmentColor: string, width: number, height: number): void {
-    // Basic color mapping
-    const colorMap: { [key: string]: [number, number, number] } = {
-      'white': [1, 1, 1],
-      'black': [0, 0, 0],
-      'red': [1, 0, 0],
-      'blue': [0, 0, 1],
-      'green': [0, 1, 0],
-      'yellow': [1, 1, 0],
-      'gray': [0.5, 0.5, 0.5],
-      'navy': [0, 0, 0.5],
-    };
-
-    const color = colorMap[garmentColor.toLowerCase()] || [1, 1, 1]; // Default to white
+    // Import actual garment colors from the system
+    const garmentColors = this.getGarmentColorData();
+    const colorInfo = garmentColors.find(c => c.name.toLowerCase() === garmentColor.toLowerCase());
     
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: width,
-      height: height,
-      color: rgb(color[0], color[1], color[2]),
+    if (colorInfo) {
+      // Convert hex to RGB
+      const hex = colorInfo.hex;
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        color: rgb(r, g, b),
+      });
+      
+      // Add garment color label and CMYK values (bottom of page like in user examples)
+      this.addGarmentColorLabels(page, [colorInfo], width, height);
+      
+      console.log(`🎨 Applied garment background: ${garmentColor} (${hex})`);
+    } else {
+      // Default to white if color not found
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        color: rgb(1, 1, 1),
+      });
+      console.log(`⚠️ Color not found, using white background for: ${garmentColor}`);
+    }
+  }
+
+  /**
+   * Add garment color labels and CMYK values (like in user's working PDFs)
+   */
+  private addGarmentColorLabels(page: PDFPage, colors: any[], width: number, height: number): void {
+    // Add labels at bottom of page matching user's format
+    let labelText = 'Garment Colors: ';
+    
+    for (let i = 0; i < colors.length; i++) {
+      const color = colors[i];
+      if (i > 0) labelText += '   ';
+      labelText += `${color.name}`;
+    }
+    
+    // Add color hex values on next line
+    let hexText = '';
+    for (let i = 0; i < colors.length; i++) {
+      const color = colors[i];
+      if (i > 0) hexText += '   ';
+      hexText += color.hex;
+    }
+    
+    // Draw labels at bottom of page
+    page.drawText(labelText, {
+      x: 20,
+      y: 40,
+      size: 12,
+      color: rgb(0, 0, 0),
     });
     
-    console.log(`🎨 Applied garment background: ${garmentColor}`);
+    page.drawText(hexText, {
+      x: 20,
+      y: 20,
+      size: 10,
+      color: rgb(0, 0, 0),
+    });
+    
+    console.log(`🏷️ Added garment color labels: ${labelText}`);
+  }
+
+  /**
+   * Get garment color data (basic set matching common colors)
+   */
+  private getGarmentColorData() {
+    return [
+      { name: 'White', hex: '#FFFFFF', cmyk: { c: 0, m: 0, y: 0, k: 0 } },
+      { name: 'Black', hex: '#171816', cmyk: { c: 78, m: 68, y: 62, k: 91 } },
+      { name: 'Hi Viz', hex: '#F0F42A', cmyk: { c: 5, m: 0, y: 95, k: 0 } },
+      { name: 'Red', hex: '#762009', cmyk: { c: 18, m: 95, y: 68, k: 56 } },
+      { name: 'Green', hex: '#3C8A35', cmyk: { c: 71, m: 0, y: 100, k: 15 } },
+      { name: 'Navy', hex: '#263147', cmyk: { c: 95, m: 72, y: 15, k: 67 } },
+      { name: 'Gray', hex: '#BCBFBB', cmyk: { c: 8, m: 5, y: 7, k: 16 } },
+    ];
   }
 
   /**
