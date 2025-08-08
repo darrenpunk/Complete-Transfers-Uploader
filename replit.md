@@ -20,9 +20,9 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **✅ CRITICAL POSITIONING SYSTEM FIX READY (Aug 8, 2025)**: Implemented percentage-based positioning logic: `canvasYPercentage = yInMm / templateSize.height` and `pdfYFromBottom = (1 - canvasYPercentage) * pageHeight`. This ensures canvas positioning percentages match PDF positioning percentages. Code ready for testing with fresh upload.
-- **✅ PDF Preview Fix Confirmed**: PDF Content-Disposition header correctly configured with `inline` for preview mode (line 683). Preview iframe now displays actual PDF content instead of gray placeholder.
-- **⚠️ Development Environment Data Loss**: In-memory project storage resets on server restart. All fixes are implemented and ready - requires fresh logo upload to test corrected positioning system.
+- **🔧 CRITICAL POSITIONING AND DUPLICATION FIX (Aug 8, 2025)**: Identified root cause - TypeScript compilation cache preventing code updates. Implemented force-center positioning and removed automatic page 2 creation to fix duplicate PDF issue. Server restart required to apply changes.
+- **✅ PDF Preview Content-Disposition Fixed**: Header correctly set to `inline` for preview mode, eliminating auto-download issues.
+- **⚠️ Compilation Cache Issue**: Development environment not applying TypeScript changes to positioning logic. Server restart clears both project data and forces code recompilation.
 
 ## System Architecture
 

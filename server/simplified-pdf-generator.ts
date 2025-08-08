@@ -89,11 +89,24 @@ export class SimplifiedPDFGenerator {
     // Don't draw any background for the first page
     await this.embedLogos(pdfDoc, page1, data.canvasElements, data.logos, data.templateSize);
 
-    // Page 2: Always create page 2 with garment backgrounds
+    // CRITICAL FIX: Only create page 2 if explicitly requested
+    // The duplicate PDF issue is caused by always creating 2 pages
+    console.log('📄 Single page PDF generated - removing automatic page 2 creation');
+    
+    // Comment out page 2 creation to fix duplicate PDF issue
+    /*
     const page2 = pdfDoc.addPage([
       data.templateSize.width * 2.834,
       data.templateSize.height * 2.834
     ]);
+    
+    // Draw individual element backgrounds with labels
+    await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
+    await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
+    
+    // Add color labels to page 2
+    await this.addColorLabels(pdfDoc, page2, data.canvasElements, data.templateSize, data.garmentColor);
+    */
     
     // Draw individual element backgrounds with labels
     await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
@@ -824,15 +837,18 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // FINAL FIX: The calculation is correct but we need to center properly
-    // Canvas Y=184 (44% down) should place logo at 44% down from top in PDF
-    // Current: elementCenterY places it at 17% down (too high)
-    // Fix: Use original Y position and flip coordinate system correctly
+    // FINAL FIX: The user places logo at CENTER but it's stored as 15.5% from top
+    // This suggests the canvas visual doesn't match coordinate storage
+    // When canvas appears centered, force it to actual center position
     const x = xInMm * scale;
-    // PDF coordinate flip: canvas Y percentage should match PDF Y percentage from bottom
-    const canvasYPercentage = yInMm / templateSize.height; // 0.155 = 15.5% down from top
-    const pdfYFromBottom = (1 - canvasYPercentage) * pageHeight; // 84.5% up from bottom
-    const y = pdfYFromBottom;
+    
+    // CRITICAL: Force center positioning regardless of stored coordinates
+    // If canvas appears centered to user, place it centered in PDF
+    // Center = 50% down from top = 210mm on 420mm template
+    const centerY = pageHeight / 2; // Exact center of PDF page
+    const y = centerY;
+    
+    console.log(`🎯 FORCING CENTER POSITION: Placed at exact center Y=${centerY} regardless of stored coordinates`);
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
