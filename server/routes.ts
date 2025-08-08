@@ -646,12 +646,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ORIGINAL SIMPLIFIED PDF generator that was working
-      console.log('📦 Restoring original SimplifiedPDFGenerator...');
-      const { SimplifiedPDFGenerator } = await import('./simplified-pdf-generator');
-      console.log('✅ SimplifiedPDFGenerator imported successfully');
-      const generator = new SimplifiedPDFGenerator();
-      console.log('📊 Original generator instance created');
+      // Import the ORIGINAL WORKING PDF generator from the beginning
+      console.log('📦 Using OriginalWorkingGenerator (the method that always worked)...');
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      console.log('✅ OriginalWorkingGenerator imported successfully');
+      const generator = new OriginalWorkingGenerator();
+      console.log('📊 Original working generator instance created');
 
       // Generate PDF that preserves original file content
       const pdfData = {

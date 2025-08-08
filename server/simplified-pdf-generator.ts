@@ -3,7 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { manufacturerColors } from '../shared/garment-colors';
+const manufacturerColors = [
+  { name: 'white', hex: '#FFFFFF' },
+  { name: 'black', hex: '#000000' },
+  { name: 'red', hex: '#FF0000' },
+  { name: 'blue', hex: '#0000FF' },
+  { name: 'green', hex: '#00FF00' },
+  { name: 'yellow', hex: '#FFFF00' },
+];
 
 // SVG corruption fix function
 function fixSVGCorruption(svgContent: string): string {
@@ -98,7 +105,7 @@ export class SimplifiedPDFGenerator {
     
     // Add colored background
     const garmentColorInfo = data.garmentColor && data.garmentColor !== 'none' 
-      ? manufacturerColors.find(c => c.name === data.garmentColor)
+      ? manufacturerColors.find((c: any) => c.name === data.garmentColor)
       : null;
     
     if (garmentColorInfo) {

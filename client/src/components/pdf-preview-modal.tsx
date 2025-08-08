@@ -127,8 +127,12 @@ export default function PDFPreviewModal({
                         >
                           <img
                             src={`/uploads/${logo.filename}`}
-                            alt={logo.originalName}
+                            alt="Logo"
                             className="w-full h-full object-contain"
+                            onError={(e) => {
+                              console.error('Image failed to load:', `/uploads/${logo.filename}`);
+                              e.currentTarget.style.display = 'none';
+                            }}
                             style={{ 
                               filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
                             }}
