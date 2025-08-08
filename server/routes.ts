@@ -750,6 +750,41 @@ export async function registerRoutes(app: express.Application) {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
+        console.log(`📁 File received: ${file.filename}, mimetype: ${file.mimetype}, originalname: ${file.originalname}`);
+
+        // CRITICAL: Check for CMYK PDFs FIRST before any conversion
+        if (file.mimetype === 'application/pdf') {
+          console.log(`🔍 Processing PDF file for CMYK detection: ${file.filename}`);
+          try {
+            const pdfPath = path.join(uploadDir, file.filename);
+            const { CMYKDetector } = await import('./cmyk-detector');
+            
+            // Check if PDF contains CMYK colors
+            const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
+            console.log(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
+            
+            if (hasCMYK) {
+              console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
+              
+              // IMPORTANT: Keep the original PDF file for later use
+              const originalPdfFilename = `original_${file.filename}`;
+              const originalPdfPath = path.join(uploadDir, originalPdfFilename);
+              
+              // Copy the original PDF to preserve it
+              fs.copyFileSync(pdfPath, originalPdfPath);
+              console.log(`📁 Preserved original CMYK PDF: ${originalPdfFilename}`);
+              
+              // Store original PDF info for later embedding
+              (file as any).originalPdfPath = originalPdfFilename;
+              (file as any).isCMYKPreserved = true;
+              
+              // Continue processing to convert to SVG for display
+            }
+          } catch (error) {
+            console.error('CMYK detection failed:', error);
+          }
+        }
+
         // Handle AI/EPS files - convert to SVG for display
         if (file.mimetype === 'application/postscript' || 
             file.mimetype === 'application/illustrator' || 
@@ -888,134 +923,49 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        console.log(`📁 File received: ${file.filename}, mimetype: ${file.mimetype}, originalname: ${file.originalname}`);
-        
-        // If it's a PDF, check for CMYK colors first
+        // Process PDF files - convert to SVG for display
         if (file.mimetype === 'application/pdf') {
-          console.log(`🔍 Processing PDF file: ${file.filename} with mimetype: ${file.mimetype}`);
           try {
             const pdfPath = path.join(uploadDir, file.filename);
-            console.log(`📂 PDF path for CMYK detection: ${pdfPath}`);
-            const { CMYKDetector } = await import('./cmyk-detector');
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
             
-            // Check if PDF contains CMYK colors
-            const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
-            console.log(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
+            // Use pdf2svg for high-quality vector conversion
+            let svgCommand;
+            try {
+              await execAsync('which pdf2svg');
+              svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+            } catch {
+              // Fallback to Inkscape if pdf2svg not available
+              svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+            }
             
-            if (hasCMYK) {
-              console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
+            await execAsync(svgCommand);
+            
+            if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+              // Clean SVG content to remove stroke scaling issues
+              const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+              let svgContent = fs.readFileSync(svgPath, 'utf8');
               
-              // IMPORTANT: Keep the original PDF file for later use
-              const originalPdfFilename = `original_${file.filename}`;
-              const originalPdfPath = path.join(uploadDir, originalPdfFilename);
-              
-              // Copy the original PDF to preserve it
-              fs.copyFileSync(pdfPath, originalPdfPath);
-              console.log(`📁 Preserved original CMYK PDF: ${originalPdfFilename}`);
-              
-              // Convert to SVG for canvas display (vectors preserved)
-              try {
-                const svgFilename = `${file.filename}.svg`;
-                const svgPath = path.join(uploadDir, svgFilename);
-                
-                // Use pdf2svg for high-quality vector conversion
-                let svgCommand;
-                try {
-                  await execAsync('which pdf2svg');
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
-                } catch {
-                  // Fallback to Inkscape if pdf2svg not available
-                  svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
-                }
-                
-                await execAsync(svgCommand);
-                
-                if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                  // Clean SVG content to remove stroke scaling issues
-                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  let svgContent = fs.readFileSync(svgPath, 'utf8');
-                  
-                  // Add markers to indicate this SVG came from a CMYK PDF
-                  svgContent = svgContent.replace('<svg', `<svg data-original-cmyk-pdf="${originalPdfFilename}" data-cmyk-preserved="true"`);
-                  
-                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
-                  
-                  // Store original PDF info for later embedding
-                  (file as any).originalPdfPath = originalPdfFilename;
-                  (file as any).isCMYKPreserved = true;
-                  
-                  // Use SVG for display but remember to use PDF for output
-                  finalFilename = svgFilename;
-                  finalMimeType = 'image/svg+xml';
-                  finalUrl = `/uploads/${finalFilename}`;
-                  
-                  console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
-                } else {
-                  // Fallback to PNG preview if SVG conversion fails
-                  const pngFilename = `${file.filename}_preview.png`;
-                  const pngPath = path.join(uploadDir, pngFilename);
-                  
-                  const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                  await execAsync(gsCommand);
-                  
-                  if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                    (file as any).previewFilename = pngFilename;
-                    console.log(`Created PNG preview for CMYK PDF: ${pngFilename}`);
-                  }
-                }
-              } catch (error) {
-                console.error('Failed to create CMYK PDF preview:', error);
-              }
-            } else {
-              // Convert RGB PDF to SVG for editing capabilities
-              const svgFilename = `${file.filename}.svg`;
-              const svgPath = path.join(uploadDir, svgFilename);
-              
-              // Use pdf2svg for conversion
-              let svgCommand;
-              try {
-                await execAsync('which pdf2svg');
-                svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
-              } catch {
-                svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+              // If this is a CMYK PDF, add markers to the SVG
+              if ((file as any).isCMYKPreserved) {
+                svgContent = svgContent.replace('<svg', `<svg data-original-cmyk-pdf="${(file as any).originalPdfPath}" data-cmyk-preserved="true"`);
+                console.log(`✅ Marked SVG as CMYK-preserved from original: ${(file as any).originalPdfPath}`);
               }
               
-              await execAsync(svgCommand);
+              const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+              fs.writeFileSync(svgPath, cleanedSvg);
+              console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
               
-              if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                // Check if this is an AI-vectorized file that should not be re-processed
-                const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
-                                      svgContent.includes('AI_VECTORIZED_FILE');
-                
-                if (isAIVectorized) {
-                  console.log(`🤖 AI-vectorized file detected: ${svgFilename}, applying specialized cleaning...`);
-                  // Apply specialized cleaning for AI-vectorized content to fix extended elements and bounding box issues
-                  const { cleanAIVectorizedSVG } = await import('./dimension-utils');
-                  const cleanedSvg = cleanAIVectorizedSVG(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
-                } else {
-                  // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
-                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
-                }
-                
-                // This is an RGB PDF - explicitly mark as NOT CMYK preserved
-                (file as any).isCMYKPreserved = false;
-                console.log(`🎨 RGB PDF detected: ${file.filename} - marked as isCMYKPreserved=false`);
-                
-                finalFilename = svgFilename;
-                finalMimeType = 'image/svg+xml';
-                finalUrl = `/uploads/${finalFilename}`;
-              }
+              // Use SVG for display but remember original settings
+              finalFilename = svgFilename;
+              finalMimeType = 'image/svg+xml';
+              finalUrl = `/uploads/${finalFilename}`;
+              
+              console.log(`Created SVG preview for PDF: ${svgFilename} (CMYK: ${(file as any).isCMYKPreserved || false})`);
             }
           } catch (error) {
-            console.error('PDF processing failed:', error);
+            console.error('PDF to SVG conversion failed:', error);
             // Continue with original PDF
           }
         }
