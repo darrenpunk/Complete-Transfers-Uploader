@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ORIGINAL WORKING PDF generator from the beginning
-      console.log('📦 Using OriginalWorkingGenerator (the method that always worked)...');
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('✅ OriginalWorkingGenerator imported successfully');
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 Original working generator instance created');
+      // Import the CMYK VECTOR PDF generator for direct vector embedding
+      console.log('📦 Using CMYKVectorGenerator for direct vector embedding with CMYK preservation...');
+      const { CMYKVectorGenerator } = await import('./cmyk-vector-generator');
+      console.log('✅ CMYKVectorGenerator imported successfully');
+      const generator = new CMYKVectorGenerator();
+      console.log('📊 CMYK vector generator instance created');
 
       // Generate PDF that preserves original file content
       const pdfData = {
