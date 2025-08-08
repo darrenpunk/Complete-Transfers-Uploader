@@ -425,8 +425,11 @@ export class OriginalWorkingGenerator {
     
     // Convert canvas position directly to PDF position
     const pdfX = element.x * canvasToPageScaleX;
-    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
-    const pdfY = pageHeight - (element.y * canvasToPageScaleY) - (element.height * canvasToPageScaleY);
+    // PDF Y coordinate is from bottom, canvas Y is from top
+    // So we need to flip: PDF_Y = PageHeight - Canvas_Y - Element_Height
+    const scaledElementHeight = element.height * canvasToPageScaleY;
+    const scaledElementY = element.y * canvasToPageScaleY;
+    const pdfY = pageHeight - scaledElementY - scaledElementHeight;
     
     const finalX = pdfX;
     const finalY = pdfY;
@@ -440,6 +443,8 @@ export class OriginalWorkingGenerator {
       pageHeight: pageHeight.toFixed(1),
       scaleX: canvasToPageScaleX.toFixed(4),
       scaleY: canvasToPageScaleY.toFixed(4),
+      scaledElementY: scaledElementY.toFixed(1),
+      scaledElementHeight: scaledElementHeight.toFixed(1),
       pdfX: pdfX.toFixed(1),
       pdfY: pdfY.toFixed(1),
       finalX: finalX.toFixed(1),
