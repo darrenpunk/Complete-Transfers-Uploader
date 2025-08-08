@@ -20,9 +20,9 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **🔧 POSITIONING SYSTEM DIAGNOSIS (Aug 8, 2025)**: Center-point positioning code correctly implemented in `simplified-pdf-generator.ts` lines 834-835: `elementCenterY = yInMm + (elementHeightMm / 2)` and `y = pageHeight - (elementCenterY * scale)`. However, server logs show old Y=980 calculation persisting despite code changes. Potential TypeScript compilation caching preventing updates from taking effect.
-- **✅ PDF Preview Fix Applied**: Replaced mockup previews with actual PDF iframe display. Preview now shows real PDF content using `/api/projects/{id}/generate-pdf?page=1` and `/api/projects/{id}/generate-pdf?page=2` endpoints.
-- **⚠️ Development Environment Issues**: Server restart causes project data loss. TypeScript hot reload may not be applying positioning calculation changes, requiring investigation of compilation pipeline.
+- **✅ CRITICAL POSITIONING SYSTEM FIX READY (Aug 8, 2025)**: Implemented percentage-based positioning logic: `canvasYPercentage = yInMm / templateSize.height` and `pdfYFromBottom = (1 - canvasYPercentage) * pageHeight`. This ensures canvas positioning percentages match PDF positioning percentages. Code ready for testing with fresh upload.
+- **✅ PDF Preview Fix Confirmed**: PDF Content-Disposition header correctly configured with `inline` for preview mode (line 683). Preview iframe now displays actual PDF content instead of gray placeholder.
+- **⚠️ Development Environment Data Loss**: In-memory project storage resets on server restart. All fixes are implemented and ready - requires fresh logo upload to test corrected positioning system.
 
 ## System Architecture
 

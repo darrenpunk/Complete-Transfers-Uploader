@@ -824,22 +824,23 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // RESTORED WORKING LOGIC: Use element center point for positioning
-    // The canvas stores top-left coordinates, but logos should be positioned by their center
-    // This was working correctly last week - restore the center-based positioning
+    // FINAL FIX: The calculation is correct but we need to center properly
+    // Canvas Y=184 (44% down) should place logo at 44% down from top in PDF
+    // Current: elementCenterY places it at 17% down (too high)
+    // Fix: Use original Y position and flip coordinate system correctly
     const x = xInMm * scale;
-    // For Y: Canvas Y=0 at TOP, PDF Y=0 at BOTTOM
-    // Convert canvas top-left to PDF bottom coordinate system
-    // Use element center point for proper visual alignment
-    const elementCenterY = yInMm + (elementHeightMm / 2);
-    const y = pageHeight - (elementCenterY * scale);
+    // PDF coordinate flip: canvas Y percentage should match PDF Y percentage from bottom
+    const canvasYPercentage = yInMm / templateSize.height; // 0.155 = 15.5% down from top
+    const pdfYFromBottom = (1 - canvasYPercentage) * pageHeight; // 84.5% up from bottom
+    const y = pdfYFromBottom;
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
       templateSizeMm: { w: templateSize.width, h: templateSize.height },
       templateSizePixels: { w: templateSize.pixelWidth, h: templateSize.pixelHeight },
       positionMm: { x: xInMm, y: yInMm },
-      elementCenterY: elementCenterY,
+      canvasYPercentage: canvasYPercentage,
+      pdfYFromBottom: pdfYFromBottom,
       positionPoints: { x, y },
       pageSize: { width: pageWidth, height: pageHeight },
       elementSizeMm: { w: elementWidthMm, h: elementHeightMm },
