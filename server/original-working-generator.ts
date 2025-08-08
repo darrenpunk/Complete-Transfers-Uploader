@@ -419,29 +419,28 @@ export class OriginalWorkingGenerator {
     const scaleX = pageWidth / templateSize.pixelWidth;
     const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // For dual-page SVGs, use a conservative approach to avoid clipping
-    // Position at 10% from edges instead of center to ensure visibility
-    const elementWidthPoints = element.width * (pageWidth / templateSize.pixelWidth);
-    const elementHeightPoints = element.height * (pageHeight / templateSize.pixelHeight);
+    // Center the artwork properly on the page
+    const scaleDownFactor = 0.8; // Use same factor as size calculation
+    const elementWidthPoints = element.width * (pageWidth / templateSize.pixelWidth) * scaleDownFactor;
+    const elementHeightPoints = element.height * (pageHeight / templateSize.pixelHeight) * scaleDownFactor;
     
-    // Use 10% margins instead of centering to avoid clipping from dual-page content
-    const marginFromEdgePercent = 0.1;
-    const marginX = pageWidth * marginFromEdgePercent;
-    const marginY = pageHeight * marginFromEdgePercent;
+    // Center the element on the page
+    const centerX = (pageWidth - elementWidthPoints) / 2;
+    const centerY = (pageHeight - elementHeightPoints) / 2;
     
-    const finalX = marginX;
-    const finalY = marginY;
+    const finalX = centerX;
+    const finalY = centerY;
     
-    console.log(`📐 Conservative positioning calculation:`, {
+    console.log(`📐 Centered positioning calculation:`, {
       elementWidth: element.width,
       elementHeight: element.height,
       elementWidthPoints: elementWidthPoints.toFixed(1),
       elementHeightPoints: elementHeightPoints.toFixed(1),
       pageWidth: pageWidth.toFixed(1),
       pageHeight: pageHeight.toFixed(1),
-      marginPercent: marginFromEdgePercent * 100 + '%',
-      marginX: marginX.toFixed(1),
-      marginY: marginY.toFixed(1),
+      scaleDownFactor: scaleDownFactor,
+      centerX: centerX.toFixed(1),
+      centerY: centerY.toFixed(1),
       finalX: finalX.toFixed(1),
       finalY: finalY.toFixed(1)
     });
@@ -456,16 +455,16 @@ export class OriginalWorkingGenerator {
     // Use the same scale factors as position calculation for consistency
     const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    // For dual-page SVGs, use more conservative sizing to prevent clipping
+    // Use proper scaling that matches the positioning calculation
     const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
     const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Scale down the element to 60% of its original size to prevent clipping
-    const scaleDownFactor = 0.6;
+    // Use 80% scaling to make artwork visible but not oversized
+    const scaleDownFactor = 0.8;
     const width = element.width * canvasToPageScaleX * scaleDownFactor;
     const height = element.height * canvasToPageScaleY * scaleDownFactor;
     
-    console.log(`📏 Conservative size calculation:`, {
+    console.log(`📏 Centered size calculation:`, {
       elementWidth: element.width,
       elementHeight: element.height,
       templatePixelWidth: templateSize.pixelWidth,
