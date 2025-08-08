@@ -890,12 +890,15 @@ export async function registerRoutes(app: express.Application) {
 
         // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
+          console.log(`🔍 Processing PDF file: ${file.filename} with mimetype: ${file.mimetype}`);
           try {
             const pdfPath = path.join(uploadDir, file.filename);
+            console.log(`📂 PDF path for CMYK detection: ${pdfPath}`);
             const { CMYKDetector } = await import('./cmyk-detector');
             
             // Check if PDF contains CMYK colors
             const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
+            console.log(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
             
             if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
