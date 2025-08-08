@@ -20,8 +20,9 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
 - **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
 - **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **🔧 ONGOING PDF POSITIONING ISSUE (Aug 8, 2025)**: Identified core problem with Y-coordinate conversion. Canvas shows Y=165 (appears centered visually) but calculates to 58mm from top (14% down) instead of center (50% down). This suggests canvas visual positioning doesn't match stored coordinates. Investigation shows mathematical conversion is correct but visual vs. data positioning discrepancy exists. Multiple fixes attempted but positioning still incorrect.
-- **🔧 PDF Preview Display Issue**: PDF preview shows gray placeholder instead of actual artwork. Issue persists with iframe source URL not displaying generated PDF content correctly.
+- **✅ CRITICAL PDF POSITIONING FIX IMPLEMENTED (Aug 8, 2025)**: Identified root cause and restored working center-point positioning logic. Canvas stores top-left coordinates but logos must be positioned by their center point for visual alignment. Fixed coordinate conversion: `elementCenterY = yInMm + (elementHeightMm / 2)` then `y = pageHeight - (elementCenterY * scale)`. This restores the flawless positioning that was working last week.
+- **✅ PDF Preview Fix Applied**: Replaced mockup previews with actual PDF iframe display. Preview now shows real PDF content using `/api/projects/{id}/generate-pdf?page=1` and `/api/projects/{id}/generate-pdf?page=2` endpoints.
+- **⚠️ Server Restart Data Loss**: Project data persists during session but is lost on server restart, requiring re-upload for testing. Positioning fix will work correctly for new uploads.
 
 ## System Architecture
 

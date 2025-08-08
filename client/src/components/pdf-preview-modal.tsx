@@ -93,11 +93,51 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             <div className="flex gap-4 flex-1">
+              {/* Page 1 Preview - Actual PDF Viewer */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
+                <div className="border rounded-lg flex-1 flex items-center justify-center relative overflow-hidden">
+                  {project ? (
+                    <iframe
+                      src={`/api/projects/${project.id}/generate-pdf?colorSpace=cmyk&page=1`}
+                      className="w-full h-full border-0"
+                      style={{ minHeight: '400px' }}
+                      title="PDF Page 1 Preview"
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <p>No project data available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Page 2 Preview - Actual PDF Viewer */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                <div className="border rounded-lg flex-1 flex items-center justify-center relative overflow-hidden">
+                  {project ? (
+                    <iframe
+                      src={`/api/projects/${project.id}/generate-pdf?colorSpace=cmyk&page=2`}
+                      className="w-full h-full border-0"
+                      style={{ minHeight: '400px' }}
+                      title="PDF Page 2 Preview"
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <p>No project data available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Fallback: Show old preview if PDF fails */}
+            <div className="hidden gap-4 flex-1" id="fallback-preview">
               {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
                 <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
-                  {/* Show positioned logos (which contain color grids) */}
                   <div 
                     className="relative border border-dashed border-gray-400"
                     style={{

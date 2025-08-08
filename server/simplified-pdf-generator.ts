@@ -824,16 +824,15 @@ export class SimplifiedPDFGenerator {
     const elementWidthMm = element.width / scale;  // Convert from points to mm
     const elementHeightMm = element.height / scale; // Convert from points to mm
     
-    // FINAL CORRECTION: Proper coordinate system conversion
-    // Canvas: Y=0 at TOP, Y increases downward
-    // PDF: Y=0 at BOTTOM, Y increases upward
-    // When canvas shows Y=165 (center), PDF should show center too
+    // RESTORED WORKING LOGIC: Use element center point for positioning
+    // The canvas stores top-left coordinates, but logos should be positioned by their center
+    // This was working correctly last week - restore the center-based positioning
     const x = xInMm * scale;
-    // Convert canvas position to PDF position:
-    // Canvas Y=165 on 420mm template = 39% down from top
-    // PDF should place at 39% up from bottom = pageHeight * 0.61
-    // Calculation: pageHeight - (yInMm * scale) gives distance from bottom
-    const y = pageHeight - (yInMm * scale);
+    // For Y: Canvas Y=0 at TOP, PDF Y=0 at BOTTOM
+    // Convert canvas top-left to PDF bottom coordinate system
+    // Use element center point for proper visual alignment
+    const elementCenterY = yInMm + (elementHeightMm / 2);
+    const y = pageHeight - (elementCenterY * scale);
     
     console.log(`📏 Position calculation details:`, {
       canvasPos: { x: element.x, y: element.y },
