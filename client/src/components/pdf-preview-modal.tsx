@@ -92,43 +92,22 @@ export default function PDFPreviewModal({
           <div className="flex-1 flex flex-col">
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
-            <div className="flex gap-4 flex-1">
-              {/* Page 1 Preview - Actual PDF Viewer */}
-              <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
-                <div className="border rounded-lg flex-1 flex items-center justify-center relative overflow-hidden">
-                  {project ? (
-                    <iframe
-                      src={`/api/projects/${project.id}/generate-pdf?colorSpace=cmyk&page=1`}
-                      className="w-full h-full border-0"
-                      style={{ minHeight: '400px' }}
-                      title="PDF Page 1 Preview"
-                    />
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      <p>No project data available</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Page 2 Preview - Actual PDF Viewer */}
-              <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg flex-1 flex items-center justify-center relative overflow-hidden">
-                  {project ? (
-                    <iframe
-                      src={`/api/projects/${project.id}/generate-pdf?colorSpace=cmyk&page=2`}
-                      className="w-full h-full border-0"
-                      style={{ minHeight: '400px' }}
-                      title="PDF Page 2 Preview"
-                    />
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      <p>No project data available</p>
-                    </div>
-                  )}
-                </div>
+            {/* Single PDF Preview to prevent duplicate requests */}
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-muted-foreground mb-2">PDF Preview</h4>
+              <div className="border rounded-lg flex-1 flex items-center justify-center relative overflow-hidden h-full">
+                {project ? (
+                  <iframe
+                    src={`/api/projects/${project.id}/generate-pdf?preview=true`}
+                    className="w-full h-full border-0"
+                    style={{ minHeight: '500px' }}
+                    title="PDF Preview"
+                  />
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <p>No project data available</p>
+                  </div>
+                )}
               </div>
             </div>
 

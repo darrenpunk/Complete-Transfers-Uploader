@@ -37,17 +37,33 @@ export class RobustPDFGenerator {
       const page = pdfDoc.addPage([pageWidth, pageHeight]);
       console.log(`📄 Created ${pageWidth}x${pageHeight}pt page`);
 
+      console.log(`🔍 DEBUG: Processing ${data.canvasElements.length} canvas elements`);
+      console.log(`🔍 DEBUG: Available ${data.logos.length} logos`);
+      
       // Process each logo with robust embedding
       for (let i = 0; i < data.canvasElements.length; i++) {
         const element = data.canvasElements[i];
-        const logo = data.logos.find(l => l.filename === element.logoFilename);
+        
+        console.log(`🔍 Element ${i}: ID=${element.id}, logoId=${element.logoId}, logoFilename=${element.logoFilename}`);
+        console.log(`🔍 Available logos:`, data.logos.map(l => `ID=${l.id}, filename=${l.filename}`));
+        
+        // Try multiple ways to find the logo with detailed logging
+        let logo = data.logos.find(l => l.id === element.logoId);
+        if (!logo) {
+          console.log(`🔍 No match on logoId, trying filename...`);
+          logo = data.logos.find(l => l.filename === element.logoFilename);
+        }
+        if (!logo && data.logos.length === 1) {
+          console.log(`🔍 Using fallback to single available logo`);
+          logo = data.logos[0];
+        }
         
         if (!logo) {
-          console.warn(`⚠️ No logo found for element ${element.id}`);
+          console.error(`❌ CRITICAL: No logo found for element after all attempts`);
           continue;
         }
 
-        console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
+        console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename} (ID: ${logo.id})`);
         await this.embedLogoRobust(pdfDoc, page, element, logo, data.templateSize);
       }
 
@@ -137,12 +153,17 @@ export class RobustPDFGenerator {
       const scaleY = elementHeightPoints / originalSize.height;
       const uniformScale = Math.min(scaleX, scaleY); // Maintain aspect ratio
 
-      // Embed the logo
+      // Embed the logo with bounds checking
+      const finalWidth = originalSize.width * uniformScale;
+      const finalHeight = originalSize.height * uniformScale;
+      
+      console.log(`📐 Embedding: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)}, ${finalY.toFixed(1)})`);
+      
       page.drawPage(embeddedPage, {
         x: xInPoints,
         y: finalY,
-        width: originalSize.width * uniformScale,
-        height: originalSize.height * uniformScale,
+        width: finalWidth,
+        height: finalHeight,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
 
