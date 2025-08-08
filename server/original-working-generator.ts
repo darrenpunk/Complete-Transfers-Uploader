@@ -254,7 +254,7 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Embed SVG logo using the original working method
+   * Embed SVG logo using PNG conversion to avoid duplication issues
    */
   private async embedSVGLogo(
     page: PDFPage,
@@ -262,44 +262,47 @@ export class OriginalWorkingGenerator {
     logoPath: string,
     templateSize: any
   ): Promise<void> {
-    // Convert SVG to PDF using Inkscape (most reliable)
-    const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_original_${Date.now()}.pdf`);
-    
     try {
-      const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoPath}"`;
+      // Calculate position and size first
+      const position = this.calculateOriginalPosition(element, templateSize, page);
+      const size = this.calculateOriginalSize(element, templateSize, page);
+      
+      console.log(`🎯 Converting SVG to PNG to avoid duplication issues`);
+      console.log(`📍 Target position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
+      
+      // Convert SVG to high-resolution PNG to preserve quality
+      const tempPngPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.png`);
+      const dpi = 300; // High resolution for print quality
+      
+      const inkscapeCmd = `inkscape --export-type=png --export-dpi=${dpi} --export-filename="${tempPngPath}" "${logoPath}"`;
       await execAsync(inkscapeCmd);
-      console.log(`🎨 SVG converted to PDF: ${tempPdfPath}`);
+      console.log(`🎨 SVG converted to PNG: ${tempPngPath}`);
       
-      // Read the converted PDF and embed it
-      const tempPdfBytes = fs.readFileSync(tempPdfPath);
-      const tempPdf = await PDFDocument.load(tempPdfBytes);
+      // Read and embed the PNG
+      const pngBytes = fs.readFileSync(tempPngPath);
+      const pngImage = await page.doc.embedPng(pngBytes);
       
-      if (tempPdf.getPageCount() > 0) {
-        const [embeddedPage] = await page.doc.embedPdf(tempPdf);
-        
-        // Calculate position using original working coordinates
-        const position = this.calculateOriginalPosition(element, templateSize, page);
-        const size = this.calculateOriginalSize(element, templateSize, page);
-        
-        // Draw the embedded page
-        page.drawPage(embeddedPage, {
-          x: position.x,
-          y: position.y,
-          width: size.width,
-          height: size.height,
-          rotate: element.rotation ? degrees(element.rotation) : undefined,
-        });
-        
-        console.log(`✅ Successfully embedded SVG logo at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
-      }
+      // Draw the image with calculated position and size
+      page.drawImage(pngImage, {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+        rotate: element.rotation ? degrees(element.rotation) : undefined,
+      });
       
-    } finally {
+      console.log(`✅ Successfully embedded SVG as PNG at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+      
       // Clean up temp file
       try {
-        fs.unlinkSync(tempPdfPath);
+        fs.unlinkSync(tempPngPath);
       } catch {
         // Ignore cleanup errors
       }
+      
+    } catch (error) {
+      console.error(`❌ Failed to embed SVG logo:`, error);
+      throw error;
     }
   }
 
@@ -361,16 +364,25 @@ export class OriginalWorkingGenerator {
     // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
     const pdfY = pageHeight - (element.y * scaleY) - (element.height * scaleY);
     
+    // Add margins and centering adjustments if needed
+    const marginX = 0; // Could add page margins here
+    const marginY = 0;
+    
+    const finalX = pdfX + marginX;
+    const finalY = pdfY + marginY;
+    
     console.log(`📐 Coordinate conversion:`, {
       canvasX: element.x,
       canvasY: element.y,
       scaleX: scaleX.toFixed(4),
       scaleY: scaleY.toFixed(4),
       pdfX: pdfX.toFixed(1),
-      pdfY: pdfY.toFixed(1)
+      pdfY: pdfY.toFixed(1),
+      finalX: finalX.toFixed(1),
+      finalY: finalY.toFixed(1)
     });
     
-    return { x: pdfX, y: pdfY };
+    return { x: finalX, y: finalY };
   }
 
   /**
