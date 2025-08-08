@@ -96,9 +96,37 @@ export class OriginalWorkingGenerator {
    * Add garment color background and labels (matching user's working PDF format)
    */
   private addGarmentBackground(page: PDFPage, garmentColor: string, width: number, height: number): void {
+    console.log(`🎨 Adding garment background for color: "${garmentColor}"`);
+    
     // Import actual garment colors from the system
     const garmentColors = this.getGarmentColorData();
-    const colorInfo = garmentColors.find(c => c.name.toLowerCase() === garmentColor.toLowerCase());
+    
+    // Try multiple matching strategies
+    let colorInfo = garmentColors.find(c => c.name.toLowerCase() === garmentColor.toLowerCase());
+    
+    if (!colorInfo) {
+      // Try matching hex color directly
+      colorInfo = garmentColors.find(c => c.hex.toLowerCase() === garmentColor.toLowerCase());
+    }
+    
+    if (!colorInfo && garmentColor.startsWith('#')) {
+      // If it's a hex color, use it directly
+      const hex = garmentColor;
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        color: rgb(r, g, b),
+      });
+      
+      console.log(`🎨 Applied hex garment background: ${garmentColor} - RGB(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`);
+      return;
+    }
     
     if (colorInfo) {
       // Convert hex to RGB
@@ -118,17 +146,18 @@ export class OriginalWorkingGenerator {
       // Add garment color label and CMYK values (bottom of page like in user examples)
       this.addGarmentColorLabels(page, [colorInfo], width, height);
       
-      console.log(`🎨 Applied garment background: ${garmentColor} (${hex})`);
+      console.log(`🎨 Applied garment background: ${colorInfo.name} (${hex}) - RGB(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`);
     } else {
-      // Default to white if color not found
+      // Default to light gray if color not found
       page.drawRectangle({
         x: 0,
         y: 0,
         width: width,
         height: height,
-        color: rgb(1, 1, 1),
+        color: rgb(0.9, 0.9, 0.9),
       });
-      console.log(`⚠️ Color not found, using white background for: ${garmentColor}`);
+      console.log(`⚠️ Color "${garmentColor}" not found in garment colors, using light gray background`);
+      console.log(`📋 Available colors: ${garmentColors.map(c => c.name).slice(0, 5).join(', ')}...`);
     }
   }
 
@@ -390,14 +419,18 @@ export class OriginalWorkingGenerator {
     const scaleX = pageWidth / templateSize.pixelWidth;
     const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // Convert canvas position to PDF position
-    const pdfX = element.x * scaleX;
-    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
-    const pdfY = pageHeight - (element.y * scaleY) - (element.height * scaleY);
+    // Convert canvas position to PDF position with proper scaling
+    // Canvas uses actual pixel coordinates, but we need to scale properly
+    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
+    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Add margins and centering adjustments if needed
-    const marginX = 0; // Could add page margins here
-    const marginY = 0;
+    const pdfX = element.x * canvasToPageScaleX;
+    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
+    const pdfY = pageHeight - (element.y * canvasToPageScaleY) - (element.height * canvasToPageScaleY);
+    
+    // Add proper margins for A3 template (typical 10mm margins)
+    const marginX = 28.35; // 10mm in points
+    const marginY = 28.35; // 10mm in points
     
     const finalX = pdfX + marginX;
     const finalY = pdfY + marginY;
@@ -423,17 +456,23 @@ export class OriginalWorkingGenerator {
     // Use the same scale factors as position calculation for consistency
     const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    const scaleX = pageWidth / templateSize.pixelWidth;
-    const scaleY = pageHeight / templateSize.pixelHeight;
+    // Proper scaling from canvas pixels to PDF points
+    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
+    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    const width = element.width * scaleX;
-    const height = element.height * scaleY;
+    // Scale the element dimensions
+    const width = element.width * canvasToPageScaleX;
+    const height = element.height * canvasToPageScaleY;
     
     console.log(`📏 Size calculation:`, {
       elementWidth: element.width,
       elementHeight: element.height,
-      scaleX: scaleX.toFixed(4),
-      scaleY: scaleY.toFixed(4),
+      templatePixelWidth: templateSize.pixelWidth,
+      templatePixelHeight: templateSize.pixelHeight,
+      pageWidth: pageWidth.toFixed(1),
+      pageHeight: pageHeight.toFixed(1),
+      scaleX: canvasToPageScaleX.toFixed(4),
+      scaleY: canvasToPageScaleY.toFixed(4),
       finalWidth: width.toFixed(1),
       finalHeight: height.toFixed(1)
     });
