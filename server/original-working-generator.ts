@@ -419,29 +419,30 @@ export class OriginalWorkingGenerator {
     const scaleX = pageWidth / templateSize.pixelWidth;
     const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // Convert canvas position to PDF position with proper scaling
-    // Canvas uses actual pixel coordinates, but we need to scale properly
-    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
-    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
+    // CENTER the artwork on the page instead of using canvas coordinates
+    const elementWidthPoints = element.width * (pageWidth / templateSize.pixelWidth);
+    const elementHeightPoints = element.height * (pageHeight / templateSize.pixelHeight);
     
-    const pdfX = element.x * canvasToPageScaleX;
-    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
-    const pdfY = pageHeight - (element.y * canvasToPageScaleY) - (element.height * canvasToPageScaleY);
+    // Center horizontally and vertically on the page
+    const centerX = (pageWidth - elementWidthPoints) / 2;
+    const centerY = (pageHeight - elementHeightPoints) / 2;
     
-    // Add proper margins for A3 template (typical 10mm margins)
+    // Add margins for professional layout
     const marginX = 28.35; // 10mm in points
     const marginY = 28.35; // 10mm in points
     
-    const finalX = pdfX + marginX;
-    const finalY = pdfY + marginY;
+    const finalX = centerX + marginX;
+    const finalY = centerY + marginY;
     
-    console.log(`📐 Coordinate conversion:`, {
-      canvasX: element.x,
-      canvasY: element.y,
-      scaleX: scaleX.toFixed(4),
-      scaleY: scaleY.toFixed(4),
-      pdfX: pdfX.toFixed(1),
-      pdfY: pdfY.toFixed(1),
+    console.log(`📐 Centering calculation:`, {
+      elementWidth: element.width,
+      elementHeight: element.height,
+      elementWidthPoints: elementWidthPoints.toFixed(1),
+      elementHeightPoints: elementHeightPoints.toFixed(1),
+      pageWidth: pageWidth.toFixed(1),
+      pageHeight: pageHeight.toFixed(1),
+      centerX: centerX.toFixed(1),
+      centerY: centerY.toFixed(1),
       finalX: finalX.toFixed(1),
       finalY: finalY.toFixed(1)
     });
