@@ -888,6 +888,8 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
+        console.log(`📁 File received: ${file.filename}, mimetype: ${file.mimetype}, originalname: ${file.originalname}`);
+        
         // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
           console.log(`🔍 Processing PDF file: ${file.filename} with mimetype: ${file.mimetype}`);
