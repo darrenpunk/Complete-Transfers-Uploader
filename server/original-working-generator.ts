@@ -327,20 +327,20 @@ export class OriginalWorkingGenerator {
         console.log(`✂️ Created single-page SVG: ${tempSvgPath}`);
       }
       
-      // Convert SVG to high-resolution PNG
-      const tempPngPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.png`);
-      const dpi = 300; // High resolution for print quality
+      // Convert SVG to PDF to preserve vectors
+      const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.pdf`);
       
-      const inkscapeCmd = `inkscape --export-type=png --export-dpi=${dpi} --export-filename="${tempPngPath}" "${finalSvgPath}"`;
+      // Use Inkscape to convert SVG to PDF preserving vectors
+      const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
       await execAsync(inkscapeCmd);
-      console.log(`🎨 SVG converted to PNG: ${tempPngPath}`);
+      console.log(`🎨 SVG converted to PDF (vectors preserved): ${tempPdfPath}`);
       
-      // Read and embed the PNG
-      const pngBytes = fs.readFileSync(tempPngPath);
-      const pngImage = await page.doc.embedPng(pngBytes);
+      // Read and embed the PDF
+      const pdfBytes = fs.readFileSync(tempPdfPath);
+      const [embeddedPage] = await page.doc.embedPdf(await PDFDocument.load(pdfBytes));
       
-      // Draw the image with calculated position and size
-      page.drawImage(pngImage, {
+      // Draw the embedded PDF with calculated position and size
+      page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
         width: size.width,
@@ -348,11 +348,11 @@ export class OriginalWorkingGenerator {
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Successfully embedded single-page SVG as PNG at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+      console.log(`✅ Successfully embedded single-page SVG as vector PDF at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       
       // Clean up temp files
       try {
-        fs.unlinkSync(tempPngPath);
+        fs.unlinkSync(tempPdfPath);
         if (needsPageExtraction && finalSvgPath !== logoPath) {
           fs.unlinkSync(finalSvgPath);
         }
