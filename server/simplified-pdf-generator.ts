@@ -89,9 +89,38 @@ export class SimplifiedPDFGenerator {
     // Don't draw any background for the first page
     await this.embedLogos(pdfDoc, page1, data.canvasElements, data.logos, data.templateSize);
 
-    // CRITICAL FIX: Only create page 2 if explicitly requested
-    // The duplicate PDF issue is caused by always creating 2 pages
-    console.log('📄 Single page PDF generated - removing automatic page 2 creation');
+    // Page 2: Design with colored background (restore original dual-page generation)
+    console.log('📄 Creating Page 2 with garment background (restored original behavior)');
+    
+    const templateWidthPoints = data.templateSize.width * 2.834;
+    const templateHeightPoints = data.templateSize.height * 2.834;
+    const page2 = pdfDoc.addPage([templateWidthPoints, templateHeightPoints]);
+    
+    // Add colored background
+    const garmentColorInfo = data.garmentColor && data.garmentColor !== 'none' 
+      ? manufacturerColors.find(c => c.name === data.garmentColor)
+      : null;
+    
+    if (garmentColorInfo) {
+      const bgColor = garmentColorInfo.hex;
+      const [r, g, b] = [
+        parseInt(bgColor.slice(1, 3), 16) / 255,
+        parseInt(bgColor.slice(3, 5), 16) / 255,
+        parseInt(bgColor.slice(5, 7), 16) / 255
+      ];
+      
+      page2.drawRectangle({
+        x: 0,
+        y: 0,
+        width: templateWidthPoints,
+        height: templateHeightPoints,
+        color: rgb(r, g, b),
+      });
+      console.log(`🎨 Applied garment background color: ${data.garmentColor} (${bgColor})`);
+    }
+    
+    // Embed logos on page 2
+    await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
 
     const pdfBytes = await pdfDoc.save();
     console.log('✅ Simplified PDF generated successfully');
