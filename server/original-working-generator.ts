@@ -272,7 +272,7 @@ export class OriginalWorkingGenerator {
 
       // Convert SVG to PDF if needed (original working method)
       if (logo.mimeType === 'image/svg+xml') {
-        await this.embedSVGLogo(page, element, logoPath, templateSize);
+        await this.embedSVGLogo(page, element, logoPath, templateSize, logo);
       } else {
         await this.embedImageLogo(page, element, logoPath, templateSize);
       }
@@ -283,17 +283,76 @@ export class OriginalWorkingGenerator {
   }
 
   /**
+   * Embed PDF logo directly preserving CMYK colors
+   */
+  private async embedPDFLogo(
+    page: PDFPage,
+    element: any,
+    pdfPath: string,
+    templateSize: any
+  ): Promise<void> {
+    try {
+      // Calculate position and size
+      const position = this.calculateOriginalPosition(element, templateSize, page);
+      const size = this.calculateOriginalSize(element, templateSize, page);
+      
+      console.log(`📍 PDF embed position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
+      
+      // Read and embed the PDF directly
+      const pdfBytes = fs.readFileSync(pdfPath);
+      const sourcePdf = await PDFDocument.load(pdfBytes);
+      const [embeddedPage] = await page.doc.embedPdf(sourcePdf, [0]); // Embed first page
+      
+      // Draw the embedded PDF with calculated position and size
+      page.drawPage(embeddedPage, {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+        rotate: element.rotation ? degrees(element.rotation) : undefined,
+      });
+      
+      console.log(`✅ Successfully embedded CMYK PDF at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to embed PDF logo:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Embed SVG logo with proper page extraction to avoid duplication
    */
   private async embedSVGLogo(
     page: PDFPage,
     element: any,
     logoPath: string,
-    templateSize: any
+    templateSize: any,
+    logo?: any
   ): Promise<void> {
     try {
-      // Read the SVG to check if it contains multi-page content
+      // Check if we have the original CMYK PDF file
+      if (logo && logo.originalPdfPath) {
+        const originalPdfPath = path.resolve(process.cwd(), 'uploads', path.basename(logo.originalPdfPath));
+        if (fs.existsSync(originalPdfPath)) {
+          console.log(`🎨 Using original CMYK PDF instead of converted SVG: ${originalPdfPath}`);
+          return this.embedPDFLogo(page, element, originalPdfPath, templateSize);
+        }
+      }
+      
+      // Check if this SVG was converted from a CMYK PDF
       const svgContent = fs.readFileSync(logoPath, 'utf8');
+      const isCMYKConverted = svgContent.includes('data-vectorized-cmyk="true"') || 
+                              svgContent.includes('data-original-cmyk-pdf="true"');
+      
+      if (isCMYKConverted) {
+        // Try to find the original PDF file
+        const pdfFilename = logoPath.replace('.svg', '').replace(/\.[^.]+\.svg$/, '');
+        if (fs.existsSync(pdfFilename)) {
+          console.log(`🎨 Found original CMYK PDF, using it instead of SVG: ${pdfFilename}`);
+          return this.embedPDFLogo(page, element, pdfFilename, templateSize);
+        }
+      }
       
       console.log(`🔍 Analyzing SVG for multi-page content...`);
       
