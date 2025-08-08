@@ -279,7 +279,7 @@ export class OriginalWorkingGenerator {
         
         // Calculate position using original working coordinates
         const position = this.calculateOriginalPosition(element, templateSize, page);
-        const size = this.calculateOriginalSize(element, templateSize);
+        const size = this.calculateOriginalSize(element, templateSize, page);
         
         // Draw the embedded page
         page.drawPage(embeddedPage, {
@@ -316,7 +316,7 @@ export class OriginalWorkingGenerator {
     const image = await page.doc.embedPng(imageBytes);
     
     const position = this.calculateOriginalPosition(element, templateSize, page);
-    const size = this.calculateOriginalSize(element, templateSize);
+    const size = this.calculateOriginalSize(element, templateSize, page);
     
     page.drawImage(image, {
       x: position.x,
@@ -335,35 +335,66 @@ export class OriginalWorkingGenerator {
   private calculateOriginalPosition(element: any, templateSize: any, page: PDFPage): { x: number; y: number } {
     const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    // Convert canvas pixels to mm, then to points
-    const pixelToMm = templateSize.width / templateSize.pixelWidth;
-    const mmToPoints = 2.834;
+    console.log(`📊 Position calculation debug:`, {
+      elementX: element.x,
+      elementY: element.y,
+      elementWidth: element.width,
+      elementHeight: element.height,
+      pageWidth,
+      pageHeight,
+      templatePixelWidth: templateSize.pixelWidth,
+      templatePixelHeight: templateSize.pixelHeight,
+      templateMmWidth: templateSize.width,
+      templateMmHeight: templateSize.height
+    });
     
-    const xMm = element.x * pixelToMm;
-    const yMm = element.y * pixelToMm;
+    // Convert canvas coordinates to PDF points directly
+    // Canvas coordinate system: (0,0) at top-left
+    // PDF coordinate system: (0,0) at bottom-left
     
-    const xPoints = xMm * mmToPoints;
-    const yPoints = yMm * mmToPoints;
+    // Scale factor from canvas pixels to PDF points
+    const scaleX = pageWidth / templateSize.pixelWidth;
+    const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
-    const finalY = pageHeight - yPoints;
+    // Convert canvas position to PDF position
+    const pdfX = element.x * scaleX;
+    // Flip Y coordinate: canvas Y=0 at top, PDF Y=0 at bottom
+    const pdfY = pageHeight - (element.y * scaleY) - (element.height * scaleY);
     
-    return { x: xPoints, y: finalY };
+    console.log(`📐 Coordinate conversion:`, {
+      canvasX: element.x,
+      canvasY: element.y,
+      scaleX: scaleX.toFixed(4),
+      scaleY: scaleY.toFixed(4),
+      pdfX: pdfX.toFixed(1),
+      pdfY: pdfY.toFixed(1)
+    });
+    
+    return { x: pdfX, y: pdfY };
   }
 
   /**
    * Calculate size using the original working method
    */
-  private calculateOriginalSize(element: any, templateSize: any): { width: number; height: number } {
-    const pixelToMm = templateSize.width / templateSize.pixelWidth;
-    const mmToPoints = 2.834;
+  private calculateOriginalSize(element: any, templateSize: any, page: PDFPage): { width: number; height: number } {
+    // Use the same scale factors as position calculation for consistency
+    const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    const widthMm = element.width * pixelToMm;
-    const heightMm = element.height * pixelToMm;
+    const scaleX = pageWidth / templateSize.pixelWidth;
+    const scaleY = pageHeight / templateSize.pixelHeight;
     
-    const widthPoints = widthMm * mmToPoints;
-    const heightPoints = heightMm * mmToPoints;
+    const width = element.width * scaleX;
+    const height = element.height * scaleY;
     
-    return { width: widthPoints, height: heightPoints };
+    console.log(`📏 Size calculation:`, {
+      elementWidth: element.width,
+      elementHeight: element.height,
+      scaleX: scaleX.toFixed(4),
+      scaleY: scaleY.toFixed(4),
+      finalWidth: width.toFixed(1),
+      finalHeight: height.toFixed(1)
+    });
+    
+    return { width, height };
   }
 }
