@@ -839,6 +839,7 @@ export class SimplifiedPDFGenerator {
       templateSizeMm: { w: templateSize.width, h: templateSize.height },
       templateSizePixels: { w: templateSize.pixelWidth, h: templateSize.pixelHeight },
       positionMm: { x: xInMm, y: yInMm },
+      elementCenterY: elementCenterY,
       positionPoints: { x, y },
       pageSize: { width: pageWidth, height: pageHeight },
       elementSizeMm: { w: elementWidthMm, h: elementHeightMm },
