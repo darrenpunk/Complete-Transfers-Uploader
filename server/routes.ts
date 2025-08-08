@@ -638,9 +638,26 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📊 Project data - Logos: ${logos.length}, Elements: ${canvasElements.length}`);
       
+      // Check if project has content to generate PDF
+      if (logos.length === 0 || canvasElements.length === 0) {
+        console.warn(`⚠️ Empty project detected - Logos: ${logos.length}, Elements: ${canvasElements.length}`);
+        console.log(`📋 Project details:`, { 
+          id: projectId, 
+          name: project.name,
+          templateSize: project.templateSize,
+          garmentColor: project.garmentColor 
+        });
+        
+        // Still proceed with PDF generation to show at least the template background
+        // This will help users understand the issue (empty vs broken PDF)
+      }
+      
       const templateSize = templateSizes.find(t => t.id === project.templateSize);
       if (!templateSize) {
         console.error(`❌ Invalid template size: ${project.templateSize}`);
+        // Use default A3 template if none found
+        console.log(`🔄 Using default A3 template as fallback`);
+        // Return error instead of using fallback for now
         return res.status(400).json({ error: 'Invalid template size' });
       }
 

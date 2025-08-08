@@ -23,6 +23,23 @@ export class OriginalWorkingGenerator {
   async generatePDF(data: OriginalPDFData): Promise<Buffer> {
     console.log('🚀 ORIGINAL WORKING PDF GENERATION - Back to Basics');
     console.log(`📊 Elements: ${data.canvasElements.length}, Template: ${data.templateSize.name}`);
+    
+    // Log detailed project data for debugging
+    console.log(`🔍 Project data:`, {
+      projectId: data.projectId,
+      templateSize: data.templateSize?.name,
+      canvasElements: data.canvasElements.length,
+      logos: data.logos.length,
+      garmentColor: data.garmentColor
+    });
+    
+    if (data.canvasElements.length === 0) {
+      console.warn(`⚠️ No canvas elements found - generating template-only PDF`);
+    }
+    
+    if (data.logos.length === 0) {
+      console.warn(`⚠️ No logos found - PDF will only contain background/template`);
+    }
 
     try {
       // Create PDF document
@@ -178,17 +195,30 @@ export class OriginalWorkingGenerator {
     logos: any[], 
     templateSize: any
   ): Promise<void> {
+    if (canvasElements.length === 0) {
+      console.log(`📄 No canvas elements to embed on this page`);
+      return;
+    }
+    
+    if (logos.length === 0) {
+      console.warn(`⚠️ No logos available to embed`);
+      return;
+    }
+    
+    console.log(`🎯 Embedding ${canvasElements.length} elements on page`);
+    
     for (let i = 0; i < canvasElements.length; i++) {
       const element = canvasElements[i];
       
       // Find matching logo
       const logo = logos.find(l => l.id === element.logoId);
       if (!logo) {
-        console.warn(`⚠️ No logo found for element ${element.id}`);
+        console.warn(`⚠️ No logo found for element ${element.id} (logoId: ${element.logoId})`);
+        console.log(`🔍 Available logos:`, logos.map(l => `${l.id}:${l.filename}`).join(', '));
         continue;
       }
 
-      console.log(`🎯 Processing logo ${i + 1}/${canvasElements.length}: ${logo.filename}`);
+      console.log(`🎯 Processing logo ${i + 1}/${canvasElements.length}: ${logo.filename} (ID: ${logo.id})`);
       await this.embedSingleLogo(page, element, logo, templateSize);
     }
   }
