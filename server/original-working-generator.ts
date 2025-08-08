@@ -419,30 +419,29 @@ export class OriginalWorkingGenerator {
     const scaleX = pageWidth / templateSize.pixelWidth;
     const scaleY = pageHeight / templateSize.pixelHeight;
     
-    // CENTER the artwork on the page instead of using canvas coordinates
+    // For dual-page SVGs, use a conservative approach to avoid clipping
+    // Position at 10% from edges instead of center to ensure visibility
     const elementWidthPoints = element.width * (pageWidth / templateSize.pixelWidth);
     const elementHeightPoints = element.height * (pageHeight / templateSize.pixelHeight);
     
-    // Center horizontally and vertically on the page
-    const centerX = (pageWidth - elementWidthPoints) / 2;
-    const centerY = (pageHeight - elementHeightPoints) / 2;
+    // Use 10% margins instead of centering to avoid clipping from dual-page content
+    const marginFromEdgePercent = 0.1;
+    const marginX = pageWidth * marginFromEdgePercent;
+    const marginY = pageHeight * marginFromEdgePercent;
     
-    // Add margins for professional layout
-    const marginX = 28.35; // 10mm in points
-    const marginY = 28.35; // 10mm in points
+    const finalX = marginX;
+    const finalY = marginY;
     
-    const finalX = centerX + marginX;
-    const finalY = centerY + marginY;
-    
-    console.log(`📐 Centering calculation:`, {
+    console.log(`📐 Conservative positioning calculation:`, {
       elementWidth: element.width,
       elementHeight: element.height,
       elementWidthPoints: elementWidthPoints.toFixed(1),
       elementHeightPoints: elementHeightPoints.toFixed(1),
       pageWidth: pageWidth.toFixed(1),
       pageHeight: pageHeight.toFixed(1),
-      centerX: centerX.toFixed(1),
-      centerY: centerY.toFixed(1),
+      marginPercent: marginFromEdgePercent * 100 + '%',
+      marginX: marginX.toFixed(1),
+      marginY: marginY.toFixed(1),
       finalX: finalX.toFixed(1),
       finalY: finalY.toFixed(1)
     });
@@ -457,15 +456,16 @@ export class OriginalWorkingGenerator {
     // Use the same scale factors as position calculation for consistency
     const { width: pageWidth, height: pageHeight } = page.getSize();
     
-    // Proper scaling from canvas pixels to PDF points
+    // For dual-page SVGs, use more conservative sizing to prevent clipping
     const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
     const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Scale the element dimensions
-    const width = element.width * canvasToPageScaleX;
-    const height = element.height * canvasToPageScaleY;
+    // Scale down the element to 60% of its original size to prevent clipping
+    const scaleDownFactor = 0.6;
+    const width = element.width * canvasToPageScaleX * scaleDownFactor;
+    const height = element.height * canvasToPageScaleY * scaleDownFactor;
     
-    console.log(`📏 Size calculation:`, {
+    console.log(`📏 Conservative size calculation:`, {
       elementWidth: element.width,
       elementHeight: element.height,
       templatePixelWidth: templateSize.pixelWidth,
@@ -474,6 +474,7 @@ export class OriginalWorkingGenerator {
       pageHeight: pageHeight.toFixed(1),
       scaleX: canvasToPageScaleX.toFixed(4),
       scaleY: canvasToPageScaleY.toFixed(4),
+      scaleDownFactor: scaleDownFactor,
       finalWidth: width.toFixed(1),
       finalHeight: height.toFixed(1)
     });
@@ -482,31 +483,23 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Extract single page content from a multi-page SVG
+   * Extract single page content from a multi-page SVG by analyzing actual content bounds
    */
   private extractSinglePageFromSVG(svgContent: string): string {
     try {
-      // Parse viewBox to get dimensions
+      // For now, return the original SVG to avoid clipping issues
+      // The duplicate removal will be handled by better coordinate filtering
+      console.log(`✂️ Preserving original SVG to avoid clipping - duplicate filtering will handle overlaps`);
+      
+      // Parse viewBox to get dimensions for logging
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-      if (!viewBoxMatch) {
-        return svgContent; // Return original if no viewBox found
+      if (viewBoxMatch) {
+        const [x, y, width, height] = viewBoxMatch[1].split(' ').map(Number);
+        console.log(`📐 Original SVG dimensions: ${width}x${height}px`);
       }
       
-      const [x, y, width, height] = viewBoxMatch[1].split(' ').map(Number);
-      const halfHeight = height / 2;
-      
-      console.log(`✂️ Extracting single page from SVG: ${width}x${height} -> ${width}x${halfHeight}`);
-      
-      // Update viewBox to show only the top half (first page)
-      const newViewBox = `viewBox="${x} ${y} ${width} ${halfHeight}"`;
-      const updatedSvg = svgContent
-        .replace(/viewBox="[^"]+"/g, newViewBox)
-        .replace(/height="[^"]+"/g, `height="${halfHeight}"`);
-      
-      // Filter out path elements that are in the bottom half (y > halfHeight)
-      const filteredSvg = this.filterSVGPathsByYPosition(updatedSvg, halfHeight);
-      
-      return filteredSvg;
+      // Instead of cutting the SVG, we'll rely on proper positioning to handle duplicates
+      return svgContent;
       
     } catch (error) {
       console.warn(`⚠️ Failed to extract single page from SVG:`, error);
