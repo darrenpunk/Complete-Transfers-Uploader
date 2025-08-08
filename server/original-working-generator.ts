@@ -254,7 +254,7 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Embed SVG logo using PNG conversion to avoid duplication issues
+   * Embed SVG logo with proper page extraction to avoid duplication
    */
   private async embedSVGLogo(
     page: PDFPage,
@@ -263,18 +263,46 @@ export class OriginalWorkingGenerator {
     templateSize: any
   ): Promise<void> {
     try {
-      // Calculate position and size first
+      // Read the SVG to check if it contains multi-page content
+      const svgContent = fs.readFileSync(logoPath, 'utf8');
+      
+      console.log(`🔍 Analyzing SVG for multi-page content...`);
+      
+      // Check if this SVG contains dual-page content (height > 1000px indicates 2-page SVG)
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      let needsPageExtraction = false;
+      
+      if (viewBoxMatch) {
+        const viewBox = viewBoxMatch[1].split(' ');
+        const svgHeight = parseFloat(viewBox[3]);
+        if (svgHeight > 1000) {
+          needsPageExtraction = true;
+          console.log(`📄 Multi-page SVG detected (height: ${svgHeight}px) - extracting single page content`);
+        }
+      }
+      
+      // Calculate position and size
       const position = this.calculateOriginalPosition(element, templateSize, page);
       const size = this.calculateOriginalSize(element, templateSize, page);
       
-      console.log(`🎯 Converting SVG to PNG to avoid duplication issues`);
       console.log(`📍 Target position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
       
-      // Convert SVG to high-resolution PNG to preserve quality
+      let finalSvgPath = logoPath;
+      
+      if (needsPageExtraction) {
+        // Create a single-page version of the SVG by filtering out the bottom half content
+        const singlePageSvg = this.extractSinglePageFromSVG(svgContent);
+        const tempSvgPath = path.join(process.cwd(), 'uploads', `temp_single_page_${Date.now()}.svg`);
+        fs.writeFileSync(tempSvgPath, singlePageSvg);
+        finalSvgPath = tempSvgPath;
+        console.log(`✂️ Created single-page SVG: ${tempSvgPath}`);
+      }
+      
+      // Convert SVG to high-resolution PNG
       const tempPngPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.png`);
       const dpi = 300; // High resolution for print quality
       
-      const inkscapeCmd = `inkscape --export-type=png --export-dpi=${dpi} --export-filename="${tempPngPath}" "${logoPath}"`;
+      const inkscapeCmd = `inkscape --export-type=png --export-dpi=${dpi} --export-filename="${tempPngPath}" "${finalSvgPath}"`;
       await execAsync(inkscapeCmd);
       console.log(`🎨 SVG converted to PNG: ${tempPngPath}`);
       
@@ -291,11 +319,14 @@ export class OriginalWorkingGenerator {
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Successfully embedded SVG as PNG at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+      console.log(`✅ Successfully embedded single-page SVG as PNG at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       
-      // Clean up temp file
+      // Clean up temp files
       try {
         fs.unlinkSync(tempPngPath);
+        if (needsPageExtraction && finalSvgPath !== logoPath) {
+          fs.unlinkSync(finalSvgPath);
+        }
       } catch {
         // Ignore cleanup errors
       }
@@ -408,5 +439,85 @@ export class OriginalWorkingGenerator {
     });
     
     return { width, height };
+  }
+
+  /**
+   * Extract single page content from a multi-page SVG
+   */
+  private extractSinglePageFromSVG(svgContent: string): string {
+    try {
+      // Parse viewBox to get dimensions
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      if (!viewBoxMatch) {
+        return svgContent; // Return original if no viewBox found
+      }
+      
+      const [x, y, width, height] = viewBoxMatch[1].split(' ').map(Number);
+      const halfHeight = height / 2;
+      
+      console.log(`✂️ Extracting single page from SVG: ${width}x${height} -> ${width}x${halfHeight}`);
+      
+      // Update viewBox to show only the top half (first page)
+      const newViewBox = `viewBox="${x} ${y} ${width} ${halfHeight}"`;
+      const updatedSvg = svgContent
+        .replace(/viewBox="[^"]+"/g, newViewBox)
+        .replace(/height="[^"]+"/g, `height="${halfHeight}"`);
+      
+      // Filter out path elements that are in the bottom half (y > halfHeight)
+      const filteredSvg = this.filterSVGPathsByYPosition(updatedSvg, halfHeight);
+      
+      return filteredSvg;
+      
+    } catch (error) {
+      console.warn(`⚠️ Failed to extract single page from SVG:`, error);
+      return svgContent; // Return original on error
+    }
+  }
+
+  /**
+   * Filter SVG paths to remove elements in the bottom half
+   */
+  private filterSVGPathsByYPosition(svgContent: string, maxY: number): string {
+    try {
+      // Find all path elements and filter them based on their y-coordinates
+      const pathPattern = /<path[^>]*d="[^"]*"[^>]*\/>/g;
+      let filteredSvg = svgContent;
+      
+      const paths = svgContent.match(pathPattern);
+      if (!paths) {
+        return svgContent;
+      }
+      
+      let removedPaths = 0;
+      
+      paths.forEach(path => {
+        // Extract y-coordinates from the path data
+        const dAttribute = path.match(/d="([^"]+)"/)?.[1];
+        if (!dAttribute) return;
+        
+        // Look for Y coordinates in the path data (simplified approach)
+        const yCoords = dAttribute.match(/(\d+\.?\d*)/g)
+          ?.map(Number)
+          ?.filter((_, index) => index % 2 === 1) // Take every second number (Y coords)
+          ?.filter(y => !isNaN(y));
+        
+        if (yCoords && yCoords.length > 0) {
+          // If any Y coordinate is in the bottom half, remove this path
+          const minY = Math.min(...yCoords);
+          if (minY > maxY) {
+            filteredSvg = filteredSvg.replace(path, '');
+            removedPaths++;
+          }
+        }
+      });
+      
+      console.log(`🗑️ Removed ${removedPaths} paths from bottom half of SVG`);
+      
+      return filteredSvg;
+      
+    } catch (error) {
+      console.warn(`⚠️ Failed to filter SVG paths:`, error);
+      return svgContent;
+    }
   }
 }
