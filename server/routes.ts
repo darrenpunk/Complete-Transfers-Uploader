@@ -646,12 +646,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ROBUST PDF generator (completely rewritten approach)
-      console.log('📦 About to import RobustPDFGenerator...');
-      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-      console.log('✅ RobustPDFGenerator imported successfully');
-      const generator = new RobustPDFGenerator();
-      console.log('📊 Robust generator instance created');
+      // Import the WORKING PDF generator (clean approach to bypass all issues)
+      console.log('📦 About to import WorkingPDFGenerator...');
+      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
+      console.log('✅ WorkingPDFGenerator imported successfully');
+      const generator = new WorkingPDFGenerator();
+      console.log('📊 Working generator instance created');
 
       // Generate PDF that preserves original file content
       const pdfData = {

@@ -117,7 +117,19 @@ export class RobustPDFGenerator {
       // Read converted PDF and embed as page
       const tempPdfBytes = await fs.readFile(tempPdfPath);
       const tempPdf = await PDFDocument.load(tempPdfBytes);
+      
+      // Check if PDF has pages
+      if (tempPdf.getPageCount() === 0) {
+        console.error(`❌ Converted PDF has no pages: ${tempPdfPath}`);
+        return;
+      }
+      
       const [embeddedPage] = await pdfDoc.copyPages(tempPdf, [0]);
+      
+      if (!embeddedPage) {
+        console.error(`❌ Failed to copy page from PDF: ${tempPdfPath}`);
+        return;
+      }
 
       // Calculate position - SIMPLIFIED APPROACH
       // Use direct canvas coordinates with proper scaling
@@ -149,6 +161,12 @@ export class RobustPDFGenerator {
 
       // Get original page size to calculate scale factor
       const originalSize = embeddedPage.getSize();
+      
+      if (!originalSize || originalSize.width <= 0 || originalSize.height <= 0) {
+        console.error(`❌ Invalid page dimensions: ${originalSize?.width}×${originalSize?.height}`);
+        return;
+      }
+      
       const scaleX = elementWidthPoints / originalSize.width;
       const scaleY = elementHeightPoints / originalSize.height;
       const uniformScale = Math.min(scaleX, scaleY); // Maintain aspect ratio
@@ -159,13 +177,19 @@ export class RobustPDFGenerator {
       
       console.log(`📐 Embedding: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)}, ${finalY.toFixed(1)})`);
       
-      page.drawPage(embeddedPage, {
-        x: xInPoints,
-        y: finalY,
-        width: finalWidth,
-        height: finalHeight,
-        rotate: element.rotation ? degrees(element.rotation) : undefined,
-      });
+      try {
+        page.drawPage(embeddedPage, {
+          x: xInPoints,
+          y: finalY,
+          width: finalWidth,
+          height: finalHeight,
+          rotate: element.rotation ? degrees(element.rotation) : undefined,
+        });
+        console.log(`✅ Successfully embedded logo`);
+      } catch (drawError) {
+        console.error(`❌ Failed to draw page:`, drawError);
+        throw drawError;
+      }
 
       console.log(`✅ Logo embedded successfully at (${xInPoints.toFixed(2)}, ${finalY.toFixed(2)})`);
 
