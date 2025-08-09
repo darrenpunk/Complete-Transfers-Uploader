@@ -775,6 +775,11 @@ export async function registerRoutes(app: express.Application) {
         try {
           console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
           
+          // DEBUG: Check variables before CMYK detection
+          console.log(`🔍 DEBUG: uploadDir = ${uploadDir}`);
+          console.log(`🔍 DEBUG: CMYKService imported:`, typeof CMYKService);
+          console.log(`🔍 DEBUG: file object:`, { filename: file.filename, originalname: file.originalname, mimetype: file.mimetype });
+          
           // IMMEDIATE CMYK detection before ANY processing
           console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
           const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
