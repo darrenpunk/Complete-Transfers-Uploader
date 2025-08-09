@@ -617,6 +617,10 @@ export async function registerRoutes(app: express.Application) {
   const { storage } = await import('./storage');
   const { setupImpositionRoutes } = await import('./imposition-routes');
   
+  // CRITICAL: Ultra-early debugging to verify function is called
+  process.stdout.write(`🚀🚀🚀 REGISTER ROUTES CALLED - ${new Date().toISOString()}\n`);
+  console.error(`🚀🚀🚀 REGISTERING ROUTES FUNCTION STARTED`);
+  
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
     try {
@@ -729,6 +733,10 @@ export async function registerRoutes(app: express.Application) {
     console.log('🚨 DEBUG TEST ROUTE HIT!');
     res.json({ message: 'Test route works!' });
   });
+
+  // CRITICAL: Log route registration
+  process.stdout.write(`📍📍📍 REGISTERING UPLOAD ROUTE - ${new Date().toISOString()}\n`);
+  console.error(`📍📍📍 REGISTERING /api/projects/:projectId/logos route`);
 
   // File upload endpoint - MUST be before imposition routes to ensure proper routing
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
