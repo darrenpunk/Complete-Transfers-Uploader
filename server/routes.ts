@@ -1347,6 +1347,7 @@ export async function registerRoutes(app: express.Application) {
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT,
           isCMYKPreserved: cmykResult.isCMYKPreserved, // USE CMYK SERVICE RESULT
+          extractedCMYKColors: cmykResult.cmykColors, // ADD EXTRACTED CMYK COLORS
           isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false,
           // PRODUCTION FLOW: Add preflight results
           preflightData: {

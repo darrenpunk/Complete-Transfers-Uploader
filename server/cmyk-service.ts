@@ -98,10 +98,12 @@ export class CMYKService {
       
       // Check if this PDF has CMYK colors
       const isCMYK = await CMYKDetector.hasCMYKColors(filePath);
+      console.log(`🔍 CMYKDetector.hasCMYKColors result: ${isCMYK}`);
       
       if (isCMYK) {
         // Extract actual CMYK color values using the working detector
         const cmykColors = await CMYKDetector.extractCMYKColors(filePath);
+        console.log(`🎨 CMYKDetector.extractCMYKColors result:`, cmykColors);
         
         // Create a preserved copy with 'original_' prefix
         const originalFilename = `original_${file.filename}`;
@@ -112,12 +114,15 @@ export class CMYKService {
         
         console.log(`💾 CMYK PDF preserved as: ${originalFilename}`);
         console.log(`🎨 Extracted ${cmykColors?.length || 0} CMYK color values using CMYKDetector`);
+        console.log(`✅ RETURNING isCMYKPreserved: true with ${cmykColors?.length || 0} colors`);
         
         return {
           isCMYKPreserved: true,
           originalPdfPath: originalPath,
           cmykColors: cmykColors || []
         };
+      } else {
+        console.log(`❌ No CMYK colors detected, returning isCMYKPreserved: false`);
       }
       
       return { isCMYKPreserved: false };
