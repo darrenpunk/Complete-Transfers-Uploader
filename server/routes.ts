@@ -771,14 +771,15 @@ export async function registerRoutes(app: express.Application) {
       const { CMYKService } = await import('./cmyk-service');
       
       for (const file of files) {
-        console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
-        
-        // IMMEDIATE CMYK detection before any processing
-        console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
-        const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
-        console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
-        console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
-        console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
+        try {
+          console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
+          
+          // IMMEDIATE CMYK detection before any processing
+          console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
+          const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
+          console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
+          console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
+          console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
         
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
@@ -1676,6 +1677,12 @@ export async function registerRoutes(app: express.Application) {
         };
 
         await storage.createCanvasElement(canvasElementData);
+        
+        } catch (fileError) {
+          console.error(`❌ Error processing file ${file.originalname}:`, fileError);
+          // Skip this file and continue with next one
+          continue;
+        }
       }
 
       console.log('🚀 Returning logos to client:', logos.map(logo => ({
