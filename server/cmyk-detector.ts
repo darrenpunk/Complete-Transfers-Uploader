@@ -65,11 +65,22 @@ export class CMYKDetector {
           'xmpG:swatchName>CMYK'          // Additional XMP swatch indicator
         ];
         
+        console.log(`CMYK Detector: Checking ${cmykIndicators.length} indicators in PDF content (${pdfContent.length} bytes)`);
         for (const indicator of cmykIndicators) {
           if (pdfContent.includes(indicator)) {
-            console.log(`CMYK Detector: Found CMYK indicator "${indicator}" in PDF content`);
+            console.log(`🎨 CMYK Detector: Found CMYK indicator "${indicator}" in PDF content - CMYK DETECTED!`);
             return true;
           }
+        }
+        console.log(`CMYK Detector: No CMYK indicators found in ${pdfContent.length} bytes of content`);
+        
+        // Debug: Show first few bytes to verify content is readable
+        const firstBytes = pdfContent.substring(0, 50);
+        console.log(`CMYK Detector: First 50 chars of content: "${firstBytes}"`);
+        
+        // Check if we have any XMP metadata at all
+        if (pdfContent.includes('xmpG:')) {
+          console.log(`CMYK Detector: Found XMP metadata but no CMYK indicators`);
         }
       } catch (error) {
         console.log('CMYK Detector: Could not read PDF content');
