@@ -782,42 +782,8 @@ export async function registerRoutes(app: express.Application) {
         let finalUrl = `/uploads/${file.filename}`;
 
         console.log(`📁 File received: ${file.filename}, mimetype: ${file.mimetype}, originalname: ${file.originalname}`);
-        console.log(`🎯 CHECKING CMYK: Is PDF? ${file.mimetype === 'application/pdf'} (mimetype: "${file.mimetype}")`);
-
-        // CRITICAL: Check for CMYK PDFs FIRST before any conversion
-        if (file.mimetype === 'application/pdf') {
-          process.stdout.write(`🔍🔍🔍 PROCESSING PDF FOR CMYK: ${file.filename}\n`);
-          console.error(`🔍 Processing PDF file for CMYK detection: ${file.filename}`);
-          try {
-            const pdfPath = path.join(uploadDir, file.filename);
-            const { CMYKDetector } = await import('./cmyk-detector');
-            
-            // Check if PDF contains CMYK colors
-            const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
-            process.stdout.write(`🎨🎨🎨 CMYK DETECTION RESULT: ${hasCMYK} for ${file.filename}\n`);
-            console.error(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
-            
-            if (hasCMYK) {
-              console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
-              
-              // IMPORTANT: Keep the original PDF file for later use
-              const originalPdfFilename = `original_${file.filename}`;
-              const originalPdfPath = path.join(uploadDir, originalPdfFilename);
-              
-              // Copy the original PDF to preserve it
-              fs.copyFileSync(pdfPath, originalPdfPath);
-              console.log(`📁 Preserved original CMYK PDF: ${originalPdfFilename}`);
-              
-              // Store original PDF info for later embedding
-              (file as any).originalPdfPath = originalPdfFilename;
-              (file as any).isCMYKPreserved = true;
-              
-              // Continue processing to convert to SVG for display
-            }
-          } catch (error) {
-            console.error('CMYK detection failed:', error);
-          }
-        }
+        
+        // CMYK detection is now handled by CMYKService above - no duplicate processing needed
 
         // Handle AI/EPS files - convert to SVG for display
         if (file.mimetype === 'application/postscript' || 
@@ -982,9 +948,9 @@ export async function registerRoutes(app: express.Application) {
               let svgContent = fs.readFileSync(svgPath, 'utf8');
               
               // If this is a CMYK PDF, add markers to the SVG
-              if ((file as any).isCMYKPreserved) {
-                svgContent = svgContent.replace('<svg', `<svg data-original-cmyk-pdf="${(file as any).originalPdfPath}" data-cmyk-preserved="true"`);
-                console.log(`✅ Marked SVG as CMYK-preserved from original: ${(file as any).originalPdfPath}`);
+              if (cmykResult.isCMYKPreserved) {
+                svgContent = svgContent.replace('<svg', `<svg data-original-cmyk-pdf="${cmykResult.originalPdfPath}" data-cmyk-preserved="true"`);
+                console.log(`✅ Marked SVG as CMYK-preserved from original: ${cmykResult.originalPdfPath}`);
               }
               
               const cleanedSvg = removeVectorizedBackgrounds(svgContent);
@@ -1195,7 +1161,7 @@ export async function registerRoutes(app: express.Application) {
             let analysis = analyzeSVGWithStrokeWidths(svgPath);
             
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
-            if ((file as any).isCMYKPreserved && (file as any).originalPdfPath) {
+            if (cmykResult.isCMYKPreserved && cmykResult.originalPdfPath) {
               console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
               console.log(`🔍 DEBUG: File has isCMYKPreserved=${(file as any).isCMYKPreserved}, originalPdfPath=${(file as any).originalPdfPath}`);
               
