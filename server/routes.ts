@@ -772,6 +772,7 @@ export async function registerRoutes(app: express.Application) {
       const { CMYKService } = await import('./cmyk-service');
       
       for (const file of files) {
+        let cmykResult = { isCMYKPreserved: false, cmykColors: [], originalPdfPath: null };
         try {
           console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
           
@@ -780,12 +781,17 @@ export async function registerRoutes(app: express.Application) {
           console.log(`🔍 DEBUG: CMYKService imported:`, typeof CMYKService);
           console.log(`🔍 DEBUG: file object:`, { filename: file.filename, originalname: file.originalname, mimetype: file.mimetype });
           
-          // IMMEDIATE CMYK detection before ANY processing
-          console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
-          const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
-          console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
-          console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
-          console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
+          try {
+            // IMMEDIATE CMYK detection before ANY processing
+            console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
+            cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
+            console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
+            console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
+            console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
+          } catch (cmykError) {
+            console.error(`❌ CMYK Detection Error for ${file.originalname}:`, cmykError);
+            console.error(`❌ CMYK Error Stack:`, cmykError.stack);
+          }
 
         
         let finalFilename = file.filename;
