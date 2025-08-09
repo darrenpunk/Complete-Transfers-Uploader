@@ -137,30 +137,88 @@ export class CMYKService {
       const { promisify } = require('util');
       const execAsync = promisify(exec);
       
-      // Use strings to find CMYK color patterns in PDF content
-      const stringCommand = `strings "${pdfPath}" | grep -E "(setcmykcolor|DeviceCMYK)" | head -20`;
+      console.log(`🔍 Starting CMYK value extraction from: ${pdfPath}`);
+      
+      // Method 1: Use Ghostscript to extract color information directly
+      const gsCommand = `gs -dNODISPLAY -dBATCH -dNOPAUSE -q -c "
+        /showcolors {
+          0 1 {
+            dup setcolor
+            currentcolor == flush
+          } for
+        } def
+        /DeviceCMYK setcolorspace
+        showcolors
+      " "${pdfPath}" 2>/dev/null || echo "gs_failed"`;
+      
+      // Method 2: Extract raw PDF content and look for color patterns
+      const extractCommand = `pdftotext -raw "${pdfPath}" - 2>/dev/null | head -50 || strings "${pdfPath}" | head -100`;
       
       try {
-        const result = await execAsync(stringCommand);
-        const cmykColors: Array<{ c: number, m: number, y: number, k: number }> = [];
+        // Try Ghostscript first
+        let result = await execAsync(gsCommand);
+        console.log(`🎨 Ghostscript extraction result length: ${result.length}`);
         
-        // Parse CMYK patterns from PDF content
-        // Look for patterns like "0.13 1.0 0.81 0.03 setcmykcolor"
-        const cmykPattern = /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+setcmykcolor/g;
-        let match;
-        
-        while ((match = cmykPattern.exec(result)) !== null) {
-          const [, c, m, y, k] = match;
-          cmykColors.push({
-            c: Math.round(parseFloat(c) * 100),
-            m: Math.round(parseFloat(m) * 100),
-            y: Math.round(parseFloat(y) * 100),
-            k: Math.round(parseFloat(k) * 100)
-          });
+        // If Ghostscript fails, try text extraction
+        if (result.includes('gs_failed') || result.length < 10) {
+          console.log(`🔄 Falling back to text extraction method`);
+          result = await execAsync(extractCommand);
         }
         
-        console.log(`🎨 Extracted ${cmykColors.length} CMYK colors from PDF content`);
-        return cmykColors.length > 0 ? cmykColors : null;
+        const cmykColors: Array<{ c: number, m: number, y: number, k: number }> = [];
+        
+        // Multiple pattern matching approaches
+        const patterns = [
+          // Standard PostScript setcmykcolor: "0.13 1.0 0.81 0.03 setcmykcolor"
+          /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+setcmykcolor/g,
+          // PDF stream format: "0.13 1.0 0.81 0.03 K"
+          /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+K/g,
+          // Array format: "[0.13 1.0 0.81 0.03]"
+          /\[(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\]/g,
+          // Direct CMYK values: "C:70 M:67 Y:64 K:74"
+          /C:?(\d+(?:\.\d+)?)\s*M:?(\d+(?:\.\d+)?)\s*Y:?(\d+(?:\.\d+)?)\s*K:?(\d+(?:\.\d+)?)/gi
+        ];
+        
+        for (const pattern of patterns) {
+          let match;
+          while ((match = pattern.exec(result)) !== null) {
+            const [, c, m, y, k] = match;
+            let cVal = parseFloat(c);
+            let mVal = parseFloat(m);
+            let yVal = parseFloat(y);
+            let kVal = parseFloat(k);
+            
+            // Handle percentage vs decimal values
+            if (cVal <= 1 && mVal <= 1 && yVal <= 1 && kVal <= 1) {
+              // Decimal format (0.0-1.0), convert to percentage
+              cVal = Math.round(cVal * 100);
+              mVal = Math.round(mVal * 100);
+              yVal = Math.round(yVal * 100);
+              kVal = Math.round(kVal * 100);
+            } else {
+              // Already percentage format
+              cVal = Math.round(cVal);
+              mVal = Math.round(mVal);
+              yVal = Math.round(yVal);
+              kVal = Math.round(kVal);
+            }
+            
+            // Only add valid CMYK values (0-100%)
+            if (cVal >= 0 && cVal <= 100 && mVal >= 0 && mVal <= 100 && 
+                yVal >= 0 && yVal <= 100 && kVal >= 0 && kVal <= 100) {
+              cmykColors.push({ c: cVal, m: mVal, y: yVal, k: kVal });
+              console.log(`✅ Found CMYK: C:${cVal}% M:${mVal}% Y:${yVal}% K:${kVal}%`);
+            }
+          }
+        }
+        
+        // Remove duplicates
+        const uniqueColors = cmykColors.filter((color, index, arr) => 
+          arr.findIndex(c => c.c === color.c && c.m === color.m && c.y === color.y && c.k === color.k) === index
+        );
+        
+        console.log(`🎨 Extracted ${uniqueColors.length} unique CMYK colors from PDF`);
+        return uniqueColors.length > 0 ? uniqueColors : null;
         
       } catch (extractError) {
         console.log(`⚠️ CMYK value extraction failed:`, extractError);
