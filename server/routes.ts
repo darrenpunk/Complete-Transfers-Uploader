@@ -739,6 +739,7 @@ export async function registerRoutes(app: express.Application) {
     // CRITICAL: Ultra-early debugging to catch the handler
     process.stdout.write(`🚨🚨🚨 UPLOAD HANDLER HIT - ${new Date().toISOString()}\n`);
     console.error(`🚨🚨🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
+    console.error(`🚨🚨🚨 REQUEST METHOD: ${req.method}, URL: ${req.url}`);
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
