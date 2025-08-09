@@ -767,7 +767,16 @@ export async function registerRoutes(app: express.Application) {
 
       const logos = [];
       
+      // Import CMYK service for reliable detection
+      const { CMYKService } = await import('./cmyk-service');
+      
       for (const file of files) {
+        console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
+        
+        // IMMEDIATE CMYK detection before any processing
+        const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
+        console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
+        
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
@@ -1338,7 +1347,7 @@ export async function registerRoutes(app: express.Application) {
           svgColors: analysisData,
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT,
-          isCMYKPreserved: (file as any).isCMYKPreserved || false,
+          isCMYKPreserved: cmykResult.isCMYKPreserved, // USE CMYK SERVICE RESULT
           isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false,
           // PRODUCTION FLOW: Add preflight results
           preflightData: {
@@ -1368,11 +1377,12 @@ export async function registerRoutes(app: express.Application) {
         }
         
         // Add original PDF info for CMYK PDFs or PDFs with raster only
-        if ((file as any).originalPdfPath) {
-          logoData.originalPdfPath = (file as any).originalPdfPath;
-          if ((file as any).isCMYKPreserved || (file as any).isPdfWithRasterOnly) {
+        if ((file as any).originalPdfPath || cmykResult.originalPdfPath) {
+          logoData.originalPdfPath = cmykResult.originalPdfPath || (file as any).originalPdfPath;
+          if (cmykResult.isCMYKPreserved || (file as any).isPdfWithRasterOnly) {
             logoData.originalFilename = file.filename; // Store the original PDF filename
             logoData.originalMimeType = 'application/pdf';
+            console.log(`✅ CMYK service linked original PDF: ${logoData.originalPdfPath}`);
           }
         }
         
