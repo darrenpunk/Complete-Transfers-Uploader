@@ -715,10 +715,14 @@ export async function registerRoutes(app: express.Application) {
       res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
     }
   });
-  
-  // Setup imposition routes
-  setupImpositionRoutes(app, storage);
-  // File upload endpoint
+
+  // Test route to verify routing is working
+  app.all('/api/projects/*/logos', (req, res, next) => {
+    console.log(`🚨 ANY REQUEST to logos endpoint: ${req.method} ${req.path} - Project: ${req.params.projectId}`);
+    next(); // Continue to the actual handler
+  });
+
+  // File upload endpoint - MUST be before imposition routes to ensure proper routing
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
     console.log(`🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
     try {
@@ -1660,6 +1664,9 @@ export async function registerRoutes(app: express.Application) {
       res.status(500).json({ error: 'Upload failed' });
     }
   });
+
+  // Setup imposition routes after file upload routes
+  setupImpositionRoutes(app, storage);
 
   // Other essential routes
   app.get('/api/projects/:projectId', async (req, res) => {
