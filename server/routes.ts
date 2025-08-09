@@ -718,8 +718,16 @@ export async function registerRoutes(app: express.Application) {
 
   // Test route to verify routing is working
   app.all('/api/projects/*/logos', (req, res, next) => {
-    console.log(`🚨 ANY REQUEST to logos endpoint: ${req.method} ${req.path} - Project: ${req.params.projectId}`);
+    console.log(`🚨 ANY REQUEST to logos endpoint: ${req.method} ${req.path} - Project: ${req.params[0]}`);
+    console.log(`🚨 FULL URL: ${req.originalUrl}`);
+    console.log(`🚨 HEADERS: Content-Type = ${req.headers['content-type']}`);
     next(); // Continue to the actual handler
+  });
+
+  // Debug test route
+  app.post('/api/test-debug/:projectId/logos', (req, res) => {
+    console.log('🚨 DEBUG TEST ROUTE HIT!');
+    res.json({ message: 'Test route works!' });
   });
 
   // File upload endpoint - MUST be before imposition routes to ensure proper routing
