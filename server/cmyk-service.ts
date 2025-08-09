@@ -81,6 +81,7 @@ export class CMYKService {
   static async processUploadedFile(file: Express.Multer.File, uploadDir: string): Promise<{
     isCMYKPreserved: boolean;
     originalPdfPath?: string;
+    cmykColors?: Array<{ c: number, m: number, y: number, k: number }>;
   }> {
     try {
       const filePath = path.join(uploadDir, file.filename);
@@ -92,10 +93,16 @@ export class CMYKService {
       
       console.log(`🔍🔍🔍 CMYK SERVICE: Processing ${file.originalname}`);
       
-      // Detect CMYK in the uploaded PDF
-      const isCMYK = await this.detectCMYKInPDF(filePath);
+      // Extract actual CMYK values AND detect CMYK presence
+      const [cmykColors, isCMYK] = await Promise.all([
+        this.extractCMYKValues(filePath),
+        this.detectCMYKInPDF(filePath)
+      ]);
       
-      if (isCMYK) {
+      // Consider CMYK if either detection method succeeded or we found CMYK colors
+      const hasCMYK = isCMYK || (cmykColors && cmykColors.length > 0);
+      
+      if (hasCMYK) {
         // Create a preserved copy with 'original_' prefix
         const originalFilename = `original_${file.filename}`;
         const originalPath = path.join(uploadDir, originalFilename);
@@ -104,10 +111,12 @@ export class CMYKService {
         fs.copyFileSync(filePath, originalPath);
         
         console.log(`💾 CMYK PDF preserved as: ${originalFilename}`);
+        console.log(`🎨 Extracted ${cmykColors?.length || 0} CMYK color values`);
         
         return {
           isCMYKPreserved: true,
-          originalPdfPath: originalPath
+          originalPdfPath: originalPath,
+          cmykColors: cmykColors || []
         };
       }
       
@@ -116,6 +125,51 @@ export class CMYKService {
     } catch (error) {
       console.error('❌ CMYK service processing error:', error);
       return { isCMYKPreserved: false };
+    }
+  }
+
+  /**
+   * Extract actual CMYK color values from PDF content stream
+   */
+  private static async extractCMYKValues(pdfPath: string): Promise<Array<{ c: number, m: number, y: number, k: number }> | null> {
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      // Use strings to find CMYK color patterns in PDF content
+      const stringCommand = `strings "${pdfPath}" | grep -E "(setcmykcolor|DeviceCMYK)" | head -20`;
+      
+      try {
+        const result = await execAsync(stringCommand);
+        const cmykColors: Array<{ c: number, m: number, y: number, k: number }> = [];
+        
+        // Parse CMYK patterns from PDF content
+        // Look for patterns like "0.13 1.0 0.81 0.03 setcmykcolor"
+        const cmykPattern = /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+setcmykcolor/g;
+        let match;
+        
+        while ((match = cmykPattern.exec(result)) !== null) {
+          const [, c, m, y, k] = match;
+          cmykColors.push({
+            c: Math.round(parseFloat(c) * 100),
+            m: Math.round(parseFloat(m) * 100),
+            y: Math.round(parseFloat(y) * 100),
+            k: Math.round(parseFloat(k) * 100)
+          });
+        }
+        
+        console.log(`🎨 Extracted ${cmykColors.length} CMYK colors from PDF content`);
+        return cmykColors.length > 0 ? cmykColors : null;
+        
+      } catch (extractError) {
+        console.log(`⚠️ CMYK value extraction failed:`, extractError);
+        return null;
+      }
+
+    } catch (error) {
+      console.error('CMYK value extraction error:', error);
+      return null;
     }
   }
 }

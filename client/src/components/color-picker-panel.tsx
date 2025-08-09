@@ -432,7 +432,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             if (isCMYK) {
               // For CMYK colors, show proper CMYK format
-              if (color.cmykColor && color.cmykColor.includes('C:')) {
+              if (color.originalFormat && color.originalFormat.includes('C:') && color.originalFormat.includes('M:')) {
+                // Use extracted CMYK values from the PDF
+                displayValue = color.originalFormat;
+              } else if (color.cmykColor && color.cmykColor.includes('C:')) {
                 displayValue = color.cmykColor;
               } else if (color.originalFormat === "CMYK from preserved PDF") {
                 // Convert RGB representation to CMYK display format

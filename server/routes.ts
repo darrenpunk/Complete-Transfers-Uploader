@@ -776,6 +776,7 @@ export async function registerRoutes(app: express.Application) {
         // IMMEDIATE CMYK detection before any processing
         const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
         console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
+        console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
         
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
@@ -1181,13 +1182,33 @@ export async function registerRoutes(app: express.Application) {
               // CRITICAL: Force all detected colors to be marked as CMYK since this came from a CMYK PDF
               if (analysis.colors && analysis.colors.length > 0) {
                 console.log(`🎨 FORCE MARKING ${analysis.colors.length} colors as CMYK (from CMYK PDF)`);
-                analysis.colors = analysis.colors.map((color, index) => ({
-                  ...color,
-                  isCMYK: true, // Force CMYK flag
-                  originalFormat: `CMYK from preserved PDF`, // Mark origin
-                  cmykPreserved: true // Additional flag for clarity
-                }));
-                console.log(`✅ All colors now marked as CMYK:`, analysis.colors.map(c => ({ original: c.originalColor, isCMYK: c.isCMYK })));
+                
+                // Get extracted CMYK values if available
+                const extractedCMYKColors = cmykResult.cmykColors || [];
+                
+                analysis.colors = analysis.colors.map((color, index) => {
+                  let cmykValue = null;
+                  
+                  // Use extracted CMYK values if available
+                  if (extractedCMYKColors[index]) {
+                    const cmyk = extractedCMYKColors[index];
+                    cmykValue = `C:${cmyk.c}% M:${cmyk.m}% Y:${cmyk.y}% K:${cmyk.k}%`;
+                  }
+                  
+                  return {
+                    ...color,
+                    isCMYK: true, // Force CMYK flag
+                    originalFormat: cmykValue || `CMYK from preserved PDF`, // Use actual CMYK values
+                    cmykPreserved: true, // Additional flag for clarity
+                    extractedCMYK: extractedCMYKColors[index] || null // Store raw CMYK values
+                  };
+                });
+                console.log(`✅ All colors now marked as CMYK with extracted values:`, analysis.colors.map(c => ({ 
+                  original: c.originalColor, 
+                  isCMYK: c.isCMYK,
+                  cmykFormat: c.originalFormat,
+                  extractedCMYK: (c as any).extractedCMYK
+                })));
               }
             }
             
