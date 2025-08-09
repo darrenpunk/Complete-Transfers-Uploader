@@ -751,6 +751,7 @@ export async function registerRoutes(app: express.Application) {
         let finalUrl = `/uploads/${file.filename}`;
 
         console.log(`📁 File received: ${file.filename}, mimetype: ${file.mimetype}, originalname: ${file.originalname}`);
+        console.log(`🎯 CHECKING CMYK: Is PDF? ${file.mimetype === 'application/pdf'} (mimetype: "${file.mimetype}")`);
 
         // CRITICAL: Check for CMYK PDFs FIRST before any conversion
         if (file.mimetype === 'application/pdf') {
