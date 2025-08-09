@@ -42,9 +42,11 @@ export class CMYKDetector {
 
       // Method 3: Check for common CMYK indicators in raw PDF
       try {
-        const pdfContent = fs.readFileSync(pdfPath, 'utf8');
+        // Read as binary buffer first, then convert to string for text search
+        const pdfBuffer = fs.readFileSync(pdfPath);
+        const pdfContent = pdfBuffer.toString('binary');
         
-        // Look for CMYK color space definitions
+        // Look for CMYK color space definitions and XMP metadata
         const cmykIndicators = [
           '/DeviceCMYK',
           '/CMYK',
@@ -55,9 +57,12 @@ export class CMYKDetector {
           'CMYK Red',                      // CMYK swatch names
           'CMYK Yellow',
           'CMYK Green',
-          'CMYK Cyan',
+          'CMYK Cyan', 
           'CMYK Magenta',
-          'CMYK Black'
+          'CMYK Black',
+          'CMYK Blue',
+          '%%CMYKProcessColor',            // PostScript CMYK indicator
+          'xmpG:swatchName>CMYK'          // Additional XMP swatch indicator
         ];
         
         for (const indicator of cmykIndicators) {
