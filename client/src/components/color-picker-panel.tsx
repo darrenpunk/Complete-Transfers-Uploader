@@ -410,19 +410,43 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           {svgColors.map((color, index) => {
             const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
             
+            // Function to convert RGB to approximate CMYK for display
+            const rgbToCMYKDisplay = (rgbString: string) => {
+              const rgbMatch = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+              if (rgbMatch) {
+                const r = parseInt(rgbMatch[1]) / 255;
+                const g = parseInt(rgbMatch[2]) / 255;
+                const b = parseInt(rgbMatch[3]) / 255;
+                
+                const k = 1 - Math.max(r, g, b);
+                const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+                const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
+                const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+                
+                return `CMYK(${Math.round(c * 100)}%, ${Math.round(m * 100)}%, ${Math.round(y * 100)}%, ${Math.round(k * 100)}%)`;
+              }
+              return rgbString;
+            };
+            
+            let displayValue = color.originalColor;
+            
+            if (isCMYK) {
+              // For CMYK colors, show proper CMYK format
+              if (color.cmykColor && color.cmykColor.includes('C:')) {
+                displayValue = color.cmykColor;
+              } else if (color.originalFormat === "CMYK from preserved PDF") {
+                // Convert RGB representation to CMYK display format
+                displayValue = rgbToCMYKDisplay(color.originalColor);
+              } else {
+                displayValue = color.originalColor;
+              }
+            }
+            
             return (
               <div key={index} className="space-y-1">
                 <div className="text-xs text-gray-500 font-mono">
-                  {isCMYK ? (
-                    // Show CMYK values if already CMYK
-                    color.cmykColor || color.originalColor
-                  ) : (
-                    // Show RGB values for RGB colors
-                    color.originalColor
-                  )}
+                  {displayValue}
                 </div>
-
-
               </div>
             );
           })}
