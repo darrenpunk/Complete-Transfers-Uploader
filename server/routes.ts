@@ -1163,7 +1163,7 @@ export async function registerRoutes(app: express.Application) {
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
             if (cmykResult.isCMYKPreserved && cmykResult.originalPdfPath) {
               console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
-              console.log(`🔍 DEBUG: File has isCMYKPreserved=${(file as any).isCMYKPreserved}, originalPdfPath=${(file as any).originalPdfPath}`);
+              console.log(`🔍 DEBUG: CMYKService result: isCMYKPreserved=${cmykResult.isCMYKPreserved}, originalPdfPath=${cmykResult.originalPdfPath}`);
               
               // Update the SVG file to include CMYK marker
               const svgContent = fs.readFileSync(svgPath, 'utf8');
@@ -1177,6 +1177,18 @@ export async function registerRoutes(app: express.Application) {
               
               // Re-analyze with the CMYK marker
               analysis = analyzeSVGWithStrokeWidths(svgPath);
+              
+              // CRITICAL: Force all detected colors to be marked as CMYK since this came from a CMYK PDF
+              if (analysis.colors && analysis.colors.length > 0) {
+                console.log(`🎨 FORCE MARKING ${analysis.colors.length} colors as CMYK (from CMYK PDF)`);
+                analysis.colors = analysis.colors.map((color, index) => ({
+                  ...color,
+                  isCMYK: true, // Force CMYK flag
+                  originalFormat: `CMYK from preserved PDF`, // Mark origin
+                  cmykPreserved: true // Additional flag for clarity
+                }));
+                console.log(`✅ All colors now marked as CMYK:`, analysis.colors.map(c => ({ original: c.originalColor, isCMYK: c.isCMYK })));
+              }
             }
             
             // CRITICAL FIX: Set the preservation flag based on actual color analysis

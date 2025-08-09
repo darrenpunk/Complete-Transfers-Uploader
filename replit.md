@@ -7,9 +7,11 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 9, 2025)
-- **✅ CMYK DETECTION FIX COMPLETE**: Moved CMYK detection to the beginning of file processing loop (before any conversions). CMYK PDFs are now properly detected and preserved BEFORE being converted to SVG for display.
-- **🎯 Correct Processing Flow**: PDF upload → CMYK detection → Preserve original if CMYK → Convert to SVG for display → Mark SVG with CMYK preservation flags → Use original CMYK PDF during PDF generation.
+- **✅ CMYK DETECTION SYSTEM COMPLETELY FIXED**: Implemented dedicated CMYKService class that provides consistent, reliable CMYK detection using multiple indicators (XMP metadata, color spaces, ICC profiles). Eliminated all competing route handlers and duplicate detection systems that were causing inconsistent results.
+- **🎯 Single Source of Truth**: Replaced conflicting CMYK detection with unified CMYKService.processUploadedFile() method called immediately before any file processing.
+- **🔧 Color Analysis Fixed**: When CMYK PDFs are detected, all colors in the converted SVG are properly marked as `isCMYK: true` ensuring correct preflight checks and color workflow management.
 - **📁 File Preservation Working**: Original CMYK PDFs are saved with `original_` prefix and linked to database records via `originalPdfPath` field.
+- **✅ Routing Conflicts Resolved**: Removed duplicate route handlers, eliminated app.all() middleware conflicts, and streamlined upload processing for consistent behavior.
 
 ## Previous Changes (August 8, 2025)
 - **🚀 FUNDAMENTAL PDF GENERATION RESTORED**: Created OriginalWorkingGenerator class that produces rock-solid, multi-page PDFs (308KB) matching user's exact format. Page 1: original artwork, Page 2: artwork with garment color backgrounds, color labels, and CMYK values.
