@@ -774,13 +774,6 @@ export async function registerRoutes(app: express.Application) {
       for (const file of files) {
         try {
           console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
-          
-          // IMMEDIATE CMYK detection before any processing
-          console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
-          const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
-          console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
-          console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
-          console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
         
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
@@ -927,6 +920,13 @@ export async function registerRoutes(app: express.Application) {
             // Continue with original file
           }
         }
+
+        // IMMEDIATE CMYK detection before any processing
+        console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
+        const cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
+        console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
+        console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
+        console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
 
         // Process PDF files - convert to SVG for display
         if (file.mimetype === 'application/pdf') {
