@@ -720,11 +720,15 @@ export async function registerRoutes(app: express.Application) {
   setupImpositionRoutes(app, storage);
   // File upload endpoint
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
+    console.log(`🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
       
+      console.log(`🚨 FILES ARRAY:`, files?.map(f => ({ name: f.originalname, mime: f.mimetype, filename: f.filename })) || 'NO FILES');
+      
       if (!files || files.length === 0) {
+        console.log(`❌ NO FILES PROVIDED IN UPLOAD`);
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
