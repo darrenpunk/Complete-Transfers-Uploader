@@ -720,13 +720,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Test route to verify routing is working
-  app.all('/api/projects/*/logos', (req, res, next) => {
-    console.log(`🚨 ANY REQUEST to logos endpoint: ${req.method} ${req.path} - Project: ${req.params[0]}`);
-    console.log(`🚨 FULL URL: ${req.originalUrl}`);
-    console.log(`🚨 HEADERS: Content-Type = ${req.headers['content-type']}`);
-    next(); // Continue to the actual handler
-  });
+  // REMOVED problematic app.all route that was intercepting requests
 
   // Debug test route
   app.post('/api/test-debug/:projectId/logos', (req, res) => {
@@ -734,6 +728,8 @@ export async function registerRoutes(app: express.Application) {
     res.json({ message: 'Test route works!' });
   });
 
+  // MOVE app.all AFTER specific routes to fix route precedence issue
+  
   // CRITICAL: Log route registration
   process.stdout.write(`📍📍📍 REGISTERING UPLOAD ROUTE - ${new Date().toISOString()}\n`);
   console.error(`📍📍📍 REGISTERING /api/projects/:projectId/logos route`);
