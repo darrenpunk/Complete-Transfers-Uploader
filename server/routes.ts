@@ -732,7 +732,9 @@ export async function registerRoutes(app: express.Application) {
 
   // File upload endpoint - MUST be before imposition routes to ensure proper routing
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
-    console.log(`🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
+    // CRITICAL: Ultra-early debugging to catch the handler
+    process.stdout.write(`🚨🚨🚨 UPLOAD HANDLER HIT - ${new Date().toISOString()}\n`);
+    console.error(`🚨🚨🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
@@ -771,14 +773,16 @@ export async function registerRoutes(app: express.Application) {
 
         // CRITICAL: Check for CMYK PDFs FIRST before any conversion
         if (file.mimetype === 'application/pdf') {
-          console.log(`🔍 Processing PDF file for CMYK detection: ${file.filename}`);
+          process.stdout.write(`🔍🔍🔍 PROCESSING PDF FOR CMYK: ${file.filename}\n`);
+          console.error(`🔍 Processing PDF file for CMYK detection: ${file.filename}`);
           try {
             const pdfPath = path.join(uploadDir, file.filename);
             const { CMYKDetector } = await import('./cmyk-detector');
             
             // Check if PDF contains CMYK colors
             const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
-            console.log(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
+            process.stdout.write(`🎨🎨🎨 CMYK DETECTION RESULT: ${hasCMYK} for ${file.filename}\n`);
+            console.error(`🎨 CMYK detection result for ${file.filename}: ${hasCMYK}`);
             
             if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
