@@ -159,16 +159,34 @@ export default function PropertiesPanel({
     ? canvasElements.find(el => el.id === selectedElement.id) ?? selectedElement
     : null;
     
+  // Conversion factor for pixel to millimeter conversion (72 DPI standard)
+  const pxToMmRatio = 1 / 2.834645669; // Convert pixels to mm
+  
   // Update local input values when the current element changes
   useEffect(() => {
     if (currentElement) {
-      setLocalInputValues({
-        x: (currentElement.x || 0).toFixed(2),
-        y: (currentElement.y || 0).toFixed(2),
-        width: (currentElement.width || 0).toFixed(2),
-        height: (currentElement.height || 0).toFixed(2),
-        opacity: Math.round((currentElement.opacity || 1) * 100).toString()
-      });
+      // Check if this is a PDF-derived element (larger than 200px typically)
+      const isPdfDerived = (currentElement.width || 0) > 200 || (currentElement.height || 0) > 200;
+      
+      if (isPdfDerived) {
+        // Convert pixels to millimeters for display
+        setLocalInputValues({
+          x: ((currentElement.x || 0) * pxToMmRatio).toFixed(2),
+          y: ((currentElement.y || 0) * pxToMmRatio).toFixed(2),
+          width: ((currentElement.width || 0) * pxToMmRatio).toFixed(2),
+          height: ((currentElement.height || 0) * pxToMmRatio).toFixed(2),
+          opacity: Math.round((currentElement.opacity || 1) * 100).toString()
+        });
+      } else {
+        // Keep original values for non-PDF elements
+        setLocalInputValues({
+          x: (currentElement.x || 0).toFixed(2),
+          y: (currentElement.y || 0).toFixed(2),
+          width: (currentElement.width || 0).toFixed(2),
+          height: (currentElement.height || 0).toFixed(2),
+          opacity: Math.round((currentElement.opacity || 1) * 100).toString()
+        });
+      }
     }
   }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.opacity]);
   
@@ -416,6 +434,14 @@ export default function PropertiesPanel({
         console.log('Invalid number input, ignoring');
         return;
       }
+      
+      // Convert millimeters back to pixels for PDF-derived elements
+      const isPdfDerived = (currentElement.width || 0) > 200 || (currentElement.height || 0) > 200;
+      if (isPdfDerived && (property === 'x' || property === 'y' || property === 'width' || property === 'height')) {
+        // Convert mm to pixels (inverse of pxToMmRatio)
+        processedValue = processedValue * 2.834645669; // Convert mm to px
+        console.log(`Converting ${property} from ${value}mm to ${processedValue}px for PDF-derived element`);
+      }
     }
 
     // Handle opacity as percentage
@@ -603,7 +629,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Position</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">X (px)</Label>
+                  <Label className="text-xs text-gray-500">X (mm)</Label>
                   <Input
                     type="number"
                     value={localInputValues.x}
@@ -611,11 +637,11 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="0"
-                    max="842"
+                    max="297"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Y (px)</Label>
+                  <Label className="text-xs text-gray-500">Y (mm)</Label>
                   <Input
                     type="number"
                     value={localInputValues.y}
@@ -623,7 +649,7 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1" 
                     min="0"
-                    max="1191"
+                    max="420"
                   />
                 </div>
               </div>
@@ -634,7 +660,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Size</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">Width (px)</Label>
+                  <Label className="text-xs text-gray-500">Width (mm)</Label>
                   <Input
                     type="number"
                     value={localInputValues.width}
@@ -642,11 +668,11 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="1"
-                    max="842"
+                    max="297"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Height (px)</Label>
+                  <Label className="text-xs text-gray-500">Height (mm)</Label>
                   <Input
                     type="number"
                     value={localInputValues.height}
@@ -654,7 +680,7 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="1"
-                    max="1191"
+                    max="420"
                   />
                 </div>
               </div>
