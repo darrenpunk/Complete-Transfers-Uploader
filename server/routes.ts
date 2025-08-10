@@ -1193,49 +1193,28 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // FIXED: Convert content bounds to proper millimeter dimensions
-          // Content bounds are in SVG pixels, need to convert to actual mm size
-          const aspectRatio = contentBounds.width / contentBounds.height;
+          // CRITICAL FIX: Use content bounds as pixel dimensions directly
+          // The content bounds (830x1148) are already in correct pixel units, not mm
+          displayWidth = contentBounds.width; // 830 pixels
+          displayHeight = contentBounds.height; // 1148 pixels
           
-          // Target dimensions: 292.97mm x 405.073mm (user requirement)
-          // Convert to pixels using standard DPI conversion (72 DPI = 2.834645669 px/mm)
-          const targetWidthMm = 292.97;
-          const targetHeightMm = 405.073;
-          const mmToPixel = 2.834645669; // 72 DPI conversion factor
+          // Calculate actual mm equivalent for logging
+          const pixelToMm = 1 / 2.834645669; // Convert pixels to mm (72 DPI)
+          const actualWidthMm = displayWidth * pixelToMm; // ~292.97mm
+          const actualHeightMm = displayHeight * pixelToMm; // ~405.07mm
           
-          displayWidth = targetWidthMm * mmToPixel; // 830.2 pixels
-          displayHeight = targetHeightMm * mmToPixel; // 1148.2 pixels
-          
-          // Maintain aspect ratio if content doesn't match target exactly
-          if (Math.abs(aspectRatio - (targetWidthMm / targetHeightMm)) > 0.01) {
-            if (contentBounds.width > contentBounds.height) {
-              displayHeight = displayWidth / aspectRatio;
-            } else {
-              displayWidth = displayHeight * aspectRatio;
-            }
-          }
-          
-          console.log(`📐 Canvas element sized to target dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (${targetWidthMm}mm x ${targetHeightMm}mm from content bounds ${contentBounds.width}x${contentBounds.height})`);
+          console.log(`📐 Canvas element sized to content bounds: ${displayWidth}x${displayHeight} pixels (${actualWidthMm.toFixed(2)}mm x ${actualHeightMm.toFixed(2)}mm)`);
         } else if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
-          // Fallback to SVG dimensions - use proper sizing
-          const aspectRatio = dimensions.width / dimensions.height;
-          const targetWidthMm = 292.97;
-          const targetHeightMm = 405.073;
-          const mmToPixel = 2.834645669;
+          // Fallback to SVG dimensions - use pixel values directly
+          displayWidth = dimensions.width; // Use pixel width directly
+          displayHeight = dimensions.height; // Use pixel height directly
           
-          displayWidth = targetWidthMm * mmToPixel;
-          displayHeight = targetHeightMm * mmToPixel;
+          // Calculate actual mm equivalent for logging
+          const pixelToMm = 1 / 2.834645669;
+          const actualWidthMm = displayWidth * pixelToMm;
+          const actualHeightMm = displayHeight * pixelToMm;
           
-          // Maintain aspect ratio if dimensions don't match target exactly
-          if (Math.abs(aspectRatio - (targetWidthMm / targetHeightMm)) > 0.01) {
-            if (dimensions.width > dimensions.height) {
-              displayHeight = displayWidth / aspectRatio;
-            } else {
-              displayWidth = displayHeight * aspectRatio;
-            }
-          }
-          
-          console.log(`📐 Canvas element sized from SVG dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (${targetWidthMm}mm x ${targetHeightMm}mm from SVG ${dimensions.width}x${dimensions.height})`);
+          console.log(`📐 Canvas element sized from SVG dimensions: ${displayWidth}x${displayHeight} pixels (${actualWidthMm.toFixed(2)}mm x ${actualHeightMm.toFixed(2)}mm)`);
         }
         
         // Create canvas element with centered positioning
