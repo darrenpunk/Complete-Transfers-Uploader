@@ -184,27 +184,44 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const minCoordinate = isLargeFormat ? -5000 : -50;  // Allow negative coordinates for outlined fonts
     
     // Helper function to update bounds with coordinate validation
-    const updateBounds = (x: number, y: number) => {
+    const updateBounds = (x: number, y: number, elementInfo = '') => {
       if (isNaN(x) || isNaN(y)) return;
       if (x < minCoordinate || x > maxCoordinate || y < minCoordinate || y > maxCoordinate) return;
       
       hasCoordinates = true;
+      const oldMinX = minX, oldMinY = minY, oldMaxX = maxX, oldMaxY = maxY;
       minX = Math.min(minX, x);
       maxX = Math.max(maxX, x);
       minY = Math.min(minY, y);
       maxY = Math.max(maxY, y);
+      
+      // Log significant bounds updates for debugging
+      if (minX !== oldMinX || minY !== oldMinY || maxX !== oldMaxX || maxY !== oldMaxY) {
+        console.log(`📍 Bounds updated by ${elementInfo}: (${x.toFixed(1)}, ${y.toFixed(1)}) → bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)}`);
+      }
     };
 
-    // 1. Process rectangles
+    // 1. Process rectangles (skip invisible/transparent ones)
     let rectMatch;
     while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
+      const rectElement = rectMatch[0];
+      
+      // Skip invisible rectangles that might be used for padding/layout
+      if (rectElement.includes('fill="none"') || 
+          rectElement.includes('opacity="0"') || 
+          rectElement.includes('fill="transparent"') ||
+          rectElement.includes('stroke="none"')) {
+        console.log(`🚫 Skipping invisible rectangle: ${rectElement.substring(0, 100)}`);
+        continue;
+      }
+      
       const x = parseFloat(rectMatch[1]);
       const y = parseFloat(rectMatch[2]);
       const width = parseFloat(rectMatch[3]);
       const height = parseFloat(rectMatch[4]);
       
-      updateBounds(x, y);
-      updateBounds(x + width, y + height);
+      updateBounds(x, y, `rect ${width}×${height}`);
+      updateBounds(x + width, y + height, `rect ${width}×${height}`);
     }
 
     // 2. Process circles
@@ -218,11 +235,22 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       updateBounds(cx + r, cy + r);
     }
 
-    // 3. Process paths
+    // 3. Process paths (skip invisible/transparent ones)
     let pathMatch;
     while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
+      const pathElement = pathMatch[0];
       const pathData = pathMatch[1];
       pathCount++;
+      
+      // Skip invisible paths that might be used for padding/layout
+      if (pathElement.includes('fill="none"') || 
+          pathElement.includes('opacity="0"') || 
+          pathElement.includes('fill="transparent"') ||
+          pathElement.includes('stroke="none"') ||
+          pathElement.includes('visibility="hidden"')) {
+        console.log(`🚫 Skipping invisible path ${pathCount}: ${pathElement.substring(0, 100)}`);
+        continue;
+      }
       
       console.log(`📍 Processing path ${pathCount}: "${pathData.substring(0, 80)}..."`);
       console.log(`📍 Path length: ${pathData.length} chars`);
@@ -258,7 +286,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const x = parseFloat(coordMatch[1]);
           const y = parseFloat(coordMatch[2]);
           console.log(`📍 Found coordinate ${coordCount}: (${x.toFixed(1)}, ${y.toFixed(1)})`);
-          updateBounds(x, y);
+          updateBounds(x, y, `path${pathCount}`);
         } else if (coordMatch[3]) {
           // H or V commands with single coordinate
           const coord = parseFloat(coordMatch[3]);
@@ -278,7 +306,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           const coords = coordMatch[4].split(/[,\s]+/).map(c => parseFloat(c)).filter(c => !isNaN(c));
           for (let i = 0; i < coords.length; i += 2) {
             if (i + 1 < coords.length) {
-              updateBounds(coords[i], coords[i + 1]);
+              updateBounds(coords[i], coords[i + 1], `path${pathCount}-curve`);
             }
           }
         }
