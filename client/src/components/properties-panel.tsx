@@ -603,7 +603,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Position</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">X (mm)</Label>
+                  <Label className="text-xs text-gray-500">X (px)</Label>
                   <Input
                     type="number"
                     value={localInputValues.x}
@@ -611,11 +611,11 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="0"
-                    max="297"
+                    max="842"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Y (mm)</Label>
+                  <Label className="text-xs text-gray-500">Y (px)</Label>
                   <Input
                     type="number"
                     value={localInputValues.y}
@@ -623,7 +623,7 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1" 
                     min="0"
-                    max="420"
+                    max="1191"
                   />
                 </div>
               </div>
@@ -634,7 +634,7 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Size</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">Width (mm)</Label>
+                  <Label className="text-xs text-gray-500">Width (px)</Label>
                   <Input
                     type="number"
                     value={localInputValues.width}
@@ -642,11 +642,11 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="1"
-                    max="297"
+                    max="842"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Height (mm)</Label>
+                  <Label className="text-xs text-gray-500">Height (px)</Label>
                   <Input
                     type="number"
                     value={localInputValues.height}
@@ -654,7 +654,7 @@ export default function PropertiesPanel({
                     className="text-sm"
                     step="1"
                     min="1"
-                    max="420"
+                    max="1191"
                   />
                 </div>
               </div>
