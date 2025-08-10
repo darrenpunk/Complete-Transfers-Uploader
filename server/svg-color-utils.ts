@@ -1198,7 +1198,17 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const finalWidth = contentWidth; // Use exact content width
     const finalHeight = contentHeight; // Use exact content height
     
-    console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})`);
+    // Get viewBox for comparison with PDF padding info
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    let viewBoxInfo = '';
+    if (viewBoxMatch) {
+      const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+      const paddingX = Math.max(0, vbWidth - rawWidth);
+      const paddingY = Math.max(0, vbHeight - rawHeight);
+      viewBoxInfo = ` | ViewBox: ${vbWidth}×${vbHeight}px, PDF Padding eliminated: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px`;
+    }
+    
+    console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})${viewBoxInfo}`);
     
     // CRITICAL FIX: Return raw width/height instead of calculated width/height
     // This ensures we get exactly the dimensions detected (600.7×595.0) not coordinate-calculated ones
