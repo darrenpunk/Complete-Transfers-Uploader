@@ -734,24 +734,10 @@ export async function registerRoutes(app: express.Application) {
   process.stdout.write(`📍📍📍 REGISTERING UPLOAD ROUTE - ${new Date().toISOString()}\n`);
   console.error(`📍📍📍 REGISTERING /api/projects/:projectId/logos route`);
 
-  // File upload endpoint - MUST be before imposition routes to ensure proper routing
+  // ================== MAIN UPLOAD HANDLER (ENHANCED WITH CMYKSERVICE) ==================
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
-    // CRITICAL: Ultra-early debugging to catch the handler
-    process.stdout.write(`🚨🚨🚨 UPLOAD HANDLER HIT - ${new Date().toISOString()}\n`);
-    console.error(`🚨🚨🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
-    console.error(`🚨🚨🚨 REQUEST METHOD: ${req.method}, URL: ${req.url}`);
-    console.error(`🚨🚨🚨 STACK TRACE AT HANDLER START:`, new Error().stack);
-    
-    // Add response and error listeners to catch any silent failures
-    res.on('error', (err) => {
-      console.error(`🚨 RESPONSE ERROR:`, err);
-    });
-    
-    process.on('uncaughtException', (err) => {
-      console.error(`🚨 UNCAUGHT EXCEPTION IN UPLOAD:`, err);
-    });
-    
     try {
+      console.log(`🚀 ENHANCED UPLOAD HANDLER: Processing files for project ${req.params.projectId}`);
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
       
@@ -783,7 +769,7 @@ export async function registerRoutes(app: express.Application) {
       const { CMYKService } = await import('./cmyk-service');
       
       for (const file of files) {
-        let cmykResult = { isCMYKPreserved: false, cmykColors: [], originalPdfPath: null };
+        let cmykResult: { isCMYKPreserved: boolean; originalPdfPath?: string; cmykColors?: { c: number; m: number; y: number; k: number; }[] } = { isCMYKPreserved: false };
         try {
           console.log(`🔄 Processing file: ${file.originalname} (${file.mimetype})`);
           
@@ -794,11 +780,15 @@ export async function registerRoutes(app: express.Application) {
           
           try {
             // IMMEDIATE CMYK detection before ANY processing
-            console.log(`🔍 ABOUT TO CALL CMYKService.processUploadedFile for ${file.originalname}`);
+            console.log(`🔍 CALLING ENHANCED CMYKService.processUploadedFile for ${file.originalname}`);
+            
+            // Use the NEW unified CMYKService with proper file path
+            const filePath = path.join(uploadDir, file.filename);
             cmykResult = await CMYKService.processUploadedFile(file, uploadDir);
-            console.log(`🎨 CMYK Result for ${file.originalname}:`, cmykResult);
-            console.log(`🎨 Extracted CMYK colors:`, cmykResult.cmykColors);
-            console.log(`🎨 isCMYKPreserved from service:`, cmykResult.isCMYKPreserved);
+            
+            console.log(`🎨 ENHANCED CMYK Result for ${file.originalname}:`, cmykResult);
+            console.log(`🎨 Enhanced Extracted CMYK colors:`, cmykResult.cmykColors);
+            console.log(`🎨 Enhanced isCMYKPreserved:`, cmykResult.isCMYKPreserved);
           } catch (cmykError) {
             console.error(`❌ CMYK Detection Error for ${file.originalname}:`, cmykError);
             console.error(`❌ CMYK Error Stack:`, cmykError.stack);
