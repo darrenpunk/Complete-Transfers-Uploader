@@ -1199,13 +1199,17 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const finalHeight = contentHeight; // Use exact content height
     
     // Get viewBox for comparison with PDF padding info
-    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    const pdfViewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
     let viewBoxInfo = '';
-    if (viewBoxMatch) {
-      const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-      const paddingX = Math.max(0, vbWidth - rawWidth);
-      const paddingY = Math.max(0, vbHeight - rawHeight);
-      viewBoxInfo = ` | ViewBox: ${vbWidth}×${vbHeight}px, PDF Padding eliminated: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px`;
+    if (pdfViewBoxMatch) {
+      const viewBoxValues = pdfViewBoxMatch[1].split(/\s+/).map(Number);
+      if (viewBoxValues.length >= 4) {
+        const vbWidth = viewBoxValues[2];
+        const vbHeight = viewBoxValues[3];
+        const paddingX = Math.max(0, vbWidth - rawWidth);
+        const paddingY = Math.max(0, vbHeight - rawHeight);
+        viewBoxInfo = ` | ViewBox: ${vbWidth}×${vbHeight}px, PDF Padding eliminated: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px`;
+      }
     }
     
     console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})${viewBoxInfo}`);

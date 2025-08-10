@@ -1235,9 +1235,36 @@ export async function registerRoutes(app: express.Application) {
               const actualBounds = calculateSVGContentBounds(svgContent);
               
               if (actualBounds && actualBounds.width > 0 && actualBounds.height > 0) {
-                displayWidth = actualBounds.width;
-                displayHeight = actualBounds.height;
-                console.log(`✅ PDF PADDING ELIMINATED: Original contentBounds ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px → Actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+                // CRITICAL: Check if content is scaled down due to viewBox padding
+                const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+                if (viewBoxMatch) {
+                  const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+                  if (viewBoxValues.length >= 4) {
+                    const vbWidth = viewBoxValues[2];
+                    const vbHeight = viewBoxValues[3];
+                    
+                    // Calculate scaling factor to restore content to proper size
+                    const scaleX = vbWidth / actualBounds.width;
+                    const scaleY = vbHeight / actualBounds.height;
+                    const avgScale = (scaleX + scaleY) / 2;
+                    
+                    if (avgScale > 1.05) { // If content is significantly scaled down
+                      displayWidth = actualBounds.width * avgScale;
+                      displayHeight = actualBounds.height * avgScale;
+                      console.log(`✅ PDF SCALING CORRECTED: ViewBox ${vbWidth}×${vbHeight}px caused ${avgScale.toFixed(2)}x scaling → Content restored from ${actualBounds.width.toFixed(1)}×${actualBounds.height.toFixed(1)}px to ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+                    } else {
+                      displayWidth = actualBounds.width;
+                      displayHeight = actualBounds.height;
+                      console.log(`✅ PDF PADDING ELIMINATED: Original contentBounds ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px → Actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+                    }
+                  } else {
+                    displayWidth = actualBounds.width;
+                    displayHeight = actualBounds.height;
+                  }
+                } else {
+                  displayWidth = actualBounds.width;
+                  displayHeight = actualBounds.height;
+                }
               } else {
                 displayWidth = contentBounds.width;
                 displayHeight = contentBounds.height;
