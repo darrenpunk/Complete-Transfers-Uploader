@@ -885,7 +885,12 @@ export async function registerRoutes(app: express.Application) {
                     undefined
                 }));
               
-              colorAnalysis.colors = colors;
+              // Store SVG colors in the expected format for color analysis
+              colorAnalysis.colors = colors.map(c => ({
+                color: c.originalColor,
+                type: 'fill',
+                isCMYK: c.isCMYK
+              }));
               console.log(`🎨 Enhanced SVG color analysis: found ${colors.length} unique colors with CMYK status: ${cmykResult.isCMYKPreserved}:`, colors.map(c => ({ originalColor: c.originalColor, isCMYK: c.isCMYK, cmykColor: c.cmykColor })));
               console.log(`🎨 SVG color analysis: found ${colors.length} colors:`, colors);
               
@@ -1223,8 +1228,21 @@ export async function registerRoutes(app: express.Application) {
           throw new Error('Template size not found');
         }
 
-        const centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
-        const centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
+        // Fix: For PDF-derived elements, displayWidth/Height are in pixels
+        // We need to center them within the template's pixel dimensions, not mm dimensions
+        let centerX, centerY;
+        
+        if (displayWidth > 200 || displayHeight > 200) {
+          // PDF-derived elements: use pixel dimensions for centering
+          centerX = Math.max(0, (templateSize.pixelWidth - displayWidth) / 2);
+          centerY = Math.max(0, (templateSize.pixelHeight - displayHeight) / 2);
+          console.log(`🎯 Centering PDF element: template=${templateSize.pixelWidth}x${templateSize.pixelHeight}px, element=${displayWidth}x${displayHeight}px, position=(${centerX},${centerY})`);
+        } else {
+          // Regular elements: use mm dimensions for centering  
+          centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
+          centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
+          console.log(`🎯 Centering regular element: template=${templateSize.width}x${templateSize.height}mm, element=${displayWidth}x${displayHeight}mm, position=(${centerX},${centerY})`);
+        }
 
         const canvasElementData = {
           projectId: projectId,

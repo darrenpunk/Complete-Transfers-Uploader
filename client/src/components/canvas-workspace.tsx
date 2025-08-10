@@ -821,65 +821,120 @@ export default function CanvasWorkspace({
       return;
     }
     
-    // Calculate 3mm safety margins
-    const safetyMarginMm = 3;
-    const safeWidth = template.width - (safetyMarginMm * 2);
-    const safeHeight = template.height - (safetyMarginMm * 2);
+    // Separate PDF-derived and regular elements for different coordinate systems
+    const pdfElements = canvasElements.filter(el => el.width > 200 || el.height > 200);
+    const regularElements = canvasElements.filter(el => el.width <= 200 && el.height <= 200);
     
-    // Find the bounding box of all elements
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    canvasElements.forEach(element => {
-      minX = Math.min(minX, element.x);
-      minY = Math.min(minY, element.y);
-      maxX = Math.max(maxX, element.x + element.width);
-      maxY = Math.max(maxY, element.y + element.height);
-    });
-    
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-    
-    // Calculate scale factor to fit within safety margins
-    const scaleX = safeWidth / contentWidth;
-    const scaleY = safeHeight / contentHeight;
-    const scaleFactor = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
-    
-    if (scaleFactor < 1) {
-      console.log(`🎯 Scaling content by ${(scaleFactor * 100).toFixed(0)}% to fit within safety margins`);
+    // Handle PDF-derived elements (stored in pixels)
+    if (pdfElements.length > 0) {
+      const safetyMarginPx = 3 * 2.834645669; // 3mm to pixels
+      const safeWidthPx = template.pixelWidth - (safetyMarginPx * 2);
+      const safeHeightPx = template.pixelHeight - (safetyMarginPx * 2);
       
-      // Scale and reposition all elements
-      canvasElements.forEach(element => {
-        const relativeX = element.x - minX;
-        const relativeY = element.y - minY;
-        
-        const newWidth = Math.round(element.width * scaleFactor);
-        const newHeight = Math.round(element.height * scaleFactor);
-        const newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
-        const newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
-        
-        updateElementDirect(element.id, {
-          x: newX,
-          y: newY,
-          width: newWidth,
-          height: newHeight
-        });
+      // Find bounding box for PDF elements
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      pdfElements.forEach(element => {
+        minX = Math.min(minX, element.x);
+        minY = Math.min(minY, element.y);
+        maxX = Math.max(maxX, element.x + element.width);
+        maxY = Math.max(maxY, element.y + element.height);
       });
-    } else {
-      // Just center the content if it already fits
-      const centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
-      const centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
       
-      console.log('🎯 Centering content within safety margins');
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
       
-      canvasElements.forEach(element => {
-        const relativeX = element.x - minX;
-        const relativeY = element.y - minY;
+      // Calculate scale factor
+      const scaleX = safeWidthPx / contentWidth;
+      const scaleY = safeHeightPx / contentHeight;
+      const scaleFactor = Math.min(scaleX, scaleY, 1);
+      
+      if (scaleFactor < 1) {
+        console.log(`🎯 Scaling PDF elements by ${(scaleFactor * 100).toFixed(0)}%`);
         
-        updateElementDirect(element.id, {
-          x: Math.round(centerOffsetX + relativeX),
-          y: Math.round(centerOffsetY + relativeY)
+        pdfElements.forEach(element => {
+          const relativeX = element.x - minX;
+          const relativeY = element.y - minY;
+          
+          updateElementDirect(element.id, {
+            x: Math.round(safetyMarginPx + (relativeX * scaleFactor)),
+            y: Math.round(safetyMarginPx + (relativeY * scaleFactor)),
+            width: Math.round(element.width * scaleFactor),
+            height: Math.round(element.height * scaleFactor)
+          });
         });
+      } else {
+        // Center PDF elements
+        const centerOffsetX = (safeWidthPx - contentWidth) / 2 + safetyMarginPx;
+        const centerOffsetY = (safeHeightPx - contentHeight) / 2 + safetyMarginPx;
+        
+        console.log('🎯 Centering PDF elements');
+        
+        pdfElements.forEach(element => {
+          const relativeX = element.x - minX;
+          const relativeY = element.y - minY;
+          
+          updateElementDirect(element.id, {
+            x: Math.round(centerOffsetX + relativeX),
+            y: Math.round(centerOffsetY + relativeY)
+          });
+        });
+      }
+    }
+    
+    // Handle regular elements (stored in mm)
+    if (regularElements.length > 0) {
+      const safetyMarginMm = 3;
+      const safeWidth = template.width - (safetyMarginMm * 2);
+      const safeHeight = template.height - (safetyMarginMm * 2);
+      
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      regularElements.forEach(element => {
+        minX = Math.min(minX, element.x);
+        minY = Math.min(minY, element.y);
+        maxX = Math.max(maxX, element.x + element.width);
+        maxY = Math.max(maxY, element.y + element.height);
       });
+      
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+      
+      const scaleX = safeWidth / contentWidth;
+      const scaleY = safeHeight / contentHeight;
+      const scaleFactor = Math.min(scaleX, scaleY, 1);
+      
+      if (scaleFactor < 1) {
+        console.log(`🎯 Scaling regular elements by ${(scaleFactor * 100).toFixed(0)}%`);
+        
+        regularElements.forEach(element => {
+          const relativeX = element.x - minX;
+          const relativeY = element.y - minY;
+          
+          updateElementDirect(element.id, {
+            x: Math.round(safetyMarginMm + (relativeX * scaleFactor)),
+            y: Math.round(safetyMarginMm + (relativeY * scaleFactor)),
+            width: Math.round(element.width * scaleFactor),
+            height: Math.round(element.height * scaleFactor)
+          });
+        });
+      } else {
+        // Center regular elements
+        const centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
+        const centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
+        
+        console.log('🎯 Centering regular elements');
+        
+        regularElements.forEach(element => {
+          const relativeX = element.x - minX;
+          const relativeY = element.y - minY;
+          
+          updateElementDirect(element.id, {
+            x: Math.round(centerOffsetX + relativeX),
+            y: Math.round(centerOffsetY + relativeY)
+          });
+        });
+      }
     }
   };
 
