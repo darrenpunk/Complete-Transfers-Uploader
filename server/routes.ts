@@ -596,7 +596,15 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const upload = multer({
-  dest: uploadDir,
+  storage: multer.diskStorage({
+    destination: uploadDir,
+    filename: (req, file, cb) => {
+      // Preserve file extension by appending it to the generated hash
+      const ext = path.extname(file.originalname);
+      const hash = crypto.randomBytes(16).toString('hex');
+      cb(null, hash + ext);
+    }
+  }),
   limits: {
     fileSize: 200 * 1024 * 1024, // 200MB limit
   },
