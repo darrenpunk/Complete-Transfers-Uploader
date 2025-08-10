@@ -741,6 +741,16 @@ export async function registerRoutes(app: express.Application) {
     console.error(`🚨🚨🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
     console.error(`🚨🚨🚨 REQUEST METHOD: ${req.method}, URL: ${req.url}`);
     console.error(`🚨🚨🚨 STACK TRACE AT HANDLER START:`, new Error().stack);
+    
+    // Add response and error listeners to catch any silent failures
+    res.on('error', (err) => {
+      console.error(`🚨 RESPONSE ERROR:`, err);
+    });
+    
+    process.on('uncaughtException', (err) => {
+      console.error(`🚨 UNCAUGHT EXCEPTION IN UPLOAD:`, err);
+    });
+    
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
