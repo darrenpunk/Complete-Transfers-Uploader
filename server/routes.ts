@@ -846,10 +846,27 @@ export async function registerRoutes(app: express.Application) {
               const dimensions = detectDimensionsFromSVG(svgContent);
               console.log(`📏 SVG dimensions detected:`, dimensions);
               
-              // Analyze SVG colors properly using existing function
-              const { extractSVGColorData } = await import('./svg-color-utils');
-              const colorAnalysis = extractSVGColorData(svgContent);
-              console.log(`🎨 SVG color analysis:`, colorAnalysis);
+              // Analyze SVG colors - create basic analysis structure
+              const colorAnalysis = {
+                colors: [],
+                fonts: [],
+                strokeWidths: [],
+                hasText: false
+              };
+              
+              // Extract colors from SVG paths and elements
+              const colorMatches = svgContent.match(/fill="[^"]*"/g) || [];
+              const colors = colorMatches
+                .map(match => match.replace(/fill="|"/g, ''))
+                .filter(color => color !== 'none' && color !== 'transparent')
+                .map(color => ({
+                  color: color,
+                  type: color.includes('rgb') ? 'rgb' : color.includes('#') ? 'hex' : 'named',
+                  isCMYK: false // Will be updated based on original CMYK detection
+                }));
+              
+              colorAnalysis.colors = colors;
+              console.log(`🎨 SVG color analysis: found ${colors.length} colors:`, colors);
               
               // Store analysis results on file object for logo creation
               (file as any).svgContentBounds = contentBounds;
@@ -1098,23 +1115,33 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // Use content bounds for proper sizing
+          // Use content bounds for proper sizing - scale down from actual content size
           const aspectRatio = contentBounds.width / contentBounds.height;
-          if (aspectRatio > 1.33) {
+          const maxSize = 250; // Maximum canvas size for readability
+          
+          if (contentBounds.width > contentBounds.height) {
             // Wide logo - constrain by width
-            displayWidth = Math.min(300, contentBounds.width);
+            displayWidth = Math.min(maxSize, contentBounds.width * 0.3); // Scale down 70%
             displayHeight = displayWidth / aspectRatio;
           } else {
-            // Tall or square logo - constrain by height
-            displayHeight = Math.min(200, contentBounds.height);
+            // Tall or square logo - constrain by height  
+            displayHeight = Math.min(maxSize, contentBounds.height * 0.3); // Scale down 70%
             displayWidth = displayHeight * aspectRatio;
           }
-          console.log(`📐 Canvas element sized from content bounds: ${displayWidth}x${displayHeight}`);
+          console.log(`📐 Canvas element sized from content bounds: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (scaled from ${contentBounds.width}x${contentBounds.height})`);
         } else if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
-          // Fallback to SVG dimensions
-          displayWidth = Math.min(300, dimensions.width);
-          displayHeight = Math.min(200, dimensions.height);
-          console.log(`📐 Canvas element sized from SVG dimensions: ${displayWidth}x${displayHeight}`);
+          // Fallback to SVG dimensions - also scale down
+          const aspectRatio = dimensions.width / dimensions.height;
+          const maxSize = 250;
+          
+          if (dimensions.width > dimensions.height) {
+            displayWidth = Math.min(maxSize, dimensions.width * 0.3);
+            displayHeight = displayWidth / aspectRatio;
+          } else {
+            displayHeight = Math.min(maxSize, dimensions.height * 0.3);
+            displayWidth = displayHeight * aspectRatio;
+          }
+          console.log(`📐 Canvas element sized from SVG dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (scaled from ${dimensions.width}x${dimensions.height})`);
         }
         
         // Create canvas element with centered positioning
