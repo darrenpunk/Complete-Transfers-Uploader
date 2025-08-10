@@ -33,6 +33,7 @@ interface CMYKColor {
 
 // Color conversion utilities
 function parseRGBPercentage(rgbString: string): { r: number; g: number; b: number } | null {
+  if (!rgbString || typeof rgbString !== 'string') return null;
   const match = rgbString.match(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/);
   if (!match) return null;
 
@@ -45,6 +46,7 @@ function parseRGBPercentage(rgbString: string): { r: number; g: number; b: numbe
 
 // Parse standard RGB format rgb(255, 255, 255)
 function parseRGBStandard(rgbString: string): { r: number; g: number; b: number } | null {
+  if (!rgbString || typeof rgbString !== 'string') return null;
   const match = rgbString.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
   if (!match) return null;
 
@@ -57,6 +59,7 @@ function parseRGBStandard(rgbString: string): { r: number; g: number; b: number 
 
 // Parse CMYK format CMYK(0, 0, 0, 100)
 function parseCMYKStandard(cmykString: string): CMYKColor | null {
+  if (!cmykString || typeof cmykString !== 'string') return null;
   const match = cmykString.match(/CMYK\((\d+),?\s*(\d+),?\s*(\d+),?\s*(\d+)\)/);
   if (!match) return null;
 
@@ -70,6 +73,7 @@ function parseCMYKStandard(cmykString: string): CMYKColor | null {
 
 // Parse RGB percentage format rgb(100%, 100%, 100%)
 function parseRGBPercentageStandard(rgbString: string): { r: number; g: number; b: number } | null {
+  if (!rgbString || typeof rgbString !== 'string') return null;
   const match = rgbString.match(/rgb\((\d+(?:\.\d+)?)%,?\s*(\d+(?:\.\d+)?)%,?\s*(\d+(?:\.\d+)?)%\)/);
   if (!match) return null;
 
@@ -82,6 +86,7 @@ function parseRGBPercentageStandard(rgbString: string): { r: number; g: number; 
 
 // Parse CMYK from the cmykColor string in the analysis (which uses Adobe conversion)
 function parseCMYKString(cmykString: string): CMYKColor | null {
+  if (!cmykString || typeof cmykString !== 'string') return null;
   const match = cmykString.match(/C:(\d+) M:(\d+) Y:(\d+) K:(\d+)/);
   if (!match) return null;
   
@@ -100,9 +105,10 @@ function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
   }
   
   // Fallback for percentage or standard RGB parsing if needed
-  let rgb = parseRGBPercentage(colorInfo.originalFormat || colorInfo.originalColor);
+  const colorString = colorInfo.originalFormat || colorInfo.originalColor || '';
+  let rgb = parseRGBPercentage(colorString);
   if (!rgb) {
-    rgb = parseRGBStandard(colorInfo.originalFormat || colorInfo.originalColor);
+    rgb = parseRGBStandard(colorString);
   }
   if (!rgb) return null;
   
