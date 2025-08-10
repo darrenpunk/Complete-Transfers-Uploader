@@ -805,8 +805,43 @@ export async function registerRoutes(app: express.Application) {
 
           console.log(`📁 Enhanced processing file: ${file.filename}, CMYK: ${cmykResult.isCMYKPreserved}`);
 
+        // Handle PDF files - convert to SVG for display
+        if (file.mimetype === 'application/pdf') {
+          try {
+            const sourcePath = path.join(uploadDir, file.filename);
+            const svgFilename = `${file.filename}.svg`;
+            const svgPath = path.join(uploadDir, svgFilename);
+            
+            console.log(`📄 Processing PDF file: ${file.filename}`);
+            console.log(`🔍 Source file exists: ${fs.existsSync(sourcePath)}`);
+            
+            if (!fs.existsSync(sourcePath)) {
+              throw new Error(`PDF source file not found: ${sourcePath}`);
+            }
+            
+            // Convert PDF to SVG using pdf2svg
+            const pdf2svgCommand = `pdf2svg "${sourcePath}" "${svgPath}"`;
+            console.log(`🔄 Running: ${pdf2svgCommand}`);
+            await execAsync(pdf2svgCommand);
+            
+            if (fs.existsSync(svgPath)) {
+              // Use SVG for display
+              finalFilename = svgFilename;
+              finalMimeType = 'image/svg+xml';
+              finalUrl = `/uploads/${svgFilename}`;
+              console.log(`✅ PDF converted to SVG: ${svgFilename}`);
+            } else {
+              console.warn(`⚠️ SVG conversion failed, using original PDF`);
+            }
+            
+          } catch (pdfError) {
+            console.error('PDF to SVG conversion failed:', pdfError);
+            // Continue with original PDF file
+          }
+        }
+        
         // Handle AI/EPS files - convert to SVG for display
-        if (file.mimetype === 'application/postscript' || 
+        else if (file.mimetype === 'application/postscript' || 
             file.mimetype === 'application/illustrator' || 
             file.mimetype === 'application/x-illustrator') {
           try {

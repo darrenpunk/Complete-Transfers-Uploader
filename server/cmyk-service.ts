@@ -110,7 +110,14 @@ export class CMYKService {
         const originalPath = path.join(uploadDir, originalFilename);
         
         // Copy the original PDF to preserve it
-        fs.copyFileSync(filePath, originalPath);
+        console.log(`🔍 Source file exists: ${fs.existsSync(filePath)}`);
+        
+        if (fs.existsSync(filePath)) {
+          fs.copyFileSync(filePath, originalPath);
+        } else {
+          console.error(`❌ Source file not found for copying: ${filePath}`);
+          throw new Error(`Source file not found: ${filePath}`);
+        }
         
         console.log(`💾 CMYK PDF preserved as: ${originalFilename}`);
         console.log(`🎨 Extracted ${cmykColors?.length || 0} CMYK color values using CMYKDetector`);
