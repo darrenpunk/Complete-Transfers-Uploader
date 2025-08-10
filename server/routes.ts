@@ -740,6 +740,7 @@ export async function registerRoutes(app: express.Application) {
     process.stdout.write(`🚨🚨🚨 UPLOAD HANDLER HIT - ${new Date().toISOString()}\n`);
     console.error(`🚨🚨🚨 UPLOAD HANDLER CALLED - Project: ${req.params.projectId}, Files: ${req.files?.length || 0}`);
     console.error(`🚨🚨🚨 REQUEST METHOD: ${req.method}, URL: ${req.url}`);
+    console.error(`🚨🚨🚨 STACK TRACE AT HANDLER START:`, new Error().stack);
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
