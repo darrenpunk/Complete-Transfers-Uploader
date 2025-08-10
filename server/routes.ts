@@ -1076,6 +1076,24 @@ export async function registerRoutes(app: express.Application) {
   // setupImpositionRoutes(app, storage);
 
   // Other essential routes
+  app.get('/api/projects', async (req, res) => {
+    try {
+      const projects = await storage.getProjects();
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get projects' });
+    }
+  });
+
+  app.post('/api/projects', async (req, res) => {
+    try {
+      const project = await storage.createProject(req.body);
+      res.json(project);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create project' });
+    }
+  });
+
   app.get('/api/projects/:projectId', async (req, res) => {
     try {
       const project = await storage.getProject(req.params.projectId);
