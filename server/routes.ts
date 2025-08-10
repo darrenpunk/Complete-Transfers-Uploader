@@ -826,6 +826,12 @@ export async function registerRoutes(app: express.Application) {
             if (!fs.existsSync(sourcePath)) {
               throw new Error(`PDF source file not found: ${sourcePath}`);
             }
+
+            // EXTRACT ORIGINAL CMYK COLORS BEFORE SVG CONVERSION
+            console.log(`🎨 Extracting original CMYK colors from PDF...`);
+            const { CMYKDetector } = await import('./cmyk-detector');
+            const originalCMYKColors = await CMYKDetector.extractCMYKColors(sourcePath);
+            console.log(`🎨 Extracted ${originalCMYKColors.length} original CMYK colors:`, originalCMYKColors);
             
             // Convert PDF to SVG using pdf2svg
             const pdf2svgCommand = `pdf2svg "${sourcePath}" "${svgPath}"`;
@@ -872,18 +878,25 @@ export async function registerRoutes(app: express.Application) {
                   uniqueColors.add(color);
                   return true;
                 })
-                .map((color, index) => ({
-                  id: `color-${index}`,
-                  originalColor: color,
-                  originalFormat: color, // Store original format
-                  elementType: 'path',
-                  attribute: 'fill',
-                  selector: `[fill="${color}"]`,
-                  isCMYK: cmykResult.isCMYKPreserved, // Use CMYK detection result
-                  cmykColor: cmykResult.isCMYKPreserved && cmykResult.cmykColors && cmykResult.cmykColors[index] ? 
-                    `C:${cmykResult.cmykColors[index].c} M:${cmykResult.cmykColors[index].m} Y:${cmykResult.cmykColors[index].y} K:${cmykResult.cmykColors[index].k}` : 
-                    undefined
-                }));
+                .map((color, index) => {
+                  // Use original CMYK values if available, otherwise fall back to RGB-to-CMYK conversion
+                  const originalCMYK = originalCMYKColors && originalCMYKColors[index];
+                  
+                  return {
+                    id: `color-${index}`,
+                    originalColor: color,
+                    originalFormat: color, // Store SVG format
+                    elementType: 'path',
+                    attribute: 'fill',
+                    selector: `[fill="${color}"]`,
+                    isCMYK: cmykResult.isCMYKPreserved,
+                    cmykColor: originalCMYK ? 
+                      `C:${originalCMYK.c} M:${originalCMYK.m} Y:${originalCMYK.y} K:${originalCMYK.k}` : 
+                      undefined,
+                    // Store original CMYK values for accurate color picker display
+                    originalCMYK: originalCMYK
+                  };
+                });
               
               // Store SVG colors in the expected format for color analysis
               colorAnalysis.colors = colors.map(c => ({
@@ -898,6 +911,7 @@ export async function registerRoutes(app: express.Application) {
               (file as any).svgContentBounds = contentBounds;
               (file as any).svgDimensions = dimensions;
               (file as any).svgColorAnalysis = colorAnalysis;
+              (file as any).originalCMYKColors = originalCMYKColors; // Store original CMYK values
               
               // Use SVG for display
               finalFilename = svgFilename;

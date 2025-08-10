@@ -326,7 +326,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
         <div className="grid grid-cols-6 gap-2">
           {svgColors.map((colorInfo, index) => {
             // Handle both new format (color/type) and legacy format (originalColor/originalFormat)
-            const originalColor = colorInfo.originalColor || colorInfo.color;
+            const originalColor = (colorInfo as any).originalColor || (colorInfo as any).color;
             const hasOverride = !!colorOverrides[originalColor];
             const currentColor = hasOverride ? colorOverrides[originalColor] : originalColor;
             const rgbPercent = parseRGBPercentage(originalColor);
@@ -378,11 +378,11 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             // Final fallback: ensure all colors are in hex format for CSS
             if (typeof originalDisplayColor !== 'string' || !originalDisplayColor.startsWith('#')) {
-              console.log(`🎨 Color conversion failed for: ${originalColor}, originalFormat: ${colorInfo.originalFormat || colorInfo.color}`);
+              console.log(`🎨 Color conversion failed for: ${originalColor}, originalFormat: ${(colorInfo as any).originalFormat || (colorInfo as any).color}`);
               
               // If it's still not hex, try to use the original format as a fallback
-              if (typeof colorInfo.originalFormat === 'string' && colorInfo.originalFormat.startsWith('#')) {
-                originalDisplayColor = colorInfo.originalFormat;
+              if (typeof (colorInfo as any).originalFormat === 'string' && (colorInfo as any).originalFormat.startsWith('#')) {
+                originalDisplayColor = (colorInfo as any).originalFormat;
               } else {
                 // Try one more time with direct RGB parsing
                 const directRgb = originalColor?.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
@@ -413,7 +413,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 currentColor={currentColor}
                 onChange={(newColor) => handleColorChange(originalColor, newColor)}
                 label={`Color ${index + 1}`}
-                cmykValues={adobeCMYK || undefined}
+                cmykValues={(colorInfo as any).originalCMYK || adobeCMYK || undefined}
                 trigger={
                   <button
                     className={`w-10 h-10 rounded-full border-2 shadow-sm transition-all hover:scale-105 ${
@@ -422,7 +422,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                         : "border-gray-300 hover:border-gray-400"
                     }`}
                     style={{ backgroundColor: displayColor }}
-                    title={`${colorInfo.elementType} color - Click to edit with CMYK`}
+                    title={`${(colorInfo as any).elementType || (colorInfo as any).type || 'fill'} color - Click to edit with CMYK`}
                   />
                 }
               />
