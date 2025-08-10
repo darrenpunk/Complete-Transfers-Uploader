@@ -833,6 +833,29 @@ export async function registerRoutes(app: express.Application) {
             await execAsync(pdf2svgCommand);
             
             if (fs.existsSync(svgPath)) {
+              // Analyze SVG content for colors and dimensions
+              const svgContent = fs.readFileSync(svgPath, 'utf8');
+              
+              // Calculate SVG content bounds and extract colors
+              const { calculateSVGContentBounds } = await import('./svg-color-utils');
+              const contentBounds = calculateSVGContentBounds(svgContent);
+              console.log(`📐 SVG content bounds calculated:`, contentBounds);
+              
+              // Extract SVG colors and dimensions
+              const { detectDimensionsFromSVG } = await import('./dimension-utils');
+              const dimensions = detectDimensionsFromSVG(svgContent);
+              console.log(`📏 SVG dimensions detected:`, dimensions);
+              
+              // Analyze SVG colors properly using existing function
+              const { extractSVGColorData } = await import('./svg-color-utils');
+              const colorAnalysis = extractSVGColorData(svgContent);
+              console.log(`🎨 SVG color analysis:`, colorAnalysis);
+              
+              // Store analysis results on file object for logo creation
+              (file as any).svgContentBounds = contentBounds;
+              (file as any).svgDimensions = dimensions;
+              (file as any).svgColorAnalysis = colorAnalysis;
+              
               // Use SVG for display
               finalFilename = svgFilename;
               finalMimeType = 'image/svg+xml';
@@ -1044,7 +1067,11 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🚀 ENHANCED: CMYK preserved: ${cmykResult.isCMYKPreserved}`);
         console.log(`🚀 ENHANCED: Original PDF path: ${cmykResult.originalPdfPath || 'none'}`);
         
-        // Create logo record immediately with CMYK results
+        // Create logo record with proper analysis results
+        const svgColors = (file as any).svgColorAnalysis || { colors: [], fonts: [], strokeWidths: [], hasText: false };
+        const contentBounds = (file as any).svgContentBounds || null;
+        const dimensions = (file as any).svgDimensions || null;
+        
         const logo = await storage.createLogo({
           projectId: projectId,
           filename: finalFilename,
@@ -1052,8 +1079,11 @@ export async function registerRoutes(app: express.Application) {
           mimeType: finalMimeType,
           size: file.size,
           url: finalUrl,
-          svgColors: { colors: [], fonts: [], strokeWidths: [], hasText: false },
-          svgFonts: [],
+          width: dimensions?.width || null,
+          height: dimensions?.height || null,
+          svgColors: svgColors,
+          svgFonts: svgColors.fonts || [],
+          contentBounds: contentBounds,
           isMixedContent: false,
           isCMYKPreserved: cmykResult.isCMYKPreserved, // USE CMYK SERVICE RESULT
           originalPdfPath: cmykResult.originalPdfPath || null, // ADD ORIGINAL PDF PATH
@@ -1063,9 +1093,29 @@ export async function registerRoutes(app: express.Application) {
         logos.push(logo);
         console.log(`✅ ENHANCED: Logo created successfully with ID: ${logo.id}`);
         
-        // ENHANCED: Simple dimension calculation for canvas element
-        let displayWidth = 200;
-        let displayHeight = 150;
+        // ENHANCED: Calculate proper canvas element size from content bounds or dimensions
+        let displayWidth = 200; // default
+        let displayHeight = 150; // default
+        
+        if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
+          // Use content bounds for proper sizing
+          const aspectRatio = contentBounds.width / contentBounds.height;
+          if (aspectRatio > 1.33) {
+            // Wide logo - constrain by width
+            displayWidth = Math.min(300, contentBounds.width);
+            displayHeight = displayWidth / aspectRatio;
+          } else {
+            // Tall or square logo - constrain by height
+            displayHeight = Math.min(200, contentBounds.height);
+            displayWidth = displayHeight * aspectRatio;
+          }
+          console.log(`📐 Canvas element sized from content bounds: ${displayWidth}x${displayHeight}`);
+        } else if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
+          // Fallback to SVG dimensions
+          displayWidth = Math.min(300, dimensions.width);
+          displayHeight = Math.min(200, dimensions.height);
+          console.log(`📐 Canvas element sized from SVG dimensions: ${displayWidth}x${displayHeight}`);
+        }
         
         // Create canvas element with centered positioning
         const templateSize = await storage.getTemplateSize(project.templateSize);
@@ -1081,8 +1131,8 @@ export async function registerRoutes(app: express.Application) {
           logoId: logo.id,
           x: centerX,
           y: centerY,
-          width: displayWidth,
-          height: displayHeight,
+          width: Math.round(displayWidth),
+          height: Math.round(displayHeight),
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
