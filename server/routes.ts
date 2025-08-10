@@ -1243,19 +1243,21 @@ export async function registerRoutes(app: express.Application) {
                     const vbWidth = viewBoxValues[2];
                     const vbHeight = viewBoxValues[3];
                     
-                    // Calculate scaling factor to restore content to proper size
-                    const scaleX = vbWidth / actualBounds.width;
-                    const scaleY = vbHeight / actualBounds.height;
-                    const avgScale = (scaleX + scaleY) / 2;
+                    // Check if there's significant padding that needs elimination
+                    const paddingX = vbWidth - actualBounds.width;
+                    const paddingY = vbHeight - actualBounds.height;
                     
-                    if (avgScale > 1.05) { // If content is significantly scaled down
-                      displayWidth = actualBounds.width * avgScale;
-                      displayHeight = actualBounds.height * avgScale;
-                      console.log(`✅ PDF SCALING CORRECTED: ViewBox ${vbWidth}×${vbHeight}px caused ${avgScale.toFixed(2)}x scaling → Content restored from ${actualBounds.width.toFixed(1)}×${actualBounds.height.toFixed(1)}px to ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+                    // Only apply scaling correction if there's significant padding (>10px in any dimension)
+                    if (paddingX > 10 || paddingY > 10) {
+                      // The content is constrained by the viewBox, so we should use the actual content bounds
+                      // NOT scale them up, as that would make them artificially larger than they should be
+                      displayWidth = actualBounds.width;
+                      displayHeight = actualBounds.height;
+                      console.log(`✅ PDF PADDING ELIMINATED: ViewBox ${vbWidth}×${vbHeight}px had ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px padding → Using actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
                     } else {
                       displayWidth = actualBounds.width;
                       displayHeight = actualBounds.height;
-                      console.log(`✅ PDF PADDING ELIMINATED: Original contentBounds ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px → Actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+                      console.log(`✅ PDF BOUNDS CALCULATED: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px (minimal padding: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px)`);
                     }
                   } else {
                     displayWidth = actualBounds.width;
