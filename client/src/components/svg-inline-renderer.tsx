@@ -47,9 +47,61 @@ export default function SvgInlineRenderer({
         // Ensure viewBox is preserved for proper scaling
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
         if (viewBoxMatch) {
-          // Add width="100%" height="100%" for full container fit
+          // Check if this is a PDF-derived SVG with significant padding
+          const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+          let scaleTransform = '';
+          
+          if (viewBoxValues.length >= 4 && logo.filename.includes('.pdf.svg')) {
+            const vbWidth = viewBoxValues[2];
+            const vbHeight = viewBoxValues[3];
+            
+            // Calculate actual content bounds from the SVG
+            const pathMatches = cleanedSvg.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
+            if (pathMatches.length > 0) {
+              // Estimate content bounds from path coordinates
+              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+              
+              pathMatches.forEach(pathMatch => {
+                const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
+                const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
+                
+                for (let i = 0; i < coords.length; i += 2) {
+                  const x = parseFloat(coords[i]);
+                  const y = parseFloat(coords[i + 1]);
+                  if (!isNaN(x) && !isNaN(y)) {
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                  }
+                }
+              });
+              
+              if (minX !== Infinity && maxX !== -Infinity) {
+                const contentWidth = maxX - minX;
+                const contentHeight = maxY - minY;
+                
+                // If there's significant padding (>10px), apply scaling correction
+                const paddingX = vbWidth - contentWidth;
+                const paddingY = vbHeight - contentHeight;
+                
+                if (paddingX > 10 || paddingY > 10) {
+                  const scaleX = vbWidth / contentWidth;
+                  const scaleY = vbHeight / contentHeight;
+                  const scale = Math.min(scaleX, scaleY);
+                  
+                  if (scale > 1.05) {
+                    scaleTransform = ` transform="scale(${scale.toFixed(3)})" transform-origin="center"`;
+                    console.log(`🎯 PDF content scaling correction applied: ${scale.toFixed(2)}x for ${logo.filename}`);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Add width="100%" height="100%" for full container fit with optional scaling
           if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" style="display:block">');
+            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" style="display:block"${scaleTransform}>`);
           }
         }
         
