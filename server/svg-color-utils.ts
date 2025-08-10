@@ -1532,13 +1532,13 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   finalSmallPaths.forEach((pathMatch) => {
     const dMatch = pathMatch.match(/d="([^"]+)"/);
     if (dMatch && dMatch[1]) {
-      const pathData = dMatch[1];
+      const pathData = dMatch[1] || '';
       const coords = pathData.match(/[\d.]+/g) || [];
       if (coords.length >= 4) {
-        const x1 = parseFloat(coords[0]);
-        const y1 = parseFloat(coords[1]);
-        const x2 = parseFloat(coords[2]);
-        const y2 = parseFloat(coords[3]);
+        const x1 = parseFloat(coords[0] || '0');
+        const y1 = parseFloat(coords[1] || '0');
+        const x2 = parseFloat(coords[2] || '0');
+        const y2 = parseFloat(coords[3] || '0');
         const width = Math.abs(x2 - x1);
         const height = Math.abs(y2 - y1);
         

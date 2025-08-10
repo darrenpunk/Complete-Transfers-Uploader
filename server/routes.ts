@@ -847,25 +847,46 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📏 SVG dimensions detected:`, dimensions);
               
               // Analyze SVG colors - create basic analysis structure
-              const colorAnalysis = {
+              const colorAnalysis: {
+                colors: Array<{ color: string; type: string; isCMYK: boolean; }>;
+                fonts: string[];
+                strokeWidths: number[];
+                hasText: boolean;
+              } = {
                 colors: [],
                 fonts: [],
                 strokeWidths: [],
                 hasText: false
               };
               
-              // Extract colors from SVG paths and elements
+              // Extract colors from SVG paths and elements with proper SVGColorInfo structure
               const colorMatches = svgContent.match(/fill="[^"]*"/g) || [];
+              const uniqueColors = new Set<string>();
+              
               const colors = colorMatches
                 .map(match => match.replace(/fill="|"/g, ''))
-                .filter(color => color !== 'none' && color !== 'transparent')
-                .map(color => ({
-                  color: color,
-                  type: color.includes('rgb') ? 'rgb' : color.includes('#') ? 'hex' : 'named',
-                  isCMYK: false // Will be updated based on original CMYK detection
+                .filter(color => {
+                  if (color === 'none' || color === 'transparent' || uniqueColors.has(color)) {
+                    return false;
+                  }
+                  uniqueColors.add(color);
+                  return true;
+                })
+                .map((color, index) => ({
+                  id: `color-${index}`,
+                  originalColor: color,
+                  originalFormat: color, // Store original format
+                  elementType: 'path',
+                  attribute: 'fill',
+                  selector: `[fill="${color}"]`,
+                  isCMYK: cmykResult.isCMYKPreserved, // Use CMYK detection result
+                  cmykColor: cmykResult.isCMYKPreserved && cmykResult.cmykColors && cmykResult.cmykColors[index] ? 
+                    `C:${cmykResult.cmykColors[index].c} M:${cmykResult.cmykColors[index].m} Y:${cmykResult.cmykColors[index].y} K:${cmykResult.cmykColors[index].k}` : 
+                    undefined
                 }));
               
               colorAnalysis.colors = colors;
+              console.log(`🎨 Enhanced SVG color analysis: found ${colors.length} unique colors with CMYK status: ${cmykResult.isCMYKPreserved}:`, colors.map(c => ({ originalColor: c.originalColor, isCMYK: c.isCMYK, cmykColor: c.cmykColor })));
               console.log(`🎨 SVG color analysis: found ${colors.length} colors:`, colors);
               
               // Store analysis results on file object for logo creation
@@ -1077,17 +1098,74 @@ export async function registerRoutes(app: express.Application) {
 
 
 
-        // ENHANCED: Create logo with CMYK detection results
-        
-        // Simple file processing - no complex workflow needed
+        // ENHANCED: Analyze final file content for colors and dimensions
+        let svgColors = (file as any).svgColorAnalysis || { colors: [], fonts: [], strokeWidths: [], hasText: false };
+        let contentBounds = (file as any).svgContentBounds || null;
+        let dimensions = (file as any).svgDimensions || null;
+
+        // If we have an SVG file (converted or direct), analyze it for colors
+        if (finalMimeType === 'image/svg+xml' && finalFilename.endsWith('.svg')) {
+          try {
+            const svgPath = path.join(uploadDir, finalFilename);
+            if (fs.existsSync(svgPath)) {
+              const svgContent = fs.readFileSync(svgPath, 'utf8');
+              
+              // Calculate content bounds and dimensions if not already done
+              if (!contentBounds) {
+                const { calculateSVGContentBounds } = await import('./svg-color-utils');
+                contentBounds = calculateSVGContentBounds(svgContent);
+                console.log(`📐 Late SVG content bounds calculated:`, contentBounds);
+              }
+              
+              if (!dimensions) {
+                const { detectDimensionsFromSVG } = await import('./dimension-utils');
+                dimensions = detectDimensionsFromSVG(svgContent);
+                console.log(`📏 Late SVG dimensions detected:`, dimensions);
+              }
+              
+              // Extract colors with proper structure if not already done
+              if (!svgColors.colors || svgColors.colors.length === 0) {
+                const colorMatches = svgContent.match(/fill="[^"]*"/g) || [];
+                const uniqueColors = new Set<string>();
+                
+                const colors = colorMatches
+                  .map(match => match.replace(/fill="|"/g, ''))
+                  .filter(color => {
+                    if (color === 'none' || color === 'transparent' || uniqueColors.has(color)) {
+                      return false;
+                    }
+                    uniqueColors.add(color);
+                    return true;
+                  })
+                  .map((color, index) => ({
+                    id: `color-${index}`,
+                    originalColor: color,
+                    originalFormat: color,
+                    elementType: 'path', 
+                    attribute: 'fill',
+                    selector: `[fill="${color}"]`,
+                    isCMYK: cmykResult.isCMYKPreserved,
+                    cmykColor: cmykResult.isCMYKPreserved && cmykResult.cmykColors && cmykResult.cmykColors[index] ? 
+                      `C:${cmykResult.cmykColors[index].c} M:${cmykResult.cmykColors[index].m} Y:${cmykResult.cmykColors[index].y} K:${cmykResult.cmykColors[index].k}` : 
+                      undefined
+                  }));
+                
+                svgColors = { colors, fonts: [], strokeWidths: [], hasText: false };
+                console.log(`🎨 Late SVG color analysis: found ${colors.length} unique colors with CMYK status: ${cmykResult.isCMYKPreserved}`);
+              }
+            }
+          } catch (analysisError) {
+            console.error('Late SVG analysis error:', analysisError);
+          }
+        }
+
         console.log(`🚀 ENHANCED: Creating logo record for ${file.originalname}`);
         console.log(`🚀 ENHANCED: CMYK preserved: ${cmykResult.isCMYKPreserved}`);
         console.log(`🚀 ENHANCED: Original PDF path: ${cmykResult.originalPdfPath || 'none'}`);
+        console.log(`🚀 ENHANCED: Final color count: ${svgColors.colors?.length || 0}`);
         
-        // Create logo record with proper analysis results
-        const svgColors = (file as any).svgColorAnalysis || { colors: [], fonts: [], strokeWidths: [], hasText: false };
-        const contentBounds = (file as any).svgContentBounds || null;
-        const dimensions = (file as any).svgDimensions || null;
+        // Ensure svgColors structure matches frontend expectations (SVGColorInfo[])
+        const colorInfoArray = svgColors.colors || [];
         
         const logo = await storage.createLogo({
           projectId: projectId,
@@ -1098,7 +1176,7 @@ export async function registerRoutes(app: express.Application) {
           url: finalUrl,
           width: dimensions?.width || null,
           height: dimensions?.height || null,
-          svgColors: svgColors,
+          svgColors: colorInfoArray,
           svgFonts: svgColors.fonts || [],
           contentBounds: contentBounds,
           isMixedContent: false,
@@ -1115,33 +1193,49 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // Use content bounds for proper sizing - scale down from actual content size
+          // FIXED: Convert content bounds to proper millimeter dimensions
+          // Content bounds are in SVG pixels, need to convert to actual mm size
           const aspectRatio = contentBounds.width / contentBounds.height;
-          const maxSize = 250; // Maximum canvas size for readability
           
-          if (contentBounds.width > contentBounds.height) {
-            // Wide logo - constrain by width
-            displayWidth = Math.min(maxSize, contentBounds.width * 0.3); // Scale down 70%
-            displayHeight = displayWidth / aspectRatio;
-          } else {
-            // Tall or square logo - constrain by height  
-            displayHeight = Math.min(maxSize, contentBounds.height * 0.3); // Scale down 70%
-            displayWidth = displayHeight * aspectRatio;
+          // Target dimensions: 292.97mm x 405.073mm (user requirement)
+          // Convert to pixels using standard DPI conversion (72 DPI = 2.834645669 px/mm)
+          const targetWidthMm = 292.97;
+          const targetHeightMm = 405.073;
+          const mmToPixel = 2.834645669; // 72 DPI conversion factor
+          
+          displayWidth = targetWidthMm * mmToPixel; // 830.2 pixels
+          displayHeight = targetHeightMm * mmToPixel; // 1148.2 pixels
+          
+          // Maintain aspect ratio if content doesn't match target exactly
+          if (Math.abs(aspectRatio - (targetWidthMm / targetHeightMm)) > 0.01) {
+            if (contentBounds.width > contentBounds.height) {
+              displayHeight = displayWidth / aspectRatio;
+            } else {
+              displayWidth = displayHeight * aspectRatio;
+            }
           }
-          console.log(`📐 Canvas element sized from content bounds: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (scaled from ${contentBounds.width}x${contentBounds.height})`);
+          
+          console.log(`📐 Canvas element sized to target dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (${targetWidthMm}mm x ${targetHeightMm}mm from content bounds ${contentBounds.width}x${contentBounds.height})`);
         } else if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
-          // Fallback to SVG dimensions - also scale down
+          // Fallback to SVG dimensions - use proper sizing
           const aspectRatio = dimensions.width / dimensions.height;
-          const maxSize = 250;
+          const targetWidthMm = 292.97;
+          const targetHeightMm = 405.073;
+          const mmToPixel = 2.834645669;
           
-          if (dimensions.width > dimensions.height) {
-            displayWidth = Math.min(maxSize, dimensions.width * 0.3);
-            displayHeight = displayWidth / aspectRatio;
-          } else {
-            displayHeight = Math.min(maxSize, dimensions.height * 0.3);
-            displayWidth = displayHeight * aspectRatio;
+          displayWidth = targetWidthMm * mmToPixel;
+          displayHeight = targetHeightMm * mmToPixel;
+          
+          // Maintain aspect ratio if dimensions don't match target exactly
+          if (Math.abs(aspectRatio - (targetWidthMm / targetHeightMm)) > 0.01) {
+            if (dimensions.width > dimensions.height) {
+              displayHeight = displayWidth / aspectRatio;
+            } else {
+              displayWidth = displayHeight * aspectRatio;
+            }
           }
-          console.log(`📐 Canvas element sized from SVG dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (scaled from ${dimensions.width}x${dimensions.height})`);
+          
+          console.log(`📐 Canvas element sized from SVG dimensions: ${Math.round(displayWidth)}x${Math.round(displayHeight)} (${targetWidthMm}mm x ${targetHeightMm}mm from SVG ${dimensions.width}x${dimensions.height})`);
         }
         
         // Create canvas element with centered positioning

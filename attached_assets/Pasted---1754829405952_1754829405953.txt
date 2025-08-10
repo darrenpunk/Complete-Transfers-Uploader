@@ -1,0 +1,431 @@
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+attached_assets/Screenshot%202025-08-09%20at%2021.06.24_1754769996829.png:1  Failed to load resource: the server responded with a status of 404 ()
+attached_assets/Screenshot%202025-08-09%20at%2021.09.23_1754770174514.png:1  Failed to load resource: the server responded with a status of 404 ()
+attached_assets/Screenshot%202025-08-09%20at%2022.41.55_1754775743564.png:1  Failed to load resource: the server responded with a status of 404 ()
+attached_assets/Screenshot%202025-08-09%20at%2023.20.03_1754778035794.png:1  Failed to load resource: the server responded with a status of 404 ()
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-fc3d6289511ec16b.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-fc3d6289511ec16b.js:1
+region1.analytics.google.com/g/collect?v=2&tid=G-MPJY3F1YEL&gtm=45je5861v9135634466za200&_p=1754780544634&gcd=13l3lPl2l2l1&npa=0&dma_cps=syphamo&dma=1&tag_exp=101509157~103116026~103200004~103233427~104527906~104528501~104684208~104684211~104948813~105033763~105033765~105103161~105103163~105113532~105135708~105135710&ul=en-us&sr=2560x1440&cid=795155766.1753916089&ecid=346396324&ir=1&uaa=x86&uab=64&uafvl=Not)A%253BBrand%3B8.0.0.0%7CChromium%3B138.0.7204.183%7CGoogle%2520Chrome%3B138.0.7204.183&uamb=0&uam=&uap=macOS&uapv=14.7.3&uaw=0&are=1&frm=0&pscdl=noapi&_eu=EBAIAAQ&_s=24&dl=https%3A%2F%2Freplit.com%2F%40darren190%2FProofDesigner&dp=%2F%40darren190%2FProofDesigner&dt=replEnvironmentDesktop&sid=1754789963&sct=39&seg=1&_tu=wAQ&en=Agent%20Used&_ee=1&ep.event_category=All&ep.value=0&tfd=9641514:1  Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+/graphql:1  Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ WebSocket connection to 'wss://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/?token=cgbQFecp6hTR' failed: 
+t @ eruda.js:2
+eruda.js:2 Uncaught (in promise) 
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ AppliqueBadgesModal open state changed: false
+ showAppliqueBadgesModal state changed to: false
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Template A3: 842x1191px, Workspace: 1286x900, Zoom: 64%
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ handleFilesUpload called with files: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Upload completed, checking for PDFs with raster content: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🎨 Fetching SVG content from: /uploads/140359917999843709b10f9fd4451ea0.pdf.svg
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 12550d6f-e097-4328-8329-ff53489fcd5e dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 Warning: validateDOMNesting(...): <p> cannot appear as a descendant of <p>.
+    at p
+    at p
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1363:13
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:182:12)
+    at div
+    at DialogHeader (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:107:3)
+    at div
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=96b43763:45:7
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:56:5
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1315:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1238:58
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=96b43763:24:11)
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1229:64
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=96b43763:244:22
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=96b43763:24:11)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at DialogPortal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1191:11)
+    at _c3 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at Dialog (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1132:5)
+    at RGBWarningModal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/rgb-warning-modal.tsx:28:35)
+    at ColorPickerPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/color-picker-panel.tsx:109:44)
+    at div
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=96b43763:2802:5)
+    at PropertiesPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/properties-panel.tsx:96:3)
+    at div
+    at div
+    at div
+    at UploadTool (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/pages/upload-tool.tsx:43:18)
+    at Route (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=96b43763:323:16)
+    at Switch (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=96b43763:379:17)
+    at Router
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=96b43763:2802:5)
+    at ThemeProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=96b43763:2805:3)
+    at App
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
+    at div
+    at p
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1363:13
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:182:12)
+    at div
+    at DialogHeader (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:107:3)
+    at div
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=96b43763:45:7
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:56:5
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1315:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1238:58
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=96b43763:24:11)
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1229:64
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=96b43763:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=96b43763:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=96b43763:244:22
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=96b43763:24:11)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at DialogPortal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1191:11)
+    at _c3 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at Dialog (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=96b43763:1132:5)
+    at RGBWarningModal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/rgb-warning-modal.tsx:28:35)
+    at ColorPickerPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/color-picker-panel.tsx:109:44)
+    at div
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=96b43763:2802:5)
+    at PropertiesPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/properties-panel.tsx:96:3)
+    at div
+    at div
+    at div
+    at UploadTool (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/pages/upload-tool.tsx:43:18)
+    at Route (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=96b43763:323:16)
+    at Switch (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=96b43763:379:17)
+    at Router
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=96b43763:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=96b43763:2802:5)
+    at ThemeProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=96b43763:2805:3)
+    at App
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 12550d6f-e097-4328-8329-ff53489fcd5e dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 12550d6f-e097-4328-8329-ff53489fcd5e dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 12550d6f-e097-4328-8329-ff53489fcd5e dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 🎨 Color conversion failed for: undefined, originalFormat: undefined
+Console.js:61 🎨 FALLBACK TO BLACK: Could not parse color: undefined
+Console.js:61 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 Template A3: 842x1191px, Workspace: 400x900, Zoom: 50%
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 12550d6f-e097-4328-8329-ff53489fcd5e dimensions: {dbWidth: 181, dbHeight: 250, pixelWidth: 256.5354330445, pixelHeight: 354.330708625, rotation: 0}
