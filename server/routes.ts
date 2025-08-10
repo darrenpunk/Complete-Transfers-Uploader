@@ -848,7 +848,7 @@ export async function registerRoutes(app: express.Application) {
               const svgContent = fs.readFileSync(svgPath, 'utf8');
               
               // Calculate SVG content bounds and extract colors
-              const { calculateSVGContentBounds } = await import('./svg-color-utils');
+              const { calculateSVGContentBounds } = await import('./dimension-utils');
               const contentBounds = calculateSVGContentBounds(svgContent);
               console.log(`📐 SVG content bounds calculated:`, contentBounds);
               
@@ -1225,16 +1225,26 @@ export async function registerRoutes(app: express.Application) {
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
           // CRITICAL FIX: Use content bounds as pixel dimensions directly
-          // The content bounds (830x1148) are already in correct pixel units, not mm
-          displayWidth = contentBounds.width; // 830 pixels
-          displayHeight = contentBounds.height; // 1148 pixels
+          displayWidth = Math.round(contentBounds.width);
+          displayHeight = Math.round(contentBounds.height);
           
           // Calculate actual mm equivalent for logging
           const pixelToMm = 1 / 2.834645669; // Convert pixels to mm (72 DPI)
-          const actualWidthMm = displayWidth * pixelToMm; // ~292.97mm
-          const actualHeightMm = displayHeight * pixelToMm; // ~405.07mm
+          const actualWidthMm = displayWidth * pixelToMm;
+          const actualHeightMm = displayHeight * pixelToMm;
           
           console.log(`📐 Canvas element sized to content bounds: ${displayWidth}x${displayHeight} pixels (${actualWidthMm.toFixed(2)}mm x ${actualHeightMm.toFixed(2)}mm)`);
+        } else if (dimensions && dimensions.widthPx > 0 && dimensions.heightPx > 0) {
+          // Use dimension detection results with proper pixel values
+          displayWidth = Math.round(dimensions.widthPx);
+          displayHeight = Math.round(dimensions.heightPx);
+          
+          // Calculate actual mm equivalent for logging
+          const pixelToMm = 1 / 2.834645669;
+          const actualWidthMm = displayWidth * pixelToMm;
+          const actualHeightMm = displayHeight * pixelToMm;
+          
+          console.log(`📐 Canvas element sized from dimension detection: ${displayWidth}x${displayHeight} pixels (${actualWidthMm.toFixed(2)}mm x ${actualHeightMm.toFixed(2)}mm)`);
         } else if (dimensions && dimensions.width > 0 && dimensions.height > 0) {
           // Fallback to SVG dimensions - use pixel values directly
           displayWidth = dimensions.width; // Use pixel width directly

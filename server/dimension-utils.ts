@@ -180,8 +180,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     }
     
     // Set coordinate bounds based on document type
-    const maxCoordinate = isLargeFormat ? 2000 : 500;  // Allow much larger bounds for PDF documents
-    const minCoordinate = isLargeFormat ? -2000 : -50;  // Allow negative coordinates for outlined fonts
+    const maxCoordinate = isLargeFormat ? 5000 : 500;  // Allow much larger bounds for PDF documents
+    const minCoordinate = isLargeFormat ? -5000 : -50;  // Allow negative coordinates for outlined fonts
     
     // Helper function to update bounds with coordinate validation
     const updateBounds = (x: number, y: number) => {
@@ -230,7 +230,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       // For large format documents, be less aggressive about filtering paths
       // Only skip obviously empty or single-coordinate paths
       if (isLargeFormat) {
-        if (pathData.length < 10) {
+        // Skip only truly empty paths for PDF documents
+        if (pathData.length < 5 || pathData.trim() === '') {
           suspiciousPaths++;
           continue;
         }
@@ -306,7 +307,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const relaxedUpdateBounds = (x: number, y: number) => {
         if (isNaN(x) || isNaN(y)) return;
         // Much more relaxed bounds for outlined fonts - allow negative coordinates
-        if (Math.abs(x) > 10000 || Math.abs(y) > 10000) return;
+        if (Math.abs(x) > 20000 || Math.abs(y) > 20000) return;
         
         hasCoordinates = true;
         minX = Math.min(minX, x);
@@ -314,7 +315,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         minY = Math.min(minY, y);
         maxY = Math.max(maxY, y);
         
-        console.log(`📍 Found coordinate: (${x.toFixed(1)}, ${y.toFixed(1)}) → bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)}`);
+        if (pathCount <= 3) { // Only log first few coordinates to avoid spam
+          console.log(`📍 Found coordinate: (${x.toFixed(1)}, ${y.toFixed(1)}) → bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)}`);
+        }
       };
       
       // Reprocess paths with relaxed bounds
