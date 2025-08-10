@@ -1171,5 +1171,43 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Template sizes route
+  app.get('/api/template-sizes', async (req, res) => {
+    try {
+      const templateSizes = await storage.getTemplateSizes();
+      res.json(templateSizes);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get template sizes' });
+    }
+  });
+
+  // Canvas element routes
+  app.patch('/api/canvas-elements/:id', async (req, res) => {
+    try {
+      const element = await storage.updateCanvasElement(req.params.id, req.body);
+      res.json(element);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update canvas element' });
+    }
+  });
+
+  app.delete('/api/canvas-elements/:id', async (req, res) => {
+    try {
+      await storage.deleteCanvasElement(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete canvas element' });
+    }
+  });
+
+  app.post('/api/canvas-elements/:id/duplicate', async (req, res) => {
+    try {
+      const duplicated = await storage.duplicateCanvasElement(req.params.id);
+      res.json(duplicated);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to duplicate canvas element' });
+    }
+  });
+
   return app;
 }
