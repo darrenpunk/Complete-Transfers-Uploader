@@ -916,6 +916,7 @@ export async function registerRoutes(app: express.Application) {
               (file as any).svgContentBounds = contentBounds;
               (file as any).svgDimensions = dimensions;
               (file as any).svgColorAnalysis = colorAnalysis;
+              (file as any).svgColors = colors; // Store enhanced color data with originalCMYK
               (file as any).originalCMYKColors = originalCMYKColors; // Store original CMYK values
               
               // Use SVG for display
@@ -1189,7 +1190,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🚀 ENHANCED: Final color count: ${svgColors.colors?.length || 0}`);
         
         // Ensure svgColors structure matches frontend expectations (SVGColorInfo[])
-        const colorInfoArray = svgColors.colors || [];
+        // Use the enhanced color data with originalCMYK if available
+        const enhancedColors = (file as any).svgColors || svgColors.colors || [];
+        console.log(`🎨 SAVING TO DATABASE: Enhanced colors with originalCMYK:`, enhancedColors.map((c: any) => ({ 
+          originalColor: c.originalColor, 
+          originalCMYK: c.originalCMYK,
+          cmykColor: c.cmykColor 
+        })));
         
         const logo = await storage.createLogo({
           projectId: projectId,
@@ -1200,7 +1207,7 @@ export async function registerRoutes(app: express.Application) {
           url: finalUrl,
           width: dimensions?.width || null,
           height: dimensions?.height || null,
-          svgColors: colorInfoArray,
+          svgColors: enhancedColors,
           svgFonts: svgColors.fonts || [],
           contentBounds: contentBounds,
           isMixedContent: false,

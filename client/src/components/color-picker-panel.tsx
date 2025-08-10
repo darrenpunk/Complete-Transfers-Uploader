@@ -16,6 +16,7 @@ interface SVGColorInfo {
   originalColor: string;
   originalFormat?: string;
   cmykColor?: string;
+  originalCMYK?: CMYKColor; // Store extracted CMYK values from PDF
   pantoneMatch?: string;
   pantoneDistance?: number;
   elementType: string;
@@ -100,12 +101,18 @@ function parseCMYKString(cmykString: string): CMYKColor | null {
 
 function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
   // Validate colorInfo input
-  if (!colorInfo || (!colorInfo.originalColor && !colorInfo.originalFormat && !colorInfo.cmykColor)) {
+  if (!colorInfo || (!colorInfo.originalColor && !colorInfo.originalFormat && !colorInfo.cmykColor && !colorInfo.originalCMYK)) {
     console.warn('🎨 Color conversion failed for: undefined color info');
     return null;
   }
   
-  // Use the pre-calculated CMYK from the server-side Adobe conversion
+  // PRIORITY 1: Use original CMYK values extracted from PDF
+  if (colorInfo.originalCMYK) {
+    console.log(`🎨 Using original CMYK values from PDF extraction: C${colorInfo.originalCMYK.c}% M${colorInfo.originalCMYK.m}% Y${colorInfo.originalCMYK.y}% K${colorInfo.originalCMYK.k}%`);
+    return colorInfo.originalCMYK;
+  }
+  
+  // PRIORITY 2: Use the pre-calculated CMYK from the server-side Adobe conversion
   if (colorInfo.cmykColor) {
     return parseCMYKString(colorInfo.cmykColor);
   }
