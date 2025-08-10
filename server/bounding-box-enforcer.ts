@@ -25,10 +25,11 @@ export class BoundingBoxEnforcer {
     
     if (mimeType === 'image/svg+xml') {
       const svgContent = fs.readFileSync(filePath, 'utf8');
+      // ALWAYS prioritize actual content bounds over viewBox to eliminate padding
       const contentBounds = calculateSVGContentBounds(svgContent);
       
       if (contentBounds) {
-        console.log('✅ Content-based bounds calculated:', contentBounds);
+        console.log('✅ EXACT content-based bounds calculated (ignoring viewBox padding):', contentBounds);
         console.log('📋 Production Flow: Using content bounds NOT viewBox (Requirement 4)');
         return contentBounds;
       }

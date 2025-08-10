@@ -547,17 +547,25 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
   // Method 3: Try viewBox dimensions (most reliable for PDF conversions)
   const viewBoxDims = extractViewBoxDimensions(svgContent);
   
-  // Check if this is a PDF-derived SVG (large format documents should preserve original layout)
+  // Check if this is a PDF-derived SVG (needs content bounds to eliminate padding)
   const isPdfDerived = svgContent.includes('pdf2svg') || svgContent.includes('inkscape') || 
                       (viewBoxDims && ((viewBoxDims.width > 800 && viewBoxDims.height > 1100) || (viewBoxDims.width > 1100 && viewBoxDims.height > 800)));
+  
+  // For PDF-derived SVGs, PRIORITIZE content bounds to eliminate viewBox padding
+  if (isPdfDerived) {
+    console.log(`📄 PDF-derived SVG detected, prioritizing content bounds to eliminate padding...`);
+    const actualContentBounds = calculateSVGContentBounds(svgContent);
+    if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
+      const contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'pdf_content_bounds');
+      console.log(`✅ PDF: Using content bounds to eliminate padding: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${contentResult.widthMm.toFixed(2)}×${contentResult.heightMm.toFixed(2)}mm`);
+      return contentResult;
+    } else {
+      console.log(`⚠️ PDF: Content bounds failed, falling back to viewBox with potential padding`);
+    }
+  }
+  
   if (viewBoxDims) {
     const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'viewbox');
-    
-    // For PDF-derived SVGs, always prioritize viewBox over content bounds to preserve original layout
-    if (isPdfDerived) {
-      console.log(`📄 PDF-derived SVG detected, using viewBox dimensions to preserve layout: ${viewBoxDims.width}×${viewBoxDims.height}px`);
-      return viewBoxResult;
-    }
     
     if (!isAIVectorized && (viewBoxResult.accuracy === 'perfect' || viewBoxResult.accuracy === 'high')) {
       return viewBoxResult;
