@@ -619,7 +619,7 @@ export default function PropertiesPanel({
     checks.push({
       name: "Print Size",
       status: hasReasonableSize ? "pass" : "warning",
-      value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`
+      value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}px`
     });
 
 
@@ -1046,7 +1046,7 @@ export default function PropertiesPanel({
                               {logo.originalName}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {Math.round(element.width)}×{Math.round(element.height)}mm
+                              {Math.round(element.width)}×{Math.round(element.height)}px
                             </span>
                           </div>
                         </div>

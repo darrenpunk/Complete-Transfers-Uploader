@@ -206,7 +206,7 @@ export default function ImpositionModal({
             <div className="text-sm text-gray-600 space-y-1">
               <div>Total copies: {totalCopies}</div>
               <div>Grid size: {Math.round(totalWidth)}×{Math.round(totalHeight)}mm</div>
-              <div>Logo size: {Math.round(selectedElement.width)}×{Math.round(selectedElement.height)}mm</div>
+              <div>Logo size: {Math.round(selectedElement.width)}×{Math.round(selectedElement.height)}px</div>
             </div>
             
             {(selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height) && (

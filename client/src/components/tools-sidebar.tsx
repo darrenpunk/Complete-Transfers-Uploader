@@ -985,7 +985,7 @@ export default function ToolsSidebar({
           checks.push({
             name: "Print Size",
             status: hasReasonableSize ? "pass" : "warning",
-            value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`
+            value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}px`
           });
 
           // Font Check
