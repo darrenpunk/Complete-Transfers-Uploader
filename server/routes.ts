@@ -1285,8 +1285,8 @@ export async function registerRoutes(app: express.Application) {
           logoId: logo.id,
           x: centerX,
           y: centerY,
-          width: Math.round(displayWidth),
-          height: Math.round(displayHeight),
+          width: displayWidth,  // Use exact dimensions without rounding
+          height: displayHeight, // Use exact dimensions without rounding
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
