@@ -259,7 +259,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
     if (color.cmykColor?.includes('C:')) return false;
     
     // If originalColor starts with CMYK(), it's vectorized and not RGB
-    if (color.originalColor?.startsWith('CMYK(')) return false;
+    if (typeof color.originalColor === 'string' && color.originalColor.startsWith('CMYK(')) return false;
     
     // White colors (transparency) should not trigger RGB warning
     if (color.originalColor === 'rgb(255, 255, 255)' || color.originalColor === '#ffffff') return false;
@@ -320,7 +320,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             let originalDisplayColor = colorInfo.originalColor;
             
             // If it's already a hex color, use it directly
-            if (colorInfo.originalColor.startsWith('#')) {
+            if (typeof colorInfo.originalColor === 'string' && colorInfo.originalColor.startsWith('#')) {
               originalDisplayColor = colorInfo.originalColor;
             }
             
@@ -336,7 +336,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 const rgbPercentStandard = parseRGBPercentageStandard(colorInfo.originalFormat || '');
                 if (rgbPercentStandard) {
                   originalDisplayColor = `#${rgbPercentStandard.r.toString(16).padStart(2, '0')}${rgbPercentStandard.g.toString(16).padStart(2, '0')}${rgbPercentStandard.b.toString(16).padStart(2, '0')}`;
-                } else if (colorInfo.originalColor.startsWith('CMYK(')) {
+                } else if (typeof colorInfo.originalColor === 'string' && colorInfo.originalColor.startsWith('CMYK(')) {
                   // Handle CMYK colors by converting to hex
                   const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
                   if (cmykStandard) {
@@ -355,15 +355,15 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             }
             
             // Final fallback: ensure all colors are in hex format for CSS
-            if (!originalDisplayColor.startsWith('#')) {
+            if (typeof originalDisplayColor !== 'string' || !originalDisplayColor.startsWith('#')) {
               console.log(`🎨 Color conversion failed for: ${colorInfo.originalColor}, originalFormat: ${colorInfo.originalFormat}`);
               
               // If it's still not hex, try to use the original format as a fallback
-              if (colorInfo.originalFormat && colorInfo.originalFormat.startsWith('#')) {
+              if (typeof colorInfo.originalFormat === 'string' && colorInfo.originalFormat.startsWith('#')) {
                 originalDisplayColor = colorInfo.originalFormat;
               } else {
                 // Try one more time with direct RGB parsing
-                const directRgb = colorInfo.originalColor.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+                const directRgb = colorInfo.originalColor?.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
                 if (directRgb) {
                   const r = parseInt(directRgb[1]);
                   const g = parseInt(directRgb[2]);
