@@ -224,6 +224,7 @@ export class MemStorage implements IStorage {
       originalFilename: insertLogo.originalFilename ?? null,
       originalMimeType: insertLogo.originalMimeType ?? null,
       originalUrl: insertLogo.originalUrl ?? null,
+      originalPdfPath: insertLogo.originalPdfPath || null,
       svgColors: insertLogo.svgColors || null,
       svgFonts: insertLogo.svgFonts || null,
       fontsOutlined: insertLogo.fontsOutlined || false,

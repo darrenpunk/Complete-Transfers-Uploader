@@ -716,7 +716,7 @@ export async function registerRoutes(app: express.Application) {
       
     } catch (error) {
       console.error('❌ PDF generation error:', error);
-      res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+      res.status(500).json({ error: 'Failed to generate PDF: ' + (error instanceof Error ? error.message : 'Unknown error') });
     }
   });
 
@@ -795,7 +795,7 @@ export async function registerRoutes(app: express.Application) {
             console.log(`🎨 Enhanced isCMYKPreserved:`, cmykResult.isCMYKPreserved);
           } catch (cmykError) {
             console.error(`❌ CMYK Detection Error for ${file.originalname}:`, cmykError);
-            console.error(`❌ CMYK Error Stack:`, cmykError.stack);
+            console.error(`❌ CMYK Error Stack:`, cmykError instanceof Error ? cmykError.stack : 'No stack trace');
           }
 
           // ENHANCED PROCESSING: Use CMYK detection results for clean file processing
@@ -1013,19 +1013,8 @@ export async function registerRoutes(app: express.Application) {
           svgFonts: [],
           isMixedContent: false,
           isCMYKPreserved: cmykResult.isCMYKPreserved, // USE CMYK SERVICE RESULT
-          extractedCMYKColors: cmykResult.cmykColors, // ADD EXTRACTED CMYK COLORS
-          isPdfWithRasterOnly: false,
-          preflightData: {
-            colorSpaceDetected: cmykResult.isCMYKPreserved ? 'CMYK' : 'RGB',
-            hasRasterContent: false,
-            hasVectorContent: true,
-            isMixedContent: false,
-            contentBounds: null,
-            colorsDetected: cmykResult.cmykColors || [],
-            requiresVectorization: false,
-            warnings: [],
-            originalColorsPreserved: true
-          }
+          originalPdfPath: cmykResult.originalPdfPath || null, // ADD ORIGINAL PDF PATH
+          isPdfWithRasterOnly: false
         });
         
         logos.push(logo);
@@ -1079,7 +1068,7 @@ export async function registerRoutes(app: express.Application) {
       res.json(logos);
     } catch (error) {
       console.error('Enhanced upload error:', error);
-      res.status(500).json({ error: 'Upload failed' });
+      res.status(500).json({ error: 'Upload failed: ' + (error instanceof Error ? error.message : 'Unknown error') });
     }
   });
 
@@ -1131,9 +1120,22 @@ export async function registerRoutes(app: express.Application) {
 
       // Use OriginalWorkingGenerator for PDF generation
       const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      const generator = new OriginalWorkingGenerator(storage);
+      const generator = new OriginalWorkingGenerator();
       
-      const pdfBuffer = await generator.generatePDF(projectId);
+      // Build PDF data object
+      const logos = await storage.getLogosByProject(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      
+      const pdfData = {
+        projectId: projectId,
+        logos,
+        canvasElements,
+        templateSize: await storage.getTemplateSize(project.templateSize),
+        garmentColor: project.garmentColor,
+        appliqueBadgesForm: project.appliqueBadgesForm
+      };
+      
+      const pdfBuffer = await generator.generatePDF(pdfData);
       
       // Set headers for PDF response
       res.setHeader('Content-Type', 'application/pdf');
@@ -1144,7 +1146,7 @@ export async function registerRoutes(app: express.Application) {
       
     } catch (error) {
       console.error('PDF generation error:', error);
-      res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+      res.status(500).json({ error: 'Failed to generate PDF: ' + (error instanceof Error ? error.message : 'Unknown error') });
     }
   });
 
