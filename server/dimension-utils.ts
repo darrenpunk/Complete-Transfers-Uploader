@@ -549,19 +549,22 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
   
   // Check if this is a PDF-derived SVG (needs content bounds to eliminate padding)
   const isPdfDerived = svgContent.includes('pdf2svg') || svgContent.includes('inkscape') || 
-                      (viewBoxDims && ((viewBoxDims.width > 800 && viewBoxDims.height > 1100) || (viewBoxDims.width > 1100 && viewBoxDims.height > 800)));
+                      svgContent.includes('.pdf') || // Also check for PDF references in content
+                      (viewBoxDims && (viewBoxDims.width > 250 || viewBoxDims.height > 250)); // Lower threshold for detection
   
   // For PDF-derived SVGs, PRIORITIZE content bounds to eliminate viewBox padding
   if (isPdfDerived) {
-    console.log(`📄 PDF-derived SVG detected, prioritizing content bounds to eliminate padding...`);
+    console.log(`📄 PDF-derived SVG detected (viewBox: ${viewBoxDims?.width}×${viewBoxDims?.height}), prioritizing content bounds to eliminate padding...`);
     const actualContentBounds = calculateSVGContentBounds(svgContent);
     if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
       const contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'pdf_content_bounds');
-      console.log(`✅ PDF: Using content bounds to eliminate padding: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${contentResult.widthMm.toFixed(2)}×${contentResult.heightMm.toFixed(2)}mm`);
+      console.log(`✅ PDF PADDING ELIMINATED: ViewBox ${viewBoxDims?.width}×${viewBoxDims?.height} → Content ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${contentResult.widthMm.toFixed(2)}×${contentResult.heightMm.toFixed(2)}mm`);
       return contentResult;
     } else {
-      console.log(`⚠️ PDF: Content bounds failed, falling back to viewBox with potential padding`);
+      console.log(`⚠️ PDF: Content bounds calculation failed, falling back to viewBox with potential padding`);
     }
+  } else {
+    console.log(`📐 Non-PDF SVG detected, using standard processing...`);
   }
   
   if (viewBoxDims) {
