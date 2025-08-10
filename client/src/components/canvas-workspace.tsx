@@ -494,17 +494,24 @@ export default function CanvasWorkspace({
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
-      // Convert mm to pixels for drag offset calculation
-      let mmToPixelRatio = template.pixelWidth / template.width;
-      
-      // Use proper DPI for PDF-derived elements
+      // Calculate drag offset 
       const isPdfDerived = element.width > 200 || element.height > 200;
+      let elementDisplayX, elementDisplayY;
+      
       if (isPdfDerived) {
-        mmToPixelRatio = 2.834645669; // 72 DPI conversion
+        // PDF-derived elements are stored as pixels, no conversion needed
+        elementDisplayX = element.x * (zoom / 100);
+        elementDisplayY = element.y * (zoom / 100);
+      } else {
+        // Regular elements are stored as mm, convert to pixels
+        let mmToPixelRatio = template.pixelWidth / template.width;
+        elementDisplayX = element.x * mmToPixelRatio * (zoom / 100);
+        elementDisplayY = element.y * mmToPixelRatio * (zoom / 100);
       }
+      
       setDragOffset({
-        x: event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100),
-        y: event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100)
+        x: event.clientX - rect.left - elementDisplayX,
+        y: event.clientY - rect.top - elementDisplayY
       });
     }
   };
@@ -523,38 +530,60 @@ export default function CanvasWorkspace({
 
       updateTimeout = setTimeout(() => {
         if (isDragging && selectedElement && template) {
-          // Convert pixels back to mm for storage
-          let mmToPixelRatio = template.pixelWidth / template.width;
-          
-          // Use proper DPI for PDF-derived elements
           const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
-          if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
-          }
+          let newX, newY;
           const safetyMargin = 3; // 3mm safety margin
           
-          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
-          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
+          if (isPdfDerived) {
+            // PDF-derived elements: store as pixels
+            newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor;
+            newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor;
+          } else {
+            // Regular elements: convert back to mm for storage
+            let mmToPixelRatio = template.pixelWidth / template.width;
+            newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
+            newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
+          }
           
           // Constrain to safe zone
-          const maxX = template.width - safetyMargin - selectedElement.width;
-          const maxY = template.height - safetyMargin - selectedElement.height;
+          let maxX, maxY, minX, minY;
+          
+          if (isPdfDerived) {
+            // PDF-derived elements: work in pixels, convert template dimensions 
+            const templateWidthPx = template.pixelWidth;
+            const templateHeightPx = template.pixelHeight;
+            const safetyMarginPx = safetyMargin * 2.834645669; // Convert 3mm to pixels
+            
+            maxX = templateWidthPx - safetyMarginPx - selectedElement.width;
+            maxY = templateHeightPx - safetyMarginPx - selectedElement.height;
+            minX = safetyMarginPx;
+            minY = safetyMarginPx;
+          } else {
+            // Regular elements: work in mm
+            maxX = template.width - safetyMargin - selectedElement.width;
+            maxY = template.height - safetyMargin - selectedElement.height;
+            minX = safetyMargin;
+            minY = safetyMargin;
+          }
 
           updateElementDirect(selectedElement.id, { 
-            x: Math.max(safetyMargin, Math.min(newX, maxX)), 
-            y: Math.max(safetyMargin, Math.min(newY, maxY)) 
+            x: Math.max(minX, Math.min(newX, maxX)), 
+            y: Math.max(minY, Math.min(newY, maxY)) 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
-          // Convert pixels back to mm for storage
-          let mmToPixelRatio = template.pixelWidth / template.width;
-          
-          // Use proper DPI for PDF-derived elements
           const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          let mouseX, mouseY;
+          
           if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+            // PDF-derived elements: work in pixels
+            mouseX = (event.clientX - rect.left) / scaleFactor;
+            mouseY = (event.clientY - rect.top) / scaleFactor;
+          } else {
+            // Regular elements: convert to mm
+            let mmToPixelRatio = template.pixelWidth / template.width;
+            mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
+            mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
           }
-          const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
-          const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
@@ -1300,25 +1329,29 @@ export default function CanvasWorkspace({
                 console.log(`Element ${element.id} has color overrides:`, element.colorOverrides);
               }
               
-              // Convert mm to pixels for display
-              // For PDF-derived large format elements, use proper DPI conversion instead of template workspace ratio
+              // Convert coordinates and dimensions for display
               let mmToPixelRatio = template.pixelWidth / template.width; // Default template ratio
               
               // Check if this is a PDF-derived element (large format) by checking dimensions
               const isPdfDerived = element.width > 200 || element.height > 200; // Large elements are likely PDF-derived
               
-              if (isPdfDerived) {
-                // Use standard 72 DPI conversion for PDF-derived elements: 1mm = 2.834645669 pixels
-                mmToPixelRatio = 2.834645669; // 72 DPI conversion
-                console.log(`🔍 PDF-derived element detected, using 72 DPI conversion: ${mmToPixelRatio} px/mm`);
-              }
+              let elementWidth, elementHeight, elementX, elementY;
               
-              // Always use the database dimensions directly - they're already swapped by the backend
-              // Apply zoom to match the canvas scaling
-              const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
-              const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
-              const elementX = element.x * mmToPixelRatio * (zoom / 100);
-              const elementY = element.y * mmToPixelRatio * (zoom / 100);
+              if (isPdfDerived) {
+                // PDF-derived elements are already stored in pixels in the database
+                // No conversion needed - just apply zoom
+                elementWidth = element.width * (zoom / 100);
+                elementHeight = element.height * (zoom / 100);
+                elementX = element.x * (zoom / 100);
+                elementY = element.y * (zoom / 100);
+                console.log(`🎯 PDF-derived element: using pixel values directly (${element.width}×${element.height}px)`);
+              } else {
+                // Regular elements are stored in mm, need conversion to pixels
+                elementWidth = element.width * mmToPixelRatio * (zoom / 100);
+                elementHeight = element.height * mmToPixelRatio * (zoom / 100);
+                elementX = element.x * mmToPixelRatio * (zoom / 100);
+                elementY = element.y * mmToPixelRatio * (zoom / 100);
+              }
               
               // For the bounding box, we need the exact content size without extra padding
               // The element dimensions from the database should already be cropped to content
