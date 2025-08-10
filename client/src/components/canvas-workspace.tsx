@@ -1438,8 +1438,8 @@ export default function CanvasWorkspace({
                     transformOrigin: 'center',
                     outline: isSelected 
                       ? `2px solid #961E75` 
-                      : `1px solid #d1d5db`,
-                    outlineOffset: '-2px',
+                      : 'none',
+                    outlineOffset: '0px',
                     boxSizing: 'border-box'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
