@@ -86,8 +86,12 @@ export default function SvgInlineRenderer({
                 const paddingY = vbHeight - contentHeight;
                 
                 if (paddingX > 10 || paddingY > 10) {
-                  // Use a more conservative approach - just center the content without aggressive scaling
-                  // Calculate translation to center content within viewBox
+                  // Calculate optimal scale to fill the available space while maintaining aspect ratio
+                  const scaleX = vbWidth / contentWidth;
+                  const scaleY = vbHeight / contentHeight;
+                  const scale = Math.min(scaleX, scaleY, 1.2); // Cap at 1.2x to avoid excessive scaling
+                  
+                  // Calculate translation to center the scaled content
                   const contentCenterX = minX + (contentWidth / 2);
                   const contentCenterY = minY + (contentHeight / 2);
                   const viewBoxCenterX = vbWidth / 2;
@@ -96,8 +100,13 @@ export default function SvgInlineRenderer({
                   const translateX = viewBoxCenterX - contentCenterX;
                   const translateY = viewBoxCenterY - contentCenterY;
                   
-                  scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)})" transform-origin="0 0"`;
-                  console.log(`🎯 PDF content centering applied: translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) for ${logo.filename}`);
+                  if (scale > 1.05) {
+                    scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)}) scale(${scale.toFixed(3)})" transform-origin="${contentCenterX.toFixed(2)} ${contentCenterY.toFixed(2)}"`;
+                    console.log(`🎯 PDF content scaled & centered: translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) scale(${scale.toFixed(2)}x) for ${logo.filename}`);
+                  } else {
+                    scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)})" transform-origin="0 0"`;
+                    console.log(`🎯 PDF content centered only: translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) for ${logo.filename}`);
+                  }
                 }
               }
             }
