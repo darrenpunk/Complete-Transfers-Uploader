@@ -442,30 +442,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           <div className="text-xs text-gray-600">
             {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
           </div>
-          <div className="bg-blue-50 p-3 rounded border border-blue-200">
-            <div className="text-xs text-blue-800 font-medium mb-2">
-              Original CMYK Color Analysis
-            </div>
-            {svgColors.map((color, index) => {
-              const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
-              const originalCMYK = (color as any).originalCMYK;
-              
-              return (
-                <div key={index} className="flex justify-between items-center text-xs mb-1">
-                  <span className="text-blue-700">Color {index + 1}:</span>
-                  <span className="text-blue-900 font-mono">
-                    {originalCMYK ? 
-                      `C${originalCMYK.c}% M${originalCMYK.m}% Y${originalCMYK.y}% K${originalCMYK.k}%` :
-                      "Click color circle to enter values"
-                    }
-                  </span>
-                </div>
-              );
-            })}
-            <div className="text-xs text-blue-600 mt-2 italic">
-              Use the color circles above to enter your original CMYK values for professional printing accuracy.
-            </div>
-          </div>
+
           {Object.keys(colorOverrides).length > 0 && (
             <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
               ✓ {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} updated with CMYK values
