@@ -182,10 +182,12 @@ export default function PropertiesPanel({
           displayHeight = "405.073";
           console.log(`🎯 Using template dimensions for PDF element: ${elementWidth}px → ${displayWidth}mm, ${elementHeight}px → ${displayHeight}mm`);
         } else {
-          // Fallback to actual conversion for non-standard sizes
-          displayWidth = (elementWidth * pxToMmRatio).toFixed(2);
-          displayHeight = (elementHeight * pxToMmRatio).toFixed(2);
-          console.log(`🔄 Using calculated conversion: ${elementWidth}px → ${displayWidth}mm, ${elementHeight}px → ${displayHeight}mm`);
+          // CRITICAL FIX: Use exact pixel-to-mm conversion without padding
+          // Use the exact same conversion factor as backend: 1 / 2.834645669
+          const exactPxToMmRatio = 1 / 2.834645669;
+          displayWidth = (elementWidth * exactPxToMmRatio).toFixed(3);
+          displayHeight = (elementHeight * exactPxToMmRatio).toFixed(3);
+          console.log(`🔄 EXACT conversion: ${elementWidth}px → ${displayWidth}mm, ${elementHeight}px → ${displayHeight}mm`);
         }
         
         setLocalInputValues({
