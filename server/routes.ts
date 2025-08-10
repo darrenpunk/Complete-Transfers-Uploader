@@ -1716,8 +1716,8 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Setup imposition routes after file upload routes
-  setupImpositionRoutes(app, storage);
+  // TEMPORARILY DISABLE imposition routes to test CMYK detection
+  // setupImpositionRoutes(app, storage);
 
   // Other essential routes
   app.get('/api/projects/:projectId', async (req, res) => {
