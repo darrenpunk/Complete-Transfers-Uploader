@@ -1224,16 +1224,41 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // CRITICAL FIX: Use EXACT content bounds without rounding or padding
-          displayWidth = contentBounds.width;  // Use exact width
-          displayHeight = contentBounds.height; // Use exact height
+          // CRITICAL PDF FIX: For PDF-derived SVGs, recalculate content bounds to eliminate viewBox padding
+          if (finalFilename.includes('.pdf.svg')) {
+            console.log(`🔧 PDF-derived SVG detected: ${finalFilename}, recalculating to eliminate viewBox padding...`);
+            try {
+              const svgPath = path.join(uploadDir, finalFilename);
+              const svgContent = fs.readFileSync(svgPath, 'utf8');
+              const { calculateSVGContentBounds } = await import('./svg-color-utils');
+              const actualBounds = calculateSVGContentBounds(svgContent);
+              
+              if (actualBounds && actualBounds.width > 0 && actualBounds.height > 0) {
+                displayWidth = actualBounds.width;
+                displayHeight = actualBounds.height;
+                console.log(`✅ PDF PADDING ELIMINATED: Original contentBounds ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px → Actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+              } else {
+                displayWidth = contentBounds.width;
+                displayHeight = contentBounds.height;
+                console.log(`⚠️ PDF content bounds recalculation failed, using original contentBounds`);
+              }
+            } catch (error) {
+              console.error(`❌ PDF content bounds recalculation error:`, error);
+              displayWidth = contentBounds.width;
+              displayHeight = contentBounds.height;
+            }
+          } else {
+            // Non-PDF: Use original content bounds
+            displayWidth = contentBounds.width;
+            displayHeight = contentBounds.height;
+          }
           
           // Calculate actual mm equivalent for logging
           const pixelToMm = 1 / 2.834645669; // Convert pixels to mm (72 DPI)
           const actualWidthMm = displayWidth * pixelToMm;
           const actualHeightMm = displayHeight * pixelToMm;
           
-          console.log(`📐 EXACT content bounds: ${displayWidth.toFixed(3)}x${displayHeight.toFixed(3)} pixels (${actualWidthMm.toFixed(3)}mm x ${actualHeightMm.toFixed(3)}mm)`);
+          console.log(`📐 FINAL content bounds: ${displayWidth.toFixed(3)}x${displayHeight.toFixed(3)} pixels (${actualWidthMm.toFixed(3)}mm x ${actualHeightMm.toFixed(3)}mm)`);
         } else if (dimensions && dimensions.widthPx > 0 && dimensions.heightPx > 0) {
           // Use dimension detection results with proper pixel values
           displayWidth = Math.round(dimensions.widthPx);
