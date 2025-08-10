@@ -97,9 +97,45 @@ export class CMYKDetector {
   }
 
   /**
-   * Extract CMYK color values from PDF using comprehensive parsing
+   * Extract CMYK color values from PDF using advanced extraction methods
    */
   static async extractCMYKColors(pdfPath: string): Promise<Array<{c: number, m: number, y: number, k: number}>> {
+    // Import the specialized extractor
+    const { PDFCMYKExtractor } = await import('./pdf-cmyk-extractor');
+    
+    try {
+      console.log(`🎨 Using advanced CMYK extractor for ${pdfPath}`);
+      
+      // Use the sophisticated extraction method
+      const extractedColors = await PDFCMYKExtractor.extractCMYKValues(pdfPath);
+      
+      if (extractedColors.length > 0) {
+        console.log(`🎨 Successfully extracted ${extractedColors.length} original CMYK colors from PDF`);
+        return extractedColors;
+      }
+      
+      // Fallback: Try metadata extraction
+      const metadataColors = await PDFCMYKExtractor.extractFromMetadata(pdfPath);
+      if (metadataColors.length > 0) {
+        console.log(`🎨 Found CMYK colors in PDF metadata`);
+        return metadataColors;
+      }
+      
+      console.log(`🎨 No original CMYK colors found in PDF - falling back to legacy method`);
+      
+      // Legacy fallback method
+      return this.legacyExtractCMYKColors(pdfPath);
+      
+    } catch (error) {
+      console.error('🎨 Advanced CMYK extraction failed:', error);
+      return this.legacyExtractCMYKColors(pdfPath);
+    }
+  }
+
+  /**
+   * Legacy CMYK extraction method as fallback
+   */
+  static async legacyExtractCMYKColors(pdfPath: string): Promise<Array<{c: number, m: number, y: number, k: number}>> {
     const colors: Array<{c: number, m: number, y: number, k: number}> = [];
     
     try {
@@ -163,7 +199,7 @@ export class CMYKDetector {
             const cmykMatches = pdfData.text.match(/(?:C|c)(?:yan)?:?\s*(\d+).*?(?:M|m)(?:agenta)?:?\s*(\d+).*?(?:Y|y)(?:ellow)?:?\s*(\d+).*?(?:K|k)(?:ey|black)?:?\s*(\d+)/gi);
             
             if (cmykMatches) {
-              cmykMatches.forEach(match => {
+              cmykMatches.forEach((match: any) => {
                 const values = match.match(/(\d+)/g);
                 if (values && values.length >= 4) {
                   const c = parseInt(values[0]);
