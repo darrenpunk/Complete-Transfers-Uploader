@@ -1225,6 +1225,7 @@ export async function registerRoutes(app: express.Application) {
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
           // CRITICAL PDF FIX: For PDF-derived SVGs, recalculate content bounds to eliminate viewBox padding
+          console.log(`🔍 Checking PDF detection: finalFilename="${finalFilename}", includes .pdf.svg: ${finalFilename.includes('.pdf.svg')}`);
           if (finalFilename.includes('.pdf.svg')) {
             console.log(`🔧 PDF-derived SVG detected: ${finalFilename}, recalculating to eliminate viewBox padding...`);
             try {
