@@ -435,76 +435,33 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           <div className="text-xs text-gray-600">
             {svgColors.length} color{svgColors.length !== 1 ? 's' : ''} detected in logo
           </div>
-          {svgColors.map((color, index) => {
-            const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
-            
-            // Function to safely convert RGB to CMYK for display
-            const rgbToCMYKDisplay = (rgbString: string): string => {
-              if (!rgbString || typeof rgbString !== 'string') return 'CMYK Color';
-              
-              // Handle percentage-based RGB values like "rgb(13.000488%, 11.326599%, 11.31134%)"
-              const percentMatch = rgbString.match(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/);
-              if (percentMatch) {
-                const r = parseFloat(percentMatch[1]) / 100;
-                const g = parseFloat(percentMatch[2]) / 100;
-                const b = parseFloat(percentMatch[3]) / 100;
-                
-                const k = 1 - Math.max(r, g, b);
-                const c = k === 1 ? 0 : Math.round(((1 - r - k) / (1 - k)) * 100);
-                const m = k === 1 ? 0 : Math.round(((1 - g - k) / (1 - k)) * 100);
-                const y = k === 1 ? 0 : Math.round(((1 - b - k) / (1 - k)) * 100);
-                const kPercent = Math.round(k * 100);
-                
-                return `C${c}% M${m}% Y${y}% K${kPercent}%`;
-              }
-              
-              // Handle regular RGB values like "rgb(255, 0, 0)"
-              const rgbMatch = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-              if (rgbMatch) {
-                const r = parseInt(rgbMatch[1]) / 255;
-                const g = parseInt(rgbMatch[2]) / 255;
-                const b = parseInt(rgbMatch[3]) / 255;
-                
-                const k = 1 - Math.max(r, g, b);
-                const c = k === 1 ? 0 : Math.round(((1 - r - k) / (1 - k)) * 100);
-                const m = k === 1 ? 0 : Math.round(((1 - g - k) / (1 - k)) * 100);
-                const y = k === 1 ? 0 : Math.round(((1 - b - k) / (1 - k)) * 100);
-                const kPercent = Math.round(k * 100);
-                
-                return `C${c}% M${m}% Y${y}% K${kPercent}%`;
-              }
-              
-              return rgbString;
-            };
-            
-            let displayValue = color.originalColor;
-            
-            if (isCMYK) {
-              // Check if we have original CMYK values from the backend
+          <div className="bg-blue-50 p-3 rounded border border-blue-200">
+            <div className="text-xs text-blue-800 font-medium mb-2">
+              Original CMYK Color Analysis
+            </div>
+            {svgColors.map((color, index) => {
+              const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
               const originalCMYK = (color as any).originalCMYK;
-              if (originalCMYK && typeof originalCMYK === 'object') {
-                displayValue = `C${originalCMYK.c}% M${originalCMYK.m}% Y${originalCMYK.y}% K${originalCMYK.k}%`;
-              } else if (color.cmykColor && typeof color.cmykColor === 'string' && color.cmykColor.includes('C:')) {
-                displayValue = color.cmykColor.replace(/C:|M:|Y:|K:/g, '').replace(/\s+/g, ' ').trim() + '%';
-              } else if (color.originalColor && typeof color.originalColor === 'string') {
-                // Convert RGB representation to CMYK display format
-                displayValue = rgbToCMYKDisplay(color.originalColor);
-              } else {
-                displayValue = 'CMYK Color';
-              }
-            }
-            
-            return (
-              <div key={index} className="space-y-1">
-                <div className="text-xs text-gray-500 font-mono">
-                  {displayValue}
+              
+              return (
+                <div key={index} className="flex justify-between items-center text-xs mb-1">
+                  <span className="text-blue-700">Color {index + 1}:</span>
+                  <span className="text-blue-900 font-mono">
+                    {originalCMYK ? 
+                      `C${originalCMYK.c}% M${originalCMYK.m}% Y${originalCMYK.y}% K${originalCMYK.k}%` :
+                      "Click color circle to enter values"
+                    }
+                  </span>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+            <div className="text-xs text-blue-600 mt-2 italic">
+              Use the color circles above to enter your original CMYK values for professional printing accuracy.
+            </div>
+          </div>
           {Object.keys(colorOverrides).length > 0 && (
-            <div className="text-xs text-blue-600">
-              {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} modified
+            <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+              ✓ {Object.keys(colorOverrides).length} color{Object.keys(colorOverrides).length !== 1 ? 's' : ''} updated with CMYK values
             </div>
           )}
         </div>
