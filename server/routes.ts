@@ -794,8 +794,8 @@ export async function registerRoutes(app: express.Application) {
             console.error(`❌ CMYK Error Stack:`, cmykError.stack);
           }
 
-        
-        let finalFilename = file.filename;
+          // Continue with regular file processing
+          let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
@@ -1701,7 +1701,7 @@ export async function registerRoutes(app: express.Application) {
         }
       }
 
-      console.log('🚀 Returning logos to client:', logos.map(logo => ({
+      console.log('🚀 ENHANCED: Returning logos to client:', logos.map(logo => ({
         id: logo.id,
         filename: logo.filename,
         originalName: logo.originalName,
@@ -1711,7 +1711,7 @@ export async function registerRoutes(app: express.Application) {
       })));
       res.json(logos);
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Enhanced upload error:', error);
       res.status(500).json({ error: 'Upload failed' });
     }
   });
