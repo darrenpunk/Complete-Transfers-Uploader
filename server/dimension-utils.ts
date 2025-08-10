@@ -548,9 +548,13 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
   const viewBoxDims = extractViewBoxDimensions(svgContent);
   
   // Check if this is a PDF-derived SVG (needs content bounds to eliminate padding)
-  const isPdfDerived = svgContent.includes('pdf2svg') || svgContent.includes('inkscape') || 
-                      svgContent.includes('.pdf') || // Also check for PDF references in content
-                      (viewBoxDims && (viewBoxDims.width > 250 || viewBoxDims.height > 250)); // Lower threshold for detection
+  const hasPdf2svg = svgContent.includes('pdf2svg');
+  const hasInkscape = svgContent.includes('inkscape');
+  const hasPdfRef = svgContent.includes('.pdf');
+  const hasLargeViewBox = viewBoxDims && (viewBoxDims.width > 250 || viewBoxDims.height > 250);
+  const isPdfDerived = hasPdf2svg || hasInkscape || hasPdfRef || hasLargeViewBox;
+  
+  console.log(`🔍 PDF Detection Debug: pdf2svg=${hasPdf2svg}, inkscape=${hasInkscape}, .pdf=${hasPdfRef}, largeViewBox=${hasLargeViewBox} (${viewBoxDims?.width}×${viewBoxDims?.height}), isPdfDerived=${isPdfDerived}`);
   
   // For PDF-derived SVGs, PRIORITIZE content bounds to eliminate viewBox padding
   if (isPdfDerived) {
@@ -562,6 +566,7 @@ export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any)
       return contentResult;
     } else {
       console.log(`⚠️ PDF: Content bounds calculation failed, falling back to viewBox with potential padding`);
+      console.log(`❌ Content bounds debug:`, actualContentBounds);
     }
   } else {
     console.log(`📐 Non-PDF SVG detected, using standard processing...`);
