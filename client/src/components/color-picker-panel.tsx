@@ -325,24 +325,32 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
         {/* Color Grid - Same style as garment colors */}
         <div className="grid grid-cols-6 gap-2">
           {svgColors.map((colorInfo, index) => {
-            const hasOverride = !!colorOverrides[colorInfo.originalColor];
-            const currentColor = hasOverride ? colorOverrides[colorInfo.originalColor] : colorInfo.originalColor;
-            const rgbPercent = parseRGBPercentage(colorInfo.originalColor);
+            // Handle both new format (color/type) and legacy format (originalColor/originalFormat)
+            const originalColor = colorInfo.originalColor || colorInfo.color;
+            const hasOverride = !!colorOverrides[originalColor];
+            const currentColor = hasOverride ? colorOverrides[originalColor] : originalColor;
+            const rgbPercent = parseRGBPercentage(originalColor);
+            
+            console.log(`🎨 Processing color ${index + 1}:`, {
+              originalColor,
+              hasOverride,
+              colorInfo
+            });
             const isCMYK = colorInfo.isCMYK || (colorInfo.cmykColor && colorInfo.cmykColor.includes('C:'));
             
             // Convert original color to hex for display
-            let originalDisplayColor = colorInfo.originalColor;
+            let originalDisplayColor = originalColor;
             
             // If it's already a hex color, use it directly
-            if (typeof colorInfo.originalColor === 'string' && colorInfo.originalColor.startsWith('#')) {
-              originalDisplayColor = colorInfo.originalColor;
+            if (typeof originalColor === 'string' && originalColor.startsWith('#')) {
+              originalDisplayColor = originalColor;
             }
             
             if (rgbPercent) {
               originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             } else {
               // Try parsing standard RGB format rgb(255, 255, 255)
-              const rgbStandard = parseRGBStandard(colorInfo.originalColor);
+              const rgbStandard = parseRGBStandard(originalColor);
               if (rgbStandard) {
                 originalDisplayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
               } else {
@@ -350,9 +358,9 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 const rgbPercentStandard = parseRGBPercentageStandard(colorInfo.originalFormat || '');
                 if (rgbPercentStandard) {
                   originalDisplayColor = `#${rgbPercentStandard.r.toString(16).padStart(2, '0')}${rgbPercentStandard.g.toString(16).padStart(2, '0')}${rgbPercentStandard.b.toString(16).padStart(2, '0')}`;
-                } else if (typeof colorInfo.originalColor === 'string' && colorInfo.originalColor.startsWith('CMYK(')) {
+                } else if (typeof originalColor === 'string' && originalColor.startsWith('CMYK(')) {
                   // Handle CMYK colors by converting to hex
-                  const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
+                  const cmykStandard = parseCMYKStandard(originalColor);
                   if (cmykStandard) {
                     const previewRGB = cmykToRGB(cmykStandard);
                     originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
@@ -370,14 +378,14 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             // Final fallback: ensure all colors are in hex format for CSS
             if (typeof originalDisplayColor !== 'string' || !originalDisplayColor.startsWith('#')) {
-              console.log(`🎨 Color conversion failed for: ${colorInfo.originalColor}, originalFormat: ${colorInfo.originalFormat}`);
+              console.log(`🎨 Color conversion failed for: ${originalColor}, originalFormat: ${colorInfo.originalFormat || colorInfo.color}`);
               
               // If it's still not hex, try to use the original format as a fallback
               if (typeof colorInfo.originalFormat === 'string' && colorInfo.originalFormat.startsWith('#')) {
                 originalDisplayColor = colorInfo.originalFormat;
               } else {
                 // Try one more time with direct RGB parsing
-                const directRgb = colorInfo.originalColor?.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
+                const directRgb = originalColor?.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
                 if (directRgb) {
                   const r = parseInt(directRgb[1]);
                   const g = parseInt(directRgb[2]);
@@ -386,7 +394,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                   console.log(`🎨 Direct RGB conversion: rgb(${r},${g},${b}) → ${originalDisplayColor}`);
                 } else {
                   // Last resort: default to black for any remaining non-hex colors
-                  console.log(`🎨 FALLBACK TO BLACK: Could not parse color: ${colorInfo.originalColor}`);
+                  console.log(`🎨 FALLBACK TO BLACK: Could not parse color: ${originalColor}`);
                   originalDisplayColor = '#000000';
                 }
               }
@@ -400,10 +408,10 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             
             return (
               <CMYKColorModal
-                key={`${colorInfo.originalColor}-${index}`}
+                key={`${originalColor}-${index}`}
                 initialColor={originalDisplayColor}
                 currentColor={currentColor}
-                onChange={(newColor) => handleColorChange(colorInfo.originalColor, newColor)}
+                onChange={(newColor) => handleColorChange(originalColor, newColor)}
                 label={`Color ${index + 1}`}
                 cmykValues={adobeCMYK || undefined}
                 trigger={
