@@ -68,8 +68,48 @@ export default function PDFPreviewModal({
     {
       icon: Palette,
       label: "Color Space",
-      value: "RGB colors detected",
-      status: "warning"
+      value: (() => {
+        // Check if any logos have RGB colors based on their analysis
+        const hasRGBColors = logos.some(logo => {
+          const svgColors = logo.svgColors as { colors?: any[]; } | any[] | null;
+          let colorArray: any[] = [];
+          
+          if (svgColors) {
+            if (Array.isArray(svgColors)) {
+              colorArray = svgColors;
+            } else if (svgColors.colors && Array.isArray(svgColors.colors)) {
+              colorArray = svgColors.colors;
+            }
+          }
+          
+          // If logo is CMYK preserved, it's not RGB
+          if (logo.isCMYKPreserved) return false;
+          
+          // Check if any colors are not marked as CMYK
+          return colorArray.some(color => !color.isCMYK);
+        });
+        
+        return hasRGBColors ? "RGB colors detected" : "CMYK Vector (Preserved)";
+      })(),
+      status: (() => {
+        const hasRGBColors = logos.some(logo => {
+          const svgColors = logo.svgColors as { colors?: any[]; } | any[] | null;
+          let colorArray: any[] = [];
+          
+          if (svgColors) {
+            if (Array.isArray(svgColors)) {
+              colorArray = svgColors;
+            } else if (svgColors.colors && Array.isArray(svgColors.colors)) {
+              colorArray = svgColors.colors;
+            }
+          }
+          
+          if (logo.isCMYKPreserved) return false;
+          return colorArray.some(color => !color.isCMYK);
+        });
+        
+        return hasRGBColors ? "warning" : "success";
+      })()
     }
   ];
 

@@ -241,9 +241,22 @@ export default function PropertiesPanel({
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     if (!currentTemplate) return;
     
-    const safetyMargin = 3; // 3mm safety margin
-    const templateWidth = currentTemplate.width;
-    const templateHeight = currentTemplate.height;
+    // Handle coordinate system differences: PDF-derived elements are in pixels, regular elements in mm
+    const isPDFDerived = currentElement.width > 200 || currentElement.height > 200;
+    
+    let templateWidth, templateHeight, safetyMargin;
+    
+    if (isPDFDerived) {
+      // Use pixel dimensions for PDF-derived elements
+      templateWidth = 842; // A3 template width in pixels
+      templateHeight = 1191; // A3 template height in pixels  
+      safetyMargin = 8.5; // ~3mm in pixels (3mm * 2.834 px/mm)
+    } else {
+      // Use millimeter dimensions for regular elements
+      templateWidth = currentTemplate.width;
+      templateHeight = currentTemplate.height;
+      safetyMargin = 3; // 3mm safety margin
+    }
     
     // Calculate safe zone dimensions
     const safeZoneX = safetyMargin;
@@ -293,6 +306,7 @@ export default function PropertiesPanel({
         break;
     }
     
+    console.log(`🎯 Alignment ${alignment}: template=${templateWidth}×${templateHeight}${isPDFDerived ? 'px' : 'mm'}, element=${currentElement.width}×${currentElement.height}, new position=(${Math.round(x)}, ${Math.round(y)})`);
     onAlignElement(currentElement.id, { x: Math.round(x), y: Math.round(y) });
   };
 
