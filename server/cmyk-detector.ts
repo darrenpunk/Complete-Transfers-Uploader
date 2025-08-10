@@ -97,104 +97,11 @@ export class CMYKDetector {
   }
 
   /**
-   * Extract CMYK color values from PDF using multiple methods
+   * For now, return empty array since PDF CMYK extraction is complex
+   * This allows the system to fall back to manual CMYK input in the color picker
    */
   static async extractCMYKColors(pdfPath: string): Promise<Array<{c: number, m: number, y: number, k: number}>> {
-    const colors: Array<{c: number, m: number, y: number, k: number}> = [];
-    
-    try {
-      console.log(`🎨 Starting CMYK extraction from ${pdfPath}`);
-      
-      // Method 1: Try to extract CMYK values directly from PDF content
-      if (fs.existsSync(pdfPath)) {
-        const pdfBuffer = fs.readFileSync(pdfPath);
-        const pdfContent = pdfBuffer.toString('binary');
-        
-        // Look for CMYK color commands in PDF
-        // Pattern: decimal decimal decimal decimal k (fill)
-        // Pattern: decimal decimal decimal decimal K (stroke)
-        const cmykFillPattern = /([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+k/g;
-        const cmykStrokePattern = /([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+([0-9]*\.?[0-9]+)\s+K/g;
-        
-        let match;
-        const foundColors = new Set<string>();
-        
-        // Extract fill colors
-        while ((match = cmykFillPattern.exec(pdfContent)) !== null) {
-          const c = Math.round(parseFloat(match[1]) * 100);
-          const m = Math.round(parseFloat(match[2]) * 100);
-          const y = Math.round(parseFloat(match[3]) * 100);
-          const k = Math.round(parseFloat(match[4]) * 100);
-          
-          const colorKey = `${c}-${m}-${y}-${k}`;
-          if (!foundColors.has(colorKey)) {
-            foundColors.add(colorKey);
-            colors.push({ c, m, y, k });
-            console.log(`🎨 Found CMYK fill color: C${c} M${m} Y${y} K${k}`);
-          }
-        }
-        
-        // Extract stroke colors
-        while ((match = cmykStrokePattern.exec(pdfContent)) !== null) {
-          const c = Math.round(parseFloat(match[1]) * 100);
-          const m = Math.round(parseFloat(match[2]) * 100);
-          const y = Math.round(parseFloat(match[3]) * 100);
-          const k = Math.round(parseFloat(match[4]) * 100);
-          
-          const colorKey = `${c}-${m}-${y}-${k}`;
-          if (!foundColors.has(colorKey)) {
-            foundColors.add(colorKey);
-            colors.push({ c, m, y, k });
-            console.log(`🎨 Found CMYK stroke color: C${c} M${m} Y${y} K${k}`);
-          }
-        }
-      }
-      
-      // Method 2: If no colors found, try Ghostscript method with improved pattern
-      if (colors.length === 0) {
-        console.log(`🎨 No direct CMYK found, trying Ghostscript method...`);
-        
-        try {
-          // Use gs to dump CMYK color information
-          const gsCommand = `gs -dNODISPLAY -dBATCH -dQUIET -sDEVICE=txtwrite -sOutputFile=- "${pdfPath}" 2>/dev/null || echo "gs-failed"`;
-          const { stdout } = await execAsync(gsCommand);
-          
-          // Look for any CMYK references in the output
-          const lines = stdout.split('\n');
-          lines.forEach(line => {
-            if (line.includes('CMYK') || line.includes('cmyk')) {
-              console.log(`🎨 Ghostscript found CMYK reference: ${line.substring(0, 100)}`);
-            }
-          });
-          
-        } catch (error) {
-          console.log('🎨 Ghostscript method failed:', error);
-        }
-      }
-      
-      // Method 3: If still no colors, provide fallback based on common print colors
-      if (colors.length === 0) {
-        console.log(`🎨 No CMYK colors extracted, checking for common patterns...`);
-        
-        // Check if PDF contains color content by looking for colorspace definitions
-        if (fs.existsSync(pdfPath)) {
-          const pdfBuffer = fs.readFileSync(pdfPath);
-          const pdfContent = pdfBuffer.toString('binary');
-          
-          if (pdfContent.includes('/DeviceCMYK') || pdfContent.includes('CMYK')) {
-            console.log(`🎨 PDF contains CMYK references but couldn't extract specific values`);
-            // Return placeholder values that will trigger manual color picker
-            colors.push({ c: 0, m: 0, y: 0, k: 100 }); // Black as placeholder
-          }
-        }
-      }
-      
-      console.log(`🎨 CMYK extraction complete: found ${colors.length} colors`);
-      return colors;
-      
-    } catch (error) {
-      console.error('🎨 CMYK Detector: Error extracting CMYK colors:', error);
-      return colors;
-    }
+    console.log(`🎨 CMYK extraction: PDF parsing is complex, using manual color picker approach for ${pdfPath}`);
+    return []; // Return empty to trigger manual CMYK input
   }
 }

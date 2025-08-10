@@ -124,14 +124,34 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
   
   // Determine which color to use for CMYK conversion - prefer currentColor if it's different from initialColor
   const colorToConvert = (currentColor !== initialColor) ? currentColor : initialColor;
-  const initialCMYK = cmykValues || getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 };
+  
+  // If we have original CMYK values from PDF, use them. Otherwise convert from RGB.
+  const initialCMYK = cmykValues ? {
+    ...cmykValues
+  } : (getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 });
+  
+  console.log(`🎨 CMYK Modal initialized for ${label}:`, {
+    hasOriginalCMYK: !!cmykValues,
+    cmykValues,
+    initialCMYK,
+    colorToConvert
+  });
+  
   const [cmyk, setCmyk] = useState<CMYKColor>(initialCMYK);
   
   // Reset CMYK when modal opens to reflect current color
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      const freshCMYK = cmykValues || getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 };
+      const freshCMYK = cmykValues ? {
+        ...cmykValues
+      } : (getCMYKFromColor(colorToConvert) || { c: 0, m: 0, y: 0, k: 0 });
+      
+      console.log(`🎨 Modal opened for ${label}, setting CMYK:`, {
+        hasOriginalCMYK: !!cmykValues,
+        freshCMYK
+      });
+      
       setCmyk(freshCMYK);
     }
   };
@@ -177,6 +197,9 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
         <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-center">CMYK Color Editor</DialogTitle>
+          <div className="text-center text-sm text-blue-600 bg-blue-50 p-2 rounded">
+            Enter your original CMYK values for professional printing accuracy
+          </div>
         </DialogHeader>
         <div id="cmyk-editor-description" className="sr-only">
           Professional CMYK color editor with sliders and numeric inputs for precise color control
@@ -193,8 +216,13 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
               <div className="text-sm font-medium">{label}</div>
               <div className="text-xs font-mono text-gray-600">{previewColor}</div>
               <div className="text-xs text-gray-500">
-                C{cmyk.c} M{cmyk.m} Y{cmyk.y} K{cmyk.k}
+                C{cmyk.c}% M{cmyk.m}% Y{cmyk.y}% K{cmyk.k}%
               </div>
+              {cmykValues ? (
+                <div className="text-xs text-green-600">✓ Using original CMYK values</div>
+              ) : (
+                <div className="text-xs text-orange-600">⚠ Converted from RGB - verify accuracy</div>
+              )}
             </div>
           </div>
 
@@ -298,6 +326,45 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
                   className="w-16 h-8 text-xs"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* CMYK Presets */}
+          <div className="space-y-2 pt-4 border-t">
+            <Label className="text-sm font-medium">Common CMYK Presets</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCmyk({ c: 70, m: 67, y: 64, k: 74 })}
+                className="text-xs"
+              >
+                Brown (C70 M67 Y64 K74)
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCmyk({ c: 13, m: 100, y: 81, k: 3 })}
+                className="text-xs"
+              >
+                Red (C13 M100 Y81 K3)
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCmyk({ c: 0, m: 0, y: 0, k: 100 })}
+                className="text-xs"
+              >
+                Black (C0 M0 Y0 K100)
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCmyk({ c: 100, m: 0, y: 0, k: 0 })}
+                className="text-xs"
+              >
+                Cyan (C100 M0 Y0 K0)
+              </Button>
             </div>
           </div>
 
