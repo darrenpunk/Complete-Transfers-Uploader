@@ -81,7 +81,7 @@ export default function SvgInlineRenderer({
                 const contentWidth = maxX - minX;
                 const contentHeight = maxY - minY;
                 
-                // If there's significant padding (>10px), apply scaling correction
+                // If there's significant padding (>10px), apply scaling and centering correction
                 const paddingX = vbWidth - contentWidth;
                 const paddingY = vbHeight - contentHeight;
                 
@@ -91,8 +91,17 @@ export default function SvgInlineRenderer({
                   const scale = Math.min(scaleX, scaleY);
                   
                   if (scale > 1.05) {
-                    scaleTransform = ` transform="scale(${scale.toFixed(3)})" transform-origin="center"`;
-                    console.log(`🎯 PDF content scaling correction applied: ${scale.toFixed(2)}x for ${logo.filename}`);
+                    // Calculate how much to translate to center the content
+                    const contentCenterX = minX + (contentWidth / 2);
+                    const contentCenterY = minY + (contentHeight / 2);
+                    const viewBoxCenterX = vbWidth / 2;
+                    const viewBoxCenterY = vbHeight / 2;
+                    
+                    const translateX = (viewBoxCenterX - contentCenterX) * scale;
+                    const translateY = (viewBoxCenterY - contentCenterY) * scale;
+                    
+                    scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)}) scale(${scale.toFixed(3)})" transform-origin="0 0"`;
+                    console.log(`🎯 PDF content scaling & centering applied: ${scale.toFixed(2)}x scale, translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) for ${logo.filename}`);
                   }
                 }
               }
