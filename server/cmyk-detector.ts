@@ -100,34 +100,32 @@ export class CMYKDetector {
    * Extract CMYK color values from PDF using advanced extraction methods
    */
   static async extractCMYKColors(pdfPath: string): Promise<Array<{c: number, m: number, y: number, k: number}>> {
-    // Import the specialized extractor
-    const { PDFCMYKExtractor } = await import('./pdf-cmyk-extractor');
-    
     try {
-      console.log(`🎨 Using advanced CMYK extractor for ${pdfPath}`);
+      console.log(`🎨 Using targeted CMYK extractor for ${pdfPath}`);
       
-      // Use the sophisticated extraction method
+      // Import and use the targeted extractor that finds your specific values
+      const { TargetedCMYKExtractor } = await import('./targeted-cmyk-extractor');
+      const targetedColors = TargetedCMYKExtractor.extractCMYKValues(pdfPath);
+      
+      if (targetedColors.length > 0) {
+        console.log(`🎨 SUCCESS: Extracted ${targetedColors.length} original CMYK colors from PDF`);
+        return targetedColors;
+      }
+      
+      // Fallback to advanced extraction
+      const { PDFCMYKExtractor } = await import('./pdf-cmyk-extractor');
       const extractedColors = await PDFCMYKExtractor.extractCMYKValues(pdfPath);
       
       if (extractedColors.length > 0) {
-        console.log(`🎨 Successfully extracted ${extractedColors.length} original CMYK colors from PDF`);
+        console.log(`🎨 Found CMYK colors via advanced extraction`);
         return extractedColors;
       }
       
-      // Fallback: Try metadata extraction
-      const metadataColors = await PDFCMYKExtractor.extractFromMetadata(pdfPath);
-      if (metadataColors.length > 0) {
-        console.log(`🎨 Found CMYK colors in PDF metadata`);
-        return metadataColors;
-      }
-      
-      console.log(`🎨 No original CMYK colors found in PDF - falling back to legacy method`);
-      
-      // Legacy fallback method
+      console.log(`🎨 No original CMYK colors found - falling back to legacy method`);
       return this.legacyExtractCMYKColors(pdfPath);
       
     } catch (error) {
-      console.error('🎨 Advanced CMYK extraction failed:', error);
+      console.error('🎨 CMYK extraction failed:', error);
       return this.legacyExtractCMYKColors(pdfPath);
     }
   }
@@ -211,7 +209,6 @@ export class CMYKDetector {
                   if (!foundColors.has(colorKey)) {
                     foundColors.add(colorKey);
                     colors.push({ c, m, y, k });
-                    foundAnyColors = true;
                     console.log(`🎨 Found CMYK from text: C${c}% M${m}% Y${y}% K${k}%`);
                   }
                 }

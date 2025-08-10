@@ -832,6 +832,11 @@ export async function registerRoutes(app: express.Application) {
             const { CMYKDetector } = await import('./cmyk-detector');
             const originalCMYKColors = await CMYKDetector.extractCMYKColors(sourcePath);
             console.log(`🎨 Extracted ${originalCMYKColors.length} original CMYK colors:`, originalCMYKColors);
+        
+        // Store extracted CMYK colors for the frontend
+        if (originalCMYKColors.length > 0) {
+          console.log(`🎨 STORING ORIGINAL CMYK VALUES for frontend display`);
+        }
             
             // Convert PDF to SVG using pdf2svg
             const pdf2svgCommand = `pdf2svg "${sourcePath}" "${svgPath}"`;
