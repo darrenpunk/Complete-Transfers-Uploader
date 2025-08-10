@@ -112,15 +112,20 @@ export default function PDFPreviewModal({
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
                       
+                      // Handle coordinate system differences: PDF-derived elements are in pixels, regular elements in mm
+                      const isPDFDerived = element.width > 200 || element.height > 200;
+                      const templateWidthPx = isPDFDerived ? 842 : (template?.width || 297); // Use pixel dimensions for PDF elements
+                      const templateHeightPx = isPDFDerived ? 1191 : (template?.height || 420);
+                      
                       return (
                         <div
                           key={element.id}
                           className="absolute"
                           style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            left: `${(element.x / templateWidthPx) * 100}%`,
+                            top: `${(element.y / templateHeightPx) * 100}%`,
+                            width: `${(element.width / templateWidthPx) * 100}%`,
+                            height: `${(element.height / templateHeightPx) * 100}%`,
                             transform: `rotate(${element.rotation || 0}deg)`,
                             opacity: element.opacity || 1,
                           }}
@@ -170,15 +175,20 @@ export default function PDFPreviewModal({
                       // Use element's individual garment color or fall back to project color
                       const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
                       
+                      // Handle coordinate system differences: PDF-derived elements are in pixels, regular elements in mm
+                      const isPDFDerived = element.width > 200 || element.height > 200;
+                      const templateWidthPx = isPDFDerived ? 842 : (template?.width || 297); // Use pixel dimensions for PDF elements
+                      const templateHeightPx = isPDFDerived ? 1191 : (template?.height || 420);
+                      
                       return (
                         <div
                           key={element.id}
                           className="absolute"
                           style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            left: `${(element.x / templateWidthPx) * 100}%`,
+                            top: `${(element.y / templateHeightPx) * 100}%`,
+                            width: `${(element.width / templateWidthPx) * 100}%`,
+                            height: `${(element.height / templateHeightPx) * 100}%`,
                             transform: `rotate(${element.rotation || 0}deg)`,
                             opacity: element.opacity || 1,
                             backgroundColor: garmentColor,

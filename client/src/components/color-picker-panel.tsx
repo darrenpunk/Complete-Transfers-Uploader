@@ -99,6 +99,12 @@ function parseCMYKString(cmykString: string): CMYKColor | null {
 }
 
 function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
+  // Validate colorInfo input
+  if (!colorInfo || (!colorInfo.originalColor && !colorInfo.originalFormat && !colorInfo.cmykColor)) {
+    console.warn('🎨 Color conversion failed for: undefined color info');
+    return null;
+  }
+  
   // Use the pre-calculated CMYK from the server-side Adobe conversion
   if (colorInfo.cmykColor) {
     return parseCMYKString(colorInfo.cmykColor);
@@ -106,11 +112,19 @@ function getCMYKFromColorInfo(colorInfo: SVGColorInfo): CMYKColor | null {
   
   // Fallback for percentage or standard RGB parsing if needed
   const colorString = colorInfo.originalFormat || colorInfo.originalColor || '';
+  if (!colorString) {
+    console.warn('🎨 Color conversion failed: missing color string', colorInfo);
+    return null;
+  }
+  
   let rgb = parseRGBPercentage(colorString);
   if (!rgb) {
     rgb = parseRGBStandard(colorString);
   }
-  if (!rgb) return null;
+  if (!rgb) {
+    console.warn('🎨 Color conversion failed for:', colorString, 'originalFormat:', colorInfo.originalFormat);
+    return null;
+  }
   
   // This is a basic fallback - should not be used for vector files
   const r = rgb.r / 255;
