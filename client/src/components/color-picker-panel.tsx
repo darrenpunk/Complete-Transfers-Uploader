@@ -438,8 +438,27 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
           {svgColors.map((color, index) => {
             const isCMYK = color.isCMYK || (color.cmykColor && color.cmykColor.includes('C:'));
             
-            // Function to convert RGB to approximate CMYK for display
-            const rgbToCMYKDisplay = (rgbString: string) => {
+            // Function to safely convert RGB to CMYK for display
+            const rgbToCMYKDisplay = (rgbString: string): string => {
+              if (!rgbString || typeof rgbString !== 'string') return 'CMYK Color';
+              
+              // Handle percentage-based RGB values like "rgb(13.000488%, 11.326599%, 11.31134%)"
+              const percentMatch = rgbString.match(/rgb\(([0-9.]+)%,\s*([0-9.]+)%,\s*([0-9.]+)%\)/);
+              if (percentMatch) {
+                const r = parseFloat(percentMatch[1]) / 100;
+                const g = parseFloat(percentMatch[2]) / 100;
+                const b = parseFloat(percentMatch[3]) / 100;
+                
+                const k = 1 - Math.max(r, g, b);
+                const c = k === 1 ? 0 : Math.round(((1 - r - k) / (1 - k)) * 100);
+                const m = k === 1 ? 0 : Math.round(((1 - g - k) / (1 - k)) * 100);
+                const y = k === 1 ? 0 : Math.round(((1 - b - k) / (1 - k)) * 100);
+                const kPercent = Math.round(k * 100);
+                
+                return `C${c}% M${m}% Y${y}% K${kPercent}%`;
+              }
+              
+              // Handle regular RGB values like "rgb(255, 0, 0)"
               const rgbMatch = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
               if (rgbMatch) {
                 const r = parseInt(rgbMatch[1]) / 255;
@@ -447,12 +466,14 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                 const b = parseInt(rgbMatch[3]) / 255;
                 
                 const k = 1 - Math.max(r, g, b);
-                const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
-                const m = k === 1 ? 0 : (1 - g - k) / (1 - k);
-                const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+                const c = k === 1 ? 0 : Math.round(((1 - r - k) / (1 - k)) * 100);
+                const m = k === 1 ? 0 : Math.round(((1 - g - k) / (1 - k)) * 100);
+                const y = k === 1 ? 0 : Math.round(((1 - b - k) / (1 - k)) * 100);
+                const kPercent = Math.round(k * 100);
                 
-                return `CMYK(${Math.round(c * 100)}%, ${Math.round(m * 100)}%, ${Math.round(y * 100)}%, ${Math.round(k * 100)}%)`;
+                return `C${c}% M${m}% Y${y}% K${kPercent}%`;
               }
+              
               return rgbString;
             };
             
@@ -461,13 +482,15 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             if (isCMYK) {
               // Check if we have original CMYK values from the backend
               const originalCMYK = (color as any).originalCMYK;
-              if (originalCMYK) {
+              if (originalCMYK && typeof originalCMYK === 'object') {
                 displayValue = `C${originalCMYK.c}% M${originalCMYK.m}% Y${originalCMYK.y}% K${originalCMYK.k}%`;
-              } else if (color.cmykColor && color.cmykColor.includes('C:')) {
+              } else if (color.cmykColor && typeof color.cmykColor === 'string' && color.cmykColor.includes('C:')) {
                 displayValue = color.cmykColor.replace(/C:|M:|Y:|K:/g, '').replace(/\s+/g, ' ').trim() + '%';
-              } else {
+              } else if (color.originalColor && typeof color.originalColor === 'string') {
                 // Convert RGB representation to CMYK display format
                 displayValue = rgbToCMYKDisplay(color.originalColor);
+              } else {
+                displayValue = 'CMYK Color';
               }
             }
             
