@@ -1224,16 +1224,16 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // CRITICAL FIX: Use content bounds as pixel dimensions directly
-          displayWidth = Math.round(contentBounds.width);
-          displayHeight = Math.round(contentBounds.height);
+          // CRITICAL FIX: Use EXACT content bounds without rounding or padding
+          displayWidth = contentBounds.width;  // Use exact width
+          displayHeight = contentBounds.height; // Use exact height
           
           // Calculate actual mm equivalent for logging
           const pixelToMm = 1 / 2.834645669; // Convert pixels to mm (72 DPI)
           const actualWidthMm = displayWidth * pixelToMm;
           const actualHeightMm = displayHeight * pixelToMm;
           
-          console.log(`📐 Canvas element sized to content bounds: ${displayWidth}x${displayHeight} pixels (${actualWidthMm.toFixed(2)}mm x ${actualHeightMm.toFixed(2)}mm)`);
+          console.log(`📐 EXACT content bounds: ${displayWidth.toFixed(3)}x${displayHeight.toFixed(3)} pixels (${actualWidthMm.toFixed(3)}mm x ${actualHeightMm.toFixed(3)}mm)`);
         } else if (dimensions && dimensions.widthPx > 0 && dimensions.heightPx > 0) {
           // Use dimension detection results with proper pixel values
           displayWidth = Math.round(dimensions.widthPx);

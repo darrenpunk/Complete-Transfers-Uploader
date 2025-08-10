@@ -154,7 +154,7 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
     // Extract coordinates from multiple SVG elements - handle multiline paths and attributes
-    const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/gs;
+    const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/g;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
     const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
     const coordinateRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)|[HV]\s*([-\d.]+)|[CSQTA]\s*([-\d.,\s]+)/g;
@@ -352,6 +352,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       return null;
     }
     
+    // Calculate exact content dimensions WITHOUT any padding
     const width = maxX - minX;
     const height = maxY - minY;
     
@@ -362,11 +363,12 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     }
     
     console.log(`📐 Analyzed ${pathCount} paths (${suspiciousPaths} suspicious skipped)`);
-    console.log(`📐 Calculated content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${width.toFixed(1)}×${height.toFixed(1)}px`);
+    console.log(`📐 EXACT content bounds: ${minX.toFixed(3)},${minY.toFixed(3)} → ${maxX.toFixed(3)},${maxY.toFixed(3)} = ${width.toFixed(3)}×${height.toFixed(3)}px`);
     
+    // Return EXACT dimensions without any rounding or padding
     return { 
-      width, 
-      height, 
+      width: width,  // Exact width without padding
+      height: height, // Exact height without padding
       minX, 
       minY, 
       maxX, 
