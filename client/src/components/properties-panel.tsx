@@ -611,15 +611,31 @@ export default function PropertiesPanel({
       value: isWithinBounds ? "In Bounds" : "Check Position"
     });
     
-    // Size Check - reasonable print size
+    // Size Check - reasonable print size with proper unit display
     const maxWidth = Math.min(templateWidth * 0.95, 500); // Allow up to 95% of template width or 500mm max
     const maxHeight = Math.min(templateHeight * 0.95, 500); // Allow up to 95% of template height or 500mm max
-    const hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
-                             currentElement.width <= maxWidth && currentElement.height <= maxHeight;
+    
+    let printSizeValue: string;
+    let hasReasonableSize: boolean;
+    
+    if (currentElement.width > 200 || currentElement.height > 200) {
+      // PDF-derived elements: convert pixels to millimeters for display
+      const pixelToMm = 1 / 2.834645669; // 72 DPI conversion
+      const widthMm = currentElement.width * pixelToMm;
+      const heightMm = currentElement.height * pixelToMm;
+      printSizeValue = `${Math.round(widthMm)}×${Math.round(heightMm)}mm`;
+      hasReasonableSize = widthMm >= 5 && heightMm >= 5 && widthMm <= maxWidth && heightMm <= maxHeight;
+    } else {
+      // Regular elements: already stored in millimeters
+      printSizeValue = `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`;
+      hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
+                         currentElement.width <= maxWidth && currentElement.height <= maxHeight;
+    }
+    
     checks.push({
       name: "Print Size",
       status: hasReasonableSize ? "pass" : "warning",
-      value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}px`
+      value: printSizeValue
     });
 
 

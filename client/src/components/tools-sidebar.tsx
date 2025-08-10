@@ -979,13 +979,28 @@ export default function ToolsSidebar({
             value: isWithinBounds ? "In Bounds" : "Check Position"
           });
           
-          // Size Check
-          const hasReasonableSize = selectedElement.width >= 5 && selectedElement.height >= 5 &&
-                                   selectedElement.width <= 280 && selectedElement.height <= 400;
+          // Size Check with proper unit display
+          let printSizeValue: string;
+          let hasReasonableSize: boolean;
+          
+          if (selectedElement.width > 200 || selectedElement.height > 200) {
+            // PDF-derived elements: show in millimeters
+            const pixelToMm = 1 / 2.834645669; // 72 DPI conversion
+            const widthMm = selectedElement.width * pixelToMm;
+            const heightMm = selectedElement.height * pixelToMm;
+            printSizeValue = `${Math.round(widthMm)}×${Math.round(heightMm)}mm`;
+            hasReasonableSize = widthMm >= 5 && heightMm >= 5 && widthMm <= 280 && heightMm <= 400;
+          } else {
+            // Regular elements: show in millimeters (already stored in mm)
+            printSizeValue = `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`;
+            hasReasonableSize = selectedElement.width >= 5 && selectedElement.height >= 5 &&
+                               selectedElement.width <= 280 && selectedElement.height <= 400;
+          }
+          
           checks.push({
             name: "Print Size",
             status: hasReasonableSize ? "pass" : "warning",
-            value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}px`
+            value: printSizeValue
           });
 
           // Font Check
