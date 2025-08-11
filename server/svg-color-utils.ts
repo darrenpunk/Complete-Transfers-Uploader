@@ -1142,9 +1142,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Check if we're still getting massive bounds (indicating background elements)
-    // A3 size at 283 DPI is 838×1190 pixels, so increase threshold
-    if (rawWidth > 1200 || rawHeight > 1200) {
+    // Check if we're still getting large bounds that need tightening
+    // For PDF content, be much more aggressive - even 600px+ can contain padding
+    if (rawWidth > 400 || rawHeight > 300) {
       // Try to find a better estimate by looking at coordinate clustering
       const centerX = (minX + maxX) / 2;
       const centerY = (minY + maxY) / 2;
@@ -1153,8 +1153,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const filteredCoords = coloredElements.filter(coord => {
         const distFromCenterX = Math.abs(coord.x - centerX);
         const distFromCenterY = Math.abs(coord.y - centerY);
-        // Keep coordinates within 40% of the total span from center
-        return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
+        // Keep coordinates within 30% of the total span from center (more aggressive)
+        return distFromCenterX < rawWidth * 0.3 && distFromCenterY < rawHeight * 0.3;
       });
       
       if (filteredCoords.length > coloredElements.length * 0.3) { // Be more aggressive - only need 30% of coordinates in center
@@ -1167,7 +1167,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const filteredHeight = filteredMaxY - filteredMinY;
         
         // Be even more aggressive about detecting significant filtering
-        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.5 || filteredHeight < rawHeight * 0.5)) {
+        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.6 || filteredHeight < rawHeight * 0.6)) {
           console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
           
           // Apply additional tightening for PDF-derived content
