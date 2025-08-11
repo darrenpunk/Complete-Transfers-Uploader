@@ -1135,11 +1135,17 @@ export async function registerRoutes(app: express.Application) {
             if (fs.existsSync(svgPath)) {
               const svgContent = fs.readFileSync(svgPath, 'utf8');
               
-              // Calculate content bounds and dimensions if not already done
+              // Calculate content bounds using simple, direct detection
               if (!contentBounds) {
-                const { calculateSVGContentBounds } = await import('./svg-color-utils');
-                contentBounds = calculateSVGContentBounds(svgContent);
-                console.log(`📐 Late SVG content bounds calculated:`, contentBounds);
+                const { detectSimpleContentBounds } = await import('./simple-bounds-detector');
+                const simpleBounds = detectSimpleContentBounds(svgContent);
+                if (simpleBounds) {
+                  contentBounds = simpleBounds;
+                  console.log(`📐 SIMPLE BOUNDS: Direct content detection successful`);
+                } else {
+                  console.log(`⚠️ Simple bounds detection failed, using fallback`);
+                  contentBounds = { width: 100, height: 100, minX: 0, minY: 0, maxX: 100, maxY: 100 };
+                }
               }
               
               if (!dimensions) {
