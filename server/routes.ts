@@ -1231,65 +1231,29 @@ export async function registerRoutes(app: express.Application) {
             try {
               const svgPath = path.join(uploadDir, finalFilename);
               const svgContent = fs.readFileSync(svgPath, 'utf8');
-              const { calculateSVGContentBounds } = await import('./svg-color-utils');
-              const { detectDimensionsFromSVG } = await import('./dimension-utils');
+              const { detectSimpleContentBounds, boundsToMillimeters } = await import('./simple-bounds-detector');
               
-              const actualBounds = calculateSVGContentBounds(svgContent);
+              const simpleBounds = detectSimpleContentBounds(svgContent);
               
-              if (actualBounds && actualBounds.width > 0 && actualBounds.height > 0) {
-                // Use precise dimension detection to check for target coat of arms dimensions
-                const preciseResult = detectDimensionsFromSVG(svgContent, actualBounds);
-                console.log(`🎯 Precise dimension result: ${preciseResult.widthPx}×${preciseResult.heightPx}px = ${preciseResult.widthMm.toFixed(3)}×${preciseResult.heightMm.toFixed(3)}mm (${preciseResult.accuracy})`);
+              if (simpleBounds && simpleBounds.width > 0 && simpleBounds.height > 0) {
+                // Use simple, direct content bounds - no complex calculations
+                displayWidth = simpleBounds.width;
+                displayHeight = simpleBounds.height;
                 
-                // Use precise dimensions if they have high accuracy (exact match for coat of arms)
-                if (preciseResult.accuracy === 'high' || preciseResult.accuracy === 'perfect') {
-                  displayWidth = preciseResult.widthPx;
-                  displayHeight = preciseResult.heightPx;
-                  console.log(`✅ USING PRECISE TARGET DIMENSIONS: ${displayWidth}×${displayHeight}px = ${preciseResult.widthMm.toFixed(3)}×${preciseResult.heightMm.toFixed(3)}mm`);
-                } else {
-                // CRITICAL: Check if content is scaled down due to viewBox padding
-                const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-                if (viewBoxMatch) {
-                  const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
-                  if (viewBoxValues.length >= 4) {
-                    const vbWidth = viewBoxValues[2];
-                    const vbHeight = viewBoxValues[3];
-                    
-                    // Check if there's significant padding that needs elimination
-                    const paddingX = vbWidth - actualBounds.width;
-                    const paddingY = vbHeight - actualBounds.height;
-                    
-                    // Only apply scaling correction if there's significant padding (>10px in any dimension)
-                    if (paddingX > 10 || paddingY > 10) {
-                      // The content is constrained by the viewBox, so we should use the actual content bounds
-                      // NOT scale them up, as that would make them artificially larger than they should be
-                      displayWidth = actualBounds.width;
-                      displayHeight = actualBounds.height;
-                      console.log(`✅ PDF PADDING ELIMINATED: ViewBox ${vbWidth}×${vbHeight}px had ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px padding → Using actual content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
-                    } else {
-                      displayWidth = actualBounds.width;
-                      displayHeight = actualBounds.height;
-                      console.log(`✅ PDF BOUNDS CALCULATED: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px (minimal padding: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px)`);
-                    }
-                  } else {
-                    displayWidth = actualBounds.width;
-                    displayHeight = actualBounds.height;
-                  }
-                } else {
-                  displayWidth = actualBounds.width;
-                  displayHeight = actualBounds.height;
-                }
-                }
+                const mmDimensions = boundsToMillimeters(simpleBounds);
+                console.log(`✅ SIMPLE CONTENT BOUNDS: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px = ${mmDimensions.widthMm.toFixed(1)}×${mmDimensions.heightMm.toFixed(1)}mm`);
               } else {
-                displayWidth = contentBounds.width;
-                displayHeight = contentBounds.height;
-                console.log(`⚠️ PDF content bounds recalculation failed, using original contentBounds`);
+                // Fallback: use default dimensions if simple bounds failed
+                console.log(`⚠️ Simple bounds failed, using fallback dimensions`);
+                displayWidth = 100; // Safe fallback
+                displayHeight = 100;
               }
             } catch (error) {
-              console.error(`❌ PDF content bounds recalculation error:`, error);
+              console.error(`❌ Simple bounds detection error:`, error);
               displayWidth = contentBounds.width;
               displayHeight = contentBounds.height;
             }
+
           } else {
             // Non-PDF: Use original content bounds
             displayWidth = contentBounds.width;
