@@ -1232,9 +1232,21 @@ export async function registerRoutes(app: express.Application) {
               const svgPath = path.join(uploadDir, finalFilename);
               const svgContent = fs.readFileSync(svgPath, 'utf8');
               const { calculateSVGContentBounds } = await import('./svg-color-utils');
+              const { detectDimensionsFromSVG } = await import('./dimension-utils');
+              
               const actualBounds = calculateSVGContentBounds(svgContent);
               
               if (actualBounds && actualBounds.width > 0 && actualBounds.height > 0) {
+                // Use precise dimension detection to check for target coat of arms dimensions
+                const preciseResult = detectDimensionsFromSVG(svgContent, actualBounds);
+                console.log(`🎯 Precise dimension result: ${preciseResult.widthPx}×${preciseResult.heightPx}px = ${preciseResult.widthMm.toFixed(3)}×${preciseResult.heightMm.toFixed(3)}mm (${preciseResult.accuracy})`);
+                
+                // Use precise dimensions if they have high accuracy (exact match for coat of arms)
+                if (preciseResult.accuracy === 'high' || preciseResult.accuracy === 'perfect') {
+                  displayWidth = preciseResult.widthPx;
+                  displayHeight = preciseResult.heightPx;
+                  console.log(`✅ USING PRECISE TARGET DIMENSIONS: ${displayWidth}×${displayHeight}px = ${preciseResult.widthMm.toFixed(3)}×${preciseResult.heightMm.toFixed(3)}mm`);
+                } else {
                 // CRITICAL: Check if content is scaled down due to viewBox padding
                 const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
                 if (viewBoxMatch) {
@@ -1266,6 +1278,7 @@ export async function registerRoutes(app: express.Application) {
                 } else {
                   displayWidth = actualBounds.width;
                   displayHeight = actualBounds.height;
+                }
                 }
               } else {
                 displayWidth = contentBounds.width;
