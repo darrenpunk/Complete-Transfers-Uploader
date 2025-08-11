@@ -1272,24 +1272,72 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // SIMPLE CONTENT BOUNDS - Just use the exact content dimensions
-    // The content coordinates ARE the content boundaries already
-    const contentWidth = rawWidth;  // Raw bounds already represent content bounds
-    const contentHeight = rawHeight;
+    // CLUSTER ANALYSIS - Find the main logo cluster and ignore outlying background elements
     
-    console.log(`🎯 USING EXACT CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px (no filtering applied - direct content dimensions)`);
+    // Group coordinates into clusters to find the main logo content
+    const gridSize = 20; // Larger grid for clustering
+    const clusters = new Map();
     
-    // Always use the exact content dimensions (no filtering or reduction)
-    if (contentWidth > 0 && contentHeight > 0) {
-      return {
-        width: contentWidth,
-        height: contentHeight,
-        minX,
-        minY,
-        maxX,
-        maxY
-      };
+    allCoordinates.forEach(coord => {
+      const gridX = Math.floor(coord.x / gridSize);
+      const gridY = Math.floor(coord.y / gridSize);
+      const key = `${gridX},${gridY}`;
+      if (!clusters.has(key)) {
+        clusters.set(key, []);
+      }
+      clusters.get(key).push(coord);
+    });
+    
+    // Find the largest cluster (main logo content)
+    let largestCluster: Array<{x: number, y: number}> = [];
+    let maxClusterSize = 0;
+    
+    clusters.forEach(cluster => {
+      if (cluster.length > maxClusterSize) {
+        maxClusterSize = cluster.length;
+        largestCluster = cluster;
+      }
+    });
+    
+    // Use only the main cluster coordinates for bounds
+    if (largestCluster.length > 0) {
+      const clusterMinX = Math.min(...largestCluster.map(c => c.x));
+      const clusterMinY = Math.min(...largestCluster.map(c => c.y));
+      const clusterMaxX = Math.max(...largestCluster.map(c => c.x));
+      const clusterMaxY = Math.max(...largestCluster.map(c => c.y));
+      
+      const clusterWidth = clusterMaxX - clusterMinX;
+      const clusterHeight = clusterMaxY - clusterMinY;
+      
+      const widthReduction = ((rawWidth - clusterWidth) / rawWidth) * 100;
+      const heightReduction = ((rawHeight - clusterHeight) / rawHeight) * 100;
+      
+      console.log(`🎯 MAIN LOGO CLUSTER BOUNDS: ${clusterWidth.toFixed(1)}×${clusterHeight.toFixed(1)}px (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction from clustering, ${largestCluster.length}/${allCoordinates.length} coordinates)`);
+      
+      // Use cluster bounds if they provide meaningful reduction
+      if (widthReduction > 10 || heightReduction > 10) {
+        return {
+          width: clusterWidth,
+          height: clusterHeight,
+          minX: clusterMinX,
+          minY: clusterMinY,
+          maxX: clusterMaxX,
+          maxY: clusterMaxY
+        };
+      }
     }
+    
+    // Fallback to full content bounds if clustering doesn't help
+    console.log(`🎯 USING FULL CONTENT BOUNDS: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (clustering ineffective)`);
+    
+    return {
+      width: rawWidth,
+      height: rawHeight,
+      minX,
+      minY,
+      maxX,
+      maxY
+    };
     
     // Fallback to raw bounds if precise detection failed
     console.log('🎯 Precise coat of arms detection failed, using raw bounds');
