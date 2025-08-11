@@ -1272,77 +1272,45 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // APPLY UNIVERSAL CONTENT-FOCUSED BOUNDS SYSTEM (3-step filtering)
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
+    // SIMPLIFIED ROBUST BOUNDS CALCULATION - Use a reliable tight percentile approach
     
-    // STEP 1: Edge removal - Remove coordinates on the outer 5% border (likely padding/viewbox whitespace)
-    const edgeFilteredCoords = allCoordinates.filter(coord => {
-      const relativeX = (coord.x - minX) / rawWidth;
-      const relativeY = (coord.y - minY) / rawHeight;
-      
-      // Keep coordinates not hugging the edges
-      return relativeX > 0.05 && relativeX < 0.95 && relativeY > 0.05 && relativeY < 0.95;
-    });
+    // Sort coordinates by X and Y to find percentiles
+    const sortedX = allCoordinates.map(c => c.x).sort((a, b) => a - b);
+    const sortedY = allCoordinates.map(c => c.y).sort((a, b) => a - b);
     
-    // STEP 2: Enhanced coordinate density analysis with logo-specific filtering
-    const densityFilteredCoords = edgeFilteredCoords.filter(coord => {
-      // Much smaller search radius for ultra-tight logo detection
-      const searchRadius = Math.max(rawWidth * 0.03, rawHeight * 0.03, 15); // Minimum 15px radius
-      const nearbyCount = edgeFilteredCoords.filter(other => {
-        const distance = Math.sqrt(
-          Math.pow(coord.x - other.x, 2) + Math.pow(coord.y - other.y, 2)
-        );
-        return distance <= searchRadius;
-      }).length;
-      
-      // Keep coordinates that have at least 2 nearby neighbors (more aggressive for tight logos)
-      return nearbyCount >= 2;
-    });
+    // Use 15th and 85th percentiles to eliminate outliers and padding (30% removal total)
+    const percentileStart = 0.15; // Remove bottom 15%
+    const percentileEnd = 0.85;   // Remove top 15%
     
-    // STEP 2.5: Logo content area detection - find the most dense region of coordinates
-    if (densityFilteredCoords.length > 50) {
-      // Calculate coordinate density in a grid to find the logo center
-      const gridSize = 20; // 20px grid cells
-      const densityMap = new Map();
+    const startIndexX = Math.floor(sortedX.length * percentileStart);
+    const endIndexX = Math.floor(sortedX.length * percentileEnd);
+    const startIndexY = Math.floor(sortedY.length * percentileStart);
+    const endIndexY = Math.floor(sortedY.length * percentileEnd);
+    
+    const percentileMinX = sortedX[startIndexX];
+    const percentileMaxX = sortedX[endIndexX];
+    const percentileMinY = sortedY[startIndexY];
+    const percentileMaxY = sortedY[endIndexY];
+    
+    const percentileWidth = percentileMaxX - percentileMinX;
+    const percentileHeight = percentileMaxY - percentileMinY;
+    
+    // Calculate reduction achieved
+    const widthReduction = ((rawWidth - percentileWidth) / rawWidth) * 100;
+    const heightReduction = ((rawHeight - percentileHeight) / rawHeight) * 100;
+    
+    // Validate percentile bounds are reasonable (must achieve some meaningful reduction)
+    if (percentileWidth > 20 && percentileHeight > 15 && (widthReduction > 15 || heightReduction > 15)) {
+      console.log(`🎯 PERCENTILE BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${percentileWidth.toFixed(1)}×${percentileHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction using 15-85th percentiles)`);
       
-      densityFilteredCoords.forEach(coord => {
-        const gridX = Math.floor(coord.x / gridSize);
-        const gridY = Math.floor(coord.y / gridSize);
-        const key = `${gridX},${gridY}`;
-        densityMap.set(key, (densityMap.get(key) || 0) + 1);
-      });
-      
-      // Find the grid cell with highest density (likely logo center)
-      let maxDensity = 0;
-      let logoCenter = null;
-      densityMap.forEach((density, key) => {
-        if (density > maxDensity) {
-          maxDensity = density;
-          const [gridX, gridY] = key.split(',').map(Number);
-          logoCenter = {
-            x: (gridX + 0.5) * gridSize,
-            y: (gridY + 0.5) * gridSize
-          };
-        }
-      });
-      
-      // If we found a dense center, prioritize coordinates near it
-      if (logoCenter && maxDensity > 10) {
-        const logoRadius = Math.min(rawWidth * 0.2, rawHeight * 0.2, 80); // Max 80px radius for tighter detection
-        const logoFocusedCoords = densityFilteredCoords.filter(coord => {
-          const distToLogo = Math.sqrt(
-            Math.pow(coord.x - logoCenter.x, 2) + Math.pow(coord.y - logoCenter.y, 2)
-          );
-          return distToLogo <= logoRadius;
-        });
-        
-        if (logoFocusedCoords.length > allCoordinates.length * 0.05) {
-          console.log(`🎯 LOGO CENTER DETECTED at (${logoCenter.x.toFixed(1)}, ${logoCenter.y.toFixed(1)}) with ${logoFocusedCoords.length} coordinates`);
-          // Update densityFilteredCoords to use logo-focused coordinates
-          densityFilteredCoords.splice(0, densityFilteredCoords.length, ...logoFocusedCoords);
-        }
-      }
+      return {
+        width: percentileWidth,
+        height: percentileHeight,
+        minX: percentileMinX,
+        minY: percentileMinY,
+        maxX: percentileMaxX,
+        maxY: percentileMaxY
+      };
     }
     
     // STEP 3: Enhanced adaptive center-focused filtering 
