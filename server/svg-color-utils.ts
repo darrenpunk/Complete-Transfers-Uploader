@@ -1168,18 +1168,13 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const coloredRectRegex = /<rect[^>]*(?:fill="([^"]*)"[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*|x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*fill="([^"]*)"[^>]*)/gi;
     const coloredCircleRegex = /<circle[^>]*(?:fill="([^"]*)"[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*|cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*fill="([^"]*)"[^>]*)/gi;
     
-    // Helper function to check if a color is background/white
+    // Helper function to check if a color is likely background (only truly transparent/none)
     const isBackgroundColor = (color: string | undefined): boolean => {
       if (!color) return true;
       const normalized = color.toLowerCase().trim();
+      // Only filter out completely transparent or missing fills - keep ALL colored content including white
       return normalized === 'none' || 
-             normalized === 'transparent' ||
-             normalized === '#ffffff' || 
-             normalized === '#fff' ||
-             normalized === 'white' ||
-             normalized === 'rgb(100%, 100%, 100%)' ||
-             normalized === 'rgb(255, 255, 255)' ||
-             normalized === 'rgb(255,255,255)';
+             normalized === 'transparent';
     };
     
     // Process ONLY colored path elements
@@ -1197,7 +1192,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const fillColor = fill1 || fill2;
       const pathData = pathData1 || pathData2;
       
-      // Skip white/transparent backgrounds - only process actual logo colors
+      // Skip only transparent/none fills - keep ALL colors including white (white is part of logo content)
       if (!isBackgroundColor(fillColor) && pathData) {
         try {
           const coords = extractPathCoordinates(pathData);
@@ -1223,7 +1218,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       
       const fillColor = fill1 || fill2;
       
-      // Skip white/transparent backgrounds - only process actual logo colors
+      // Skip only transparent/none fills - keep ALL colors including white (white is part of logo content)
       if (!isBackgroundColor(fillColor) && !isNaN(x1) && !isNaN(y1) && !isNaN(width1) && !isNaN(height1)) {
         allCoordinates.push(
           { x: x1, y: y1 },
@@ -1245,7 +1240,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       
       const fillColor = fill1 || fill2;
       
-      // Skip white/transparent backgrounds - only process actual logo colors
+      // Skip only transparent/none fills - keep ALL colors including white (white is part of logo content)
       if (!isBackgroundColor(fillColor) && !isNaN(cx1) && !isNaN(cy1) && !isNaN(r1)) {
         allCoordinates.push(
           { x: cx1 - r1, y: cy1 },  // Left
@@ -1256,7 +1251,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       }
     }
     
-    console.log(`📊 Extracted ${allCoordinates.length} COLORED CONTENT coordinates from ${pathCount} colored paths (backgrounds filtered out)`);
+    console.log(`📊 Extracted ${allCoordinates.length} CONTENT coordinates from ${pathCount} paths (only transparent/none filtered out - white content preserved)`);
     
     if (allCoordinates.length === 0) {
       console.log('No coordinates found, using fallback dimensions');
