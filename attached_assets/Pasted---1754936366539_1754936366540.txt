@@ -1,0 +1,1069 @@
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ WebSocket connection to 'wss://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/?token=X_q9YZ1NM4aJ' failed: 
+t @ eruda.js:2
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🎯 Ending drag
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🎯 Starting drag for element: cc67cc88-cbb0-4567-9399-0bbc30a969d5
+ 🎯 Drag offset calculated: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+ ColorPickerPanel Debug: Object
+ RGB Warning Check: Object
+ 🎨 Processing color 1: Object
+ 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+ 🎨 Processing color 2: Object
+ 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+ 🎨 Processing color 3: Object
+ 🎨 Processing color 4: Object
+ 🎨 Processing color 5: Object
+ 🎨 Processing color 6: Object
+ 🎨 Processing color 7: Object
+ 🎨 Processing color 8: Object
+ 🎨 CMYK Modal initialized for Color 1: Object
+ 🎨 CMYK Modal initialized for Color 2: Object
+ 🎨 CMYK Modal initialized for Color 3: Object
+ 🎨 CMYK Modal initialized for Color 4: Object
+ 🎨 CMYK Modal initialized for Color 5: Object
+ 🎨 CMYK Modal initialized for Color 6: Object
+ 🎨 CMYK Modal initialized for Color 7: Object
+ 🎨 CMYK Modal initialized for Color 8: Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎯 Dragging to: Object
+ Canvas updateElementDirect called: Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+ Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 Dragging to: Object
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 🎯 Dragging to: Object
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 🎯 Ending drag
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 Template A3: 842x1191px, Workspace: 400x900, Zoom: 50%
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element cc67cc88-cbb0-4567-9399-0bbc30a969d5 dimensions: {dbWidth: 310.861687, dbHeight: 310.752106, pixelWidth: 155.4308435, pixelHeight: 155.376053, rotation: 0}
