@@ -1233,23 +1233,23 @@ export async function registerRoutes(app: express.Application) {
           try {
             const svgPath = path.join(uploadDir, finalFilename);
             const svgContent = fs.readFileSync(svgPath, 'utf8');
-            const { detectSmartContentBounds } = await import('./smart-content-detector');
+            const { detectPreciseContentBounds } = await import('./precise-content-detector');
             
-            const smartBounds = detectSmartContentBounds(svgContent);
+            const preciseBounds = detectPreciseContentBounds(svgContent);
             
-            if (smartBounds && smartBounds.width > 0 && smartBounds.height > 0) {
-              // Use smart content bounds that filter out background/padding
-              displayWidth = smartBounds.width;
-              displayHeight = smartBounds.height;
-              console.log(`🎯 Smart bounds applied: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
+            if (preciseBounds && preciseBounds.width > 0 && preciseBounds.height > 0) {
+              // Use precise content bounds that find actual visual elements only
+              displayWidth = preciseBounds.width;
+              displayHeight = preciseBounds.height;
+              console.log(`🎯 Precise bounds applied: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
             } else {
               // Fallback: use original content bounds
-              console.log(`⚠️ Smart bounds failed, using contentBounds dimensions`);
+              console.log(`⚠️ Precise bounds failed, using contentBounds dimensions`);
               displayWidth = contentBounds.width;
               displayHeight = contentBounds.height;
             }
           } catch (error) {
-            console.error(`❌ Smart bounds detection error:`, error);
+            console.error(`❌ Precise bounds detection error:`, error);
             displayWidth = contentBounds.width;
             displayHeight = contentBounds.height;
           }
