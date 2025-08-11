@@ -1287,8 +1287,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     // STEP 2: Enhanced coordinate density analysis with logo-specific filtering
     const densityFilteredCoords = edgeFilteredCoords.filter(coord => {
-      // Smaller search radius for tighter logo detection
-      const searchRadius = Math.max(rawWidth * 0.05, rawHeight * 0.05, 20); // Minimum 20px radius
+      // Much smaller search radius for ultra-tight logo detection
+      const searchRadius = Math.max(rawWidth * 0.03, rawHeight * 0.03, 15); // Minimum 15px radius
       const nearbyCount = edgeFilteredCoords.filter(other => {
         const distance = Math.sqrt(
           Math.pow(coord.x - other.x, 2) + Math.pow(coord.y - other.y, 2)
@@ -1329,7 +1329,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       
       // If we found a dense center, prioritize coordinates near it
       if (logoCenter && maxDensity > 10) {
-        const logoRadius = Math.min(rawWidth * 0.3, rawHeight * 0.3, 100); // Max 100px radius
+        const logoRadius = Math.min(rawWidth * 0.2, rawHeight * 0.2, 80); // Max 80px radius for tighter detection
         const logoFocusedCoords = densityFilteredCoords.filter(coord => {
           const distToLogo = Math.sqrt(
             Math.pow(coord.x - logoCenter.x, 2) + Math.pow(coord.y - logoCenter.y, 2)
@@ -1337,7 +1337,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           return distToLogo <= logoRadius;
         });
         
-        if (logoFocusedCoords.length > allCoordinates.length * 0.1) {
+        if (logoFocusedCoords.length > allCoordinates.length * 0.05) {
           console.log(`🎯 LOGO CENTER DETECTED at (${logoCenter.x.toFixed(1)}, ${logoCenter.y.toFixed(1)}) with ${logoFocusedCoords.length} coordinates`);
           // Update densityFilteredCoords to use logo-focused coordinates
           densityFilteredCoords.splice(0, densityFilteredCoords.length, ...logoFocusedCoords);
@@ -1349,8 +1349,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     const spanX = maxX - minX;
     const spanY = maxY - minY;
     
-    // Try multiple focus ratios to find the best content bounds - much more aggressive
-    const focusRatios = [0.15, 0.25, 0.35, 0.45]; // Start extremely aggressive for tight logos
+    // Try multiple focus ratios to find the best content bounds - ultra-aggressive for tight logos
+    const focusRatios = [0.08, 0.12, 0.18, 0.25]; // Start with ultra-tight filtering
     let bestResult = null;
     let bestReduction = 0;
     
@@ -1364,8 +1364,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         return distFromCenterX <= focusRangeX / 2 && distFromCenterY <= focusRangeY / 2;
       });
       
-      // Must have sufficient coordinates to be valid (at least 10% for very aggressive filtering)
-      if (centerFilteredCoords.length > allCoordinates.length * 0.10) {
+      // Must have sufficient coordinates to be valid (at least 5% for ultra-aggressive filtering)
+      if (centerFilteredCoords.length > allCoordinates.length * 0.05) {
         const contentMinX = Math.min(...centerFilteredCoords.map(c => c.x));
         const contentMinY = Math.min(...centerFilteredCoords.map(c => c.y));
         const contentMaxX = Math.max(...centerFilteredCoords.map(c => c.x));
@@ -1379,8 +1379,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
         const totalReduction = (widthReduction + heightReduction) / 2;
         
-        // Prefer results with significant reduction (>20% total) and reasonable dimensions
-        if (totalReduction > 20 && contentWidth > 30 && contentHeight > 20 && totalReduction > bestReduction) {
+        // Prefer results with significant reduction (>30% total) and tight dimensions
+        if (totalReduction > 30 && contentWidth > 20 && contentHeight > 15 && totalReduction > bestReduction) {
           bestResult = {
             coords: centerFilteredCoords,
             width: contentWidth,
