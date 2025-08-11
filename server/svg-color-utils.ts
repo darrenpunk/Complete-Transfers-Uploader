@@ -1257,10 +1257,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       return relativeX > 0.05 && relativeX < 0.95 && relativeY > 0.05 && relativeY < 0.95;
     });
     
-    // STEP 2: Coordinate density analysis - Remove outlier coordinates that are far from the main cluster
+    // STEP 2: Enhanced coordinate density analysis with logo-specific filtering
     const densityFilteredCoords = edgeFilteredCoords.filter(coord => {
-      // Count nearby coordinates within 10% of canvas dimensions
-      const searchRadius = Math.max(rawWidth * 0.1, rawHeight * 0.1);
+      // Smaller search radius for tighter logo detection
+      const searchRadius = Math.max(rawWidth * 0.05, rawHeight * 0.05, 20); // Minimum 20px radius
       const nearbyCount = edgeFilteredCoords.filter(other => {
         const distance = Math.sqrt(
           Math.pow(coord.x - other.x, 2) + Math.pow(coord.y - other.y, 2)
@@ -1268,16 +1268,61 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         return distance <= searchRadius;
       }).length;
       
-      // Keep coordinates that have at least 3 nearby neighbors (indicating actual content)
-      return nearbyCount >= 3;
+      // Keep coordinates that have at least 2 nearby neighbors (more aggressive for tight logos)
+      return nearbyCount >= 2;
     });
+    
+    // STEP 2.5: Logo content area detection - find the most dense region of coordinates
+    if (densityFilteredCoords.length > 50) {
+      // Calculate coordinate density in a grid to find the logo center
+      const gridSize = 20; // 20px grid cells
+      const densityMap = new Map();
+      
+      densityFilteredCoords.forEach(coord => {
+        const gridX = Math.floor(coord.x / gridSize);
+        const gridY = Math.floor(coord.y / gridSize);
+        const key = `${gridX},${gridY}`;
+        densityMap.set(key, (densityMap.get(key) || 0) + 1);
+      });
+      
+      // Find the grid cell with highest density (likely logo center)
+      let maxDensity = 0;
+      let logoCenter = null;
+      densityMap.forEach((density, key) => {
+        if (density > maxDensity) {
+          maxDensity = density;
+          const [gridX, gridY] = key.split(',').map(Number);
+          logoCenter = {
+            x: (gridX + 0.5) * gridSize,
+            y: (gridY + 0.5) * gridSize
+          };
+        }
+      });
+      
+      // If we found a dense center, prioritize coordinates near it
+      if (logoCenter && maxDensity > 10) {
+        const logoRadius = Math.min(rawWidth * 0.3, rawHeight * 0.3, 100); // Max 100px radius
+        const logoFocusedCoords = densityFilteredCoords.filter(coord => {
+          const distToLogo = Math.sqrt(
+            Math.pow(coord.x - logoCenter.x, 2) + Math.pow(coord.y - logoCenter.y, 2)
+          );
+          return distToLogo <= logoRadius;
+        });
+        
+        if (logoFocusedCoords.length > allCoordinates.length * 0.1) {
+          console.log(`🎯 LOGO CENTER DETECTED at (${logoCenter.x.toFixed(1)}, ${logoCenter.y.toFixed(1)}) with ${logoFocusedCoords.length} coordinates`);
+          // Update densityFilteredCoords to use logo-focused coordinates
+          densityFilteredCoords.splice(0, densityFilteredCoords.length, ...logoFocusedCoords);
+        }
+      }
+    }
     
     // STEP 3: Enhanced adaptive center-focused filtering 
     const spanX = maxX - minX;
     const spanY = maxY - minY;
     
-    // Try multiple focus ratios to find the best content bounds
-    const focusRatios = [0.25, 0.35, 0.5, 0.65]; // Start very aggressive, then relax
+    // Try multiple focus ratios to find the best content bounds - much more aggressive
+    const focusRatios = [0.15, 0.25, 0.35, 0.45]; // Start extremely aggressive for tight logos
     let bestResult = null;
     let bestReduction = 0;
     
@@ -1291,8 +1336,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         return distFromCenterX <= focusRangeX / 2 && distFromCenterY <= focusRangeY / 2;
       });
       
-      // Must have sufficient coordinates to be valid (at least 15% for aggressive filtering)
-      if (centerFilteredCoords.length > allCoordinates.length * 0.15) {
+      // Must have sufficient coordinates to be valid (at least 10% for very aggressive filtering)
+      if (centerFilteredCoords.length > allCoordinates.length * 0.10) {
         const contentMinX = Math.min(...centerFilteredCoords.map(c => c.x));
         const contentMinY = Math.min(...centerFilteredCoords.map(c => c.y));
         const contentMaxX = Math.max(...centerFilteredCoords.map(c => c.x));
@@ -1306,8 +1351,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
         const totalReduction = (widthReduction + heightReduction) / 2;
         
-        // Prefer results with significant reduction (>15% total) and reasonable dimensions
-        if (totalReduction > 15 && contentWidth > 50 && contentHeight > 30 && totalReduction > bestReduction) {
+        // Prefer results with significant reduction (>20% total) and reasonable dimensions
+        if (totalReduction > 20 && contentWidth > 30 && contentHeight > 20 && totalReduction > bestReduction) {
           bestResult = {
             coords: centerFilteredCoords,
             width: contentWidth,
