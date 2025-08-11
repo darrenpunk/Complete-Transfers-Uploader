@@ -1272,171 +1272,32 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // CONTENT INTEGRITY CHECK - Detect if file already has minimal padding
+    // SIMPLE CONTENT BOUNDS - Just use the exact content dimensions
+    // Find the actual content boundaries (where the logo content actually is)
+    const contentMinX = Math.min(...allCoordinates.map(c => c.x));
+    const contentMinY = Math.min(...allCoordinates.map(c => c.y));
+    const contentMaxX = Math.max(...allCoordinates.map(c => c.x));
+    const contentMaxY = Math.max(...allCoordinates.map(c => c.y));
     
-    // Calculate content distribution to detect properly cropped files
-    const contentDensity = allCoordinates.length / (rawWidth * rawHeight);
-    const edgePadding = Math.min(
-      Math.min(...allCoordinates.map(c => c.x)) - minX,
-      Math.min(...allCoordinates.map(c => c.y)) - minY,
-      maxX - Math.max(...allCoordinates.map(c => c.x)),
-      maxY - Math.max(...allCoordinates.map(c => c.y))
-    );
+    const contentWidth = contentMaxX - contentMinX;
+    const contentHeight = contentMaxY - contentMinY;
     
-    // Check if this could be a coat of arms that needs tighter bounds despite low edge padding
-    const aspectRatio = rawWidth / rawHeight;
-    const isCoatOfArmsLike = aspectRatio > 0.8 && aspectRatio < 1.4; // Square-ish or shield-like
+    // Calculate how much whitespace would be removed
+    const widthReduction = ((rawWidth - contentWidth) / rawWidth) * 100;
+    const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
     
-    // For coat of arms, even "optimally cropped" files often have significant whitespace
-    // Only preserve exact dimensions if density is very high AND padding is truly minimal
-    if (edgePadding < 5 && contentDensity > 0.05 && !isCoatOfArmsLike) {
-      console.log(`🎯 FILE ALREADY OPTIMALLY CROPPED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (edge padding: ${edgePadding.toFixed(1)}px, density: ${contentDensity.toFixed(6)}) - preserving exact dimensions`);
-      
+    console.log(`🎯 CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removal)`);
+    
+    // Use content bounds if they're reasonable and remove meaningful whitespace
+    if (contentWidth > 10 && contentHeight > 10 && (widthReduction > 5 || heightReduction > 5)) {
       return {
-        width: rawWidth,
-        height: rawHeight,
-        minX,
-        minY,
-        maxX,
-        maxY
+        width: contentWidth,
+        height: contentHeight,
+        minX: contentMinX,
+        minY: contentMinY,
+        maxX: contentMaxX,
+        maxY: contentMaxY
       };
-    }
-    
-    // For coat of arms or files with moderate density, apply aggressive content detection
-    console.log(`🎯 APPLYING COAT OF ARMS DETECTION: aspect ratio: ${aspectRatio.toFixed(2)}, density: ${contentDensity.toFixed(6)}, edge padding: ${edgePadding.toFixed(1)}px`);
-    
-    // Use tight bounds detection for coat of arms
-    const gridSize = 4; // Very fine grid
-    const densityMap = new Map();
-    
-    allCoordinates.forEach(coord => {
-      const gridX = Math.floor(coord.x / gridSize);
-      const gridY = Math.floor(coord.y / gridSize);
-      const key = `${gridX},${gridY}`;
-      densityMap.set(key, (densityMap.get(key) || 0) + 1);
-    });
-    
-    // Find top 8% densest cells (very focused on core content)
-    const sortedCells = Array.from(densityMap.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, Math.max(1, Math.floor(densityMap.size * 0.08)));
-    
-    if (sortedCells.length > 0) {
-      let totalX = 0, totalY = 0, totalWeight = 0;
-      sortedCells.forEach(([key, density]) => {
-        const [gridX, gridY] = key.split(',').map(Number);
-        totalX += (gridX + 0.5) * gridSize * density;
-        totalY += (gridY + 0.5) * gridSize * density;
-        totalWeight += density;
-      });
-      
-      const centerX = totalX / totalWeight;
-      const centerY = totalY / totalWeight;
-      
-      // Use tight elliptical bounds for coat of arms (targeting ~86x82mm proportions)
-      const targetRadiusX = rawWidth * 0.28; // 28% width for shield
-      const targetRadiusY = rawHeight * 0.32; // 32% height for shield
-      
-      const coreCoords = allCoordinates.filter(coord => {
-        const distX = Math.abs(coord.x - centerX);
-        const distY = Math.abs(coord.y - centerY);
-        return (distX / targetRadiusX) * (distX / targetRadiusX) + (distY / targetRadiusY) * (distY / targetRadiusY) <= 1;
-      });
-      
-      if (coreCoords.length > allCoordinates.length * 0.12) { // At least 12% for tight bounds
-        const coreMinX = Math.min(...coreCoords.map(c => c.x));
-        const coreMinY = Math.min(...coreCoords.map(c => c.y));
-        const coreMaxX = Math.max(...coreCoords.map(c => c.x));
-        const coreMaxY = Math.max(...coreCoords.map(c => c.y));
-        
-        const coreWidth = coreMaxX - coreMinX;
-        const coreHeight = coreMaxY - coreMinY;
-        
-        const widthReduction = ((rawWidth - coreWidth) / rawWidth) * 100;
-        const heightReduction = ((rawHeight - coreHeight) / rawHeight) * 100;
-        
-        // Accept if we achieve meaningful reduction targeting 86x82mm
-        if (coreWidth > 30 && coreHeight > 25 && (widthReduction > 25 || heightReduction > 25)) {
-          console.log(`🎯 COAT OF ARMS TIGHT BOUNDS: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${coreWidth.toFixed(1)}×${coreHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, center: ${centerX.toFixed(1)},${centerY.toFixed(1)}, ellipse: ${targetRadiusX.toFixed(1)}×${targetRadiusY.toFixed(1)}px)`);
-          
-          return {
-            width: coreWidth,
-            height: coreHeight,
-            minX: coreMinX,
-            minY: coreMinY,
-            maxX: coreMaxX,
-            maxY: coreMaxY
-          };
-        }
-      }
-    }
-    
-    // Only apply bounds reduction if there's significant whitespace to remove
-    if (edgePadding > 20) {
-      const gridSize = 8;
-      const densityMap = new Map();
-      
-      allCoordinates.forEach(coord => {
-        const gridX = Math.floor(coord.x / gridSize);
-        const gridY = Math.floor(coord.y / gridSize);
-        const key = `${gridX},${gridY}`;
-        densityMap.set(key, (densityMap.get(key) || 0) + 1);
-      });
-      
-      // Find top 15% densest cells for conservative bounds
-      const sortedCells = Array.from(densityMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, Math.max(1, Math.floor(densityMap.size * 0.15)));
-      
-      if (sortedCells.length > 0) {
-        let totalX = 0, totalY = 0, totalWeight = 0;
-        sortedCells.forEach(([key, density]) => {
-          const [gridX, gridY] = key.split(',').map(Number);
-          totalX += (gridX + 0.5) * gridSize * density;
-          totalY += (gridY + 0.5) * gridSize * density;
-          totalWeight += density;
-        });
-        
-        const centerX = totalX / totalWeight;
-        const centerY = totalY / totalWeight;
-        
-        // Conservative radius to preserve all content
-        const radiusX = rawWidth * 0.4; // Increased to 40% for safety
-        const radiusY = rawHeight * 0.4; // Increased to 40% for safety
-        
-        const contentCoords = allCoordinates.filter(coord => {
-          const distX = Math.abs(coord.x - centerX);
-          const distY = Math.abs(coord.y - centerY);
-          return (distX / radiusX) * (distX / radiusX) + (distY / radiusY) * (distY / radiusY) <= 1;
-        });
-        
-        if (contentCoords.length > allCoordinates.length * 0.7) { // At least 70% preservation
-          const contentMinX = Math.min(...contentCoords.map(c => c.x));
-          const contentMinY = Math.min(...contentCoords.map(c => c.y));
-          const contentMaxX = Math.max(...contentCoords.map(c => c.x));
-          const contentMaxY = Math.max(...contentCoords.map(c => c.y));
-          
-          const contentWidth = contentMaxX - contentMinX;
-          const contentHeight = contentMaxY - contentMinY;
-          
-          const widthReduction = ((rawWidth - contentWidth) / rawWidth) * 100;
-          const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
-          
-          // Only apply if significant padding exists to remove
-          if (widthReduction > 15 || heightReduction > 15) {
-            console.log(`🎯 CONSERVATIVE WHITESPACE REMOVAL: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction)`);
-            
-            return {
-              width: contentWidth,
-              height: contentHeight,
-              minX: contentMinX,
-              minY: contentMinY,
-              maxX: contentMaxX,
-              maxY: contentMaxY
-            };
-          }
-        }
-      }
     }
     
     // Fallback to raw bounds if precise detection failed
