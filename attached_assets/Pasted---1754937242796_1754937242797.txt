@@ -1,0 +1,475 @@
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-5b231f5f9ffdabf9.js:1
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-5b231f5f9ffdabf9.js:1
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ WebSocket connection to 'wss://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/?token=iBhVJ6zyzk1t' failed: 
+t @ eruda.js:2
+eruda.js:2 Uncaught (in promise) 
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ AppliqueBadgesModal open state changed: false
+ showAppliqueBadgesModal state changed to: false
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Canvas state update: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ RasterWarningModal render check: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Template A3: 842x1191px, Workspace: 1029x900, Zoom: 64%
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ RasterWarningModal render check: Object
+ 🎨 CMYK Modal initialized for Custom Garment Color: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ handleFilesUpload called with files: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Upload completed, checking for PDFs with raster content: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎨 CMYK Modal initialized for Select Garment Color: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🎨 Fetching SVG content from: /uploads/93893a6f27c9e447d7da26cc60144a06.pdf.svg
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 🎯 Starting drag for element: 2638e0c8-6b6d-42d7-9981-ddb7bad5c857
+Console.js:61 🎯 Drag offset calculated: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element 2638e0c8-6b6d-42d7-9981-ddb7bad5c857 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🔄 EXACT conversion: 310.861687px → 109.665mm, 310.752106px → 109.626mm
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 Warning: validateDOMNesting(...): <p> cannot appear as a descendant of <p>.
+    at p
+    at p
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1363:13
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:182:12)
+    at div
+    at DialogHeader (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:107:3)
+    at div
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=1e2889c2:45:7
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:56:5
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1315:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1238:58
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=1e2889c2:24:11)
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1229:64
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=1e2889c2:244:22
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=1e2889c2:24:11)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at DialogPortal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1191:11)
+    at _c3 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at Dialog (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1132:5)
+    at RGBWarningModal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/rgb-warning-modal.tsx:28:35)
+    at ColorPickerPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/color-picker-panel.tsx:124:44)
+    at div
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1e2889c2:2802:5)
+    at PropertiesPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/properties-panel.tsx:96:3)
+    at div
+    at div
+    at div
+    at UploadTool (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/pages/upload-tool.tsx:43:18)
+    at Route (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1e2889c2:323:16)
+    at Switch (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1e2889c2:379:17)
+    at Router
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1e2889c2:2802:5)
+    at ThemeProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1e2889c2:2805:3)
+    at App
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 Warning: validateDOMNesting(...): <div> cannot appear as a descendant of <p>.
+    at div
+    at p
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1363:13
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:182:12)
+    at div
+    at DialogHeader (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:107:3)
+    at div
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=1e2889c2:45:7
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:56:5
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1315:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1238:58
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=1e2889c2:24:11)
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1229:64
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:43:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-Z7JUZCUR.js?v=1e2889c2:20:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-GCLFTVUM.js?v=1e2889c2:42:13
+    at https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WUON6RVF.js?v=1e2889c2:244:22
+    at Presence (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6AICYJNT.js?v=1e2889c2:24:11)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at DialogPortal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1191:11)
+    at _c3 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at Dialog (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=1e2889c2:1132:5)
+    at RGBWarningModal (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/rgb-warning-modal.tsx:28:35)
+    at ColorPickerPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/color-picker-panel.tsx:124:44)
+    at div
+    at _c9 (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1e2889c2:2802:5)
+    at PropertiesPanel (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/properties-panel.tsx:96:3)
+    at div
+    at div
+    at div
+    at UploadTool (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/pages/upload-tool.tsx:43:18)
+    at Route (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1e2889c2:323:16)
+    at Switch (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=1e2889c2:379:17)
+    at Router
+    at Provider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=1e2889c2:38:15)
+    at TooltipProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=1e2889c2:2802:5)
+    at ThemeProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/src/components/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=1e2889c2:2805:3)
+    at App
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 🎯 Ending drag
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element 2638e0c8-6b6d-42d7-9981-ddb7bad5c857 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element 2638e0c8-6b6d-42d7-9981-ddb7bad5c857 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element 2638e0c8-6b6d-42d7-9981-ddb7bad5c857 dimensions: Object
+Console.js:61 ColorPickerPanel Debug: Object
+Console.js:61 RGB Warning Check: Object
+Console.js:61 🎨 Processing color 1: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C70% M67% Y64% K74%
+Console.js:61 🎨 Processing color 2: Object
+Console.js:61 🎨 Using original CMYK values from PDF extraction: C13% M100% Y81% K3%
+Console.js:61 🎨 Processing color 3: Object
+Console.js:61 🎨 Processing color 4: Object
+Console.js:61 🎨 Processing color 5: Object
+Console.js:61 🎨 Processing color 6: Object
+Console.js:61 🎨 Processing color 7: Object
+Console.js:61 🎨 Processing color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 1: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 2: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 3: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 4: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 5: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 6: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 7: Object
+Console.js:61 🎨 CMYK Modal initialized for Color 8: Object
+Console.js:61 🎨 CMYK Modal initialized for Select Garment Color: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Template A3: 842x1191px, Workspace: 400x900, Zoom: 50%
+Console.js:61 🎯 PDF-derived element: using pixel values directly (310.861687×310.752106px)
+Console.js:61 Canvas element 2638e0c8-6b6d-42d7-9981-ddb7bad5c857 dimensions: {dbWidth: 310.861687, dbHeight: 310.752106, pixelWidth: 155.4308435, pixelHeight: 155.376053, rotation: 0}

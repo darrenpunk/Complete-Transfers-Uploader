@@ -1264,8 +1264,8 @@ export async function registerRoutes(app: express.Application) {
             displayHeight = contentBounds.height;
           }
           
-          // Calculate actual mm equivalent for logging
-          const pixelToMm = 1 / 2.834645669; // Convert pixels to mm (72 DPI)
+          // Calculate actual mm equivalent for logging using correct conversion factor
+          const pixelToMm = 0.35; // Correct artwork conversion: 1 pixel = 0.35mm
           const actualWidthMm = displayWidth * pixelToMm;
           const actualHeightMm = displayHeight * pixelToMm;
           
@@ -1275,8 +1275,8 @@ export async function registerRoutes(app: express.Application) {
           displayWidth = Math.round(dimensions.widthPx);
           displayHeight = Math.round(dimensions.heightPx);
           
-          // Calculate actual mm equivalent for logging
-          const pixelToMm = 1 / 2.834645669;
+          // Calculate actual mm equivalent for logging using correct conversion factor
+          const pixelToMm = 0.35; // Correct artwork conversion: 1 pixel = 0.35mm
           const actualWidthMm = displayWidth * pixelToMm;
           const actualHeightMm = displayHeight * pixelToMm;
           
@@ -1286,8 +1286,8 @@ export async function registerRoutes(app: express.Application) {
           displayWidth = dimensions.width; // Use pixel width directly
           displayHeight = dimensions.height; // Use pixel height directly
           
-          // Calculate actual mm equivalent for logging
-          const pixelToMm = 1 / 2.834645669;
+          // Calculate actual mm equivalent for logging using correct conversion factor
+          const pixelToMm = 0.35; // Correct artwork conversion: 1 pixel = 0.35mm
           const actualWidthMm = displayWidth * pixelToMm;
           const actualHeightMm = displayHeight * pixelToMm;
           
