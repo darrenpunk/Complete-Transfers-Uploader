@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
 import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
+import { detectPreciseContentBounds } from './precise-content-detector';
 
 const execAsync = promisify(exec);
 
@@ -1233,7 +1234,6 @@ export async function registerRoutes(app: express.Application) {
           try {
             const svgPath = path.join(uploadDir, finalFilename);
             const svgContent = fs.readFileSync(svgPath, 'utf8');
-            const { detectPreciseContentBounds } = await import('./precise-content-detector');
             
             const preciseBounds = detectPreciseContentBounds(svgContent);
             
