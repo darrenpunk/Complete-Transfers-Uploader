@@ -1300,44 +1300,6 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     };
   }
 }
-      
-      if (!isBackground) {
-        const coords = extractPathCoordinates(pathData);
-        if (coords.length > 0) {
-          coloredElements.push(...coords);
-        }
-      }
-    }
-    
-    // Find elements with style-based colors
-    const stylePathRegex = /<path[^>]*style="[^"]*fill:\s*([^;]+)[^"]*"[^>]*d="([^"]*)"[^>]*>/gi;
-    let styleMatch;
-    let styleMatchCount = 0;
-    const maxStyleMatches = 500; // Prevent infinite loops
-    
-    while ((styleMatch = stylePathRegex.exec(svgContent)) !== null && styleMatchCount < maxStyleMatches) {
-      styleMatchCount++;
-      const fillColor = styleMatch[1].trim();
-      const pathData = styleMatch[2];
-      
-      // Skip only transparent/none colors - KEEP white content for text elements
-      const isBackground = fillColor === 'none' || fillColor === 'transparent';
-      
-      if (!isBackground) {
-        try {
-          const coords = extractPathCoordinates(pathData);
-          if (coords.length > 0) {
-            coloredElements.push(...coords);
-          }
-        } catch (coordError) {
-          console.log('Error extracting coordinates from style path, skipping');
-          continue;
-        }
-      }
-    }
-    
-    if (styleMatchCount >= maxStyleMatches) {
-      console.log(`Stopped processing style-based SVG paths after ${maxStyleMatches} matches to prevent infinite loop`);
     }
     
     if (coloredElements.length === 0) {
