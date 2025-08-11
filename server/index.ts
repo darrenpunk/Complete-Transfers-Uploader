@@ -35,6 +35,9 @@ app.use('/uploads', express.static('./uploads', {
   }
 }));
 
+// Serve static files from public directory
+app.use(express.static('public'));
+
 // Serve the fixed Odoo module download
 app.get('/artwork_uploader_module_error_fixed.zip', (req, res) => {
   const filePath = './artwork_uploader_module_error_fixed.zip';
