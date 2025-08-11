@@ -914,6 +914,8 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
 // Calculate actual content bounding box from SVG elements, excluding obvious backgrounds and font definitions
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX?: number; minY?: number; maxX?: number; maxY?: number } | null {
   try {
+    console.log('🎯 UNIVERSAL CONTENT-FOCUSED BOUNDS CALCULATION STARTING');
+    
     // Early check for extremely large files - use fallback to prevent timeouts
     if (svgContent.length > 2000000) { // 2MB+ SVG files
       console.log('SVG content extremely large (>2MB), using performance fallback');
@@ -1112,18 +1114,192 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Original logic for non-text SVGs
-    const coloredElements = [];
+    // UNIVERSAL CONTENT-FOCUSED BOUNDS for all regular SVGs
+    console.log('🎯 Processing regular SVG with universal content-focused bounds detection');
+    const allCoordinates = [];
     
-    // Find path elements with actual colors (not white/transparent)
-    const pathRegex = /<path[^>]*fill="([^"]*)"[^>]*d="([^"]*)"[^>]*>/gi;
+    // Extract ALL coordinates from paths, rects, circles, etc.
+    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gi;
+    const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/gi;
+    const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/gi;
+    
+    // Process all path elements
     let pathMatch;
-    while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
-      const fillColor = pathMatch[1];
-      const pathData = pathMatch[2];
+    let pathCount = 0;
+    const maxPaths = 200; // Process up to 200 paths
+    
+    while ((pathMatch = pathRegex.exec(svgContent)) !== null && pathCount < maxPaths) {
+      pathCount++;
+      const pathData = pathMatch[1];
       
-      // Skip only transparent/none colors - KEEP white content for text elements
-      const isBackground = fillColor === 'none' || fillColor === 'transparent';
+      try {
+        const coords = extractPathCoordinates(pathData);
+        if (coords.length > 0) {
+          allCoordinates.push(...coords);
+        }
+      } catch (coordError) {
+        console.log(`Error extracting coordinates from path ${pathCount}, skipping`);
+        continue;
+      }
+    }
+    
+    // Process rectangles
+    let rectMatch;
+    while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
+      const x = parseFloat(rectMatch[1]);
+      const y = parseFloat(rectMatch[2]);
+      const width = parseFloat(rectMatch[3]);
+      const height = parseFloat(rectMatch[4]);
+      
+      if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+        allCoordinates.push(
+          { x, y },
+          { x: x + width, y },
+          { x: x + width, y: y + height },
+          { x, y: y + height }
+        );
+      }
+    }
+    
+    // Process circles
+    let circleMatch;
+    while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
+      const cx = parseFloat(circleMatch[1]);
+      const cy = parseFloat(circleMatch[2]);
+      const r = parseFloat(circleMatch[3]);
+      
+      if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
+        allCoordinates.push(
+          { x: cx - r, y: cy },  // Left
+          { x: cx + r, y: cy },  // Right
+          { x: cx, y: cy - r },  // Top
+          { x: cx, y: cy + r }   // Bottom
+        );
+      }
+    }
+    
+    console.log(`📊 Extracted ${allCoordinates.length} total coordinates from ${pathCount} paths`);
+    
+    if (allCoordinates.length === 0) {
+      console.log('No coordinates found, using fallback dimensions');
+      return {
+        width: 200,
+        height: 200
+      };
+    }
+    
+    // Calculate raw bounds
+    const minX = Math.min(...allCoordinates.map(c => c.x));
+    const minY = Math.min(...allCoordinates.map(c => c.y));
+    const maxX = Math.max(...allCoordinates.map(c => c.x));
+    const maxY = Math.max(...allCoordinates.map(c => c.y));
+    
+    const rawWidth = maxX - minX;
+    const rawHeight = maxY - minY;
+    
+    console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
+    
+    // APPLY UNIVERSAL CONTENT-FOCUSED BOUNDS SYSTEM (3-step filtering)
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // STEP 1: Edge removal - Remove coordinates on the outer 5% border (likely padding/viewbox whitespace)
+    const edgeFilteredCoords = allCoordinates.filter(coord => {
+      const relativeX = (coord.x - minX) / rawWidth;
+      const relativeY = (coord.y - minY) / rawHeight;
+      
+      // Keep coordinates not hugging the edges
+      return relativeX > 0.05 && relativeX < 0.95 && relativeY > 0.05 && relativeY < 0.95;
+    });
+    
+    // STEP 2: Coordinate density analysis - Remove outlier coordinates that are far from the main cluster
+    const densityFilteredCoords = edgeFilteredCoords.filter(coord => {
+      // Count nearby coordinates within 10% of canvas dimensions
+      const searchRadius = Math.max(rawWidth * 0.1, rawHeight * 0.1);
+      const nearbyCount = edgeFilteredCoords.filter(other => {
+        const distance = Math.sqrt(
+          Math.pow(coord.x - other.x, 2) + Math.pow(coord.y - other.y, 2)
+        );
+        return distance <= searchRadius;
+      }).length;
+      
+      // Keep coordinates that have at least 3 nearby neighbors (indicating actual content)
+      return nearbyCount >= 3;
+    });
+    
+    // STEP 3: Center-focused filtering - Focus on coordinates within 40% span of center (main content area)
+    const centerFocusedCoords = densityFilteredCoords.filter(coord => {
+      const distFromCenterX = Math.abs(coord.x - centerX);
+      const distFromCenterY = Math.abs(coord.y - centerY);
+      
+      // Keep coordinates within 40% of canvas from center
+      return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
+    });
+    
+    // Choose the best coordinate set based on filtering effectiveness
+    let bestCoords = allCoordinates;
+    let filteringApplied = 'none';
+    
+    if (centerFocusedCoords.length > allCoordinates.length * 0.15) {
+      bestCoords = centerFocusedCoords;
+      filteringApplied = 'center-focused (40% span)';
+    } else if (densityFilteredCoords.length > allCoordinates.length * 0.3) {
+      bestCoords = densityFilteredCoords;
+      filteringApplied = 'density-based';
+    } else if (edgeFilteredCoords.length > allCoordinates.length * 0.5) {
+      bestCoords = edgeFilteredCoords;
+      filteringApplied = 'edge-removal (5% border)';
+    }
+    
+    // Calculate final content bounds
+    if (bestCoords.length > 0 && bestCoords.length < allCoordinates.length) {
+      const contentMinX = Math.min(...bestCoords.map(c => c.x));
+      const contentMinY = Math.min(...bestCoords.map(c => c.y));
+      const contentMaxX = Math.max(...bestCoords.map(c => c.x));
+      const contentMaxY = Math.max(...bestCoords.map(c => c.y));
+      
+      const contentWidth = contentMaxX - contentMinX;
+      const contentHeight = contentMaxY - contentMinY;
+      
+      // Calculate whitespace reduction
+      const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
+      const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
+      
+      // Apply content-focused bounds if we achieved meaningful whitespace removal
+      if (contentWidth > 10 && contentHeight > 10 && (widthReduction > 10 || heightReduction > 10)) {
+        console.log(`🎯 CONTENT-FOCUSED BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed, filter: ${filteringApplied})`);
+        
+        return {
+          width: contentWidth,
+          height: contentHeight,
+          minX: contentMinX,
+          minY: contentMinY,
+          maxX: contentMaxX,
+          maxY: contentMaxY
+        };
+      }
+    }
+    
+    // Use original raw bounds if content filtering didn't provide significant improvement
+    console.log(`🎯 Using raw bounds: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (filtering ineffective: ${filteringApplied})`);
+    
+    return {
+      width: rawWidth,
+      height: rawHeight,
+      minX,
+      minY,
+      maxX,
+      maxY
+    };
+    
+  } catch (error) {
+    console.error('Error calculating SVG content bounds:', error);
+    return {
+      width: 200,
+      height: 200
+    };
+  }
+}
       
       if (!isBackground) {
         const coords = extractPathCoordinates(pathData);
