@@ -1309,8 +1309,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       const centerX = totalX / densestCells.length;
       const centerY = totalY / densestCells.length;
       
-      // Step 4: Use a tight radius around the densest center for ultra-precise bounds
-      const tightRadius = Math.min(rawWidth * 0.15, rawHeight * 0.15, 50); // Very tight radius
+      // Step 4: Use an expanded radius to capture full logo content including banners and shields
+      const tightRadius = Math.min(rawWidth * 0.35, rawHeight * 0.35, 120); // Expanded radius to include all logo elements
       
       const coreCoordinates = allCoordinates.filter(coord => {
         const distanceToCenter = Math.sqrt(
@@ -1331,8 +1331,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const widthReduction = ((rawWidth - coreWidth) / rawWidth) * 100;
         const heightReduction = ((rawHeight - coreHeight) / rawHeight) * 100;
         
-        // Accept if we achieve significant reduction and have reasonable dimensions
-        if (coreWidth > 15 && coreHeight > 15 && (widthReduction > 40 || heightReduction > 40)) {
+        // Accept if we achieve some padding removal while preserving full logo content
+        if (coreWidth > 30 && coreHeight > 30 && (widthReduction > 15 || heightReduction > 15)) {
           console.log(`🎯 CORE DENSITY BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${coreWidth.toFixed(1)}×${coreHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, center: ${centerX.toFixed(1)},${centerY.toFixed(1)}, radius: ${tightRadius.toFixed(1)}px)`);
           
           return {
