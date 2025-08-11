@@ -2,6 +2,51 @@ import fs from 'fs';
 import path from 'path';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 
+// Helper function to extract coordinates from SVG path data
+function extractPathCoordinates(pathData: string): Array<{ x: number; y: number }> {
+  const coordinates: Array<{ x: number; y: number }> = [];
+  
+  // Match all coordinate patterns in SVG path data
+  const coordinateRegex = /([ML])\s*([-\d.]+)[,\s]+([-\d.]+)|([HV])\s*([-\d.]+)|([CSQTA])\s*([-\d.,\s]+)/g;
+  let match;
+  let currentX = 0;
+  let currentY = 0;
+  
+  while ((match = coordinateRegex.exec(pathData)) !== null) {
+    if (match[1] && match[2] && match[3]) {
+      // M or L command - moveto or lineto
+      currentX = parseFloat(match[2]);
+      currentY = parseFloat(match[3]);
+      coordinates.push({ x: currentX, y: currentY });
+    } else if (match[4] && match[5]) {
+      // H or V command - horizontal or vertical line
+      if (match[4] === 'H') {
+        currentX = parseFloat(match[5]);
+        coordinates.push({ x: currentX, y: currentY });
+      } else {
+        currentY = parseFloat(match[5]);
+        coordinates.push({ x: currentX, y: currentY });
+      }
+    } else if (match[6] && match[7]) {
+      // Complex curves - extract all coordinate pairs
+      const coordString = match[7];
+      const coordPairs = coordString.match(/[-\d.]+[,\s]+[-\d.]+/g);
+      if (coordPairs) {
+        coordPairs.forEach(pair => {
+          const coords = pair.split(/[,\s]+/).map(parseFloat);
+          if (coords.length >= 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+            currentX = coords[coords.length - 2];
+            currentY = coords[coords.length - 1];
+            coordinates.push({ x: currentX, y: currentY });
+          }
+        });
+      }
+    }
+  }
+  
+  return coordinates;
+}
+
 // Pantone color database - Common Pantone colors with their RGB/CMYK values
 const PANTONE_COLORS = [
   // Basic Pantone Colors
@@ -1299,494 +1344,4 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       height: 200
     };
   }
-}
-    }
-    
-    if (coloredElements.length === 0) {
-      console.log('No colored content elements found, using conservative fallback');
-      return {
-        width: 350,  // Increased from 300 for better logo visibility
-        height: 250  // Increased from 200 for better logo visibility
-      };
-    }
-    
-    // Calculate bounding box from colored content only
-    const minX = Math.min(...coloredElements.map(e => e.x));
-    const minY = Math.min(...coloredElements.map(e => e.y));
-    const maxX = Math.max(...coloredElements.map(e => e.x));
-    const maxY = Math.max(...coloredElements.map(e => e.y));
-    
-    // Force exact dimensions to match known PDF values: 600×595px
-    // This eliminates floating point precision issues
-    const rawWidth = Math.round(maxX - minX);
-    const rawHeight = Math.round(maxY - minY);
-    
-    // If we're very close to the expected dimensions, use exact values
-    if (Math.abs(rawWidth - 600) < 2 && Math.abs(rawHeight - 595) < 2) {
-      console.log(`Detected dimensions ${rawWidth}×${rawHeight}px very close to expected 600×595px, using exact values`);
-      const exactWidth = 600;
-      const exactHeight = 595;
-      
-      // Return exact dimensions for perfect accuracy
-      return {
-        width: exactWidth,
-        height: exactHeight,
-        minX,
-        minY,
-        maxX,
-        maxY
-      };
-    }
-    
-    // UNIVERSAL CONTENT-FOCUSED BOUNDS CALCULATION
-    // Apply intelligent content bounds detection for ALL file types, ignoring whitespace and viewBox padding
-    
-    console.log(`🎯 ANALYZING CONTENT BOUNDS: Raw detected: ${rawWidth}×${rawHeight}px from ${coloredElements.length} coordinates`);
-    
-    // Always apply content-focused filtering - don't just target large files
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    
-    // STEP 1: Remove extreme outliers that suggest background/viewBox padding
-    const outlierThreshold = 0.95; // Remove coordinates in outer 5% of bounds
-    const borderFilteredCoords = coloredElements.filter(coord => {
-      const relativeX = (coord.x - minX) / rawWidth;
-      const relativeY = (coord.y - minY) / rawHeight;
-      
-      // Keep coordinates that aren't hugging the edges (suggests content vs. background)
-      const notOnLeftEdge = relativeX > 0.05;
-      const notOnRightEdge = relativeX < 0.95;
-      const notOnTopEdge = relativeY > 0.05;
-      const notOnBottomEdge = relativeY < 0.95;
-      
-      return notOnLeftEdge && notOnRightEdge && notOnTopEdge && notOnBottomEdge;
-    });
-    
-    // STEP 2: Focus on coordinate density - where most content actually is
-    const densityFilteredCoords = borderFilteredCoords.length > coloredElements.length * 0.4 
-      ? borderFilteredCoords 
-      : coloredElements; // Fallback if too aggressive
-    
-    // STEP 3: Find coordinates concentrated around the center (actual content)
-    const centerFocusedCoords = densityFilteredCoords.filter(coord => {
-      const distFromCenterX = Math.abs(coord.x - centerX);
-      const distFromCenterY = Math.abs(coord.y - centerY);
-      
-      // Keep coordinates within 40% of total span from center - content is usually centered
-      return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
-    });
-    
-    // Choose the best coordinate set based on content density
-    const bestCoords = centerFocusedCoords.length > coloredElements.length * 0.2
-      ? centerFocusedCoords
-      : densityFilteredCoords;
-    
-    if (bestCoords.length > 0 && bestCoords.length < coloredElements.length) {
-      const contentMinX = Math.min(...bestCoords.map(e => e.x));
-      const contentMinY = Math.min(...bestCoords.map(e => e.y));
-      const contentMaxX = Math.max(...bestCoords.map(e => e.x));
-      const contentMaxY = Math.max(...bestCoords.map(e => e.y));
-      
-      const contentWidth = contentMaxX - contentMinX;
-      const contentHeight = contentMaxY - contentMinY;
-      
-      // Calculate improvement percentage
-      const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
-      const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
-      
-      // Only apply if we've achieved meaningful whitespace removal
-      if (contentWidth > 0 && contentHeight > 0 && (widthReduction > 10 || heightReduction > 10)) {
-        console.log(`🎯 CONTENT-FOCUSED BOUNDS: ${rawWidth}×${rawHeight} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed)`);
-        
-        return {
-          width: contentWidth,
-          height: contentHeight,
-          minX: contentMinX,
-          minY: contentMinY,
-          maxX: contentMaxX,
-          maxY: contentMaxY
-        };
-      }
-    }
-    
-    // If content-focused filtering didn't help, content is likely well-bounded already
-    console.log(`📏 USING ORIGINAL BOUNDS: Content appears well-bounded at ${rawWidth}×${rawHeight}px`);
-    
-    // Use exact raw floating point dimensions for perfect precision
-    const contentWidth = rawWidth; // Use exact floating point value, no rounding
-    const contentHeight = rawHeight; // Use exact floating point value, no rounding
-    
-    // CRITICAL: Use actual content dimensions for accurate logo sizing - no artificial caps
-    // This is essential for customer accuracy across all templates
-    const finalWidth = contentWidth; // Use exact content width
-    const finalHeight = contentHeight; // Use exact content height
-    
-    // Get viewBox for comparison with PDF padding info
-    const pdfViewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-    let viewBoxInfo = '';
-    if (pdfViewBoxMatch) {
-      const viewBoxValues = pdfViewBoxMatch[1].split(/\s+/).map(Number);
-      if (viewBoxValues.length >= 4) {
-        const vbWidth = viewBoxValues[2];
-        const vbHeight = viewBoxValues[3];
-        const paddingX = Math.max(0, vbWidth - rawWidth);
-        const paddingY = Math.max(0, vbHeight - rawHeight);
-        viewBoxInfo = ` | ViewBox: ${vbWidth}×${vbHeight}px, PDF Padding eliminated: ${paddingX.toFixed(1)}×${paddingY.toFixed(1)}px`;
-      }
-    }
-    
-    console.log(`Content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} = ${finalWidth}×${finalHeight} (colored content only, raw: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)})${viewBoxInfo}`);
-    
-    // CRITICAL FIX: Return raw width/height instead of calculated width/height
-    // This ensures we get exactly the dimensions detected (600.7×595.0) not coordinate-calculated ones
-    return {
-      width: rawWidth,  // Use raw width for exact precision
-      height: rawHeight, // Use raw height for exact precision
-      minX,
-      minY,
-      maxX,
-      maxY
-    };
-    
-  } catch (error) {
-    console.error('Error calculating SVG content bounds:', error);
-    return null;
-  }
-}
-
-// Extract coordinates from SVG path data
-function extractPathCoordinates(pathData: string): Array<{ x: number; y: number }> {
-  const coords = [];
-  
-  // Match all number pairs in path data (M, L, C, etc. commands with coordinates)
-  const numberRegex = /(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g;
-  let match;
-  
-  while ((match = numberRegex.exec(pathData)) !== null) {
-    const x = parseFloat(match[1]);
-    const y = parseFloat(match[2]);
-    
-    if (!isNaN(x) && !isNaN(y)) {
-      coords.push({ x, y });
-    }
-  }
-  
-  return coords;
-}
-
-export function applySVGColorChanges(svgPath: string, colorOverrides: Record<string, string>): string {
-  try {
-    let svgContent = fs.readFileSync(svgPath, 'utf8');
-    
-    console.log('Applying color overrides:', colorOverrides);
-    
-    // Apply color overrides
-    Object.entries(colorOverrides).forEach(([originalColor, newColor]) => {
-      console.log(`Replacing ${originalColor} with ${newColor}`);
-      
-      // Escape special regex characters in color strings
-      const escapedOriginal = escapeRegExp(originalColor);
-      
-      let replacementCount = 0;
-      
-      // Replace fill attributes (exact match)
-      const fillRegex = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-      const beforeReplace = svgContent;
-      svgContent = svgContent.replace(fillRegex, `fill="${newColor}"`);
-      if (svgContent !== beforeReplace) {
-        replacementCount++;
-        console.log('Replaced fill attribute');
-      }
-      
-      // Replace stroke attributes (exact match)
-      const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-      svgContent = svgContent.replace(strokeRegex, `stroke="${newColor}"`);
-      
-      // Replace style-based fills (more careful regex)
-      const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleFillRegex, `$1${newColor}$2`);
-      
-      // Replace style-based strokes (more careful regex)
-      const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleStrokeRegex, `$1${newColor}$2`);
-      
-      // Also try to replace any CSS color definitions
-      const cssRegex = new RegExp(`(color\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(cssRegex, `$1${newColor}$2`);
-      
-      console.log(`Total replacements made: ${replacementCount}`);
-    });
-
-    console.log('Color replacement complete');
-    return svgContent;
-  } catch (error) {
-    console.error('Error applying SVG color changes:', error);
-    return '';
-  }
-}
-
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Remove background elements from vectorized SVG files
-export function removeVectorizedBackgrounds(svgContent: string): string {
-  // In Node.js environment, we'll use the regex method directly
-  // since DOMParser is not available
-  return removeVectorizedBackgroundsRegex(svgContent);
-}
-
-// Fallback regex-based method
-function removeVectorizedBackgroundsRegex(svgContent: string): string {
-  let modifiedSvg = svgContent;
-  
-  // Count all elements before processing
-  const pathCount = (modifiedSvg.match(/<path[^>]*>/gi) || []).length;
-  const circleCount = (modifiedSvg.match(/<circle[^>]*>/gi) || []).length;
-  const rectCount = (modifiedSvg.match(/<rect[^>]*>/gi) || []).length;
-  console.log(`📊 SVG element counts - paths: ${pathCount}, circles: ${circleCount}, rects: ${rectCount}`);
-  
-  // First, let's analyze what narrow elements exist before any processing
-  const allRects = modifiedSvg.match(/<rect[^>]*>/gi) || [];
-  allRects.forEach((rect, index) => {
-    const widthMatch = rect.match(/width\s*=\s*["']([^"']+)["']/);
-    const heightMatch = rect.match(/height\s*=\s*["']([^"']+)["']/);
-    if (widthMatch && heightMatch) {
-      const width = parseFloat(widthMatch[1]);
-      const height = parseFloat(heightMatch[1]);
-      if (width < 20 && height > 20) {
-        console.log(`🎯 NARROW RECT #${index}: ${width}×${height} - ${rect.substring(0, 150)}`);
-      }
-    }
-  });
-  
-  // Remove ALL stroke attributes completely - vectorized files should only have fills
-  const strokeCount = (modifiedSvg.match(/\s*stroke[^=]*=\s*["'][^"']+["']/gi) || []).length;
-  if (strokeCount > 0) {
-    // Remove all stroke-related attributes (stroke, stroke-width, stroke-opacity, etc.)
-    modifiedSvg = modifiedSvg.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-    console.log(`🎨 Removed ${strokeCount} stroke attributes - vectorized files should only have fills`);
-  }
-  
-  // Remove vector-effect attributes
-  const vectorEffectCount = (modifiedSvg.match(/vector-effect\s*=\s*["'][^"']+["']/gi) || []).length;
-  if (vectorEffectCount > 0) {
-    modifiedSvg = modifiedSvg.replace(/\s*vector-effect\s*=\s*["'][^"']+["']/gi, '');
-    console.log(`🎨 Removed ${vectorEffectCount} vector-effect attributes`);
-  }
-  
-  // Remove ALL stroke-related properties from style attributes
-  modifiedSvg = modifiedSvg.replace(/style\s*=\s*["']([^"']+)["']/gi, (match, styles) => {
-    const cleanedStyles = styles
-      .split(';')
-      .filter((style: string) => {
-        const prop = style.trim().toLowerCase();
-        // Remove any style that starts with 'stroke'
-        return !prop.startsWith('stroke');
-      })
-      .join(';');
-    return cleanedStyles ? `style="${cleanedStyles}"` : '';
-  });
-  
-  // Remove elements that are stroke-only (paths/shapes with stroke but no fill)
-  // BUT preserve small elements that might be important details like dots
-  let removedCount = 0;
-  let preservedCount = 0;
-  modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
-    // Check if element has stroke but no fill (or fill="none")
-    const hasStroke = match.includes('stroke=') || (match.includes('style=') && match.includes('stroke:'));
-    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
-    
-    // Additional check for elements with no fill attribute at all
-    if (!match.includes('fill=')) {
-      // SVG elements without fill attribute default to black fill, so they have fill
-      // Unless they're in a group with fill:none
-      const isInNoFillGroup = attrs.includes('inherit') || attrs.includes('currentColor');
-      if (!isInNoFillGroup) {
-        // Element has implicit fill
-        const updatedHasFill = true;
-        if (tag === 'path' || tag === 'rect') {
-          console.log(`📌 Element ${tag} has no fill attribute (defaults to black)`);
-        }
-      }
-    }
-    
-    // Log element details for debugging narrow elements
-    if ((tag === 'rect' || tag === 'path') && !hasFill) {
-      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 200)}`);
-    }
-    
-    // Try to detect if this is a small element (like a dot)
-    let isSmallElement = false;
-    
-    // For circles, check the radius
-    if (tag === 'circle') {
-      const radiusMatch = attrs.match(/r\s*=\s*["']([^"']+)["']/);
-      if (radiusMatch) {
-        const radius = parseFloat(radiusMatch[1]);
-        isSmallElement = radius < 10 && radius > 0;
-      }
-    }
-    
-    // For rectangles, check width and height
-    if (tag === 'rect') {
-      const widthMatch = attrs.match(/width\s*=\s*["']([^"']+)["']/);
-      const heightMatch = attrs.match(/height\s*=\s*["']([^"']+)["']/);
-      if (widthMatch && heightMatch) {
-        const width = parseFloat(widthMatch[1]);
-        const height = parseFloat(heightMatch[1]);
-        // Check for narrow vertical rectangles (like letter "I")
-        if (width < 20 && height > 20 && width > 0) {
-          isSmallElement = true;
-          console.log(`🔤 Detected narrow vertical rect (potential letter "I"): ${width.toFixed(2)}×${height.toFixed(2)}`);
-        } else if (width < 20 && height < 20 && width > 0 && height > 0) {
-          isSmallElement = true;
-        }
-      }
-    }
-    
-    // For paths, check if it's a small path by looking at the d attribute
-    if (tag === 'path') {
-      const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
-      if (dMatch && dMatch[1]) {
-        const pathData = dMatch[1];
-        // Extract bounding box from path data
-        const coords = extractPathCoordinates(pathData);
-        if (coords.length > 0) {
-          const minX = Math.min(...coords.map(c => c.x));
-          const maxX = Math.max(...coords.map(c => c.x));
-          const minY = Math.min(...coords.map(c => c.y));
-          const maxY = Math.max(...coords.map(c => c.y));
-          const width = maxX - minX;
-          const height = maxY - minY;
-          
-          // Detect narrow vertical elements (like "I") or small dots
-          if ((width < 15 && height > 20) || (width < 15 && height < 15 && height > 0)) {
-            isSmallElement = true;
-            if (width < 15 && height > 20) {
-              console.log(`🔤 Detected narrow vertical path (potential letter "I"): ${width.toFixed(2)}×${height.toFixed(2)}`);
-            }
-          }
-          
-          // Also check if it looks like text based on path complexity
-          const commandCount = (pathData.match(/[MLHVCSQTAZmlhvcsqtaz]/g) || []).length;
-          if (commandCount > 10 && pathData.length < 1000) {
-            isSmallElement = true;
-            console.log(`📝 Complex path preserved (potential text with ${commandCount} commands)`);
-          }
-        }
-        // Also check if it's a short path
-        if (!isSmallElement && pathData.length < 100 && !pathData.includes('C') && !pathData.includes('Q')) {
-          isSmallElement = true;
-        }
-      }
-    }
-    
-    if (hasStroke && !hasFill && !isSmallElement) {
-      console.log(`🎨 Removing stroke-only element: ${tag}`);
-      removedCount++;
-      return '';
-    }
-    
-    // If it's a small element without fill, convert it to filled
-    if (!hasFill && isSmallElement) {
-      console.log(`🔍 Found small element without fill, converting to filled element: ${tag}`);
-      preservedCount++;
-      
-      // Check if element already has fill="none" or fill="transparent"
-      if (match.includes('fill="none"') || match.includes('fill="transparent"')) {
-        // Replace the fill attribute with black
-        let newMatch = match.replace(/fill\s*=\s*["'](none|transparent)["']/gi, 'fill="#000000"');
-        // Remove stroke attributes since we're converting to fill
-        newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-        return newMatch;
-      } else {
-        // Add a black fill to preserve the element
-        let newMatch = match.replace(/>$/, ' fill="#000000">');
-        // Remove stroke attributes since we're converting to fill
-        newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-        return newMatch;
-      }
-    }
-    
-    // For elements with both stroke and fill, remove stroke attributes
-    if (hasStroke && hasFill) {
-      let cleaned = match;
-      // Remove stroke attributes
-      cleaned = cleaned.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-      return cleaned;
-    }
-    
-    return match;
-  });
-  
-  // Step 4: Check for any very small filled elements that might have been missed
-  // Sometimes dots (like in the letter i) are created as tiny filled paths
-  modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse)([^>]*)>/gi, (match, tag, attrs) => {
-    // Check if this has a fill
-    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
-    
-    if (hasFill && tag === 'path') {
-      // Check if this is a tiny path (potential dot)
-      const dMatch = attrs.match(/d\s*=\s*["']([^"']+)["']/);
-      if (dMatch && dMatch[1]) {
-        const pathData = dMatch[1];
-        // Look for very small paths - these could be dots
-        const coords = pathData.match(/[\d.]+/g);
-        if (coords && coords.length >= 4) {
-          const x1 = parseFloat(coords[0]);
-          const y1 = parseFloat(coords[1]);
-          const x2 = parseFloat(coords[2]);
-          const y2 = parseFloat(coords[3]);
-          const width = Math.abs(x2 - x1);
-          const height = Math.abs(y2 - y1);
-          
-          if (width < 10 && height < 10 && width > 0 && height > 0) {
-            console.log(`🔵 Preserving small filled element (potential dot): ${width}x${height}`);
-          }
-        }
-      }
-    }
-    
-    return match;
-  });
-  
-  // Remove empty groups that might be left after cleaning
-  modifiedSvg = modifiedSvg.replace(/<g[^>]*>\s*<\/g>/gi, '');
-  
-  // Count elements after processing
-  const finalPathCount = (modifiedSvg.match(/<path[^>]*>/gi) || []).length;
-  const finalCircleCount = (modifiedSvg.match(/<circle[^>]*>/gi) || []).length;
-  const finalRectCount = (modifiedSvg.match(/<rect[^>]*>/gi) || []).length;
-  console.log(`📊 Final element counts - paths: ${finalPathCount}, circles: ${finalCircleCount}, rects: ${finalRectCount}`);
-  
-  console.log(`🎨 Vectorized SVG cleaning complete - all strokes removed, only fills remain`);
-  console.log(`🎨 Removed ${removedCount} stroke-only elements, preserved ${preservedCount} small elements`);
-  
-  // Final check for dot-like elements in cleaned SVG
-  const finalSmallPaths = modifiedSvg.match(/<path[^>]*d="[^"]+"/g) || [];
-  let dotCount = 0;
-  finalSmallPaths.forEach((pathMatch) => {
-    const dMatch = pathMatch.match(/d="([^"]+)"/);
-    if (dMatch && dMatch[1]) {
-      const pathData = dMatch[1] || '';
-      const coords = pathData.match(/[\d.]+/g) || [];
-      if (coords.length >= 4) {
-        const x1 = parseFloat(coords[0] || '0');
-        const y1 = parseFloat(coords[1] || '0');
-        const x2 = parseFloat(coords[2] || '0');
-        const y2 = parseFloat(coords[3] || '0');
-        const width = Math.abs(x2 - x1);
-        const height = Math.abs(y2 - y1);
-        
-        if (width < 5 && height < 5 && width > 0 && height > 0) {
-          dotCount++;
-          console.log(`✅ Final dot-like element preserved: ${width.toFixed(2)}×${height.toFixed(2)}`);
-        }
-      }
-    }
-  });
-  console.log(`✅ Total dot-like elements in final SVG: ${dotCount}`);
-  
-  return modifiedSvg;
 }
