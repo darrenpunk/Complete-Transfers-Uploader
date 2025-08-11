@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import UploadTool from "@/pages/upload-tool";
 import DownloadOdooModule from "@/pages/download-odoo-module";
 import ModuleDownload from "@/pages/ModuleDownload";
+import DownloadPage from "@/pages/DownloadPage";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/project/:id" component={UploadTool} />
       <Route path="/download-odoo-module" component={DownloadOdooModule} />
       <Route path="/module-download" component={ModuleDownload} />
+      <Route path="/download-fixed" component={DownloadPage} />
       <Route component={NotFound} />
     </Switch>
   );

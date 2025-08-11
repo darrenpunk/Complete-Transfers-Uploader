@@ -35,6 +35,17 @@ app.use('/uploads', express.static('./uploads', {
   }
 }));
 
+// Serve the fixed Odoo module download
+app.get('/artwork_uploader_module_error_fixed.zip', (req, res) => {
+  const filePath = './artwork_uploader_module_error_fixed.zip';
+  res.download(filePath, 'artwork_uploader_module_error_fixed.zip', (err) => {
+    if (err) {
+      console.error('Download error:', err);
+      res.status(404).send('File not found');
+    }
+  });
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -90,7 +101,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
+  const httpServer = server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
