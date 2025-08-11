@@ -1272,22 +1272,67 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       return nearbyCount >= 3;
     });
     
-    // STEP 3: Center-focused filtering - Focus on coordinates within 40% span of center (main content area)
-    const centerFocusedCoords = densityFilteredCoords.filter(coord => {
-      const distFromCenterX = Math.abs(coord.x - centerX);
-      const distFromCenterY = Math.abs(coord.y - centerY);
+    // STEP 3: Enhanced adaptive center-focused filtering 
+    const spanX = maxX - minX;
+    const spanY = maxY - minY;
+    
+    // Try multiple focus ratios to find the best content bounds
+    const focusRatios = [0.25, 0.35, 0.5, 0.65]; // Start very aggressive, then relax
+    let bestResult = null;
+    let bestReduction = 0;
+    
+    for (const focusRatio of focusRatios) {
+      const focusRangeX = spanX * focusRatio;
+      const focusRangeY = spanY * focusRatio;
       
-      // Keep coordinates within 40% of canvas from center
-      return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
-    });
+      const centerFilteredCoords = densityFilteredCoords.filter(coord => {
+        const distFromCenterX = Math.abs(coord.x - centerX);
+        const distFromCenterY = Math.abs(coord.y - centerY);
+        return distFromCenterX <= focusRangeX / 2 && distFromCenterY <= focusRangeY / 2;
+      });
+      
+      // Must have sufficient coordinates to be valid (at least 15% for aggressive filtering)
+      if (centerFilteredCoords.length > allCoordinates.length * 0.15) {
+        const contentMinX = Math.min(...centerFilteredCoords.map(c => c.x));
+        const contentMinY = Math.min(...centerFilteredCoords.map(c => c.y));
+        const contentMaxX = Math.max(...centerFilteredCoords.map(c => c.x));
+        const contentMaxY = Math.max(...centerFilteredCoords.map(c => c.y));
+        
+        const contentWidth = contentMaxX - contentMinX;
+        const contentHeight = contentMaxY - contentMinY;
+        
+        // Calculate total reduction percentage
+        const widthReduction = ((rawWidth - contentWidth) / rawWidth) * 100;
+        const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
+        const totalReduction = (widthReduction + heightReduction) / 2;
+        
+        // Prefer results with significant reduction (>15% total) and reasonable dimensions
+        if (totalReduction > 15 && contentWidth > 50 && contentHeight > 30 && totalReduction > bestReduction) {
+          bestResult = {
+            coords: centerFilteredCoords,
+            width: contentWidth,
+            height: contentHeight,
+            minX: contentMinX,
+            minY: contentMinY,
+            maxX: contentMaxX,
+            maxY: contentMaxY,
+            focusRatio,
+            widthReduction,
+            heightReduction,
+            totalReduction
+          };
+          bestReduction = totalReduction;
+        }
+      }
+    }
     
     // Choose the best coordinate set based on filtering effectiveness
     let bestCoords = allCoordinates;
     let filteringApplied = 'none';
     
-    if (centerFocusedCoords.length > allCoordinates.length * 0.15) {
-      bestCoords = centerFocusedCoords;
-      filteringApplied = 'center-focused (40% span)';
+    if (bestResult) {
+      bestCoords = bestResult.coords;
+      filteringApplied = `adaptive center-focused (${Math.round(bestResult.focusRatio * 100)}% span)`;
     } else if (densityFilteredCoords.length > allCoordinates.length * 0.3) {
       bestCoords = densityFilteredCoords;
       filteringApplied = 'density-based';
@@ -1296,8 +1341,21 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       filteringApplied = 'edge-removal (5% border)';
     }
     
-    // Calculate final content bounds
-    if (bestCoords.length > 0 && bestCoords.length < allCoordinates.length) {
+    // Calculate final content bounds - use pre-calculated bestResult if available
+    if (bestResult) {
+      console.log(`🎯 CONTENT-FOCUSED BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${bestResult.width.toFixed(1)}×${bestResult.height.toFixed(1)} (${bestResult.widthReduction.toFixed(0)}%×${bestResult.heightReduction.toFixed(0)}% whitespace removed, filter: ${filteringApplied})`);
+      
+      return {
+        width: bestResult.width,
+        height: bestResult.height,
+        minX: bestResult.minX,
+        minY: bestResult.minY,
+        maxX: bestResult.maxX,
+        maxY: bestResult.maxY
+      };
+    }
+    // Fallback for other filtering methods
+    else if (bestCoords.length > 0 && bestCoords.length < allCoordinates.length) {
       const contentMinX = Math.min(...bestCoords.map(c => c.x));
       const contentMinY = Math.min(...bestCoords.map(c => c.y));
       const contentMaxX = Math.max(...bestCoords.map(c => c.x));
