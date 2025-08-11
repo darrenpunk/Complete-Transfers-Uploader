@@ -3,6 +3,11 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +42,11 @@ app.use('/uploads', express.static('./uploads', {
 
 // Serve static files from public directory
 app.use(express.static('public'));
+
+// Serve the download page directly at /download
+app.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'download.html'));
+});
 
 // Serve the fixed Odoo module download
 app.get('/artwork_uploader_module_error_fixed.zip', (req, res) => {
