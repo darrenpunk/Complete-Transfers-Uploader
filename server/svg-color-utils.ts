@@ -1163,67 +1163,100 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     console.log('🎯 Processing regular SVG with universal content-focused bounds detection');
     const allCoordinates = [];
     
-    // Extract ALL coordinates from paths, rects, circles, etc.
-    const pathRegex = /<path[^>]*d="([^"]*)"[^>]*>/gi;
-    const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/gi;
-    const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/gi;
+    // Extract coordinates ONLY from COLORED content elements (skip white/transparent backgrounds)
+    const coloredPathRegex = /<path[^>]*(?:fill="([^"]*)"[^>]*d="([^"]*)"[^>]*|d="([^"]*)"[^>]*fill="([^"]*)"[^>]*)/gi;
+    const coloredRectRegex = /<rect[^>]*(?:fill="([^"]*)"[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*|x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"[^>]*fill="([^"]*)"[^>]*)/gi;
+    const coloredCircleRegex = /<circle[^>]*(?:fill="([^"]*)"[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*|cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"[^>]*fill="([^"]*)"[^>]*)/gi;
     
-    // Process all path elements
+    // Helper function to check if a color is background/white
+    const isBackgroundColor = (color: string | undefined): boolean => {
+      if (!color) return true;
+      const normalized = color.toLowerCase().trim();
+      return normalized === 'none' || 
+             normalized === 'transparent' ||
+             normalized === '#ffffff' || 
+             normalized === '#fff' ||
+             normalized === 'white' ||
+             normalized === 'rgb(100%, 100%, 100%)' ||
+             normalized === 'rgb(255, 255, 255)' ||
+             normalized === 'rgb(255,255,255)';
+    };
+    
+    // Process ONLY colored path elements
     let pathMatch;
     let pathCount = 0;
-    const maxPaths = 200; // Process up to 200 paths
+    const maxPaths = 200;
     
-    while ((pathMatch = pathRegex.exec(svgContent)) !== null && pathCount < maxPaths) {
+    while ((pathMatch = coloredPathRegex.exec(svgContent)) !== null && pathCount < maxPaths) {
       pathCount++;
-      const pathData = pathMatch[1];
+      const fill1 = pathMatch[1];
+      const pathData1 = pathMatch[2];
+      const pathData2 = pathMatch[3];
+      const fill2 = pathMatch[4];
       
-      try {
-        const coords = extractPathCoordinates(pathData);
-        if (coords.length > 0) {
-          allCoordinates.push(...coords);
+      const fillColor = fill1 || fill2;
+      const pathData = pathData1 || pathData2;
+      
+      // Skip white/transparent backgrounds - only process actual logo colors
+      if (!isBackgroundColor(fillColor) && pathData) {
+        try {
+          const coords = extractPathCoordinates(pathData);
+          if (coords.length > 0) {
+            allCoordinates.push(...coords);
+          }
+        } catch (coordError) {
+          console.log(`Error extracting coordinates from colored path ${pathCount}, skipping`);
+          continue;
         }
-      } catch (coordError) {
-        console.log(`Error extracting coordinates from path ${pathCount}, skipping`);
-        continue;
       }
     }
     
-    // Process rectangles
+    // Process ONLY colored rectangles
     let rectMatch;
-    while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
-      const x = parseFloat(rectMatch[1]);
-      const y = parseFloat(rectMatch[2]);
-      const width = parseFloat(rectMatch[3]);
-      const height = parseFloat(rectMatch[4]);
+    while ((rectMatch = coloredRectRegex.exec(svgContent)) !== null) {
+      const fill1 = rectMatch[1];
+      const x1 = parseFloat(rectMatch[2] || rectMatch[6]);
+      const y1 = parseFloat(rectMatch[3] || rectMatch[7]);
+      const width1 = parseFloat(rectMatch[4] || rectMatch[8]);
+      const height1 = parseFloat(rectMatch[5] || rectMatch[9]);
+      const fill2 = rectMatch[10];
       
-      if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+      const fillColor = fill1 || fill2;
+      
+      // Skip white/transparent backgrounds - only process actual logo colors
+      if (!isBackgroundColor(fillColor) && !isNaN(x1) && !isNaN(y1) && !isNaN(width1) && !isNaN(height1)) {
         allCoordinates.push(
-          { x, y },
-          { x: x + width, y },
-          { x: x + width, y: y + height },
-          { x, y: y + height }
+          { x: x1, y: y1 },
+          { x: x1 + width1, y: y1 },
+          { x: x1 + width1, y: y1 + height1 },
+          { x: x1, y: y1 + height1 }
         );
       }
     }
     
-    // Process circles
+    // Process ONLY colored circles
     let circleMatch;
-    while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
-      const cx = parseFloat(circleMatch[1]);
-      const cy = parseFloat(circleMatch[2]);
-      const r = parseFloat(circleMatch[3]);
+    while ((circleMatch = coloredCircleRegex.exec(svgContent)) !== null) {
+      const fill1 = circleMatch[1];
+      const cx1 = parseFloat(circleMatch[2] || circleMatch[5]);
+      const cy1 = parseFloat(circleMatch[3] || circleMatch[6]);
+      const r1 = parseFloat(circleMatch[4] || circleMatch[7]);
+      const fill2 = circleMatch[8];
       
-      if (!isNaN(cx) && !isNaN(cy) && !isNaN(r)) {
+      const fillColor = fill1 || fill2;
+      
+      // Skip white/transparent backgrounds - only process actual logo colors
+      if (!isBackgroundColor(fillColor) && !isNaN(cx1) && !isNaN(cy1) && !isNaN(r1)) {
         allCoordinates.push(
-          { x: cx - r, y: cy },  // Left
-          { x: cx + r, y: cy },  // Right
-          { x: cx, y: cy - r },  // Top
-          { x: cx, y: cy + r }   // Bottom
+          { x: cx1 - r1, y: cy1 },  // Left
+          { x: cx1 + r1, y: cy1 },  // Right
+          { x: cx1, y: cy1 - r1 },  // Top
+          { x: cx1, y: cy1 + r1 }   // Bottom
         );
       }
     }
     
-    console.log(`📊 Extracted ${allCoordinates.length} total coordinates from ${pathCount} paths`);
+    console.log(`📊 Extracted ${allCoordinates.length} COLORED CONTENT coordinates from ${pathCount} colored paths (backgrounds filtered out)`);
     
     if (allCoordinates.length === 0) {
       console.log('No coordinates found, using fallback dimensions');
