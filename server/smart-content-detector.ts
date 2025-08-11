@@ -135,22 +135,12 @@ function extractAllCoordinates(svgContent: string): Coordinate[] {
 }
 
 function isBackgroundPath(element: string, pathData: string): boolean {
-  // Skip very simple rectangles or lines that span the entire canvas
-  if (pathData.match(/^M\s*[-\d.]+[,\s]+[-\d.]+\s*H\s*[-\d.]+\s*V\s*[-\d.]+\s*H\s*[-\d.]+\s*Z?\s*$/)) {
+  // Skip invisible or transparent elements only
+  if (element.includes('opacity="0"') || element.includes('visibility="hidden"')) {
     return true;
   }
   
-  // Skip paths with very few coordinates (likely background shapes)
-  const coordinateMatches = pathData.match(/[-\d.]+/g);
-  if (coordinateMatches && coordinateMatches.length < 6) {
-    return true;
-  }
-  
-  // Skip invisible or transparent elements
-  if (element.includes('opacity="0"') || element.includes('fill="none"') || element.includes('visibility="hidden"')) {
-    return true;
-  }
-  
+  // For artwork content, don't skip paths based on complexity - keep all visible content
   return false;
 }
 
@@ -172,13 +162,13 @@ function filterContentCoordinates(coordinates: Coordinate[]): Coordinate[] {
   const yQ1 = yValues[Math.floor(yValues.length * 0.25)];
   const yQ3 = yValues[Math.floor(yValues.length * 0.75)];
   
-  // Expand slightly beyond interquartile range to include edge content
+  // Expand generously beyond interquartile range to capture all edge content
   const xIQR = xQ3 - xQ1;
   const yIQR = yQ3 - yQ1;
-  const xMin = xQ1 - (xIQR * 0.5);
-  const xMax = xQ3 + (xIQR * 0.5);
-  const yMin = yQ1 - (yIQR * 0.5);
-  const yMax = yQ3 + (yIQR * 0.5);
+  const xMin = xQ1 - (xIQR * 1.0);  // More generous expansion
+  const xMax = xQ3 + (xIQR * 1.0);
+  const yMin = yQ1 - (yIQR * 1.0);
+  const yMax = yQ3 + (yIQR * 1.0);
   
   console.log(`📊 Content cluster analysis: X range ${xMin.toFixed(1)} to ${xMax.toFixed(1)}, Y range ${yMin.toFixed(1)} to ${yMax.toFixed(1)}`);
   
