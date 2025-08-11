@@ -1272,45 +1272,79 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // SIMPLIFIED ROBUST BOUNDS CALCULATION - Use a reliable tight percentile approach
+    // ULTRA-AGGRESSIVE DENSITY-BASED APPROACH - Find the core logo content area
     
-    // Sort coordinates by X and Y to find percentiles
-    const sortedX = allCoordinates.map(c => c.x).sort((a, b) => a - b);
-    const sortedY = allCoordinates.map(c => c.y).sort((a, b) => a - b);
+    // Step 1: Find coordinate density clusters using smaller grid
+    const gridSize = 8; // Very small grid for precise detection
+    const densityMap = new Map();
     
-    // Use 15th and 85th percentiles to eliminate outliers and padding (30% removal total)
-    const percentileStart = 0.15; // Remove bottom 15%
-    const percentileEnd = 0.85;   // Remove top 15%
+    allCoordinates.forEach(coord => {
+      const gridX = Math.floor(coord.x / gridSize);
+      const gridY = Math.floor(coord.y / gridSize);
+      const key = `${gridX},${gridY}`;
+      densityMap.set(key, (densityMap.get(key) || 0) + 1);
+    });
     
-    const startIndexX = Math.floor(sortedX.length * percentileStart);
-    const endIndexX = Math.floor(sortedX.length * percentileEnd);
-    const startIndexY = Math.floor(sortedY.length * percentileStart);
-    const endIndexY = Math.floor(sortedY.length * percentileEnd);
+    // Step 2: Find the densest region (likely the main logo)
+    let maxDensity = 0;
+    let densestCells: string[] = [];
+    densityMap.forEach((density, key) => {
+      if (density > maxDensity) {
+        maxDensity = density;
+        densestCells = [key];
+      } else if (density === maxDensity) {
+        densestCells.push(key);
+      }
+    });
     
-    const percentileMinX = sortedX[startIndexX];
-    const percentileMaxX = sortedX[endIndexX];
-    const percentileMinY = sortedY[startIndexY];
-    const percentileMaxY = sortedY[endIndexY];
-    
-    const percentileWidth = percentileMaxX - percentileMinX;
-    const percentileHeight = percentileMaxY - percentileMinY;
-    
-    // Calculate reduction achieved
-    const widthReduction = ((rawWidth - percentileWidth) / rawWidth) * 100;
-    const heightReduction = ((rawHeight - percentileHeight) / rawHeight) * 100;
-    
-    // Validate percentile bounds are reasonable (must achieve some meaningful reduction)
-    if (percentileWidth > 20 && percentileHeight > 15 && (widthReduction > 15 || heightReduction > 15)) {
-      console.log(`🎯 PERCENTILE BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${percentileWidth.toFixed(1)}×${percentileHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction using 15-85th percentiles)`);
+    // Step 3: Find the center of the densest region
+    if (densestCells.length > 0) {
+      let totalX = 0, totalY = 0;
+      densestCells.forEach(key => {
+        const [gridX, gridY] = key.split(',').map(Number);
+        totalX += (gridX + 0.5) * gridSize;
+        totalY += (gridY + 0.5) * gridSize;
+      });
       
-      return {
-        width: percentileWidth,
-        height: percentileHeight,
-        minX: percentileMinX,
-        minY: percentileMinY,
-        maxX: percentileMaxX,
-        maxY: percentileMaxY
-      };
+      const centerX = totalX / densestCells.length;
+      const centerY = totalY / densestCells.length;
+      
+      // Step 4: Use a tight radius around the densest center for ultra-precise bounds
+      const tightRadius = Math.min(rawWidth * 0.15, rawHeight * 0.15, 50); // Very tight radius
+      
+      const coreCoordinates = allCoordinates.filter(coord => {
+        const distanceToCenter = Math.sqrt(
+          Math.pow(coord.x - centerX, 2) + Math.pow(coord.y - centerY, 2)
+        );
+        return distanceToCenter <= tightRadius;
+      });
+      
+      if (coreCoordinates.length > allCoordinates.length * 0.1) { // At least 10% of coordinates
+        const coreMinX = Math.min(...coreCoordinates.map(c => c.x));
+        const coreMinY = Math.min(...coreCoordinates.map(c => c.y));
+        const coreMaxX = Math.max(...coreCoordinates.map(c => c.x));
+        const coreMaxY = Math.max(...coreCoordinates.map(c => c.y));
+        
+        const coreWidth = coreMaxX - coreMinX;
+        const coreHeight = coreMaxY - coreMinY;
+        
+        const widthReduction = ((rawWidth - coreWidth) / rawWidth) * 100;
+        const heightReduction = ((rawHeight - coreHeight) / rawHeight) * 100;
+        
+        // Accept if we achieve significant reduction and have reasonable dimensions
+        if (coreWidth > 15 && coreHeight > 15 && (widthReduction > 40 || heightReduction > 40)) {
+          console.log(`🎯 CORE DENSITY BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${coreWidth.toFixed(1)}×${coreHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, center: ${centerX.toFixed(1)},${centerY.toFixed(1)}, radius: ${tightRadius.toFixed(1)}px)`);
+          
+          return {
+            width: coreWidth,
+            height: coreHeight,
+            minX: coreMinX,
+            minY: coreMinY,
+            maxX: coreMaxX,
+            maxY: coreMaxY
+          };
+        }
+      }
     }
     
     // STEP 3: Enhanced adaptive center-focused filtering 
