@@ -1272,63 +1272,62 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // CLUSTER ANALYSIS - Find the main logo cluster and ignore outlying background elements
+    // DENSITY-BASED FILTERING - Remove sparse outlying coordinates that create padding
     
-    // Group coordinates into clusters to find the main logo content
-    const gridSize = 20; // Larger grid for clustering
-    const clusters = new Map();
+    // Calculate coordinate density to identify main content area
+    const gridSize = 10; // Smaller grid for better precision
+    const densityMap = new Map();
     
+    // Count coordinate density in each grid cell
     allCoordinates.forEach(coord => {
       const gridX = Math.floor(coord.x / gridSize);
       const gridY = Math.floor(coord.y / gridSize);
       const key = `${gridX},${gridY}`;
-      if (!clusters.has(key)) {
-        clusters.set(key, []);
-      }
-      clusters.get(key).push(coord);
+      densityMap.set(key, (densityMap.get(key) || 0) + 1);
     });
     
-    // Find the largest cluster (main logo content)
-    let largestCluster: Array<{x: number, y: number}> = [];
-    let maxClusterSize = 0;
+    // Find minimum density threshold (coordinates in cells with meaningful content)
+    const densities = Array.from(densityMap.values());
+    const avgDensity = densities.reduce((a, b) => a + b, 0) / densities.length;
+    const minDensityThreshold = Math.max(2, avgDensity * 0.1); // At least 2 coordinates or 10% of average
     
-    clusters.forEach(cluster => {
-      if (cluster.length > maxClusterSize) {
-        maxClusterSize = cluster.length;
-        largestCluster = cluster;
-      }
+    // Filter coordinates to only include those in dense areas
+    const denseCoordinates = allCoordinates.filter(coord => {
+      const gridX = Math.floor(coord.x / gridSize);
+      const gridY = Math.floor(coord.y / gridSize);
+      const key = `${gridX},${gridY}`;
+      return (densityMap.get(key) || 0) >= minDensityThreshold;
     });
     
-    // Use only the main cluster coordinates for bounds
-    if (largestCluster.length > 0) {
-      const clusterMinX = Math.min(...largestCluster.map(c => c.x));
-      const clusterMinY = Math.min(...largestCluster.map(c => c.y));
-      const clusterMaxX = Math.max(...largestCluster.map(c => c.x));
-      const clusterMaxY = Math.max(...largestCluster.map(c => c.y));
+    if (denseCoordinates.length > 0) {
+      const denseMinX = Math.min(...denseCoordinates.map(c => c.x));
+      const denseMinY = Math.min(...denseCoordinates.map(c => c.y));
+      const denseMaxX = Math.max(...denseCoordinates.map(c => c.x));
+      const denseMaxY = Math.max(...denseCoordinates.map(c => c.y));
       
-      const clusterWidth = clusterMaxX - clusterMinX;
-      const clusterHeight = clusterMaxY - clusterMinY;
+      const denseWidth = denseMaxX - denseMinX;
+      const denseHeight = denseMaxY - denseMinY;
       
-      const widthReduction = ((rawWidth - clusterWidth) / rawWidth) * 100;
-      const heightReduction = ((rawHeight - clusterHeight) / rawHeight) * 100;
+      const widthReduction = ((rawWidth - denseWidth) / rawWidth) * 100;
+      const heightReduction = ((rawHeight - denseHeight) / rawHeight) * 100;
       
-      console.log(`🎯 MAIN LOGO CLUSTER BOUNDS: ${clusterWidth.toFixed(1)}×${clusterHeight.toFixed(1)}px (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction from clustering, ${largestCluster.length}/${allCoordinates.length} coordinates)`);
+      console.log(`🎯 DENSE CONTENT BOUNDS: ${denseWidth.toFixed(1)}×${denseHeight.toFixed(1)}px (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, ${denseCoordinates.length}/${allCoordinates.length} coordinates in dense areas)`);
       
-      // Use cluster bounds if they provide meaningful reduction
-      if (widthReduction > 10 || heightReduction > 10) {
+      // Use dense bounds if they provide reasonable reduction but not too extreme
+      if ((widthReduction > 5 && widthReduction < 80) || (heightReduction > 5 && heightReduction < 80)) {
         return {
-          width: clusterWidth,
-          height: clusterHeight,
-          minX: clusterMinX,
-          minY: clusterMinY,
-          maxX: clusterMaxX,
-          maxY: clusterMaxY
+          width: denseWidth,
+          height: denseHeight,
+          minX: denseMinX,
+          minY: denseMinY,
+          maxX: denseMaxX,
+          maxY: denseMaxY
         };
       }
     }
     
-    // Fallback to full content bounds if clustering doesn't help
-    console.log(`🎯 USING FULL CONTENT BOUNDS: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (clustering ineffective)`);
+    // Fallback to full content bounds if density filtering doesn't provide reasonable results
+    console.log(`🎯 USING FULL CONTENT BOUNDS: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (density filtering ineffective)`);
     
     return {
       width: rawWidth,
