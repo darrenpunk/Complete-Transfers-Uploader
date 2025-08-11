@@ -7,3 +7,5 @@ access_artwork_canvas_element_user,artwork.canvas.element.user,model_artwork_can
 access_artwork_canvas_element_public,artwork.canvas.element.public,model_artwork_canvas_element,,1,1,1,0
 access_artwork_template_mapping_user,artwork.template.mapping.user,model_artwork_template_mapping,base.group_user,1,1,1,1
 access_artwork_template_mapping_public,artwork.template.mapping.public,model_artwork_template_mapping,,1,0,0,0
+access_product_price_tier_user,product.price.tier.user,model_product_price_tier,base.group_user,1,1,1,1
+access_product_price_tier_public,product.price.tier.public,model_product_price_tier,,1,0,0,0
