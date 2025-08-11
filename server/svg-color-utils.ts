@@ -844,7 +844,50 @@ function calculateVectorizedSVGBounds(svgContent: string): { width: number; heig
     const rawWidth = maxX - minX;
     const rawHeight = maxY - minY;
     
-    // Use exact dimensions for vectorized content (AI has already optimized)
+    // Apply universal content-focused bounds for vectorized SVGs too
+    console.log(`🎯 VECTORIZED CONTENT ANALYSIS: Raw detected: ${rawWidth}×${rawHeight}px from ${allCoordinates.length} coordinates`);
+    
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Filter out edge coordinates that might be from viewBox padding
+    const contentCoords = allCoordinates.filter(coord => {
+      const relativeX = (coord.x - minX) / rawWidth;
+      const relativeY = (coord.y - minY) / rawHeight;
+      
+      // Keep coordinates that aren't hugging edges
+      return relativeX > 0.03 && relativeX < 0.97 && relativeY > 0.03 && relativeY < 0.97;
+    });
+    
+    // If we filtered out significant padding, use the tighter bounds
+    if (contentCoords.length > allCoordinates.length * 0.5) {
+      const contentMinX = Math.min(...contentCoords.map(c => c.x));
+      const contentMinY = Math.min(...contentCoords.map(c => c.y));
+      const contentMaxX = Math.max(...contentCoords.map(c => c.x));
+      const contentMaxY = Math.max(...contentCoords.map(c => c.y));
+      
+      const contentWidth = contentMaxX - contentMinX;
+      const contentHeight = contentMaxY - contentMinY;
+      
+      // Calculate whitespace removal
+      const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
+      const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
+      
+      if (contentWidth > 10 && contentHeight > 10 && (widthReduction > 5 || heightReduction > 5)) {
+        console.log(`🎯 VECTORIZED CONTENT-FOCUSED BOUNDS: ${rawWidth}×${rawHeight} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed)`);
+        
+        return {
+          width: contentWidth,
+          height: contentHeight,
+          minX: contentMinX,
+          minY: contentMinY,
+          maxX: contentMaxX,
+          maxY: contentMaxY
+        };
+      }
+    }
+    
+    // Use original bounds if content-focused filtering didn't help
     const finalWidth = Math.max(10, rawWidth); // Minimum 10px width
     const finalHeight = Math.max(10, rawHeight); // Minimum 10px height
     
@@ -981,49 +1024,64 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const rawWidth = maxX - minX;
         const rawHeight = maxY - minY;
         
-        // Check if we're still getting massive bounds that suggest background contamination
-        // Only apply center-focused filtering if bounds are really large (likely background contamination)
-        // A3 size at 283 DPI is 838×1190 pixels, so increase threshold to handle real A3 artwork
-        if (rawWidth > 1200 && rawHeight > 1200) {
-          // Try to find a better estimate by looking at the coordinate distribution
-          const centerX = (minX + maxX) / 2;
-          const centerY = (minY + maxY) / 2;
+        // UNIVERSAL CONTENT-FOCUSED BOUNDS for text/glyph SVGs (same approach as regular SVGs)
+        console.log(`🎯 TEXT/GLYPH CONTENT ANALYSIS: Raw detected: ${rawWidth}×${rawHeight}px from ${coloredElements.length} coordinates`);
+        
+        // Apply the same intelligent content bounds detection for text SVGs
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        
+        // STEP 1: Remove coordinates hugging the edges (likely background padding)
+        const borderFilteredCoords = coloredElements.filter(coord => {
+          const relativeX = (coord.x - minX) / rawWidth;
+          const relativeY = (coord.y - minY) / rawHeight;
           
-          // Filter coordinates to those closer to the center (likely actual content)
-          const centerCoords = coloredElements.filter(coord => {
-            const distFromCenterX = Math.abs(coord.x - centerX);
-            const distFromCenterY = Math.abs(coord.y - centerY);
-            return distFromCenterX < rawWidth * 0.3 && distFromCenterY < rawHeight * 0.3;
-          });
+          // Keep coordinates that aren't on the very edges
+          return relativeX > 0.05 && relativeX < 0.95 && relativeY > 0.05 && relativeY < 0.95;
+        });
+        
+        // STEP 2: Focus on center-concentrated content (text is usually centered)
+        const centerFocusedCoords = borderFilteredCoords.filter(coord => {
+          const distFromCenterX = Math.abs(coord.x - centerX);
+          const distFromCenterY = Math.abs(coord.y - centerY);
           
-          if (centerCoords.length > 0) {
-            const centerMinX = Math.min(...centerCoords.map(e => e.x));
-            const centerMinY = Math.min(...centerCoords.map(e => e.y));
-            const centerMaxX = Math.max(...centerCoords.map(e => e.x));
-            const centerMaxY = Math.max(...centerCoords.map(e => e.y));
+          // For text, use a slightly tighter center focus (35% instead of 40%)
+          return distFromCenterX < rawWidth * 0.35 && distFromCenterY < rawHeight * 0.35;
+        });
+        
+        // Use the best coordinate set
+        const bestCoords = centerFocusedCoords.length > coloredElements.length * 0.15 
+          ? centerFocusedCoords
+          : borderFilteredCoords.length > coloredElements.length * 0.3 
+            ? borderFilteredCoords 
+            : coloredElements;
+        
+        if (bestCoords.length > 0 && bestCoords.length < coloredElements.length) {
+          const contentMinX = Math.min(...bestCoords.map(e => e.x));
+          const contentMinY = Math.min(...bestCoords.map(e => e.y));
+          const contentMaxX = Math.max(...bestCoords.map(e => e.x));
+          const contentMaxY = Math.max(...bestCoords.map(e => e.y));
+          
+          const contentWidth = contentMaxX - contentMinX;
+          const contentHeight = contentMaxY - contentMinY;
+          
+          // Calculate whitespace removal percentage
+          const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
+          const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
+          
+          // Apply if we've achieved meaningful whitespace removal
+          if (contentWidth > 0 && contentHeight > 0 && (widthReduction > 15 || heightReduction > 15)) {
+            console.log(`🎯 TEXT CONTENT-FOCUSED BOUNDS: ${rawWidth}×${rawHeight} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed)`);
             
-            const centerWidth = centerMaxX - centerMinX;
-            const centerHeight = centerMaxY - centerMinY;
-            
-            if (centerWidth > 0 && centerHeight > 0 && centerWidth < rawWidth * 0.8) {
-              console.log(`Using center-focused bounds for text logo: ${centerWidth.toFixed(1)}×${centerHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
-              
-              const contentWidth = centerWidth; // Use exact floating point value, no rounding
-              const contentHeight = centerHeight; // Use exact floating point value, no rounding
-              
-              // Allow larger dimensions for real content - don't cap too aggressively
-              return {
-                width: contentWidth, // Use exact content width for accuracy  
-                height: contentHeight // Use exact content height for accuracy
-              };
-            }
+            return {
+              width: contentWidth,
+              height: contentHeight,
+              minX: contentMinX,
+              minY: contentMinY,
+              maxX: contentMaxX,
+              maxY: contentMaxY
+            };
           }
-          
-          console.log(`Detected oversized bounds for text logo (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using conservative text sizing`);
-          return {
-            width: 350,
-            height: 120
-          };
         }
         
         // For text/glyph SVGs, use exact content dimensions for accuracy
@@ -1142,71 +1200,79 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       };
     }
     
-    // Check if we're still getting large bounds that need tightening
-    // For PDF content, be much more aggressive - even 600px+ can contain padding
-    if (rawWidth > 400 || rawHeight > 300) {
-      // Try to find a better estimate by looking at coordinate clustering
-      const centerX = (minX + maxX) / 2;
-      const centerY = (minY + maxY) / 2;
+    // UNIVERSAL CONTENT-FOCUSED BOUNDS CALCULATION
+    // Apply intelligent content bounds detection for ALL file types, ignoring whitespace and viewBox padding
+    
+    console.log(`🎯 ANALYZING CONTENT BOUNDS: Raw detected: ${rawWidth}×${rawHeight}px from ${coloredElements.length} coordinates`);
+    
+    // Always apply content-focused filtering - don't just target large files
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // STEP 1: Remove extreme outliers that suggest background/viewBox padding
+    const outlierThreshold = 0.95; // Remove coordinates in outer 5% of bounds
+    const borderFilteredCoords = coloredElements.filter(coord => {
+      const relativeX = (coord.x - minX) / rawWidth;
+      const relativeY = (coord.y - minY) / rawHeight;
       
-      // Filter coordinates to exclude outliers (likely background elements)
-      const filteredCoords = coloredElements.filter(coord => {
-        const distFromCenterX = Math.abs(coord.x - centerX);
-        const distFromCenterY = Math.abs(coord.y - centerY);
-        // Keep coordinates within 30% of the total span from center (more aggressive)
-        return distFromCenterX < rawWidth * 0.3 && distFromCenterY < rawHeight * 0.3;
-      });
+      // Keep coordinates that aren't hugging the edges (suggests content vs. background)
+      const notOnLeftEdge = relativeX > 0.05;
+      const notOnRightEdge = relativeX < 0.95;
+      const notOnTopEdge = relativeY > 0.05;
+      const notOnBottomEdge = relativeY < 0.95;
       
-      if (filteredCoords.length > coloredElements.length * 0.3) { // Be more aggressive - only need 30% of coordinates in center
-        const filteredMinX = Math.min(...filteredCoords.map(e => e.x));
-        const filteredMinY = Math.min(...filteredCoords.map(e => e.y));
-        const filteredMaxX = Math.max(...filteredCoords.map(e => e.x));
-        const filteredMaxY = Math.max(...filteredCoords.map(e => e.y));
+      return notOnLeftEdge && notOnRightEdge && notOnTopEdge && notOnBottomEdge;
+    });
+    
+    // STEP 2: Focus on coordinate density - where most content actually is
+    const densityFilteredCoords = borderFilteredCoords.length > coloredElements.length * 0.4 
+      ? borderFilteredCoords 
+      : coloredElements; // Fallback if too aggressive
+    
+    // STEP 3: Find coordinates concentrated around the center (actual content)
+    const centerFocusedCoords = densityFilteredCoords.filter(coord => {
+      const distFromCenterX = Math.abs(coord.x - centerX);
+      const distFromCenterY = Math.abs(coord.y - centerY);
+      
+      // Keep coordinates within 40% of total span from center - content is usually centered
+      return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
+    });
+    
+    // Choose the best coordinate set based on content density
+    const bestCoords = centerFocusedCoords.length > coloredElements.length * 0.2
+      ? centerFocusedCoords
+      : densityFilteredCoords;
+    
+    if (bestCoords.length > 0 && bestCoords.length < coloredElements.length) {
+      const contentMinX = Math.min(...bestCoords.map(e => e.x));
+      const contentMinY = Math.min(...bestCoords.map(e => e.y));
+      const contentMaxX = Math.max(...bestCoords.map(e => e.x));
+      const contentMaxY = Math.max(...bestCoords.map(e => e.y));
+      
+      const contentWidth = contentMaxX - contentMinX;
+      const contentHeight = contentMaxY - contentMinY;
+      
+      // Calculate improvement percentage
+      const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
+      const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
+      
+      // Only apply if we've achieved meaningful whitespace removal
+      if (contentWidth > 0 && contentHeight > 0 && (widthReduction > 10 || heightReduction > 10)) {
+        console.log(`🎯 CONTENT-FOCUSED BOUNDS: ${rawWidth}×${rawHeight} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed)`);
         
-        const filteredWidth = filteredMaxX - filteredMinX;
-        const filteredHeight = filteredMaxY - filteredMinY;
-        
-        // Be even more aggressive about detecting significant filtering
-        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.6 || filteredHeight < rawHeight * 0.6)) {
-          console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
-          
-          // Apply additional tightening for PDF-derived content
-          // Check if this looks like PDF content by examining the coordinate distribution
-          const isPdfDerived = svgContent.includes('.pdf.svg') || rawWidth > 800 || rawHeight > 800;
-          
-          if (isPdfDerived) {
-            // For PDF content, apply an additional 20% margin reduction to eliminate edge padding
-            const tightenedWidth = filteredWidth * 0.8;
-            const tightenedHeight = filteredHeight * 0.8;
-            
-            // Don't make it too small though
-            const finalWidth = Math.max(tightenedWidth, Math.min(300, filteredWidth));
-            const finalHeight = Math.max(tightenedHeight, Math.min(200, filteredHeight));
-            
-            console.log(`✅ TIGHTENED PDF BOUNDS: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} → ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)} (20% margin reduction)`);
-            
-            return {
-              width: finalWidth,
-              height: finalHeight
-            };
-          }
-          
-          return {
-            width: filteredWidth,
-            height: filteredHeight
-          };
-        }
+        return {
+          width: contentWidth,
+          height: contentHeight,
+          minX: contentMinX,
+          minY: contentMinY,
+          maxX: contentMaxX,
+          maxY: contentMaxY
+        };
       }
-      
-      console.log(`Detected oversized bounds (${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}), using filtered content sizing`);
-      // Even for oversized content, try to find the actual logo content 
-      const filteredWidth = Math.min(rawWidth, 600); // Cap only truly excessive sizes
-      const filteredHeight = Math.min(rawHeight, 600);
-      return {
-        width: filteredWidth,
-        height: filteredHeight
-      };
     }
+    
+    // If content-focused filtering didn't help, content is likely well-bounded already
+    console.log(`📏 USING ORIGINAL BOUNDS: Content appears well-bounded at ${rawWidth}×${rawHeight}px`);
     
     // Use exact raw floating point dimensions for perfect precision
     const contentWidth = rawWidth; // Use exact floating point value, no rounding
