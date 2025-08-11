@@ -1273,30 +1273,21 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
     // SIMPLE CONTENT BOUNDS - Just use the exact content dimensions
-    // Find the actual content boundaries (where the logo content actually is)
-    const contentMinX = Math.min(...allCoordinates.map(c => c.x));
-    const contentMinY = Math.min(...allCoordinates.map(c => c.y));
-    const contentMaxX = Math.max(...allCoordinates.map(c => c.x));
-    const contentMaxY = Math.max(...allCoordinates.map(c => c.y));
+    // The content coordinates ARE the content boundaries already
+    const contentWidth = rawWidth;  // Raw bounds already represent content bounds
+    const contentHeight = rawHeight;
     
-    const contentWidth = contentMaxX - contentMinX;
-    const contentHeight = contentMaxY - contentMinY;
+    console.log(`🎯 USING EXACT CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px (no filtering applied - direct content dimensions)`);
     
-    // Calculate how much whitespace would be removed
-    const widthReduction = ((rawWidth - contentWidth) / rawWidth) * 100;
-    const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
-    
-    console.log(`🎯 CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removal)`);
-    
-    // Use content bounds if they're reasonable and remove meaningful whitespace
-    if (contentWidth > 10 && contentHeight > 10 && (widthReduction > 5 || heightReduction > 5)) {
+    // Always use the exact content dimensions (no filtering or reduction)
+    if (contentWidth > 0 && contentHeight > 0) {
       return {
         width: contentWidth,
         height: contentHeight,
-        minX: contentMinX,
-        minY: contentMinY,
-        maxX: contentMaxX,
-        maxY: contentMaxY
+        minX,
+        minY,
+        maxX,
+        maxY
       };
     }
     
