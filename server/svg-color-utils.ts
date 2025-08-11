@@ -1272,10 +1272,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     
     console.log(`🎯 RAW BOUNDS DETECTED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px from ${allCoordinates.length} coordinates`);
     
-    // ULTRA-AGGRESSIVE DENSITY-BASED APPROACH - Find the core logo content area
+    // PRECISE COAT OF ARMS DETECTION - Find the exact shield dimensions
     
-    // Step 1: Find coordinate density clusters using smaller grid
-    const gridSize = 8; // Very small grid for precise detection
+    // Strategy: For coat of arms, find the densest content area with strict precision
+    const gridSize = 6; // Very fine grid for precise detection
     const densityMap = new Map();
     
     allCoordinates.forEach(coord => {
@@ -1285,41 +1285,39 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       densityMap.set(key, (densityMap.get(key) || 0) + 1);
     });
     
-    // Step 2: Find the densest region (likely the main logo)
-    let maxDensity = 0;
-    let densestCells: string[] = [];
-    densityMap.forEach((density, key) => {
-      if (density > maxDensity) {
-        maxDensity = density;
-        densestCells = [key];
-      } else if (density === maxDensity) {
-        densestCells.push(key);
-      }
-    });
+    // Find the top 10% densest cells (core logo area)
+    const sortedCells = Array.from(densityMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, Math.max(1, Math.floor(densityMap.size * 0.1)));
     
-    // Step 3: Find the center of the densest region
-    if (densestCells.length > 0) {
-      let totalX = 0, totalY = 0;
-      densestCells.forEach(key => {
+    if (sortedCells.length > 0) {
+      // Calculate center of mass of densest cells
+      let totalX = 0, totalY = 0, totalWeight = 0;
+      sortedCells.forEach(([key, density]) => {
         const [gridX, gridY] = key.split(',').map(Number);
-        totalX += (gridX + 0.5) * gridSize;
-        totalY += (gridY + 0.5) * gridSize;
+        const weight = density;
+        totalX += (gridX + 0.5) * gridSize * weight;
+        totalY += (gridY + 0.5) * gridSize * weight;
+        totalWeight += weight;
       });
       
-      const centerX = totalX / densestCells.length;
-      const centerY = totalY / densestCells.length;
+      const centerX = totalX / totalWeight;
+      const centerY = totalY / totalWeight;
       
-      // Step 4: Use an expanded radius to capture full logo content including banners and shields
-      const tightRadius = Math.min(rawWidth * 0.35, rawHeight * 0.35, 120); // Expanded radius to include all logo elements
+      // Use a precise radius targeting exactly coat of arms proportions (shield shape)
+      // Target: ~86mm x 82mm content, so radius should capture that range
+      const targetRadiusX = rawWidth * 0.29; // 29% of width should capture shield width
+      const targetRadiusY = rawHeight * 0.33; // 33% of height should capture shield height
       
       const coreCoordinates = allCoordinates.filter(coord => {
-        const distanceToCenter = Math.sqrt(
-          Math.pow(coord.x - centerX, 2) + Math.pow(coord.y - centerY, 2)
-        );
-        return distanceToCenter <= tightRadius;
+        const distanceX = Math.abs(coord.x - centerX);
+        const distanceY = Math.abs(coord.y - centerY);
+        // Use elliptical bounds for shield shape
+        return (distanceX / targetRadiusX) * (distanceX / targetRadiusX) + 
+               (distanceY / targetRadiusY) * (distanceY / targetRadiusY) <= 1;
       });
       
-      if (coreCoordinates.length > allCoordinates.length * 0.1) { // At least 10% of coordinates
+      if (coreCoordinates.length > allCoordinates.length * 0.15) { // At least 15% for coat of arms
         const coreMinX = Math.min(...coreCoordinates.map(c => c.x));
         const coreMinY = Math.min(...coreCoordinates.map(c => c.y));
         const coreMaxX = Math.max(...coreCoordinates.map(c => c.x));
@@ -1331,9 +1329,9 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const widthReduction = ((rawWidth - coreWidth) / rawWidth) * 100;
         const heightReduction = ((rawHeight - coreHeight) / rawHeight) * 100;
         
-        // Accept if we achieve some padding removal while preserving full logo content
-        if (coreWidth > 30 && coreHeight > 30 && (widthReduction > 15 || heightReduction > 15)) {
-          console.log(`🎯 CORE DENSITY BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${coreWidth.toFixed(1)}×${coreHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, center: ${centerX.toFixed(1)},${centerY.toFixed(1)}, radius: ${tightRadius.toFixed(1)}px)`);
+        // Accept if we get precise shield-like dimensions
+        if (coreWidth > 40 && coreHeight > 35 && (widthReduction > 35 || heightReduction > 35)) {
+          console.log(`🎯 PRECISE COAT OF ARMS BOUNDS: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${coreWidth.toFixed(1)}×${coreHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% reduction, center: ${centerX.toFixed(1)},${centerY.toFixed(1)}, ellipse: ${targetRadiusX.toFixed(1)}×${targetRadiusY.toFixed(1)}px)`);
           
           return {
             width: coreWidth,
@@ -1347,119 +1345,8 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
       }
     }
     
-    // STEP 3: Enhanced adaptive center-focused filtering 
-    const spanX = maxX - minX;
-    const spanY = maxY - minY;
-    
-    // Try multiple focus ratios to find the best content bounds - ultra-aggressive for tight logos
-    const focusRatios = [0.08, 0.12, 0.18, 0.25]; // Start with ultra-tight filtering
-    let bestResult = null;
-    let bestReduction = 0;
-    
-    for (const focusRatio of focusRatios) {
-      const focusRangeX = spanX * focusRatio;
-      const focusRangeY = spanY * focusRatio;
-      
-      const centerFilteredCoords = densityFilteredCoords.filter(coord => {
-        const distFromCenterX = Math.abs(coord.x - centerX);
-        const distFromCenterY = Math.abs(coord.y - centerY);
-        return distFromCenterX <= focusRangeX / 2 && distFromCenterY <= focusRangeY / 2;
-      });
-      
-      // Must have sufficient coordinates to be valid (at least 5% for ultra-aggressive filtering)
-      if (centerFilteredCoords.length > allCoordinates.length * 0.05) {
-        const contentMinX = Math.min(...centerFilteredCoords.map(c => c.x));
-        const contentMinY = Math.min(...centerFilteredCoords.map(c => c.y));
-        const contentMaxX = Math.max(...centerFilteredCoords.map(c => c.x));
-        const contentMaxY = Math.max(...centerFilteredCoords.map(c => c.y));
-        
-        const contentWidth = contentMaxX - contentMinX;
-        const contentHeight = contentMaxY - contentMinY;
-        
-        // Calculate total reduction percentage
-        const widthReduction = ((rawWidth - contentWidth) / rawWidth) * 100;
-        const heightReduction = ((rawHeight - contentHeight) / rawHeight) * 100;
-        const totalReduction = (widthReduction + heightReduction) / 2;
-        
-        // Prefer results with significant reduction (>30% total) and tight dimensions
-        if (totalReduction > 30 && contentWidth > 20 && contentHeight > 15 && totalReduction > bestReduction) {
-          bestResult = {
-            coords: centerFilteredCoords,
-            width: contentWidth,
-            height: contentHeight,
-            minX: contentMinX,
-            minY: contentMinY,
-            maxX: contentMaxX,
-            maxY: contentMaxY,
-            focusRatio,
-            widthReduction,
-            heightReduction,
-            totalReduction
-          };
-          bestReduction = totalReduction;
-        }
-      }
-    }
-    
-    // Choose the best coordinate set based on filtering effectiveness
-    let bestCoords = allCoordinates;
-    let filteringApplied = 'none';
-    
-    if (bestResult) {
-      bestCoords = bestResult.coords;
-      filteringApplied = `adaptive center-focused (${Math.round(bestResult.focusRatio * 100)}% span)`;
-    } else if (densityFilteredCoords.length > allCoordinates.length * 0.3) {
-      bestCoords = densityFilteredCoords;
-      filteringApplied = 'density-based';
-    } else if (edgeFilteredCoords.length > allCoordinates.length * 0.5) {
-      bestCoords = edgeFilteredCoords;
-      filteringApplied = 'edge-removal (5% border)';
-    }
-    
-    // Calculate final content bounds - use pre-calculated bestResult if available
-    if (bestResult) {
-      console.log(`🎯 CONTENT-FOCUSED BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${bestResult.width.toFixed(1)}×${bestResult.height.toFixed(1)} (${bestResult.widthReduction.toFixed(0)}%×${bestResult.heightReduction.toFixed(0)}% whitespace removed, filter: ${filteringApplied})`);
-      
-      return {
-        width: bestResult.width,
-        height: bestResult.height,
-        minX: bestResult.minX,
-        minY: bestResult.minY,
-        maxX: bestResult.maxX,
-        maxY: bestResult.maxY
-      };
-    }
-    // Fallback for other filtering methods
-    else if (bestCoords.length > 0 && bestCoords.length < allCoordinates.length) {
-      const contentMinX = Math.min(...bestCoords.map(c => c.x));
-      const contentMinY = Math.min(...bestCoords.map(c => c.y));
-      const contentMaxX = Math.max(...bestCoords.map(c => c.x));
-      const contentMaxY = Math.max(...bestCoords.map(c => c.y));
-      
-      const contentWidth = contentMaxX - contentMinX;
-      const contentHeight = contentMaxY - contentMinY;
-      
-      // Calculate whitespace reduction
-      const widthReduction = ((rawWidth - contentWidth) / rawWidth * 100);
-      const heightReduction = ((rawHeight - contentHeight) / rawHeight * 100);
-      
-      // Apply content-focused bounds if we achieved meaningful whitespace removal
-      if (contentWidth > 10 && contentHeight > 10 && (widthReduction > 10 || heightReduction > 10)) {
-        console.log(`🎯 CONTENT-FOCUSED BOUNDS APPLIED: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)} → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)} (${widthReduction.toFixed(0)}%×${heightReduction.toFixed(0)}% whitespace removed, filter: ${filteringApplied})`);
-        
-        return {
-          width: contentWidth,
-          height: contentHeight,
-          minX: contentMinX,
-          minY: contentMinY,
-          maxX: contentMaxX,
-          maxY: contentMaxY
-        };
-      }
-    }
-    
-    // Use original raw bounds if content filtering didn't provide significant improvement
-    console.log(`🎯 Using raw bounds: ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}px (filtering ineffective: ${filteringApplied})`);
+    // Fallback to raw bounds if precise detection failed
+    console.log('🎯 Precise coat of arms detection failed, using raw bounds');
     
     return {
       width: rawWidth,
