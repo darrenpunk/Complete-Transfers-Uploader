@@ -1233,25 +1233,23 @@ export async function registerRoutes(app: express.Application) {
           try {
             const svgPath = path.join(uploadDir, finalFilename);
             const svgContent = fs.readFileSync(svgPath, 'utf8');
-            const { detectSimpleContentBounds, boundsToMillimeters } = await import('./simple-bounds-detector');
+            const { detectSmartContentBounds } = await import('./smart-content-detector');
             
-            const simpleBounds = detectSimpleContentBounds(svgContent);
+            const smartBounds = detectSmartContentBounds(svgContent);
             
-            if (simpleBounds && simpleBounds.width > 0 && simpleBounds.height > 0) {
-              // Use simple, direct content bounds - no complex calculations
-              displayWidth = simpleBounds.width;
-              displayHeight = simpleBounds.height;
-              
-              const mmDimensions = boundsToMillimeters(simpleBounds);
-              console.log(`✅ SIMPLE CONTENT BOUNDS: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px = ${mmDimensions.widthMm.toFixed(1)}×${mmDimensions.heightMm.toFixed(1)}mm`);
+            if (smartBounds && smartBounds.width > 0 && smartBounds.height > 0) {
+              // Use smart content bounds that filter out background/padding
+              displayWidth = smartBounds.width;
+              displayHeight = smartBounds.height;
+              console.log(`🎯 Smart bounds applied: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px`);
             } else {
               // Fallback: use original content bounds
-              console.log(`⚠️ Simple bounds failed, using contentBounds dimensions`);
+              console.log(`⚠️ Smart bounds failed, using contentBounds dimensions`);
               displayWidth = contentBounds.width;
               displayHeight = contentBounds.height;
             }
           } catch (error) {
-            console.error(`❌ Simple bounds detection error:`, error);
+            console.error(`❌ Smart bounds detection error:`, error);
             displayWidth = contentBounds.width;
             displayHeight = contentBounds.height;
           }

@@ -17,10 +17,10 @@ interface ContentBounds {
 }
 
 export function detectSimpleContentBounds(svgContent: string): ContentBounds | null {
-  console.log('🎯 SIMPLE BOUNDS DETECTION: Starting direct coordinate extraction...');
+  console.log('🎯 SIMPLE BOUNDS DETECTION: Starting smart content extraction...');
   
   try {
-    // Extract all drawing coordinates from visible elements
+    // Extract visible elements, filtering out backgrounds and padding
     const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/g;
     const rectRegex = /<rect[^>]*?x="([^"]*?)"[^>]*?y="([^"]*?)"[^>]*?width="([^"]*?)"[^>]*?height="([^"]*?)"/g;
     const circleRegex = /<circle[^>]*?cx="([^"]*?)"[^>]*?cy="([^"]*?)"[^>]*?r="([^"]*?)"/g;
@@ -28,16 +28,21 @@ export function detectSimpleContentBounds(svgContent: string): ContentBounds | n
     // Coordinate extraction patterns
     const coordinateRegex = /([ML])\s*([-\d.]+)[,\s]+([-\d.]+)|([HV])\s*([-\d.]+)|([CSQTA])\s*([-\d.,\s]+)/g;
     
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let coordinateCount = 0;
+    let allCoordinates: { x: number, y: number, pathId: number }[] = [];
     
-    // Process all paths
+    // Process all paths and collect coordinates with metadata
     let match;
     let pathCount = 0;
     
     while ((match = pathRegex.exec(svgContent)) !== null) {
       pathCount++;
       const pathData = match[1];
+      const fullPathElement = match[0];
+      
+      // Skip background elements, large rectangles, and invisible elements
+      if (isBackgroundElement(fullPathElement, pathData)) {
+        continue;
+      }
       
       // Extract coordinates from path data
       let coordMatch;
