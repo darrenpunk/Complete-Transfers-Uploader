@@ -489,8 +489,11 @@ export default function CanvasWorkspace({
     if (!element) return;
     
     event.preventDefault();
+    event.stopPropagation();
     setIsDragging(true);
     onElementSelect(element);
+    
+    console.log('🎯 Starting drag for element:', element.id);
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
@@ -509,10 +512,13 @@ export default function CanvasWorkspace({
         elementDisplayY = element.y * mmToPixelRatio * (zoom / 100);
       }
       
-      setDragOffset({
+      const calculatedOffset = {
         x: event.clientX - rect.left - elementDisplayX,
         y: event.clientY - rect.top - elementDisplayY
-      });
+      };
+      
+      console.log('🎯 Drag offset calculated:', calculatedOffset);
+      setDragOffset(calculatedOffset);
     }
   };
 
@@ -566,9 +572,14 @@ export default function CanvasWorkspace({
             minY = safetyMargin;
           }
 
+          const constrainedX = Math.max(minX, Math.min(newX, maxX));
+          const constrainedY = Math.max(minY, Math.min(newY, maxY));
+          
+          console.log('🎯 Dragging to:', { x: constrainedX, y: constrainedY });
+          
           updateElementDirect(selectedElement.id, { 
-            x: Math.max(minX, Math.min(newX, maxX)), 
-            y: Math.max(minY, Math.min(newY, maxY)) 
+            x: constrainedX, 
+            y: constrainedY 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
@@ -710,6 +721,9 @@ export default function CanvasWorkspace({
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        console.log('🎯 Ending drag');
+      }
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
@@ -1427,7 +1441,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
-                  className={`canvas-element absolute cursor-move`}
+                  className={`canvas-element absolute ${isDragging && selectedElement?.id === element.id ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: elementX,
                     top: elementY,
@@ -1440,7 +1454,8 @@ export default function CanvasWorkspace({
                       ? `2px solid #961E75` 
                       : 'none',
                     outlineOffset: '0px',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    userSelect: 'none'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
