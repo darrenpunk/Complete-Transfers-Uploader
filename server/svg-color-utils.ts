@@ -1157,7 +1157,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         return distFromCenterX < rawWidth * 0.4 && distFromCenterY < rawHeight * 0.4;
       });
       
-      if (filteredCoords.length > coloredElements.length * 0.5) { // At least half the coordinates should be in center
+      if (filteredCoords.length > coloredElements.length * 0.3) { // Be more aggressive - only need 30% of coordinates in center
         const filteredMinX = Math.min(...filteredCoords.map(e => e.x));
         const filteredMinY = Math.min(...filteredCoords.map(e => e.y));
         const filteredMaxX = Math.max(...filteredCoords.map(e => e.x));
@@ -1166,15 +1166,34 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
         const filteredWidth = filteredMaxX - filteredMinX;
         const filteredHeight = filteredMaxY - filteredMinY;
         
-        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.7 || filteredHeight < rawHeight * 0.7)) {
+        // Be even more aggressive about detecting significant filtering
+        if (filteredWidth > 0 && filteredHeight > 0 && (filteredWidth < rawWidth * 0.5 || filteredHeight < rawHeight * 0.5)) {
           console.log(`Using filtered bounds: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} instead of ${rawWidth.toFixed(1)}×${rawHeight.toFixed(1)}`);
           
-          const contentWidth = filteredWidth; // Use exact floating point value, no rounding
-          const contentHeight = filteredHeight; // Use exact floating point value, no rounding
+          // Apply additional tightening for PDF-derived content
+          // Check if this looks like PDF content by examining the coordinate distribution
+          const isPdfDerived = svgContent.includes('.pdf.svg') || rawWidth > 800 || rawHeight > 800;
+          
+          if (isPdfDerived) {
+            // For PDF content, apply an additional 20% margin reduction to eliminate edge padding
+            const tightenedWidth = filteredWidth * 0.8;
+            const tightenedHeight = filteredHeight * 0.8;
+            
+            // Don't make it too small though
+            const finalWidth = Math.max(tightenedWidth, Math.min(300, filteredWidth));
+            const finalHeight = Math.max(tightenedHeight, Math.min(200, filteredHeight));
+            
+            console.log(`✅ TIGHTENED PDF BOUNDS: ${filteredWidth.toFixed(1)}×${filteredHeight.toFixed(1)} → ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)} (20% margin reduction)`);
+            
+            return {
+              width: finalWidth,
+              height: finalHeight
+            };
+          }
           
           return {
-            width: contentWidth, // Use exact content width for accuracy
-            height: contentHeight // Use exact content height for accuracy
+            width: filteredWidth,
+            height: filteredHeight
           };
         }
       }
