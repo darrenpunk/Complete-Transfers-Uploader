@@ -847,10 +847,10 @@ export async function registerRoutes(app: express.Application) {
               // Analyze SVG content for colors and dimensions
               const svgContent = fs.readFileSync(svgPath, 'utf8');
               
-              // Calculate SVG content bounds and extract colors
-              const { calculateSVGContentBounds } = await import('./dimension-utils');
+              // Calculate SVG content bounds using advanced content-focused algorithm
+              const { calculateSVGContentBounds } = await import('./svg-color-utils');
               const contentBounds = calculateSVGContentBounds(svgContent);
-              console.log(`📐 SVG content bounds calculated:`, contentBounds);
+              console.log(`📐 SVG content bounds calculated using advanced filtering:`, contentBounds);
               
               // Extract SVG colors and dimensions
               const { detectDimensionsFromSVG } = await import('./dimension-utils');
