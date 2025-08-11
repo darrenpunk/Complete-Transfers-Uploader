@@ -1228,38 +1228,30 @@ export async function registerRoutes(app: express.Application) {
         let displayHeight = 150; // default
         
         if (contentBounds && contentBounds.width > 0 && contentBounds.height > 0) {
-          // CRITICAL PDF FIX: For PDF-derived SVGs, recalculate content bounds to eliminate viewBox padding
-          console.log(`🔍 Checking PDF detection: finalFilename="${finalFilename}", includes .pdf.svg: ${finalFilename.includes('.pdf.svg')}`);
-          if (finalFilename.includes('.pdf.svg')) {
-            console.log(`🔧 PDF-derived SVG detected: ${finalFilename}, recalculating to eliminate viewBox padding...`);
-            try {
-              const svgPath = path.join(uploadDir, finalFilename);
-              const svgContent = fs.readFileSync(svgPath, 'utf8');
-              const { detectSimpleContentBounds, boundsToMillimeters } = await import('./simple-bounds-detector');
+          // ALWAYS use simple content bounds detection for ALL SVG files
+          console.log(`🔍 Processing SVG file: ${finalFilename}`);
+          try {
+            const svgPath = path.join(uploadDir, finalFilename);
+            const svgContent = fs.readFileSync(svgPath, 'utf8');
+            const { detectSimpleContentBounds, boundsToMillimeters } = await import('./simple-bounds-detector');
+            
+            const simpleBounds = detectSimpleContentBounds(svgContent);
+            
+            if (simpleBounds && simpleBounds.width > 0 && simpleBounds.height > 0) {
+              // Use simple, direct content bounds - no complex calculations
+              displayWidth = simpleBounds.width;
+              displayHeight = simpleBounds.height;
               
-              const simpleBounds = detectSimpleContentBounds(svgContent);
-              
-              if (simpleBounds && simpleBounds.width > 0 && simpleBounds.height > 0) {
-                // Use simple, direct content bounds - no complex calculations
-                displayWidth = simpleBounds.width;
-                displayHeight = simpleBounds.height;
-                
-                const mmDimensions = boundsToMillimeters(simpleBounds);
-                console.log(`✅ SIMPLE CONTENT BOUNDS: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px = ${mmDimensions.widthMm.toFixed(1)}×${mmDimensions.heightMm.toFixed(1)}mm`);
-              } else {
-                // Fallback: use default dimensions if simple bounds failed
-                console.log(`⚠️ Simple bounds failed, using fallback dimensions`);
-                displayWidth = 100; // Safe fallback
-                displayHeight = 100;
-              }
-            } catch (error) {
-              console.error(`❌ Simple bounds detection error:`, error);
+              const mmDimensions = boundsToMillimeters(simpleBounds);
+              console.log(`✅ SIMPLE CONTENT BOUNDS: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}px = ${mmDimensions.widthMm.toFixed(1)}×${mmDimensions.heightMm.toFixed(1)}mm`);
+            } else {
+              // Fallback: use original content bounds
+              console.log(`⚠️ Simple bounds failed, using contentBounds dimensions`);
               displayWidth = contentBounds.width;
               displayHeight = contentBounds.height;
             }
-
-          } else {
-            // Non-PDF: Use original content bounds
+          } catch (error) {
+            console.error(`❌ Simple bounds detection error:`, error);
             displayWidth = contentBounds.width;
             displayHeight = contentBounds.height;
           }
