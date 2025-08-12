@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING ROBUST PDF generator
-      console.log('📦 Using RobustPDFGenerator (working version)...');
-      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-      console.log('✅ RobustPDFGenerator imported successfully');
-      const generator = new RobustPDFGenerator();
-      console.log('📊 Robust generator instance created');
+      // Import the WORKING PDF generator
+      console.log('📦 Using WorkingPDFGenerator (tested and working)...');
+      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
+      console.log('✅ WorkingPDFGenerator imported successfully');
+      const generator = new WorkingPDFGenerator();
+      console.log('📊 Working generator instance created');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,7 +679,7 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating robust PDF with working vector embedding...`);
+      console.log(`🔄 Generating working PDF with proven vector embedding...`);
       const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
@@ -753,12 +753,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING ROBUST PDF generator  
-      console.log('📦 Using RobustPDFGenerator (working version)...');
-      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-      console.log('✅ RobustPDFGenerator imported successfully');
-      const generator = new RobustPDFGenerator();
-      console.log('📊 Robust generator instance created');
+      // Import the WORKING PDF generator
+      console.log('📦 Using WorkingPDFGenerator (tested and working)...');
+      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
+      console.log('✅ WorkingPDFGenerator imported successfully');
+      const generator = new WorkingPDFGenerator();
+      console.log('📊 Working generator instance created');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -772,7 +772,7 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating robust PDF with working vector embedding...`);
+      console.log(`🔄 Generating working PDF with proven vector embedding...`);
       const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
