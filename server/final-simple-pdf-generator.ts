@@ -116,26 +116,32 @@ export class FinalSimplePDFGenerator {
             console.log(`📐 Vector PDF dimensions: ${vectorWidth}×${vectorHeight}`);
             console.log(`📐 Canvas dimensions: ${width}×${height}`);
             
-            // Copy the vector page and draw it onto the current page
-            const [embeddedVectorPage] = await page.doc.copyPages(vectorDocument, [0]);
+            // Embed the vector PDF page as a form object
+            const vectorPdf = await page.doc.embedPdf(vectorPdfBytes);
+            const vectorPage = vectorPdf.getPages()[0];
             
-            // Calculate scaling to fit canvas size exactly
-            const scaleX = width / vectorWidth;
-            const scaleY = height / vectorHeight;
+            if (vectorPage) {
+              // Calculate scaling to fit canvas size exactly
+              const scaleX = width / vectorWidth;
+              const scaleY = height / vectorHeight;
+              
+              // Draw the embedded vector page at exact position
+              page.drawPage(vectorPage, {
+                x: x,
+                y: y,
+                width: width,
+                height: height
+              });
+              
+              // Clean up
+              fs.unlinkSync(tempPdfPath);
+              
+              console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) with scaling: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`);
+              return true;
+            }
             
-            // Draw the vector page content onto the current page at exact position
-            page.drawPage(embeddedVectorPage, {
-              x: x,
-              y: y,
-              width: width,
-              height: height
-            });
-            
-            // Clean up
+            // Clean up if vectorPage is null
             fs.unlinkSync(tempPdfPath);
-            
-            console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) with scaling: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`);
-            return true;
           }
         }
         
