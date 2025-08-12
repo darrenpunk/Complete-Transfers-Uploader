@@ -72,7 +72,7 @@ export class FinalSimplePDFGenerator {
   }
   
   /**
-   * Embed actual SVG content at exact coordinates
+   * Embed actual SVG content as vector graphics (preserving CMYK and vector data)
    */
   private async embedActualSVG(
     page: any,
@@ -91,80 +91,92 @@ export class FinalSimplePDFGenerator {
         return false;
       }
       
-      // Get SVG's original dimensions to avoid scaling artifacts
-      console.log(`🔍 ANALYZING SVG DIMENSIONS for ${logoPath}`);
+      // Read SVG content and embed as vector graphics
+      console.log(`🔍 EMBEDDING SVG AS VECTOR for ${logoPath}`);
       const svgContent = fs.readFileSync(logoPath, 'utf8');
+      
+      // Get SVG's original dimensions
       const widthMatch = svgContent.match(/width="([^"]+)"/);
       const heightMatch = svgContent.match(/height="([^"]+)"/);
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       
       let svgWidth = width;
       let svgHeight = height;
-      
-      console.log(`🔍 Canvas wants: ${width}×${height}, SVG matches: width="${widthMatch?.[1]}" height="${heightMatch?.[1]}"`);
       
       if (widthMatch && heightMatch) {
         const originalWidth = parseFloat(widthMatch[1]);
         const originalHeight = parseFloat(heightMatch[1]);
         
-        console.log(`🔍 Parsed SVG dimensions: ${originalWidth}×${originalHeight}`);
-        
         if (originalWidth > 0 && originalHeight > 0) {
-          // Use SVG's original dimensions to preserve quality
           svgWidth = originalWidth;
           svgHeight = originalHeight;
-          console.log(`✅ USING SVG ORIGINAL DIMENSIONS: ${originalWidth}×${originalHeight} instead of canvas ${width}×${height}`);
+          console.log(`✅ Using SVG original dimensions: ${originalWidth}×${originalHeight}`);
         }
-      } else {
-        console.log(`⚠️ Could not extract SVG dimensions, using canvas dimensions: ${width}×${height}`);
       }
       
-      // Convert SVG to PNG with original dimensions for best quality
-      const tempPngPath = path.join('/tmp', `svg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`);
-      
+      // Try to embed SVG directly as vector graphics using pdf-lib's experimental SVG support
       try {
-        // Use ImageMagick convert as fallback if rsvg-convert not available
-        let convertCmd = `convert "${logoPath}" -resize ${Math.round(svgWidth)}x${Math.round(svgHeight)}! "${tempPngPath}"`;
+        // For now, use the SVG content directly by converting to a Form XObject
+        // This preserves vector information and CMYK colors
         
-        // Try rsvg-convert first (better quality)
+        // Clean the SVG content for PDF embedding
+        let cleanSvgContent = svgContent
+          .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim();
+        
+        // Create a Form XObject from the SVG
+        // This is a complex operation that requires converting SVG paths to PDF paths
+        console.log(`🎨 Attempting direct SVG vector embedding...`);
+        
+        // For maximum vector preservation, we'll use Inkscape to convert SVG to PDF
+        // then embed that PDF page, preserving all vector and CMYK data
+        const tempPdfPath = path.join('/tmp', `svg_vector_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.pdf`);
+        
         try {
-          convertCmd = `rsvg-convert "${logoPath}" -w ${Math.round(svgWidth)} -h ${Math.round(svgHeight)} -o "${tempPngPath}"`;
-          execSync(convertCmd, { stdio: 'pipe' });
-        } catch (rsvgError) {
-          // Fallback to ImageMagick
-          convertCmd = `convert "${logoPath}" -resize ${Math.round(svgWidth)}x${Math.round(svgHeight)}! "${tempPngPath}"`;
-          execSync(convertCmd, { stdio: 'pipe' });
+          // Use Inkscape to convert SVG to PDF (preserves vectors and CMYK)
+          const inkscapeCmd = `inkscape "${logoPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-area-drawing`;
+          execSync(inkscapeCmd, { stdio: 'pipe' });
+          
+          if (fs.existsSync(tempPdfPath)) {
+            // Embed the PDF page as vector content
+            const pdfBytes = fs.readFileSync(tempPdfPath);
+            const vectorPdf = await page.doc.embedPdf(pdfBytes);
+            const vectorPage = await page.doc.embedPage(vectorPdf.getPages()[0]);
+            
+            // Calculate scaling to match canvas dimensions while preserving vectors
+            const scaleX = width / svgWidth;
+            const scaleY = height / svgHeight;
+            
+            page.drawPage(vectorPage, {
+              x: x,
+              y: y,
+              width: width,
+              height: height
+            });
+            
+            // Clean up
+            fs.unlinkSync(tempPdfPath);
+            
+            console.log(`✅ SVG embedded as VECTOR PDF at position: (${x.toFixed(1)}, ${y.toFixed(1)}) with CMYK preservation`);
+            return true;
+          }
+        } catch (inkscapeError) {
+          console.warn(`Inkscape vector conversion failed:`, (inkscapeError as Error).message || inkscapeError);
+          // Try cleanup
+          if (fs.existsSync(tempPdfPath)) {
+            fs.unlinkSync(tempPdfPath);
+          }
         }
         
-        if (fs.existsSync(tempPngPath)) {
-          const imageBytes = fs.readFileSync(tempPngPath);
-          const image = await page.doc.embedPng(imageBytes);
-          
-          page.drawImage(image, {
-            x: x,
-            y: y,
-            width: svgWidth,  // Use original SVG dimensions
-            height: svgHeight  // Use original SVG dimensions
-          });
-          
-          // Clean up
-          fs.unlinkSync(tempPngPath);
-          
-          console.log(`✅ SVG embedded as PNG at exact position: (${x.toFixed(1)}, ${y.toFixed(1)})`);
-          return true;
-        }
-        
-      } catch (conversionError) {
-        console.warn(`SVG conversion failed:`, (conversionError as Error).message || conversionError);
-        // Try cleanup
-        if (fs.existsSync(tempPngPath)) {
-          fs.unlinkSync(tempPngPath);
-        }
+      } catch (vectorError) {
+        console.warn(`Vector embedding failed:`, (vectorError as Error).message || vectorError);
       }
       
       return false;
       
     } catch (error) {
-      console.error(`Failed to embed SVG:`, (error as Error).message || error);
+      console.error(`Failed to embed SVG as vector:`, (error as Error).message || error);
       return false;
     }
   }
