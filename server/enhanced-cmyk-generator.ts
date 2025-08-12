@@ -805,25 +805,59 @@ export class EnhancedCMYKGenerator {
       console.log(`Enhanced CMYK: Element size: ${element.width}×${element.height}mm -> ${targetWidth}×${targetHeight}pts`);
       console.log(`Enhanced CMYK: Original PDF size: ${origWidth}×${origHeight}pts`);
       
-      // Calculate scale to fit target dimensions while maintaining aspect ratio
-      const scaleX = targetWidth / origWidth;
-      const scaleY = targetHeight / origHeight;
-      const scale = Math.min(scaleX, scaleY);
+      // CRITICAL FIX: Use exact element dimensions from canvas bounds detection
+      // The canvas system already displays at the correct size, so PDF must match exactly
+      console.log(`📊 Position calculation debug:`, {
+        elementX: element.x,
+        elementY: element.y,
+        elementWidth: element.width,
+        elementHeight: element.height,
+        pageWidth: templateSize.width * mmToPoints,
+        pageHeight: templateSize.height * mmToPoints,
+        templatePixelWidth: templateSize.pixelWidth,
+        templatePixelHeight: templateSize.pixelHeight,
+        templateMmWidth: templateSize.width,
+        templateMmHeight: templateSize.height
+      });
       
-      console.log(`Enhanced CMYK: Scale factors: scaleX=${scaleX}, scaleY=${scaleY}, final scale=${scale}`);
+      console.log(`📐 Exact canvas coordinate conversion:`, {
+        canvasX: element.x,
+        canvasY: element.y,
+        canvasWidth: element.width,
+        canvasHeight: element.height,
+        pageWidth: (templateSize.width * mmToPoints).toFixed(1),
+        pageHeight: (templateSize.height * mmToPoints).toFixed(1),
+        scaleX: (templateSize.width * mmToPoints / templateSize.pixelWidth).toFixed(4),
+        scaleY: (templateSize.height * mmToPoints / templateSize.pixelHeight).toFixed(4),
+        scaledElementY: (element.y * templateSize.height * mmToPoints / templateSize.pixelHeight).toFixed(1),
+        scaledElementHeight: (element.height * templateSize.height * mmToPoints / templateSize.pixelHeight).toFixed(1),
+        pdfX: x.toFixed(1),
+        pdfY: y.toFixed(1),
+        finalX: x.toFixed(1),
+        finalY: y.toFixed(1)
+      });
       
-      // Calculate final rendered dimensions
-      const finalWidth = origWidth * scale;
-      const finalHeight = origHeight * scale;
+      console.log(`📏 Exact canvas size calculation:`, {
+        canvasWidth: element.width,
+        canvasHeight: element.height,
+        templatePixelWidth: templateSize.pixelWidth,
+        templatePixelHeight: templateSize.pixelHeight,
+        pageWidth: (templateSize.width * mmToPoints).toFixed(1),
+        pageHeight: (templateSize.height * mmToPoints).toFixed(1),
+        scaleX: (templateSize.width * mmToPoints / templateSize.pixelWidth).toFixed(4),
+        scaleY: (templateSize.height * mmToPoints / templateSize.pixelHeight).toFixed(4),
+        finalWidth: targetWidth.toFixed(1),
+        finalHeight: targetHeight.toFixed(1)
+      });
       
-      console.log(`Enhanced CMYK: Final rendered size: ${finalWidth}×${finalHeight}pts (${finalWidth/mmToPoints}×${finalHeight/mmToPoints}mm)`);
+      console.log(`📍 Target position: (${x.toFixed(1)}, ${y.toFixed(1)}) size: ${targetWidth.toFixed(1)}x${targetHeight.toFixed(1)}`);
       
-      // Draw the embedded page with vectors preserved using exact canvas dimensions
+      // Use exact target dimensions without scaling - match canvas display exactly
       page.drawPage(embeddedPage, {
         x: x,
         y: y,
-        width: finalWidth,
-        height: finalHeight,
+        width: targetWidth,  // Use exact element dimensions, not scaled
+        height: targetHeight, // Use exact element dimensions, not scaled  
         rotate: degrees(element.rotation || 0),
       });
       
@@ -1614,15 +1648,18 @@ export class EnhancedCMYKGenerator {
           // Calculate position in points (flip Y coordinate for PDF)
           const x = element.x * mmToPoints;
           const y = (templateSize.height - element.y - element.height) * mmToPoints;
-          const width = element.width * mmToPoints;
-          const height = element.height * mmToPoints;
+          const targetWidth = element.width * mmToPoints;
+          const targetHeight = element.height * mmToPoints;
           
-          // Draw the embedded page
+          console.log(`🎨 SVG converted to PDF (vectors preserved): ${path.basename(svgPath)}`);
+          console.log(`✅ Successfully embedded single-page SVG as vector PDF at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+          
+          // Use exact element dimensions to match canvas display
           page.drawPage(embeddedPage, {
             x: x,
             y: y,
-            width: width,
-            height: height,
+            width: targetWidth,  // Use exact dimensions
+            height: targetHeight, // Use exact dimensions
             rotate: degrees(element.rotation || 0),
           });
           
