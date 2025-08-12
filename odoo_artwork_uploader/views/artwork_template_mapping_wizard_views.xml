@@ -1,50 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Wizard Form View -->
-        <record id="view_artwork_template_mapping_wizard" model="ir.ui.view">
+        
+        <!-- Template Mapping Wizard Form View -->
+        <record id="artwork_template_mapping_wizard_form_view" model="ir.ui.view">
             <field name="name">artwork.template.mapping.wizard.form</field>
             <field name="model">artwork.template.mapping.wizard</field>
             <field name="arch" type="xml">
-                <form string="Configure Template Mappings">
-                    <group>
-                        <p class="text-muted">
-                            Map your artwork templates to existing products in your catalog. 
-                            The system has detected unmapped templates and suggests products based on their names.
-                            Please review and adjust the mappings as needed.
-                        </p>
-                    </group>
-                    <field name="mapping_line_ids">
-                        <tree editable="bottom">
-                            <field name="template_display_name" readonly="1"/>
-                            <field name="product_id" options="{'no_create': True}"/>
-                            <field name="min_quantity"/>
-                            <field name="max_quantity"/>
-                            <field name="template_id" invisible="1"/>
-                        </tree>
-                    </field>
+                <form string="Template Mapping Setup Wizard">
+                    <sheet>
+                        <div class="oe_title">
+                            <h1>Template Mapping Setup</h1>
+                        </div>
+                        
+                        <!-- Introduction Step -->
+                        <div attrs="{'invisible': [('step', '!=', 'intro')]}">
+                            <div class="alert alert-info">
+                                <h3>Welcome to the Template Mapping Setup!</h3>
+                                <p>This wizard will help you map artwork templates to your existing products.</p>
+                                <ul>
+                                    <li>Select products that will be used for artwork uploads</li>
+                                    <li>Map each template to a specific product</li>
+                                    <li>Configure pricing and availability</li>
+                                </ul>
+                                <p><strong>Note:</strong> You can always modify these mappings later in the configuration menu.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Products Selection Step -->
+                        <div attrs="{'invisible': [('step', '!=', 'products')]}">
+                            <h3>Select Products</h3>
+                            <p>Choose the products that customers can use for artwork uploads:</p>
+                            <field name="product_ids" widget="many2many_tags"/>
+                        </div>
+                        
+                        <!-- Mapping Step -->
+                        <div attrs="{'invisible': [('step', '!=', 'mapping')]}">
+                            <h3>Map Templates to Products</h3>
+                            <p>Assign each template to a product from your selection:</p>
+                            <field name="mapping_line_ids">
+                                <tree editable="bottom">
+                                    <field name="template_name" readonly="1"/>
+                                    <field name="product_id"/>
+                                </tree>
+                            </field>
+                        </div>
+                        
+                        <!-- Confirmation Step -->
+                        <div attrs="{'invisible': [('step', '!=', 'confirm')]}">
+                            <div class="alert alert-success">
+                                <h3>Setup Complete!</h3>
+                                <p>Your template mappings are ready to be created.</p>
+                                <p>Click "Apply" to save the mappings and start using the artwork uploader.</p>
+                            </div>
+                        </div>
+                        
+                        <field name="step" invisible="1"/>
+                    </sheet>
                     <footer>
-                        <button name="action_create_mappings" string="Create Mappings" type="object" class="btn-primary"/>
-                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        <button string="Previous" name="action_previous_step" type="object" 
+                                attrs="{'invisible': [('step', '=', 'intro')]}" class="btn-secondary"/>
+                        <button string="Next" name="action_next_step" type="object" 
+                                attrs="{'invisible': [('step', '=', 'confirm')]}" class="btn-primary"/>
+                        <button string="Apply" name="action_next_step" type="object" 
+                                attrs="{'invisible': [('step', '!=', 'confirm')]}" class="btn-primary"/>
+                        <button string="Cancel" special="cancel" class="btn-secondary"/>
                     </footer>
                 </form>
             </field>
         </record>
-
-        <!-- Wizard Action -->
+        
+        <!-- Template Mapping Wizard Action -->
         <record id="action_artwork_template_mapping_wizard" model="ir.actions.act_window">
-            <field name="name">Configure Template Mappings</field>
+            <field name="name">Setup Template Mappings</field>
             <field name="res_model">artwork.template.mapping.wizard</field>
             <field name="view_mode">form</field>
+            <field name="view_id" ref="artwork_template_mapping_wizard_form_view"/>
             <field name="target">new</field>
         </record>
-
-        <!-- Menu Item -->
-        <menuitem id="menu_artwork_template_mapping_wizard"
-                  name="Setup Template Mappings"
-                  parent="menu_artwork_config"
-                  action="action_artwork_template_mapping_wizard"
-                  sequence="5"/>
-
+        
     </data>
 </odoo>

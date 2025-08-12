@@ -173,72 +173,122 @@ class ArtworkProject(models.Model):
         
         for record in self:
             if record.template_size in dimensions:
-                record.template_width, record.template_height = dimensions[record.template_size]
+                width, height = dimensions[record.template_size]
+                record.template_width = width
+                record.template_height = height
             else:
-                record.template_width = 297
-                record.template_height = 420
-    
+                record.template_width = 297  # Default A3 width
+                record.template_height = 420  # Default A3 height
+
     @api.depends('template_size', 'quantity')
     def _compute_price(self):
-        # This would integrate with Odoo's pricelist system
-        # For now, using simple pricing logic
+        """Compute pricing based on template and quantity"""
+        # Base pricing structure
         base_prices = {
-            'A3': 20.00,
-            'A4': 15.00,
-            'A5': 10.00,
+            'template-A3': 5.50,
+            'template-A4': 4.50,
+            'template-A5': 3.50,
+            'template-dtf-a3': 6.00,
+            'template-dtf-a4': 5.00,
+            'template-uv-dtf-a3': 7.50,
+            'template-uv-dtf-a4': 6.50,
+            'template-FOTLA3': 5.50,
+            'template-FOTLA4': 4.50,
+            'template-sublimation-a3': 6.50,
+            'template-sublimation-a4': 5.50,
+            'template-vinyl-a3': 4.50,
+            'template-vinyl-a4': 3.50,
+            'template-vinyl-flock-a3': 5.00,
+            'template-vinyl-flock-a4': 4.00,
+            'template-soft-shell-a3': 8.50,
+            'template-soft-shell-a4': 7.50,
+            'template-reflective-a3': 9.50,
+            'template-reflective-a4': 8.50,
+            'template-hi-viz-a3': 10.50,
+            'template-hi-viz-a4': 9.50,
+            'template-glitter-a3': 7.50,
+            'template-glitter-a4': 6.50,
+            'template-metallic-a3': 8.00,
+            'template-metallic-a4': 7.00,
+            'template-holographic-a3': 9.00,
+            'template-holographic-a4': 8.00,
+            'template-glow-in-dark-a3': 11.50,
+            'template-glow-in-dark-a4': 10.50,
+            'template-puff-a3': 7.00,
+            'template-puff-a4': 6.00,
+            'template-foil-a3': 12.50,
+            'template-foil-a4': 11.50,
+            'template-photographic-a3': 8.50,
+            'template-photographic-a4': 7.50,
+            'template-embroidery-badges-a3': 15.00,
+            'template-embroidery-badges-a4': 12.00,
+            'template-applique-badges-a3': 18.00,
+            'template-applique-badges-a4': 15.00,
+            'template-laser-cut-badges-a3': 20.00,
+            'template-laser-cut-badges-a4': 17.00,
+            'template-woven-badges-a3': 16.00,
+            'template-woven-badges-a4': 13.00,
         }
         
         for record in self:
-            if 'A3' in record.template_size:
-                base_price = base_prices['A3']
-            elif 'A4' in record.template_size:
-                base_price = base_prices['A4']
-            elif 'A5' in record.template_size:
-                base_price = base_prices['A5']
-            else:
-                base_price = 20.00
+            base_price = base_prices.get(record.template_size, 5.50)
             
             # Quantity discounts
             if record.quantity >= 100:
-                base_price *= 0.8
+                discount = 0.15  # 15% discount
             elif record.quantity >= 50:
-                base_price *= 0.9
+                discount = 0.10  # 10% discount
+            elif record.quantity >= 25:
+                discount = 0.05  # 5% discount
+            else:
+                discount = 0.0
             
-            record.price_unit = base_price
-            record.price_total = base_price * record.quantity
-    
+            record.price_unit = base_price * (1 - discount)
+            record.price_total = record.price_unit * record.quantity
+
     def action_confirm(self):
-        self.ensure_one()
+        """Confirm the project"""
         self.state = 'confirmed'
         
     def action_cancel(self):
-        self.ensure_one()
+        """Cancel the project"""
         self.state = 'cancelled'
         
     def action_done(self):
-        self.ensure_one()
+        """Mark project as done"""
         self.state = 'done'
-        
-    def action_generate_pdf(self):
-        """Generate PDF from the artwork project"""
-        self.ensure_one()
-        # This would call the PDF generation service
-        # For now, just mark as done
-        self.action_done()
-        
-    def action_add_to_cart(self):
-        """Add the artwork project to cart"""
+
+    def action_reset_to_draft(self):
+        """Reset to draft state"""
+        self.state = 'draft'
+
+    def get_project_data(self):
+        """Get project data as dict for API responses"""
         self.ensure_one()
         
-        # Find mapped product for this template
-        product = self.env['artwork.template.mapping'].get_product_for_template(self.template_size)
+        # Parse garment colors JSON if available
+        garment_colors = []
+        if self.garment_colors_json:
+            try:
+                garment_colors = json.loads(self.garment_colors_json)
+            except (json.JSONDecodeError, TypeError):
+                pass
         
-        if not product:
-            raise UserError('No product mapped for this template. Please configure template mappings.')
-        
-        # Update project with product
-        self.product_id = product
-        
-        # Create sale order line with the artwork product
-        # This would integrate with website_sale
-        return True
+        return {
+            'id': self.uuid,
+            'name': self.name,
+            'templateSize': self.template_size,
+            'templateWidth': self.template_width,
+            'templateHeight': self.template_height,
+            'garmentColor': self.garment_color,
+            'garmentColorName': self.garment_color_name,
+            'garmentColors': garment_colors,
+            'inkColor': self.ink_color,
+            'inkColorName': self.ink_color_name,
+            'comments': self.project_comments,
+            'quantity': self.quantity,
+            'priceUnit': self.price_unit,
+            'priceTotal': self.price_total,
+            'state': self.state,
+            'canvasData': self.canvas_data,
+        }
