@@ -28,6 +28,7 @@ export default function PDFPreviewModal({
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
 
   // Generate PDF preview using working POST route when modal opens
   useEffect(() => {
@@ -54,13 +55,17 @@ export default function PDFPreviewModal({
           
           if (response.ok) {
             const blob = await response.blob();
+            console.log('✅ PDF blob received:', blob.size, 'bytes, type:', blob.type);
             const url = URL.createObjectURL(blob);
+            console.log('✅ Blob URL created:', url);
             setPreviewPdfUrl(url);
           } else {
-            console.error('Failed to generate PDF preview');
+            console.error('❌ Failed to generate PDF preview. Status:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('❌ Response body:', errorText);
           }
         } catch (error) {
-          console.error('Error generating PDF preview:', error);
+          console.error('❌ Error generating PDF preview:', error);
         } finally {
           setPreviewLoading(false);
         }
@@ -101,6 +106,7 @@ export default function PDFPreviewModal({
     }
     setPreviewPdfUrl(null);
     setPreviewLoading(false);
+    setIframeError(false);
   };
 
   // Calculate preflight information
@@ -223,22 +229,44 @@ export default function PDFPreviewModal({
                     </div>
                   ) : previewPdfUrl ? (
                     <iframe
-                      src={`${previewPdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                      src={`${previewPdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                       className="w-full h-full border-0"
                       style={{ minHeight: '400px' }}
                       title="PDF Preview - Exact Canvas Output"
                       key={previewPdfUrl} // Force reload when URL changes
+                      allow="same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                       onLoad={(e) => {
                         console.log('✅ PDF preview iframe loaded successfully with latest changes');
                       }}
                       onError={(e) => {
                         console.error('❌ PDF preview iframe failed to load');
+                        setIframeError(true);
                       }}
                     />
                   ) : (
                     <div className="flex items-center justify-center flex-col gap-2">
                       <Eye className="w-8 h-8 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">Failed to generate PDF preview</p>
+                    </div>
+                  )}
+                  
+                  {/* Fallback: If iframe fails, show download option */}
+                  {iframeError && previewPdfUrl && (
+                    <div className="absolute inset-0 bg-white flex items-center justify-center flex-col gap-4 border rounded-lg">
+                      <Eye className="w-12 h-12 text-muted-foreground" />
+                      <div className="text-center">
+                        <p className="text-sm font-medium mb-2">PDF Preview Unavailable</p>
+                        <p className="text-xs text-muted-foreground mb-4">Your browser cannot display PDFs inline</p>
+                        <a
+                          href={previewPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          Open PDF in New Tab
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>

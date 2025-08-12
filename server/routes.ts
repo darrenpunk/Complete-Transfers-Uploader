@@ -788,21 +788,16 @@ export async function registerRoutes(app: express.Application) {
       
       res.setHeader('Content-Type', 'application/pdf');
       
-      // Check if this is for preview (inline viewing) or download
-      const isPreview = req.query.preview === 'true' || req.headers['user-agent']?.includes('iframe');
-      
-      if (isPreview) {
-        // For preview, use inline disposition so it displays in iframe
-        res.setHeader('Content-Disposition', `inline; filename="${project.name || 'project'}_cmyk.pdf"`);
-        res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow iframe from same origin
-        res.setHeader('Content-Security-Policy', 'frame-ancestors \'self\''); // Modern alternative to X-Frame-Options
-        res.setHeader('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
-        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none'); // Allow embedding
-        res.setHeader('Cross-Origin-Resource-Policy', 'same-origin'); // Same-origin policy
-      } else {
-        // For download, use attachment disposition
-        res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'project'}_cmyk.pdf"`);
-      }
+      // Always use inline disposition for iframe previews to work
+      res.setHeader('Content-Disposition', `inline; filename="${project.name || 'project'}_cmyk.pdf"`);
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow iframe from same origin
+      res.setHeader('Content-Security-Policy', 'frame-ancestors \'self\''); // Modern alternative to X-Frame-Options
+      res.setHeader('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
+      res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none'); // Allow embedding
+      res.setHeader('Cross-Origin-Resource-Policy', 'same-origin'); // Same-origin policy
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // Force refresh
+      res.setHeader('Pragma', 'no-cache'); // HTTP 1.0 compatibility
+      res.setHeader('Expires', '0'); // Proxy cache
       
       res.send(pdfBuffer);
       
