@@ -16,6 +16,34 @@ interface ContentBounds {
   coordinateCount: number;
 }
 
+function isBackgroundElement(pathElement: string, pathData: string): boolean {
+  // Check if this is likely a background element that should be ignored
+  const lowerElement = pathElement.toLowerCase();
+  
+  // Skip elements with no fill or transparent fill
+  if (lowerElement.includes('fill="none"') || 
+      lowerElement.includes('fill="transparent"') ||
+      lowerElement.includes('opacity="0"')) {
+    return true;
+  }
+  
+  // Skip very large rectangles that are likely backgrounds
+  if (pathData.includes('M') && pathData.includes('L')) {
+    const coords = pathData.match(/[\d.]+/g);
+    if (coords && coords.length >= 4) {
+      const width = Math.abs(parseFloat(coords[2]) - parseFloat(coords[0]));
+      const height = Math.abs(parseFloat(coords[3]) - parseFloat(coords[1]));
+      
+      // Skip elements larger than 500px in any dimension (likely backgrounds)
+      if (width > 500 || height > 500) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
 export function detectSimpleContentBounds(svgContent: string): ContentBounds | null {
   console.log('🎯 SIMPLE BOUNDS DETECTION: Starting smart content extraction...');
   
@@ -29,6 +57,13 @@ export function detectSimpleContentBounds(svgContent: string): ContentBounds | n
     const coordinateRegex = /([ML])\s*([-\d.]+)[,\s]+([-\d.]+)|([HV])\s*([-\d.]+)|([CSQTA])\s*([-\d.,\s]+)/g;
     
     let allCoordinates: { x: number, y: number, pathId: number }[] = [];
+    
+    // Initialize bounds tracking variables
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let coordinateCount = 0;
     
     // Process all paths and collect coordinates with metadata
     let match;
@@ -58,10 +93,10 @@ export function detectSimpleContentBounds(svgContent: string): ContentBounds | n
         } else if (coordMatch[4] === 'H') {
           // Horizontal line: x coordinate only
           x = parseFloat(coordMatch[5]);
-          y = maxY === -Infinity ? 0 : maxY; // Use last Y
+          y = allCoordinates.length > 0 ? allCoordinates[allCoordinates.length - 1].y : 0;
         } else if (coordMatch[4] === 'V') {
           // Vertical line: y coordinate only
-          x = maxX === -Infinity ? 0 : maxX; // Use last X
+          x = allCoordinates.length > 0 ? allCoordinates[allCoordinates.length - 1].x : 0;
           y = parseFloat(coordMatch[5]);
         } else if (coordMatch[6]) {
           // Curve/Arc commands: extract coordinate pairs

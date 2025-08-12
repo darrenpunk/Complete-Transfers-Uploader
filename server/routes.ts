@@ -985,11 +985,12 @@ export async function registerRoutes(app: express.Application) {
                   fs.writeFileSync(svgPath, cleanedSvg);
                   console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
                 } else {
-                  // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
-                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                  // Simple SVG cleanup for non-AI-vectorized files
+                  const cleanedSvg = svgContent
+                    .replace(/fill="none"/g, 'fill="transparent"')
+                    .replace(/stroke="none"/g, 'stroke="transparent"');
                   fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                  console.log(`🧹 Applied basic SVG cleanup for ${svgFilename}`);
                 }
                 
                 // Store original file info for later embedding
@@ -1027,12 +1028,13 @@ export async function registerRoutes(app: express.Application) {
               }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                // Clean SVG content to remove stroke scaling issues
-                const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                // Simple SVG cleanup
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+                const cleanedSvg = svgContent
+                  .replace(/fill="none"/g, 'fill="transparent"')
+                  .replace(/stroke="none"/g, 'stroke="transparent"');
                 fs.writeFileSync(svgPath, cleanedSvg);
-                console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                console.log(`🧹 Applied basic SVG cleanup for ${svgFilename}`);
                 
                 (file as any).originalVectorPath = sourcePath;
                 (file as any).originalVectorType = extension;
@@ -1095,8 +1097,7 @@ export async function registerRoutes(app: express.Application) {
             await execAsync(svgCommand);
             
             if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-              // Clean SVG content to remove stroke scaling issues
-              const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+              // Read and clean SVG content
               let svgContent = fs.readFileSync(svgPath, 'utf8');
               
               // If this is a CMYK PDF, add markers to the SVG
@@ -1105,7 +1106,10 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Marked SVG as CMYK-preserved from original: ${cmykResult.originalPdfPath}`);
               }
               
-              const cleanedSvg = removeVectorizedBackgrounds(svgContent);
+              // Simple SVG cleanup - remove obvious background elements
+              const cleanedSvg = svgContent
+                .replace(/fill="none"/g, 'fill="transparent"')
+                .replace(/stroke="none"/g, 'stroke="transparent"');
               fs.writeFileSync(svgPath, cleanedSvg);
               console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
               
