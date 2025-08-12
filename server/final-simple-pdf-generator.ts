@@ -91,20 +91,47 @@ export class FinalSimplePDFGenerator {
         return false;
       }
       
-      // Try converting SVG to PNG with exact dimensions
+      // Get SVG's original dimensions to avoid scaling artifacts
+      console.log(`🔍 ANALYZING SVG DIMENSIONS for ${logoPath}`);
+      const svgContent = fs.readFileSync(logoPath, 'utf8');
+      const widthMatch = svgContent.match(/width="([^"]+)"/);
+      const heightMatch = svgContent.match(/height="([^"]+)"/);
+      
+      let svgWidth = width;
+      let svgHeight = height;
+      
+      console.log(`🔍 Canvas wants: ${width}×${height}, SVG matches: width="${widthMatch?.[1]}" height="${heightMatch?.[1]}"`);
+      
+      if (widthMatch && heightMatch) {
+        const originalWidth = parseFloat(widthMatch[1]);
+        const originalHeight = parseFloat(heightMatch[1]);
+        
+        console.log(`🔍 Parsed SVG dimensions: ${originalWidth}×${originalHeight}`);
+        
+        if (originalWidth > 0 && originalHeight > 0) {
+          // Use SVG's original dimensions to preserve quality
+          svgWidth = originalWidth;
+          svgHeight = originalHeight;
+          console.log(`✅ USING SVG ORIGINAL DIMENSIONS: ${originalWidth}×${originalHeight} instead of canvas ${width}×${height}`);
+        }
+      } else {
+        console.log(`⚠️ Could not extract SVG dimensions, using canvas dimensions: ${width}×${height}`);
+      }
+      
+      // Convert SVG to PNG with original dimensions for best quality
       const tempPngPath = path.join('/tmp', `svg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`);
       
       try {
         // Use ImageMagick convert as fallback if rsvg-convert not available
-        let convertCmd = `convert "${logoPath}" -resize ${Math.round(width)}x${Math.round(height)}! "${tempPngPath}"`;
+        let convertCmd = `convert "${logoPath}" -resize ${Math.round(svgWidth)}x${Math.round(svgHeight)}! "${tempPngPath}"`;
         
         // Try rsvg-convert first (better quality)
         try {
-          convertCmd = `rsvg-convert "${logoPath}" -w ${Math.round(width)} -h ${Math.round(height)} -o "${tempPngPath}"`;
+          convertCmd = `rsvg-convert "${logoPath}" -w ${Math.round(svgWidth)} -h ${Math.round(svgHeight)} -o "${tempPngPath}"`;
           execSync(convertCmd, { stdio: 'pipe' });
         } catch (rsvgError) {
           // Fallback to ImageMagick
-          convertCmd = `convert "${logoPath}" -resize ${Math.round(width)}x${Math.round(height)}! "${tempPngPath}"`;
+          convertCmd = `convert "${logoPath}" -resize ${Math.round(svgWidth)}x${Math.round(svgHeight)}! "${tempPngPath}"`;
           execSync(convertCmd, { stdio: 'pipe' });
         }
         
@@ -115,8 +142,8 @@ export class FinalSimplePDFGenerator {
           page.drawImage(image, {
             x: x,
             y: y,
-            width: width,
-            height: height
+            width: svgWidth,  // Use original SVG dimensions
+            height: svgHeight  // Use original SVG dimensions
           });
           
           // Clean up
@@ -127,7 +154,7 @@ export class FinalSimplePDFGenerator {
         }
         
       } catch (conversionError) {
-        console.warn(`SVG conversion failed:`, conversionError.message);
+        console.warn(`SVG conversion failed:`, (conversionError as Error).message || conversionError);
         // Try cleanup
         if (fs.existsSync(tempPngPath)) {
           fs.unlinkSync(tempPngPath);
@@ -137,7 +164,7 @@ export class FinalSimplePDFGenerator {
       return false;
       
     } catch (error) {
-      console.error(`Failed to embed SVG:`, error.message);
+      console.error(`Failed to embed SVG:`, (error as Error).message || error);
       return false;
     }
   }
