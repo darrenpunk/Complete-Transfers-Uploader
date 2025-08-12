@@ -791,13 +791,68 @@ export class EnhancedCMYKGenerator {
       // Convert mm to points (1 mm = 2.834645669 points)
       const mmToPoints = 2.834645669;
       
-      // Calculate position in points
-      const x = element.x * mmToPoints;
-      const y = (templateSize.height - element.y - element.height) * mmToPoints;
+      // Calculate position in points (will be updated after content bounds calculation)
+      let x = element.x * mmToPoints;
+      let y = (templateSize.height - element.y - element.height) * mmToPoints;
       
-      // Calculate target size in points
-      const targetWidth = element.width * mmToPoints;
-      const targetHeight = element.height * mmToPoints;
+      // CRITICAL FIX: Use actual content bounds instead of element dimensions
+      // Canvas ignores element.width/height and uses true content bounds
+      // PDF must do the same to achieve visual matching
+      
+      // Get the SVG file that canvas actually displays
+      const allLogos = await storage.getAllLogos();
+      const logo = allLogos.find(l => l.id === element.logoId);
+      let actualContentWidth = element.width;
+      let actualContentHeight = element.height;
+      
+      if (logo && logo.filename.includes('.pdf.svg')) {
+        const uploadsDir = path.join(process.cwd(), 'uploads');
+        const svgPath = path.join(uploadsDir, logo.filename);
+        const svgContent = fs.readFileSync(svgPath, 'utf8');
+        
+        console.log(`🎯 CALCULATING TRUE CONTENT BOUNDS like canvas does for: ${logo.filename}`);
+        
+        // Extract all path coordinates to find true content bounds (same as canvas logic)
+        const pathMatches = svgContent.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        
+        pathMatches.forEach(pathMatch => {
+          const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
+          const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
+          
+          for (let i = 0; i < coords.length; i += 2) {
+            const x = parseFloat(coords[i]);
+            const y = parseFloat(coords[i + 1]);
+            if (!isNaN(x) && !isNaN(y)) {
+              minX = Math.min(minX, x);
+              maxX = Math.max(maxX, x);
+              minY = Math.min(minY, y);
+              maxY = Math.max(maxY, y);
+            }
+          }
+        });
+        
+        if (minX !== Infinity && maxX !== -Infinity) {
+          const contentWidthPx = maxX - minX;
+          const contentHeightPx = maxY - minY;
+          
+          // Convert from pixels to mm (same conversion as canvas uses)
+          const pixelsToMm = 0.26458333; // 1 pixel = 0.26458333 mm
+          actualContentWidth = contentWidthPx * pixelsToMm;
+          actualContentHeight = contentHeightPx * pixelsToMm;
+          
+          console.log(`🎯 CONTENT BOUNDS: ${contentWidthPx.toFixed(1)}×${contentHeightPx.toFixed(1)}px = ${actualContentWidth.toFixed(1)}×${actualContentHeight.toFixed(1)}mm`);
+          console.log(`🎯 CANVAS ELEMENT: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+          console.log(`🎯 USING CONTENT BOUNDS for PDF generation to match canvas display`);
+          
+          // Recalculate Y position using actual content height
+          y = (templateSize.height - element.y - actualContentHeight) * mmToPoints;
+        }
+      }
+      
+      // Calculate target size in points using ACTUAL content dimensions
+      const targetWidth = actualContentWidth * mmToPoints;
+      const targetHeight = actualContentHeight * mmToPoints;
       
       // Get original page dimensions in points
       const { width: origWidth, height: origHeight } = embeddedPage.size();
