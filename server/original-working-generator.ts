@@ -272,6 +272,16 @@ export class OriginalWorkingGenerator {
 
       // SCALING FIX: Attach logo data to element for content bounds access
       element.logo = logo;
+      
+      // DEBUG: Log available data for scaling fix
+      console.log(`🔍 SCALING DEBUG: Element data:`, {
+        elementId: element.id,
+        elementSize: `${element.width}×${element.height}`,
+        logoId: logo.id,
+        logoFilename: logo.filename,
+        hasPreflightData: !!logo.preflightData,
+        contentBounds: logo.preflightData?.contentBounds || 'none'
+      });
 
       // Convert SVG to PDF if needed (original working method)
       if (logo.mimeType === 'image/svg+xml') {
