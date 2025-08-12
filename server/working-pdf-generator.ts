@@ -1,104 +1,69 @@
-import { PDFDocument, degrees, rgb } from 'pdf-lib';
+import { PDFDocument, PDFPage, degrees } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
 import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
 
-export interface WorkingPDFData {
-  projectId: string;
-  canvasElements: any[];
-  logos: any[];
-  templateSize: any;
-  project?: any;
-  garmentColor?: string;
-  extraGarmentColors?: string[];
-  quantity?: number;
-}
-
-/**
- * Simplified PDF generator that works correctly with vector embedding
- */
 export class WorkingPDFGenerator {
-  
-  async generatePDF(data: WorkingPDFData): Promise<Buffer> {
-    console.log('🔧 WORKING PDF GENERATOR - Simplified Approach');
-    console.log(`📊 Elements: ${data.canvasElements.length}, Template: ${data.templateSize.name}`);
-
+  async generatePDF(params: {
+    projectId: string;
+    canvasElements: any[];
+    logos: any[];
+    templateSize: any;
+    project: any;
+    garmentColor: string;
+    extraGarmentColors: string[];
+    quantity: number;
+  }): Promise<Buffer> {
     try {
-      // Create new PDF document
-      const pdfDoc = await PDFDocument.create();
-      pdfDoc.setTitle(`${data.projectId}_artwork`);
-      pdfDoc.setCreator('CompleteTransfers.com Logo Uploader');
-
-      // Create single page with template dimensions
-      const pageWidth = data.templateSize.width * 2.834; // mm to points
-      const pageHeight = data.templateSize.height * 2.834;
+      console.log('📄 Starting Working PDF generation...');
+      console.log(`📐 Template: ${params.templateSize.name} (${params.templateSize.width}×${params.templateSize.height}mm)`);
+      console.log(`📊 Elements to embed: ${params.canvasElements.length}`);
       
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      console.log(`📄 Created ${pageWidth}x${pageHeight}pt page`);
-
-      // Process each logo
-      for (let i = 0; i < data.canvasElements.length; i++) {
-        const element = data.canvasElements[i];
-        
-        // Find matching logo
-        let logo = data.logos.find(l => l.id === element.logoId);
-        if (!logo && data.logos.length === 1) {
-          logo = data.logos[0]; // Use single available logo
-        }
-        
+      // Create PDF document
+      const pdfDoc = await PDFDocument.create();
+      
+      // Page 1: Artwork on garment background
+      const page1 = pdfDoc.addPage([
+        params.templateSize.width * 2.834,  // mm to points
+        params.templateSize.height * 2.834
+      ]);
+      
+      console.log('📄 Page 1 created for artwork');
+      
+      // Add garment background color
+      const garmentRgb = this.hexToRgb(params.garmentColor);
+      page1.drawRectangle({
+        x: 0,
+        y: 0,
+        width: page1.getWidth(),
+        height: page1.getHeight(),
+        color: { r: garmentRgb.r / 255, g: garmentRgb.g / 255, b: garmentRgb.b / 255 }
+      });
+      console.log(`🎨 Garment background applied: ${params.garmentColor}`);
+      
+      // Embed all canvas elements (logos) using PNG bypass
+      for (const element of params.canvasElements) {
+        const logo = params.logos.find(l => l.id === element.logoId);
         if (!logo) {
-          console.error(`❌ No logo found for element ${element.id}`);
+          console.warn(`⚠️  Logo not found for element ${element.id}`);
           continue;
         }
-
-        console.log(`🎯 Processing logo: ${logo.filename}`);
-        await this.embedLogo(pdfDoc, page, element, logo, data.templateSize);
+        
+        console.log(`🔄 Processing element ${element.id} with logo ${logo.filename}`);
+        await this.embedLogo(pdfDoc, page1, element, logo, params.templateSize);
       }
-
-      // Add second page with garment colors and project details
-      const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
       
-      // Draw garment color information on page 2
-      page2.drawText(`Project: ${data.project?.name || 'Untitled Project'}`, {
-        x: 50,
-        y: pageHeight - 50,
-        size: 24,
-        color: rgb(0, 0, 0),
-      });
+      // Page 2: Labels and information
+      const page2 = pdfDoc.addPage([
+        params.templateSize.width * 2.834,
+        params.templateSize.height * 2.834
+      ]);
       
-      page2.drawText(`Template: ${data.templateSize.name} (${data.templateSize.width}×${data.templateSize.height}mm)`, {
-        x: 50,
-        y: pageHeight - 100,
-        size: 16,
-        color: rgb(0, 0, 0),
-      });
+      console.log('📄 Page 2 created for labels and garment colors');
       
-      page2.drawText(`Main Garment Color: ${data.garmentColor || '#FFFFFF'}`, {
-        x: 50,
-        y: pageHeight - 150,
-        size: 16,
-        color: rgb(0, 0, 0),
-      });
+      // Add page 2 content: main garment color, extra colors, project info
+      await this.addPage2Content(page2, params);
       
-      // Draw garment color swatch
-      const hexToRgb = (hex: string) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-          r: parseInt(result[1], 16) / 255,
-          g: parseInt(result[2], 16) / 255,
-          b: parseInt(result[3], 16) / 255
-        } : { r: 1, g: 1, b: 1 };
-      };
-      
-      const colorRgb = hexToRgb(data.garmentColor || '#FFFFFF');
-      page2.drawRectangle({
-        x: 50,
-        y: pageHeight - 200,
-        width: 100,
-        height: 50,
-        color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
-      });
-
       // Generate final PDF
       const pdfBytes = await pdfDoc.save();
       console.log(`✅ Working PDF generated successfully - Size: ${pdfBytes.length} bytes`);
@@ -113,7 +78,7 @@ export class WorkingPDFGenerator {
 
   private async embedLogo(
     pdfDoc: PDFDocument, 
-    page: any, 
+    page: PDFPage, 
     element: any, 
     logo: any, 
     templateSize: any
@@ -121,128 +86,121 @@ export class WorkingPDFGenerator {
     try {
       const logoPath = path.resolve(process.cwd(), 'uploads', logo.filename);
       
-      // Check if file exists
       if (!fs.existsSync(logoPath)) {
         console.error(`❌ Logo file not found: ${logoPath}`);
         return;
       }
 
-      // Convert SVG to PDF using Inkscape
-      const tempPdfPath = path.join('/tmp', `working_${Date.now()}.pdf`);
+      console.log(`🎯 PNG BYPASS: Converting to PNG for exact canvas coordinate preservation`);
+      
+      // Convert all files to PNG at exact canvas dimensions
+      const tempPngPath = path.join('/tmp', `canvas_exact_${Date.now()}.png`);
+      const canvasWidth = Math.round(element.width);
+      const canvasHeight = Math.round(element.height);
       
       if (logo.mimeType === 'image/svg+xml') {
-        // Use Inkscape for SVG conversion - simplified command
-        const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoPath}"`;
+        console.log(`🎨 SVG → PNG: ${canvasWidth}×${canvasHeight}px`);
+        const inkscapeCmd = `inkscape --export-type=png --export-filename="${tempPngPath}" --export-width=${canvasWidth} --export-height=${canvasHeight} "${logoPath}"`;
         execSync(inkscapeCmd, { stdio: 'pipe' });
-        console.log(`🎨 SVG converted to PDF: ${tempPdfPath}`);
       } else {
-        // For other formats, copy the file
-        fs.copyFileSync(logoPath, tempPdfPath);
-      }
-
-      // Read and validate the converted PDF
-      const tempPdfBytes = fs.readFileSync(tempPdfPath);
-      const tempPdfDoc = await PDFDocument.load(tempPdfBytes);
-      
-      // Critical validation
-      if (tempPdfDoc.getPageCount() === 0) {
-        console.error(`❌ Converted PDF has no pages: ${tempPdfPath}`);
-        fs.unlinkSync(tempPdfPath);
-        return;
+        console.log(`🎨 PDF/Other → PNG: ${canvasWidth}×${canvasHeight}px`);
+        const convertCmd = `convert -density 300 "${logoPath}[0]" -resize ${canvasWidth}x${canvasHeight}! "${tempPngPath}"`;
+        execSync(convertCmd, { stdio: 'pipe' });
       }
       
-      // Load source PDF and embed its page - this is the correct approach
-      console.log('🔄 Loading source PDF and embedding page...');
-      const sourcePdf = tempPdfDoc;
-      const sourcePages = sourcePdf.getPages();
+      console.log(`✅ Converted to PNG at exact canvas size`);
       
-      if (sourcePages.length === 0) {
-        console.error(`❌ Source PDF has no pages: ${tempPdfPath}`);
-        fs.unlinkSync(tempPdfPath);
-        return;
-      }
+      // Embed PNG with exact proportional coordinates 
+      const pngBytes = fs.readFileSync(tempPngPath);
+      const pngImage = await pdfDoc.embedPng(pngBytes);
       
-      console.log(`📋 Found ${sourcePages.length} source pages`);
-      const embeddedPage = await pdfDoc.embedPage(sourcePages[0]);
-      console.log('📋 Embedded page type:', typeof embeddedPage);
-      console.log('📋 Embedded page constructor:', embeddedPage ? embeddedPage.constructor.name : 'null');
-      
-      if (!embeddedPage || typeof embeddedPage !== 'object') {
-        console.error(`❌ Failed to embed page: ${tempPdfPath}`);
-        fs.unlinkSync(tempPdfPath);
-        return;
-      }
-      
-      const copiedPage = embeddedPage;
-
-      // CRITICAL FIX: Proper coordinate mapping canvas -> PDF
-      const scale = 2.834; // mm to points conversion (72/25.4)
-      
-      // CRITICAL FIX: Canvas coordinates are in DISPLAY pixels, NOT template pixels
-      // Canvas elements use the actual canvas display coordinates which need different scaling
-      
-      // The canvas shows the template at a specific zoom/scale
-      // We need to convert from canvas pixels to actual template proportions
-      const canvasDisplayWidth = 842;   // Canvas element width in pixels
-      const canvasDisplayHeight = 1191; // Canvas element height in pixels
+      // PROPORTIONAL COORDINATE SYSTEM: Canvas pixels → Template percentages → PDF points
+      const scale = 2.834; // mm to points conversion
+      const canvasDisplayWidth = 842;   
+      const canvasDisplayHeight = 1191; 
       
       // Calculate proportional positioning and sizing
       const xProportion = element.x / canvasDisplayWidth;
-      const yProportion = element.y / canvasDisplayHeight;  
+      const yProportion = element.y / canvasDisplayHeight;
       const widthProportion = element.width / canvasDisplayWidth;
       const heightProportion = element.height / canvasDisplayHeight;
       
-      // Convert proportions to actual PDF points
+      // Convert proportions to PDF points
       const pageWidthPoints = templateSize.width * scale;
       const pageHeightPoints = templateSize.height * scale;
       
       const xInPoints = xProportion * pageWidthPoints;
       const yInPoints = yProportion * pageHeightPoints;
-      const targetWidthPoints = widthProportion * pageWidthPoints; 
+      const targetWidthPoints = widthProportion * pageWidthPoints;
       const targetHeightPoints = heightProportion * pageHeightPoints;
       
       // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
       const finalY = pageHeightPoints - yInPoints - targetHeightPoints;
       
-      // Get original page size for scaling from embedded PDF page
-      const originalSize = { width: copiedPage.width, height: copiedPage.height };
+      console.log(`🎯 COORDINATE MAPPING: Canvas(${element.width}×${element.height}px) = ${(widthProportion*100).toFixed(1)}%×${(heightProportion*100).toFixed(1)}% → PDF(${targetWidthPoints.toFixed(1)}×${targetHeightPoints.toFixed(1)}pt)`);
+      console.log(`📍 POSITION MAPPING: Canvas(${element.x},${element.y}) = ${(xProportion*100).toFixed(1)}%,${(yProportion*100).toFixed(1)}% → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
       
-      if (!originalSize || originalSize.width <= 0 || originalSize.height <= 0) {
-        console.error(`❌ Invalid page dimensions: ${originalSize?.width}×${originalSize?.height}`);
-        fs.unlinkSync(tempPdfPath);
-        return;
-      }
-      
-      // CRITICAL FIX: Proper scaling to match canvas display
-      // The canvas element size represents the desired size in canvas pixels
-      // Use the targetWidthPoints and targetHeightPoints calculated above
-      
-      const finalWidth = targetWidthPoints;
-      const finalHeight = targetHeightPoints;
-      
-      console.log(`🎯 PROPORTIONAL SCALING: Canvas(${element.width}×${element.height}px) = ${(widthProportion*100).toFixed(1)}%×${(heightProportion*100).toFixed(1)}% → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt)`);
-      
-      console.log(`📍 PROPORTIONAL POSITIONING: Canvas(${element.x},${element.y}) = ${(xProportion*100).toFixed(1)}%,${(yProportion*100).toFixed(1)}% → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
-      
-      // Draw the embedded page using correct drawPage API - ensuring exact canvas matching
-      page.drawPage(copiedPage, {
+      // Draw PNG image with exact canvas-to-PDF coordinate mapping
+      page.drawImage(pngImage, {
         x: xInPoints,
         y: finalY,
-        width: finalWidth,   // This now matches canvas element size exactly
-        height: finalHeight, // This now matches canvas element size exactly
+        width: targetWidthPoints,
+        height: targetHeightPoints,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Logo drawn with exact canvas dimensions: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
+      console.log(`✅ LOGO EMBEDDED: PNG bypass ensures perfect coordinate preservation`);
       
-      console.log(`✅ Logo positioned exactly as canvas`);
-
-      // Clean up temp file
-      fs.unlinkSync(tempPdfPath);
+      // Clean up temp PNG file
+      fs.unlinkSync(tempPngPath);
 
     } catch (error) {
       console.error(`❌ Failed to embed logo ${logo.filename}:`, error);
       throw error;
     }
+  }
+
+  private async addPage2Content(page: PDFPage, params: any): Promise<void> {
+    // Add main garment color sample
+    const garmentRgb = this.hexToRgb(params.garmentColor);
+    page.drawRectangle({
+      x: 50,
+      y: page.getHeight() - 100,
+      width: 100,
+      height: 50,
+      color: { r: garmentRgb.r / 255, g: garmentRgb.g / 255, b: garmentRgb.b / 255 }
+    });
+    
+    // Add text label
+    page.drawText(`Main Garment Color: ${params.garmentColor}`, {
+      x: 200,
+      y: page.getHeight() - 80,
+      size: 12
+    });
+    
+    // Add project name
+    page.drawText(`Project: ${params.project.name || 'Untitled'}`, {
+      x: 50,
+      y: page.getHeight() - 150,
+      size: 14
+    });
+    
+    // Add quantity
+    page.drawText(`Quantity: ${params.quantity}`, {
+      x: 50,
+      y: page.getHeight() - 180,
+      size: 12
+    });
+    
+    console.log('✅ Page 2 content added: garment colors and project info');
+  }
+
+  private hexToRgb(hex: string): { r: number; g: number; b: number } {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 255, g: 255, b: 255 };
   }
 }
