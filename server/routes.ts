@@ -631,7 +631,7 @@ export async function registerRoutes(app: express.Application) {
   console.error(`🚀🚀🚀 REGISTERING ROUTES FUNCTION STARTED`);
   
   // PDF Generation endpoint - Must be before other routes
-  app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
+  app.post('/api/projects/:projectId/generate-pdf', async (req, res) => {
     try {
       console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
       const projectId = req.params.projectId;
@@ -676,31 +676,35 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ORIGINAL WORKING PDF generator
-      console.log('📦 Using OriginalWorkingGenerator...');
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('✅ OriginalWorkingGenerator imported successfully');
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 Original working generator instance created');
+      // Import the SIMPLE CANVAS PDF generator
+      console.log('📦 Using SimpleCanvasPDFGenerator...');
+      const { SimpleCanvasPDFGenerator } = await import('./simple-canvas-pdf-generator');
+      console.log('✅ SimpleCanvasPDFGenerator imported successfully');
+      const generator = new SimpleCanvasPDFGenerator();
+      console.log('📊 Simple canvas generator instance created');
 
-      // Generate PDF that preserves original file content
-      const pdfData = {
-        projectId,
-        templateSize,
-        canvasElements,
-        logos,
-        garmentColor: project.garmentColor,
-        appliqueBadgesForm: project.appliqueBadgesForm
-      };
+      // Get request data for garment colors and other settings
+      const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
       
-      // Debug: Log canvas elements with garment colors
-      console.log('📊 Canvas elements with garment colors:');
+      // Use project garment color as fallback
+      const finalGarmentColor = garmentColor || project.garmentColor || '#FFFFFF';
+      
+      // Debug: Log canvas elements 
+      console.log('📊 Canvas elements:');
       canvasElements.forEach(element => {
-        console.log(`  - Element ${element.id}: garmentColor = ${element.garmentColor || 'none'}`);
+        console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with original file preservation...`);
-      const pdfBuffer = await generator.generatePDF(pdfData);
+      console.log(`🔄 Generating simple PDF that matches canvas exactly...`);
+      const pdfBuffer = await generator.generatePDF(
+        project.name || 'Untitled Project',
+        canvasElements,
+        logos,
+        templateSize,
+        finalGarmentColor,
+        extraGarmentColors,
+        quantity
+      );
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');
