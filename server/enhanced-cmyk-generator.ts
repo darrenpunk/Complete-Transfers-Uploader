@@ -915,49 +915,78 @@ export class EnhancedCMYKGenerator {
         console.log(`🎯 FORCING content stretch: ${origWidth}×${origHeight}pts -> ${targetWidth}×${targetHeight}pts`);
         console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origHeight).toFixed(3)}x`);
         
-        // BREAKTHROUGH INSIGHT: Canvas uses processed .pdf.svg file with content-only bounds
-        // PDF generation should use the SAME .pdf.svg file, not the original PDF!
-        // This ensures exact matching between canvas display and PDF output
+        // REVOLUTIONARY APPROACH: Generate positioned SVG that matches canvas exactly
+        // Create a full-page SVG with element positioned exactly as canvas shows it
+        // This bypasses all PDF embedding scaling issues
         
-        console.log(`🎯 DIRECT SVG APPROACH: Use the same .pdf.svg file that canvas uses`);
-        
-        // Find the corresponding .pdf.svg file (which already has content-only processing)
-        const uploadsDir = path.join(process.cwd(), 'uploads');
-        const allLogos = await storage.getAllLogos();
-        const logo = allLogos.find(l => l.id === element.logoId);
+        console.log(`🎯 CANVAS REPLICATION: Creating full-page SVG matching canvas layout exactly`);
         
         if (logo && logo.filename.includes('.pdf.svg')) {
+          const uploadsDir = path.join(process.cwd(), 'uploads');
           const svgPath = path.join(uploadsDir, logo.filename);
-          const tempPdfPath = path.join(uploadsDir, `temp_canvas_match_${Date.now()}.pdf`);
+          const tempFullPageSvgPath = path.join(uploadsDir, `temp_fullpage_${Date.now()}.svg`);
+          const tempFullPagePdfPath = path.join(uploadsDir, `temp_fullpage_${Date.now()}.pdf`);
           
           try {
-            console.log(`🎯 Converting canvas SVG to PDF: ${logo.filename}`);
+            console.log(`🎯 Creating full-page SVG with exact canvas positioning`);
             
-            // Convert the SAME SVG file that canvas uses to PDF
-            await execAsync(`inkscape "${svgPath}" --export-pdf="${tempPdfPath}" --export-area-drawing`);
-            console.log(`🎯 Converted canvas SVG to content-only PDF`);
+            // Read the original logo SVG content
+            const logoSvgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // Load and embed this content-only PDF
-            const canvasMatchPdfBytes = fs.readFileSync(tempPdfPath);
-            const canvasMatchPdfDoc = await PDFDocument.load(canvasMatchPdfBytes);
-            const [canvasMatchPage] = await pdfDoc.embedPages([canvasMatchPdfDoc.getPage(0)]);
+            // Extract just the content (paths, shapes) without the outer SVG wrapper
+            const contentMatch = logoSvgContent.match(/<svg[^>]*>(.*)<\/svg>/s);
+            const logoContent = contentMatch ? contentMatch[1] : logoSvgContent;
             
-            // This MUST match canvas exactly since it uses the same source SVG
-            page.drawPage(canvasMatchPage, {
-              x: x,
-              y: y,
-              width: targetWidth,
-              height: targetHeight,
-              rotate: degrees(element.rotation || 0),
+            // Calculate exact canvas pixel positioning
+            const canvasWidthPx = templateSize.pixelWidth;
+            const canvasHeightPx = templateSize.pixelHeight;
+            
+            // Convert element position from mm to pixels (exact canvas scale)
+            const elementXPx = (element.x / templateSize.width) * canvasWidthPx;
+            const elementYPx = (element.y / templateSize.height) * canvasHeightPx;
+            const elementWidthPx = (actualContentWidth / templateSize.width) * canvasWidthPx;
+            const elementHeightPx = (actualContentHeight / templateSize.height) * canvasHeightPx;
+            
+            console.log(`🎯 EXACT POSITIONING: (${elementXPx.toFixed(1)}, ${elementYPx.toFixed(1)}) size ${elementWidthPx.toFixed(1)}×${elementHeightPx.toFixed(1)}px`);
+            
+            // Create full-page SVG with logo positioned exactly as canvas shows
+            const fullPageSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidthPx}" height="${canvasHeightPx}" viewBox="0 0 ${canvasWidthPx} ${canvasHeightPx}">
+  <g transform="translate(${elementXPx}, ${elementYPx}) scale(${(elementWidthPx/338.2).toFixed(6)}, ${(elementHeightPx/225.2).toFixed(6)}) rotate(${element.rotation || 0})">
+    ${logoContent}
+  </g>
+</svg>`;
+            
+            fs.writeFileSync(tempFullPageSvgPath, fullPageSvg);
+            
+            // Convert full-page SVG to PDF at exact template dimensions
+            await execAsync(`inkscape "${tempFullPageSvgPath}" --export-pdf="${tempFullPagePdfPath}" --export-width=${canvasWidthPx} --export-height=${canvasHeightPx}`);
+            console.log(`🎯 Generated full-page PDF matching canvas exactly`);
+            
+            // Load and embed the full-page PDF
+            const fullPagePdfBytes = fs.readFileSync(tempFullPagePdfPath);
+            const fullPagePdfDoc = await PDFDocument.load(fullPagePdfBytes);
+            const [fullPagePdfPage] = await pdfDoc.embedPages([fullPagePdfDoc.getPage(0)]);
+            
+            // Embed at full page size (positioning already baked into the SVG)
+            const pageWidthPts = templateSize.width * mmToPoints;
+            const pageHeightPts = templateSize.height * mmToPoints;
+            
+            page.drawPage(fullPagePdfPage, {
+              x: 0,
+              y: 0,
+              width: pageWidthPts,
+              height: pageHeightPts,
             });
             
-            console.log(`🎯 SUCCESS: Embedded exact canvas-matching PDF from .pdf.svg source`);
+            console.log(`🎯 SUCCESS: Embedded full-page PDF with exact canvas positioning`);
             
-            // Clean up temp file
-            fs.unlinkSync(tempPdfPath);
+            // Clean up temp files
+            fs.unlinkSync(tempFullPageSvgPath);
+            fs.unlinkSync(tempFullPagePdfPath);
             
           } catch (error) {
-            console.log(`🎯 Canvas SVG conversion failed, using fallback:`, error);
+            console.log(`🎯 Full-page SVG generation failed, using fallback:`, error);
             // Fallback to original approach
             page.drawPage(embeddedPage, {
               x: x,
