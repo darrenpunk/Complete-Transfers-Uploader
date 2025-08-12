@@ -97,23 +97,38 @@ export class WorkingPDFGenerator {
 
       // Read and validate the converted PDF
       const tempPdfBytes = fs.readFileSync(tempPdfPath);
-      const sourcePdf = await PDFDocument.load(tempPdfBytes);
+      const tempPdfDoc = await PDFDocument.load(tempPdfBytes);
       
       // Critical validation
-      if (sourcePdf.getPageCount() === 0) {
+      if (tempPdfDoc.getPageCount() === 0) {
         console.error(`❌ Converted PDF has no pages: ${tempPdfPath}`);
         fs.unlinkSync(tempPdfPath);
         return;
       }
       
-      // Copy the page - this is the critical working code
-      const [copiedPage] = await pdfDoc.copyPages(sourcePdf, [0]);
+      // Load source PDF and embed its page - this is the correct approach
+      console.log('🔄 Loading source PDF and embedding page...');
+      const sourcePdf = tempPdfDoc;
+      const sourcePages = sourcePdf.getPages();
       
-      if (!copiedPage) {
-        console.error(`❌ Failed to copy page from PDF: ${tempPdfPath}`);
+      if (sourcePages.length === 0) {
+        console.error(`❌ Source PDF has no pages: ${tempPdfPath}`);
         fs.unlinkSync(tempPdfPath);
         return;
       }
+      
+      console.log(`📋 Found ${sourcePages.length} source pages`);
+      const embeddedPage = await pdfDoc.embedPage(sourcePages[0]);
+      console.log('📋 Embedded page type:', typeof embeddedPage);
+      console.log('📋 Embedded page constructor:', embeddedPage ? embeddedPage.constructor.name : 'null');
+      
+      if (!embeddedPage || typeof embeddedPage !== 'object') {
+        console.error(`❌ Failed to embed page: ${tempPdfPath}`);
+        fs.unlinkSync(tempPdfPath);
+        return;
+      }
+      
+      const copiedPage = embeddedPage;
 
       // Simple position calculation
       const scale = 2.834; // mm to points conversion
@@ -128,8 +143,8 @@ export class WorkingPDFGenerator {
       const pageHeight = templateSize.height * scale;
       const finalY = pageHeight - yInPoints;
       
-      // Get original page size for scaling
-      const originalSize = copiedPage.getSize();
+      // Get original page size for scaling from embedded PDF page
+      const originalSize = { width: copiedPage.width, height: copiedPage.height };
       
       if (!originalSize || originalSize.width <= 0 || originalSize.height <= 0) {
         console.error(`❌ Invalid page dimensions: ${originalSize?.width}×${originalSize?.height}`);
@@ -151,7 +166,13 @@ export class WorkingPDFGenerator {
       
       console.log(`📐 Embedding: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)}, ${finalY.toFixed(1)})`);
       
-      // Draw the copied page
+      // Final validation before drawing
+      console.log('🎯 Pre-draw validation:');
+      console.log('🎯 copiedPage type:', typeof copiedPage);
+      console.log('🎯 copiedPage constructor:', copiedPage ? copiedPage.constructor.name : 'null');
+      console.log('🎯 copiedPage value:', copiedPage);
+      
+      // Draw the embedded page using correct drawPage API
       page.drawPage(copiedPage, {
         x: xInPoints,
         y: finalY,

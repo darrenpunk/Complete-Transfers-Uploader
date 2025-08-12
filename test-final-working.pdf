@@ -1,1 +1,1 @@
-{"error":"Project not found"}
+{"error":"Failed to generate PDF: Transform failed with 1 error:\n/home/runner/workspace/server/working-pdf-generator.ts:111:12: ERROR: The symbol \"sourcePdf\" has already been declared"}
