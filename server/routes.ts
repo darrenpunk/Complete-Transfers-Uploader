@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the FINAL SIMPLE PDF generator
-      console.log('📦 Using FinalSimplePDFGenerator...');
-      const { FinalSimplePDFGenerator } = await import('./final-simple-pdf-generator');
-      console.log('✅ FinalSimplePDFGenerator imported successfully');
-      const generator = new FinalSimplePDFGenerator();
-      console.log('📊 Simple canvas generator instance created');
+      // Import the WORKING ROBUST PDF generator
+      console.log('📦 Using RobustPDFGenerator (working version)...');
+      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+      console.log('✅ RobustPDFGenerator imported successfully');
+      const generator = new RobustPDFGenerator();
+      console.log('📊 Robust generator instance created');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,16 +679,16 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating simple PDF that matches canvas exactly...`);
-      const pdfBuffer = await generator.generatePDF(
-        project.name || 'Untitled Project',
-        canvasElements,
-        logos,
-        templateSize,
-        finalGarmentColor,
-        [], // No extra garment colors for GET
-        1   // Default quantity
-      );
+      console.log(`🔄 Generating robust PDF with working vector embedding...`);
+      const pdfBuffer = await generator.generatePDF({
+        projectId: projectId,
+        canvasElements: canvasElements,
+        logos: logos,
+        templateSize: templateSize,
+        garmentColor: finalGarmentColor,
+        extraGarmentColors: [], // No extra garment colors for GET
+        quantity: 1   // Default quantity
+      });
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');
@@ -753,12 +753,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the FINAL SIMPLE PDF generator
-      console.log('📦 Using FinalSimplePDFGenerator...');
-      const { FinalSimplePDFGenerator } = await import('./final-simple-pdf-generator');
-      console.log('✅ FinalSimplePDFGenerator imported successfully');
-      const generator = new FinalSimplePDFGenerator();
-      console.log('📊 Simple canvas generator instance created');
+      // Import the WORKING ROBUST PDF generator  
+      console.log('📦 Using RobustPDFGenerator (working version)...');
+      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+      console.log('✅ RobustPDFGenerator imported successfully');
+      const generator = new RobustPDFGenerator();
+      console.log('📊 Robust generator instance created');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -772,16 +772,16 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating simple PDF that matches canvas exactly...`);
-      const pdfBuffer = await generator.generatePDF(
-        project.name || 'Untitled Project',
-        canvasElements,
-        logos,
-        templateSize,
-        finalGarmentColor,
-        extraGarmentColors,
-        quantity
-      );
+      console.log(`🔄 Generating robust PDF with working vector embedding...`);
+      const pdfBuffer = await generator.generatePDF({
+        projectId: projectId,
+        canvasElements: canvasElements,
+        logos: logos,
+        templateSize: templateSize,
+        garmentColor: finalGarmentColor,
+        extraGarmentColors: extraGarmentColors,
+        quantity: quantity
+      });
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
       res.setHeader('Content-Type', 'application/pdf');

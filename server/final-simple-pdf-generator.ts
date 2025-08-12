@@ -97,46 +97,69 @@ export class FinalSimplePDFGenerator {
       const tempPdfPath = path.join('/tmp', `svg_vector_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.pdf`);
       
       try {
-        // Inkscape command to preserve vectors and CMYK colors exactly
-        const inkscapeCmd = `inkscape "${logoPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-area-drawing --export-text-to-path`;
+        // Use EXACT WORKING Inkscape command from RobustPDFGenerator
+        const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoPath}"`;
         execSync(inkscapeCmd, { stdio: 'pipe' });
         
         if (fs.existsSync(tempPdfPath)) {
           console.log(`✅ SVG converted to vector PDF: ${tempPdfPath}`);
           
-          // Read the vector PDF and embed it directly
-          const vectorPdfBytes = fs.readFileSync(tempPdfPath);
-          const vectorDocument = await PDFDocument.load(vectorPdfBytes);
-          const vectorPages = vectorDocument.getPages();
+          // Read and validate the PDF like RobustPDFGenerator does
+          const tempPdfBytes = fs.readFileSync(tempPdfPath);
+          const tempPdf = await PDFDocument.load(tempPdfBytes);
           
-          if (vectorPages.length > 0) {
-            const firstVectorPage = vectorPages[0];
-            const { width: vectorWidth, height: vectorHeight } = firstVectorPage.getSize();
-            
-            console.log(`📐 Vector PDF dimensions: ${vectorWidth}×${vectorHeight}`);
-            console.log(`📐 Canvas dimensions: ${width}×${height}`);
-            
-            // Use copyPages to properly handle vector content
-            const [copiedVectorPage] = await page.doc.copyPages(vectorDocument, [0]);
-            
-            if (copiedVectorPage) {
-              // Draw the vector page content at exact position and size
-              page.drawPage(copiedVectorPage, {
-                x: x,
-                y: y,
-                width: width,
-                height: height
-              });
-              
-              // Clean up
-              fs.unlinkSync(tempPdfPath);
-              
-              console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) size: ${width}×${height}`);
-              return true;
-            }
-            
-            // Clean up if copy failed
+          // Check if PDF has pages (CRITICAL validation from RobustPDFGenerator)
+          if (tempPdf.getPageCount() === 0) {
+            console.error(`❌ Converted PDF has no pages: ${tempPdfPath}`);
             fs.unlinkSync(tempPdfPath);
+            return false;
+          }
+          
+          const [embeddedPage] = await page.doc.copyPages(tempPdf, [0]);
+          
+          if (!embeddedPage) {
+            console.error(`❌ Failed to copy page from PDF: ${tempPdfPath}`);
+            fs.unlinkSync(tempPdfPath);
+            return false;
+          }
+
+          // Get original page size to calculate scale factor
+          const originalSize = embeddedPage.getSize();
+          
+          if (!originalSize || originalSize.width <= 0 || originalSize.height <= 0) {
+            console.error(`❌ Invalid page dimensions: ${originalSize?.width}×${originalSize?.height}`);
+            fs.unlinkSync(tempPdfPath);
+            return false;
+          }
+          
+          const scaleX = width / originalSize.width;
+          const scaleY = height / originalSize.height;
+          const uniformScale = Math.min(scaleX, scaleY); // Maintain aspect ratio
+
+          // Calculate final dimensions
+          const finalWidth = originalSize.width * uniformScale;
+          const finalHeight = originalSize.height * uniformScale;
+          
+          console.log(`📐 Embedding: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}px at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+          
+          try {
+            page.drawPage(embeddedPage, {
+              x: x,
+              y: y,
+              width: finalWidth,
+              height: finalHeight
+            });
+            
+            // Clean up
+            fs.unlinkSync(tempPdfPath);
+            
+            console.log(`✅ VECTOR CONTENT EMBEDDED successfully using EXACT working method at (${x.toFixed(1)}, ${y.toFixed(1)})`);
+            return true;
+            
+          } catch (drawError) {
+            console.error(`❌ Failed to draw page:`, drawError);
+            fs.unlinkSync(tempPdfPath);
+            return false;
           }
         }
         
