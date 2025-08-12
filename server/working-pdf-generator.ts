@@ -1,4 +1,4 @@
-import { PDFDocument, degrees } from 'pdf-lib';
+import { PDFDocument, degrees, rgb } from 'pdf-lib';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,6 +53,50 @@ export class WorkingPDFGenerator {
         console.log(`🎯 Processing logo: ${logo.filename}`);
         await this.embedLogo(pdfDoc, page, element, logo, data.templateSize);
       }
+
+      // Add second page with garment colors and project details
+      const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Draw garment color information on page 2
+      page2.drawText(`Project: ${data.projectId}`, {
+        x: 50,
+        y: pageHeight - 50,
+        size: 24,
+        color: rgb(0, 0, 0),
+      });
+      
+      page2.drawText(`Template: ${data.templateSize.name} (${data.templateSize.width}×${data.templateSize.height}mm)`, {
+        x: 50,
+        y: pageHeight - 100,
+        size: 16,
+        color: rgb(0, 0, 0),
+      });
+      
+      page2.drawText(`Main Garment Color: ${data.garmentColor || '#FFFFFF'}`, {
+        x: 50,
+        y: pageHeight - 150,
+        size: 16,
+        color: rgb(0, 0, 0),
+      });
+      
+      // Draw garment color swatch
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16) / 255,
+          g: parseInt(result[2], 16) / 255,
+          b: parseInt(result[3], 16) / 255
+        } : { r: 1, g: 1, b: 1 };
+      };
+      
+      const colorRgb = hexToRgb(data.garmentColor || '#FFFFFF');
+      page2.drawRectangle({
+        x: 50,
+        y: pageHeight - 200,
+        width: 100,
+        height: 50,
+        color: rgb(colorRgb.r, colorRgb.g, colorRgb.b),
+      });
 
       // Generate final PDF
       const pdfBytes = await pdfDoc.save();
@@ -130,18 +174,20 @@ export class WorkingPDFGenerator {
       
       const copiedPage = embeddedPage;
 
-      // Simple position calculation
-      const scale = 2.834; // mm to points conversion
-      const pixelToMm = templateSize.width / templateSize.pixelWidth;
-      const xInMm = element.x * pixelToMm;
-      const yInMm = element.y * pixelToMm;
+      // CRITICAL FIX: Proper coordinate mapping canvas -> PDF
+      const scale = 2.834; // mm to points conversion (72/25.4)
       
-      const xInPoints = xInMm * scale;
-      const yInPoints = yInMm * scale;
+      // Canvas pixels to PDF points conversion
+      const canvasToPointsX = (templateSize.width * scale) / templateSize.pixelWidth;
+      const canvasToPointsY = (templateSize.height * scale) / templateSize.pixelHeight;
+      
+      // Direct pixel-to-point conversion (no mm intermediate step)
+      const xInPoints = element.x * canvasToPointsX;
+      const yInPoints = element.y * canvasToPointsY;
       
       // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
-      const pageHeight = templateSize.height * scale;
-      const finalY = pageHeight - yInPoints;
+      const pageHeightPoints = templateSize.height * scale;
+      const finalY = pageHeightPoints - yInPoints - (element.height * canvasToPointsY);
       
       // Get original page size for scaling from embedded PDF page
       const originalSize = { width: copiedPage.width, height: copiedPage.height };
@@ -152,10 +198,9 @@ export class WorkingPDFGenerator {
         return;
       }
       
-      const elementWidthMm = element.width * pixelToMm;
-      const elementHeightMm = element.height * pixelToMm;
-      const elementWidthPoints = elementWidthMm * scale;
-      const elementHeightPoints = elementHeightMm * scale;
+      // Direct canvas pixel to PDF points conversion for size
+      const elementWidthPoints = element.width * canvasToPointsX;
+      const elementHeightPoints = element.height * canvasToPointsY;
       
       const scaleX = elementWidthPoints / originalSize.width;
       const scaleY = elementHeightPoints / originalSize.height;
@@ -164,13 +209,7 @@ export class WorkingPDFGenerator {
       const finalWidth = originalSize.width * uniformScale;
       const finalHeight = originalSize.height * uniformScale;
       
-      console.log(`📐 Embedding: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)}, ${finalY.toFixed(1)})`);
-      
-      // Final validation before drawing
-      console.log('🎯 Pre-draw validation:');
-      console.log('🎯 copiedPage type:', typeof copiedPage);
-      console.log('🎯 copiedPage constructor:', copiedPage ? copiedPage.constructor.name : 'null');
-      console.log('🎯 copiedPage value:', copiedPage);
+      console.log(`📐 EXACT POSITIONING: Canvas(${element.x},${element.y},${element.width}×${element.height}) → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)},${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)})`);
       
       // Draw the embedded page using correct drawPage API
       page.drawPage(copiedPage, {
@@ -181,7 +220,7 @@ export class WorkingPDFGenerator {
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Logo embedded successfully`);
+      console.log(`✅ Logo positioned exactly as canvas`);
 
       // Clean up temp file
       fs.unlinkSync(tempPdfPath);
