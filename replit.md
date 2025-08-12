@@ -1,7 +1,7 @@
-# Logo Upload and Design Tool
+# Odoo Artwork Uploader Module
 
 ## Overview
-This full-stack web application streamlines logo uploads and layout creation on garment templates, primarily for the custom apparel industry. It provides a professional design experience for positioning logos on various canvas templates and generating production-ready vector graphics. The project includes a standalone application and an integrated Odoo 16 module for seamless integration with Odoo product catalogs. The business vision is to offer an intuitive tool that simplifies the design process, enhances accuracy for printing, and supports high-volume custom apparel production, ultimately expanding market potential in the personalized garment sector.
+This is a comprehensive Odoo 16 module that brings the full Artwork Uploader & Gang Sheet Builder functionality into Odoo's e-commerce platform. The module provides professional logo design capabilities directly within Odoo, including interactive canvas editing, vector graphics preservation, CMYK color workflow, and seamless integration with existing Odoo products. Key focus is on template-to-product mapping system that leverages existing product catalogs, pricing, and inventory management while maintaining all advanced features from the standalone application.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
