@@ -1,4 +1,5 @@
 import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -78,7 +79,7 @@ export class DirectPDFGenerator {
           // Use exact canvas size for perfect pixel matching
           const command = `inkscape "${logoPath}" --export-png="${pngPath}" --export-width=${Math.round(element.width)} --export-height=${Math.round(element.height)} --export-background=white --export-background-opacity=0`;
           
-          require('child_process').execSync(command, { stdio: 'ignore' });
+          execSync(command, { stdio: 'ignore' });
           imageData = fs.readFileSync(pngPath);
           embeddedImage = await pdfDoc.embedPng(imageData);
           
