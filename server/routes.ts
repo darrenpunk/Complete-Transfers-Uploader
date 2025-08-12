@@ -676,11 +676,11 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the SIMPLE CANVAS PDF generator
-      console.log('📦 Using SimpleCanvasPDFGenerator...');
-      const { SimpleCanvasPDFGenerator } = await import('./simple-canvas-pdf-generator');
-      console.log('✅ SimpleCanvasPDFGenerator imported successfully');
-      const generator = new SimpleCanvasPDFGenerator();
+      // Import the ULTRA SIMPLE PDF generator
+      console.log('📦 Using UltraSimplePDFGenerator...');
+      const { UltraSimplePDFGenerator } = await import('./ultra-simple-pdf-generator');
+      console.log('✅ UltraSimplePDFGenerator imported successfully');
+      const generator = new UltraSimplePDFGenerator();
       console.log('📊 Simple canvas generator instance created');
 
       // Get request data for garment colors and other settings

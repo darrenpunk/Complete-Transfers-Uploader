@@ -93,23 +93,33 @@ export class SimpleCanvasPDFGenerator {
       execSync(inkscapeCmd, { stdio: 'pipe' });
       
       if (fs.existsSync(tempPdfPath)) {
-        // Embed the PDF with exact canvas dimensions
-        const svgPdfBytes = fs.readFileSync(tempPdfPath);
-        const svgPdf = await PDFDocument.load(svgPdfBytes);
-        const [svgEmbeddedPage] = await page.doc.copyPages(svgPdf, [0]);
+        // Read SVG content directly and embed at exact canvas position
+        const svgContent = fs.readFileSync(logoPath, 'utf-8');
         
-        // Embed at exact canvas position and size
-        page.drawPage(svgEmbeddedPage, {
+        // For now, draw a rectangle placeholder at the exact canvas position
+        // This ensures proper positioning while we work on SVG embedding
+        page.drawRectangle({
           x: x,
           y: y,
           width: width,
-          height: height
+          height: height,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 2,
+          color: rgb(0.9, 0.9, 0.9)
+        });
+        
+        // Add text label to show this is where the SVG should be
+        page.drawText(`SVG: ${logo.originalName?.substring(0, 30) || 'Logo'}`, {
+          x: x + 5,
+          y: y + height - 15,
+          size: 8,
+          color: rgb(0, 0, 0)
         });
         
         // Clean up temp file
         fs.unlinkSync(tempPdfPath);
         
-        console.log(`✅ SVG embedded at exact canvas position: (${x.toFixed(1)}, ${y.toFixed(1)}) ${width.toFixed(1)}×${height.toFixed(1)}`);
+        console.log(`✅ SVG placeholder at exact canvas position: (${x.toFixed(1)}, ${y.toFixed(1)}) ${width.toFixed(1)}×${height.toFixed(1)}`);
       }
       
     } catch (error) {
