@@ -116,17 +116,12 @@ export class FinalSimplePDFGenerator {
             console.log(`📐 Vector PDF dimensions: ${vectorWidth}×${vectorHeight}`);
             console.log(`📐 Canvas dimensions: ${width}×${height}`);
             
-            // Embed the vector PDF page as a form object
-            const vectorPdf = await page.doc.embedPdf(vectorPdfBytes);
-            const vectorPage = vectorPdf.getPages()[0];
+            // Use copyPages to properly handle vector content
+            const [copiedVectorPage] = await page.doc.copyPages(vectorDocument, [0]);
             
-            if (vectorPage) {
-              // Calculate scaling to fit canvas size exactly
-              const scaleX = width / vectorWidth;
-              const scaleY = height / vectorHeight;
-              
-              // Draw the embedded vector page at exact position
-              page.drawPage(vectorPage, {
+            if (copiedVectorPage) {
+              // Draw the vector page content at exact position and size
+              page.drawPage(copiedVectorPage, {
                 x: x,
                 y: y,
                 width: width,
@@ -136,11 +131,11 @@ export class FinalSimplePDFGenerator {
               // Clean up
               fs.unlinkSync(tempPdfPath);
               
-              console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) with scaling: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`);
+              console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) size: ${width}×${height}`);
               return true;
             }
             
-            // Clean up if vectorPage is null
+            // Clean up if copy failed
             fs.unlinkSync(tempPdfPath);
           }
         }
