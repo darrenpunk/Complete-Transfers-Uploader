@@ -44,78 +44,29 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // Ensure viewBox is preserved for proper scaling
+        // For PDF-derived SVGs, use server-calculated bounds to fix viewBox
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-        if (viewBoxMatch) {
-          // Check if this is a PDF-derived SVG with significant padding
-          const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
-          let scaleTransform = '';
+        if (viewBoxMatch && logo.filename.includes('.pdf.svg')) {
+          // The server has already calculated the precise content bounds
+          // Use the element dimensions from the database as the new viewBox
+          const newViewBox = `0 0 ${element.width} ${element.height}`;
           
-          if (viewBoxValues.length >= 4 && logo.filename.includes('.pdf.svg')) {
-            const vbWidth = viewBoxValues[2];
-            const vbHeight = viewBoxValues[3];
-            
-            // Calculate actual content bounds from the SVG
-            const pathMatches = cleanedSvg.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
-            if (pathMatches.length > 0) {
-              // Estimate content bounds from path coordinates
-              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-              
-              pathMatches.forEach(pathMatch => {
-                const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
-                const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
-                
-                for (let i = 0; i < coords.length; i += 2) {
-                  const x = parseFloat(coords[i]);
-                  const y = parseFloat(coords[i + 1]);
-                  if (!isNaN(x) && !isNaN(y)) {
-                    minX = Math.min(minX, x);
-                    maxX = Math.max(maxX, x);
-                    minY = Math.min(minY, y);
-                    maxY = Math.max(maxY, y);
-                  }
-                }
-              });
-              
-              if (minX !== Infinity && maxX !== -Infinity) {
-                const contentWidth = maxX - minX;
-                const contentHeight = maxY - minY;
-                
-                // If there's significant padding (>10px), apply scaling and centering correction
-                const paddingX = vbWidth - contentWidth;
-                const paddingY = vbHeight - contentHeight;
-                
-                if (paddingX > 10 || paddingY > 10) {
-                  // Calculate optimal scale to fill the available space while maintaining aspect ratio
-                  const scaleX = vbWidth / contentWidth;
-                  const scaleY = vbHeight / contentHeight;
-                  const scale = Math.min(scaleX, scaleY, 1.2); // Cap at 1.2x to avoid excessive scaling
-                  
-                  // Calculate translation to center the scaled content
-                  const contentCenterX = minX + (contentWidth / 2);
-                  const contentCenterY = minY + (contentHeight / 2);
-                  const viewBoxCenterX = vbWidth / 2;
-                  const viewBoxCenterY = vbHeight / 2;
-                  
-                  const translateX = viewBoxCenterX - contentCenterX;
-                  const translateY = viewBoxCenterY - contentCenterY;
-                  
-                  if (scale > 1.05) {
-                    scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)}) scale(${scale.toFixed(3)})" transform-origin="${contentCenterX.toFixed(2)} ${contentCenterY.toFixed(2)}"`;
-                    console.log(`🎯 PDF content scaled & centered: translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) scale(${scale.toFixed(2)}x) for ${logo.filename}`);
-                  } else {
-                    scaleTransform = ` transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)})" transform-origin="0 0"`;
-                    console.log(`🎯 PDF content centered only: translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)}) for ${logo.filename}`);
-                  }
-                }
-              }
-            }
-          }
+          console.log(`🎯 PDF-derived SVG viewBox correction:`, {
+            originalViewBox: viewBoxMatch[1],
+            serverDetectedBounds: `${element.width}×${element.height}px`,
+            newViewBox: newViewBox
+          });
           
-          // Add width="100%" height="100%" for full container fit with optional scaling
-          if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" style="display:block"${scaleTransform}>`);
-          }
+          // Replace the viewBox with the server-detected bounds
+          cleanedSvg = cleanedSvg.replace(
+            /viewBox\s*=\s*["'][^"']*["']/i,
+            `viewBox="${newViewBox}"`
+          );
+        }
+        
+        // Ensure the SVG fills its container completely
+        if (!cleanedSvg.includes('width="100%"')) {
+          cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" style="display:block">`);
         }
         
         // Remove any existing style attributes that might have background
