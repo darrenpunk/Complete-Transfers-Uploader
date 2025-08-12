@@ -858,18 +858,26 @@ export class EnhancedCMYKGenerator {
       
       if (forceStretch) {
         console.log(`🎯 FORCING content stretch: ${origWidth}×${origHeight}pts -> ${targetWidth}×${targetHeight}pts`);
-        console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origHeight).toFixed(3)}x`);
+        console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origWidth).toFixed(3)}x`);
         
-        // Use exact target dimensions to force stretch - matches canvas exactly
+        // CRITICAL: Get the actual content bounds from the embedded page
+        const pageBox = embeddedPage.mediaBox || embeddedPage.cropBox;
+        console.log(`🎯 Original PDF MediaBox/CropBox:`, pageBox);
+        
+        // Force exact stretching by cropping and scaling the embedded page
+        // This ensures the content fills the exact target dimensions
         page.drawPage(embeddedPage, {
           x: x,
           y: y,
           width: targetWidth,   // Force exact width - stretch content
-          height: targetHeight, // Force exact height - stretch content
+          height: targetHeight, // Force exact height - stretch content  
           rotate: degrees(element.rotation || 0),
+          // Crop the entire page area to force fill
+          xScale: targetWidth / origWidth,   // Force X scaling
+          yScale: targetHeight / origHeight, // Force Y scaling
         });
         
-        console.log(`✅ Successfully embedded CMYK PDF at (${x.toFixed(1)}, ${y.toFixed(1)}) with forced stretch`);
+        console.log(`✅ Successfully embedded CMYK PDF at (${x.toFixed(1)}, ${y.toFixed(1)}) with forced stretch scales: ${(targetWidth/origWidth).toFixed(3)}x, ${(targetHeight/origHeight).toFixed(3)}x`);
       } else {
         // Original scaling logic (not used)
         page.drawPage(embeddedPage, {
