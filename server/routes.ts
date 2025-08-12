@@ -685,6 +685,7 @@ export async function registerRoutes(app: express.Application) {
         canvasElements: canvasElements,
         logos: logos,
         templateSize: templateSize,
+        project: project,
         garmentColor: finalGarmentColor,
         extraGarmentColors: [], // No extra garment colors for GET
         quantity: 1   // Default quantity
@@ -778,6 +779,7 @@ export async function registerRoutes(app: express.Application) {
         canvasElements: canvasElements,
         logos: logos,
         templateSize: templateSize,
+        project: project,
         garmentColor: finalGarmentColor,
         extraGarmentColors: extraGarmentColors,
         quantity: quantity

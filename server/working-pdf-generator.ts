@@ -8,6 +8,7 @@ export interface WorkingPDFData {
   canvasElements: any[];
   logos: any[];
   templateSize: any;
+  project?: any;
   garmentColor?: string;
   extraGarmentColors?: string[];
   quantity?: number;
@@ -58,7 +59,7 @@ export class WorkingPDFGenerator {
       const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
       
       // Draw garment color information on page 2
-      page2.drawText(`Project: ${data.projectId}`, {
+      page2.drawText(`Project: ${data.project?.name || 'Untitled Project'}`, {
         x: 50,
         y: pageHeight - 50,
         size: 24,
@@ -198,16 +199,9 @@ export class WorkingPDFGenerator {
         return;
       }
       
-      // Direct canvas pixel to PDF points conversion for size
-      const elementWidthPoints = element.width * canvasToPointsX;
-      const elementHeightPoints = element.height * canvasToPointsY;
-      
-      const scaleX = elementWidthPoints / originalSize.width;
-      const scaleY = elementHeightPoints / originalSize.height;
-      const uniformScale = Math.min(scaleX, scaleY);
-
-      const finalWidth = originalSize.width * uniformScale;
-      const finalHeight = originalSize.height * uniformScale;
+      // CRITICAL FIX: Use element size directly in points (no scaling down)
+      const finalWidth = element.width * canvasToPointsX;
+      const finalHeight = element.height * canvasToPointsY;
       
       console.log(`📐 EXACT POSITIONING: Canvas(${element.x},${element.y},${element.width}×${element.height}) → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)},${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)})`);
       
