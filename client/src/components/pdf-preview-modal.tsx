@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Layers, Palette, Type } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -26,6 +26,53 @@ export default function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [designApproved, setDesignApproved] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  // Generate PDF preview using working POST route when modal opens
+  useEffect(() => {
+    if (open && project?.id && !previewPdfUrl && !previewLoading) {
+      setPreviewLoading(true);
+      
+      const generatePreview = async () => {
+        try {
+          const response = await fetch(`/api/projects/${project.id}/generate-pdf`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              garmentColor: project.garmentColor || '#FFFFFF',
+              extraGarmentColors: [],
+              quantity: 1
+            })
+          });
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            setPreviewPdfUrl(url);
+          } else {
+            console.error('Failed to generate PDF preview');
+          }
+        } catch (error) {
+          console.error('Error generating PDF preview:', error);
+        } finally {
+          setPreviewLoading(false);
+        }
+      };
+      
+      generatePreview();
+    }
+  }, [open, project?.id, project?.garmentColor]);
+
+  // Cleanup blob URL when modal closes
+  useEffect(() => {
+    if (!open && previewPdfUrl) {
+      URL.revokeObjectURL(previewPdfUrl);
+      setPreviewPdfUrl(null);
+    }
+  }, [open, previewPdfUrl]);
   
   console.log('PDFPreviewModal render:', { open, project: project?.name });
 
@@ -132,11 +179,42 @@ export default function PDFPreviewModal({
           <div className="flex-1 flex flex-col">
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
-            {/* Restore original preview method (NO IFRAMES) */}
+            {/* Real PDF Preview using working POST route */}
             <div className="gap-4 flex-1 flex">
-              {/* Page 1 Preview - Artwork Layout */}
+              {/* Real PDF Preview */}
               <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">PDF Preview - Exact Canvas Output</h4>
+                <div className="border rounded-lg bg-white flex-1 flex items-center justify-center relative overflow-hidden">
+                  {previewLoading ? (
+                    <div className="flex items-center justify-center flex-col gap-2">
+                      <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm text-muted-foreground">Generating PDF preview...</p>
+                    </div>
+                  ) : previewPdfUrl ? (
+                    <iframe
+                      src={previewPdfUrl}
+                      className="w-full h-full border-0"
+                      style={{ minHeight: '400px' }}
+                      title="PDF Preview - Exact Canvas Output"
+                      onLoad={(e) => {
+                        console.log('PDF preview iframe loaded successfully');
+                      }}
+                      onError={(e) => {
+                        console.error('PDF preview iframe failed to load');
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center flex-col gap-2">
+                      <Eye className="w-8 h-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">Failed to generate PDF preview</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Canvas Comparison for reference */}
+              <div className="flex-1 flex flex-col">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Canvas Reference</h4>
                 <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
                   <div 
                     className="relative border border-dashed border-gray-400"
@@ -147,7 +225,7 @@ export default function PDFPreviewModal({
                       maxWidth: '280px'
                     }}
                   >
-                    {/* Render positioned logos that contain the artwork with color grids */}
+                    {/* Render positioned logos for comparison */}
                     {canvasElements.map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
