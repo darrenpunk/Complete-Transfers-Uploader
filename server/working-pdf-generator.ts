@@ -178,20 +178,30 @@ export class WorkingPDFGenerator {
       // CRITICAL FIX: Proper coordinate mapping canvas -> PDF
       const scale = 2.834; // mm to points conversion (72/25.4)
       
-      // Canvas pixels to PDF points conversion - use template canvas pixel dimensions
-      const canvasToPointsX = (templateSize.width * scale) / 842; // A3 canvas width in pixels  
-      const canvasToPointsY = (templateSize.height * scale) / 1191; // A3 canvas height in pixels
+      // CRITICAL FIX: Canvas coordinates are in DISPLAY pixels, NOT template pixels
+      // Canvas elements use the actual canvas display coordinates which need different scaling
       
-      // Calculate the target size in PDF points based on canvas element dimensions
-      const targetWidthPoints = element.width * canvasToPointsX; 
-      const targetHeightPoints = element.height * canvasToPointsY;
+      // The canvas shows the template at a specific zoom/scale
+      // We need to convert from canvas pixels to actual template proportions
+      const canvasDisplayWidth = 842;   // Canvas element width in pixels
+      const canvasDisplayHeight = 1191; // Canvas element height in pixels
       
-      // Direct pixel-to-point conversion for positioning
-      const xInPoints = element.x * canvasToPointsX;
-      const yInPoints = element.y * canvasToPointsY;
+      // Calculate proportional positioning and sizing
+      const xProportion = element.x / canvasDisplayWidth;
+      const yProportion = element.y / canvasDisplayHeight;  
+      const widthProportion = element.width / canvasDisplayWidth;
+      const heightProportion = element.height / canvasDisplayHeight;
+      
+      // Convert proportions to actual PDF points
+      const pageWidthPoints = templateSize.width * scale;
+      const pageHeightPoints = templateSize.height * scale;
+      
+      const xInPoints = xProportion * pageWidthPoints;
+      const yInPoints = yProportion * pageHeightPoints;
+      const targetWidthPoints = widthProportion * pageWidthPoints; 
+      const targetHeightPoints = heightProportion * pageHeightPoints;
       
       // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
-      const pageHeightPoints = templateSize.height * scale;
       const finalY = pageHeightPoints - yInPoints - targetHeightPoints;
       
       // Get original page size for scaling from embedded PDF page
@@ -210,9 +220,9 @@ export class WorkingPDFGenerator {
       const finalWidth = targetWidthPoints;
       const finalHeight = targetHeightPoints;
       
-      console.log(`📐 CANVAS MATCHING: Element(${element.width}×${element.height}px) → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt) - Direct Canvas Size`);
+      console.log(`🎯 PROPORTIONAL SCALING: Canvas(${element.width}×${element.height}px) = ${(widthProportion*100).toFixed(1)}%×${(heightProportion*100).toFixed(1)}% → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt)`);
       
-      console.log(`📐 EXACT POSITIONING: Canvas(${element.x},${element.y},${element.width}×${element.height}) → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)},${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)})`);
+      console.log(`📍 PROPORTIONAL POSITIONING: Canvas(${element.x},${element.y}) = ${(xProportion*100).toFixed(1)}%,${(yProportion*100).toFixed(1)}% → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
       
       // Draw the embedded page using correct drawPage API - ensuring exact canvas matching
       page.drawPage(copiedPage, {
