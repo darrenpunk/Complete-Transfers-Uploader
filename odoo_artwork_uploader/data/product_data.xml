@@ -102,31 +102,31 @@
         <!-- Default Template Mappings -->
         <record id="mapping_a3_full_colour" model="artwork.template.mapping">
             <field name="template_id">template-A3</field>
-            <field name="product_id" ref="product_full_colour_transfer_a3"/>
+            <field name="product_id" model="product.product" search="[('product_tmpl_id', '=', ref('product_full_colour_transfer_a3'))]"/>
             <field name="sequence">10</field>
         </record>
         
         <record id="mapping_a4_full_colour" model="artwork.template.mapping">
             <field name="template_id">template-A4</field>
-            <field name="product_id" ref="product_full_colour_transfer_a4"/>
+            <field name="product_id" model="product.product" search="[('product_tmpl_id', '=', ref('product_full_colour_transfer_a4'))]"/>
             <field name="sequence">20</field>
         </record>
         
         <record id="mapping_dtf_a3" model="artwork.template.mapping">
             <field name="template_id">template-dtf-a3</field>
-            <field name="product_id" ref="product_dtf_transfer_a3"/>
+            <field name="product_id" model="product.product" search="[('product_tmpl_id', '=', ref('product_dtf_transfer_a3'))]"/>
             <field name="sequence">30</field>
         </record>
         
         <record id="mapping_vinyl_a3" model="artwork.template.mapping">
             <field name="template_id">template-vinyl-a3</field>
-            <field name="product_id" ref="product_vinyl_transfer_a3"/>
+            <field name="product_id" model="product.product" search="[('product_tmpl_id', '=', ref('product_vinyl_transfer_a3'))]"/>
             <field name="sequence">40</field>
         </record>
         
         <record id="mapping_embroidery_a3" model="artwork.template.mapping">
             <field name="template_id">template-embroidery-badges-a3</field>
-            <field name="product_id" ref="product_embroidery_badges_a3"/>
+            <field name="product_id" model="product.product" search="[('product_tmpl_id', '=', ref('product_embroidery_badges_a3'))]"/>
             <field name="sequence">50</field>
         </record>
         
