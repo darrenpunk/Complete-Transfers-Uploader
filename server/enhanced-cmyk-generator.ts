@@ -949,10 +949,16 @@ export class EnhancedCMYKGenerator {
             
             console.log(`🎯 EXACT POSITIONING: (${elementXPx.toFixed(1)}, ${elementYPx.toFixed(1)}) size ${elementWidthPx.toFixed(1)}×${elementHeightPx.toFixed(1)}px`);
             
+            // Calculate dynamic scaling based on actual detected content bounds
+            const scaleX = elementWidthPx / contentWidthPx;
+            const scaleY = elementHeightPx / contentHeightPx;
+            
+            console.log(`🎯 DYNAMIC SCALING: content=${contentWidthPx.toFixed(1)}×${contentHeightPx.toFixed(1)}px, target=${elementWidthPx.toFixed(1)}×${elementHeightPx.toFixed(1)}px, scale=(${scaleX.toFixed(6)}, ${scaleY.toFixed(6)})`);
+            
             // Create full-page SVG with logo positioned exactly as canvas shows
             const fullPageSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidthPx}" height="${canvasHeightPx}" viewBox="0 0 ${canvasWidthPx} ${canvasHeightPx}">
-  <g transform="translate(${elementXPx}, ${elementYPx}) scale(${(elementWidthPx/338.2).toFixed(6)}, ${(elementHeightPx/225.2).toFixed(6)}) rotate(${element.rotation || 0})">
+  <g transform="translate(${elementXPx}, ${elementYPx}) scale(${scaleX.toFixed(6)}, ${scaleY.toFixed(6)}) rotate(${element.rotation || 0})">
     ${logoContent}
   </g>
 </svg>`;
