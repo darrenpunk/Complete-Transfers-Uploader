@@ -44,17 +44,15 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // For PDF-derived SVGs, extract content bounds and recalculate positioning
-        const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-        if (viewBoxMatch && logo.filename.includes('.pdf.svg')) {
-          const originalViewBox = viewBoxMatch[1].split(/\s+/).map(Number);
-          
-          // Calculate actual content bounds from the SVG paths
+        // For PDF-derived SVGs, completely ignore original dimensions and use only content bounds
+        if (logo.filename.includes('.pdf.svg')) {
+          // Extract all path coordinates to find true content bounds
           const pathMatches = cleanedSvg.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           
           pathMatches.forEach(pathMatch => {
             const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
+            // Extract all numeric coordinates from path data
             const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
             
             for (let i = 0; i < coords.length; i += 2) {
@@ -73,22 +71,26 @@ export default function SvgInlineRenderer({
             const contentWidth = maxX - minX;
             const contentHeight = maxY - minY;
             
-            // Create new viewBox that exactly matches the content bounds
-            const newViewBox = `${minX} ${minY} ${contentWidth} ${contentHeight}`;
+            // CRITICAL: Replace ALL container dimensions with ONLY content dimensions
+            // 1. Remove any existing width/height attributes
+            cleanedSvg = cleanedSvg.replace(/\s*(width|height)\s*=\s*["'][^"']*["']/gi, '');
             
-            console.log(`🎯 PDF-derived SVG complete bounds fix:`, {
-              originalViewBox: viewBoxMatch[1],
+            // 2. Set viewBox to EXACTLY match content bounds (no padding, no container)
+            const contentOnlyViewBox = `${minX} ${minY} ${contentWidth} ${contentHeight}`;
+            
+            // 3. Replace or add viewBox with content-only dimensions
+            if (cleanedSvg.includes('viewBox')) {
+              cleanedSvg = cleanedSvg.replace(/viewBox\s*=\s*["'][^"']*["']/i, `viewBox="${contentOnlyViewBox}"`);
+            } else {
+              cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 viewBox="${contentOnlyViewBox}">`);
+            }
+            
+            console.log(`🎯 CONTENT-ONLY SVG transformation:`, {
               detectedContentBounds: `${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)}`,
-              contentSize: `${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px`,
-              serverDetectedSize: `${element.width}×${element.height}px`,
-              newViewBox: newViewBox
+              contentOnlySize: `${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px`,
+              contentOnlyViewBox: contentOnlyViewBox,
+              ignoredOriginalContainer: 'YES - using ONLY content dimensions'
             });
-            
-            // Replace the viewBox with exact content bounds
-            cleanedSvg = cleanedSvg.replace(
-              /viewBox\s*=\s*["'][^"']*["']/i,
-              `viewBox="${newViewBox}"`
-            );
           }
         }
         
