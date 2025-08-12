@@ -497,20 +497,9 @@ export default function CanvasWorkspace({
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
-      // Calculate drag offset 
-      const isPdfDerived = element.width > 200 || element.height > 200;
-      let elementDisplayX, elementDisplayY;
-      
-      if (isPdfDerived) {
-        // PDF-derived elements are stored as pixels, no conversion needed
-        elementDisplayX = element.x * (zoom / 100);
-        elementDisplayY = element.y * (zoom / 100);
-      } else {
-        // Regular elements are stored as mm, convert to pixels
-        let mmToPixelRatio = template.pixelWidth / template.width;
-        elementDisplayX = element.x * mmToPixelRatio * (zoom / 100);
-        elementDisplayY = element.y * mmToPixelRatio * (zoom / 100);
-      }
+      // SIMPLIFIED: All elements are now stored in pixels, no coordinate conversion needed
+      const elementDisplayX = element.x * (zoom / 100);
+      const elementDisplayY = element.y * (zoom / 100);
       
       const calculatedOffset = {
         x: event.clientX - rect.left - elementDisplayX,
@@ -536,41 +525,18 @@ export default function CanvasWorkspace({
 
       updateTimeout = setTimeout(() => {
         if (isDragging && selectedElement && template) {
-          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
-          let newX, newY;
-          const safetyMargin = 3; // 3mm safety margin
+          // SIMPLIFIED: All elements stored in pixels, no conversion needed
+          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor;
+          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor;
           
-          if (isPdfDerived) {
-            // PDF-derived elements: store as pixels
-            newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor;
-            newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor;
-          } else {
-            // Regular elements: convert back to mm for storage
-            let mmToPixelRatio = template.pixelWidth / template.width;
-            newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
-            newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
-          }
+          // Safety margin in pixels (3mm converted to pixels)
+          const safetyMarginPx = 3 * 2.834645669;
           
-          // Constrain to safe zone
-          let maxX, maxY, minX, minY;
-          
-          if (isPdfDerived) {
-            // PDF-derived elements: work in pixels, convert template dimensions 
-            const templateWidthPx = template.pixelWidth;
-            const templateHeightPx = template.pixelHeight;
-            const safetyMarginPx = safetyMargin * 2.834645669; // Convert 3mm to pixels
-            
-            maxX = templateWidthPx - safetyMarginPx - selectedElement.width;
-            maxY = templateHeightPx - safetyMarginPx - selectedElement.height;
-            minX = safetyMarginPx;
-            minY = safetyMarginPx;
-          } else {
-            // Regular elements: work in mm
-            maxX = template.width - safetyMargin - selectedElement.width;
-            maxY = template.height - safetyMargin - selectedElement.height;
-            minX = safetyMargin;
-            minY = safetyMargin;
-          }
+          // Constrain to safe zone (all in pixels)
+          const maxX = template.pixelWidth - safetyMarginPx - selectedElement.width;
+          const maxY = template.pixelHeight - safetyMarginPx - selectedElement.height;
+          const minX = safetyMarginPx;
+          const minY = safetyMarginPx;
 
           const constrainedX = Math.max(minX, Math.min(newX, maxX));
           const constrainedY = Math.max(minY, Math.min(newY, maxY));
@@ -582,19 +548,9 @@ export default function CanvasWorkspace({
             y: constrainedY 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
-          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
-          let mouseX, mouseY;
-          
-          if (isPdfDerived) {
-            // PDF-derived elements: work in pixels
-            mouseX = (event.clientX - rect.left) / scaleFactor;
-            mouseY = (event.clientY - rect.top) / scaleFactor;
-          } else {
-            // Regular elements: convert to mm
-            let mmToPixelRatio = template.pixelWidth / template.width;
-            mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
-            mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
-          }
+          // SIMPLIFIED: All elements stored in pixels
+          const mouseX = (event.clientX - rect.left) / scaleFactor;
+          const mouseY = (event.clientY - rect.top) / scaleFactor;
 
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
