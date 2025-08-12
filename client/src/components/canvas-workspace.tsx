@@ -1506,7 +1506,7 @@ export default function CanvasWorkspace({
                             background: 'transparent', 
                             backgroundColor: 'transparent',
                             filter: "none",
-                            objectFit: 'contain',
+                            objectFit: logo.filename.includes('.pdf') ? 'fill' : 'contain',
                             width: '100%',
                             height: '100%',
 

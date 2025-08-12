@@ -44,24 +44,52 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // For PDF-derived SVGs, use server-calculated bounds to fix viewBox
+        // For PDF-derived SVGs, extract content bounds and recalculate positioning
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
         if (viewBoxMatch && logo.filename.includes('.pdf.svg')) {
-          // The server has already calculated the precise content bounds
-          // Use the element dimensions from the database as the new viewBox
-          const newViewBox = `0 0 ${element.width} ${element.height}`;
+          const originalViewBox = viewBoxMatch[1].split(/\s+/).map(Number);
           
-          console.log(`🎯 PDF-derived SVG viewBox correction:`, {
-            originalViewBox: viewBoxMatch[1],
-            serverDetectedBounds: `${element.width}×${element.height}px`,
-            newViewBox: newViewBox
+          // Calculate actual content bounds from the SVG paths
+          const pathMatches = cleanedSvg.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          pathMatches.forEach(pathMatch => {
+            const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
+            const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
+            
+            for (let i = 0; i < coords.length; i += 2) {
+              const x = parseFloat(coords[i]);
+              const y = parseFloat(coords[i + 1]);
+              if (!isNaN(x) && !isNaN(y)) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+              }
+            }
           });
           
-          // Replace the viewBox with the server-detected bounds
-          cleanedSvg = cleanedSvg.replace(
-            /viewBox\s*=\s*["'][^"']*["']/i,
-            `viewBox="${newViewBox}"`
-          );
+          if (minX !== Infinity && maxX !== -Infinity) {
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            
+            // Create new viewBox that exactly matches the content bounds
+            const newViewBox = `${minX} ${minY} ${contentWidth} ${contentHeight}`;
+            
+            console.log(`🎯 PDF-derived SVG complete bounds fix:`, {
+              originalViewBox: viewBoxMatch[1],
+              detectedContentBounds: `${minX.toFixed(1)},${minY.toFixed(1)} → ${maxX.toFixed(1)},${maxY.toFixed(1)}`,
+              contentSize: `${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px`,
+              serverDetectedSize: `${element.width}×${element.height}px`,
+              newViewBox: newViewBox
+            });
+            
+            // Replace the viewBox with exact content bounds
+            cleanedSvg = cleanedSvg.replace(
+              /viewBox\s*=\s*["'][^"']*["']/i,
+              `viewBox="${newViewBox}"`
+            );
+          }
         }
         
         // Ensure the SVG fills its container completely
