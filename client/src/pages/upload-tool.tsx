@@ -134,8 +134,18 @@ export default function UploadTool() {
         throw new Error('Please provide a project name before generating PDF');
       }
       
-      const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
-      const response = await fetch(url);
+      const url = `/api/projects/${currentProject?.id}/generate-pdf`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          garmentColor: currentProject?.garmentColor || '#FFFFFF',
+          extraGarmentColors: [],
+          quantity: quantity
+        })
+      });
       if (!response.ok) throw new Error('Failed to generate PDF');
       const blob = await response.blob();
       

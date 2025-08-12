@@ -630,7 +630,84 @@ export async function registerRoutes(app: express.Application) {
   process.stdout.write(`🚀🚀🚀 REGISTER ROUTES CALLED - ${new Date().toISOString()}\n`);
   console.error(`🚀🚀🚀 REGISTERING ROUTES FUNCTION STARTED`);
   
-  // PDF Generation endpoint - Must be before other routes
+  // PDF Generation endpoints - Must be before other routes
+  
+  // GET route for PDF preview (used by iframe and direct download) - with explicit API prefix to avoid Vite SPA routing
+  app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
+    // Force PDF content type early to avoid HTML interception
+    res.setHeader('Content-Type', 'application/pdf');
+    try {
+      console.log(`📄 PDF GET requested for project: ${req.params.projectId}`);
+      const projectId = req.params.projectId;
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        console.error(`❌ Project not found: ${projectId}`);
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      console.log(`✅ Project found: ${project.name || 'Untitled'}`);
+
+      // Get project data
+      const logos = await storage.getLogosByProject(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      const templateSizes = await storage.getTemplateSizes();
+      
+      console.log(`📊 Project data - Logos: ${logos.length}, Elements: ${canvasElements.length}`);
+      
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      if (!templateSize) {
+        console.error(`❌ Invalid template size: ${project.templateSize}`);
+        return res.status(400).json({ error: 'Invalid template size' });
+      }
+
+      console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
+
+      // Import the FINAL SIMPLE PDF generator
+      console.log('📦 Using FinalSimplePDFGenerator...');
+      const { FinalSimplePDFGenerator } = await import('./final-simple-pdf-generator');
+      console.log('✅ FinalSimplePDFGenerator imported successfully');
+      const generator = new FinalSimplePDFGenerator();
+      console.log('📊 Simple canvas generator instance created');
+
+      // Use project garment color as default
+      const finalGarmentColor = project.garmentColor || '#FFFFFF';
+      
+      // Debug: Log canvas elements 
+      console.log('📊 Canvas elements:');
+      canvasElements.forEach(element => {
+        console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
+      });
+
+      console.log(`🔄 Generating simple PDF that matches canvas exactly...`);
+      const pdfBuffer = await generator.generatePDF(
+        project.name || 'Untitled Project',
+        canvasElements,
+        logos,
+        templateSize,
+        finalGarmentColor,
+        [], // No extra garment colors for GET
+        1   // Default quantity
+      );
+      console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${project.name || 'project'}_artwork.pdf"`);
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+      res.setHeader('Content-Security-Policy', 'frame-ancestors \'self\'');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+      res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+      
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ PDF GET generation error:', error);
+      res.status(500).json({ error: 'Failed to generate PDF: ' + (error instanceof Error ? error.message : 'Unknown error') });
+    }
+  });
+
+  // POST route for PDF generation with custom parameters
   app.post('/api/projects/:projectId/generate-pdf', async (req, res) => {
     try {
       console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
@@ -1405,49 +1482,8 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // ====== PDF GENERATION ROUTE ======
-  app.post('/api/projects/:projectId/generate-pdf', async (req, res) => {
-    try {
-      const projectId = req.params.projectId;
-      console.log('📄 Generating PDF for project:', projectId);
-      
-      // Get project and validate
-      const project = await storage.getProject(projectId);
-      if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
-
-      // Use OriginalWorkingGenerator for PDF generation
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      const generator = new OriginalWorkingGenerator();
-      
-      // Build PDF data object
-      const logos = await storage.getLogosByProject(projectId);
-      const canvasElements = await storage.getCanvasElementsByProject(projectId);
-      
-      const pdfData = {
-        projectId: projectId,
-        logos,
-        canvasElements,
-        templateSize: await storage.getTemplateSize(project.templateSize),
-        garmentColor: project.garmentColor,
-        appliqueBadgesForm: project.appliqueBadgesForm
-      };
-      
-      const pdfBuffer = await generator.generatePDF(pdfData);
-      
-      // Set headers for PDF response
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Length', pdfBuffer.length);
-      res.setHeader('Content-Disposition', 'inline'); // For preview, use 'attachment' for download
-      
-      res.send(pdfBuffer);
-      
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      res.status(500).json({ error: 'Failed to generate PDF: ' + (error instanceof Error ? error.message : 'Unknown error') });
-    }
-  });
+  // ====== REMOVED DUPLICATE PDF GENERATION ROUTE ======
+  // This was overriding the new FinalSimplePDFGenerator routes defined earlier
 
   // Essential routes continue here...
   app.patch('/api/projects/:projectId', async (req, res) => {
