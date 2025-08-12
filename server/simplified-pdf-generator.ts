@@ -129,6 +129,9 @@ export class SimplifiedPDFGenerator {
     // Embed logos on page 2
     await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
 
+    // Add color information labels including original CMYK/RGB values and garment colors
+    await this.addOriginalColorLabels(pdfDoc, page2, data.logos, data.garmentColor, data.canvasElements);
+
     const pdfBytes = await pdfDoc.save();
     console.log('✅ Simplified PDF generated successfully');
     return Buffer.from(pdfBytes);
@@ -896,5 +899,175 @@ export class SimplifiedPDFGenerator {
     console.log(`🎯 Final position: (${adjustedX.toFixed(2)}, ${adjustedY.toFixed(2)}) on ${pageWidth}x${pageHeight}pt page`);
     console.log(`📍 Respects canvas positioning: user placed at (${element.x}, ${element.y})`);
     return { x: adjustedX, y: adjustedY };
+  }
+
+  private async addOriginalColorLabels(
+    pdfDoc: PDFDocument,
+    page: PDFPage,
+    logos: any[],
+    mainGarmentColor: string,
+    canvasElements: any[]
+  ) {
+    console.log('🎨 Adding original CMYK/RGB color information to page 2');
+    
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontSize = 9;
+    const pageHeight = page.getSize().height;
+    const pageWidth = page.getSize().width;
+    
+    let yPosition = 40; // Start from bottom
+    const leftMargin = 20;
+    const sectionSpacing = 15;
+    
+    // Section 1: Main Garment Color
+    if (mainGarmentColor && mainGarmentColor !== 'none') {
+      console.log(`🎨 Adding main garment color: ${mainGarmentColor}`);
+      
+      page.drawText('GARMENT COLOR:', {
+        x: leftMargin,
+        y: yPosition,
+        size: fontSize,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      
+      const garmentColorInfo = manufacturerColors.find((c: any) => c.name === mainGarmentColor);
+      if (garmentColorInfo) {
+        const colorText = `${garmentColorInfo.name} (${garmentColorInfo.hex})`;
+        page.drawText(colorText, {
+          x: leftMargin + 100,
+          y: yPosition,
+          size: fontSize,
+          font,
+          color: rgb(0.2, 0.2, 0.2),
+        });
+        
+        // Draw color swatch
+        const swatchSize = 12;
+        const rgbColor = this.hexToRgb(garmentColorInfo.hex);
+        if (rgbColor) {
+          page.drawRectangle({
+            x: leftMargin + 250,
+            y: yPosition - 2,
+            width: swatchSize,
+            height: swatchSize,
+            color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+            borderColor: rgb(0, 0, 0),
+            borderWidth: 0.5,
+          });
+        }
+      }
+      yPosition += sectionSpacing;
+    }
+    
+    // Section 2: Individual Element Garment Colors
+    const uniqueElementColors = new Set<string>();
+    canvasElements.forEach(element => {
+      if (element.garmentColor && element.garmentColor !== mainGarmentColor) {
+        uniqueElementColors.add(element.garmentColor);
+      }
+    });
+    
+    if (uniqueElementColors.size > 0) {
+      console.log(`🎨 Adding element garment colors: ${Array.from(uniqueElementColors).join(', ')}`);
+      
+      page.drawText('ADDITIONAL GARMENT COLORS:', {
+        x: leftMargin,
+        y: yPosition,
+        size: fontSize,
+        font: boldFont,
+        color: rgb(0, 0, 0),
+      });
+      yPosition += 12;
+      
+      uniqueElementColors.forEach(colorName => {
+        const colorInfo = manufacturerColors.find((c: any) => c.name === colorName);
+        if (colorInfo) {
+          const colorText = `${colorInfo.name} (${colorInfo.hex})`;
+          page.drawText(colorText, {
+            x: leftMargin + 20,
+            y: yPosition,
+            size: fontSize,
+            font,
+            color: rgb(0.2, 0.2, 0.2),
+          });
+          
+          // Draw color swatch
+          const swatchSize = 12;
+          const rgbColor = this.hexToRgb(colorInfo.hex);
+          if (rgbColor) {
+            page.drawRectangle({
+              x: leftMargin + 200,
+              y: yPosition - 2,
+              width: swatchSize,
+              height: swatchSize,
+              color: rgb(rgbColor.r / 255, rgbColor.g / 255, rgbColor.b / 255),
+              borderColor: rgb(0, 0, 0),
+              borderWidth: 0.5,
+            });
+          }
+          yPosition += 12;
+        }
+      });
+      yPosition += sectionSpacing;
+    }
+    
+    // Section 3: Original CMYK/RGB Values from Artwork
+    console.log(`🎨 Processing ${logos.length} logos for original color values`);
+    
+    page.drawText('ORIGINAL ARTWORK COLORS:', {
+      x: leftMargin,
+      y: yPosition,
+      size: fontSize,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    yPosition += 12;
+    
+    for (const logo of logos) {
+      console.log(`🎨 Processing logo: ${logo.originalName}`);
+      
+      // Get SVG analysis data which contains original color information
+      if (logo.svgAnalysis && logo.svgAnalysis.colors) {
+        console.log(`🎨 Found ${logo.svgAnalysis.colors.length} colors in SVG analysis`);
+        
+        logo.svgAnalysis.colors.forEach((colorInfo: any, index: number) => {
+          console.log(`🎨 Color ${index + 1}:`, colorInfo);
+          
+          let colorText = '';
+          
+          // Check for original CMYK values
+          if (colorInfo.originalCMYK) {
+            const cmyk = colorInfo.originalCMYK;
+            colorText = `CMYK(${cmyk.c}, ${cmyk.m}, ${cmyk.y}, ${cmyk.k})`;
+          } 
+          // Check for CMYK values
+          else if (colorInfo.cmykColor) {
+            const cmyk = colorInfo.cmykColor;
+            colorText = `CMYK(${cmyk.c}, ${cmyk.m}, ${cmyk.y}, ${cmyk.k})`;
+          }
+          // Fall back to RGB values
+          else if (colorInfo.originalColor) {
+            colorText = `RGB: ${colorInfo.originalColor}`;
+          }
+          
+          if (colorText) {
+            page.drawText(`• ${colorText}`, {
+              x: leftMargin + 20,
+              y: yPosition,
+              size: fontSize - 1,
+              font,
+              color: rgb(0.3, 0.3, 0.3),
+            });
+            yPosition += 10;
+          }
+        });
+      } else {
+        console.log(`🎨 No SVG analysis found for logo: ${logo.originalName}`);
+      }
+    }
+    
+    console.log(`🎨 Finished adding color labels at position: ${yPosition}`);
   }
 }
