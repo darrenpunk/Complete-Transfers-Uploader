@@ -66,33 +66,85 @@ export class UltraSimplePDFGenerator {
       console.log(`    Canvas: (${element.x.toFixed(1)}, ${element.y.toFixed(1)}) ${element.width.toFixed(1)}×${element.height.toFixed(1)}`);
       console.log(`    PDF: (${pdfX.toFixed(1)}, ${pdfY.toFixed(1)}) ${element.width.toFixed(1)}×${element.height.toFixed(1)}`);
       
-      // Draw a rectangle with the logo info at the exact position
-      page.drawRectangle({
-        x: pdfX,
-        y: pdfY,
-        width: element.width,
-        height: element.height,
-        borderColor: rgb(0.2, 0.2, 0.8),
-        borderWidth: 2,
-        color: rgb(0.95, 0.95, 1.0)
-      });
+      // Embed the actual SVG content at exact canvas position
+      await this.embedSVGAtExactPosition(page, logo, pdfX, pdfY, element.width, element.height);
+    }
+  }
+  
+  /**
+   * Embed SVG content at exact position using simple conversion
+   */
+  private async embedSVGAtExactPosition(
+    page: any,
+    logo: any,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): Promise<void> {
+    
+    try {
+      const logoPath = path.resolve(process.cwd(), 'uploads', logo.filename);
       
-      // Add filename label
-      const fontSize = Math.max(8, Math.min(12, element.width / 20));
-      page.drawText(logo.originalName?.substring(0, 25) || 'Logo', {
-        x: pdfX + 5,
-        y: pdfY + element.height - fontSize - 5,
-        size: fontSize,
-        color: rgb(0, 0, 0)
-      });
+      if (fs.existsSync(logoPath)) {
+        // Convert SVG to PNG using rsvg-convert at exact dimensions
+        const tempPngPath = path.join(path.dirname(logoPath), `temp_svg_${Date.now()}.png`);
+        
+        try {
+          // Use rsvg-convert to create PNG at exact canvas dimensions
+          const { execSync } = require('child_process');
+          const convertCmd = `rsvg-convert "${logoPath}" -w ${Math.round(width)} -h ${Math.round(height)} -o "${tempPngPath}"`;
+          execSync(convertCmd, { stdio: 'pipe' });
+          
+          if (fs.existsSync(tempPngPath)) {
+            // Embed PNG at exact coordinates
+            const imageBytes = fs.readFileSync(tempPngPath);
+            const image = await page.doc.embedPng(imageBytes);
+            
+            page.drawImage(image, {
+              x: x,
+              y: y,
+              width: width,
+              height: height
+            });
+            
+            // Clean up temp file
+            fs.unlinkSync(tempPngPath);
+            
+            console.log(`✅ SVG converted and embedded at exact coordinates: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+          } else {
+            throw new Error('PNG conversion failed');
+          }
+          
+        } catch (conversionError) {
+          console.warn(`⚠️ SVG conversion failed, using placeholder:`, conversionError);
+          
+          // Fallback: Draw rectangle with exact positioning info
+          page.drawRectangle({
+            x: x,
+            y: y,
+            width: width,
+            height: height,
+            borderColor: rgb(0.8, 0.2, 0.2),
+            borderWidth: 1,
+            color: rgb(0.95, 0.95, 0.95)
+          });
+          
+          const fontSize = Math.min(10, width / 30);
+          page.drawText(`SVG at (${x.toFixed(0)}, ${y.toFixed(0)})`, {
+            x: x + 2,
+            y: y + height/2,
+            size: fontSize,
+            color: rgb(0, 0, 0)
+          });
+        }
+        
+      } else {
+        console.warn(`⚠️ SVG file not found: ${logoPath}`);
+      }
       
-      // Add size info
-      page.drawText(`${element.width.toFixed(0)}×${element.height.toFixed(0)}px`, {
-        x: pdfX + 5,
-        y: pdfY + 5,
-        size: Math.max(6, fontSize - 2),
-        color: rgb(0.5, 0.5, 0.5)
-      });
+    } catch (error) {
+      console.error(`❌ Failed to embed SVG at position:`, error);
     }
   }
   
