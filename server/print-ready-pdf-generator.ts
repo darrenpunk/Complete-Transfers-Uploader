@@ -93,26 +93,35 @@ export class PrintReadyPDFGenerator {
       
       let embeddedImage;
       
-      // SIMPLIFIED APPROACH - Based on working direct test
+      // VECTOR PRESERVATION - Embed SVG as vector graphics
       if (logo.filename.toLowerCase().endsWith('.svg')) {
-        console.log('🔧 Converting SVG to PNG...');
-        const pngPath = originalPath.replace('.svg', '_embed.png');
-        const command = `inkscape "${originalPath}" --export-filename="${pngPath}" --export-width=${Math.round(element.width)} --export-height=${Math.round(element.height)} --export-background=white --export-background-opacity=0`;
+        console.log('🎯 PRESERVING VECTORS: Embedding SVG as vector graphics');
+        const svgData = fs.readFileSync(originalPath, 'utf-8');
         
-        execSync(command);
-        const pngData = fs.readFileSync(pngPath);
-        console.log(`✅ SVG converted: ${pngData.length} bytes`);
+        // Scale SVG to exact canvas dimensions while preserving vectors
+        const scaledSvg = this.scaleSVGContent(svgData, element.width, element.height);
+        console.log(`✅ SVG vectors preserved at ${element.width}x${element.height}`);
         
-        embeddedImage = await pdfDoc.embedPng(pngData);
-        fs.unlinkSync(pngPath); // cleanup
+        // Convert to PDF-compatible format while keeping vectors
+        const pdfPageData = await this.embedSVGAsVectorPDF(pdfDoc, scaledSvg, element.width, element.height);
+        embeddedImage = pdfPageData;
         
       } else if (logo.filename.toLowerCase().endsWith('.png')) {
+        console.log('🎯 PRESERVING RASTER: Embedding original PNG');
         const imageData = fs.readFileSync(originalPath);
         embeddedImage = await pdfDoc.embedPng(imageData);
+        console.log(`✅ PNG preserved: ${imageData.length} bytes`);
         
       } else if (logo.filename.toLowerCase().match(/\.(jpg|jpeg)$/)) {
+        console.log('🎯 PRESERVING RASTER: Embedding original JPEG');
         const imageData = fs.readFileSync(originalPath);
         embeddedImage = await pdfDoc.embedJpg(imageData);
+        console.log(`✅ JPEG preserved: ${imageData.length} bytes`);
+        
+      } else if (logo.filename.toLowerCase().endsWith('.pdf')) {
+        console.log('🎯 PRESERVING PDF: Embedding original PDF page');
+        await this.embedOriginalPDFPage(pdfDoc, page, element, originalPath, pageHeight);
+        return;
         
       } else {
         console.warn(`⚠️ Unsupported format: ${logo.filename}`);
@@ -125,13 +134,24 @@ export class PrintReadyPDFGenerator {
       
       console.log(`🎯 Drawing at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
       
-      // Draw image on PDF
-      page.drawImage(embeddedImage, {
-        x: pdfX,
-        y: pdfY,
-        width: element.width,
-        height: element.height
-      });
+      // Draw preserved graphic on PDF
+      if (embeddedImage.node) {
+        // For PDF pages (SVG converted to PDF)
+        page.drawPage(embeddedImage, {
+          x: pdfX,
+          y: pdfY,
+          width: element.width,
+          height: element.height
+        });
+      } else {
+        // For raster images (PNG/JPG)
+        page.drawImage(embeddedImage, {
+          x: pdfX,
+          y: pdfY,
+          width: element.width,
+          height: element.height
+        });
+      }
       
       console.log('✅ Graphic embedded successfully');
       
@@ -140,120 +160,9 @@ export class PrintReadyPDFGenerator {
     }
   }
 
-  private async convertSVGToPNG(svgPath: string, element: any, pdfDoc: PDFDocument): Promise<any> {
-    try {
-      const pngPath = svgPath.replace('.svg', '_original.png');
-      
-      console.log(`🔧 DEBUG: Converting SVG to PNG: ${svgPath} -> ${pngPath}`);
-      
-      // Convert at exact canvas dimensions to preserve sizing
-      const command = `inkscape "${svgPath}" --export-filename="${pngPath}" --export-width=${Math.round(element.width)} --export-height=${Math.round(element.height)} --export-background=white --export-background-opacity=0`;
-      
-      console.log(`🔧 DEBUG: Inkscape command: ${command}`);
-      
-      try {
-        execSync(command, { stdio: 'pipe' });
-      } catch (inkscapeError) {
-        console.error(`❌ Inkscape conversion failed: ${inkscapeError}`);
-        throw inkscapeError;
-      }
-      
-      const pngData = fs.readFileSync(pngPath);
-      console.log(`✅ SVG converted: ${pngData.length} bytes at ${element.width}x${element.height}px`);
-      
-      if (pngData.length === 0) {
-        throw new Error('PNG conversion produced empty file');
-      }
-      
-      console.log(`🔧 DEBUG: Embedding ${pngData.length} bytes PNG into PDF document...`);
-      
-      // Embed PNG into the actual PDF document (not a temp one!)
-      const embeddedImage = await pdfDoc.embedPng(pngData);
-      console.log(`🔧 DEBUG: PNG embedded successfully, dimensions: ${embeddedImage.width}x${embeddedImage.height}`);
-      
-      // Clean up temporary file
-      fs.unlinkSync(pngPath);
-      
-      return embeddedImage;
-      
-    } catch (error) {
-      console.error('❌ SVG conversion failed:', error);
-      throw error;
-    }
-  }
 
-  private async embedPDFGraphic(
-    pdfDoc: PDFDocument,
-    page: PDFPage,
-    element: any,
-    logo: any,
-    pageHeight: number
-  ): Promise<void> {
-    try {
-      console.log(`📄 Embedding original PDF: ${logo.filename}`);
-      
-      const pdfPath = path.join('uploads', logo.filename);
-      const pdfData = fs.readFileSync(pdfPath);
-      
-      // Import original PDF to preserve all qualities
-      const originalPdf = await PDFDocument.load(pdfData);
-      const [firstPage] = await pdfDoc.copyPages(originalPdf, [0]);
-      
-      // Scale and position the imported page to match canvas element
-      const pdfX = element.x;
-      const pdfY = pageHeight - element.y - element.height;
-      
-      console.log(`🎯 PDF positioning: (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
-      
-      // This requires a different approach for PDF pages - embed as form
-      const form = await pdfDoc.embedPage(firstPage);
-      
-      page.drawPage(form, {
-        x: pdfX,
-        y: pdfY,
-        width: element.width,
-        height: element.height
-      });
-      
-      console.log('✅ Original PDF embedded preserving all properties');
-      
-    } catch (error) {
-      console.error('❌ PDF embedding failed:', error);
-      // Fallback to converting PDF to PNG
-      await this.convertPDFToPNG(logo, element, pdfDoc, page, pageHeight);
-    }
-  }
 
-  private async convertPDFToPNG(logo: any, element: any, pdfDoc: PDFDocument, page: PDFPage, pageHeight: number): Promise<void> {
-    try {
-      const pdfPath = path.join('uploads', logo.filename);
-      const pngPath = pdfPath.replace('.pdf', '_print.png');
-      
-      // Convert PDF to PNG at exact canvas dimensions
-      const command = `pdftoppm "${pdfPath}" -png -f 1 -l 1 -scale-to-x ${Math.round(element.width)} -scale-to-y ${Math.round(element.height)} > "${pngPath}"`;
-      
-      execSync(command, { stdio: 'ignore' });
-      
-      const pngData = fs.readFileSync(pngPath);
-      const embeddedImage = await pdfDoc.embedPng(pngData);
-      
-      const pdfX = element.x;
-      const pdfY = pageHeight - element.y - element.height;
-      
-      page.drawImage(embeddedImage, {
-        x: pdfX,
-        y: pdfY,
-        width: element.width,
-        height: element.height
-      });
-      
-      fs.unlinkSync(pngPath);
-      console.log('✅ PDF converted to PNG with exact dimensions');
-      
-    } catch (error) {
-      console.error('❌ PDF to PNG conversion failed:', error);
-    }
-  }
+
 
   private async addGarmentBackground(page: PDFPage, garmentColor: string): Promise<void> {
     try {
@@ -328,5 +237,84 @@ export class PrintReadyPDFGenerator {
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
     } : { r: 255, g: 255, b: 255 };
+  }
+
+  private scaleSVGContent(svgContent: string, targetWidth: number, targetHeight: number): string {
+    console.log(`🎯 Scaling SVG to ${targetWidth}x${targetHeight} while preserving vectors`);
+    
+    // Update viewBox and dimensions to match canvas size
+    let scaledSvg = svgContent.replace(
+      /viewBox="[^"]*"/,
+      `viewBox="0 0 ${targetWidth} ${targetHeight}"`
+    );
+    
+    scaledSvg = scaledSvg.replace(
+      /width="[^"]*"/,
+      `width="${targetWidth}"`
+    );
+    
+    scaledSvg = scaledSvg.replace(
+      /height="[^"]*"/,
+      `height="${targetHeight}"`
+    );
+    
+    return scaledSvg;
+  }
+
+  private async embedSVGAsVectorPDF(pdfDoc: PDFDocument, svgContent: string, width: number, height: number): Promise<any> {
+    try {
+      console.log('🎯 Creating vector PDF from SVG content');
+      
+      // Create temporary files for SVG to PDF conversion
+      const tempSvgPath = 'temp_vector.svg';
+      fs.writeFileSync(tempSvgPath, svgContent);
+      
+      const tempPdfPath = 'temp_vector.pdf';
+      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf`;
+      execSync(command);
+      
+      // Load the generated PDF and copy its page
+      const pdfData = fs.readFileSync(tempPdfPath);
+      const sourcePdf = await PDFDocument.load(pdfData);
+      const [copiedPage] = await pdfDoc.copyPages(sourcePdf, [0]);
+      
+      // Clean up temp files
+      fs.unlinkSync(tempSvgPath);
+      fs.unlinkSync(tempPdfPath);
+      
+      console.log('✅ SVG converted to vector PDF page');
+      
+      // Return the actual PDF page object that can be drawn
+      return copiedPage;
+      
+    } catch (error) {
+      console.error('❌ Vector PDF creation failed:', error);
+      throw error;
+    }
+  }
+
+  private async embedOriginalPDFPage(pdfDoc: PDFDocument, page: PDFPage, element: any, pdfPath: string, pageHeight: number): Promise<void> {
+    try {
+      console.log('🎯 Embedding original PDF page as vectors');
+      
+      const pdfData = fs.readFileSync(pdfPath);
+      const sourcePdf = await PDFDocument.load(pdfData);
+      const [firstPage] = await pdfDoc.copyPages(sourcePdf, [0]);
+      
+      const pdfX = element.x;
+      const pdfY = pageHeight - element.y - element.height;
+      
+      page.drawPage(firstPage, {
+        x: pdfX,
+        y: pdfY,
+        width: element.width,
+        height: element.height
+      });
+      
+      console.log('✅ Original PDF page embedded with vectors preserved');
+      
+    } catch (error) {
+      console.error('❌ PDF page embedding failed:', error);
+    }
   }
 }
