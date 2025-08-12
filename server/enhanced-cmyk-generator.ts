@@ -9,7 +9,7 @@ const execAsync = promisify(exec);
 import { PDFDocument, rgb, degrees, PDFName, PDFArray, PDFDict, PDFRef, StandardFonts, PDFString } from "pdf-lib";
 import { manufacturerColors } from "@shared/garment-colors";
 import { recolorSVG } from "./svg-recolor";
-import { applySVGColorChanges } from "./svg-color-utils";
+// import { applySVGColorChanges } from "./svg-color-utils"; // Commented out - not used
 import { prepareSVGForCMYKConversion } from "./preserve-cmyk-values";
 
 console.log('Enhanced CMYK Generator loaded - Version 2.0');
@@ -860,53 +860,114 @@ export class EnhancedCMYKGenerator {
         console.log(`🎯 FORCING content stretch: ${origWidth}×${origHeight}pts -> ${targetWidth}×${targetHeight}pts`);
         console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origWidth).toFixed(3)}x`);
         
-        // CRITICAL: Apply content-only cropping like the canvas does
-        // The canvas uses content bounds only, ignoring original container dimensions
+        // CRITICAL SOLUTION: Convert PDF to SVG and use content-only approach like canvas
+        // This ensures exact matching between canvas display and PDF output
         
-        // Method 1: Try to modify the embedded page's MediaBox to crop to content bounds
-        const originalMediaBox = embeddedPage.getMediaBox();
-        console.log(`🎯 Original PDF MediaBox: [${originalMediaBox.x}, ${originalMediaBox.y}, ${originalMediaBox.width}, ${originalMediaBox.height}]`);
+        console.log(`🎯 SWITCHING TO SVG APPROACH: Converting PDF to content-only SVG for exact canvas matching`);
         
-        // Load the corresponding SVG to get content bounds (like canvas does)
-        const logoFile = await storage.getLogoById(element.logoId);
-        if (logoFile && logoFile.detectedBounds) {
-          const { minX, minY, maxX, maxY } = logoFile.detectedBounds;
-          const contentWidth = maxX - minX;
-          const contentHeight = maxY - minY;
+        // Use the SVG conversion approach instead of direct PDF embedding
+        const allLogos = await storage.getAllLogos();
+        const logo = allLogos.find(l => l.id === element.logoId);
+        if (logo && logo.filename.includes('.pdf.svg')) {
+          // Load the SVG content and process it like the canvas does
+          const uploadsDir = path.join(process.cwd(), 'uploads');
+          const svgPath = path.join(uploadsDir, logo.filename);
+          const svgContent = fs.readFileSync(svgPath, 'utf8');
           
-          console.log(`🎯 Content bounds from SVG analysis: ${minX},${minY} to ${maxX},${maxY} (${contentWidth}x${contentHeight})`);
+          console.log(`🎯 Loading SVG content for content-only processing: ${logo.filename}`);
           
-          // Calculate crop ratios relative to original page size
-          const pageWidth = originalMediaBox.width;
-          const pageHeight = originalMediaBox.height;
+          // Apply the same content-only transformation as canvas does
+          let processedSvg = svgContent;
           
-          // Convert SVG pixel coordinates to PDF points (assume 72 DPI)
-          const pdfContentX = (minX / pageWidth) * pageWidth;
-          const pdfContentY = (minY / pageHeight) * pageHeight;
-          const pdfContentWidth = (contentWidth / pageWidth) * pageWidth;
-          const pdfContentHeight = (contentHeight / pageHeight) * pageHeight;
+          // Extract content bounds just like the canvas renderer does
+          const pathMatches = processedSvg.match(/<path[^>]*d="([^"]*)"[^>]*>/g) || [];
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           
-          console.log(`🎯 PDF content crop area: ${pdfContentX.toFixed(1)}, ${pdfContentY.toFixed(1)}, ${pdfContentWidth.toFixed(1)}x${pdfContentHeight.toFixed(1)}`);
+          pathMatches.forEach(pathMatch => {
+            const pathData = pathMatch.match(/d="([^"]*)"/) ?.[1] || '';
+            const coords = pathData.match(/[-]?\d+\.?\d*/g) || [];
+            
+            for (let i = 0; i < coords.length; i += 2) {
+              const x = parseFloat(coords[i]);
+              const y = parseFloat(coords[i + 1]);
+              if (!isNaN(x) && !isNaN(y)) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+              }
+            }
+          });
           
-          // Modify the MediaBox to crop to content bounds only (like canvas viewBox)
-          embeddedPage.setMediaBox(
-            originalMediaBox.x + pdfContentX,
-            originalMediaBox.y + pdfContentY, 
-            pdfContentWidth,
-            pdfContentHeight
-          );
-          
-          console.log(`🎯 Applied content-only MediaBox cropping to match canvas behavior`);
+          if (minX !== Infinity && maxX !== -Infinity) {
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            
+            console.log(`🎯 Content bounds detected: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} (${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)})`);
+            
+            // Apply content-only viewBox (same as canvas)
+            processedSvg = processedSvg.replace(/\s*(width|height)\s*=\s*["'][^"']*["']/gi, '');
+            const contentOnlyViewBox = `${minX} ${minY} ${contentWidth} ${contentHeight}`;
+            
+            if (processedSvg.includes('viewBox')) {
+              processedSvg = processedSvg.replace(/viewBox\s*=\s*["'][^"']*["']/i, `viewBox="${contentOnlyViewBox}"`);
+            } else {
+              processedSvg = processedSvg.replace(/<svg([^>]*)>/, `<svg$1 viewBox="${contentOnlyViewBox}">`);
+            }
+            
+            // Convert content-only SVG to PDF
+            const tempSvgPath = path.join(uploadsDir, `temp_content_only_${Date.now()}.svg`);
+            const tempPdfPath = path.join(uploadsDir, `temp_content_only_${Date.now()}.pdf`);
+            
+            fs.writeFileSync(tempSvgPath, processedSvg);
+            
+            // Convert to PDF using Inkscape (preserves vectors)
+            await execAsync(`inkscape "${tempSvgPath}" --export-pdf="${tempPdfPath}" --export-area-drawing`);
+            
+            console.log(`🎯 Generated content-only PDF: ${tempPdfPath}`);
+            
+            // Load and embed the content-only PDF
+            const contentOnlyPdfBytes = fs.readFileSync(tempPdfPath);
+            const contentOnlyPdfDoc = await PDFDocument.load(contentOnlyPdfBytes);
+            const [contentOnlyPage] = await pdfDoc.embedPages([contentOnlyPdfDoc.getPage(0)]);
+            
+            // Now this should fill the target bounds exactly like canvas
+            page.drawPage(contentOnlyPage, {
+              x: x,
+              y: y,
+              width: targetWidth,
+              height: targetHeight,
+              rotate: degrees(element.rotation || 0),
+            });
+            
+            console.log(`🎯 SUCCESS: Embedded content-only PDF at (${x.toFixed(1)}, ${y.toFixed(1)}) size ${targetWidth.toFixed(1)}×${targetHeight.toFixed(1)}`);
+            
+            // Clean up temp files
+            fs.unlinkSync(tempSvgPath);
+            fs.unlinkSync(tempPdfPath);
+            
+          } else {
+            // Fallback to original method
+            console.log(`🎯 No content bounds detected, using original PDF`);
+            page.drawPage(embeddedPage, {
+              x: x,
+              y: y,
+              width: targetWidth,
+              height: targetHeight,
+              rotate: degrees(element.rotation || 0),
+            });
+          }
+        } else {
+          // Fallback to original method
+          console.log(`🎯 No SVG available, using original PDF`);
+          page.drawPage(embeddedPage, {
+            x: x,
+            y: y,
+            width: targetWidth,
+            height: targetHeight,
+            rotate: degrees(element.rotation || 0),
+          });
         }
-        
-        // Now embed the cropped page at target dimensions
-        page.drawPage(embeddedPage, {
-          x: x,
-          y: y,
-          width: targetWidth,   // Fill target width exactly
-          height: targetHeight, // Fill target height exactly
-          rotate: degrees(element.rotation || 0),
-        });
         
         console.log(`✅ Successfully embedded CMYK PDF at (${x.toFixed(1)}, ${y.toFixed(1)}) with forced stretch scales: ${(targetWidth/origWidth).toFixed(3)}x, ${(targetHeight/origHeight).toFixed(3)}x`);
       } else {
