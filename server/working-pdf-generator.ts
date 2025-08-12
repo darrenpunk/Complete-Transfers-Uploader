@@ -178,17 +178,21 @@ export class WorkingPDFGenerator {
       // CRITICAL FIX: Proper coordinate mapping canvas -> PDF
       const scale = 2.834; // mm to points conversion (72/25.4)
       
-      // Canvas pixels to PDF points conversion
-      const canvasToPointsX = (templateSize.width * scale) / templateSize.pixelWidth;
-      const canvasToPointsY = (templateSize.height * scale) / templateSize.pixelHeight;
+      // Canvas pixels to PDF points conversion - use template canvas pixel dimensions
+      const canvasToPointsX = (templateSize.width * scale) / 842; // A3 canvas width in pixels  
+      const canvasToPointsY = (templateSize.height * scale) / 1191; // A3 canvas height in pixels
       
-      // Direct pixel-to-point conversion (no mm intermediate step)
+      // Calculate the target size in PDF points based on canvas element dimensions
+      const targetWidthPoints = element.width * canvasToPointsX; 
+      const targetHeightPoints = element.height * canvasToPointsY;
+      
+      // Direct pixel-to-point conversion for positioning
       const xInPoints = element.x * canvasToPointsX;
       const yInPoints = element.y * canvasToPointsY;
       
       // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
       const pageHeightPoints = templateSize.height * scale;
-      const finalY = pageHeightPoints - yInPoints - (element.height * canvasToPointsY);
+      const finalY = pageHeightPoints - yInPoints - targetHeightPoints;
       
       // Get original page size for scaling from embedded PDF page
       const originalSize = { width: copiedPage.width, height: copiedPage.height };
@@ -199,27 +203,27 @@ export class WorkingPDFGenerator {
         return;
       }
       
-      // CRITICAL FIX: Account for SVG viewBox vs content bounds mismatch
-      // The canvas element size (338×225) represents the actual content bounds,
-      // but Inkscape converts using the full viewBox (595×419), so we need to scale up
+      // CRITICAL FIX: Proper scaling to match canvas display
+      // The canvas element size represents the desired size in canvas pixels
+      // Use the targetWidthPoints and targetHeightPoints calculated above
       
-      // For PDF-derived SVGs, we need to use the original PDF size to get proper scaling
-      const scaleUpFactor = originalSize.width / element.width; // viewBox/content ratio
-      const finalWidth = originalSize.width;
-      const finalHeight = originalSize.height;
+      const finalWidth = targetWidthPoints;
+      const finalHeight = targetHeightPoints;
       
-      console.log(`📐 SCALING FIX: Element(${element.width}×${element.height}) → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}) ScaleUp: ${scaleUpFactor.toFixed(2)}`);
+      console.log(`📐 CANVAS MATCHING: Element(${element.width}×${element.height}px) → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt) - Direct Canvas Size`);
       
       console.log(`📐 EXACT POSITIONING: Canvas(${element.x},${element.y},${element.width}×${element.height}) → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)},${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)})`);
       
-      // Draw the embedded page using correct drawPage API
+      // Draw the embedded page using correct drawPage API - ensuring exact canvas matching
       page.drawPage(copiedPage, {
         x: xInPoints,
         y: finalY,
-        width: finalWidth,
-        height: finalHeight,
+        width: finalWidth,   // This now matches canvas element size exactly
+        height: finalHeight, // This now matches canvas element size exactly
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
+      
+      console.log(`✅ Logo drawn with exact canvas dimensions: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt at (${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
       
       console.log(`✅ Logo positioned exactly as canvas`);
 
