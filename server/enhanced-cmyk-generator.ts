@@ -852,14 +852,34 @@ export class EnhancedCMYKGenerator {
       
       console.log(`📍 Target position: (${x.toFixed(1)}, ${y.toFixed(1)}) size: ${targetWidth.toFixed(1)}x${targetHeight.toFixed(1)}`);
       
-      // Use exact target dimensions without scaling - match canvas display exactly
-      page.drawPage(embeddedPage, {
-        x: x,
-        y: y,
-        width: targetWidth,  // Use exact element dimensions, not scaled
-        height: targetHeight, // Use exact element dimensions, not scaled  
-        rotate: degrees(element.rotation || 0),
-      });
+      // CRITICAL: Force content to fill exact bounds by stretching to target dimensions
+      // This ensures PDF matches the canvas display exactly, ignoring original PDF aspect ratio
+      const forceStretch = true; // Always stretch to match canvas
+      
+      if (forceStretch) {
+        console.log(`🎯 FORCING content stretch: ${origWidth}×${origHeight}pts -> ${targetWidth}×${targetHeight}pts`);
+        console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origHeight).toFixed(3)}x`);
+        
+        // Use exact target dimensions to force stretch - matches canvas exactly
+        page.drawPage(embeddedPage, {
+          x: x,
+          y: y,
+          width: targetWidth,   // Force exact width - stretch content
+          height: targetHeight, // Force exact height - stretch content
+          rotate: degrees(element.rotation || 0),
+        });
+        
+        console.log(`✅ Successfully embedded CMYK PDF at (${x.toFixed(1)}, ${y.toFixed(1)}) with forced stretch`);
+      } else {
+        // Original scaling logic (not used)
+        page.drawPage(embeddedPage, {
+          x: x,
+          y: y,
+          width: finalWidth,
+          height: finalHeight,
+          rotate: degrees(element.rotation || 0),
+        });
+      }
       
       const colorSpace = useCMYKVersion ? 'CMYK' : 'RGB';
       console.log(`Enhanced CMYK: Successfully embedded ${colorSpace} vector PDF: ${element.logoId}`);
