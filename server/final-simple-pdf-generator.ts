@@ -72,7 +72,7 @@ export class FinalSimplePDFGenerator {
   }
   
   /**
-   * Embed actual SVG content with high quality PNG conversion (fallback until vector works)
+   * Embed actual SVG content as true vectors preserving exact artwork
    */
   private async embedActualSVG(
     page: any,
@@ -91,95 +91,65 @@ export class FinalSimplePDFGenerator {
         return false;
       }
       
-      console.log(`🔍 EMBEDDING SVG WITH HIGH QUALITY for ${logoPath}`);
-      const svgContent = fs.readFileSync(logoPath, 'utf8');
+      console.log(`🎯 EMBEDDING SVG AS TRUE VECTORS for ${logoPath}`);
       
-      // Get SVG's original dimensions for best quality
-      const widthMatch = svgContent.match(/width="([^"]+)"/);
-      const heightMatch = svgContent.match(/height="([^"]+)"/);
-      
-      let svgWidth = width;
-      let svgHeight = height;
-      
-      if (widthMatch && heightMatch) {
-        const originalWidth = parseFloat(widthMatch[1]);
-        const originalHeight = parseFloat(heightMatch[1]);
-        
-        if (originalWidth > 0 && originalHeight > 0) {
-          svgWidth = originalWidth;
-          svgHeight = originalHeight;
-          console.log(`✅ Using SVG original dimensions: ${originalWidth}×${originalHeight}`);
-        }
-      }
-      
-      // Convert SVG to high-resolution PNG to preserve quality and colors
-      const tempPngPath = path.join('/tmp', `svg_hq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`);
+      // Use Inkscape to convert SVG directly to PDF with full vector preservation
+      const tempPdfPath = path.join('/tmp', `svg_vector_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.pdf`);
       
       try {
-        // Use Inkscape for highest quality conversion at exact canvas size
-        // This preserves colors and provides crisp output
-        const inkscapeCmd = `inkscape "${logoPath}" --export-type=png --export-filename="${tempPngPath}" --export-width=${Math.round(width)} --export-height=${Math.round(height)} --export-dpi=300`;
+        // Inkscape command to preserve vectors and CMYK colors exactly
+        const inkscapeCmd = `inkscape "${logoPath}" --export-type=pdf --export-filename="${tempPdfPath}" --export-area-drawing --export-text-to-path`;
         execSync(inkscapeCmd, { stdio: 'pipe' });
         
-        if (fs.existsSync(tempPngPath)) {
-          const imageBytes = fs.readFileSync(tempPngPath);
-          const image = await page.doc.embedPng(imageBytes);
+        if (fs.existsSync(tempPdfPath)) {
+          console.log(`✅ SVG converted to vector PDF: ${tempPdfPath}`);
           
-          // Draw at exact canvas position and size
-          page.drawImage(image, {
-            x: x,
-            y: y,
-            width: width,
-            height: height
-          });
+          // Read the vector PDF and embed it directly
+          const vectorPdfBytes = fs.readFileSync(tempPdfPath);
+          const vectorDocument = await PDFDocument.load(vectorPdfBytes);
+          const vectorPages = vectorDocument.getPages();
           
-          // Clean up
-          fs.unlinkSync(tempPngPath);
-          
-          console.log(`✅ SVG embedded as HIGH-QUALITY PNG at exact position: (${x.toFixed(1)}, ${y.toFixed(1)})`);
-          return true;
-        }
-        
-      } catch (conversionError) {
-        console.warn(`Inkscape conversion failed:`, (conversionError as Error).message || conversionError);
-        // Try cleanup
-        if (fs.existsSync(tempPngPath)) {
-          fs.unlinkSync(tempPngPath);
-        }
-        
-        // Fallback to ImageMagick if Inkscape fails
-        try {
-          const magickCmd = `convert "${logoPath}" -resize ${Math.round(width)}x${Math.round(height)}! -quality 100 "${tempPngPath}"`;
-          execSync(magickCmd, { stdio: 'pipe' });
-          
-          if (fs.existsSync(tempPngPath)) {
-            const imageBytes = fs.readFileSync(tempPngPath);
-            const image = await page.doc.embedPng(imageBytes);
+          if (vectorPages.length > 0) {
+            const firstVectorPage = vectorPages[0];
+            const { width: vectorWidth, height: vectorHeight } = firstVectorPage.getSize();
             
-            page.drawImage(image, {
+            console.log(`📐 Vector PDF dimensions: ${vectorWidth}×${vectorHeight}`);
+            console.log(`📐 Canvas dimensions: ${width}×${height}`);
+            
+            // Copy the vector page and draw it onto the current page
+            const [embeddedVectorPage] = await page.doc.copyPages(vectorDocument, [0]);
+            
+            // Calculate scaling to fit canvas size exactly
+            const scaleX = width / vectorWidth;
+            const scaleY = height / vectorHeight;
+            
+            // Draw the vector page content onto the current page at exact position
+            page.drawPage(embeddedVectorPage, {
               x: x,
               y: y,
               width: width,
               height: height
             });
             
-            fs.unlinkSync(tempPngPath);
+            // Clean up
+            fs.unlinkSync(tempPdfPath);
             
-            console.log(`✅ SVG embedded as PNG (ImageMagick fallback) at exact position: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+            console.log(`✅ VECTOR CONTENT EMBEDDED at exact position: (${x.toFixed(1)}, ${y.toFixed(1)}) with scaling: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`);
             return true;
           }
-        } catch (fallbackError) {
-          console.warn(`ImageMagick fallback failed:`, (fallbackError as Error).message || fallbackError);
-          if (fs.existsSync(tempPngPath)) {
-            fs.unlinkSync(tempPngPath);
-          }
+        }
+        
+      } catch (inkscapeError) {
+        console.warn(`Vector embedding failed:`, (inkscapeError as Error).message || inkscapeError);
+        if (fs.existsSync(tempPdfPath)) {
+          fs.unlinkSync(tempPdfPath);
         }
       }
       
       return false;
       
     } catch (error) {
-      console.error(`Failed to embed SVG:`, (error as Error).message || error);
+      console.error(`Failed to embed SVG vectors:`, (error as Error).message || error);
       return false;
     }
   }
