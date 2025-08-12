@@ -29,7 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Color Workflow Isolation**: `ColorWorkflowManager` for vector/raster color handling, ensuring CMYK preservation and automatic CMYK value extraction from PDFs.
 - **Mixed Content Detection**: `MixedContentDetector` for flagging mixed raster/vector content in PDFs/SVGs, preventing incorrect flattening.
 - **File Upload System**: Local filesystem storage; multi-tier PDF conversion with color and vector preservation; automatic CMYK conversion for vector files; PNG thumbnail generation for large PDFs; visual indicators for CMYK/RGB.
-- **Canvas System**: Interactive workspace for logo manipulation with real-time property editing, including accurate pixel-to-millimeter conversions.
+- **Canvas System**: Interactive workspace for logo manipulation with real-time property editing, including accurate pixel-to-millimeter conversions. **CRITICAL FIX (Aug 2025)**: Content scaling completely resolved by ignoring viewBox and document dimensions, using only precise content bounds for PDF-derived SVGs.
 - **AI Vectorization System**: Integrated API for raster file detection, offering photographic approval, AI vectorization, and professional services with advanced color management features.
 - **Onboarding Tutorial System**: Comprehensive 6-step interactive tutorial.
 - **Imposition Tool**: Grid replication system for logos.
