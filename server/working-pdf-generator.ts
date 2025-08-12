@@ -199,9 +199,16 @@ export class WorkingPDFGenerator {
         return;
       }
       
-      // CRITICAL FIX: Use element size directly in points (no scaling down)
-      const finalWidth = element.width * canvasToPointsX;
-      const finalHeight = element.height * canvasToPointsY;
+      // CRITICAL FIX: Account for SVG viewBox vs content bounds mismatch
+      // The canvas element size (338×225) represents the actual content bounds,
+      // but Inkscape converts using the full viewBox (595×419), so we need to scale up
+      
+      // For PDF-derived SVGs, we need to use the original PDF size to get proper scaling
+      const scaleUpFactor = originalSize.width / element.width; // viewBox/content ratio
+      const finalWidth = originalSize.width;
+      const finalHeight = originalSize.height;
+      
+      console.log(`📐 SCALING FIX: Element(${element.width}×${element.height}) → PDF(${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}) ScaleUp: ${scaleUpFactor.toFixed(2)}`);
       
       console.log(`📐 EXACT POSITIONING: Canvas(${element.x},${element.y},${element.width}×${element.height}) → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)},${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)})`);
       
