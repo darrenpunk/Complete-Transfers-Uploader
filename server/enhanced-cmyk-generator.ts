@@ -860,48 +860,60 @@ export class EnhancedCMYKGenerator {
         console.log(`🎯 FORCING content stretch: ${origWidth}×${origHeight}pts -> ${targetWidth}×${targetHeight}pts`);
         console.log(`🎯 Stretch ratios: X=${(targetWidth/origWidth).toFixed(3)}x, Y=${(targetHeight/origHeight).toFixed(3)}x`);
         
-        // CRITICAL INSIGHT: The issue is that PDF embedding preserves original margins
-        // Canvas shows content-only because it uses processed SVG with content-only viewBox
-        // Solution: For PDF generation, use SVG conversion instead of direct PDF embedding
+        // BREAKTHROUGH INSIGHT: Canvas uses processed .pdf.svg file with content-only bounds
+        // PDF generation should use the SAME .pdf.svg file, not the original PDF!
+        // This ensures exact matching between canvas display and PDF output
         
-        console.log(`🎯 CANVAS MATCHING APPROACH: Use SVG-to-PDF conversion for exact canvas matching`);
+        console.log(`🎯 DIRECT SVG APPROACH: Use the same .pdf.svg file that canvas uses`);
         
-        // Convert original PDF to SVG, apply content-only processing, then back to PDF
+        // Find the corresponding .pdf.svg file (which already has content-only processing)
         const uploadsDir = path.join(process.cwd(), 'uploads');
-        const tempSvgPath = path.join(uploadsDir, `temp_content_${Date.now()}.svg`);
-        const tempPdfPath = path.join(uploadsDir, `temp_content_${Date.now()}.pdf`);
+        const allLogos = await storage.getAllLogos();
+        const logo = allLogos.find(l => l.id === element.logoId);
         
-        try {
-          // Step 1: Convert original PDF to SVG (this gets content without margins)
-          await execAsync(`inkscape "${pdfPath}" --export-plain-svg="${tempSvgPath}" --export-area-drawing`);
-          console.log(`🎯 Converted original PDF to content-only SVG`);
+        if (logo && logo.filename.includes('.pdf.svg')) {
+          const svgPath = path.join(uploadsDir, logo.filename);
+          const tempPdfPath = path.join(uploadsDir, `temp_canvas_match_${Date.now()}.pdf`);
           
-          // Step 2: Convert content-only SVG back to PDF 
-          await execAsync(`inkscape "${tempSvgPath}" --export-pdf="${tempPdfPath}" --export-area-drawing`);
-          console.log(`🎯 Converted content-only SVG to PDF`);
-          
-          // Step 3: Load and embed the content-only PDF (should match canvas)
-          const contentPdfBytes = fs.readFileSync(tempPdfPath);
-          const contentPdfDoc = await PDFDocument.load(contentPdfBytes);
-          const [contentPage] = await pdfDoc.embedPages([contentPdfDoc.getPage(0)]);
-          
-          // This should now fill target bounds exactly like canvas
-          page.drawPage(contentPage, {
-            x: x,
-            y: y,
-            width: targetWidth,
-            height: targetHeight,
-            rotate: degrees(element.rotation || 0),
-          });
-          
-          console.log(`🎯 SUCCESS: Embedded content-only PDF exactly matching canvas display`);
-          
-          // Clean up temp files
-          fs.unlinkSync(tempSvgPath);
-          fs.unlinkSync(tempPdfPath);
-          
-        } catch (error) {
-          console.log(`🎯 SVG conversion failed, falling back to original embedding:`, error);
+          try {
+            console.log(`🎯 Converting canvas SVG to PDF: ${logo.filename}`);
+            
+            // Convert the SAME SVG file that canvas uses to PDF
+            await execAsync(`inkscape "${svgPath}" --export-pdf="${tempPdfPath}" --export-area-drawing`);
+            console.log(`🎯 Converted canvas SVG to content-only PDF`);
+            
+            // Load and embed this content-only PDF
+            const canvasMatchPdfBytes = fs.readFileSync(tempPdfPath);
+            const canvasMatchPdfDoc = await PDFDocument.load(canvasMatchPdfBytes);
+            const [canvasMatchPage] = await pdfDoc.embedPages([canvasMatchPdfDoc.getPage(0)]);
+            
+            // This MUST match canvas exactly since it uses the same source SVG
+            page.drawPage(canvasMatchPage, {
+              x: x,
+              y: y,
+              width: targetWidth,
+              height: targetHeight,
+              rotate: degrees(element.rotation || 0),
+            });
+            
+            console.log(`🎯 SUCCESS: Embedded exact canvas-matching PDF from .pdf.svg source`);
+            
+            // Clean up temp file
+            fs.unlinkSync(tempPdfPath);
+            
+          } catch (error) {
+            console.log(`🎯 Canvas SVG conversion failed, using fallback:`, error);
+            // Fallback to original approach
+            page.drawPage(embeddedPage, {
+              x: x,
+              y: y,
+              width: targetWidth,
+              height: targetHeight,
+              rotate: degrees(element.rotation || 0),
+            });
+          }
+        } else {
+          console.log(`🎯 No .pdf.svg file found, using original PDF embedding`);
           // Fallback to original approach
           page.drawPage(embeddedPage, {
             x: x,
