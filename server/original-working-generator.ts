@@ -279,8 +279,10 @@ export class OriginalWorkingGenerator {
         elementSize: `${element.width}×${element.height}`,
         logoId: logo.id,
         logoFilename: logo.filename,
-        hasPreflightData: !!logo.preflightData,
-        contentBounds: logo.preflightData?.contentBounds || 'none'
+        hasContentBounds: !!logo.contentBounds,
+        contentBoundsType: typeof logo.contentBounds,
+        contentBounds: logo.contentBounds,
+        logoKeys: Object.keys(logo)
       });
 
       // Convert SVG to PDF if needed (original working method)
@@ -554,9 +556,9 @@ export class OriginalWorkingGenerator {
     let finalWidth = element.width * canvasToPageScaleX;
     let finalHeight = element.height * canvasToPageScaleY;
     
-    // If element has preflightData with content bounds, use those for more accurate scaling
-    if (element.logo && element.logo.preflightData && element.logo.preflightData.contentBounds) {
-      const contentBounds = element.logo.preflightData.contentBounds;
+    // SCALING FIX: Use actual content bounds stored directly in logo.contentBounds
+    if (element.logo && element.logo.contentBounds) {
+      const contentBounds = element.logo.contentBounds;
       console.log(`🎯 SCALING FIX: Using content bounds for accurate sizing: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
       
       // Calculate the scale ratio between user's chosen size and actual content size
