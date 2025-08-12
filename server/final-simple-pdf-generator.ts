@@ -139,27 +139,37 @@ export class FinalSimplePDFGenerator {
           execSync(inkscapeCmd, { stdio: 'pipe' });
           
           if (fs.existsSync(tempPdfPath)) {
-            // Embed the PDF page as vector content
+            // Read the generated PDF and embed it properly
             const pdfBytes = fs.readFileSync(tempPdfPath);
-            const vectorPdf = await page.doc.embedPdf(pdfBytes);
-            const vectorPage = await page.doc.embedPage(vectorPdf.getPages()[0]);
+            const embeddedPdf = await PDFDocument.load(pdfBytes);
+            const pages = embeddedPdf.getPages();
             
-            // Calculate scaling to match canvas dimensions while preserving vectors
-            const scaleX = width / svgWidth;
-            const scaleY = height / svgHeight;
-            
-            page.drawPage(vectorPage, {
-              x: x,
-              y: y,
-              width: width,
-              height: height
-            });
-            
-            // Clean up
-            fs.unlinkSync(tempPdfPath);
-            
-            console.log(`✅ SVG embedded as VECTOR PDF at position: (${x.toFixed(1)}, ${y.toFixed(1)}) with CMYK preservation`);
-            return true;
+            if (pages.length > 0) {
+              // Copy the first page from the embedded PDF
+              const [copiedPage] = await page.doc.copyPages(embeddedPdf, [0]);
+              
+              // Get the embedded page dimensions
+              const { width: pageWidth, height: pageHeight } = copiedPage.getSize();
+              
+              // Calculate scaling to match canvas requirements
+              const scaleX = width / pageWidth;
+              const scaleY = height / pageHeight;
+              const scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
+              
+              // Draw the copied page onto our current page at the specified position
+              page.drawPage(copiedPage, {
+                x: x,
+                y: y,
+                width: pageWidth * scale,
+                height: pageHeight * scale
+              });
+              
+              // Clean up
+              fs.unlinkSync(tempPdfPath);
+              
+              console.log(`✅ SVG embedded as VECTOR PDF at position: (${x.toFixed(1)}, ${y.toFixed(1)}) with CMYK preservation`);
+              return true;
+            }
           }
         } catch (inkscapeError) {
           console.warn(`Inkscape vector conversion failed:`, (inkscapeError as Error).message || inkscapeError);
