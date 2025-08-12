@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Layers, Palette, Type } from "lucide-react";
+import { Eye, Layers, Palette, Type, RefreshCw } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState, useEffect } from "react";
 
@@ -36,10 +36,14 @@ export default function PDFPreviewModal({
       
       const generatePreview = async () => {
         try {
-          const response = await fetch(`/api/projects/${project.id}/generate-pdf`, {
+          // Add cache-busting to force fresh PDF generation
+          const cacheBuster = Date.now();
+          const response = await fetch(`/api/projects/${project.id}/generate-pdf?cb=${cacheBuster}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
             },
             body: JSON.stringify({
               garmentColor: project.garmentColor || '#FFFFFF',
@@ -66,11 +70,18 @@ export default function PDFPreviewModal({
     }
   }, [open, project?.id, project?.garmentColor]);
 
-  // Cleanup blob URL when modal closes
+  // Cleanup blob URL when modal closes or force refresh when opened
   useEffect(() => {
     if (!open && previewPdfUrl) {
       URL.revokeObjectURL(previewPdfUrl);
       setPreviewPdfUrl(null);
+    }
+    
+    // Force refresh when modal opens again
+    if (open && previewPdfUrl) {
+      URL.revokeObjectURL(previewPdfUrl);
+      setPreviewPdfUrl(null);
+      setPreviewLoading(false);
     }
   }, [open, previewPdfUrl]);
   
@@ -82,6 +93,14 @@ export default function PDFPreviewModal({
     if (canProceed) {
       onApprove();
     }
+  };
+
+  const handleRefreshPreview = () => {
+    if (previewPdfUrl) {
+      URL.revokeObjectURL(previewPdfUrl);
+    }
+    setPreviewPdfUrl(null);
+    setPreviewLoading(false);
   };
 
   // Calculate preflight information
@@ -177,7 +196,19 @@ export default function PDFPreviewModal({
         <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
           {/* PDF Preview Section */}
           <div className="flex-1 flex flex-col">
-            <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">PDF Preview</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshPreview}
+                disabled={previewLoading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${previewLoading ? 'animate-spin' : ''}`} />
+                Refresh Preview
+              </Button>
+            </div>
             
             {/* Real PDF Preview using working POST route */}
             <div className="gap-4 flex-1 flex">
@@ -192,15 +223,16 @@ export default function PDFPreviewModal({
                     </div>
                   ) : previewPdfUrl ? (
                     <iframe
-                      src={previewPdfUrl}
+                      src={`${previewPdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
                       className="w-full h-full border-0"
                       style={{ minHeight: '400px' }}
                       title="PDF Preview - Exact Canvas Output"
+                      key={previewPdfUrl} // Force reload when URL changes
                       onLoad={(e) => {
-                        console.log('PDF preview iframe loaded successfully');
+                        console.log('✅ PDF preview iframe loaded successfully with latest changes');
                       }}
                       onError={(e) => {
-                        console.error('PDF preview iframe failed to load');
+                        console.error('❌ PDF preview iframe failed to load');
                       }}
                     />
                   ) : (
