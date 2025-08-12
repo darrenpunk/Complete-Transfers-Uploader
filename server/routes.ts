@@ -754,12 +754,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING PDF generator
-      console.log('📦 Using WorkingPDFGenerator (tested and working)...');
-      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
-      console.log('✅ WorkingPDFGenerator imported successfully');
-      const generator = new WorkingPDFGenerator();
-      console.log('📊 Working generator instance created');
+      // Import the NEW DIRECT PDF generator - Starting from scratch
+      console.log('🆕 Using DirectPDFGenerator - COMPLETELY NEW APPROACH');
+      const { DirectPDFGenerator } = await import('./direct-pdf-generator');
+      console.log('✅ DirectPDFGenerator imported successfully');
+      const generator = new DirectPDFGenerator();
+      console.log('📊 Direct generator instance created - NO complex coordinate mapping');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -808,6 +808,48 @@ export async function registerRoutes(app: express.Application) {
   });
 
   // REMOVED problematic app.all route that was intercepting requests
+
+  // NEW DIRECT PDF TEST ROUTE
+  app.post('/api/projects/:projectId/generate-pdf-direct', async (req, res) => {
+    try {
+      console.log('🆕 DIRECT PDF TEST: Starting completely fresh approach');
+      const projectId = req.params.projectId;
+      
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      const logos = await storage.getLogosByProject(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      const templateSizes = await storage.getTemplateSizes();
+      const templateSize = templateSizes.find(t => t.id === project.templateSize) || templateSizes[0];
+      
+      console.log(`🎯 Direct test - Elements: ${canvasElements.length}, Logos: ${logos.length}`);
+      
+      const { DirectPDFGenerator } = await import('./direct-pdf-generator');
+      const generator = new DirectPDFGenerator();
+      
+      const pdfBuffer = await generator.generatePDF({
+        projectId,
+        canvasElements,
+        logos,
+        templateSize,
+        project,
+        garmentColor: '#FFFFFF',
+        extraGarmentColors: [],
+        quantity: 1
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="direct-test.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error('❌ Direct PDF test failed:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
 
   // Debug test route
   app.post('/api/test-debug/:projectId/logos', (req, res) => {
