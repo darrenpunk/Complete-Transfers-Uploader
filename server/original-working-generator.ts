@@ -270,6 +270,9 @@ export class OriginalWorkingGenerator {
         return;
       }
 
+      // SCALING FIX: Attach logo data to element for content bounds access
+      element.logo = logo;
+
       // Convert SVG to PDF if needed (original working method)
       if (logo.mimeType === 'image/svg+xml') {
         await this.embedSVGLogo(page, element, logoPath, templateSize, logo);
@@ -536,9 +539,26 @@ export class OriginalWorkingGenerator {
     const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
     const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
     
-    // Scale element dimensions exactly as they appear on canvas
-    const width = element.width * canvasToPageScaleX;
-    const height = element.height * canvasToPageScaleY;
+    // CRITICAL FIX: Use actual content bounds instead of canvas element dimensions
+    // The element stores the user's chosen size on canvas, but we need to scale the actual content
+    let finalWidth = element.width * canvasToPageScaleX;
+    let finalHeight = element.height * canvasToPageScaleY;
+    
+    // If element has preflightData with content bounds, use those for more accurate scaling
+    if (element.logo && element.logo.preflightData && element.logo.preflightData.contentBounds) {
+      const contentBounds = element.logo.preflightData.contentBounds;
+      console.log(`🎯 SCALING FIX: Using content bounds for accurate sizing: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+      
+      // Calculate the scale ratio between user's chosen size and actual content size
+      const userScaleX = element.width / contentBounds.width;
+      const userScaleY = element.height / contentBounds.height;
+      
+      // Apply this scale to the actual content dimensions
+      finalWidth = contentBounds.width * userScaleX * canvasToPageScaleX;
+      finalHeight = contentBounds.height * userScaleY * canvasToPageScaleY;
+      
+      console.log(`🎯 SCALING FIX: Content=${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px, User scale=(${userScaleX.toFixed(3)}, ${userScaleY.toFixed(3)}), Final=${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pt`);
+    }
     
     console.log(`📏 Exact canvas size calculation:`, {
       canvasWidth: element.width,
@@ -549,11 +569,11 @@ export class OriginalWorkingGenerator {
       pageHeight: pageHeight.toFixed(1),
       scaleX: canvasToPageScaleX.toFixed(4),
       scaleY: canvasToPageScaleY.toFixed(4),
-      finalWidth: width.toFixed(1),
-      finalHeight: height.toFixed(1)
+      finalWidth: finalWidth.toFixed(1),
+      finalHeight: finalHeight.toFixed(1)
     });
     
-    return { width, height };
+    return { width: finalWidth, height: finalHeight };
   }
 
   /**
