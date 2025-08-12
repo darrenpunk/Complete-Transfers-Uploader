@@ -754,12 +754,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the NEW DIRECT PDF generator - Starting from scratch
-      console.log('🆕 Using DirectPDFGenerator - COMPLETELY NEW APPROACH');
-      const { DirectPDFGenerator } = await import('./direct-pdf-generator');
-      console.log('✅ DirectPDFGenerator imported successfully');
-      const generator = new DirectPDFGenerator();
-      console.log('📊 Direct generator instance created - NO complex coordinate mapping');
+      // Import the PRINT-READY PDF generator - Built to user specifications
+      console.log('📄 Using PrintReadyPDFGenerator - Built for exact requirements');
+      const { PrintReadyPDFGenerator } = await import('./print-ready-pdf-generator');
+      console.log('✅ PrintReadyPDFGenerator imported successfully');
+      const generator = new PrintReadyPDFGenerator();
+      console.log('📊 Print-ready generator: Original files + Exact positioning + Color preservation');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
