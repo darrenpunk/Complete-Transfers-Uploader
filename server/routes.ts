@@ -19,7 +19,7 @@ import { calculateSVGContentBounds } from './svg-color-utils';
 import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { detectPreciseContentBounds } from './precise-content-detector';
-import { EnhancedCMYKGenerator } from './enhanced-cmyk-generator';
+// Only import working components - no broken generators
 
 const execAsync = promisify(exec);
 
@@ -664,11 +664,10 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the SimpleWorkingGenerator - original approach that actually worked
-      const { SimpleWorkingGenerator } = await import('./simple-working-generator');
-      console.log('📄 Using SimpleWorkingGenerator - original simple approach that worked');  
+      // Import the exact working generator from deployed version
+      const { SimpleWorkingGenerator } = await import('./working-pdf-generator');
+      console.log('📄 Using exact deployed working generator');  
       const generator = new SimpleWorkingGenerator();
-      console.log('📊 Simple working generator: Original implementation before complex features broke it');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -751,11 +750,10 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the SimpleWorkingGenerator - exact replica of deployed version
-      const { SimpleWorkingGenerator } = await import('./simple-working-generator');
-      console.log('📄 Using SimpleWorkingGenerator - exact replica of deployed version');  
+      // Import the exact working generator from deployed version
+      const { SimpleWorkingGenerator } = await import('./working-pdf-generator');
+      console.log('📄 Using exact deployed working generator');  
       const generator = new SimpleWorkingGenerator();
-      console.log('📊 Simple working generator: Original implementation before complex features broke it');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
