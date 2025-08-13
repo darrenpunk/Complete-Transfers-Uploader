@@ -928,10 +928,7 @@ export async function registerRoutes(app: express.Application) {
                   // Add CMYK marker to the SVG so color analysis knows this came from a CMYK PDF
                   const markedSvg = cleanedSvg.replace(
                     /<svg/,
-                    '<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
-                  ).replace(
-                    '<svg',
-                    '<!-- CMYK_PDF_CONVERTED -->\n<svg'
+                    '<!-- CMYK_PDF_CONVERTED -->\n<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
                   );
                   
                   fs.writeFileSync(svgPath, markedSvg);
