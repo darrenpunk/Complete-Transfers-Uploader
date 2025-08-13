@@ -719,7 +719,7 @@ export async function registerRoutes(app: express.Application) {
   });
   
   // Setup imposition routes
-  setupImpositionRoutes(app, storage);
+  setupImpositionRoutes(app as any, storage);
   // File upload endpoint
   app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
     try {
@@ -1333,7 +1333,9 @@ export async function registerRoutes(app: express.Application) {
             }
           } catch (analysisError) {
             console.error('❌ SVG analysis failed during upload:', analysisError);
-            console.error('Stack trace:', analysisError.stack);
+            if (analysisError instanceof Error) {
+              console.error('Stack trace:', analysisError.stack);
+            }
           }
         }
 
