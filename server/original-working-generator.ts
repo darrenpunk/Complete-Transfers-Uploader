@@ -355,11 +355,23 @@ export class OriginalWorkingGenerator {
         // For CMYK files, use direct Inkscape conversion with CMYK color space preservation
         console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
-        // Convert SVG to PDF with CMYK color space preservation using Inkscape
-        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
-        await execAsync(inkscapeCmd);
+        // Use Ghostscript for proper CMYK preservation instead of Inkscape
+        const psPath = path.join(process.cwd(), 'uploads', `temp_ps_${Date.now()}.ps`);
         
-        console.log(`🎨 SVG converted to PDF with CMYK preservation: ${tempPdfPath}`);
+        // First convert SVG to PostScript with Inkscape
+        const svgToPsCmd = `inkscape --export-type=ps --export-text-to-path --export-filename="${psPath}" "${finalSvgPath}"`;
+        await execAsync(svgToPsCmd);
+        
+        // Then convert PostScript to PDF with CMYK preservation using Ghostscript
+        const psToPdfCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempPdfPath}" "${psPath}"`;
+        await execAsync(psToPdfCmd);
+        
+        // Clean up PostScript file
+        if (fs.existsSync(psPath)) {
+          fs.unlinkSync(psPath);
+        }
+        
+        console.log(`🎨 SVG converted to PDF with Ghostscript CMYK preservation: ${tempPdfPath}`);
       } else {
         // Use standard Inkscape conversion for RGB/non-CMYK content
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;

@@ -310,51 +310,57 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
             const rgbPercent = parseRGBPercentage(colorInfo.originalColor);
             const isCMYK = colorInfo.isCMYK || (colorInfo.cmykColor && colorInfo.cmykColor.includes('C:'));
             
-            // Convert original color to hex for display
+            // For CMYK colors, show the original CMYK values instead of RGB conversion
             let originalDisplayColor = colorInfo.originalColor;
             
-            // If it's already a hex color, use it directly
-            if (colorInfo.originalColor.startsWith('#')) {
-              originalDisplayColor = colorInfo.originalColor;
-            }
+            // Create a hex color for CSS display (for the color swatch)
+            let hexForDisplay = originalDisplayColor;
             
+            // Convert the actual color to hex for the visual swatch
             if (rgbPercent) {
-              originalDisplayColor = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
+              hexForDisplay = `#${rgbPercent.r.toString(16).padStart(2, '0')}${rgbPercent.g.toString(16).padStart(2, '0')}${rgbPercent.b.toString(16).padStart(2, '0')}`;
             } else {
               // Try parsing standard RGB format rgb(255, 255, 255)
               const rgbStandard = parseRGBStandard(colorInfo.originalColor);
               if (rgbStandard) {
-                originalDisplayColor = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
+                hexForDisplay = `#${rgbStandard.r.toString(16).padStart(2, '0')}${rgbStandard.g.toString(16).padStart(2, '0')}${rgbStandard.b.toString(16).padStart(2, '0')}`;
               } else {
                 // Try parsing originalFormat if it's RGB percentage format
                 const rgbPercentStandard = parseRGBPercentageStandard(colorInfo.originalFormat || '');
                 if (rgbPercentStandard) {
-                  originalDisplayColor = `#${rgbPercentStandard.r.toString(16).padStart(2, '0')}${rgbPercentStandard.g.toString(16).padStart(2, '0')}${rgbPercentStandard.b.toString(16).padStart(2, '0')}`;
+                  hexForDisplay = `#${rgbPercentStandard.r.toString(16).padStart(2, '0')}${rgbPercentStandard.g.toString(16).padStart(2, '0')}${rgbPercentStandard.b.toString(16).padStart(2, '0')}`;
                 } else if (colorInfo.originalColor.startsWith('CMYK(')) {
                   // Handle CMYK colors by converting to hex
                   const cmykStandard = parseCMYKStandard(colorInfo.originalColor);
                   if (cmykStandard) {
                     const previewRGB = cmykToRGB(cmykStandard);
-                    originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                    hexForDisplay = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
                   } else {
                     // Fallback to getCMYKFromColorInfo
                     const adobeCMYKForDisplay = getCMYKFromColorInfo(colorInfo);
                     if (adobeCMYKForDisplay) {
                       const previewRGB = cmykToRGB(adobeCMYKForDisplay);
-                      originalDisplayColor = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
+                      hexForDisplay = `#${previewRGB.r.toString(16).padStart(2, '0')}${previewRGB.g.toString(16).padStart(2, '0')}${previewRGB.b.toString(16).padStart(2, '0')}`;
                     }
                   }
+                } else if (colorInfo.originalColor.startsWith('#')) {
+                  hexForDisplay = colorInfo.originalColor;
                 }
               }
             }
             
-            // Final fallback: ensure all colors are in hex format for CSS
-            if (!originalDisplayColor.startsWith('#')) {
+            // For CMYK colors, show the original CMYK values as the display text
+            if (isCMYK && colorInfo.cmykColor) {
+              originalDisplayColor = colorInfo.cmykColor; // Show CMYK format like "C:0 M:15 Y:96 K:5"
+            }
+            
+            // Final fallback: ensure hex color is available for CSS display
+            if (!hexForDisplay.startsWith('#')) {
               console.log(`🎨 Color conversion failed for: ${colorInfo.originalColor}, originalFormat: ${colorInfo.originalFormat}`);
               
               // If it's still not hex, try to use the original format as a fallback
               if (colorInfo.originalFormat && colorInfo.originalFormat.startsWith('#')) {
-                originalDisplayColor = colorInfo.originalFormat;
+                hexForDisplay = colorInfo.originalFormat;
               } else {
                 // Try one more time with direct RGB parsing
                 const directRgb = colorInfo.originalColor.match(/rgb\((\d+),?\s*(\d+),?\s*(\d+)\)/);
@@ -362,12 +368,12 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                   const r = parseInt(directRgb[1]);
                   const g = parseInt(directRgb[2]);
                   const b = parseInt(directRgb[3]);
-                  originalDisplayColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-                  console.log(`🎨 Direct RGB conversion: rgb(${r},${g},${b}) → ${originalDisplayColor}`);
+                  hexForDisplay = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                  console.log(`🎨 Direct RGB conversion: rgb(${r},${g},${b}) → ${hexForDisplay}`);
                 } else {
                   // Last resort: default to black for any remaining non-hex colors
                   console.log(`🎨 FALLBACK TO BLACK: Could not parse color: ${colorInfo.originalColor}`);
-                  originalDisplayColor = '#000000';
+                  hexForDisplay = '#000000';
                 }
               }
             }
@@ -393,7 +399,7 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
                         ? "border-primary ring-2 ring-blue-200"
                         : "border-gray-300 hover:border-gray-400"
                     }`}
-                    style={{ backgroundColor: displayColor }}
+                    style={{ backgroundColor: hexForDisplay }}
                     title={`${colorInfo.elementType} color - Click to edit with CMYK`}
                   />
                 }
