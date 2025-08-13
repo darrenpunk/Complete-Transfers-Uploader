@@ -27,13 +27,17 @@ export class IllustratorCMYKMapper {
     { rgb: "rgb(67.38%, 67.38%, 67.38%)", cmyk: "C:0 M:0 Y:0 K:100", description: "100% K" },
 
     // Row 2 - USER'S TARGET CMYK MAPPINGS from screenshot
-    // Based on actual SVG colors from uploaded PDF  
+    // Based on actual SVG colors from uploaded PDF - EXACT MATCHES REQUIRED
     { rgb: "rgb(100%, 94.898987%, 0%)", cmyk: "C:50 M:27 Y:40 K:70", description: "Target Gold/Yellow - C:50 M:27 Y:40 K:70" },
     { rgb: "rgb(255, 242, 0)", cmyk: "C:50 M:27 Y:40 K:70", description: "Target Gold/Yellow converted" },
     { rgb: "rgb(13.729858%, 12.159729%, 12.548828%)", cmyk: "C:40 M:70 Y:100 K:5", description: "Target Dark/Black - C:40 M:70 Y:100 K:5" },
     { rgb: "rgb(35, 31, 32)", cmyk: "C:40 M:70 Y:100 K:5", description: "Target Dark/Black converted" },
     { rgb: "rgb(0%, 65.098572%, 31.369019%)", cmyk: "C:40 M:65 Y:90 K:35", description: "Target Green - C:40 M:65 Y:90 K:35" },
     { rgb: "rgb(0, 166, 80)", cmyk: "C:40 M:65 Y:90 K:35", description: "Target Green converted" },
+    
+    // ADDITIONAL SVG COLORS from user's PDF to map to target values
+    { rgb: "rgb(92.939758%, 10.978699%, 14.118958%)", cmyk: "C:40 M:70 Y:100 K:5", description: "Red to Target Dark/Black mapping" },
+    { rgb: "rgb(237, 28, 36)", cmyk: "C:40 M:70 Y:100 K:5", description: "Red converted to Target Dark/Black" },
     { rgb: "rgb(34.51%, 29.02%, 15.29%)", cmyk: "C:35 M:60 Y:80 K:25", description: "Dark Olive" },
     { rgb: "rgb(42.35%, 27.84%, 17.65%)", cmyk: "C:25 M:40 Y:65 K:40", description: "Medium Brown" },
     { rgb: "rgb(34.51%, 27.84%, 19.61%)", cmyk: "C:65 M:60 Y:45 K:40", description: "Dark Brown" },
