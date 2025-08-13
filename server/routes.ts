@@ -821,7 +821,7 @@ export async function registerRoutes(app: express.Application) {
       const { DirectPDFGenerator } = await import('./direct-pdf-generator');
       const generator = new DirectPDFGenerator();
       
-      const pdfBuffer = await generator.generateCMYKPDF({
+      const pdfBuffer = await generator.generatePDF({
         projectId,
         canvasElements,
         logos,
