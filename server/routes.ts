@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
 import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
+import { setupImpositionRoutes } from './imposition-routes';
 
 const execAsync = promisify(exec);
 
@@ -712,7 +713,8 @@ export async function registerRoutes(app: express.Application) {
       
     } catch (error) {
       console.error('❌ PDF generation error:', error);
-      res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: 'Failed to generate PDF: ' + errorMessage });
     }
   });
   
