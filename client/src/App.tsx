@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 
+interface Project {
+  id: string;
+  name: string;
+  templateSize: string;
+  garmentColor: string;
+}
+
 function App() {
-  const [project, setProject] = useState(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [status, setStatus] = useState('');
 
   const createProject = async () => {
@@ -19,7 +26,7 @@ function App() {
       const data = await response.json();
       setProject(data);
       setStatus(`Project created: ${data.id}`);
-    } catch (error) {
+    } catch (error: any) {
       setStatus(`Error: ${error.message}`);
     }
   };
@@ -48,7 +55,7 @@ function App() {
       } else {
         setStatus(`PDF generation failed: ${response.status}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       setStatus(`Error: ${error.message}`);
     }
   };

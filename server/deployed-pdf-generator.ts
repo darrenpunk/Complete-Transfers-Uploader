@@ -86,7 +86,7 @@ export class DeployedPDFGenerator {
 
     } catch (error) {
       console.error('❌ EXACT: Deployed PDF generation failed:', error);
-      throw new Error(`Exact deployed PDF generation failed: ${error.message}`);
+      throw new Error(`Exact deployed PDF generation failed: ${(error as Error).message}`);
     }
   }
 

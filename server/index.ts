@@ -1,119 +1,198 @@
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import { DeployedPDFGenerator } from './deployed-pdf-generator';
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes";
+// Temporarily remove problematic vite import
+const log = (message: string) => console.log(`${new Date().toLocaleTimeString()} [express] ${message}`);
+import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
-const PORT = 3001; // Different port to avoid conflicts
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Configure proper MIME types for uploads directory
+app.use('/uploads', express.static('./uploads', {
+  setHeaders: (res, path) => {
+    // Set proper MIME type for SVG files even without extension
+    if (path.endsWith('.svg') || res.req?.url?.includes('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    } else {
+      // Try to detect SVG content by reading file
+      try {
+        const content = fs.readFileSync(path, 'utf8');
+        if (content.includes('<svg') || content.includes('<?xml')) {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        }
+      } catch (e) {
+        // If file read fails, continue with default
+      }
+    }
+  }
+}));
+
+// Serve static files from public directory
 app.use(express.static('public'));
 
-// File upload setup
-const upload = multer({ dest: 'uploads/' });
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+  let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
-// Simple in-memory storage for this fresh replica
-const projects = new Map();
-const logos = new Map();
-
-// Create project
-app.post('/api/projects', (req, res) => {
-  const id = Date.now().toString();
-  const project = {
-    id,
-    name: req.body.name || 'Untitled',
-    templateSize: req.body.templateSize || 'A3',
-    garmentColor: req.body.garmentColor || '#FFFFFF',
-    elements: []
+  const originalResJson = res.json;
+  res.json = function (bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
   };
-  projects.set(id, project);
-  console.log(`✅ FRESH: Project created: ${id}`);
-  res.json(project);
-});
 
-// Upload logo (supports multiple files like deployed version)
-app.post('/api/projects/:projectId/logos', upload.array('files'), (req, res) => {
-  const projectId = req.params.projectId;
-  const project = projects.get(projectId);
-  
-  if (!project || !req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'Invalid project or no files' });
-  }
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
 
-  const uploadedLogos = [];
-  const createdElements = [];
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
 
-  (req.files as Express.Multer.File[]).forEach((file, index) => {
-    const logo = {
-      id: (Date.now() + index).toString(),
-      filename: file.filename,
-      originalName: file.originalname,
-      path: file.path,
-      mimetype: file.mimetype
-    };
-
-    logos.set(logo.id, logo);
-    
-    // Add canvas element for this logo (like deployed version positioning)
-    const element = {
-      id: `element-${Date.now() + index}`,
-      logoId: logo.id,
-      x: 100 + (index * 20), // Offset multiple logos
-      y: 100 + (index * 20),
-      width: 250, // Larger default size like deployed version
-      height: 200
-    };
-    
-    project.elements.push(element);
-    uploadedLogos.push(logo);
-    createdElements.push(element);
-    
-    console.log(`✅ FRESH: Logo uploaded: ${logo.originalName} (${logo.mimetype})`);
+      log(logLine);
+    }
   });
 
-  res.json({ logos: uploadedLogos, elements: createdElements });
+  next();
 });
 
-// Generate PDF - EXACT DEPLOYED VERSION
-app.post('/api/projects/:projectId/generate-pdf', async (req, res) => {
-  try {
-    console.log(`🚀 FRESH: Generating PDF for project: ${req.params.projectId}`);
-    
-    const project = projects.get(req.params.projectId);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
+(async () => {
+  // Register routes first
+  registerRoutes(app);
 
-    const generator = new DeployedPDFGenerator();
-    
-    // Prepare data exactly like deployed version
-    const pdfData = {
-      projectId: project.id,
-      templateSize: { name: 'A3', width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191 },
-      canvasElements: project.elements,
-      logos: project.elements.map(el => logos.get(el.logoId)).filter(Boolean),
-      garmentColor: req.body.garmentColor || project.garmentColor
-    };
+  // Start main server on port 3001 for Vite proxy
+  const mainServer = app.listen(3001, "0.0.0.0", () => {
+    log(`Main API server running on http://0.0.0.0:3001`);
+  });
 
-    console.log(`📊 FRESH: Elements: ${pdfData.canvasElements.length}, Logos: ${pdfData.logos.length}`);
+  // Also start a duplicate server on port 5000 for workflow compatibility
+  const workflowServer = app.listen(5000, "0.0.0.0", () => {
+    log(`Workflow compatibility server running on http://0.0.0.0:5000`);
+  });
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // Serve a simple HTML frontend directly from Express as fallback
+  app.get('/', (req, res) => {
+    res.send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artwork Uploader</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .project { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Artwork Uploader</h1>
     
-    const pdfBuffer = await generator.generateExactDeployedPDF(pdfData);
+    <form id="projectForm">
+        <div class="form-group">
+            <label for="name">Project Name:</label>
+            <input type="text" id="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="templateSize">Template Size:</label>
+            <select id="templateSize">
+                <option value="A3">A3</option>
+                <option value="A4">A4</option>
+                <option value="Letter">Letter</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="garmentColor">Garment Color:</label>
+            <input type="color" id="garmentColor" value="#ffffff">
+        </div>
+        
+        <button type="submit">Create Project</button>
+    </form>
     
-    console.log(`✅ FRESH: PDF generated - Size: ${pdfBuffer.length} bytes (${Math.round(pdfBuffer.length/1024)}KB)`);
+    <div id="projects"></div>
     
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="deployed-test.pdf"');
-    res.send(pdfBuffer);
-    
-  } catch (error) {
-    console.error('❌ FRESH: PDF generation failed:', error);
-    res.status(500).json({ error: error.message });
+    <script>
+        const form = document.getElementById('projectForm');
+        const projectsDiv = document.getElementById('projects');
+        
+        // Load existing projects
+        loadProjects();
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const project = {
+                name: document.getElementById('name').value,
+                templateSize: document.getElementById('templateSize').value,
+                garmentColor: document.getElementById('garmentColor').value
+            };
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(project)
+                });
+                
+                if (response.ok) {
+                    form.reset();
+                    loadProjects();
+                } else {
+                    alert('Error creating project');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+        
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                const projects = await response.json();
+                
+                projectsDiv.innerHTML = '<h2>Projects</h2>' + 
+                    projects.map(p => 
+                        \`<div class="project">
+                            <h3>\${p.name}</h3>
+                            <p>Size: \${p.templateSize} | Color: \${p.garmentColor}</p>
+                            <small>Created: \${new Date(p.createdAt).toLocaleString()}</small>
+                        </div>\`
+                    ).join('');
+            } catch (error) {
+                projectsDiv.innerHTML = '<p>Error loading projects</p>';
+            }
+        }
+    </script>
+</body>
+</html>
+    `);
+  });
+  
+  if (isProduction) {
+    log("Production mode: API servers ready with built-in frontend");
+  } else {
+    log("Development mode: API servers ready with built-in frontend");
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 FRESH DEPLOYED REPLICA running on port ${PORT}`);
-  console.log(`🎯 This is the exact deployed version implementation`);
-});
+})();
