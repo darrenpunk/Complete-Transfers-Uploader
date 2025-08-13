@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Complete Transfers - No Mess, Just Press</title>
+    <style>
+        /* Extract and inline your deployed styles */
+        :root{--background:0 0% 100%;--foreground:222.2 84% 4.9%;--card:0 0% 100%;--card-foreground:222.2 84% 4.9%;--popover:0 0% 100%;--popover-foreground:222.2 84% 4.9%;--primary:221.2 83.2% 53.3%;--primary-foreground:210 40% 98%;--secondary:210 40% 96%;--secondary-foreground:222.2 84% 4.9%;--muted:210 40% 96%;--muted-foreground:215.4 16.3% 46.9%;--accent:210 40% 96%;--accent-foreground:222.2 84% 4.9%;--destructive:0 84.2% 60.2%;--destructive-foreground:210 40% 98%;--border:214.3 31.8% 91.4%;--input:214.3 31.8% 91.4%;--ring:221.2 83.2% 53.3%;--chart-1:12 76% 61%;--chart-2:173 58% 39%;--chart-3:197 37% 24%;--chart-4:43 74% 66%;--chart-5:27 87% 67%;--radius:.5rem}.dark{--background:222.2 84% 4.9%;--foreground:210 40% 98%;--card:222.2 84% 4.9%;--card-foreground:210 40% 98%;--popover:222.2 84% 4.9%;--popover-foreground:210 40% 98%;--primary:217.2 91.2% 59.8%;--primary-foreground:222.2 84% 4.9%;--secondary:217.2 32.6% 17.5%;--secondary-foreground:210 40% 98%;--muted:217.2 32.6% 17.5%;--muted-foreground:215 20.2% 65.1%;--accent:217.2 32.6% 17.5%;--accent-foreground:210 40% 98%;--destructive:0 62.8% 30.6%;--destructive-foreground:210 40% 98%;--border:217.2 32.6% 17.5%;--input:217.2 32.6% 17.5%;--ring:224.3 76.3% 94.1%;--chart-1:220 70% 50%;--chart-2:160 60% 45%;--chart-3:30 80% 55%;--chart-4:280 65% 60%;--chart-5:340 75% 55%}
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .main-container {
+            display: none;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo-header img {
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .main-heading {
+            font-size: 42px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .sub-heading {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .sub-heading h2 {
+            font-size: 32px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .sub-heading p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
+
+        .product-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .product-image {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .select-button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .main-heading { font-size: 28px; }
+            .sub-heading h2 { font-size: 24px; }
+            .products-grid { grid-template-columns: 1fr; gap: 20px; }
+            .product-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body class="dark">
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Setting up your workspace...</div>
+    </div>
+
+    <div class="main-container" id="mainContent">
+        <div class="logo-header">
+            <img src="./attached_assets/Artboard 1@4x_1753539065182-B1QyImPQ.png" alt="Complete Transfers Logo">
+            <h1 class="main-heading">Complete Transfers - No Mess, Just Press</h1>
+        </div>
+        
+        <div class="sub-heading">
+            <h2>Select Product Type</h2>
+            <p>Choose the type of product you want to create artwork for</p>
+        </div>
+        
+        <div class="products-grid">
+            <div class="product-card" onclick="selectProduct('full-colour')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Full Colour Transfers">
+                </div>
+                <div class="product-title">Full Colour Transfers</div>
+                <div class="product-description">Full-Colour screen printed heat applied transfers</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('full-colour-metallic')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Full Colour Metallic">
+                </div>
+                <div class="product-title">Full Colour Metallic</div>
+                <div class="product-description">Full-Colour screen printed with metallic finish</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('full-colour-hd')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Full Colour HD">
+                </div>
+                <div class="product-title">Full Colour HD</div>
+                <div class="product-description">High-definition full-colour screen printed transfers</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('single-colour')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Single Colour Transfers">
+                </div>
+                <div class="product-title">Single Colour Transfers</div>
+                <div class="product-description">Screen printed using our off-the-shelf colour range</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('dtf')">
+                <div class="product-image">
+                    <img src="./attached_assets/DTF_1753540006979-DscAnoR0.png" alt="DTF Transfers">
+                </div>
+                <div class="product-title">DTF - Digital Film Transfers</div>
+                <div class="product-description">Small order digital heat transfers</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('uv-dtf')">
+                <div class="product-image">
+                    <img src="./attached_assets/DTF_1753540006979-DscAnoR0.png" alt="UV DTF">
+                </div>
+                <div class="product-title">UV DTF</div>
+                <div class="product-description">Hard Surface Transfers</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('custom-badges')">
+                <div class="product-image">
+                    <img src="./attached_assets/DTF_1753540006979-DscAnoR0.png" alt="Custom Badges">
+                </div>
+                <div class="product-title">Custom Badges</div>
+                <div class="product-description">Polyester textile woven badges</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('applique-badges')">
+                <div class="product-image">
+                    <img src="./attached_assets/DTF_1753540006979-DscAnoR0.png" alt="Applique Badges">
+                </div>
+                <div class="product-title">Applique Badges</div>
+                <div class="product-description">Fabric applique badges</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('reflective')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Reflective Transfers">
+                </div>
+                <div class="product-title">Reflective Transfers</div>
+                <div class="product-description">Our silver reflective helps enhance the visibility of the wearer at night</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('zero-single')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="ZERO Single Colour">
+                </div>
+                <div class="product-title">ZERO Single Colour Transfers</div>
+                <div class="product-description">Zero inks are super stretchy and do not bleed!</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('sublimation')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Sublimation Transfers">
+                </div>
+                <div class="product-title">Sublimation Transfers</div>
+                <div class="product-description">Sublimation heat transfers are designed for full colour decoration of white, 100% polyester</div>
+                <button class="select-button">Select</button>
+            </div>
+
+            <div class="product-card" onclick="selectProduct('zero-silicone')">
+                <div class="product-image">
+                    <img src="./attached_assets/Full Colour tshirt mock_1753540286823-CPbK6whQ.png" alt="Zero Silicone Transfers">
+                </div>
+                <div class="product-title">Zero Silicone Transfers</div>
+                <div class="product-description">Silicone-free transfers</div>
+                <button class="select-button">Select</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Show loading screen for 1.5 seconds then show main content
+        setTimeout(() => {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }, 1500);
+
+        function selectProduct(productType) {
+            alert(`You selected: ${productType}. This would redirect to the artwork uploader.`);
+            // In your actual app, this would redirect to the artwork uploader
+            // window.location.href = '/artwork-uploader?product=' + productType;
+        }
+    </script>
+</body>
+</html>
