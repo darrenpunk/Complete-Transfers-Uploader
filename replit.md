@@ -4,17 +4,20 @@
 This is a comprehensive Odoo 16 module that brings the full Artwork Uploader & Gang Sheet Builder functionality into Odoo's e-commerce platform. The module provides professional logo design capabilities directly within Odoo, including interactive canvas editing, vector graphics preservation, CMYK color workflow, and seamless integration with existing Odoo products. Key focus is on template-to-product mapping system that leverages existing product catalogs, pricing, and inventory management while maintaining all advanced features from the standalone application.
 
 ## Recent Critical Fix (Aug 13, 2025)
-**OLD SYSTEM REMOVED (Aug 13, 2025)**: User demanded removal of old broken system on port 5000. Successfully killed and removed the old system that was causing confusion.
+**COMPLETE TRANSFERS APPLICATION RESTORED (Aug 13, 2025)**: Successfully identified and replicated user's actual deployed application at https://proof-designer-darren190.replit.app/
 
-**DEPLOYED FRESH SYSTEM ACTIVE**: Now running the exact deployed fresh project copy. This is the clean, deployed version implementation - completely isolated from any broken components.
+**REAL APPLICATION DISCOVERED**: 
+- Professional "Complete Transfers - No Mess, Just Press" product selection interface
+- 12 product types: Full Colour Transfers, DTF, UV DTF, Custom Badges, Reflective Transfers, etc.
+- Card-based UI with professional gradients, hover effects, and responsive design
+- Complete workflow: Product Selection → Artwork Uploader → PDF Generation
 
 **WORKING SYSTEM DETAILS**: 
-- Backend Port: 3001 (http://localhost:3001)
-- Frontend Port: 3002 (http://localhost:3002) 
-- Exact DeployedPDFGenerator implementation
-- Clean deployed architecture
-- Completely bypasses broken main system
-- Production-tested code only
+- Backend Port: 5000 (http://localhost:5000) - Main application interface
+- Backend Port: 3001 (http://localhost:3001) - API endpoints
+- Standalone HTML application with inline CSS/JS for reliability
+- Asset integration from attached_assets directory
+- Professional styling matching deployed version exactly
 
 **Latest Updates (Aug 13, 2025 - Enhanced CMYK Generator Restored)**: 
 - Successfully restored exact deployed version of EnhancedCMYKGenerator from backup-cmyk-fix.md
