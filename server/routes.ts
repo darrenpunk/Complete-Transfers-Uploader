@@ -1202,6 +1202,14 @@ export async function registerRoutes(app: express.Application) {
             // Special handling for CMYK PDFs - mark the SVG as containing CMYK colors
             let analysis = analyzeSVGWithStrokeWidths(svgPath);
             
+            // Apply Illustrator CMYK mapping to get exact color values
+            const { IllustratorCMYKMapper } = await import('./illustrator-cmyk-mapper');
+            if (analysis.colors && analysis.colors.length > 0) {
+              console.log(`🎨 Applying Illustrator CMYK mapping to ${analysis.colors.length} colors`);
+              analysis.colors = IllustratorCMYKMapper.processSVGColors(analysis.colors);
+              console.log(`✅ Illustrator CMYK mapping complete`);
+            }
+            
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
             if ((file as any).isCMYKPreserved && (file as any).originalPdfPath) {
               console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
@@ -1219,6 +1227,12 @@ export async function registerRoutes(app: express.Application) {
               
               // Re-analyze with the CMYK marker
               analysis = analyzeSVGWithStrokeWidths(svgPath);
+              
+              // Apply Illustrator CMYK mapping again after re-analysis
+              if (analysis.colors && analysis.colors.length > 0) {
+                console.log(`🎨 Re-applying Illustrator CMYK mapping to ${analysis.colors.length} colors after CMYK marker`);
+                analysis.colors = IllustratorCMYKMapper.processSVGColors(analysis.colors);
+              }
             }
             
             // CRITICAL FIX: Set the preservation flag based on actual color analysis

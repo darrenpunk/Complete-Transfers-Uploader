@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
+import { IllustratorCMYKMapper } from './illustrator-cmyk-mapper';
 
 // Pantone color database - Common Pantone colors with their RGB/CMYK values
 const PANTONE_COLORS = [
@@ -1562,7 +1563,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   let dotCount = 0;
   finalSmallPaths.forEach((pathMatch) => {
     const dMatch = pathMatch.match(/d="([^"]+)"/);
-    if (dMatch && dMatch[1]) {
+    if (dMatch?.[1]) {
       const pathData = dMatch[1];
       const coords = pathData.match(/[\d.]+/g) || [];
       if (coords.length >= 4) {
