@@ -393,10 +393,11 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Calculate position using the original working method
+   * Calculate position using the original working method - FIXED SCALING  
    */
   private calculateOriginalPosition(element: any, templateSize: any, page: PDFPage): { x: number; y: number } {
     const { width: pageWidth, height: pageHeight } = page.getSize();
+    const MM_TO_POINTS = 2.834645669;
     
     console.log(`📊 Position calculation debug:`, {
       elementX: element.x,
@@ -405,81 +406,61 @@ export class OriginalWorkingGenerator {
       elementHeight: element.height,
       pageWidth,
       pageHeight,
-      templatePixelWidth: templateSize.pixelWidth,
-      templatePixelHeight: templateSize.pixelHeight,
       templateMmWidth: templateSize.width,
       templateMmHeight: templateSize.height
     });
     
-    // Convert canvas coordinates to PDF points directly
+    // Convert coordinates from millimeters to PDF points directly
     // Canvas coordinate system: (0,0) at top-left
     // PDF coordinate system: (0,0) at bottom-left
     
-    // Scale factor from canvas pixels to PDF points
-    const scaleX = pageWidth / templateSize.pixelWidth;
-    const scaleY = pageHeight / templateSize.pixelHeight;
+    // Convert element position directly from millimeters to points
+    const pdfX = element.x * MM_TO_POINTS;
     
-    // Use EXACT canvas coordinates - no artificial centering
-    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
-    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
-    
-    // Convert canvas position directly to PDF position
-    const pdfX = element.x * canvasToPageScaleX;
     // PDF Y coordinate is from bottom, canvas Y is from top
     // So we need to flip: PDF_Y = PageHeight - Canvas_Y - Element_Height
-    const scaledElementHeight = element.height * canvasToPageScaleY;
-    const scaledElementY = element.y * canvasToPageScaleY;
-    const pdfY = pageHeight - scaledElementY - scaledElementHeight;
+    const elementHeightPoints = element.height * MM_TO_POINTS;
+    const elementYPoints = element.y * MM_TO_POINTS;
+    const pdfY = pageHeight - elementYPoints - elementHeightPoints;
     
-    const finalX = pdfX;
-    const finalY = pdfY;
-    
-    console.log(`📐 Exact canvas coordinate conversion:`, {
-      canvasX: element.x,
-      canvasY: element.y,
-      canvasWidth: element.width,
-      canvasHeight: element.height,
-      pageWidth: pageWidth.toFixed(1),
-      pageHeight: pageHeight.toFixed(1),
-      scaleX: canvasToPageScaleX.toFixed(4),
-      scaleY: canvasToPageScaleY.toFixed(4),
-      scaledElementY: scaledElementY.toFixed(1),
-      scaledElementHeight: scaledElementHeight.toFixed(1),
-      pdfX: pdfX.toFixed(1),
+    console.log(`📐 Direct MM to Points coordinate conversion:`, {
+      canvasXmm: element.x,
+      canvasYmm: element.y,
+      elementHeightMM: element.height,
+      mmToPoints: MM_TO_POINTS,
+      pageHeightPoints: pageHeight.toFixed(1),
+      elementXPoints: pdfX.toFixed(1),
+      elementYPoints: elementYPoints.toFixed(1),
+      elementHeightPoints: elementHeightPoints.toFixed(1),
       pdfY: pdfY.toFixed(1),
-      finalX: finalX.toFixed(1),
-      finalY: finalY.toFixed(1)
+      finalX: pdfX.toFixed(1),
+      finalY: pdfY.toFixed(1)
     });
     
-    return { x: finalX, y: finalY };
+    return { x: pdfX, y: pdfY };
   }
 
   /**
-   * Calculate size using the original working method
+   * Calculate size using the original working method - FIXED SCALING
    */
   private calculateOriginalSize(element: any, templateSize: any, page: PDFPage): { width: number; height: number } {
-    // Use the same scale factors as position calculation for consistency
-    const { width: pageWidth, height: pageHeight } = page.getSize();
+    // Convert element size from millimeters to PDF points directly
+    // 1 mm = 2.834645669 points (standard PDF conversion)
+    const MM_TO_POINTS = 2.834645669;
     
-    // Use EXACT canvas size - no artificial scaling
-    const canvasToPageScaleX = pageWidth / templateSize.pixelWidth;
-    const canvasToPageScaleY = pageHeight / templateSize.pixelHeight;
+    // Element dimensions are in millimeters from the canvas
+    // Convert directly to PDF points without any scaling factors
+    const width = element.width * MM_TO_POINTS;
+    const height = element.height * MM_TO_POINTS;
     
-    // Scale element dimensions exactly as they appear on canvas
-    const width = element.width * canvasToPageScaleX;
-    const height = element.height * canvasToPageScaleY;
-    
-    console.log(`📏 Exact canvas size calculation:`, {
-      canvasWidth: element.width,
-      canvasHeight: element.height,
-      templatePixelWidth: templateSize.pixelWidth,
-      templatePixelHeight: templateSize.pixelHeight,
-      pageWidth: pageWidth.toFixed(1),
-      pageHeight: pageHeight.toFixed(1),
-      scaleX: canvasToPageScaleX.toFixed(4),
-      scaleY: canvasToPageScaleY.toFixed(4),
-      finalWidth: width.toFixed(1),
-      finalHeight: height.toFixed(1)
+    console.log(`📏 Direct MM to Points size calculation:`, {
+      elementWidthMM: element.width,
+      elementHeightMM: element.height,
+      mmToPoints: MM_TO_POINTS,
+      finalWidthPoints: width.toFixed(1),
+      finalHeightPoints: height.toFixed(1),
+      finalWidthMM: (width / MM_TO_POINTS).toFixed(1),
+      finalHeightMM: (height / MM_TO_POINTS).toFixed(1)
     });
     
     return { width, height };
