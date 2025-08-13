@@ -83,28 +83,53 @@ export class WorkingPDFGenerator {
         return;
       }
 
-      console.log(`🎯 PNG BYPASS: Converting to PNG for exact canvas coordinate preservation`);
+      console.log(`🎯 VECTOR PRESERVATION: Using exact canvas coordinate system with vector graphics`);
       
-      // Convert all files to PNG at exact canvas dimensions
-      const tempPngPath = path.join('/tmp', `canvas_exact_${Date.now()}.png`);
+      let embeddedGraphic;
       const canvasWidth = Math.round(element.width);
       const canvasHeight = Math.round(element.height);
       
       if (logo.mimeType === 'image/svg+xml') {
-        console.log(`🎨 SVG → PNG: ${canvasWidth}×${canvasHeight}px`);
-        const inkscapeCmd = `inkscape --export-type=png --export-filename="${tempPngPath}" --export-width=${canvasWidth} --export-height=${canvasHeight} "${logoPath}"`;
+        console.log(`🎨 SVG → Vector PDF: ${canvasWidth}×${canvasHeight}px`);
+        
+        // Convert SVG to vector PDF at exact canvas dimensions
+        const tempSvgPath = path.join('/tmp', `canvas_exact_${Date.now()}.svg`);
+        const tempPdfPath = path.join('/tmp', `canvas_exact_${Date.now()}.pdf`);
+        
+        // Read and scale SVG to exact canvas dimensions
+        const svgContent = fs.readFileSync(logoPath, 'utf-8');
+        let scaledSvg = svgContent.replace(/width="[^"]*"/, `width="${canvasWidth}"`);
+        scaledSvg = scaledSvg.replace(/height="[^"]*"/, `height="${canvasHeight}"`);
+        fs.writeFileSync(tempSvgPath, scaledSvg);
+        
+        // Convert to PDF using Inkscape
+        const inkscapeCmd = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${canvasWidth} --export-height=${canvasHeight}`;
         execSync(inkscapeCmd, { stdio: 'pipe' });
+        
+        // Embed PDF page as vector
+        if (fs.existsSync(tempPdfPath)) {
+          const pdfData = fs.readFileSync(tempPdfPath);
+          const sourcePdf = await PDFDocument.load(pdfData);
+          const [copiedPage] = await pdfDoc.copyPages(sourcePdf, [0]);
+          embeddedGraphic = await pdfDoc.embedPage(copiedPage);
+          
+          // Clean up temp files
+          fs.unlinkSync(tempSvgPath);
+          fs.unlinkSync(tempPdfPath);
+        }
       } else {
-        console.log(`🎨 PDF/Other → PNG: ${canvasWidth}×${canvasHeight}px`);
+        console.log(`🎨 Raster file: ${canvasWidth}×${canvasHeight}px`);
+        // For raster files, use PNG embedding
+        const tempPngPath = path.join('/tmp', `canvas_exact_${Date.now()}.png`);
         const convertCmd = `convert -density 300 "${logoPath}[0]" -resize ${canvasWidth}x${canvasHeight}! "${tempPngPath}"`;
         execSync(convertCmd, { stdio: 'pipe' });
+        
+        const pngBytes = fs.readFileSync(tempPngPath);
+        embeddedGraphic = await pdfDoc.embedPng(pngBytes);
+        fs.unlinkSync(tempPngPath);
       }
       
-      console.log(`✅ Converted to PNG at exact canvas size`);
-      
-      // Embed PNG with exact proportional coordinates 
-      const pngBytes = fs.readFileSync(tempPngPath);
-      const pngImage = await pdfDoc.embedPng(pngBytes);
+      console.log(`✅ Vector/raster embedding completed at exact canvas size`);
       
       // PROPORTIONAL COORDINATE SYSTEM: Canvas pixels → Template percentages → PDF points
       const scale = 2.834; // mm to points conversion
@@ -132,19 +157,35 @@ export class WorkingPDFGenerator {
       console.log(`🎯 COORDINATE MAPPING: Canvas(${element.width}×${element.height}px) = ${(widthProportion*100).toFixed(1)}%×${(heightProportion*100).toFixed(1)}% → PDF(${targetWidthPoints.toFixed(1)}×${targetHeightPoints.toFixed(1)}pt)`);
       console.log(`📍 POSITION MAPPING: Canvas(${element.x},${element.y}) = ${(xProportion*100).toFixed(1)}%,${(yProportion*100).toFixed(1)}% → PDF(${xInPoints.toFixed(1)},${finalY.toFixed(1)})`);
       
-      // Draw PNG image with exact canvas-to-PDF coordinate mapping
-      page.drawImage(pngImage, {
-        x: xInPoints,
-        y: finalY,
-        width: targetWidthPoints,
-        height: targetHeightPoints,
-        rotate: element.rotation ? degrees(element.rotation) : undefined,
-      });
+      // Draw vector/raster graphic with exact canvas-to-PDF coordinate mapping
+      if (embeddedGraphic) {
+        if (embeddedGraphic.width !== undefined && embeddedGraphic.height !== undefined) {
+          // Vector PDF page
+          console.log(`🎯 Drawing vector PDF page`);
+          page.drawPage(embeddedGraphic, {
+            x: xInPoints,
+            y: finalY,
+            width: targetWidthPoints,
+            height: targetHeightPoints,
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+        } else {
+          // Raster image
+          console.log(`🎯 Drawing raster image`);
+          page.drawImage(embeddedGraphic, {
+            x: xInPoints,
+            y: finalY,
+            width: targetWidthPoints,
+            height: targetHeightPoints,
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+        }
+      } else {
+        console.error(`❌ No embeddedGraphic available for drawing`);
+        return;
+      }
       
-      console.log(`✅ LOGO EMBEDDED: PNG bypass ensures perfect coordinate preservation`);
-      
-      // Clean up temp PNG file
-      fs.unlinkSync(tempPngPath);
+      console.log(`✅ LOGO EMBEDDED: Vector preservation with perfect coordinate mapping`);
 
     } catch (error) {
       console.error(`❌ Failed to embed logo ${logo.filename}:`, error);
