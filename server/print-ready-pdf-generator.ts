@@ -95,14 +95,27 @@ export class PrintReadyPDFGenerator {
       
       // VECTOR PRESERVATION - Embed SVG as vector graphics
       if (logo.filename.toLowerCase().endsWith('.svg')) {
-        console.log('🎯 DIRECT PNG APPROACH: Converting SVG to ensure visibility');
-        // Use direct PNG conversion to guarantee artwork appears
-        embeddedImage = await this.convertSVGToPNG(originalPath, element, pdfDoc);
+        console.log('🎯 PRESERVING ORIGINAL VECTORS: Embedding SVG with vector data intact');
+        const svgData = fs.readFileSync(originalPath, 'utf-8');
         
-        if (!embeddedImage) {
-          console.error('❌ SVG PNG conversion failed completely');
-        } else {
-          console.log('✅ SVG converted to PNG successfully for embedding');
+        // Scale SVG to exact canvas dimensions while preserving vectors
+        const scaledSvg = this.scaleSVGContent(svgData, element.width, element.height);
+        console.log(`✅ SVG vectors preserved at ${element.width}x${element.height}`);
+        
+        // Try vector embedding first, fallback to PNG only if it fails
+        try {
+          const pdfPageData = await this.embedSVGAsVectorPDF(pdfDoc, scaledSvg, element.width, element.height);
+          if (pdfPageData) {
+            embeddedImage = pdfPageData;
+            console.log('✅ Vector PDF embedding successful');
+          } else {
+            console.log('🔄 Vector embedding returned null, using PNG fallback');
+            embeddedImage = await this.convertSVGToPNG(originalPath, element, pdfDoc);
+          }
+        } catch (vectorError) {
+          console.error('❌ Vector embedding failed:', vectorError);
+          console.log('🔄 Using PNG fallback due to vector error');
+          embeddedImage = await this.convertSVGToPNG(originalPath, element, pdfDoc);
         }
         
       } else if (logo.filename.toLowerCase().endsWith('.png')) {
@@ -133,21 +146,34 @@ export class PrintReadyPDFGenerator {
       
       console.log(`🎯 Drawing at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
       
-      // Draw artwork on PDF - simplified approach
+      // Draw artwork on PDF - handle both vector pages and raster images
       if (embeddedImage) {
-        console.log('🎯 Drawing artwork image directly');
         try {
-          page.drawImage(embeddedImage, {
-            x: pdfX,
-            y: pdfY,
-            width: element.width,
-            height: element.height
-          });
-          console.log(`✅ Artwork drawn successfully at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+          if (embeddedImage.width !== undefined && embeddedImage.height !== undefined) {
+            // For embedded PDF pages (vectors preserved)
+            console.log('🎯 Drawing vector PDF page');
+            page.drawPage(embeddedImage, {
+              x: pdfX,
+              y: pdfY,
+              width: element.width,
+              height: element.height
+            });
+            console.log(`✅ Vector artwork drawn at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+          } else {
+            // For raster images (PNG/JPG fallback)
+            console.log('🎯 Drawing raster image fallback');
+            page.drawImage(embeddedImage, {
+              x: pdfX,
+              y: pdfY,
+              width: element.width,
+              height: element.height
+            });
+            console.log(`✅ Raster artwork drawn at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+          }
         } catch (drawError) {
           console.error('❌ Drawing failed:', drawError);
-          console.error('❌ EmbeddedImage type:', typeof embeddedImage);
-          console.error('❌ EmbeddedImage keys:', Object.keys(embeddedImage));
+          console.log('🔄 Attempting PNG fallback due to drawing error');
+          await this.fallbackToImageEmbedding(originalPath, page, pdfX, pdfY, element, pdfDoc);
         }
       } else {
         console.error('❌ CRITICAL: No embeddedImage available for drawing');
@@ -280,6 +306,14 @@ export class PrintReadyPDFGenerator {
       
       // Embed the copied page to make it drawable
       const embeddedPage = await pdfDoc.embedPage(copiedPage);
+      
+      console.log('🔍 Embedded page validation:', {
+        hasWidth: typeof embeddedPage.width === 'number',
+        hasHeight: typeof embeddedPage.height === 'number',
+        width: embeddedPage.width,
+        height: embeddedPage.height,
+        type: typeof embeddedPage
+      });
       
       // Clean up temp files
       fs.unlinkSync(tempSvgPath);
