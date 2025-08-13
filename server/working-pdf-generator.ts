@@ -115,12 +115,13 @@ export class SimpleWorkingGenerator {
       const originalName = (logo.originalName || logo.filename || '').toLowerCase();
       
       // Check both actual file path and original filename for format detection
-      const isPdf = fileExt.endsWith('.pdf') || originalName.endsWith('.pdf');
-      const isSvg = fileExt.endsWith('.svg') || originalName.endsWith('.svg');
+      // CRITICAL: If filename contains .svg, it's SVG regardless of original name
+      const isSvg = fileExt.includes('.svg') || originalName.endsWith('.svg');
+      const isPdf = !isSvg && (fileExt.endsWith('.pdf') || originalName.endsWith('.pdf'));
       const isJpg = fileExt.match(/\.(jpg|jpeg)$/) || originalName.match(/\.(jpg|jpeg)$/);
       const isPng = fileExt.endsWith('.png') || originalName.endsWith('.png');
       
-      console.log(`🔍 Format detection: file=${path.basename(logoPath)}, original=${originalName}, pdf=${isPdf}, svg=${isSvg}`);
+      console.log(`🔍 FIXED Format detection: file=${path.basename(logoPath)}, original=${originalName}, pdf=${isPdf}, svg=${isSvg}`);
       
       if (isPdf) {
         // Simple PDF embedding
