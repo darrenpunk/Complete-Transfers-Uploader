@@ -41,7 +41,7 @@ export class PrintReadyPDFGenerator {
         console.log(`🎯 Processing: ${logo.originalName || logo.filename}`);
         console.log(`📍 Canvas position: (${element.x}, ${element.y}) size ${element.width}x${element.height}`);
         
-        await this.embedOriginalGraphic(pdfDoc, page1, element, logo, pageHeight);
+        await this.embedOriginalGraphic(pdfDoc, page1, element, logo, params.templateSize);
       }
       
       // PAGE 2: Same graphics + garment color background + labels
@@ -55,7 +55,7 @@ export class PrintReadyPDFGenerator {
       for (const element of params.canvasElements) {
         const logo = params.logos.find(l => l.id === element.logoId);
         if (logo) {
-          await this.embedOriginalGraphic(pdfDoc, page2, element, logo, pageHeight);
+          await this.embedOriginalGraphic(pdfDoc, page2, element, logo, params.templateSize);
         }
       }
       
@@ -79,7 +79,7 @@ export class PrintReadyPDFGenerator {
     page: PDFPage,
     element: any,
     logo: any,
-    pageHeight: number
+    templateSize: any
   ): Promise<void> {
     try {
       const originalPath = path.join('uploads', logo.filename);
@@ -132,7 +132,7 @@ export class PrintReadyPDFGenerator {
         
       } else if (logo.filename.toLowerCase().endsWith('.pdf')) {
         console.log('🎯 PRESERVING PDF: Embedding original PDF page');
-        await this.embedOriginalPDFPage(pdfDoc, page, element, originalPath, pageHeight);
+        await this.embedOriginalPDFPage(pdfDoc, page, element, originalPath, templateSize.height * 2.834);
         return;
         
       } else {
@@ -140,11 +140,32 @@ export class PrintReadyPDFGenerator {
         return;
       }
       
-      // Calculate PDF coordinates
-      const pdfX = element.x;
-      const pdfY = pageHeight - element.y - element.height;
+      // PROPORTIONAL COORDINATE SYSTEM: Canvas pixels → Template percentages → PDF points
+      const scale = 2.834; // mm to points conversion
+      const canvasDisplayWidth = 842;   
+      const canvasDisplayHeight = 1191; 
       
-      console.log(`🎯 Drawing at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+      // Calculate proportional positioning and sizing
+      const xProportion = element.x / canvasDisplayWidth;
+      const yProportion = element.y / canvasDisplayHeight;
+      const widthProportion = element.width / canvasDisplayWidth;
+      const heightProportion = element.height / canvasDisplayHeight;
+      
+      // Convert proportions to PDF points
+      const pageWidthPoints = templateSize.width * scale;
+      const pageHeightPoints = templateSize.height * scale;
+      
+      const xInPoints = xProportion * pageWidthPoints;
+      const yInPoints = yProportion * pageHeightPoints;
+      const targetWidthPoints = widthProportion * pageWidthPoints;
+      const targetHeightPoints = heightProportion * pageHeightPoints;
+      
+      // PDF coordinate system: Y=0 at bottom, canvas Y=0 at top
+      const pdfX = xInPoints;
+      const pdfY = pageHeightPoints - yInPoints - targetHeightPoints;
+      
+      console.log(`🎯 COORDINATE MAPPING: Canvas(${element.width}×${element.height}px) = ${(widthProportion*100).toFixed(1)}%×${(heightProportion*100).toFixed(1)}% → PDF(${targetWidthPoints.toFixed(1)}×${targetHeightPoints.toFixed(1)}pt)`);
+      console.log(`📍 POSITION MAPPING: Canvas(${element.x},${element.y}) = ${(xProportion*100).toFixed(1)}%,${(yProportion*100).toFixed(1)}% → PDF(${pdfX.toFixed(1)},${pdfY.toFixed(1)})`);
       
       // Draw artwork on PDF - handle both vector pages and raster images
       if (embeddedImage) {
@@ -155,20 +176,20 @@ export class PrintReadyPDFGenerator {
             page.drawPage(embeddedImage, {
               x: pdfX,
               y: pdfY,
-              width: element.width,
-              height: element.height
+              width: targetWidthPoints,
+              height: targetHeightPoints
             });
-            console.log(`✅ Vector artwork drawn at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+            console.log(`✅ Vector artwork drawn at (${pdfX}, ${pdfY}) size ${targetWidthPoints}x${targetHeightPoints}`);
           } else {
             // For raster images (PNG/JPG fallback)
             console.log('🎯 Drawing raster image fallback');
             page.drawImage(embeddedImage, {
               x: pdfX,
               y: pdfY,
-              width: element.width,
-              height: element.height
+              width: targetWidthPoints,
+              height: targetHeightPoints
             });
-            console.log(`✅ Raster artwork drawn at (${pdfX}, ${pdfY}) size ${element.width}x${element.height}`);
+            console.log(`✅ Raster artwork drawn at (${pdfX}, ${pdfY}) size ${targetWidthPoints}x${targetHeightPoints}`);
           }
         } catch (drawError) {
           console.error('❌ Drawing failed:', drawError);
