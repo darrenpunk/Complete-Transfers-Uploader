@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the PRINT-READY PDF generator - Complete page layout system
-      console.log('📄 Using PrintReadyPDFGenerator - Complete page layout system');
-      const { PrintReadyPDFGenerator } = await import('./print-ready-pdf-generator');
-      console.log('✅ PrintReadyPDFGenerator imported successfully');
-      const generator = new PrintReadyPDFGenerator();
-      console.log('📊 Print-ready generator: Full layout + Vector preservation');
+      // Import the WORKING PDF generator - Deployed version that works
+      console.log('📄 Using WorkingPDFGenerator - Deployed working version');
+      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
+      console.log('✅ WorkingPDFGenerator imported successfully');
+      const generator = new WorkingPDFGenerator();
+      console.log('📊 Working generator: Deployed version with proven vector embedding');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -754,12 +754,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the PRINT-READY PDF generator - Complete page layout with vector preservation
-      console.log('📄 Using PrintReadyPDFGenerator - Complete page layout system');
-      const { PrintReadyPDFGenerator } = await import('./print-ready-pdf-generator');
-      console.log('✅ PrintReadyPDFGenerator imported successfully');
-      const generator = new PrintReadyPDFGenerator();
-      console.log('📊 Print-ready generator: Full layout + Vector preservation');
+      // Import the WORKING PDF generator - Deployed version that works
+      console.log('📄 Using WorkingPDFGenerator - Deployed working version');
+      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
+      console.log('✅ WorkingPDFGenerator imported successfully');
+      const generator = new WorkingPDFGenerator();
+      console.log('📊 Working generator: Deployed version with proven vector embedding');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
