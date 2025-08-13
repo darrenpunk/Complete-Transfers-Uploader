@@ -15,7 +15,7 @@ export interface PDFGenerationData {
   appliqueBadgesForm?: any;
 }
 
-export class PDFGenerator {
+export class OdooPDFGenerator {
   async generateProductionPDF(data: PDFGenerationData): Promise<Buffer> {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
@@ -584,4 +584,4 @@ export class PDFGenerator {
   }
 }
 
-export const pdfGenerator = new PDFGenerator();
+export const pdfGenerator = new OdooPDFGenerator();

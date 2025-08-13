@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING PDF generator - Deployed version that works
-      console.log('📄 Using WorkingPDFGenerator - Deployed working version');
-      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
-      console.log('✅ WorkingPDFGenerator imported successfully');
-      const generator = new WorkingPDFGenerator();
-      console.log('📊 Working generator: Deployed version with proven vector embedding');
+      // Import the ORIGINAL DEPLOYED PDF generator - Exact deployed version
+      console.log('📄 Using OdooPDFGenerator - Original deployed version');  
+      const { OdooPDFGenerator } = await import('./pdf-generator');
+      console.log('✅ OdooPDFGenerator imported successfully');
+      const generator = new OdooPDFGenerator();
+      console.log('📊 Original deployed generator: Exact copy of working deployed version');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,16 +679,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating working PDF with proven vector embedding...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with original deployed generator...`);
+      const pdfBuffer = await generator.generateProductionPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
         templateSize: templateSize,
-        project: project,
-        garmentColor: finalGarmentColor,
-        extraGarmentColors: [], // No extra garment colors for GET
-        quantity: 1   // Default quantity
+        garmentColor: finalGarmentColor
       });
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
@@ -754,12 +751,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING PDF generator - Deployed version that works
-      console.log('📄 Using WorkingPDFGenerator - Deployed working version');
-      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
-      console.log('✅ WorkingPDFGenerator imported successfully');
-      const generator = new WorkingPDFGenerator();
-      console.log('📊 Working generator: Deployed version with proven vector embedding');
+      // Import the ORIGINAL DEPLOYED PDF generator - Exact deployed version  
+      console.log('📄 Using OdooPDFGenerator - Original deployed version');
+      const { OdooPDFGenerator } = await import('./pdf-generator');
+      console.log('✅ OdooPDFGenerator imported successfully');
+      const generator = new OdooPDFGenerator();
+      console.log('📊 Original deployed generator: Exact copy of working deployed version');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -773,16 +770,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating working PDF with proven vector embedding...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with original deployed generator...`);
+      const pdfBuffer = await generator.generateProductionPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
         templateSize: templateSize,
-        project: project,
-        garmentColor: finalGarmentColor,
-        extraGarmentColors: extraGarmentColors,
-        quantity: quantity
+        garmentColor: finalGarmentColor
       });
       console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
       
