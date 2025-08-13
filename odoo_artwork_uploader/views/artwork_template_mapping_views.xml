@@ -1,70 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
-        <!-- Template Mapping Tree View -->
-        <record id="artwork_template_mapping_tree_view" model="ir.ui.view">
+        <!-- Tree View -->
+        <record id="view_artwork_template_mapping_tree" model="ir.ui.view">
             <field name="name">artwork.template.mapping.tree</field>
             <field name="model">artwork.template.mapping</field>
             <field name="arch" type="xml">
-                <tree string="Template Mappings" editable="top">
-                    <field name="sequence" widget="handle"/>
+                <tree string="Template Mappings">
                     <field name="template_id"/>
                     <field name="product_id"/>
-                    <field name="template_category" readonly="1"/>
-                    <field name="template_width" readonly="1"/>
-                    <field name="template_height" readonly="1"/>
+                    <field name="min_quantity"/>
+                    <field name="max_quantity"/>
                     <field name="active"/>
                 </tree>
             </field>
         </record>
-        
-        <!-- Template Mapping Form View -->
-        <record id="artwork_template_mapping_form_view" model="ir.ui.view">
+
+        <!-- Form View -->
+        <record id="view_artwork_template_mapping_form" model="ir.ui.view">
             <field name="name">artwork.template.mapping.form</field>
             <field name="model">artwork.template.mapping</field>
             <field name="arch" type="xml">
                 <form string="Template Mapping">
                     <sheet>
-                        <div class="oe_title">
-                            <h1>
-                                <field name="name" readonly="1"/>
-                            </h1>
-                        </div>
                         <group>
-                            <group name="template_info">
+                            <group>
                                 <field name="template_id"/>
-                                <field name="template_category" readonly="1"/>
-                                <field name="template_width" readonly="1"/>
-                                <field name="template_height" readonly="1"/>
-                            </group>
-                            <group name="product_info">
-                                <field name="product_id"/>
-                                <field name="sequence"/>
+                                <field name="product_id" domain="[('sale_ok', '=', True)]"/>
                                 <field name="active"/>
                             </group>
+                            <group>
+                                <field name="min_quantity"/>
+                                <field name="max_quantity"/>
+                            </group>
+                        </group>
+                        <group string="Notes">
+                            <field name="notes" nolabel="1"/>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
-        
-        <!-- Template Mapping Action -->
-        <record id="action_artwork_template_mapping_tree" model="ir.actions.act_window">
+
+        <!-- Search View -->
+        <record id="view_artwork_template_mapping_search" model="ir.ui.view">
+            <field name="name">artwork.template.mapping.search</field>
+            <field name="model">artwork.template.mapping</field>
+            <field name="arch" type="xml">
+                <search string="Search Template Mappings">
+                    <field name="template_id"/>
+                    <field name="product_id"/>
+                    <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                    <filter string="Inactive" name="inactive" domain="[('active', '=', False)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Product" name="product" context="{'group_by': 'product_id'}"/>
+                        <filter string="Active" name="active_group" context="{'group_by': 'active'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_artwork_template_mapping" model="ir.actions.act_window">
             <field name="name">Template Mappings</field>
             <field name="res_model">artwork.template.mapping</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="artwork_template_mapping_tree_view"/>
+            <field name="search_view_id" ref="view_artwork_template_mapping_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    Set up template to product mappings!
+                    Configure Template to Product Mappings
                 </p>
                 <p>
-                    Template mappings connect artwork templates to specific products in your catalog.
-                    This allows customers to select templates and automatically get the correct pricing and product information.
+                    Map each artwork template to an existing product in your catalog.
+                    This allows the system to automatically find the correct product
+                    when customers add their artwork to the cart.
                 </p>
             </field>
         </record>
-        
+
+        <!-- Menu -->
+        <menuitem id="menu_artwork_template_mapping"
+                  name="Template Mappings"
+                  parent="menu_artwork_config"
+                  action="action_artwork_template_mapping"
+                  sequence="10"/>
+
     </data>
 </odoo>

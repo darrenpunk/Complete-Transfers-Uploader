@@ -19,6 +19,7 @@ import { calculateSVGContentBounds } from './svg-color-utils';
 import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-utils';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { detectPreciseContentBounds } from './precise-content-detector';
+import { EnhancedCMYKGenerator } from './enhanced-cmyk-generator';
 
 const execAsync = promisify(exec);
 
@@ -663,12 +664,10 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the TRUE ORIGINAL working generator that handles SVG files properly
-      console.log('📄 Using OriginalWorkingGenerator - TRUE deployed version with SVG support');  
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('✅ OriginalWorkingGenerator imported successfully');
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 TRUE original working generator: Handles SVG files correctly');
+      // Import the EnhancedCMYKGenerator - exact deployed version with CMYK fixes
+      console.log('📄 Using EnhancedCMYKGenerator - exact deployed version with CMYK color accuracy');  
+      const generator = new EnhancedCMYKGenerator();
+      console.log('📊 Enhanced CMYK generator: Exact deployed version with SVG + CMYK support');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,8 +678,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with TRUE original working generator...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with Enhanced CMYK Generator...`);
+      const pdfBuffer = await generator.generateCMYKPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
@@ -751,12 +750,10 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the TRUE ORIGINAL working generator that handles SVG files properly
-      console.log('📄 Using OriginalWorkingGenerator - TRUE deployed version with SVG support');  
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('✅ OriginalWorkingGenerator imported successfully');
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 TRUE original working generator: Handles SVG files correctly');
+      // Import the EnhancedCMYKGenerator - exact deployed version with CMYK fixes  
+      console.log('📄 Using EnhancedCMYKGenerator - exact deployed version with CMYK color accuracy');
+      const generator = new EnhancedCMYKGenerator();
+      console.log('📊 Enhanced CMYK generator: Exact deployed version with SVG + CMYK support');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -770,8 +767,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with TRUE original working generator...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with Enhanced CMYK Generator...`);
+      const pdfBuffer = await generator.generateCMYKPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,

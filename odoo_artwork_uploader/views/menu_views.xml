@@ -1,38 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
-        <!-- Main Menu -->
-        <menuitem id="menu_artwork_uploader_main"
-                  name="Artwork Uploader"
+        <!-- Top menu -->
+        <menuitem id="menu_artwork_root"
+                  name="Artwork"
                   sequence="10"/>
-        
-        <!-- Projects Menu -->
+
+        <!-- Main menu -->
         <menuitem id="menu_artwork_projects"
                   name="Projects"
-                  parent="menu_artwork_uploader_main"
-                  action="action_artwork_project_tree"
+                  parent="menu_artwork_root"
+                  action="action_artwork_project"
                   sequence="10"/>
-        
-        <!-- Configuration Menu -->
-        <menuitem id="menu_artwork_configuration"
+
+        <!-- Configuration menu -->
+        <menuitem id="menu_artwork_config"
                   name="Configuration"
-                  parent="menu_artwork_uploader_main"
-                  sequence="90"/>
-        
-        <!-- Template Mappings -->
-        <menuitem id="menu_artwork_template_mappings"
-                  name="Template Mappings"
-                  parent="menu_artwork_configuration"
-                  action="action_artwork_template_mapping_tree"
-                  sequence="10"/>
-        
-        <!-- Template Mapping Wizard -->
-        <menuitem id="menu_artwork_mapping_wizard"
-                  name="Setup Template Mappings"
-                  parent="menu_artwork_configuration"
-                  action="action_artwork_template_mapping_wizard"
-                  sequence="20"/>
-        
+                  parent="menu_artwork_root"
+                  sequence="100"/>
+
     </data>
 </odoo>

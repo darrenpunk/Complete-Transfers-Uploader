@@ -1,96 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
         <!-- Main Upload Page Template -->
-        <template id="upload_page" name="Artwork Upload Page">
+        <template id="upload_page" name="Artwork Uploader">
             <t t-call="website.layout">
-                <div id="wrap" class="oe_structure oe_empty">
-                    <div class="container mt-4">
+                <div id="wrap" class="oe_structure">
+                    <div class="container-fluid artwork-uploader-container">
                         <div class="row">
                             <div class="col-12">
-                                <h1 class="text-center mb-4">Upload Your Artwork</h1>
-                                <p class="lead text-center mb-5">
-                                    Create professional transfers and designs with our easy-to-use artwork uploader.
-                                    Choose from various templates and customize your design.
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Artwork Uploader Container -->
-                        <div id="artwork-uploader-container" class="row">
-                            <div class="col-12">
-                                <!-- This will be populated by JavaScript -->
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="text-center py-5">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="sr-only">Loading...</span>
-                                            </div>
-                                            <p class="mt-3">Loading artwork uploader...</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Template Information -->
-                        <div class="row mt-5">
-                            <div class="col-12">
-                                <h2>Available Templates</h2>
-                                <div class="row">
-                                    <t t-foreach="templates" t-as="template">
-                                        <div class="col-md-4 mb-3">
-                                            <div class="card h-100">
-                                                <div class="card-body">
-                                                    <h5 class="card-title" t-esc="template.name"/>
-                                                    <p class="card-text" t-esc="template.description_sale"/>
-                                                    <div class="mt-auto">
-                                                        <span class="badge badge-primary" t-esc="template.artwork_template_type"/>
-                                                        <span class="float-right">
-                                                            <strong t-esc="template.list_price" t-options="{'widget': 'monetary', 'display_currency': website.currency_id}"/>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </t>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Features Section -->
-                        <div class="row mt-5">
-                            <div class="col-12">
-                                <h2>Features</h2>
-                                <div class="row">
-                                    <div class="col-md-3 mb-3">
-                                        <div class="text-center">
-                                            <i class="fa fa-upload fa-3x text-primary mb-3"/>
-                                            <h4>Easy Upload</h4>
-                                            <p>Support for PNG, JPEG, SVG, PDF, AI, and EPS files up to 200MB</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="text-center">
-                                            <i class="fa fa-palette fa-3x text-primary mb-3"/>
-                                            <h4>Color Preservation</h4>
-                                            <p>Professional CMYK workflow with Pantone color detection</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="text-center">
-                                            <i class="fa fa-edit fa-3x text-primary mb-3"/>
-                                            <h4>Interactive Canvas</h4>
-                                            <p>Position, resize, and rotate your designs with precision</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-3">
-                                        <div class="text-center">
-                                            <i class="fa fa-file-pdf fa-3x text-primary mb-3"/>
-                                            <h4>Production Ready</h4>
-                                            <p>Generate professional PDFs with accurate dimensions</p>
-                                        </div>
+                                <h1 class="text-center my-4">Artwork Uploader &amp; Design Tool</h1>
+                                <div id="artwork-uploader-root" 
+                                     data-templates='<t t-esc="json.dumps(templates.mapped(lambda t: {&quot;id&quot;: t.id, &quot;name&quot;: t.name, &quot;type&quot;: t.artwork_template_type}))" />'
+                                     data-garment-colors='<t t-esc="json.dumps(garment_colors)" />'
+                                     data-ink-colors='<t t-esc="json.dumps(ink_colors)" />'>
+                                    <!-- React app will mount here -->
+                                    <div class="text-center p-5">
+                                        <i class="fa fa-spinner fa-spin fa-3x"></i>
+                                        <p class="mt-3">Loading artwork uploader...</p>
                                     </div>
                                 </div>
                             </div>
@@ -99,47 +25,14 @@
                 </div>
             </t>
         </template>
-        
-        <!-- Embed Button Widget -->
-        <template id="artwork_embed_button" name="Artwork Upload Button">
-            <div class="artwork-upload-button-container">
-                <button type="button" class="btn btn-primary artwork-upload-btn" 
-                        data-toggle="modal" data-target="#artworkUploaderModal">
-                    <i class="fa fa-upload"/> Upload Artwork
-                </button>
-                
-                <!-- Modal -->
-                <div class="modal fade" id="artworkUploaderModal" tabindex="-1" role="dialog" 
-                     aria-labelledby="artworkUploaderModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="artworkUploaderModalLabel">Upload Your Artwork</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&amp;times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <div id="modal-artwork-uploader-container">
-                                    <!-- Artwork uploader will be loaded here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </template>
-        
-        <!-- Website Menu -->
-        <template id="artwork_uploader_menu" name="Artwork Uploader Menu" inherit_id="website.layout">
-            <xpath expr="//header//nav//ul[hasclass('navbar-nav')]" position="inside">
-                <li class="nav-item">
-                    <a href="/artwork/upload" class="nav-link">
-                        <i class="fa fa-upload"/> Upload Artwork
-                    </a>
-                </li>
-            </xpath>
-        </template>
-        
+
+        <!-- Add to Website Menu -->
+        <record id="menu_artwork_uploader" model="website.menu">
+            <field name="name">Design Tool</field>
+            <field name="url">/artwork/upload</field>
+            <field name="parent_id" ref="website.main_menu"/>
+            <field name="sequence">50</field>
+        </record>
+
     </data>
 </odoo>

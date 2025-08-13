@@ -1,73 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
-        <!-- Artwork Project Tree View -->
-        <record id="artwork_project_tree_view" model="ir.ui.view">
-            <field name="name">artwork.project.tree</field>
-            <field name="model">artwork.project</field>
-            <field name="arch" type="xml">
-                <tree string="Artwork Projects" decoration-info="state == 'draft'" decoration-success="state == 'done'">
-                    <field name="name"/>
-                    <field name="template_size"/>
-                    <field name="partner_id"/>
-                    <field name="quantity"/>
-                    <field name="price_total" sum="Total Price"/>
-                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'done'"/>
-                    <field name="create_date"/>
-                </tree>
-            </field>
-        </record>
-        
         <!-- Artwork Project Form View -->
-        <record id="artwork_project_form_view" model="ir.ui.view">
+        <record id="view_artwork_project_form" model="ir.ui.view">
             <field name="name">artwork.project.form</field>
             <field name="model">artwork.project</field>
             <field name="arch" type="xml">
                 <form string="Artwork Project">
                     <header>
-                        <button name="action_confirm" string="Confirm" type="object" 
-                                states="draft" class="btn-primary"/>
-                        <button name="action_done" string="Mark Done" type="object" 
-                                states="confirmed" class="btn-primary"/>
-                        <button name="action_cancel" string="Cancel" type="object" 
-                                states="draft,confirmed"/>
-                        <button name="action_reset_to_draft" string="Reset to Draft" type="object" 
-                                states="cancelled"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
+                        <button name="action_confirm" string="Confirm" type="object" class="oe_highlight" states="draft"/>
+                        <button name="action_generate_pdf" string="Generate PDF" type="object" states="confirmed"/>
+                        <button name="action_cancel" string="Cancel" type="object" states="draft,confirmed"/>
+                        <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
                         <div class="oe_title">
                             <h1>
-                                <field name="name" placeholder="Project Name"/>
+                                <field name="name"/>
                             </h1>
                         </div>
                         <group>
-                            <group name="project_info">
+                            <group>
                                 <field name="uuid" readonly="1"/>
+                                <field name="partner_id"/>
                                 <field name="template_size"/>
                                 <field name="template_width" readonly="1"/>
                                 <field name="template_height" readonly="1"/>
-                                <field name="partner_id"/>
-                                <field name="sale_order_id"/>
                             </group>
-                            <group name="colors">
+                            <group>
                                 <field name="garment_color" widget="color"/>
                                 <field name="garment_color_name"/>
-                                <field name="ink_color" widget="color"/>
-                                <field name="ink_color_name"/>
+                                <field name="garment_colors_json" invisible="1"/>
+                                <field name="ink_color" widget="color" attrs="{'invisible': [('template_size', 'not ilike', 'single')]}"/>
+                                <field name="ink_color_name" attrs="{'invisible': [('template_size', 'not ilike', 'single')]}"/>
                             </group>
                         </group>
-                        <group name="pricing">
-                            <group>
-                                <field name="quantity"/>
-                                <field name="price_unit"/>
-                                <field name="price_total"/>
-                            </group>
+                        <group string="Project Details">
+                            <field name="project_comments" placeholder="Enter any additional comments or instructions for this project..." nolabel="1"/>
                         </group>
                         <notebook>
-                            <page string="Logos" name="logos">
-                                <field name="logo_ids">
+                            <page string="Logos">
+                                <field name="logo_ids" readonly="1">
                                     <tree>
                                         <field name="name"/>
                                         <field name="filename"/>
@@ -78,85 +51,100 @@
                                     </tree>
                                 </field>
                             </page>
-                            <page string="Canvas Elements" name="canvas">
-                                <field name="canvas_element_ids">
+                            <page string="Canvas Elements">
+                                <field name="canvas_element_ids" readonly="1">
                                     <tree>
+                                        <field name="sequence" widget="handle"/>
                                         <field name="name"/>
                                         <field name="logo_id"/>
                                         <field name="x"/>
                                         <field name="y"/>
                                         <field name="width"/>
                                         <field name="height"/>
-                                        <field name="is_locked"/>
+                                        <field name="rotation"/>
                                     </tree>
                                 </field>
                             </page>
-                            <page string="Comments" name="comments">
-                                <field name="project_comments" placeholder="Add any special instructions or comments for this project..."/>
-                            </page>
-                            <page string="Advanced" name="advanced">
+                            <page string="Pricing">
                                 <group>
-                                    <field name="garment_colors_json"/>
-                                    <field name="canvas_data"/>
-                                </group>
-                                <group string="PDF">
-                                    <field name="pdf_file" filename="pdf_filename"/>
-                                    <field name="pdf_filename"/>
+                                    <group>
+                                        <field name="quantity"/>
+                                        <field name="price_unit"/>
+                                    </group>
+                                    <group>
+                                        <field name="price_total"/>
+                                        <field name="sale_order_id" readonly="1"/>
+                                    </group>
                                 </group>
                             </page>
                         </notebook>
                     </sheet>
                     <div class="oe_chatter">
-                        <field name="message_follower_ids"/>
-                        <field name="activity_ids"/>
-                        <field name="message_ids"/>
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
                     </div>
                 </form>
             </field>
         </record>
-        
-        <!-- Artwork Project Search View -->
-        <record id="artwork_project_search_view" model="ir.ui.view">
-            <field name="name">artwork.project.search</field>
+
+        <!-- Artwork Project Tree View -->
+        <record id="view_artwork_project_tree" model="ir.ui.view">
+            <field name="name">artwork.project.tree</field>
             <field name="model">artwork.project</field>
             <field name="arch" type="xml">
-                <search string="Artwork Projects">
+                <tree string="Artwork Projects">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="template_size"/>
-                    <field name="state"/>
-                    <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
-                    <filter string="Confirmed" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
-                    <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                    <field name="garment_color_name"/>
+                    <field name="project_comments"/>
+                    <field name="quantity"/>
+                    <field name="price_total"/>
+                    <field name="state" widget="badge" decoration-success="state == 'done'" decoration-info="state == 'confirmed'"/>
+                    <field name="create_date"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Artwork Project Search View -->
+        <record id="view_artwork_project_search" model="ir.ui.view">
+            <field name="name">artwork.project.search</field>
+            <field name="model">artwork.project</field>
+            <field name="arch" type="xml">
+                <search string="Search Artwork Projects">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+                    <filter string="Confirmed" name="confirmed" domain="[('state','=','confirmed')]"/>
+                    <filter string="Done" name="done" domain="[('state','=','done')]"/>
                     <separator/>
-                    <filter string="My Projects" name="my_projects" domain="[('create_uid', '=', uid)]"/>
+                    <filter string="My Projects" name="my_projects" domain="[('partner_id.user_ids','in',uid)]"/>
                     <group expand="0" string="Group By">
-                        <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
-                        <filter string="Template" name="group_template" domain="[]" context="{'group_by': 'template_size'}"/>
-                        <filter string="Customer" name="group_partner" domain="[]" context="{'group_by': 'partner_id'}"/>
-                        <filter string="Created Date" name="group_date" domain="[]" context="{'group_by': 'create_date:month'}"/>
+                        <filter string="Customer" name="group_partner" context="{'group_by':'partner_id'}"/>
+                        <filter string="Template" name="group_template" context="{'group_by':'template_size'}"/>
+                        <filter string="State" name="group_state" context="{'group_by':'state'}"/>
+                        <filter string="Month" name="group_month" context="{'group_by':'create_date:month'}"/>
                     </group>
                 </search>
             </field>
         </record>
-        
-        <!-- Artwork Project Action -->
-        <record id="action_artwork_project_tree" model="ir.actions.act_window">
+
+        <!-- Action -->
+        <record id="action_artwork_project" model="ir.actions.act_window">
             <field name="name">Artwork Projects</field>
             <field name="res_model">artwork.project</field>
             <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="artwork_project_tree_view"/>
-            <field name="search_view_id" ref="artwork_project_search_view"/>
+            <field name="search_view_id" ref="view_artwork_project_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    Create your first artwork project!
+                    Create a new artwork project
                 </p>
                 <p>
-                    Artwork projects allow customers to upload logos and design layouts on various garment templates.
-                    Each project can contain multiple logos positioned on a canvas with professional color management.
+                    Manage customer artwork uploads and designs.
                 </p>
             </field>
         </record>
-        
+
     </data>
 </odoo>
