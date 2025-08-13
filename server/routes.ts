@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ORIGINAL DEPLOYED PDF generator - Exact deployed version
-      console.log('📄 Using OdooPDFGenerator - Original deployed version');  
-      const { OdooPDFGenerator } = await import('./pdf-generator');
-      console.log('✅ OdooPDFGenerator imported successfully');
-      const generator = new OdooPDFGenerator();
-      console.log('📊 Original deployed generator: Exact copy of working deployed version');
+      // Import the TRUE ORIGINAL working generator that handles SVG files properly
+      console.log('📄 Using OriginalWorkingGenerator - TRUE deployed version with SVG support');  
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      console.log('✅ OriginalWorkingGenerator imported successfully');
+      const generator = new OriginalWorkingGenerator();
+      console.log('📊 TRUE original working generator: Handles SVG files correctly');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,8 +679,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with original deployed generator...`);
-      const pdfBuffer = await generator.generateProductionPDF({
+      console.log(`🔄 Generating PDF with TRUE original working generator...`);
+      const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
@@ -751,12 +751,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the ORIGINAL DEPLOYED PDF generator - Exact deployed version  
-      console.log('📄 Using OdooPDFGenerator - Original deployed version');
-      const { OdooPDFGenerator } = await import('./pdf-generator');
-      console.log('✅ OdooPDFGenerator imported successfully');
-      const generator = new OdooPDFGenerator();
-      console.log('📊 Original deployed generator: Exact copy of working deployed version');
+      // Import the TRUE ORIGINAL working generator that handles SVG files properly
+      console.log('📄 Using OriginalWorkingGenerator - TRUE deployed version with SVG support');  
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      console.log('✅ OriginalWorkingGenerator imported successfully');
+      const generator = new OriginalWorkingGenerator();
+      console.log('📊 TRUE original working generator: Handles SVG files correctly');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -770,8 +770,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with original deployed generator...`);
-      const pdfBuffer = await generator.generateProductionPDF({
+      console.log(`🔄 Generating PDF with TRUE original working generator...`);
+      const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
