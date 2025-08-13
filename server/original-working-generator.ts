@@ -272,7 +272,9 @@ export class OriginalWorkingGenerator {
 
       // Convert SVG to PDF if needed (original working method)
       if (logo.mimeType === 'image/svg+xml') {
-        await this.embedSVGLogo(page, element, logoPath, templateSize);
+        // Pass logo data to embedSVGLogo for CMYK analysis
+        const elementWithLogo = { ...element, logo };
+        await this.embedSVGLogo(page, elementWithLogo, logoPath, templateSize);
       } else {
         await this.embedImageLogo(page, element, logoPath, templateSize);
       }
@@ -283,7 +285,7 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Embed SVG logo with proper page extraction to avoid duplication
+   * Embed SVG logo with CMYK color preservation
    */
   private async embedSVGLogo(
     page: PDFPage,
@@ -295,7 +297,24 @@ export class OriginalWorkingGenerator {
       // Read the SVG to check if it contains multi-page content
       const svgContent = fs.readFileSync(logoPath, 'utf8');
       
-      console.log(`🔍 Analyzing SVG for multi-page content...`);
+      console.log(`🔍 Analyzing SVG for multi-page content and CMYK colors...`);
+      
+      // Check if this SVG contains CMYK colors from logo analysis
+      const logo = element.logo || {};
+      const svgColors = logo.svgColors;
+      
+      console.log(`🔍 SVG Colors Debug:`, {
+        hasLogo: !!logo,
+        hasSvgColors: !!svgColors,
+        svgColorsType: typeof svgColors,
+        colorsArray: svgColors?.colors ? `${svgColors.colors.length} colors` : 'no colors array'
+      });
+      
+      const hasCMYKColors = svgColors && 
+        Array.isArray(svgColors.colors) && 
+        svgColors.colors.some((color: any) => color.isCMYK === true);
+      
+      console.log(`🎨 CMYK Analysis: ${hasCMYKColors ? 'CMYK colors detected' : 'No CMYK colors detected'}`);
       
       // Check if this SVG contains dual-page content (height > 1000px indicates 2-page SVG)
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
@@ -327,13 +346,39 @@ export class OriginalWorkingGenerator {
         console.log(`✂️ Created single-page SVG: ${tempSvgPath}`);
       }
       
-      // Convert SVG to PDF to preserve vectors
+      // Convert SVG to PDF with CMYK preservation if needed
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.pdf`);
       
-      // Use Inkscape to convert SVG to PDF preserving vectors
-      const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
-      await execAsync(inkscapeCmd);
-      console.log(`🎨 SVG converted to PDF (vectors preserved): ${tempPdfPath}`);
+      if (hasCMYKColors) {
+        console.log(`🎨 Using Enhanced CMYK Generator for proper CMYK preservation`);
+        
+        // Import and use the Enhanced CMYK Generator
+        const { prepareSVGForCMYKConversion } = await import('./preserve-cmyk-values');
+        
+        // Read and process the SVG content for CMYK preservation
+        const svgContent = fs.readFileSync(finalSvgPath, 'utf8');
+        const cmykPreservedSvg = await prepareSVGForCMYKConversion(svgContent, svgColors?.colors || []);
+        
+        // Save the CMYK-preserved SVG to a temporary file
+        const cmykSvgPath = path.join(process.cwd(), 'uploads', `temp_cmyk_svg_${Date.now()}.svg`);
+        fs.writeFileSync(cmykSvgPath, cmykPreservedSvg);
+        
+        // Convert CMYK-preserved SVG to PDF using Inkscape with CMYK color profile
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykSvgPath}"`;
+        await execAsync(inkscapeCmd);
+        
+        console.log(`🎨 SVG converted to PDF with Enhanced CMYK preservation: ${tempPdfPath}`);
+        
+        // Clean up CMYK SVG file
+        if (fs.existsSync(cmykSvgPath)) {
+          fs.unlinkSync(cmykSvgPath);
+        }
+      } else {
+        // Use standard Inkscape conversion for RGB/non-CMYK content
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
+        await execAsync(inkscapeCmd);
+        console.log(`🎨 SVG converted to PDF (standard conversion): ${tempPdfPath}`);
+      }
       
       // Read and embed the PDF
       const pdfBytes = fs.readFileSync(tempPdfPath);
@@ -348,7 +393,7 @@ export class OriginalWorkingGenerator {
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Successfully embedded single-page SVG as vector PDF at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
+      console.log(`✅ Successfully embedded SVG as vector PDF with ${hasCMYKColors ? 'CMYK preservation' : 'standard conversion'} at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       
       // Clean up temp files
       try {
