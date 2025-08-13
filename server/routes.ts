@@ -664,11 +664,11 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the OriginalWorkingGenerator - the method that worked from the beginning  
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('📄 Using OriginalWorkingGenerator - the method that worked from the beginning');  
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 Original working generator: Back to basics approach');
+      // Import the DeployedWorkingGenerator - exact replica of deployed version
+      const { DeployedWorkingGenerator } = await import('./deployed-working-generator');
+      console.log('📄 Using DeployedWorkingGenerator - exact replica of deployed version');  
+      const generator = new DeployedWorkingGenerator();
+      console.log('📊 Deployed working generator: Exact implementation that was working');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -679,8 +679,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with Original Working Generator...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with Deployed Working Generator...`);
+      const pdfBuffer = await generator.generateCMYKPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
@@ -751,11 +751,11 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the OriginalWorkingGenerator - the method that worked from the beginning  
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('📄 Using OriginalWorkingGenerator - the method that worked from the beginning');  
-      const generator = new OriginalWorkingGenerator();
-      console.log('📊 Original working generator: Back to basics approach');
+      // Import the DeployedWorkingGenerator - exact replica of deployed version
+      const { DeployedWorkingGenerator } = await import('./deployed-working-generator');
+      console.log('📄 Using DeployedWorkingGenerator - exact replica of deployed version');  
+      const generator = new DeployedWorkingGenerator();
+      console.log('📊 Deployed working generator: Exact implementation that was working');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -769,8 +769,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with Original Working Generator...`);
-      const pdfBuffer = await generator.generatePDF({
+      console.log(`🔄 Generating PDF with Deployed Working Generator...`);
+      const pdfBuffer = await generator.generateCMYKPDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
@@ -823,7 +823,7 @@ export async function registerRoutes(app: express.Application) {
       const { DirectPDFGenerator } = await import('./direct-pdf-generator');
       const generator = new DirectPDFGenerator();
       
-      const pdfBuffer = await generator.generatePDF({
+      const pdfBuffer = await generator.generateCMYKPDF({
         projectId,
         canvasElements,
         logos,
