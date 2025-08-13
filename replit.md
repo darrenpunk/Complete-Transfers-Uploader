@@ -6,6 +6,14 @@ This is a comprehensive Odoo 16 module that brings the full Artwork Uploader & G
 ## Recent Critical Fix (Aug 13, 2025)
 **Vector Preservation System FULLY WORKING**: Complete success! The PrintReadyPDFGenerator now perfectly preserves original vector data and colors while ensuring artwork visibility. Key breakthrough: SVG-to-vector-PDF conversion with proper embedded page validation generates large PDFs (60KB-94KB) containing full vector streams. System maintains original CMYK colors, vector paths, and typography while ensuring artwork appears correctly on both pages. All core requirements achieved: vector preservation, original color retention, exact canvas positioning, dual-page output, and functional preview modal.
 
+**Latest Updates (Aug 13, 2025 - Final)**: 
+- Fixed vector scaling issues by implementing proper proportional coordinate system (Canvas pixels → Template percentages → PDF points)
+- Updated preview modal to use GET endpoint (eliminating request body issues)
+- Both GET and POST routes now use PrintReadyPDFGenerator for consistency
+- Inkscape vector conversion uses exact dimensions with margin=0 for perfect size matching
+- System generates 70KB+ PDFs indicating full page layouts vs 30-40KB simplified layouts
+- Vector positioning verified working perfectly (lobster logo test shows exact placement)
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 

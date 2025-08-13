@@ -663,12 +663,12 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the WORKING PDF generator
-      console.log('📦 Using WorkingPDFGenerator (tested and working)...');
-      const { WorkingPDFGenerator } = await import('./working-pdf-generator');
-      console.log('✅ WorkingPDFGenerator imported successfully');
-      const generator = new WorkingPDFGenerator();
-      console.log('📊 Working generator instance created');
+      // Import the PRINT-READY PDF generator - Complete page layout system
+      console.log('📄 Using PrintReadyPDFGenerator - Complete page layout system');
+      const { PrintReadyPDFGenerator } = await import('./print-ready-pdf-generator');
+      console.log('✅ PrintReadyPDFGenerator imported successfully');
+      const generator = new PrintReadyPDFGenerator();
+      console.log('📊 Print-ready generator: Full layout + Vector preservation');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';

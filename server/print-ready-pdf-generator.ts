@@ -315,8 +315,8 @@ export class PrintReadyPDFGenerator {
       fs.writeFileSync(tempSvgPath, svgContent);
       
       const tempPdfPath = 'temp_vector.pdf';
-      // Use exact dimensions to prevent clipping and maintain aspect ratio
-      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)}`;
+      // Use exact dimensions to ensure perfect size matching - override with explicit dimensions
+      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)} --export-margin=0`;
       execSync(command);
       
       // Load the generated PDF and copy its page
