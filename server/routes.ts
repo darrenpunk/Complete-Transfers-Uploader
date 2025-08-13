@@ -922,10 +922,20 @@ export async function registerRoutes(app: express.Application) {
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                   // Clean SVG content to remove stroke scaling issues
                   const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  let svgContent = fs.readFileSync(svgPath, 'utf8');
                   const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                  
+                  // Add CMYK marker to the SVG so color analysis knows this came from a CMYK PDF
+                  const markedSvg = cleanedSvg.replace(
+                    /<svg/,
+                    '<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
+                  ).replace(
+                    '<svg',
+                    '<!-- CMYK_PDF_CONVERTED -->\n<svg'
+                  );
+                  
+                  fs.writeFileSync(svgPath, markedSvg);
+                  console.log(`🧹 Cleaned SVG content and marked as CMYK for ${svgFilename}`);
                   
                   // Store original PDF info for later embedding
                   (file as any).originalPdfPath = pdfPath;

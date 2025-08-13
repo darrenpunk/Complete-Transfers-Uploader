@@ -342,8 +342,16 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     const colors: SVGColorInfo[] = [];
     let colorId = 0;
 
-    // PRESERVE ORIGINAL PDF CONTENT - NO COLOR CONVERSION
-    console.log('🎨 PDF COLOR PRESERVATION MODE: All colors will be preserved exactly as they appear in the original PDF');
+    // CHECK IF THIS SVG CAME FROM A CMYK PDF
+    const isCMYKVectorized = svgContent.includes('data-vectorized-cmyk="true"') || 
+                             svgContent.includes('data-original-cmyk-pdf="true"') ||
+                             svgContent.includes('<!-- CMYK_PDF_CONVERTED -->');
+    
+    if (isCMYKVectorized) {
+      console.log('🎨 CMYK PDF DETECTED: This SVG was converted from a CMYK PDF - all colors will be marked as CMYK');
+    } else {
+      console.log('🎨 COLOR PRESERVATION MODE: Colors will be preserved exactly as they appear in the file');
+    }
 
     // Function to convert RGB percentage to 0-255 values
     const convertRgbPercent = (rgbString: string): string => {
@@ -496,36 +504,59 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
         const g = parseInt(rgbMatch[2]);
         const b = parseInt(rgbMatch[3]);
         
-        // PRESERVE ORIGINAL PDF COLORS - NO CONVERSION
-        // Store RGB values exactly as they appear in the PDF without any conversion
-        console.log(`🎨 PRESERVED ORIGINAL: RGB(${r}, ${g}, ${b}) - no conversion applied`);
-        
-        return {
-          original: colorString,  // Keep the exact format from SVG
-          display: rgbColor,      // Standardized format for UI
-          cmyk: null,             // No CMYK conversion
-          isCMYK: false,          // RGB colors are RGB, not CMYK
-          rgb: { r, g, b }        // Store RGB values as they exist in PDF
-        };
+        // If this came from a CMYK PDF, mark it as CMYK and convert
+        if (isCMYKVectorized) {
+          console.log(`🎨 CMYK PDF COLOR: RGB(${r}, ${g}, ${b}) detected in CMYK-sourced SVG`);
+          const cmyk = adobeRgbToCmyk({ r, g, b });
+          return {
+            original: colorString,  // Keep the exact format from SVG
+            display: rgbColor,      // Standardized format for UI
+            cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`,  // Convert to CMYK
+            isCMYK: true,          // This is a CMYK color from a CMYK PDF
+            rgb: { r, g, b }       // Store RGB values for display
+          };
+        } else {
+          // Regular RGB file - preserve as RGB
+          console.log(`🎨 PRESERVED ORIGINAL: RGB(${r}, ${g}, ${b}) - RGB file, no conversion`);
+          return {
+            original: colorString,  // Keep the exact format from SVG
+            display: rgbColor,      // Standardized format for UI
+            cmyk: null,             // No CMYK conversion for RGB files
+            isCMYK: false,          // RGB colors are RGB, not CMYK
+            rgb: { r, g, b }        // Store RGB values as they exist
+          };
+        }
       }
       
-      // PRESERVE ORIGINAL PDF COLORS - NO CONVERSION FOR HEX
+      // Handle HEX colors - check if from CMYK PDF
       if (colorString.startsWith('#')) {
         const hex = colorString.substring(1);
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         
-        // Store original hex colors exactly as they appear in the PDF without any conversion
-        console.log(`🎨 PRESERVED ORIGINAL: HEX ${colorString} RGB(${r}, ${g}, ${b}) - no conversion applied`);
-        
-        return {
-          original: colorString,  // Keep the exact format from SVG
-          display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
-          cmyk: null,             // No CMYK conversion
-          isCMYK: false,          // Hex colors are RGB, not CMYK
-          rgb: { r, g, b }        // Store RGB values as they exist in PDF
-        };
+        // If this came from a CMYK PDF, mark it as CMYK and convert
+        if (isCMYKVectorized) {
+          console.log(`🎨 CMYK PDF COLOR: HEX ${colorString} detected in CMYK-sourced SVG`);
+          const cmyk = adobeRgbToCmyk({ r, g, b });
+          return {
+            original: colorString,  // Keep the exact format from SVG
+            display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
+            cmyk: `C:${cmyk.c} M:${cmyk.m} Y:${cmyk.y} K:${cmyk.k}`,  // Convert to CMYK
+            isCMYK: true,          // This is a CMYK color from a CMYK PDF
+            rgb: { r, g, b }       // Store RGB values for display
+          };
+        } else {
+          // Regular RGB/HEX file - preserve as RGB
+          console.log(`🎨 PRESERVED ORIGINAL: HEX ${colorString} - RGB file, no conversion`);
+          return {
+            original: colorString,  // Keep the exact format from SVG
+            display: `rgb(${r}, ${g}, ${b})`,  // Standardized format for UI
+            cmyk: null,             // No CMYK conversion for RGB files
+            isCMYK: false,          // Hex colors in RGB files stay RGB
+            rgb: { r, g, b }        // Store RGB values as they exist
+          };
+        }
       }
       
       return {
