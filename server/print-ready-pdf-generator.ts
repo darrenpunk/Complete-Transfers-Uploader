@@ -311,42 +311,40 @@ export class PrintReadyPDFGenerator {
     try {
       console.log('🎯 Creating vector PDF from SVG content');
       
-      // Create temporary files for SVG to PDF conversion
-      const tempSvgPath = 'temp_vector.svg';
+      // EXACT DEPLOYED VERSION IMPLEMENTATION: Use /tmp and canvas dimensions
+      const tempSvgPath = path.join('/tmp', `canvas_exact_${Date.now()}.svg`);
+      const tempPdfPath = path.join('/tmp', `canvas_exact_${Date.now()}.pdf`);
+      
+      // Write scaled SVG content
       fs.writeFileSync(tempSvgPath, svgContent);
       
-      const tempPdfPath = 'temp_vector.pdf';
-      // CRITICAL FIX: Force exact output size to match target dimensions
-      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)} --export-area-page --export-margin=0 --export-dpi=72`;
-      execSync(command);
+      // EXACT DEPLOYED VERSION COMMAND: Same as working generator
+      const inkscapeCmd = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${width} --export-height=${height}`;
+      execSync(inkscapeCmd, { stdio: 'pipe' });
       
-      // Load the generated PDF and copy its page
-      const pdfData = fs.readFileSync(tempPdfPath);
-      const sourcePdf = await PDFDocument.load(pdfData);
-      const [copiedPage] = await pdfDoc.copyPages(sourcePdf, [0]);
-      
-      // Embed the copied page to make it drawable
-      const embeddedPage = await pdfDoc.embedPage(copiedPage);
-      
-      console.log('🔍 Embedded page validation:', {
-        hasWidth: typeof embeddedPage.width === 'number',
-        hasHeight: typeof embeddedPage.height === 'number',
-        width: embeddedPage.width,
-        height: embeddedPage.height,
-        type: typeof embeddedPage
-      });
-      
-      // Clean up temp files
-      fs.unlinkSync(tempSvgPath);
-      fs.unlinkSync(tempPdfPath);
-      
-      console.log('✅ SVG converted to vector PDF page and embedded');
-      
-      // Verify the embedded page is valid before returning
-      if (embeddedPage && typeof embeddedPage.width === 'number' && typeof embeddedPage.height === 'number') {
+      // EXACT DEPLOYED VERSION: Same PDF loading and embedding process
+      if (fs.existsSync(tempPdfPath)) {
+        const pdfData = fs.readFileSync(tempPdfPath);
+        const sourcePdf = await PDFDocument.load(pdfData);
+        const [copiedPage] = await pdfDoc.copyPages(sourcePdf, [0]);
+        const embeddedPage = await pdfDoc.embedPage(copiedPage);
+        
+        console.log('🔍 Embedded page validation:', {
+          hasWidth: typeof embeddedPage.width === 'number',
+          hasHeight: typeof embeddedPage.height === 'number',
+          width: embeddedPage.width,
+          height: embeddedPage.height,
+          type: typeof embeddedPage
+        });
+        
+        // Clean up temp files
+        fs.unlinkSync(tempSvgPath);
+        fs.unlinkSync(tempPdfPath);
+        
+        console.log('✅ SVG converted to vector PDF page and embedded');
         return embeddedPage;
       } else {
-        console.error('❌ Invalid embedded page:', typeof embeddedPage);
+        console.error('❌ Temporary PDF file not created');
         return null;
       }
       
