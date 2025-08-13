@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { CMYKDetector } from './cmyk-detector';
+import { CMYKSVGProcessor } from './cmyk-svg-processor';
 
 const execAsync = promisify(exec);
 
@@ -355,20 +357,25 @@ export class OriginalWorkingGenerator {
         // For CMYK files, use direct Inkscape conversion with CMYK color space preservation
         console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
-        // Use Ghostscript for proper CMYK preservation instead of Inkscape
-        const psPath = path.join(process.cwd(), 'uploads', `temp_ps_${Date.now()}.ps`);
+        // Process SVG to replace RGB with device-cmyk colors for true preservation
+        const cmykProcessedSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
         
-        // First convert SVG to PostScript with Inkscape
-        const svgToPsCmd = `inkscape --export-type=ps --export-text-to-path --export-filename="${psPath}" "${finalSvgPath}"`;
-        await execAsync(svgToPsCmd);
+        // Use Inkscape with CMYK-specific settings for proper color preservation
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykProcessedSvgPath}"`;
+        await execAsync(inkscapeCmd);
         
-        // Then convert PostScript to PDF with CMYK preservation using Ghostscript
-        const psToPdfCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempPdfPath}" "${psPath}"`;
-        await execAsync(psToPdfCmd);
+        // Post-process with Ghostscript to ensure CMYK preservation
+        const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
+        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
+        await execAsync(gsCmd);
         
-        // Clean up PostScript file
-        if (fs.existsSync(psPath)) {
-          fs.unlinkSync(psPath);
+        // Replace original with CMYK-processed version
+        fs.copyFileSync(tempGsPath, tempPdfPath);
+        fs.unlinkSync(tempGsPath);
+        
+        // Clean up processed SVG
+        if (fs.existsSync(cmykProcessedSvgPath)) {
+          fs.unlinkSync(cmykProcessedSvgPath);
         }
         
         console.log(`🎨 SVG converted to PDF with Ghostscript CMYK preservation: ${tempPdfPath}`);
