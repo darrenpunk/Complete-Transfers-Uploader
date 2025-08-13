@@ -420,8 +420,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
               <div key={index} className="space-y-1">
                 <div className="text-xs text-gray-500 font-mono">
                   {isCMYK && color.cmykColor ? (
-                    // Show original CMYK values directly for CMYK colors
-                    color.cmykColor
+                    // Show pure CMYK values for CMYK colors
+                    <span className="text-blue-600 font-semibold">{color.cmykColor}</span>
                   ) : (
                     // Show RGB values for RGB colors
                     color.originalColor

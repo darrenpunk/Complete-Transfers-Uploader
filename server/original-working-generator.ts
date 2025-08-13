@@ -5,6 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { CMYKDetector } from './cmyk-detector';
 import { CMYKSVGProcessor } from './cmyk-svg-processor';
+import { NativeCMYKGenerator } from './native-cmyk-generator';
 
 const execAsync = promisify(exec);
 
@@ -352,33 +353,47 @@ export class OriginalWorkingGenerator {
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.pdf`);
       
       if (hasCMYKColors) {
-        console.log(`🎨 Using Enhanced CMYK Generator for proper CMYK preservation`);
+        console.log(`🎨 Using Native CMYK Generator for true CMYK preservation`);
         
-        // For CMYK files, use direct Inkscape conversion with CMYK color space preservation
+        // For CMYK files, use native CMYK PostScript generation
         console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
-        // Process SVG to replace RGB with device-cmyk colors for true preservation
-        const cmykProcessedSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
-        
-        // Use Inkscape with CMYK-specific settings for proper color preservation
-        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykProcessedSvgPath}"`;
-        await execAsync(inkscapeCmd);
-        
-        // Post-process with Ghostscript to ensure CMYK preservation
-        const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
-        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
-        await execAsync(gsCmd);
-        
-        // Replace original with CMYK-processed version
-        fs.copyFileSync(tempGsPath, tempPdfPath);
-        fs.unlinkSync(tempGsPath);
-        
-        // Clean up processed SVG
-        if (fs.existsSync(cmykProcessedSvgPath)) {
-          fs.unlinkSync(cmykProcessedSvgPath);
+        try {
+          // Generate true CMYK PDF using PostScript with native CMYK commands
+          await NativeCMYKGenerator.generateCMYKPDF(
+            finalSvgPath, 
+            svgColors, 
+            tempPdfPath, 
+            size.width, 
+            size.height
+          );
+          
+          console.log(`🎨 Native CMYK PDF generated successfully: ${tempPdfPath}`);
+          
+        } catch (nativeError) {
+          console.warn(`⚠️ Native CMYK generation failed, falling back to enhanced method:`, nativeError);
+          
+          // Fallback to enhanced CMYK processing
+          const cmykProcessedSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
+          
+          // Use Inkscape with CMYK-specific settings
+          const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykProcessedSvgPath}"`;
+          await execAsync(inkscapeCmd);
+          
+          // Post-process with Ghostscript
+          const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
+          const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
+          await execAsync(gsCmd);
+          
+          fs.copyFileSync(tempGsPath, tempPdfPath);
+          fs.unlinkSync(tempGsPath);
+          
+          if (fs.existsSync(cmykProcessedSvgPath)) {
+            fs.unlinkSync(cmykProcessedSvgPath);
+          }
+          
+          console.log(`🎨 Fallback CMYK processing completed: ${tempPdfPath}`);
         }
-        
-        console.log(`🎨 SVG converted to PDF with Ghostscript CMYK preservation: ${tempPdfPath}`);
       } else {
         // Use standard Inkscape conversion for RGB/non-CMYK content
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
