@@ -45,7 +45,7 @@ app.post('/api/projects/:projectId/logos', upload.array('files'), (req, res) => 
   const uploadedLogos = [];
   const createdElements = [];
 
-  req.files.forEach((file, index) => {
+  (req.files as Express.Multer.File[]).forEach((file, index) => {
     const logo = {
       id: (Date.now() + index).toString(),
       filename: file.filename,
