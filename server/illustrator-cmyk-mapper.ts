@@ -28,8 +28,11 @@ export class IllustratorCMYKMapper {
 
     // Row 2 - Actual SVG colors mapped to exact CMYK values from screenshot  
     { rgb: "rgb(97.201538%, 85.482788%, 36.306763%)", cmyk: "C:50 M:27 Y:40 K:70", description: "Gold/Yellow from SVG" },
+    { rgb: "rgb(248, 218, 93)", cmyk: "C:50 M:27 Y:40 K:70", description: "Gold/Yellow converted" },
     { rgb: "rgb(1.789856%, 1.435852%, 2.896118%)", cmyk: "C:40 M:70 Y:100 K:5", description: "Dark/Black from SVG" },
+    { rgb: "rgb(5, 4, 7)", cmyk: "C:40 M:70 Y:100 K:5", description: "Dark/Black converted" },
     { rgb: "rgb(20.960999%, 55.158997%, 17.533875%)", cmyk: "C:40 M:65 Y:90 K:35", description: "Green from SVG" },
+    { rgb: "rgb(53, 141, 45)", cmyk: "C:40 M:65 Y:90 K:35", description: "Green converted" },
     { rgb: "rgb(34.51%, 29.02%, 15.29%)", cmyk: "C:35 M:60 Y:80 K:25", description: "Dark Olive" },
     { rgb: "rgb(42.35%, 27.84%, 17.65%)", cmyk: "C:25 M:40 Y:65 K:40", description: "Medium Brown" },
     { rgb: "rgb(34.51%, 27.84%, 19.61%)", cmyk: "C:65 M:60 Y:45 K:40", description: "Dark Brown" },
@@ -108,9 +111,12 @@ export class IllustratorCMYKMapper {
    */
   static processSVGColors(colors: any[]): any[] {
     return colors.map((color, index) => {
+      console.log(`🎯 Processing color ${index}: originalFormat="${color.originalFormat}", originalColor="${color.originalColor}"`);
+      
       const exactCMYK = this.getCMYKFromRGB(color.originalFormat || color.originalColor);
       
       if (exactCMYK) {
+        console.log(`✅ EXACT MATCH FOUND: ${color.originalFormat} → ${exactCMYK}`);
         return {
           ...color,
           cmykColor: exactCMYK,
@@ -119,6 +125,7 @@ export class IllustratorCMYKMapper {
         };
       }
       
+      console.log(`⚠️ No exact mapping found for: ${color.originalFormat || color.originalColor}`);
       // Keep original if no exact match found
       return color;
     });
