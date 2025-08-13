@@ -1,131 +1,90 @@
-import { useState } from 'react'
-import { WorkflowStep } from '../../shared/schema'
+import React, { useState } from 'react';
 
-// Import components
-import { WorkflowSteps } from './components/WorkflowSteps'
-import { Sidebar } from './components/Sidebar'
-import { ProductSelection } from './components/ProductSelection'
-import { GarmentColorSelection } from './components/GarmentColorSelection'
-import { CanvasEditor } from './components/CanvasEditor'
+function App() {
+  const [project, setProject] = useState(null);
+  const [status, setStatus] = useState('');
 
-const WORKFLOW_STEPS: WorkflowStep[] = [
-  { id: 1, name: 'Upload Logo', description: 'Upload your logo file', completed: false },
-  { id: 2, name: 'Template Size', description: 'Select template dimensions', completed: false },
-  { id: 3, name: 'Garment Color', description: 'Choose garment colors', completed: false },
-  { id: 4, name: 'Canvas/PDF', description: 'Position and edit artwork', completed: false },
-  { id: 5, name: 'Artwork', description: 'Generate final artwork', completed: false }
-]
-
-type AppState = 'product-selection' | 'template-selection' | 'color-selection' | 'canvas-editor'
-
-export default function App() {
-  const [appState, setAppState] = useState<AppState>('product-selection')
-  const [currentStep, setCurrentStep] = useState(0)
-  const [workflowSteps, setWorkflowSteps] = useState(WORKFLOW_STEPS)
-  
-  // Project state
-  const [selectedProduct, setSelectedProduct] = useState<string>('')
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('A3')
-  const [selectedGarmentColor, setSelectedGarmentColor] = useState<string>('')
-
-  const handleProductSelected = (productId: string) => {
-    setSelectedProduct(productId)
-    setAppState('template-selection')
-    setCurrentStep(1)
-    updateWorkflowStep(0, true)
-  }
-
-  const handleColorSelected = (colorId: string) => {
-    setSelectedGarmentColor(colorId)
-    setAppState('canvas-editor')
-    setCurrentStep(2)
-    updateWorkflowStep(1, true)
-  }
-
-  const handleStepClick = (step: number) => {
-    setCurrentStep(step)
-    // Navigate to appropriate state based on step
-    switch (step) {
-      case 0:
-        setAppState('product-selection')
-        break
-      case 1:
-        setAppState('template-selection')
-        break
-      case 2:
-        setAppState('color-selection')
-        break
-      case 3:
-      case 4:
-        setAppState('canvas-editor')
-        break
+  const createProject = async () => {
+    try {
+      setStatus('Creating fresh project...');
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Fresh UI Test',
+          templateSize: 'A3',
+          garmentColor: '#FF0000'
+        })
+      });
+      const data = await response.json();
+      setProject(data);
+      setStatus(`Project created: ${data.id}`);
+    } catch (error) {
+      setStatus(`Error: ${error.message}`);
     }
-  }
+  };
 
-  const updateWorkflowStep = (stepIndex: number, completed: boolean) => {
-    setWorkflowSteps(prev => prev.map((step, index) => 
-      index === stepIndex ? { ...step, completed } : step
-    ))
-  }
+  const generatePDF = async () => {
+    if (!project) return;
+    
+    try {
+      setStatus('Generating PDF with fresh deployed replica...');
+      const response = await fetch(`/api/projects/${project.id}/generate-pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ garmentColor: '#FF0000' })
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        setStatus(`PDF generated: ${blob.size} bytes (${Math.round(blob.size/1024)}KB)`);
+        
+        // Download the PDF
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fresh-deployed-test.pdf';
+        a.click();
+      } else {
+        setStatus(`PDF generation failed: ${response.status}`);
+      }
+    } catch (error) {
+      setStatus(`Error: ${error.message}`);
+    }
+  };
 
-  const handlePDFGenerate = () => {
-    // Handle PDF generation
-    console.log('Generating PDF...', {
-      product: selectedProduct,
-      template: selectedTemplate,
-      color: selectedGarmentColor
-    })
-    updateWorkflowStep(4, true)
-  }
-
-  // Show product selection modal
-  if (appState === 'product-selection') {
-    return <ProductSelection onProductSelected={handleProductSelected} />
-  }
-
-  // Show template selection with color selection
-  if (appState === 'template-selection') {
-    return <GarmentColorSelection onColorSelected={handleColorSelected} />
-  }
-
-  // Show color selection
-  if (appState === 'color-selection') {
-    return <GarmentColorSelection onColorSelected={handleColorSelected} />
-  }
-
-  // Main application layout with sidebar and canvas
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      backgroundColor: '#111827',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      {/* Sidebar */}
-      <Sidebar 
-        currentStep={currentStep} 
-        onStepClick={handleStepClick} 
-      />
-
-      {/* Main Content Area */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Workflow Steps Header */}
-        <WorkflowSteps 
-          steps={workflowSteps} 
-          currentStep={currentStep} 
-        />
-
-        {/* Canvas Editor */}
-        <CanvasEditor
-          templateSize={selectedTemplate}
-          garmentColor={selectedGarmentColor}
-          onPDFGenerate={handlePDFGenerate}
-        />
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1>Fresh Deployed Replica - Artwork Uploader</h1>
+      <p>This is a completely fresh implementation based on the exact deployed version.</p>
+      
+      <div style={{ marginBottom: '20px' }}>
+        <button onClick={createProject} style={{ marginRight: '10px', padding: '10px 20px' }}>
+          Create Fresh Project
+        </button>
+        
+        {project && (
+          <button onClick={generatePDF} style={{ padding: '10px 20px' }}>
+            Generate PDF (Fresh Deployed Method)
+          </button>
+        )}
       </div>
+      
+      <div style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px' }}>
+        <strong>Status:</strong> {status}
+      </div>
+      
+      {project && (
+        <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc' }}>
+          <h3>Project Details:</h3>
+          <p>ID: {project.id}</p>
+          <p>Name: {project.name}</p>
+          <p>Template: {project.templateSize}</p>
+          <p>Garment Color: {project.garmentColor}</p>
+        </div>
+      )}
     </div>
-  )
+  );
 }
+
+export default App;
