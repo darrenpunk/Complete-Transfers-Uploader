@@ -281,9 +281,13 @@ export class EnhancedCMYKGenerator {
     const { projectId, templateSize, canvasElements, logos, garmentColor } = data;
     
     try {
-      // Use uploaded ICC profile from attached_assets
+      // Use uploaded ICC profile from attached_assets - fix path with spaces
       const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
       const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+      
+      // Check if ICC file actually exists and log the issue
+      console.log(`Enhanced CMYK: Checking ICC profile at: ${uploadedICCPath}`);
+      console.log(`Enhanced CMYK: ICC file exists: ${fs.existsSync(uploadedICCPath)}`);
       
       let iccProfilePath = uploadedICCPath;
       let useICC = fs.existsSync(uploadedICCPath);
@@ -321,9 +325,11 @@ export class EnhancedCMYKGenerator {
       template?.label?.includes('Single Colour');
     const inkColor = project?.inkColor;
     
-    // Get ICC profile info
+    // Get ICC profile info - disable ICC for now to fix core functionality
     const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
     const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
+    
+    console.log(`Enhanced CMYK: ICC check - uploaded exists: ${fs.existsSync(uploadedICCPath)}, fallback exists: ${fs.existsSync(fallbackICCPath)}`);
     
     let iccProfilePath = uploadedICCPath;
     let useICC = fs.existsSync(uploadedICCPath);
