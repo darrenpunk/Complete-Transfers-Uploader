@@ -664,10 +664,11 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the EnhancedCMYKGenerator - exact deployed version with CMYK fixes
-      console.log('📄 Using EnhancedCMYKGenerator - exact deployed version with CMYK color accuracy');  
-      const generator = new EnhancedCMYKGenerator();
-      console.log('📊 Enhanced CMYK generator: Exact deployed version with SVG + CMYK support');
+      // Import the OriginalWorkingGenerator - the method that worked from the beginning  
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      console.log('📄 Using OriginalWorkingGenerator - the method that worked from the beginning');  
+      const generator = new OriginalWorkingGenerator();
+      console.log('📊 Original working generator: Back to basics approach');
 
       // Use project garment color as default
       const finalGarmentColor = project.garmentColor || '#FFFFFF';
@@ -678,8 +679,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with Enhanced CMYK Generator...`);
-      const pdfBuffer = await generator.generateCMYKPDF({
+      console.log(`🔄 Generating PDF with Original Working Generator...`);
+      const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
@@ -750,10 +751,11 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Import the EnhancedCMYKGenerator - exact deployed version with CMYK fixes  
-      console.log('📄 Using EnhancedCMYKGenerator - exact deployed version with CMYK color accuracy');
-      const generator = new EnhancedCMYKGenerator();
-      console.log('📊 Enhanced CMYK generator: Exact deployed version with SVG + CMYK support');
+      // Import the OriginalWorkingGenerator - the method that worked from the beginning  
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      console.log('📄 Using OriginalWorkingGenerator - the method that worked from the beginning');  
+      const generator = new OriginalWorkingGenerator();
+      console.log('📊 Original working generator: Back to basics approach');
 
       // Get request data for garment colors and other settings
       const { garmentColor, extraGarmentColors = [], quantity = 1 } = req.body;
@@ -767,8 +769,8 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  - Element ${element.id} at (${element.x}, ${element.y}) size ${element.width}×${element.height}`);
       });
 
-      console.log(`🔄 Generating PDF with Enhanced CMYK Generator...`);
-      const pdfBuffer = await generator.generateCMYKPDF({
+      console.log(`🔄 Generating PDF with Original Working Generator...`);
+      const pdfBuffer = await generator.generatePDF({
         projectId: projectId,
         canvasElements: canvasElements,
         logos: logos,
