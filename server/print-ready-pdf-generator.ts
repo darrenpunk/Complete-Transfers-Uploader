@@ -268,13 +268,9 @@ export class PrintReadyPDFGenerator {
   private scaleSVGContent(svgContent: string, targetWidth: number, targetHeight: number): string {
     console.log(`🎯 Scaling SVG to ${targetWidth}x${targetHeight} while preserving vectors`);
     
-    // Update viewBox and dimensions to match canvas size
+    // CRITICAL FIX: Don't change viewBox - let the original content bounds be preserved
+    // Only update the outer dimensions to match canvas size
     let scaledSvg = svgContent.replace(
-      /viewBox="[^"]*"/,
-      `viewBox="0 0 ${targetWidth} ${targetHeight}"`
-    );
-    
-    scaledSvg = scaledSvg.replace(
       /width="[^"]*"/,
       `width="${targetWidth}"`
     );
@@ -283,6 +279,8 @@ export class PrintReadyPDFGenerator {
       /height="[^"]*"/,
       `height="${targetHeight}"`
     );
+    
+    console.log(`🔧 SVG scaled: preserved original viewBox, set dimensions to ${targetWidth}x${targetHeight}`);
     
     return scaledSvg;
   }
@@ -296,7 +294,8 @@ export class PrintReadyPDFGenerator {
       fs.writeFileSync(tempSvgPath, svgContent);
       
       const tempPdfPath = 'temp_vector.pdf';
-      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf`;
+      // Use exact dimensions to prevent clipping and maintain aspect ratio
+      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)}`;
       execSync(command);
       
       // Load the generated PDF and copy its page
