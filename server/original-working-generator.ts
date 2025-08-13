@@ -352,27 +352,14 @@ export class OriginalWorkingGenerator {
       if (hasCMYKColors) {
         console.log(`🎨 Using Enhanced CMYK Generator for proper CMYK preservation`);
         
-        // Import and use the Enhanced CMYK Generator
-        const { prepareSVGForCMYKConversion } = await import('./preserve-cmyk-values');
+        // For CMYK files, use direct Inkscape conversion with CMYK color space preservation
+        console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
-        // Read and process the SVG content for CMYK preservation
-        const svgContent = fs.readFileSync(finalSvgPath, 'utf8');
-        const cmykPreservedSvg = await prepareSVGForCMYKConversion(svgContent, svgColors?.colors || []);
-        
-        // Save the CMYK-preserved SVG to a temporary file
-        const cmykSvgPath = path.join(process.cwd(), 'uploads', `temp_cmyk_svg_${Date.now()}.svg`);
-        fs.writeFileSync(cmykSvgPath, cmykPreservedSvg);
-        
-        // Convert CMYK-preserved SVG to PDF using Inkscape with CMYK color profile
-        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykSvgPath}"`;
+        // Convert SVG to PDF with CMYK color space preservation using Inkscape
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
         await execAsync(inkscapeCmd);
         
-        console.log(`🎨 SVG converted to PDF with Enhanced CMYK preservation: ${tempPdfPath}`);
-        
-        // Clean up CMYK SVG file
-        if (fs.existsSync(cmykSvgPath)) {
-          fs.unlinkSync(cmykSvgPath);
-        }
+        console.log(`🎨 SVG converted to PDF with CMYK preservation: ${tempPdfPath}`);
       } else {
         // Use standard Inkscape conversion for RGB/non-CMYK content
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
