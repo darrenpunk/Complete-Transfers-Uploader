@@ -6,12 +6,13 @@ This is a comprehensive Odoo 16 module that brings the full Artwork Uploader & G
 ## Recent Critical Fix (Aug 13, 2025)
 **OLD SYSTEM REMOVED (Aug 13, 2025)**: User demanded removal of old broken system on port 5000. Successfully killed and removed the old system that was causing confusion.
 
-**CARBON COPY SYSTEM ACTIVE**: Now running the exact carbon copy of the deployed working version on port 6000. This is the confirmed working implementation from August 1, 2025 that user confirmed with "cmyk out is perfect now!" - completely isolated from any broken components.
+**DEPLOYED FRESH SYSTEM ACTIVE**: Now running the exact deployed fresh project copy. This is the clean, deployed version implementation - completely isolated from any broken components.
 
 **WORKING SYSTEM DETAILS**: 
-- Port: 6000 (http://localhost:6000)
-- Exact DeployedWorkingGenerator implementation
-- User-confirmed working CMYK output
+- Backend Port: 3001 (http://localhost:3001)
+- Frontend Port: 3002 (http://localhost:3002) 
+- Exact DeployedPDFGenerator implementation
+- Clean deployed architecture
 - Completely bypasses broken main system
 - Production-tested code only
 
