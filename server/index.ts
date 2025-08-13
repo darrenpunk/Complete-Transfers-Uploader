@@ -1,119 +1,100 @@
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import { DeployedPDFGenerator } from './deployed-pdf-generator';
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes";
+import { setupVite, serveStatic, log } from "./vite";
+import dotenv from "dotenv";
+import fs from "fs";
+
+// Load environment variables
+dotenv.config();
+
+// Debug: Log the loaded environment variables
+console.log("Loaded VECTORIZER_API_ID:", process.env.VECTORIZER_API_ID ? "exists" : "not found");
+console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ? "exists" : "not found");
 
 const app = express();
-const PORT = 3001; // Different port to avoid conflicts
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-// File upload setup
-const upload = multer({ dest: 'uploads/' });
-
-// Simple in-memory storage for this fresh replica
-const projects = new Map();
-const logos = new Map();
-
-// Create project
-app.post('/api/projects', (req, res) => {
-  const id = Date.now().toString();
-  const project = {
-    id,
-    name: req.body.name || 'Untitled',
-    templateSize: req.body.templateSize || 'A3',
-    garmentColor: req.body.garmentColor || '#FFFFFF',
-    elements: []
-  };
-  projects.set(id, project);
-  console.log(`✅ FRESH: Project created: ${id}`);
-  res.json(project);
-});
-
-// Upload logo (supports multiple files like deployed version)
-app.post('/api/projects/:projectId/logos', upload.array('files'), (req, res) => {
-  const projectId = req.params.projectId;
-  const project = projects.get(projectId);
-  
-  if (!project || !req.files || req.files.length === 0) {
-    return res.status(400).json({ error: 'Invalid project or no files' });
+// Configure proper MIME types for uploads directory
+app.use('/uploads', express.static('./uploads', {
+  setHeaders: (res, path) => {
+    // Set proper MIME type for SVG files even without extension
+    if (path.endsWith('.svg') || res.req?.url?.includes('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
+    } else {
+      // Try to detect SVG content by reading file
+      try {
+        const content = fs.readFileSync(path, 'utf8');
+        if (content.includes('<svg') || content.includes('<?xml')) {
+          res.setHeader('Content-Type', 'image/svg+xml');
+        }
+      } catch (e) {
+        // If file read fails, continue with default
+      }
+    }
   }
+}));
 
-  const uploadedLogos: any[] = [];
-  const createdElements: any[] = [];
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+  let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
-  (req.files as Express.Multer.File[]).forEach((file, index) => {
-    const logo = {
-      id: (Date.now() + index).toString(),
-      filename: file.filename,
-      originalName: file.originalname,
-      path: file.path,
-      mimetype: file.mimetype
-    };
+  const originalResJson = res.json;
+  res.json = function (bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
+  };
 
-    logos.set(logo.id, logo);
-    
-    // Add canvas element for this logo (like deployed version positioning)
-    const element = {
-      id: `element-${Date.now() + index}`,
-      logoId: logo.id,
-      x: 100 + (index * 20), // Offset multiple logos
-      y: 100 + (index * 20),
-      width: 250, // Larger default size like deployed version
-      height: 200
-    };
-    
-    project.elements.push(element);
-    uploadedLogos.push(logo);
-    createdElements.push(element);
-    
-    console.log(`✅ FRESH: Logo uploaded: ${logo.originalName} (${logo.mimetype})`);
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
+
+      log(logLine);
+    }
   });
 
-  res.json({ logos: uploadedLogos, elements: createdElements });
+  next();
 });
 
-// Generate PDF - EXACT DEPLOYED VERSION
-app.post('/api/projects/:projectId/generate-pdf', async (req, res) => {
-  try {
-    console.log(`🚀 FRESH: Generating PDF for project: ${req.params.projectId}`);
-    
-    const project = projects.get(req.params.projectId);
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
+(async () => {
+  const server = await registerRoutes(app);
 
-    const generator = new DeployedPDFGenerator();
-    
-    // Prepare data exactly like deployed version
-    const pdfData = {
-      projectId: project.id,
-      templateSize: { name: 'A3', width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191 },
-      canvasElements: project.elements,
-      logos: project.elements.map(el => logos.get(el.logoId)).filter(Boolean),
-      garmentColor: req.body.garmentColor || project.garmentColor
-    };
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
 
-    console.log(`📊 FRESH: Elements: ${pdfData.canvasElements.length}, Logos: ${pdfData.logos.length}`);
-    
-    const pdfBuffer = await generator.generateExactDeployedPDF(pdfData);
-    
-    console.log(`✅ FRESH: PDF generated - Size: ${pdfBuffer.length} bytes (${Math.round(pdfBuffer.length/1024)}KB)`);
-    
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="deployed-test.pdf"');
-    res.send(pdfBuffer);
-    
-  } catch (error) {
-    console.error('❌ FRESH: PDF generation failed:', error);
-    res.status(500).json({ error: error.message });
+    res.status(status).json({ message });
+    throw err;
+  });
+
+  // importantly only setup vite in development and after
+  // setting up all the other routes so the catch-all route
+  // doesn't interfere with the other routes
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
   }
-});
 
-app.listen(PORT, () => {
-  console.log(`🚀 FRESH DEPLOYED REPLICA running on port ${PORT}`);
-  console.log(`🎯 This is the exact deployed version implementation`);
-});
+  // ALWAYS serve the app on the port specified in the environment variable PORT
+  // Other ports are firewalled. Default to 5000 if not specified.
+  // this serves both the API and the client.
+  // It is the only port that is not firewalled.
+  const port = parseInt(process.env.PORT || '5000', 10);
+  server.listen({
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  }, () => {
+    log(`serving on port ${port}`);
+  });
+})();
