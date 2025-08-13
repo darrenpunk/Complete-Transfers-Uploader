@@ -1861,7 +1861,7 @@ export async function registerRoutes(app: express.Application) {
       }
       
       // Get the logo
-      const logo = await storage.getLogo(element.logoId);
+      const logo = await storage.getLogo(element.logoId || '');
       if (!logo) {
         return res.status(404).json({ error: 'Logo not found' });
       }
@@ -2063,7 +2063,7 @@ export async function registerRoutes(app: express.Application) {
           const b = Math.round(bPercent * 2.55);
           
           // Apply Adobe CMYK conversion
-          const cmyk = adobeRgbToCmyk(r, g, b);
+          const cmyk = adobeRgbToCmyk({ r, g, b });
           
           // Convert CMYK back to RGB for display
           const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
@@ -2089,7 +2089,7 @@ export async function registerRoutes(app: express.Application) {
       
       // Handle regular RGB values
       svgContent = svgContent.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
-        const cmyk = adobeRgbToCmyk(parseInt(r), parseInt(g), parseInt(b));
+        const cmyk = adobeRgbToCmyk({ r: parseInt(r), g: parseInt(g), b: parseInt(b) });
         // Convert CMYK back to RGB for display
         const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
         const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
@@ -2102,7 +2102,7 @@ export async function registerRoutes(app: express.Application) {
         const r = parseInt(hex.substr(0, 2), 16);
         const g = parseInt(hex.substr(2, 2), 16);
         const b = parseInt(hex.substr(4, 2), 16);
-        const cmyk = adobeRgbToCmyk(r, g, b);
+        const cmyk = adobeRgbToCmyk({ r, g, b });
         // Convert CMYK back to RGB for display
         const rNew = Math.round(255 * (1 - cmyk.c / 100) * (1 - cmyk.k / 100));
         const gNew = Math.round(255 * (1 - cmyk.m / 100) * (1 - cmyk.k / 100));
@@ -2142,7 +2142,7 @@ export async function registerRoutes(app: express.Application) {
       const matches = svgContent.match(hexColorRegex);
       
       if (matches) {
-        const uniqueColors = [...new Set(matches)];
+        const uniqueColors = Array.from(new Set(matches));
         console.log(`🎨 Converting ${uniqueColors.length} unique RGB colors to CMYK format`);
         
         // Add CMYK marker to indicate this is a CMYK vectorized file
@@ -2604,7 +2604,7 @@ export async function registerRoutes(app: express.Application) {
       const contentType = response.headers.get('content-type') || '';
       console.log('🔍 Response content-type:', contentType);
       
-      let result;
+      let result: any;
       if (contentType.includes('image/svg') || contentType.includes('text/') || contentType.includes('application/xml')) {
         result = await response.text(); // SVG content
         console.log('📊 SVG Response size:', result.length, 'bytes');
@@ -2709,7 +2709,7 @@ export async function registerRoutes(app: express.Application) {
       let smallElementCount = 0;
       dotPatterns.forEach(pattern => {
         const matches = result.match(pattern) || [];
-        matches.forEach(match => {
+        matches.forEach((match: any) => {
           // Check if it's a small element
           if (match.includes('circle') || match.includes('ellipse')) {
             const radiusMatch = match.match(/r[xy]?=["']([0-9.]+)["']/);
@@ -2815,10 +2815,10 @@ export async function registerRoutes(app: express.Application) {
           if (pathData.includes('Z') || pathData.includes('z')) {
             const coords = pathData.match(/[\d.]+/g) || [];
             if (coords.length >= 4) {
-              const x1 = parseFloat(coords[0]);
-              const y1 = parseFloat(coords[1]);
-              const x2 = parseFloat(coords[2]);
-              const y2 = parseFloat(coords[3]);
+              const x1 = parseFloat(coords[0] || '0');
+              const y1 = parseFloat(coords[1] || '0');
+              const x2 = parseFloat(coords[2] || '0');
+              const y2 = parseFloat(coords[3] || '0');
               const approxWidth = Math.abs(x2 - x1);
               const approxHeight = Math.abs(y2 - y1);
               

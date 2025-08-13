@@ -103,7 +103,7 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
             zIndex: originalElement.zIndex + 1, // Ensure new elements are above original
             isVisible: originalElement.isVisible,
             isLocked: originalElement.isLocked,
-            colorOverrides: originalElement.colorOverrides,
+            colorOverrides: originalElement.colorOverrides as any,
             garmentColor: originalElement.garmentColor || null
           });
           
