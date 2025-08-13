@@ -70,6 +70,71 @@ export class CMYKDetector {
         console.log('CMYK Detector: Could not read PDF content');
       }
 
+      // Method 4: Advanced CMYK detection using pdfimages and identify
+      try {
+        // Extract images and check their color space
+        const tempDir = pdfPath.replace('.pdf', '_temp');
+        await execAsync(`mkdir -p "${tempDir}"`);
+        
+        // Extract images from PDF
+        await execAsync(`pdfimages "${pdfPath}" "${tempDir}/img" 2>/dev/null || true`);
+        
+        // Check if any extracted images have CMYK color space
+        const { stdout: lsOutput } = await execAsync(`ls "${tempDir}"/ 2>/dev/null || echo ""`);
+        const imageFiles = lsOutput.split('\n').filter(f => f.trim() !== '');
+        
+        for (const imageFile of imageFiles) {
+          try {
+            const imagePath = `${tempDir}/${imageFile}`;
+            const { stdout: identifyOutput } = await execAsync(`identify -verbose "${imagePath}" 2>/dev/null || true`);
+            
+            if (identifyOutput.toLowerCase().includes('cmyk') || 
+                identifyOutput.toLowerCase().includes('colorspace: cmyk') ||
+                identifyOutput.toLowerCase().includes('channels: cmyk')) {
+              console.log(`CMYK Detector: Found CMYK image in PDF: ${imageFile}`);
+              await execAsync(`rm -rf "${tempDir}" 2>/dev/null || true`);
+              return true;
+            }
+          } catch (e) {
+            // Continue checking other images
+          }
+        }
+        
+        // Clean up
+        await execAsync(`rm -rf "${tempDir}" 2>/dev/null || true`);
+      } catch (error) {
+        console.log('CMYK Detector: Advanced image detection failed');
+      }
+
+      // Method 5: Check for CMYK-specific operators in PDF streams
+      try {
+        const pdfBuffer = fs.readFileSync(pdfPath);
+        const pdfContent = pdfBuffer.toString('latin1'); // Use latin1 to preserve binary data
+        
+        // Look for CMYK color operators
+        const cmykOperators = [
+          'K ', // CMYK color operator (setcmykcolor)
+          'k ', // CMYK color operator (lowercase)
+          'SC ', // setcolor with CMYK
+          'sc ', // setcolor with CMYK (lowercase)
+          '\\bCMYK\\b', // CMYK keyword
+          'DeviceCMYK', // DeviceCMYK color space
+          '/ColorSpace\\s*/DeviceCMYK', // ColorSpace DeviceCMYK
+          'separation', // Separation color space (often CMYK-based)
+          'Separation' // Separation color space
+        ];
+        
+        for (const operator of cmykOperators) {
+          const regex = new RegExp(operator, 'gi');
+          if (regex.test(pdfContent)) {
+            console.log(`CMYK Detector: Found CMYK operator "${operator}" in PDF streams`);
+            return true;
+          }
+        }
+      } catch (error) {
+        console.log('CMYK Detector: Could not analyze PDF streams');
+      }
+
       console.log('CMYK Detector: No CMYK colors detected in PDF');
       return false;
       
