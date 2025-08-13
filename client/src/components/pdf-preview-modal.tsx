@@ -40,12 +40,17 @@ export default function PDFPreviewModal({
           // Add cache-busting to force fresh PDF generation
           const cacheBuster = Date.now();
           const response = await fetch(`/api/projects/${project.id}/generate-pdf?cb=${cacheBuster}`, {
-            method: 'GET',
+            method: 'POST',
             headers: {
+              'Content-Type': 'application/json',
               'Cache-Control': 'no-cache',
               'Pragma': 'no-cache'
-            }
-
+            },
+            body: JSON.stringify({
+              garmentColor: project.garmentColor || '#FFFFFF',
+              extraGarmentColors: [],
+              quantity: 1
+            })
           });
           
           if (response.ok) {

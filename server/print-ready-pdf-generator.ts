@@ -173,13 +173,14 @@ export class PrintReadyPDFGenerator {
           if (embeddedImage.width !== undefined && embeddedImage.height !== undefined) {
             // For embedded PDF pages (vectors preserved)
             console.log('🎯 Drawing vector PDF page');
+            // FORCE EXACT TARGET SIZE - ignore embedded page dimensions
             page.drawPage(embeddedImage, {
               x: pdfX,
               y: pdfY,
               width: targetWidthPoints,
               height: targetHeightPoints
             });
-            console.log(`✅ Vector artwork drawn at (${pdfX}, ${pdfY}) size ${targetWidthPoints}x${targetHeightPoints}`);
+            console.log(`✅ Vector artwork FORCED to exact size: (${pdfX}, ${pdfY}) ${targetWidthPoints}x${targetHeightPoints} (embedded was ${embeddedImage.width}x${embeddedImage.height})`);
           } else {
             // For raster images (PNG/JPG fallback)
             console.log('🎯 Drawing raster image fallback');
@@ -315,8 +316,8 @@ export class PrintReadyPDFGenerator {
       fs.writeFileSync(tempSvgPath, svgContent);
       
       const tempPdfPath = 'temp_vector.pdf';
-      // Use exact dimensions to ensure perfect size matching - override with explicit dimensions
-      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)} --export-margin=0`;
+      // CRITICAL FIX: Force exact output size to match target dimensions
+      const command = `inkscape "${tempSvgPath}" --export-filename="${tempPdfPath}" --export-type=pdf --export-width=${Math.round(width)} --export-height=${Math.round(height)} --export-area-page --export-margin=0 --export-dpi=72`;
       execSync(command);
       
       // Load the generated PDF and copy its page
