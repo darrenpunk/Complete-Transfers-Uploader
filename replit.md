@@ -6,6 +6,8 @@ This is a comprehensive Odoo 16 module that brings the full Artwork Uploader & G
 ## Recent Critical Fix (Aug 13, 2025)
 **DEPLOYED WORKING GENERATOR CREATED**: User requested exact replication of deployed version. Created new DeployedWorkingGenerator class as exact replica of the working deployed version. System now uses the identical implementation that was confirmed working in production. This fresh implementation bypasses all experimental generators and returns to the proven methodology that generated large PDFs with proper graphics embedding.
 
+**CARBON COPY CREATED (Aug 13, 2025)**: User insisted on exact carbon copy of deployed version, not fixes. Created carbon-copy-deployed/ folder with exact DeployedWorkingGenerator implementation running on port 6000. This completely bypasses the broken main system and uses only the confirmed working code from the deployed version.
+
 **Latest Updates (Aug 13, 2025 - Enhanced CMYK Generator Restored)**: 
 - Successfully restored exact deployed version of EnhancedCMYKGenerator from backup-cmyk-fix.md
 - Fixed critical method name mismatch: Updated both GET/POST routes to call generateCMYKPDF() instead of generatePDF()
