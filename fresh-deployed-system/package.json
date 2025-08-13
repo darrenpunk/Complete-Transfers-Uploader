@@ -4,7 +4,7 @@
   "description": "Fresh system using only deployed working version",
   "main": "server.ts",
   "scripts": {
-    "start": "PORT=8000 tsx server.ts"
+    "start": "PORT=8000 tsx server/server.ts"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1",
