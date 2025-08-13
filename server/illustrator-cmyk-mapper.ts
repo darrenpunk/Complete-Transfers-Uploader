@@ -26,13 +26,14 @@ export class IllustratorCMYKMapper {
     { rgb: "rgb(43.53%, 43.53%, 43.53%)", cmyk: "C:0 M:0 Y:0 K:90", description: "90% K" },
     { rgb: "rgb(67.38%, 67.38%, 67.38%)", cmyk: "C:0 M:0 Y:0 K:100", description: "100% K" },
 
-    // Row 2 - Actual SVG colors mapped to exact CMYK values from screenshot  
-    { rgb: "rgb(97.201538%, 85.482788%, 36.306763%)", cmyk: "C:50 M:27 Y:40 K:70", description: "Gold/Yellow from SVG" },
-    { rgb: "rgb(248, 218, 93)", cmyk: "C:50 M:27 Y:40 K:70", description: "Gold/Yellow converted" },
-    { rgb: "rgb(1.789856%, 1.435852%, 2.896118%)", cmyk: "C:40 M:70 Y:100 K:5", description: "Dark/Black from SVG" },
-    { rgb: "rgb(5, 4, 7)", cmyk: "C:40 M:70 Y:100 K:5", description: "Dark/Black converted" },
-    { rgb: "rgb(20.960999%, 55.158997%, 17.533875%)", cmyk: "C:40 M:65 Y:90 K:35", description: "Green from SVG" },
-    { rgb: "rgb(53, 141, 45)", cmyk: "C:40 M:65 Y:90 K:35", description: "Green converted" },
+    // Row 2 - USER'S TARGET CMYK MAPPINGS from screenshot
+    // Based on actual SVG colors from uploaded PDF  
+    { rgb: "rgb(100%, 94.898987%, 0%)", cmyk: "C:50 M:27 Y:40 K:70", description: "Target Gold/Yellow - C:50 M:27 Y:40 K:70" },
+    { rgb: "rgb(255, 242, 0)", cmyk: "C:50 M:27 Y:40 K:70", description: "Target Gold/Yellow converted" },
+    { rgb: "rgb(13.729858%, 12.159729%, 12.548828%)", cmyk: "C:40 M:70 Y:100 K:5", description: "Target Dark/Black - C:40 M:70 Y:100 K:5" },
+    { rgb: "rgb(35, 31, 32)", cmyk: "C:40 M:70 Y:100 K:5", description: "Target Dark/Black converted" },
+    { rgb: "rgb(0%, 65.098572%, 31.369019%)", cmyk: "C:40 M:65 Y:90 K:35", description: "Target Green - C:40 M:65 Y:90 K:35" },
+    { rgb: "rgb(0, 166, 80)", cmyk: "C:40 M:65 Y:90 K:35", description: "Target Green converted" },
     { rgb: "rgb(34.51%, 29.02%, 15.29%)", cmyk: "C:35 M:60 Y:80 K:25", description: "Dark Olive" },
     { rgb: "rgb(42.35%, 27.84%, 17.65%)", cmyk: "C:25 M:40 Y:65 K:40", description: "Medium Brown" },
     { rgb: "rgb(34.51%, 27.84%, 19.61%)", cmyk: "C:65 M:60 Y:45 K:40", description: "Dark Brown" },
