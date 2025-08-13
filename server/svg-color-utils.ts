@@ -675,7 +675,12 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
       index === self.findIndex(c => c.originalColor === color.originalColor && c.attribute === color.attribute && c.cmykColor === color.cmykColor)
     );
 
-    return uniqueColors;
+    // Apply IllustratorCMYKMapper to get exact CMYK values
+    console.log('🎨 APPLYING ILLUSTRATOR CMYK MAPPER TO COLORS');
+    const mappedColors = IllustratorCMYKMapper.processSVGColors(uniqueColors);
+    console.log(`🎨 MAPPING COMPLETE: Processed ${uniqueColors.length} colors, ${mappedColors.filter(c => c.isExactMatch).length} exact matches found`);
+
+    return mappedColors;
   } catch (error) {
     console.error('Error extracting SVG colors:', error);
     return [];
