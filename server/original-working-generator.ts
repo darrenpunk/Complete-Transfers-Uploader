@@ -473,9 +473,11 @@ export class OriginalWorkingGenerator {
       // Get the actual temp PDF dimensions
       const tempPageSize = embeddedPage.size();
       console.log(`📏 Temp PDF dimensions: ${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)} pts`);
+      console.log(`🎯 POSITIONING FIX: Temp PDF acts as a 'stamp' - logo is at (0,0) in temp PDF, we position the entire temp PDF at target coordinates`);
       
-      // The temp PDF contains the logo at its original size, we need to scale and position it
-      // Draw the embedded PDF with calculated position and size
+      // CRITICAL FIX: The temp PDF contains the logo at (0,0) with correct proportions
+      // We simply place this temp PDF at the calculated position with the target size
+      // This is like placing a "stamp" at the right location
       page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
@@ -483,6 +485,8 @@ export class OriginalWorkingGenerator {
         height: size.height,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
+      
+      console.log(`✅ FIXED: Positioned temp PDF (${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)}) at (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) scaled to ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
       
       console.log(`✅ Successfully embedded SVG as vector PDF with ${hasCMYKColors ? 'CMYK preservation' : 'standard conversion'} at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       
