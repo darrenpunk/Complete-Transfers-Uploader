@@ -678,11 +678,11 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Pure Ghostscript Generator (NO pdf-lib)');
+        console.log('🎨 CMYK content detected - Using Hybrid Template + CMYK Generator');
         
-        // Use pure Ghostscript approach that completely bypasses pdf-lib
-        const { PureGhostscriptGenerator } = await import('./pure-ghostscript-generator');
-        const generator = new PureGhostscriptGenerator();
+        // Use hybrid approach: original template structure + CMYK logo preservation
+        const { HybridCMYKGenerator } = await import('./hybrid-cmyk-generator');
+        const generator = new HybridCMYKGenerator();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
