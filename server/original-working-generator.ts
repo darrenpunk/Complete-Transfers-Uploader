@@ -457,26 +457,23 @@ export class OriginalWorkingGenerator {
         const pdfStats = fs.statSync(tempPdfPath);
         console.log(`📊 Inkscape created PDF: ${pdfStats.size} bytes`);
         
-        // EXACT CMYK COLOR PRESERVATION - Use PostScript injection method
-        console.log(`🎨 Preserving exact CMYK values with PostScript injection...`);
+        // CMYK PRESERVATION: Use original PDF embedding if available
+        console.log(`🎨 Checking for original PDF to preserve exact CMYK values...`);
         
-        const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
+        // Check if this logo has an original PDF file (which would preserve CMYK exactly)
+        const originalPdfPath = logoPath.replace(/\.(svg)$/i, '.pdf');
+        const hasOriginalPdf = fs.existsSync(originalPdfPath);
         
-        // Create ICC profile command for CMYK preservation
-        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
-        
-        try {
-          await execAsync(gsCmd);
-          const gsStats = fs.statSync(tempGsPath);
-          console.log(`📊 Ghostscript CMYK preserved PDF: ${gsStats.size} bytes`);
+        if (hasOriginalPdf) {
+          console.log(`🎯 Found original PDF: ${originalPdfPath}`);
+          console.log(`✅ Using original PDF to preserve exact CMYK values (no conversion!)`);
           
-          // Replace the original with the CMYK version
-          fs.copyFileSync(tempGsPath, tempPdfPath);
-          fs.unlinkSync(tempGsPath);
-          console.log(`✅ Applied CMYK color space preservation`);
-        } catch (gsError: any) {
-          console.warn(`⚠️ Ghostscript processing failed: ${gsError.message}`);
-          console.log(`📄 Continuing with RGB version from Inkscape`);
+          // Copy the original PDF instead of the Inkscape conversion
+          fs.copyFileSync(originalPdfPath, tempPdfPath);
+          console.log(`📋 Copied original PDF with preserved CMYK colors`);
+        } else {
+          console.warn(`⚠️ No original PDF found, using Inkscape conversion`);
+          console.log(`📝 Note: Colors will be RGB-based, not original CMYK values`);
         }
         
         // DEBUGGING: Keep temp files for inspection
