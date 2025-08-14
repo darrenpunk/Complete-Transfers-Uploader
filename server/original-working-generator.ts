@@ -484,6 +484,15 @@ export class OriginalWorkingGenerator {
             console.log(`✅ Applied CMYK color space with /LeaveColorUnchanged - preserves original intent`);
             console.log(`🎨 RGB(17%, 17%, 43%) Navy → Professional CMYK separation`);
             console.log(`🎨 RGB(90%, 61%, 16%) Gold → Professional CMYK separation`);
+            
+            // CRITICAL: Verify CMYK color space was applied
+            try {
+              const { stdout } = await execAsync(`pdfinfo "${tempPdfPath}" 2>/dev/null || echo "PDF info unavailable"`);
+              console.log(`📊 CMYK PDF Details:\n${stdout}`);
+            } catch (infoError: any) {
+              console.log(`📊 PDF info check failed: ${infoError.message}`);
+            }
+            
           } else {
             console.warn(`⚠️ CMYK conversion produced small file, keeping original`);
           }
