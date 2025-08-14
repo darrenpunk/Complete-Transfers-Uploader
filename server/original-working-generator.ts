@@ -429,48 +429,31 @@ export class OriginalWorkingGenerator {
       const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_svg_${Date.now()}.pdf`);
       
       if (hasCMYKColors) {
-        console.log(`🎨 Using Native CMYK Generator for true CMYK preservation`);
+        console.log(`🎨 Using enhanced CMYK preservation pipeline`);
         
-        // For CMYK files, use native CMYK PostScript generation
+        // Use enhanced CMYK processing for reliable color preservation
         console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
-        try {
-          // Generate true CMYK PDF using PostScript with native CMYK commands  
-          // This preserves exact CMYK values from the original files
-          await NativeCMYKGenerator.generateCMYKPDF(
-            finalSvgPath, 
-            svgColors, 
-            tempPdfPath, 
-            size.width, 
-            size.height
-          );
-          
-          console.log(`🎨 Native CMYK PDF generated with exact color preservation: ${tempPdfPath}`);
-          
-        } catch (nativeError) {
-          console.warn(`⚠️ Native CMYK generation failed, falling back to enhanced method:`, nativeError);
-          
-          // Fallback to enhanced CMYK processing
-          const cmykProcessedSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
-          
-          // Use Inkscape with CMYK-specific settings
-          const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykProcessedSvgPath}"`;
-          await execAsync(inkscapeCmd);
-          
-          // Post-process with Ghostscript
-          const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
-          const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
-          await execAsync(gsCmd);
-          
-          fs.copyFileSync(tempGsPath, tempPdfPath);
-          fs.unlinkSync(tempGsPath);
-          
-          if (fs.existsSync(cmykProcessedSvgPath)) {
-            fs.unlinkSync(cmykProcessedSvgPath);
-          }
-          
-          console.log(`🎨 Fallback CMYK processing completed: ${tempPdfPath}`);
+        // Enhanced CMYK processing - this handles RGB to CMYK conversion properly
+        const cmykProcessedSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
+        
+        // Use Inkscape with CMYK-specific settings
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-text-to-path --export-dpi=300 --export-filename="${tempPdfPath}" "${cmykProcessedSvgPath}"`;
+        await execAsync(inkscapeCmd);
+        
+        // Post-process with Ghostscript for true CMYK color space
+        const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
+        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
+        await execAsync(gsCmd);
+        
+        fs.copyFileSync(tempGsPath, tempPdfPath);
+        fs.unlinkSync(tempGsPath);
+        
+        if (fs.existsSync(cmykProcessedSvgPath)) {
+          fs.unlinkSync(cmykProcessedSvgPath);
         }
+        
+        console.log(`🎨 Enhanced CMYK processing completed: ${tempPdfPath}`);
       } else {
         // Use standard Inkscape conversion for RGB/non-CMYK content
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
