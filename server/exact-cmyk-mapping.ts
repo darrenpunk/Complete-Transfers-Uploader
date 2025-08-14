@@ -53,16 +53,24 @@ export const EXACT_CMYK_MAPPINGS: CMYKMapping[] = [
 /**
  * Find exact CMYK values by matching RGB percentages
  */
-export function getExactCMYK(r: number, g: number, b: number, tolerance = 3): CMYKMapping | null {
+export function getExactCMYK(r: number, g: number, b: number, tolerance = 5): CMYKMapping | null {
+  console.log(`🔍 Searching exact CMYK for RGB(${r.toFixed(1)}, ${g.toFixed(1)}, ${b.toFixed(1)})`);
+  
   for (const mapping of EXACT_CMYK_MAPPINGS) {
     const [mr, mg, mb] = mapping.rgbPercent;
+    const rDiff = Math.abs(r - mr);
+    const gDiff = Math.abs(g - mg);
+    const bDiff = Math.abs(b - mb);
+    
+    console.log(`   Testing ${mapping.pantone}: RGB(${mr}, ${mg}, ${mb}) - Diff: (${rDiff.toFixed(1)}, ${gDiff.toFixed(1)}, ${bDiff.toFixed(1)})`);
     
     // Check if RGB values match within tolerance
-    if (Math.abs(r - mr) <= tolerance && 
-        Math.abs(g - mg) <= tolerance && 
-        Math.abs(b - mb) <= tolerance) {
+    if (rDiff <= tolerance && gDiff <= tolerance && bDiff <= tolerance) {
+      console.log(`✅ EXACT MATCH FOUND: ${mapping.pantone} CMYK(${mapping.cmyk.join(', ')})`);
       return mapping;
     }
   }
+  
+  console.log(`❌ No exact match found for RGB(${r.toFixed(1)}, ${g.toFixed(1)}, ${b.toFixed(1)})`);
   return null;
 }
