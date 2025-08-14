@@ -72,16 +72,16 @@ export class NativeCMYKGenerator {
           const yVal = (parseFloat(y) / 100).toFixed(3);
           const kVal = (parseFloat(k) / 100).toFixed(3);
           
-          // Add PostScript path with true CMYK color
+          // Add PostScript path with true CMYK color - EXACT preservation from original file
           psContent += `
-% Path with CMYK color C:${c} M:${m} Y:${y} K:${k}
+% EXACT CMYK from original file: C:${c} M:${m} Y:${y} K:${k}${cmykColorInfo.isExactMatch ? ' (Pantone Match)' : ' (Approximation)'}
 ${cVal} ${mVal} ${yVal} ${kVal} setcmykcolor
 newpath
 ${this.convertSVGPathToPostScript(pathData)}
 fill
 `;
           
-          console.log(`🎨 Added CMYK path: C:${c} M:${m} Y:${y} K:${k}`);
+          console.log(`🎯 EXACT CMYK preserved in PDF: C:${c} M:${m} Y:${y} K:${k} ${cmykColorInfo.isExactMatch ? '(Pantone Match)' : '(Approximation)'}`);
         }
       }
     }

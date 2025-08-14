@@ -19,14 +19,14 @@ import {
   AlignCenterVertical,
   AlignEndVertical
 } from "lucide-react";
-import ColorPickerPanel from "./color-picker-panel";
+
 import CMYKColorModal from "./cmyk-color-modal";
 import GarmentColorModal from "./garment-color-modal";
 import ImpositionModal from "./imposition-modal";
 import TemplateSelectorModal from "./template-selector-modal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { manufacturerColors } from "@shared/garment-colors";
-import { Palette } from "lucide-react";
+
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
 import { useToast } from "@/hooks/use-toast";
 
@@ -911,34 +911,7 @@ export default function PropertiesPanel({
         </Card>
       )}
 
-      {/* SVG Color Picker Panel */}
-      {currentElement && (() => {
-        const logo = logos.find(l => l.id === currentElement.logoId);
-        if (!logo) return null;
-        
-        return (
-          <Card className="rounded-none border-x-0 border-t-0">
-            <CardHeader className="cursor-pointer" onClick={() => setPreflightPanelCollapsed(!preflightPanelCollapsed)}>
-              <CardTitle className="text-lg flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Palette className="w-5 h-5" />
-                  Color Analysis
-                </span>
-                {preflightPanelCollapsed ? (
-                  <ChevronRight className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            {!preflightPanelCollapsed && (
-              <CardContent>
-                <ColorPickerPanel selectedElement={currentElement} logo={logo} />
-              </CardContent>
-            )}
-          </Card>
-        );
-      })()}
+
 
 
 

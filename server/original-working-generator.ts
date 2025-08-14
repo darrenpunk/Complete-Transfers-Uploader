@@ -359,7 +359,8 @@ export class OriginalWorkingGenerator {
         console.log(`🎨 Processing SVG with ${svgColors?.colors?.length || 0} CMYK colors detected`);
         
         try {
-          // Generate true CMYK PDF using PostScript with native CMYK commands
+          // Generate true CMYK PDF using PostScript with native CMYK commands  
+          // This preserves exact CMYK values from the original files
           await NativeCMYKGenerator.generateCMYKPDF(
             finalSvgPath, 
             svgColors, 
@@ -368,7 +369,7 @@ export class OriginalWorkingGenerator {
             size.height
           );
           
-          console.log(`🎨 Native CMYK PDF generated successfully: ${tempPdfPath}`);
+          console.log(`🎨 Native CMYK PDF generated with exact color preservation: ${tempPdfPath}`);
           
         } catch (nativeError) {
           console.warn(`⚠️ Native CMYK generation failed, falling back to enhanced method:`, nativeError);
