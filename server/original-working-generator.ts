@@ -467,8 +467,14 @@ export class OriginalWorkingGenerator {
       
       // Read and embed the PDF
       const pdfBytes = fs.readFileSync(tempPdfPath);
-      const [embeddedPage] = await page.doc.embedPdf(await PDFDocument.load(pdfBytes));
+      const tempDoc = await PDFDocument.load(pdfBytes);
+      const [embeddedPage] = await page.doc.embedPdf(tempDoc);
       
+      // Get the actual temp PDF dimensions
+      const tempPageSize = embeddedPage.size();
+      console.log(`📏 Temp PDF dimensions: ${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)} pts`);
+      
+      // The temp PDF contains the logo at its original size, we need to scale and position it
       // Draw the embedded PDF with calculated position and size
       page.drawPage(embeddedPage, {
         x: position.x,
