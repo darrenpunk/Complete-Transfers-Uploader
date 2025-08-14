@@ -348,7 +348,7 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Embed original PDF directly to preserve CMYK colors
+   * Embed original PDF directly to preserve CMYK colors - ASPECT RATIO FIX
    */
   private async embedOriginalPDF(
     page: PDFPage,
@@ -371,22 +371,49 @@ export class OriginalWorkingGenerator {
       }
       
       const sourcePage = sourcePages[0];
+      const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
       
       // Embed the source page into our target document
       const [embeddedPage] = await page.doc.embedPdf(sourcePdfDoc);
       
-      // Calculate position and size
+      // Calculate position
       const position = this.calculateOriginalPosition(element, templateSize, page);
-      const size = this.calculateOriginalSize(element, templateSize, page);
       
-      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
+      // CRITICAL ASPECT RATIO FIX: Calculate size while preserving original PDF aspect ratio
+      const targetSize = this.calculateOriginalSize(element, templateSize, page);
+      const originalAspectRatio = originalWidth / originalHeight;
+      const targetAspectRatio = targetSize.width / targetSize.height;
       
-      // Draw the embedded PDF page with calculated position and size
+      let finalWidth: number, finalHeight: number;
+      
+      // Maintain original aspect ratio by fitting within target dimensions
+      if (originalAspectRatio > targetAspectRatio) {
+        // Original is wider - fit to width, adjust height
+        finalWidth = targetSize.width;
+        finalHeight = targetSize.width / originalAspectRatio;
+      } else {
+        // Original is taller - fit to height, adjust width
+        finalHeight = targetSize.height;
+        finalWidth = targetSize.height * originalAspectRatio;
+      }
+      
+      console.log(`🔧 ASPECT RATIO FIX:`, {
+        originalPdfSize: `${originalWidth.toFixed(1)}x${originalHeight.toFixed(1)}`,
+        originalAspectRatio: originalAspectRatio.toFixed(3),
+        targetSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
+        targetAspectRatio: targetAspectRatio.toFixed(3),
+        finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`,
+        preservedAspectRatio: (finalWidth / finalHeight).toFixed(3)
+      });
+      
+      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
+      
+      // Draw the embedded PDF page with aspect-ratio-preserved size
       page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
-        width: size.width,
-        height: size.height,
+        width: finalWidth,
+        height: finalHeight,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
@@ -545,7 +572,7 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Embed image logo using the original working method
+   * Embed image logo using the original working method - ASPECT RATIO FIX
    */
   private async embedImageLogo(
     page: PDFPage,
@@ -557,17 +584,42 @@ export class OriginalWorkingGenerator {
     const image = await page.doc.embedPng(imageBytes);
     
     const position = this.calculateOriginalPosition(element, templateSize, page);
-    const size = this.calculateOriginalSize(element, templateSize, page);
+    
+    // CRITICAL ASPECT RATIO FIX: Get original image dimensions and preserve aspect ratio
+    const { width: originalWidth, height: originalHeight } = image.scale(1);
+    const targetSize = this.calculateOriginalSize(element, templateSize, page);
+    const originalAspectRatio = originalWidth / originalHeight;
+    const targetAspectRatio = targetSize.width / targetSize.height;
+    
+    let finalWidth: number, finalHeight: number;
+    
+    // Maintain original aspect ratio by fitting within target dimensions
+    if (originalAspectRatio > targetAspectRatio) {
+      // Original is wider - fit to width, adjust height
+      finalWidth = targetSize.width;
+      finalHeight = targetSize.width / originalAspectRatio;
+    } else {
+      // Original is taller - fit to height, adjust width
+      finalHeight = targetSize.height;
+      finalWidth = targetSize.height * originalAspectRatio;
+    }
+    
+    console.log(`🔧 IMAGE ASPECT RATIO FIX:`, {
+      originalImageSize: `${originalWidth.toFixed(1)}x${originalHeight.toFixed(1)}`,
+      originalAspectRatio: originalAspectRatio.toFixed(3),
+      targetSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
+      finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`
+    });
     
     page.drawImage(image, {
       x: position.x,
       y: position.y,
-      width: size.width,
-      height: size.height,
+      width: finalWidth,
+      height: finalHeight,
       rotate: element.rotation ? degrees(element.rotation) : undefined,
     });
     
-    console.log(`✅ Successfully embedded image logo`);
+    console.log(`✅ Successfully embedded image logo with preserved aspect ratio`);
   }
 
   /**
