@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getOriginalCMYK, findPantoneByRGB } from './pantone-cmyk-mapping';
+import { PDFCMYKExtractor } from './pdf-cmyk-extractor';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -229,47 +229,65 @@ export class UniversalColorExtractor {
   }
 
   /**
-   * Extract colors from PDF files using Ghostscript
+   * Extract colors from PDF files - extract actual CMYK values directly
    */
   private static async extractFromPDF(filePath: string): Promise<ExtractedColors> {
-    console.log(`📄 Extracting colors from PDF: ${filePath}`);
+    console.log('🔍 Extracting CMYK colors directly from PDF file...');
     
     try {
-      // Use Ghostscript to analyze color information
-      const { stdout } = await execAsync(`gs -dNODISPLAY -dBATCH -dNOPAUSE -sDEVICE=nullpage -c "
-        /findcolors {
-          currentpagedevice /ImagingBBox known {
-            dup type /dicttype eq {
-              /ColorSpace known {
-                dup /ColorSpace get == flush
-              } if
-            } if
-          } if
-        } def
-        (${filePath}) (r) file runpdfbegin
-        1 1 pdfpagecount {
-          pdfgetpage findcolors
-        } for
-        quit" 2>/dev/null || echo "RGB"`);
-
-      const colorSpace = stdout.includes('DeviceCMYK') ? 'CMYK' : 'RGB';
+      // Extract actual CMYK colors from PDF using Ghostscript
+      const pdfCMYKColors = await PDFCMYKExtractor.extractCMYKFromPDF(filePath);
       
-      // For now, return basic detection - would need more sophisticated parsing for full extraction
-      return {
-        colors: [],
-        colorSpace: colorSpace as any,
-        hasEmbeddedProfile: colorSpace === 'CMYK',
-        preserveOriginal: true
-      };
+      if (pdfCMYKColors.length > 0) {
+        console.log(`✅ Found ${pdfCMYKColors.length} original CMYK colors in PDF`);
+        
+        const colors: ColorValue[] = pdfCMYKColors.map((color, index) => ({
+          format: 'cmyk',
+          values: [color.c, color.m, color.y, color.k],
+          originalString: `CMYK(${color.c.toFixed(0)}, ${color.m.toFixed(0)}, ${color.y.toFixed(0)}, ${color.k.toFixed(0)})`,
+          elementSelector: `pdf-color-${index}`
+        }));
+        
+        return {
+          colors,
+          colorSpace: 'CMYK',
+          hasEmbeddedProfile: true,
+          preserveOriginal: true,
+          extractionMethod: 'PDF_DIRECT_CMYK',
+          totalColors: colors.length,
+          significantColors: colors.length
+        };
+      }
+      
+      // Fallback: convert to SVG and analyze
+      console.log('⚠️ No direct CMYK found, falling back to SVG analysis');
+      return await this.extractFromPDFViaSVG(filePath);
+      
     } catch (error) {
-      console.log('📄 PDF color analysis failed, assuming RGB');
-      return {
-        colors: [],
-        colorSpace: 'RGB',
-        hasEmbeddedProfile: false,
-        preserveOriginal: true
-      };
+      console.log('❌ PDF CMYK extraction failed:', error);
+      return this.createFallbackResult();
     }
+  }
+
+  /**
+   * Fallback method: Extract via SVG conversion
+   */
+  private static async extractFromPDFViaSVG(filePath: string): Promise<ExtractedColors> {
+    const svgPath = filePath.replace('.pdf', '.svg');
+    
+    try {
+      await execAsync(`gs -dNODISPLAY -dBATCH -dNOPAUSE -sDEVICE=svg -sOutputFile="${svgPath}" "${filePath}"`);
+      
+      if (fs.existsSync(svgPath)) {
+        const result = await this.extractFromSVG(svgPath);
+        fs.unlinkSync(svgPath);
+        return result;
+      }
+    } catch (error) {
+      console.log('⚠️ PDF-to-SVG conversion failed:', error);
+    }
+    
+    return this.createFallbackResult();
   }
 
   /**

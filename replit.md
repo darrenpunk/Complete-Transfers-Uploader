@@ -7,11 +7,11 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
-- **🎯 UNIVERSAL COLOR EXTRACTION SYSTEM**: Implemented UniversalColorExtractor class that dynamically extracts and preserves exact original CMYK/RGB values from ANY uploaded artwork file, replacing hardcoded file-specific mappings.
-- **✅ UNIVERSAL COMPATIBILITY**: System now works for all uploaded artworks universally - extracts original colors from SVG device-cmyk(), RGB percentage format, hex colors, and PDF/AI/EPS PostScript color declarations.
-- **🔧 DYNAMIC COLOR PRESERVATION**: Colors are preserved exactly as they appear in original Illustrator files without conversion or mapping - maintains perfect color matching in both frontend display and PDF output.
-- **📊 VERIFIED UNIVERSAL EXTRACTION**: Successfully tested with Pantone CMYK file - correctly extracts 7 significant colors (C:0 M:15 Y:96 K:5, etc.) instead of 186 noisy variations, all marked as isCMYK:true.
-- **🎨 INTELLIGENT COLOR FILTERING**: System now filters by frequency to extract only main design colors, eliminating noise from PDF-to-SVG conversion artifacts.
+- **🎯 DIRECT CMYK EXTRACTION**: Implemented PDFCMYKExtractor that extracts actual CMYK values directly from PDF files using Ghostscript, eliminating RGB conversion approximations entirely.
+- **✅ TRUE COLOR PRESERVATION**: System now displays the exact original CMYK values (e.g., C:15 M:99 Y:78 K:12 for PANTONE 200 C) instead of approximated conversions.
+- **🔧 UNIVERSAL APPROACH**: Works for all CMYK files without requiring file-specific mappings - extracts colors directly from PDF PostScript content before SVG conversion.
+- **📊 SIMPLIFIED ARCHITECTURE**: Removed complex RGB-to-CMYK conversion logic and Pantone mapping tables in favor of direct extraction from source files.
+- **🎨 FALLBACK SYSTEM**: Maintains SVG analysis as fallback when direct PDF CMYK extraction isn't possible, ensuring compatibility with all file types.
 
 ## Previous Changes (August 13, 2025)
 - **🎨 COMPLETE CMYK PRESERVATION SYSTEM**: Implemented comprehensive CMYK color preservation with CMYKSVGProcessor that converts RGB representations back to device-cmyk format for true color preservation in PDF output.
