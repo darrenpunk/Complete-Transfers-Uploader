@@ -265,6 +265,64 @@ export class OriginalWorkingGenerator {
     templateSize: any
   ): Promise<void> {
     try {
+      // CRITICAL: Check if this is a PDF that was converted to SVG for preview
+      // If so, use the ORIGINAL PDF file to preserve CMYK colors
+      if (logo.mimeType === 'image/svg+xml' && logo.originalName?.toLowerCase().endsWith('.pdf')) {
+        // Find the original PDF file
+        const originalPdfName = logo.originalName;
+        const uploadDir = path.resolve(process.cwd(), 'uploads');
+        
+        // Look for the original PDF file in uploads directory
+        const files = fs.readdirSync(uploadDir);
+        console.log(`🔍 Looking for original PDF. Original name: ${originalPdfName}, SVG filename: ${logo.filename}`);
+        
+        const originalPdfFile = files.find(file => {
+          // First try exact match with original name
+          if (file === originalPdfName) {
+            console.log(`✅ Found exact match for original PDF: ${file}`);
+            return true;
+          }
+          
+          // When PDF is uploaded, it's saved with a hash filename (no extension)
+          // and then converted to SVG with the same hash + .svg extension
+          // Example: uploaded PDF -> 1bcf41d24b99e87adb8cd2fe3c60287b (no extension)
+          //          SVG version -> 1bcf41d24b99e87adb8cd2fe3c60287b.svg
+          
+          const svgBaseName = logo.filename.replace('.svg', '');
+          
+          console.log(`🔍 Checking file: ${file}`);
+          console.log(`🔍 SVG base name: ${svgBaseName}`);
+          
+          // Check if this file is the original uploaded PDF (same hash, no extension)
+          if (file === svgBaseName) {
+            console.log(`✅ Found original uploaded PDF file: ${file} (matches SVG base)`);
+            return true;
+          }
+          
+          // Also check PDF files with the same base name
+          if (file.endsWith('.pdf')) {
+            const pdfBaseName = path.basename(file, '.pdf');
+            if (pdfBaseName === svgBaseName) {
+              console.log(`✅ Found PDF file with matching base: ${file}`);
+              return true;
+            }
+          }
+          
+          return false;
+        });
+        
+        console.log(`🔍 Found ${files.filter(f => f.endsWith('.pdf')).length} PDF files in uploads. Match result: ${originalPdfFile || 'none'}`);
+        
+        if (originalPdfFile) {
+          const originalPdfPath = path.join(uploadDir, originalPdfFile);
+          console.log(`🎯 USING ORIGINAL PDF: ${originalPdfFile} instead of converted SVG ${logo.filename}`);
+          await this.embedOriginalPDF(page, element, originalPdfPath, templateSize);
+          return;
+        } else {
+          console.warn(`⚠️ Original PDF not found for ${logo.filename}, falling back to SVG`);
+        }
+      }
+      
       const logoPath = path.resolve(process.cwd(), 'uploads', logo.filename);
       
       // Check if file exists
@@ -273,8 +331,10 @@ export class OriginalWorkingGenerator {
         return;
       }
 
-      // Convert SVG to PDF if needed (original working method)
-      if (logo.mimeType === 'image/svg+xml') {
+      // Handle different file types
+      if (logo.mimeType === 'application/pdf') {
+        await this.embedOriginalPDF(page, element, logoPath, templateSize);
+      } else if (logo.mimeType === 'image/svg+xml') {
         // Pass logo data to embedSVGLogo for CMYK analysis
         const elementWithLogo = { ...element, logo };
         await this.embedSVGLogo(page, elementWithLogo, logoPath, templateSize);
@@ -284,6 +344,57 @@ export class OriginalWorkingGenerator {
       
     } catch (error) {
       console.error(`❌ Failed to embed logo ${logo.filename}:`, error);
+    }
+  }
+
+  /**
+   * Embed original PDF directly to preserve CMYK colors
+   */
+  private async embedOriginalPDF(
+    page: PDFPage,
+    element: any,
+    pdfPath: string,
+    templateSize: any
+  ): Promise<void> {
+    try {
+      console.log(`📄 Embedding original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
+      
+      // Read the original PDF file
+      const pdfBytes = fs.readFileSync(pdfPath);
+      const sourcePdfDoc = await PDFDocument.load(pdfBytes);
+      
+      // Get the first page from the source PDF
+      const sourcePages = sourcePdfDoc.getPages();
+      if (sourcePages.length === 0) {
+        console.error(`❌ Source PDF has no pages: ${pdfPath}`);
+        return;
+      }
+      
+      const sourcePage = sourcePages[0];
+      
+      // Embed the source page into our target document
+      const [embeddedPage] = await page.doc.embedPdf(sourcePdfDoc);
+      
+      // Calculate position and size
+      const position = this.calculateOriginalPosition(element, templateSize, page);
+      const size = this.calculateOriginalSize(element, templateSize, page);
+      
+      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
+      
+      // Draw the embedded PDF page with calculated position and size
+      page.drawPage(embeddedPage, {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+        rotate: element.rotation ? degrees(element.rotation) : undefined,
+      });
+      
+      console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
+      
+    } catch (error) {
+      console.error(`❌ Failed to embed original PDF:`, error);
+      throw error;
     }
   }
 
