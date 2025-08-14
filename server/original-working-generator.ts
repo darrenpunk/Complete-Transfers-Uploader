@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import { CMYKDetector } from './cmyk-detector';
 import { CMYKSVGProcessor } from './cmyk-svg-processor';
 import { NativeCMYKGenerator } from './native-cmyk-generator';
+import { calculateSVGContentBounds } from './dimension-utils';
 
 const execAsync = promisify(exec);
 
@@ -379,17 +380,71 @@ export class OriginalWorkingGenerator {
       // Calculate position
       const position = this.calculateOriginalPosition(element, templateSize, page);
       
-      // Use canvas element dimensions directly - preserves user's intended size
+      // CRITICAL FIX: Use content bounds from SVG instead of embedding entire PDF viewBox
+      // This prevents distortion by using the actual logo content dimensions
+      const { width: originalPdfWidth, height: originalPdfHeight } = sourcePage.getSize();
+      
+      // Get the content bounds from the SVG version to determine actual logo area
+      const svgPath = element.filePath;
+      const svgContent = fs.readFileSync(svgPath, 'utf-8');
+      
+      // Calculate content bounds from the SVG to get the actual logo dimensions
+      const contentBounds = calculateSVGContentBounds(svgContent);
+      
+      if (!contentBounds) {
+        console.warn(`⚠️ Could not calculate content bounds, falling back to canvas dimensions`);
+        // Fallback to using canvas dimensions directly
+        const targetSize = this.calculateOriginalSize(element, templateSize, page);
+        
+        console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
+        
+        page.drawPage(embeddedPage, {
+          x: position.x,
+          y: position.y,
+          width: targetSize.width,
+          height: targetSize.height,
+          rotate: element.rotation ? degrees(element.rotation) : undefined,
+        });
+        
+        console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
+        return;
+      }
+      const contentAspectRatio = contentBounds.width / contentBounds.height;
+      
+      // Use canvas element dimensions but maintain content aspect ratio
       const targetSize = this.calculateOriginalSize(element, templateSize, page);
       
-      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
+      // Maintain content aspect ratio within canvas bounds
+      let finalWidth: number, finalHeight: number;
+      const canvasAspectRatio = targetSize.width / targetSize.height;
       
-      // Draw the embedded PDF page with canvas dimensions (user's intended size)
+      if (contentAspectRatio > canvasAspectRatio) {
+        // Content is wider - fit to width
+        finalWidth = targetSize.width;
+        finalHeight = targetSize.width / contentAspectRatio;
+      } else {
+        // Content is taller - fit to height  
+        finalHeight = targetSize.height;
+        finalWidth = finalHeight * contentAspectRatio;
+      }
+      
+      console.log(`🔧 CONTENT BOUNDS FIX:`, {
+        originalPdfSize: `${originalPdfWidth.toFixed(1)}x${originalPdfHeight.toFixed(1)}`,
+        contentBounds: `${contentBounds.width.toFixed(1)}x${contentBounds.height.toFixed(1)}`,
+        contentAspectRatio: contentAspectRatio.toFixed(3),
+        canvasSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
+        finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`,
+        preservedContentRatio: 'YES'
+      });
+      
+      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
+      
+      // Draw the embedded PDF page with content-preserving dimensions
       page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
-        width: targetSize.width,
-        height: targetSize.height,
+        width: finalWidth,
+        height: finalHeight,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
