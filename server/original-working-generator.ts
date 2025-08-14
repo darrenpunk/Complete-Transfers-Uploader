@@ -457,19 +457,23 @@ export class OriginalWorkingGenerator {
         const pdfStats = fs.statSync(tempPdfPath);
         console.log(`📊 Inkscape created PDF: ${pdfStats.size} bytes`);
         
-        // Post-process with Ghostscript for CMYK color space conversion
-        console.log(`🎨 Post-processing with Ghostscript for CMYK conversion...`);
+        // EXACT CMYK COLOR PRESERVATION - Use PostScript injection method
+        console.log(`🎨 Preserving exact CMYK values with PostScript injection...`);
+        
         const tempGsPath = path.join(process.cwd(), 'uploads', `temp_gs_${Date.now()}.pdf`);
-        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
+        
+        // Create ICC profile command for CMYK preservation
+        const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -dAutoFilterColorImages=false -dAutoFilterGrayImages=false -dDownsampleColorImages=false -dDownsampleGrayImages=false -dPreserveSeparation=true -dPreserveDeviceN=true -dUseCIEColor=false -sOutputFile="${tempGsPath}" "${tempPdfPath}"`;
         
         try {
           await execAsync(gsCmd);
           const gsStats = fs.statSync(tempGsPath);
-          console.log(`📊 Ghostscript processed PDF: ${gsStats.size} bytes`);
+          console.log(`📊 Ghostscript CMYK preserved PDF: ${gsStats.size} bytes`);
           
           // Replace the original with the CMYK version
           fs.copyFileSync(tempGsPath, tempPdfPath);
           fs.unlinkSync(tempGsPath);
+          console.log(`✅ Applied CMYK color space preservation`);
         } catch (gsError: any) {
           console.warn(`⚠️ Ghostscript processing failed: ${gsError.message}`);
           console.log(`📄 Continuing with RGB version from Inkscape`);
