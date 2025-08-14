@@ -379,41 +379,17 @@ export class OriginalWorkingGenerator {
       // Calculate position
       const position = this.calculateOriginalPosition(element, templateSize, page);
       
-      // CRITICAL ASPECT RATIO FIX: Calculate size while preserving original PDF aspect ratio
-      const targetSize = await this.calculateOriginalSize(element, templateSize, page);
-      const originalAspectRatio = originalWidth / originalHeight;
-      const targetAspectRatio = targetSize.width / targetSize.height;
+      // Use canvas element dimensions directly - preserves user's intended size
+      const targetSize = this.calculateOriginalSize(element, templateSize, page);
       
-      let finalWidth: number, finalHeight: number;
+      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
       
-      // Maintain original aspect ratio by fitting within target dimensions
-      if (originalAspectRatio > targetAspectRatio) {
-        // Original is wider - fit to width, adjust height
-        finalWidth = targetSize.width;
-        finalHeight = targetSize.width / originalAspectRatio;
-      } else {
-        // Original is taller - fit to height, adjust width
-        finalHeight = targetSize.height;
-        finalWidth = targetSize.height * originalAspectRatio;
-      }
-      
-      console.log(`🔧 ASPECT RATIO FIX:`, {
-        originalPdfSize: `${originalWidth.toFixed(1)}x${originalHeight.toFixed(1)}`,
-        originalAspectRatio: originalAspectRatio.toFixed(3),
-        targetSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
-        targetAspectRatio: targetAspectRatio.toFixed(3),
-        finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`,
-        preservedAspectRatio: (finalWidth / finalHeight).toFixed(3)
-      });
-      
-      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
-      
-      // Draw the embedded PDF page with aspect-ratio-preserved size
+      // Draw the embedded PDF page with canvas dimensions (user's intended size)
       page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
-        width: finalWidth,
-        height: finalHeight,
+        width: targetSize.width,
+        height: targetSize.height,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
@@ -472,7 +448,7 @@ export class OriginalWorkingGenerator {
       
       // Calculate position and size
       const position = this.calculateOriginalPosition(element, templateSize, page);
-      const size = await this.calculateOriginalSize(element, templateSize, page);
+      const size = this.calculateOriginalSize(element, templateSize, page);
       
       console.log(`📍 Target position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
       
@@ -585,37 +561,16 @@ export class OriginalWorkingGenerator {
     
     const position = this.calculateOriginalPosition(element, templateSize, page);
     
-    // CRITICAL ASPECT RATIO FIX: Get original image dimensions and preserve aspect ratio
-    const { width: originalWidth, height: originalHeight } = image.scale(1);
-    const targetSize = await this.calculateOriginalSize(element, templateSize, page);
-    const originalAspectRatio = originalWidth / originalHeight;
-    const targetAspectRatio = targetSize.width / targetSize.height;
+    // Use canvas element dimensions directly - preserves user's intended size
+    const targetSize = this.calculateOriginalSize(element, templateSize, page);
     
-    let finalWidth: number, finalHeight: number;
-    
-    // Maintain original aspect ratio by fitting within target dimensions
-    if (originalAspectRatio > targetAspectRatio) {
-      // Original is wider - fit to width, adjust height
-      finalWidth = targetSize.width;
-      finalHeight = targetSize.width / originalAspectRatio;
-    } else {
-      // Original is taller - fit to height, adjust width
-      finalHeight = targetSize.height;
-      finalWidth = targetSize.height * originalAspectRatio;
-    }
-    
-    console.log(`🔧 IMAGE ASPECT RATIO FIX:`, {
-      originalImageSize: `${originalWidth.toFixed(1)}x${originalHeight.toFixed(1)}`,
-      originalAspectRatio: originalAspectRatio.toFixed(3),
-      targetSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
-      finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`
-    });
+    console.log(`📍 Embedding image at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
     
     page.drawImage(image, {
       x: position.x,
       y: position.y,
-      width: finalWidth,
-      height: finalHeight,
+      width: targetSize.width,
+      height: targetSize.height,
       rotate: element.rotation ? degrees(element.rotation) : undefined,
     });
     
@@ -671,66 +626,16 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Calculate size using the original working method - FIXED FOR PDF DIMENSION PRESERVATION
+   * Calculate size using canvas element dimensions - PRESERVES USER'S INTENDED SIZE
    */
-  private async calculateOriginalSize(element: any, templateSize: any, page: PDFPage): Promise<{ width: number; height: number }> {
+  private calculateOriginalSize(element: any, templateSize: any, page: PDFPage): { width: number; height: number } {
     const MM_TO_POINTS = 2.834645669;
     
-    // **CRITICAL PDF DIMENSION FIX**: Check if this element uses an original PDF file
-    // If so, use the original PDF dimensions instead of canvas element dimensions
-    if (element.filePath && element.filePath.endsWith('.svg')) {
-      try {
-        const fs = require('fs');
-        const path = require('path');
-        const { PDFDocument } = require('pdf-lib');
-        
-        // Check if there's a corresponding original PDF file
-        const svgPath = element.filePath;
-        const filename = path.basename(svgPath, '.svg');
-        const uploadsDir = path.dirname(svgPath);
-        const originalPdfPath = path.join(uploadsDir, filename);
-        
-        // Also check if the SVG indicates it's PDF-derived
-        const svgContent = fs.readFileSync(svgPath, 'utf-8');
-        const isPdfDerived = svgContent.includes('data-original-cmyk-pdf="true"') || 
-                             svgContent.includes('CMYK_PDF_CONVERTED');
-        
-        if (isPdfDerived && fs.existsSync(originalPdfPath)) {
-          const pdfBytes = fs.readFileSync(originalPdfPath);
-          const pdfDoc = await PDFDocument.load(pdfBytes);
-          const pages = pdfDoc.getPages();
-          
-          if (pages.length > 0) {
-            const { width: pdfWidthPt, height: pdfHeightPt } = pages[0].getSize();
-            // Convert PDF points to mm (1 point = 0.352778 mm)
-            const widthMM = pdfWidthPt * 0.352778;
-            const heightMM = pdfHeightPt * 0.352778;
-            
-            // Convert back to points for PDF embedding
-            const width = widthMM * MM_TO_POINTS;
-            const height = heightMM * MM_TO_POINTS;
-            
-            console.log(`🔧 PDF DIMENSION FIX: Using original PDF dimensions for embedding:`, {
-              originalPdfSizePt: `${pdfWidthPt.toFixed(1)}x${pdfHeightPt.toFixed(1)}`,
-              originalPdfSizeMM: `${widthMM.toFixed(1)}x${heightMM.toFixed(1)}`,
-              canvasElementSizeMM: `${element.width}x${element.height}`,
-              finalEmbedSizePt: `${width.toFixed(1)}x${height.toFixed(1)}`,
-              aspectRatioPreserved: 'YES'
-            });
-            
-            return { width, height };
-          }
-        }
-      } catch (pdfError) {
-        console.warn(`⚠️ Could not read original PDF dimensions for embedding, using canvas dimensions:`, pdfError);
-      }
-    }
-    
-    // Fallback: use canvas element dimensions (for non-PDF files or if PDF reading fails)
+    // ALWAYS use canvas element dimensions - this preserves user's intended size and positioning
     const width = element.width * MM_TO_POINTS;
     const height = element.height * MM_TO_POINTS;
     
-    console.log(`📏 Using canvas element dimensions for embedding:`, {
+    console.log(`📏 Using canvas element dimensions for output (preserves user intent):`, {
       elementWidthMM: element.width,
       elementHeightMM: element.height,
       mmToPoints: MM_TO_POINTS,
