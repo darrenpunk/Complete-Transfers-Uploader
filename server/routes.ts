@@ -666,8 +666,14 @@ export async function registerRoutes(app: express.Application) {
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
       // Import the ORIGINAL WORKING PDF generator
+      // Convert logos array to object keyed by logo ID for proper lookup
+      const logosObject: { [key: string]: any } = {};
+      logos.forEach(logo => {
+        logosObject[logo.id] = logo;
+      });
+
       // Check if any logos have CMYK colors that need native preservation
-      const hasCMYKLogos = Object.values(logos).some(logo => 
+      const hasCMYKLogos = Object.values(logosObject).some(logo => 
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
@@ -677,7 +683,7 @@ export async function registerRoutes(app: express.Application) {
         const generator = new NativeCMYKGenerator();
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
-          logos,
+          logos: logosObject,
           templateSize,
           garmentColor: project.garmentColor,
           projectName: project.name,

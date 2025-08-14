@@ -31,10 +31,13 @@ export class NativeCMYKGenerator {
       // Step 1: Create individual CMYK PDFs for each logo
       const cmykPdfPaths: string[] = [];
       
+      console.log(`🔍 Canvas elements:`, data.canvasElements.map(e => ({ id: e.id, logoId: e.logoId })));
+      console.log(`🔍 Available logos:`, Object.keys(data.logos));
+
       for (const element of data.canvasElements) {
         const logo = data.logos[element.logoId];
         if (!logo) {
-          console.log(`⚠️ No logo found for element ${element.logoId}`);
+          console.log(`⚠️ No logo found for element ${element.logoId}, available logos: ${Object.keys(data.logos).join(', ')}`);
           continue;
         }
 
