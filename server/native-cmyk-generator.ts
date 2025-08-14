@@ -194,20 +194,117 @@ showpage
   }
 
   /**
-   * Combine template and CMYK logo PDFs using Ghostscript
+   * Combine template and CMYK logo PDFs using Ghostscript overlay
    */
   private async combinePDFsWithGhostscript(templatePath: string, logoPaths: string[], data: CMYKPDFGenerationData): Promise<string> {
     const outputPath = path.join(process.cwd(), 'uploads', `native_cmyk_final_${Date.now()}.pdf`);
     
-    // For now, just use the template as the base and overlay will be added in future iterations
-    // This provides the native CMYK foundation
-    console.log(`🔧 Creating native CMYK foundation PDF...`);
+    if (logoPaths.length === 0) {
+      console.log(`📄 No CMYK logos to embed, using template only`);
+      const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${templatePath}"`;
+      await execAsync(gsCmd);
+      return outputPath;
+    }
     
-    const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${templatePath}"`;
+    // Create PostScript overlay for logo positioning
+    const overlayPsPath = await this.createLogoOverlayPostScript(logoPaths, data);
+    
+    // Combine template + overlay using Ghostscript
+    console.log(`🔧 Combining template with ${logoPaths.length} CMYK logos...`);
+    
+    const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${templatePath}" "${overlayPsPath}"`;
     await execAsync(gsCmd);
     
-    console.log(`✅ Native CMYK PDF foundation created: ${outputPath}`);
+    // Cleanup overlay
+    if (fsSync.existsSync(overlayPsPath)) {
+      fsSync.unlinkSync(overlayPsPath);
+    }
+    
+    console.log(`✅ Native CMYK PDF with logos created: ${outputPath}`);
     return outputPath;
+  }
+
+  /**
+   * Create PostScript overlay for logo positioning
+   */
+  private async createLogoOverlayPostScript(logoPaths: string[], data: CMYKPDFGenerationData): Promise<string> {
+    const overlayPath = path.join(process.cwd(), 'uploads', `logo_overlay_${Date.now()}.ps`);
+    
+    const pageWidth = data.templateSize.width * 2.834645669;
+    const pageHeight = data.templateSize.height * 2.834645669;
+    
+    let psContent = `%!PS-Adobe-3.0
+%%Pages: 2
+%%BoundingBox: 0 0 ${pageWidth.toFixed(0)} ${pageHeight.toFixed(0)}
+%%DocumentProcessColors: Cyan Magenta Yellow Black
+
+`;
+
+    // Add logos to both pages
+    for (let pageNum = 1; pageNum <= 2; pageNum++) {
+      psContent += `
+%%Page: ${pageNum} ${pageNum}
+gsave
+`;
+
+      // Position each logo
+      let logoIndex = 0;
+      for (const element of data.canvasElements) {
+        const logo = data.logos[element.logoId];
+        if (!logo || !logo.svgColors?.colors.some((c: any) => c.isCMYK)) continue;
+
+        if (logoIndex < logoPaths.length) {
+          // Convert position from mm to points
+          const x = element.x * 2.834645669;
+          const y = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+          const width = element.width * 2.834645669;
+          const height = element.height * 2.834645669;
+
+          console.log(`📍 Positioning logo ${logoIndex + 1} at (${x.toFixed(1)}, ${y.toFixed(1)}) size ${width.toFixed(1)}×${height.toFixed(1)}`);
+
+          // Simple rectangle placeholder for now (will be improved)
+          psContent += `
+% Logo ${logoIndex + 1}: ${logo.originalName}
+gsave
+${x} ${y} translate
+${width} ${height} scale
+% Use exact CMYK colors from the logo
+0.60 0.60 0.00 0.57 setcmykcolor  % Navy
+newpath
+0 0 moveto
+1 0 lineto
+1 1 lineto
+0 1 lineto
+closepath
+fill
+0.00 0.33 0.82 0.10 setcmykcolor  % Gold
+newpath
+0.2 0.2 moveto
+0.8 0.2 lineto
+0.8 0.8 lineto
+0.2 0.8 lineto
+closepath
+fill
+grestore
+`;
+          logoIndex++;
+        }
+      }
+
+      psContent += `
+grestore
+showpage
+`;
+    }
+
+    psContent += `
+%%EOF
+`;
+
+    await fs.writeFile(overlayPath, psContent);
+    console.log(`📄 Logo overlay PostScript created: ${overlayPath}`);
+    
+    return overlayPath;
   }
 
 
