@@ -666,7 +666,31 @@ export async function registerRoutes(app: express.Application) {
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
       // Import the ORIGINAL WORKING PDF generator
-      console.log('📦 Using OriginalWorkingGenerator...');
+      // Check if any logos have CMYK colors that need native preservation
+      const hasCMYKLogos = Object.values(logos).some(logo => 
+        logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
+      );
+
+      if (hasCMYKLogos) {
+        console.log('🎨 CMYK content detected - Using Native CMYK Generator for perfect color preservation');
+        const { NativeCMYKGenerator } = await import('./native-cmyk-generator');
+        const generator = new NativeCMYKGenerator();
+        const pdfBuffer = await generator.generatePDF({
+          canvasElements,
+          logos,
+          templateSize,
+          garmentColor: project.garmentColor,
+          projectName: project.name,
+          quantity: project.quantity || 1
+        });
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateId}_qty${project.quantity || 1}.pdf"`);
+        res.send(pdfBuffer);
+        return;
+      }
+
+      console.log('📦 Using OriginalWorkingGenerator for RGB content...');
       const { OriginalWorkingGenerator } = await import('./original-working-generator');
       console.log('✅ OriginalWorkingGenerator imported successfully');
       const generator = new OriginalWorkingGenerator();
