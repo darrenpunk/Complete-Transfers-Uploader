@@ -457,23 +457,49 @@ export class OriginalWorkingGenerator {
         const pdfStats = fs.statSync(tempPdfPath);
         console.log(`📊 Inkscape created PDF: ${pdfStats.size} bytes`);
         
-        // CMYK PRESERVATION: Use original PDF embedding if available
-        console.log(`🎨 Checking for original PDF to preserve exact CMYK values...`);
+        // EXACT CMYK PRESERVATION: Use SVG processing with original CMYK injection
+        console.log(`🎨 Processing SVG with exact CMYK values from original artwork...`);
         
-        // Check if this logo has an original PDF file (which would preserve CMYK exactly)
-        const originalPdfPath = logoPath.replace(/\.(svg)$/i, '.pdf');
-        const hasOriginalPdf = fs.existsSync(originalPdfPath);
-        
-        if (hasOriginalPdf) {
-          console.log(`🎯 Found original PDF: ${originalPdfPath}`);
-          console.log(`✅ Using original PDF to preserve exact CMYK values (no conversion!)`);
+        if (svgColors?.colors && Array.isArray(svgColors.colors)) {
+          const cmykColors = svgColors.colors.filter((color: any) => color.isCMYK === true);
+          console.log(`🎯 Found ${cmykColors.length} CMYK colors to preserve:`, cmykColors.map((c: any) => {
+            const cmyk = c.cmyk || {};
+            return `C:${cmyk.c || 0} M:${cmyk.m || 0} Y:${cmyk.y || 0} K:${cmyk.k || 0}`;
+          }));
           
-          // Copy the original PDF instead of the Inkscape conversion
-          fs.copyFileSync(originalPdfPath, tempPdfPath);
-          console.log(`📋 Copied original PDF with preserved CMYK colors`);
+          // Create CMYK-preserved SVG with device-cmyk() commands
+          try {
+            const cmykSvgPath = await CMYKSVGProcessor.processSVGForCMYKPreservation(finalSvgPath, svgColors);
+            console.log(`✅ Created CMYK-preserved SVG: ${cmykSvgPath}`);
+            
+            // Try to use the CMYK SVG with Inkscape
+            const cmykPdfPath = path.join(process.cwd(), 'uploads', `temp_cmyk_${Date.now()}.pdf`);
+            const inkscapeCmykCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${cmykPdfPath}" "${cmykSvgPath}"`;
+            
+            try {
+              await execAsync(inkscapeCmykCmd);
+              const cmykStats = fs.statSync(cmykPdfPath);
+              console.log(`📊 CMYK PDF created: ${cmykStats.size} bytes`);
+              
+              if (cmykStats.size > 1000) {
+                // Use the CMYK version
+                fs.copyFileSync(cmykPdfPath, tempPdfPath);
+                console.log(`✅ Using CMYK-preserved PDF with exact original values`);
+              }
+              fs.unlinkSync(cmykPdfPath);
+            } catch (cmykError: any) {
+              console.warn(`⚠️ CMYK SVG failed with Inkscape: ${cmykError.message}`);
+            }
+            
+            // Clean up
+            if (fs.existsSync(cmykSvgPath)) {
+              fs.unlinkSync(cmykSvgPath);
+            }
+          } catch (processingError: any) {
+            console.warn(`⚠️ CMYK processing failed: ${processingError.message}`);
+          }
         } else {
-          console.warn(`⚠️ No original PDF found, using Inkscape conversion`);
-          console.log(`📝 Note: Colors will be RGB-based, not original CMYK values`);
+          console.log(`📝 No CMYK color data available, using RGB version`);
         }
         
         // DEBUGGING: Keep temp files for inspection
