@@ -475,15 +475,10 @@ export class OriginalWorkingGenerator {
           console.log(`📄 Continuing with RGB version from Inkscape`);
         }
         
-        // DEBUGGING: Keep CMYK processed files for inspection
-        console.log(`🔍 CMYK processed SVG: ${cmykProcessedSvgPath}`);
+        // DEBUGGING: Keep temp files for inspection
+        console.log(`🔍 Final temp PDF: ${tempPdfPath}`);
         
-        // Comment out for debugging
-        // if (fs.existsSync(cmykProcessedSvgPath)) {
-        //   fs.unlinkSync(cmykProcessedSvgPath);
-        // }
-        
-        console.log(`🎨 Enhanced CMYK processing completed: ${tempPdfPath}`);
+        console.log(`🎨 CMYK conversion completed: ${tempPdfPath}`);
       } else {
         // Use standard Inkscape conversion for RGB/non-CMYK content
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${finalSvgPath}"`;
