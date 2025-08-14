@@ -696,16 +696,16 @@ export async function registerRoutes(app: express.Application) {
             await execAsync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${tempPdfPath}"`);
             
             // Cleanup temp
-            if (require('fs').existsSync(tempPdfPath)) {
-              require('fs').unlinkSync(tempPdfPath);
+            if (fs.existsSync(tempPdfPath)) {
+              fs.unlinkSync(tempPdfPath);
             }
             
             console.log(`✅ Direct CMYK PDF created: ${outputPath}`);
             
-            const cmykBuffer = require('fs').readFileSync(outputPath);
+            const cmykBuffer = fs.readFileSync(outputPath);
             
             // Cleanup
-            require('fs').unlinkSync(outputPath);
+            fs.unlinkSync(outputPath);
             
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
