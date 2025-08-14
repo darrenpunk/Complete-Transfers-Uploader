@@ -46,6 +46,15 @@ export default function PDFPreviewModal({
   
   const hasLowResLogos = logos.some(logo => logo.mimeType && logo.mimeType.startsWith('image/') && !logo.mimeType.includes('svg'));
 
+  // Check for CMYK colors in the uploaded logos
+  const hasCMYKColors = logos.some(logo => {
+    const svgColors = logo.svgColors as any;
+    if (svgColors?.colors && Array.isArray(svgColors.colors)) {
+      return svgColors.colors.some((color: any) => color.isCMYK === true);
+    }
+    return false;
+  });
+
   const preflightItems = [
     {
       icon: Layers,
@@ -68,8 +77,8 @@ export default function PDFPreviewModal({
     {
       icon: Palette,
       label: "Color Space",
-      value: "RGB colors detected",
-      status: "warning"
+      value: hasCMYKColors ? "CMYK colors detected" : "RGB colors detected",
+      status: hasCMYKColors ? "success" : "warning"
     }
   ];
 
