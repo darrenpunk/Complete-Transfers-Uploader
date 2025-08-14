@@ -685,7 +685,7 @@ export async function registerRoutes(app: express.Application) {
         });
         
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateId}_qty${project.quantity || 1}.pdf"`);
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
         res.send(pdfBuffer);
         return;
       }
