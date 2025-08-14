@@ -7,6 +7,7 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
+- **🔧 MULTI-LOGO PDF HANDLING**: Fixed issue where PDFs containing multiple logos were being embedded with entire viewBox, causing distortion. System now uses exact canvas dimensions for PDF embedding to match user's positioning on screen.
 - **🔧 CRITICAL PDF DIMENSION FIX**: Implemented proper PDF dimension detection that uses original PDF viewBox dimensions (97x97mm) instead of SVG content bounds (95x52.5mm). System now correctly detects PDF-derived SVGs and preserves the original document aspect ratio, preventing content distortion in output PDFs.
 - **🔧 CRITICAL ASPECT RATIO FIX**: Fixed logo distortion by implementing aspect ratio preservation in PDF embedding. Both `embedOriginalPDF` and `embedImageLogo` methods now maintain original aspect ratios, preventing squashing and stretching of logos in output PDFs.
 - **🔧 CRITICAL CONTENT BOUNDS FIX**: Fixed distortion issue by ensuring ALL files use actual content dimensions instead of document/viewBox dimensions. System now prioritizes calculateSVGContentBounds() for all non-AI-vectorized files, eliminating squashing and proportion issues.

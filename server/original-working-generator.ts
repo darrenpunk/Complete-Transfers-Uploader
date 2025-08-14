@@ -380,53 +380,24 @@ export class OriginalWorkingGenerator {
       // Calculate position
       const position = this.calculateOriginalPosition(element, templateSize, page);
       
-      // CRITICAL FIX: Maintain PDF aspect ratio to prevent squashing
-      // The original PDF has both logos, so we need to maintain its aspect ratio
-      const { width: originalPdfWidth, height: originalPdfHeight } = sourcePage.getSize();
-      const pdfAspectRatio = originalPdfWidth / originalPdfHeight;
-      
-      // Get canvas element dimensions
+      // CRITICAL: Use canvas dimensions directly without aspect ratio adjustment
+      // This matches what the user sees on the canvas
       const targetSize = this.calculateOriginalSize(element, templateSize, page);
-      const canvasAspectRatio = targetSize.width / targetSize.height;
       
-      // Calculate dimensions that maintain PDF aspect ratio within canvas bounds
-      let finalWidth: number, finalHeight: number;
-      
-      if (pdfAspectRatio > canvasAspectRatio) {
-        // PDF is wider - fit to width
-        finalWidth = targetSize.width;
-        finalHeight = targetSize.width / pdfAspectRatio;
-      } else {
-        // PDF is taller - fit to height
-        finalHeight = targetSize.height;
-        finalWidth = targetSize.height * pdfAspectRatio;
-      }
-      
-      // Center the logo within the canvas bounds if it's smaller
-      let offsetX = 0, offsetY = 0;
-      if (finalWidth < targetSize.width) {
-        offsetX = (targetSize.width - finalWidth) / 2;
-      }
-      if (finalHeight < targetSize.height) {
-        offsetY = (targetSize.height - finalHeight) / 2;
-      }
-      
-      console.log(`🎯 ASPECT RATIO PRESERVATION:`, {
-        originalPDF: `${originalPdfWidth.toFixed(1)}x${originalPdfHeight.toFixed(1)}`,
-        pdfAspectRatio: pdfAspectRatio.toFixed(3),
-        canvasSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
-        canvasAspectRatio: canvasAspectRatio.toFixed(3),
-        finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`,
-        centered: offsetX > 0 || offsetY > 0 ? 'YES' : 'NO'
+      console.log(`📊 DIRECT CANVAS EMBEDDING:`, {
+        canvasElementSize: `${element.width.toFixed(1)}x${element.height.toFixed(1)}mm`,
+        targetPDFSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}pts`,
+        description: 'Using exact canvas dimensions to match user positioning'
       });
       
-      console.log(`📍 Embedding original PDF at position: (${(position.x + offsetX).toFixed(1)}, ${(position.y + offsetY).toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
+      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
       
+      // Embed using exact canvas dimensions
       page.drawPage(embeddedPage, {
-        x: position.x + offsetX,
-        y: position.y + offsetY,
-        width: finalWidth,
-        height: finalHeight,
+        x: position.x,
+        y: position.y,
+        width: targetSize.width,
+        height: targetSize.height,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
