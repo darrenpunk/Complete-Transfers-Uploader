@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { PDFCMYKExtractor } from './pdf-cmyk-extractor';
+import { getExactCMYK } from './exact-cmyk-mapping';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -112,18 +113,19 @@ export class UniversalColorExtractor {
           if (uniqueRGBColors.has(roundedKey)) {
             uniqueRGBColors.get(roundedKey)!.count++;
           } else {
-            // For CMYK files, try to find original Pantone CMYK first, then fallback to approximation
+            // For CMYK files, try to find exact CMYK values first, then fallback to approximation
             let cmykValues: number[] | null = null;
             if (hasCMYKMarkers) {
-              // First try to find exact Pantone match
-              cmykValues = getOriginalCMYK(rPercent, gPercent, bPercent);
-              
-              // If no Pantone match, use RGB-to-CMYK approximation
-              if (!cmykValues) {
+              // First try exact mapping for known Pantone colors
+              const exactMapping = getExactCMYK(rPercent, gPercent, bPercent);
+              if (exactMapping) {
+                cmykValues = exactMapping.cmyk;
+                console.log(`🎯 EXACT MATCH: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → ${exactMapping.pantone} CMYK(${cmykValues.join(', ')})`);
+              } else {
+                // If no exact match, use RGB-to-CMYK approximation
                 cmykValues = this.rgbToCMYKApprox(values[0], values[1], values[2]);
+                console.log(`⚠️ Approximation: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → CMYK(${cmykValues.join(', ')})`);
               }
-              
-              console.log(`🎨 Color mapping: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → ${cmykValues ? `CMYK(${cmykValues.join(', ')})` : 'No match'}`);
             }
             
             uniqueRGBColors.set(roundedKey, {

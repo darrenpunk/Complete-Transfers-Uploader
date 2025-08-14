@@ -26,35 +26,41 @@ export class PDFCMYKExtractor {
     try {
       console.log('🎯 Attempting direct CMYK extraction from PDF...');
       
-      // Method 1: Extract PostScript operators with better pattern
-      const { stdout: postscriptOut } = await execAsync(`gs -dNODISPLAY -dBATCH -dNOPAUSE -q -c "(${pdfPath}) (r) file runpdfbegin 1 1 pdfpagecount { pdfgetpage pdfshowpage } for quit" 2>&1 | head -200`);
+      // Method 1: Convert PDF to PostScript and extract CMYK operators
+      const { stdout: postscriptContent } = await execAsync(`gs -dNODISPLAY -dBATCH -dNOPAUSE -sDEVICE=ps2write -sOutputFile=- "${pdfPath}" 2>/dev/null`);
       
-      console.log('📄 PostScript output preview:', postscriptOut.substring(0, 500));
+      console.log('📄 PostScript content length:', postscriptContent.length);
       
       const cmykColors: Map<string, PDFCMYKColor> = new Map();
       
-      // Look for CMYK operators in PostScript
-      const patterns = [
-        // Standard CMYK operators
-        /([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+k\s/gi,
-        /([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+K\s/gi,
-        // setcmykcolor operators
-        /([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+setcmykcolor/gi,
+      // Look for CMYK operators in PostScript output
+      const cmykPatterns = [
+        // Standard CMYK fill operators
+        /([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+k/g,
+        /([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+K/g,
+        // setcmykcolor operators  
+        /([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+setcmykcolor/g,
       ];
       
-      for (const pattern of patterns) {
+      for (const pattern of cmykPatterns) {
         let match;
-        while ((match = pattern.exec(postscriptOut)) !== null) {
+        while ((match = pattern.exec(postscriptContent)) !== null) {
           const [, c, m, y, k] = match;
           const cmykKey = `${c}-${m}-${y}-${k}`;
           
-          // Convert to percentages and validate
-          const cPercent = parseFloat(c) * 100;
-          const mPercent = parseFloat(m) * 100; 
-          const yPercent = parseFloat(y) * 100;
-          const kPercent = parseFloat(k) * 100;
+          // Parse and convert to percentages
+          const cVal = parseFloat(c);
+          const mVal = parseFloat(m);
+          const yVal = parseFloat(y);
+          const kVal = parseFloat(k);
           
-          // Only include valid CMYK values (0-100%)
+          // PostScript CMYK values are typically 0-1, convert to percentages
+          const cPercent = cVal <= 1 ? cVal * 100 : cVal;
+          const mPercent = mVal <= 1 ? mVal * 100 : mVal; 
+          const yPercent = yVal <= 1 ? yVal * 100 : yVal;
+          const kPercent = kVal <= 1 ? kVal * 100 : kVal;
+          
+          // Only include valid CMYK values
           if (cPercent >= 0 && cPercent <= 100 && 
               mPercent >= 0 && mPercent <= 100 && 
               yPercent >= 0 && yPercent <= 100 && 
@@ -64,10 +70,10 @@ export class PDFCMYKExtractor {
               cmykColors.get(cmykKey)!.frequency++;
             } else {
               cmykColors.set(cmykKey, {
-                c: cPercent,
-                m: mPercent,
-                y: yPercent,
-                k: kPercent,
+                c: Math.round(cPercent),
+                m: Math.round(mPercent),
+                y: Math.round(yPercent),
+                k: Math.round(kPercent),
                 frequency: 1
               });
             }
@@ -75,14 +81,24 @@ export class PDFCMYKExtractor {
         }
       }
       
-      // Convert to array and sort by frequency
-      const colors = Array.from(cmykColors.values()).sort((a, b) => b.frequency - a.frequency);
+      // Convert to array and sort by frequency, filter duplicates
+      const colors = Array.from(cmykColors.values())
+        .sort((a, b) => b.frequency - a.frequency)
+        .filter(color => {
+          // Filter out pure white and pure black unless they're the only colors
+          const isWhite = color.c === 0 && color.m === 0 && color.y === 0 && color.k === 0;
+          const isBlack = color.c === 0 && color.m === 0 && color.y === 0 && color.k === 100;
+          return !isWhite && !isBlack;
+        })
+        .slice(0, 10); // Limit to top 10 colors
       
       console.log(`✅ Direct PDF extraction: Found ${colors.length} unique CMYK colors`);
       if (colors.length > 0) {
-        colors.slice(0, 5).forEach((color, i) => {
-          console.log(`   Color ${i+1}: C:${color.c.toFixed(0)} M:${color.m.toFixed(0)} Y:${color.y.toFixed(0)} K:${color.k.toFixed(0)} (${color.frequency}x)`);
+        colors.forEach((color, i) => {
+          console.log(`   Direct Color ${i+1}: C:${color.c} M:${color.m} Y:${color.y} K:${color.k} (${color.frequency}x)`);
         });
+      } else {
+        console.log('⚠️ No CMYK operators found in PostScript output');
       }
       
       return colors;
