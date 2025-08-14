@@ -7,7 +7,8 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
-- **🎯 FINAL CMYK SOLUTION**: Fixed device-cmyk() compatibility issue with Inkscape by switching to UseCIEColor strategy. System now generates PDFs with proper CMYK color space for accurate print reproduction while maintaining visible content generation.
+- **🎯 FINAL CMYK SOLUTION**: Fixed device-cmyk() compatibility issue with Inkscape by switching to /LeaveColorUnchanged strategy. System now generates PDFs with proper CMYK color space for accurate print reproduction while maintaining visible content generation.
+- **🎨 EXACT COLOR MAPPING**: Added precise CMYK mappings for user's actual artwork colors: Navy rgb(17%, 17%, 43%) → CMYK(60,60,0,57) and Gold rgb(90%, 61%, 16%) → CMYK(0,33,82,10). System preserves original color intent through professional CMYK separation.
 - **🎨 COLOR PRESERVATION ARCHITECTURE**: Removed original PDF embedding for multi-logo PDFs. SVG conversion already maintains perfect color fidelity through NativeCMYKGenerator, CMYKSVGProcessor, and Inkscape/Ghostscript pipeline. This prevents viewBox distortion while preserving exact RGB/CMYK values.
 - **🔧 MULTI-LOGO PDF HANDLING**: Fixed issue where PDFs containing multiple logos were being embedded with entire viewBox, causing distortion. System now uses SVG with proper single-logo bounds and color preservation.
 - **🔧 CRITICAL PDF DIMENSION FIX**: Implemented proper PDF dimension detection that uses original PDF viewBox dimensions (97x97mm) instead of SVG content bounds (95x52.5mm). System now correctly detects PDF-derived SVGs and preserves the original document aspect ratio, preventing content distortion in output PDFs.

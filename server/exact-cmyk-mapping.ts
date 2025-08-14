@@ -36,17 +36,17 @@ export const EXACT_CMYK_MAPPINGS: CMYKMapping[] = [
     cmyk: [16, 72, 3, 0],
     pantone: "PANTONE 674 C"
   },
-  // PANTONE 715 C - Orange
+  // Navy Blue - From actual SVG file rgb(17.254639%, 17.254639%, 43.136597%)
   {
-    rgbPercent: [98, 73, 26], // Need to find actual RGB % from logs
-    cmyk: [1, 48, 76, 0],
-    pantone: "PANTONE 715 C"
+    rgbPercent: [17.25, 17.25, 43.14], // Exact values from uploaded SVG
+    cmyk: [60, 60, 0, 57], // Navy blue CMYK equivalent
+    pantone: "PANTONE 539 C"
   },
-  // Additional mapping for yellow color - need exact RGB values from logs
+  // Gold/Orange - From actual SVG file rgb(90.196228%, 60.784912%, 16.470337%)
   {
-    rgbPercent: [97, 91, 8], // Approximation for yellow
-    cmyk: [0, 15, 96, 5],
-    pantone: "PANTONE 200 C"
+    rgbPercent: [90.20, 60.78, 16.47], // Exact values from uploaded SVG
+    cmyk: [0, 33, 82, 10], // Gold/orange CMYK equivalent
+    pantone: "PANTONE 124 C"
   }
 ];
 
