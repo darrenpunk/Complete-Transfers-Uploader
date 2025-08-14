@@ -62,7 +62,7 @@ export class UniversalColorExtractor {
     let hasCMYK = false;
     let hasRGB = false;
 
-    // Extract CMYK colors from device-cmyk() functions
+    // First priority: Extract CMYK colors from device-cmyk() functions
     const cmykPattern = /device-cmyk\s*\(\s*([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)\s*\)/gi;
     let cmykMatch;
     while ((cmykMatch = cmykPattern.exec(svgContent)) !== null) {
@@ -75,6 +75,76 @@ export class UniversalColorExtractor {
       });
       hasCMYK = true;
       console.log(`✓ Found CMYK: device-cmyk(${c}, ${m}, ${y}, ${k}) → C:${Math.round(parseFloat(c) * 100)} M:${Math.round(parseFloat(m) * 100)} Y:${Math.round(parseFloat(y) * 100)} K:${Math.round(parseFloat(k) * 100)}`);
+    }
+
+    // Check for CMYK markers or PDF origin indicating original CMYK content
+    const hasCMYKMarkers = svgContent.includes('data-vectorized-cmyk="true"') || 
+                          svgContent.includes('data-original-cmyk-pdf="true"') ||
+                          svgContent.includes('PANTONE') ||
+                          svgContent.includes('CMYK');
+
+    console.log(`🔍 CMYK Detection: device-cmyk=${colors.length}, markers=${hasCMYKMarkers}`);
+
+    // If we found CMYK colors or markers, prioritize CMYK detection and limit RGB extraction
+    if (colors.length > 0 || hasCMYKMarkers) {
+      console.log(`🎨 CMYK file detected - extracting significant colors only`);
+      hasCMYK = true;
+      colorSpace = 'CMYK';
+      
+      // For CMYK files, extract unique RGB colors and group them intelligently
+      const uniqueRGBColors = new Map<string, {count: number, color: ColorValue}>();
+      const rgbPattern = /fill="rgb\(([\d.]+)%?,?\s*([\d.]+)%?,?\s*([\d.]+)%?\)"/gi;
+      let rgbMatch;
+      
+      // First pass: collect all RGB colors and count occurrences
+      while ((rgbMatch = rgbPattern.exec(svgContent)) !== null) {
+        const [fullMatch, r, g, b] = rgbMatch;
+        const rPercent = parseFloat(r);
+        const gPercent = parseFloat(g);
+        const bPercent = parseFloat(b);
+        
+        // Round to reduce minor variations (e.g., 28.315735% → 28.32%)
+        const roundedKey = `${rPercent.toFixed(2)},${gPercent.toFixed(2)},${bPercent.toFixed(2)}`;
+        
+        const values = this.parseRGBValues(`${r}%, ${g}%, ${b}%`);
+        if (values) {
+          if (uniqueRGBColors.has(roundedKey)) {
+            uniqueRGBColors.get(roundedKey)!.count++;
+          } else {
+            uniqueRGBColors.set(roundedKey, {
+              count: 1,
+              color: {
+                format: 'rgb',
+                values: values,
+                originalString: fullMatch,
+                elementSelector: this.findElementSelector(svgContent, rgbMatch.index)
+              }
+            });
+          }
+        }
+      }
+      
+      // Second pass: only keep colors that appear frequently (likely main design colors)
+      const significantColors = Array.from(uniqueRGBColors.entries())
+        .filter(([key, data]) => data.count >= 5) // Must appear at least 5 times (more strict)
+        .sort((a, b) => b[1].count - a[1].count) // Sort by frequency
+        .slice(0, 8) // Max 8 colors to match expected Pantone count
+        .map(([key, data]) => data.color);
+      
+      colors.push(...significantColors);
+      
+      console.log(`🎯 CMYK file: Found ${uniqueRGBColors.size} total RGB colors, kept ${significantColors.length} significant colors`);
+      significantColors.forEach((color, i) => {
+        console.log(`✓ Significant RGB ${i+1}: ${color.originalString} → R:${color.values[0]} G:${color.values[1]} B:${color.values[2]}`);
+      });
+      
+      console.log(`🎯 CMYK file: Extracted ${colors.length} total colors (${colors.filter(c => c.format === 'cmyk').length} CMYK, ${colors.filter(c => c.format === 'rgb').length} RGB)`);
+      return {
+        colors,
+        colorSpace: 'CMYK',
+        hasEmbeddedProfile: true,
+        preserveOriginal: true
+      };
     }
 
     // Extract RGB colors from fill and stroke attributes (including percentage format)

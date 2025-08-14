@@ -1202,6 +1202,7 @@ export async function registerRoutes(app: express.Application) {
             
             // UNIVERSAL COLOR EXTRACTION - Preserve exact original values from ANY file
             console.log(`🎨 UNIVERSAL COLOR EXTRACTION: Extracting original colors from ${finalFilename}`);
+            const { UniversalColorExtractor } = await import('./universal-color-extractor');
             const universalColors = await UniversalColorExtractor.extractColors(svgPath, finalMimeType);
             
             // Get traditional SVG analysis for stroke/font data 
@@ -1209,43 +1210,32 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📊 SVG analysis: ${analysis.colors?.length || 0} colors detected`);
             console.log(`🎯 Universal extraction: ${universalColors.colors.length} original colors preserved`);
             
-            // REPLACE color analysis with universal extraction results
-            if (universalColors.colors.length > 0) {
-              console.log(`✅ USING UNIVERSAL COLOR EXTRACTION: ${universalColors.colors.length} original colors`);
-              
-              // Convert universal colors to the expected format
-              analysis.colors = universalColors.colors.map((color, index) => ({
-                id: `color_${index}`,
-                originalColor: color.format === 'rgb' ? 
-                  `rgb(${color.values[0]}, ${color.values[1]}, ${color.values[2]})` :
-                  color.originalString,
-                originalFormat: color.originalString,
-                cmykColor: color.format === 'cmyk' ? 
-                  UniversalColorExtractor.formatColorForDisplay(color) :
-                  (color.format === 'rgb' ? 
-                    `R:${color.values[0]} G:${color.values[1]} B:${color.values[2]}` :
-                    UniversalColorExtractor.formatColorForDisplay(color)),
-                elementType: color.elementSelector?.split(':')[0] || 'path',
-                attribute: 'fill',
-                selector: color.elementSelector || `path:nth-of-type(${index + 1})`,
-                isCMYK: color.format === 'cmyk',
-                isExactMatch: true // Always exact since extracted from original
-              }));
-              
-              // Mark as CMYK preserved if we found CMYK colors
-              if (universalColors.colorSpace === 'CMYK' || universalColors.hasEmbeddedProfile) {
-                (file as any).isCMYKPreserved = true;
-                console.log(`🎨 CMYK colors detected - marking file as CMYK preserved`);
-              }
-            } else {
-              console.log(`⚠️ No colors extracted by universal extractor, falling back to traditional analysis`);
-              
-              // Legacy fallback for files without extractable colors
-              const { IllustratorCMYKMapper } = await import('./illustrator-cmyk-mapper');
-              if (analysis.colors && analysis.colors.length > 0) {
-                console.log(`🔄 FALLBACK: Applying legacy Illustrator mapping to ${analysis.colors.length} colors`);
-                analysis.colors = IllustratorCMYKMapper.processSVGColors(analysis.colors);
-              }
+            // ALWAYS use universal extraction results (replace legacy analysis)
+            console.log(`✅ USING UNIVERSAL COLOR EXTRACTION: ${universalColors.colors.length} original colors`);
+            
+            // Convert universal colors to the expected format
+            analysis.colors = universalColors.colors.map((color, index) => ({
+              id: `color_${index}`,
+              originalColor: color.format === 'rgb' ? 
+                `rgb(${color.values[0]}, ${color.values[1]}, ${color.values[2]})` :
+                color.originalString,
+              originalFormat: color.originalString,
+              cmykColor: color.format === 'cmyk' ? 
+                UniversalColorExtractor.formatColorForDisplay(color) :
+                (color.format === 'rgb' ? 
+                  `R:${color.values[0]} G:${color.values[1]} B:${color.values[2]}` :
+                  UniversalColorExtractor.formatColorForDisplay(color)),
+              elementType: color.elementSelector?.split(':')[0] || 'path',
+              attribute: 'fill',
+              selector: color.elementSelector || `path:nth-of-type(${index + 1})`,
+              isCMYK: color.format === 'cmyk',
+              isExactMatch: true // Always exact since extracted from original
+            }));
+            
+            // Mark as CMYK preserved if we found CMYK colors
+            if (universalColors.colorSpace === 'CMYK' || universalColors.hasEmbeddedProfile) {
+              (file as any).isCMYKPreserved = true;
+              console.log(`🎨 CMYK colors detected - marking file as CMYK preserved`);
             }
             
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
