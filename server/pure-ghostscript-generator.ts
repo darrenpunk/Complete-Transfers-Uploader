@@ -75,64 +75,21 @@ export class PureGhostscriptGenerator {
   private async createCompletePostScriptPDF(logoData: any[], data: PureCMYKGenerationData): Promise<string> {
     const outputPath = path.join(process.cwd(), 'uploads', `pure_gs_complete_${Date.now()}.pdf`);
     
-    // Create comprehensive PostScript file
-    const psPath = path.join(process.cwd(), 'uploads', `complete_design_${Date.now()}.ps`);
-    
-    const pageWidth = data.templateSize.width * 2.834645669;  // mm to points
-    const pageHeight = data.templateSize.height * 2.834645669;
-    
-    let psContent = `%!PS-Adobe-3.0
-%%Pages: 2
-%%BoundingBox: 0 0 ${pageWidth.toFixed(0)} ${pageHeight.toFixed(0)}
-%%DocumentProcessColors: Cyan Magenta Yellow Black
-
-`;
-
-    // Page 1: Logo on transparent background
-    psContent += `
-%%Page: 1 1
-gsave
-${this.generateLogoPositioning(logoData, pageWidth, pageHeight, false)}
-grestore
-showpage
-
-`;
-
-    // Page 2: Logo on garment color background
-    psContent += `
-%%Page: 2 2
-gsave
-% Fill page with garment color
-${this.getGarmentColorCMYK(data.garmentColor)} setcmykcolor
-newpath
-0 0 moveto
-${pageWidth} 0 lineto
-${pageWidth} ${pageHeight} lineto
-0 ${pageHeight} lineto
-closepath
-fill
-
-${this.generateLogoPositioning(logoData, pageWidth, pageHeight, true)}
-grestore
-showpage
-
-`;
-
-    psContent += `%%EOF\n`;
-    
-    await fs.promises.writeFile(psPath, psContent);
-    console.log(`📄 Complete PostScript file created: ${psPath}`);
-    
-    // Convert to CMYK PDF with Ghostscript
-    const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${psPath}"`;
-    await execAsync(gsCmd);
-    
-    // Cleanup PostScript
-    if (fs.existsSync(psPath)) {
-      fs.unlinkSync(psPath);
+    if (logoData.length === 0) {
+      throw new Error('No CMYK logos to embed');
     }
     
-    console.log(`✅ Complete CMYK PDF created: ${outputPath}`);
+    // For now, just return the first logo's CMYK PDF directly
+    // This preserves exact CMYK colors without any conversion
+    const firstLogo = logoData[0];
+    
+    console.log(`📄 Using direct CMYK logo: ${firstLogo.path}`);
+    
+    // Copy the CMYK PDF to output location
+    const logoBuffer = fs.readFileSync(firstLogo.path);
+    fs.writeFileSync(outputPath, logoBuffer);
+    
+    console.log(`✅ Direct CMYK PDF preserved: ${outputPath} (${logoBuffer.length} bytes)`);
     return outputPath;
   }
   
@@ -149,31 +106,12 @@ showpage
       const height = element.height * 2.834645669;
       
       positioning += `
-% Logo ${index + 1} positioning
+% Embed actual CMYK PDF logo ${index + 1}
 gsave
 ${x} ${y} translate
 ${width} ${height} scale
-
-% Navy CMYK color
-0.60 0.60 0.00 0.57 setcmykcolor
-newpath
-0 0 moveto
-1 0 lineto
-1 1 lineto
-0 1 lineto
-closepath
-fill
-
-% Gold CMYK color accent
-0.00 0.33 0.82 0.10 setcmykcolor
-newpath
-0.2 0.2 moveto
-0.8 0.2 lineto
-0.8 0.8 lineto
-0.2 0.8 lineto
-closepath
-fill
-
+% Include the actual CMYK PDF content
+(${item.path}) run
 grestore
 `;
 
@@ -183,9 +121,7 @@ grestore
 /Helvetica findfont 12 scalefont setfont
 0 0 0 1 setcmykcolor
 ${x} ${y - 20} moveto
-(Navy: C:60 M:60 Y:0 K:57) show
-${x} ${y - 35} moveto
-(Gold: C:0 M:33 Y:82 K:10) show
+(CMYK Logo: ${index + 1}) show
 `;
       }
     });
