@@ -1727,7 +1727,29 @@ export async function registerRoutes(app: express.Application) {
   app.get('/api/projects/:projectId/logos', async (req, res) => {
     try {
       const logos = await storage.getLogosByProject(req.params.projectId);
-      res.json(logos);
+      
+      // Apply Illustrator CMYK mapping to logo colors when retrieving
+      const { IllustratorCMYKMapper } = await import('./illustrator-cmyk-mapper');
+      const processedLogos = logos.map(logo => {
+        if (logo.svgColors && Array.isArray(logo.svgColors) && logo.svgColors.length > 0) {
+          // Check if svgColors has the new format or old format
+          const colors = (logo.svgColors as any).colors || logo.svgColors;
+          if (Array.isArray(colors)) {
+            console.log(`🎨 Applying Illustrator CMYK mapping to ${colors.length} colors for logo ${logo.id}`);
+            const mappedColors = IllustratorCMYKMapper.processSVGColors(colors);
+            return {
+              ...logo,
+              svgColors: {
+                ...(typeof logo.svgColors === 'object' ? logo.svgColors : {}),
+                colors: mappedColors
+              }
+            };
+          }
+        }
+        return logo;
+      });
+      
+      res.json(processedLogos);
     } catch (error) {
       res.status(500).json({ error: 'Failed to get logos' });
     }
