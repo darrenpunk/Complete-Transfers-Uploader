@@ -380,94 +380,57 @@ export class OriginalWorkingGenerator {
       // Calculate position
       const position = this.calculateOriginalPosition(element, templateSize, page);
       
-      // CRITICAL FIX: Use content bounds from SVG instead of embedding entire PDF viewBox
-      // This prevents distortion by using the actual logo content dimensions
+      // CRITICAL FIX: Maintain PDF aspect ratio to prevent squashing
+      // The original PDF has both logos, so we need to maintain its aspect ratio
       const { width: originalPdfWidth, height: originalPdfHeight } = sourcePage.getSize();
+      const pdfAspectRatio = originalPdfWidth / originalPdfHeight;
       
-      // Get the content bounds from the SVG version to determine actual logo area
-      const svgPath = element.filePath;
-      if (!svgPath || !fs.existsSync(svgPath)) {
-        console.warn(`⚠️ SVG file path not found: ${svgPath}, using canvas dimensions directly`);
-        // Fallback to using canvas dimensions directly
-        const targetSize = this.calculateOriginalSize(element, templateSize, page);
-        
-        console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
-        
-        page.drawPage(embeddedPage, {
-          x: position.x,
-          y: position.y,
-          width: targetSize.width,
-          height: targetSize.height,
-          rotate: element.rotation ? degrees(element.rotation) : undefined,
-        });
-        
-        console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
-        return;
-      }
-      
-      const svgContent = fs.readFileSync(svgPath, 'utf-8');
-      
-      // Calculate content bounds from the SVG to get the actual logo dimensions
-      const contentBounds = calculateSVGContentBounds(svgContent);
-      
-      if (!contentBounds) {
-        console.warn(`⚠️ Could not calculate content bounds, falling back to canvas dimensions`);
-        // Fallback to using canvas dimensions directly
-        const targetSize = this.calculateOriginalSize(element, templateSize, page);
-        
-        console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
-        
-        page.drawPage(embeddedPage, {
-          x: position.x,
-          y: position.y,
-          width: targetSize.width,
-          height: targetSize.height,
-          rotate: element.rotation ? degrees(element.rotation) : undefined,
-        });
-        
-        console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
-        return;
-      }
-      const contentAspectRatio = contentBounds.width / contentBounds.height;
-      
-      // Use canvas element dimensions but maintain content aspect ratio
+      // Get canvas element dimensions
       const targetSize = this.calculateOriginalSize(element, templateSize, page);
-      
-      // Maintain content aspect ratio within canvas bounds
-      let finalWidth: number, finalHeight: number;
       const canvasAspectRatio = targetSize.width / targetSize.height;
       
-      if (contentAspectRatio > canvasAspectRatio) {
-        // Content is wider - fit to width
+      // Calculate dimensions that maintain PDF aspect ratio within canvas bounds
+      let finalWidth: number, finalHeight: number;
+      
+      if (pdfAspectRatio > canvasAspectRatio) {
+        // PDF is wider - fit to width
         finalWidth = targetSize.width;
-        finalHeight = targetSize.width / contentAspectRatio;
+        finalHeight = targetSize.width / pdfAspectRatio;
       } else {
-        // Content is taller - fit to height  
+        // PDF is taller - fit to height
         finalHeight = targetSize.height;
-        finalWidth = finalHeight * contentAspectRatio;
+        finalWidth = targetSize.height * pdfAspectRatio;
       }
       
-      console.log(`🔧 CONTENT BOUNDS FIX:`, {
-        originalPdfSize: `${originalPdfWidth.toFixed(1)}x${originalPdfHeight.toFixed(1)}`,
-        contentBounds: `${contentBounds.width.toFixed(1)}x${contentBounds.height.toFixed(1)}`,
-        contentAspectRatio: contentAspectRatio.toFixed(3),
+      // Center the logo within the canvas bounds if it's smaller
+      let offsetX = 0, offsetY = 0;
+      if (finalWidth < targetSize.width) {
+        offsetX = (targetSize.width - finalWidth) / 2;
+      }
+      if (finalHeight < targetSize.height) {
+        offsetY = (targetSize.height - finalHeight) / 2;
+      }
+      
+      console.log(`🎯 ASPECT RATIO PRESERVATION:`, {
+        originalPDF: `${originalPdfWidth.toFixed(1)}x${originalPdfHeight.toFixed(1)}`,
+        pdfAspectRatio: pdfAspectRatio.toFixed(3),
         canvasSize: `${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`,
+        canvasAspectRatio: canvasAspectRatio.toFixed(3),
         finalSize: `${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`,
-        preservedContentRatio: 'YES'
+        centered: offsetX > 0 || offsetY > 0 ? 'YES' : 'NO'
       });
       
-      console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
+      console.log(`📍 Embedding original PDF at position: (${(position.x + offsetX).toFixed(1)}, ${(position.y + offsetY).toFixed(1)}) size: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
       
-      // Draw the embedded PDF page with content-preserving dimensions
       page.drawPage(embeddedPage, {
-        x: position.x,
-        y: position.y,
+        x: position.x + offsetX,
+        y: position.y + offsetY,
         width: finalWidth,
         height: finalHeight,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
+      console.log(`✅ Successfully embedded original PDF with aspect ratio preservation: ${path.basename(pdfPath)}`);
       
     } catch (error) {
       console.error(`❌ Failed to embed original PDF:`, error);
