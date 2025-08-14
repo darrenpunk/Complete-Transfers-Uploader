@@ -678,22 +678,43 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Native CMYK Generator for perfect color preservation');
-        const { NativeCMYKGenerator } = await import('./native-cmyk-generator');
-        const generator = new NativeCMYKGenerator();
-        const pdfBuffer = await generator.generatePDF({
-          canvasElements,
-          logos: logosObject,
-          templateSize,
-          garmentColor: project.garmentColor,
-          projectName: project.name,
-          quantity: project.quantity || 1
-        });
+        console.log('🎨 CMYK content detected - Using Direct CMYK PDF Embedding (bypassing pdf-lib)');
         
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
-        res.send(pdfBuffer);
-        return;
+        // Find the first CMYK logo and use it directly 
+        const outputPath = path.join(process.cwd(), 'uploads', `direct_cmyk_${Date.now()}.pdf`);
+        
+        for (const element of canvasElements) {
+          const logo = logosObject[element.logoId];
+          if (logo && logo.svgColors?.colors.some((c: any) => c.isCMYK)) {
+            const logoFile = path.join(process.cwd(), logo.url.replace('/uploads/', 'uploads/'));
+            
+            console.log(`🔧 Creating direct CMYK PDF from: ${logo.originalName}`);
+            
+            // Convert to CMYK PDF directly - this preserves exact colors
+            const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_direct_${Date.now()}.pdf`);
+            await execAsync(`inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${logoFile}"`);
+            await execAsync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${tempPdfPath}"`);
+            
+            // Cleanup temp
+            if (require('fs').existsSync(tempPdfPath)) {
+              require('fs').unlinkSync(tempPdfPath);
+            }
+            
+            console.log(`✅ Direct CMYK PDF created: ${outputPath}`);
+            
+            const cmykBuffer = require('fs').readFileSync(outputPath);
+            
+            // Cleanup
+            require('fs').unlinkSync(outputPath);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
+            res.send(cmykBuffer);
+            return;
+          }
+        }
+        
+        throw new Error('No CMYK logo found for direct conversion');
       }
 
       console.log('📦 Using OriginalWorkingGenerator for RGB content...');
