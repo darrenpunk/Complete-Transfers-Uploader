@@ -266,63 +266,17 @@ export class OriginalWorkingGenerator {
     templateSize: any
   ): Promise<void> {
     try {
-      // CRITICAL: Check if this is a PDF that was converted to SVG for preview
-      // If so, use the ORIGINAL PDF file to preserve CMYK colors
-      if (logo.mimeType === 'image/svg+xml' && logo.originalName?.toLowerCase().endsWith('.pdf')) {
-        // Find the original PDF file
-        const originalPdfName = logo.originalName;
-        const uploadDir = path.resolve(process.cwd(), 'uploads');
-        
-        // Look for the original PDF file in uploads directory
-        const files = fs.readdirSync(uploadDir);
-        console.log(`🔍 Looking for original PDF. Original name: ${originalPdfName}, SVG filename: ${logo.filename}`);
-        
-        const originalPdfFile = files.find(file => {
-          // First try exact match with original name
-          if (file === originalPdfName) {
-            console.log(`✅ Found exact match for original PDF: ${file}`);
-            return true;
-          }
-          
-          // When PDF is uploaded, it's saved with a hash filename (no extension)
-          // and then converted to SVG with the same hash + .svg extension
-          // Example: uploaded PDF -> 1bcf41d24b99e87adb8cd2fe3c60287b (no extension)
-          //          SVG version -> 1bcf41d24b99e87adb8cd2fe3c60287b.svg
-          
-          const svgBaseName = logo.filename.replace('.svg', '');
-          
-          console.log(`🔍 Checking file: ${file}`);
-          console.log(`🔍 SVG base name: ${svgBaseName}`);
-          
-          // Check if this file is the original uploaded PDF (same hash, no extension)
-          if (file === svgBaseName) {
-            console.log(`✅ Found original uploaded PDF file: ${file} (matches SVG base)`);
-            return true;
-          }
-          
-          // Also check PDF files with the same base name
-          if (file.endsWith('.pdf')) {
-            const pdfBaseName = path.basename(file, '.pdf');
-            if (pdfBaseName === svgBaseName) {
-              console.log(`✅ Found PDF file with matching base: ${file}`);
-              return true;
-            }
-          }
-          
-          return false;
-        });
-        
-        console.log(`🔍 Found ${files.filter(f => f.endsWith('.pdf')).length} PDF files in uploads. Match result: ${originalPdfFile || 'none'}`);
-        
-        if (originalPdfFile) {
-          const originalPdfPath = path.join(uploadDir, originalPdfFile);
-          console.log(`🎯 USING ORIGINAL PDF: ${originalPdfFile} instead of converted SVG ${logo.filename}`);
-          await this.embedOriginalPDF(page, element, originalPdfPath, templateSize);
-          return;
-        } else {
-          console.warn(`⚠️ Original PDF not found for ${logo.filename}, falling back to SVG`);
-        }
-      }
+      // IMPORTANT: We no longer use original PDF embedding for multi-logo PDFs
+      // The SVG conversion already preserves CMYK colors correctly through:
+      // 1. NativeCMYKGenerator for exact CMYK preservation
+      // 2. CMYKSVGProcessor fallback for enhanced CMYK processing
+      // 3. Inkscape + Ghostscript pipeline for color space conversion
+      //
+      // Using the original PDF would embed the entire page with multiple logos,
+      // causing distortion and scaling issues. The SVG version has the correct
+      // single-logo bounds and maintains color fidelity.
+      
+      console.log(`🎨 Using SVG with color preservation for: ${logo.filename}`);
       
       const logoPath = path.resolve(process.cwd(), 'uploads', logo.filename);
       
