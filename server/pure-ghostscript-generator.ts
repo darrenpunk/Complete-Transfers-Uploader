@@ -1,4 +1,7 @@
-import { execAsync } from './utils/shell';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+
+const execAsync = promisify(exec);
 import * as fs from 'fs';
 import * as path from 'path';
 
