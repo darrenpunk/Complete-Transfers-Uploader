@@ -7,11 +7,12 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
+- **🔧 CRITICAL CONTENT BOUNDS FIX**: Fixed distortion issue by ensuring ALL files use actual content dimensions instead of document/viewBox dimensions. System now prioritizes calculateSVGContentBounds() for all non-AI-vectorized files, eliminating squashing and proportion issues.
+- **✅ ORIGINAL PDF PRESERVATION**: Implemented direct original PDF embedding in output PDFs, bypassing SVG conversion entirely to maintain perfect CMYK color values and content integrity.
+- **🎨 PDF PREVIEW CMYK DETECTION**: Updated PDF preview modal to correctly detect and display "CMYK colors detected" status matching the sidebar preflight checks.
 - **🎯 COLOR ANALYSIS REMOVED**: Completely removed the color analysis panel from frontend interface to focus solely on PDF output color preservation.
 - **✅ EXACT CMYK MAPPING**: Implemented exact-cmyk-mapping.ts with precise RGB-to-Pantone CMYK lookup table for perfect color matching (C:71 M:1 Y:5 K:0 for PANTONE 306 C).
-- **🎨 PDF COLOR PRESERVATION**: Enhanced NativeCMYKGenerator to use exact CMYK values in PostScript generation, ensuring PDF output contains identical color values as original files.
 - **🔧 TRUE CMYK OUTPUT**: System now generates PDFs with native CMYK color space commands, preserving exact Pantone values throughout the entire PDF generation pipeline.
-- **📊 PRODUCTION FOCUS**: Shifted from UI display of colors to ensuring final PDF deliverables maintain perfect color fidelity for professional printing.
 
 ## Previous Changes (August 13, 2025)
 - **🎨 COMPLETE CMYK PRESERVATION SYSTEM**: Implemented comprehensive CMYK color preservation with CMYKSVGProcessor that converts RGB representations back to device-cmyk format for true color preservation in PDF output.
