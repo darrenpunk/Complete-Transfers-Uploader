@@ -33,12 +33,25 @@ export class NativeCMYKGenerator {
       
       for (const element of data.canvasElements) {
         const logo = data.logos[element.logoId];
-        if (!logo) continue;
+        if (!logo) {
+          console.log(`⚠️ No logo found for element ${element.logoId}`);
+          continue;
+        }
+
+        console.log(`🔍 Checking logo: ${logo.originalName}`);
+        console.log(`📊 Logo colors:`, logo.svgColors?.colors?.map(c => ({ isCMYK: c.isCMYK, color: c.originalColor })));
 
         if (logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)) {
           console.log(`🎨 Creating CMYK PDF for: ${logo.originalName}`);
-          const cmykPdfPath = await this.createIndividualCMYKPDF(logo, element);
-          cmykPdfPaths.push(cmykPdfPath);
+          try {
+            const cmykPdfPath = await this.createIndividualCMYKPDF(logo, element);
+            cmykPdfPaths.push(cmykPdfPath);
+            console.log(`✅ CMYK PDF created and added to paths: ${cmykPdfPath}`);
+          } catch (error) {
+            console.error(`❌ Failed to create CMYK PDF for ${logo.originalName}:`, error);
+          }
+        } else {
+          console.log(`📄 Logo ${logo.originalName} has no CMYK colors, skipping individual PDF creation`);
         }
       }
       
@@ -200,9 +213,17 @@ showpage
     const outputPath = path.join(process.cwd(), 'uploads', `native_cmyk_final_${Date.now()}.pdf`);
     
     if (logoPaths.length === 0) {
-      console.log(`📄 No CMYK logos to embed, using template only`);
-      const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${templatePath}"`;
+      console.log(`📄 No CMYK logos to embed, creating logo overlay anyway for positioning`);
+      // Still create overlay with CMYK color rectangles for testing
+      const overlayPsPath = await this.createLogoOverlayPostScript([], data);
+      const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${templatePath}" "${overlayPsPath}"`;
       await execAsync(gsCmd);
+      
+      // Cleanup overlay
+      if (fsSync.existsSync(overlayPsPath)) {
+        fsSync.unlinkSync(overlayPsPath);
+      }
+      
       return outputPath;
     }
     
@@ -247,13 +268,14 @@ showpage
 gsave
 `;
 
-      // Position each logo
+      // Position each logo (create CMYK rectangles even if no PDF paths)
       let logoIndex = 0;
       for (const element of data.canvasElements) {
         const logo = data.logos[element.logoId];
-        if (!logo || !logo.svgColors?.colors.some((c: any) => c.isCMYK)) continue;
+        if (!logo) continue;
 
-        if (logoIndex < logoPaths.length) {
+        // Always create CMYK colored rectangles for any logo
+        {
           // Convert position from mm to points
           const x = element.x * 2.834645669;
           const y = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
