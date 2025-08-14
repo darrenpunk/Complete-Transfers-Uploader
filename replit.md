@@ -7,10 +7,11 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
-- **🔧 CRITICAL FILE HANDLING FIX**: Fixed issue where CMYK-converted PDFs (11,250 bytes) were being overwritten by RGB versions (9,705 bytes). System now correctly preserves Ghostscript-generated CMYK PDFs throughout the embedding process with proper file size verification.
-- **🎯 FINAL CMYK SOLUTION**: Fixed device-cmyk() compatibility issue with Inkscape by switching to /LeaveColorUnchanged strategy. System now generates PDFs with proper CMYK color space for accurate print reproduction while maintaining visible content generation.
+- **🚨 CRITICAL DISCOVERY**: pdf-lib library fundamentally incompatible with CMYK preservation - converts all CMYK content to RGB regardless of input format. User requirement: NO color conversion cycles, preserve original RGB/CMYK values exactly.
+- **✅ DIRECT CMYK SUCCESS**: Successfully created individual CMYK PDFs (11,250 bytes) using Inkscape + Ghostscript pipeline, but pdf-lib converts them back to RGB in final output.
+- **🔧 HYBRID APPROACH FAILED**: Attempted to feed CMYK PDFs to original working generator, but pdf-lib still converts to RGB in final step.
+- **🎯 NEXT APPROACH**: Must create pure Ghostscript PDF generation system that bypasses pdf-lib entirely for true CMYK preservation.
 - **🎨 EXACT COLOR MAPPING**: Added precise CMYK mappings for user's actual artwork colors: Navy rgb(17%, 17%, 43%) → CMYK(60,60,0,57) and Gold rgb(90%, 61%, 16%) → CMYK(0,33,82,10). System preserves original color intent through professional CMYK separation.
-- **🎨 COLOR PRESERVATION ARCHITECTURE**: Removed original PDF embedding for multi-logo PDFs. SVG conversion already maintains perfect color fidelity through NativeCMYKGenerator, CMYKSVGProcessor, and Inkscape/Ghostscript pipeline. This prevents viewBox distortion while preserving exact RGB/CMYK values.
 - **🔧 MULTI-LOGO PDF HANDLING**: Fixed issue where PDFs containing multiple logos were being embedded with entire viewBox, causing distortion. System now uses SVG with proper single-logo bounds and color preservation.
 - **🔧 CRITICAL PDF DIMENSION FIX**: Implemented proper PDF dimension detection that uses original PDF viewBox dimensions (97x97mm) instead of SVG content bounds (95x52.5mm). System now correctly detects PDF-derived SVGs and preserves the original document aspect ratio, preventing content distortion in output PDFs.
 - **🔧 CRITICAL ASPECT RATIO FIX**: Fixed logo distortion by implementing aspect ratio preservation in PDF embedding. Both `embedOriginalPDF` and `embedImageLogo` methods now maintain original aspect ratios, preventing squashing and stretching of logos in output PDFs.

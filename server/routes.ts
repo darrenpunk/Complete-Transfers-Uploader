@@ -678,65 +678,20 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using CMYK-Preserved Original Working Generator');
+        console.log('🎨 CMYK content detected - Using Pure Ghostscript Generator (NO pdf-lib)');
         
-        // Pre-convert CMYK logos to CMYK PDFs
-        const cmykLogoPaths: { [key: string]: string } = {};
-        
-        for (const element of canvasElements) {
-          const logo = logosObject[element.logoId];
-          if (logo && logo.svgColors?.colors.some((c: any) => c.isCMYK)) {
-            const logoFile = path.join(process.cwd(), logo.url.replace('/uploads/', 'uploads/'));
-            const cmykPdfPath = path.join(process.cwd(), 'uploads', `cmyk_preserved_${Date.now()}_${logo.id}.pdf`);
-            
-            console.log(`🔧 Pre-converting CMYK logo: ${logo.originalName}`);
-            
-            // Create CMYK PDF version
-            const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_cmyk_${Date.now()}.pdf`);
-            await execAsync(`inkscape --export-type=pdf --export-pdf-version=1.5 --export-text-to-path --export-filename="${tempPdfPath}" "${logoFile}"`);
-            await execAsync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${cmykPdfPath}" "${tempPdfPath}"`);
-            
-            // Cleanup temp and store CMYK path
-            if (fs.existsSync(tempPdfPath)) {
-              fs.unlinkSync(tempPdfPath);
-            }
-            
-            cmykLogoPaths[logo.id] = cmykPdfPath;
-            console.log(`✅ CMYK logo preserved: ${cmykPdfPath}`);
-          }
-        }
-        
-        // Now use the original working generator with CMYK PDFs
-        const { OriginalWorkingGenerator } = await import('./original-working-generator');
-        const generator = new OriginalWorkingGenerator();
-        
-        // Temporarily replace logo URLs with CMYK PDF paths
-        const modifiedLogos = { ...logosObject };
-        for (const [logoId, cmykPath] of Object.entries(cmykLogoPaths)) {
-          if (modifiedLogos[logoId]) {
-            modifiedLogos[logoId] = {
-              ...modifiedLogos[logoId],
-              url: cmykPath.replace(process.cwd(), ''),
-              isCMYKPreserved: true
-            };
-          }
-        }
+        // Use pure Ghostscript approach that completely bypasses pdf-lib
+        const { PureGhostscriptGenerator } = await import('./pure-ghostscript-generator');
+        const generator = new PureGhostscriptGenerator();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
-          logos: Object.values(modifiedLogos),
+          logos: logosObject,
           templateSize,
           garmentColor: project.garmentColor,
           projectName: project.name,
           quantity: project.quantity || 1
         });
-        
-        // Cleanup CMYK temp files
-        for (const cmykPath of Object.values(cmykLogoPaths)) {
-          if (fs.existsSync(cmykPath)) {
-            fs.unlinkSync(cmykPath);
-          }
-        }
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
