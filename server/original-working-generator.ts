@@ -386,6 +386,25 @@ export class OriginalWorkingGenerator {
       
       // Get the content bounds from the SVG version to determine actual logo area
       const svgPath = element.filePath;
+      if (!svgPath || !fs.existsSync(svgPath)) {
+        console.warn(`⚠️ SVG file path not found: ${svgPath}, using canvas dimensions directly`);
+        // Fallback to using canvas dimensions directly
+        const targetSize = this.calculateOriginalSize(element, templateSize, page);
+        
+        console.log(`📍 Embedding original PDF at position: (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) size: ${targetSize.width.toFixed(1)}x${targetSize.height.toFixed(1)}`);
+        
+        page.drawPage(embeddedPage, {
+          x: position.x,
+          y: position.y,
+          width: targetSize.width,
+          height: targetSize.height,
+          rotate: element.rotation ? degrees(element.rotation) : undefined,
+        });
+        
+        console.log(`✅ Successfully embedded original PDF with CMYK preservation: ${path.basename(pdfPath)}`);
+        return;
+      }
+      
       const svgContent = fs.readFileSync(svgPath, 'utf-8');
       
       // Calculate content bounds from the SVG to get the actual logo dimensions
