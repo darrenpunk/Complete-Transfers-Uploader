@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { getOriginalCMYK, findPantoneByRGB } from './pantone-cmyk-mapping';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -111,8 +112,19 @@ export class UniversalColorExtractor {
           if (uniqueRGBColors.has(roundedKey)) {
             uniqueRGBColors.get(roundedKey)!.count++;
           } else {
-            // For CMYK files, convert RGB to approximate CMYK values
-            const cmykValues = hasCMYKMarkers ? this.rgbToCMYKApprox(values[0], values[1], values[2]) : null;
+            // For CMYK files, try to find original Pantone CMYK first, then fallback to approximation
+            let cmykValues: number[] | null = null;
+            if (hasCMYKMarkers) {
+              // First try to find exact Pantone match
+              cmykValues = getOriginalCMYK(rPercent, gPercent, bPercent);
+              
+              // If no Pantone match, use RGB-to-CMYK approximation
+              if (!cmykValues) {
+                cmykValues = this.rgbToCMYKApprox(values[0], values[1], values[2]);
+              }
+              
+              console.log(`🎨 Color mapping: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → ${cmykValues ? `CMYK(${cmykValues.join(', ')})` : 'No match'}`);
+            }
             
             uniqueRGBColors.set(roundedKey, {
               count: 1,
