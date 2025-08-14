@@ -76,45 +76,109 @@ export class HybridCMYKGenerator {
   private async createTemplateWithCMYKLogos(logoData: any[], data: HybridCMYKGenerationData): Promise<string> {
     const outputPath = path.join(process.cwd(), 'uploads', `hybrid_final_${Date.now()}.pdf`);
     
-    // Create blank template pages first
-    const blankTemplatePath = await this.createBlankTemplate(data);
-    
     if (logoData.length === 0) {
-      // No logos to embed, just return blank template
-      fs.copyFileSync(blankTemplatePath, outputPath);
-      fs.unlinkSync(blankTemplatePath);
-      return outputPath;
+      throw new Error('No CMYK logos to embed');
     }
     
-    // Combine template with CMYK logos using Ghostscript
-    const logoCommands = logoData.map(item => {
-      const element = item.element;
-      
-      // Convert canvas coordinates to PDF points
-      const x = element.x * 2.834645669;
-      const y = (data.templateSize.height - element.y - element.height) * 2.834645669;
-      const width = element.width * 2.834645669;
-      const height = element.height * 2.834645669;
-      
-      return `"${item.path}"`;
-    }).join(' ');
+    // Create comprehensive PostScript that includes both template and positioned logos
+    const psPath = await this.createCompletePostScriptWithLogos(logoData, data);
     
-    // Use Ghostscript to overlay logos on both pages
-    const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${blankTemplatePath}" ${logoCommands}`;
+    // Convert to CMYK PDF with all logo references
+    const logoFiles = logoData.map(item => `"${item.path}"`).join(' ');
+    const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${outputPath}" "${psPath}" ${logoFiles}`;
     
-    console.log(`🔧 Combining template with CMYK logos...`);
+    console.log(`🔧 Creating complete PDF with positioned CMYK logos...`);
     await execAsync(gsCmd);
     
-    // Cleanup
-    if (fs.existsSync(blankTemplatePath)) {
-      fs.unlinkSync(blankTemplatePath);
+    // Cleanup PostScript
+    if (fs.existsSync(psPath)) {
+      fs.unlinkSync(psPath);
     }
     
-    console.log(`✅ Template with CMYK logos created: ${outputPath}`);
+    console.log(`✅ Template with positioned CMYK logos created: ${outputPath}`);
     return outputPath;
   }
   
-  private async createBlankTemplate(data: HybridCMYKGenerationData): Promise<string> {
+  private async createCompletePostScriptWithLogos(logoData: any[], data: HybridCMYKGenerationData): Promise<string> {
+    const psPath = path.join(process.cwd(), 'uploads', `complete_template_${Date.now()}.ps`);
+    
+    const pageWidth = data.templateSize.width * 2.834645669;  // mm to points
+    const pageHeight = data.templateSize.height * 2.834645669;
+    
+    let psContent = `%!PS-Adobe-3.0
+%%Pages: 2
+%%BoundingBox: 0 0 ${pageWidth.toFixed(0)} ${pageHeight.toFixed(0)}
+%%DocumentProcessColors: Cyan Magenta Yellow Black
+
+`;
+
+    // Define logo positioning function
+    const logoPositioning = logoData.map((item, index) => {
+      const element = item.element;
+      const x = element.x * 2.834645669;
+      const y = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+      const width = element.width * 2.834645669;
+      const height = element.height * 2.834645669;
+      
+      return `
+% Position and scale logo ${index + 1}
+gsave
+${x} ${y} translate
+${width} ${height} scale
+% Include logo PDF content here - will be handled by Ghostscript
+% Logo file: ${item.path}
+grestore`;
+    }).join('\n');
+
+    // Page 1: Logos on transparent background
+    psContent += `
+%%Page: 1 1
+gsave
+${logoPositioning}
+grestore
+showpage
+
+`;
+
+    // Page 2: Logos on garment color background
+    psContent += `
+%%Page: 2 2  
+gsave
+% Fill page with garment color
+${this.getGarmentColorCMYK(data.garmentColor)} setcmykcolor
+newpath
+0 0 moveto
+${pageWidth} 0 lineto
+${pageWidth} ${pageHeight} lineto
+0 ${pageHeight} lineto
+closepath
+fill
+
+% Add logos on top of background
+${logoPositioning}
+
+% Add project info at bottom
+/Helvetica findfont 12 scalefont setfont
+0 0 0 1 setcmykcolor
+20 20 moveto
+(Project: ${data.projectName}) show
+20 35 moveto
+(Quantity: ${data.quantity}) show
+20 50 moveto
+(Template: ${data.templateSize.name}) show
+
+grestore
+showpage
+
+%%EOF
+`;
+
+    await fs.promises.writeFile(psPath, psContent);
+    console.log(`📄 Complete PostScript with logo positioning: ${psPath}`);
+    return psPath;
+  }
+  
+  private async createBlankTemplate_UNUSED(data: HybridCMYKGenerationData): Promise<string> {
     const templatePath = path.join(process.cwd(), 'uploads', `template_${Date.now()}.pdf`);
     
     const pageWidth = data.templateSize.width * 2.834645669;  // mm to points

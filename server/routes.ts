@@ -678,11 +678,11 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Hybrid Template + CMYK Generator');
+        console.log('🎨 CMYK content detected - Using Ghostscript Overlay Generator');
         
-        // Use hybrid approach: original template structure + CMYK logo preservation
-        const { HybridCMYKGenerator } = await import('./hybrid-cmyk-generator');
-        const generator = new HybridCMYKGenerator();
+        // Use Ghostscript overlay approach: template creation + CMYK logo overlays
+        const { GhostscriptOverlayGenerator } = await import('./ghostscript-overlay-generator');
+        const generator = new GhostscriptOverlayGenerator();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,

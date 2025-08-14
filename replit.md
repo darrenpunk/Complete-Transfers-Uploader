@@ -7,7 +7,7 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
-- **🎯 HYBRID CMYK GENERATOR**: Created new approach combining original template structure with pure CMYK logo preservation. Uses Ghostscript for two-page template creation (Page 1: transparent, Page 2: garment background) while maintaining exact CMYK values without pdf-lib interference.
+- **🎯 GHOSTSCRIPT OVERLAY APPROACH**: New iterative overlay system that creates simple template first, then uses Ghostscript to progressively overlay each CMYK logo with exact positioning coordinates. This approach maintains template structure while preserving CMYK colors through pure Ghostscript processing.
 - **🚨 CRITICAL DISCOVERY**: pdf-lib library fundamentally incompatible with CMYK preservation - converts all CMYK content to RGB regardless of input format. User requirement: NO color conversion cycles, preserve original RGB/CMYK values exactly.
 - **✅ DIRECT CMYK SUCCESS**: Successfully created individual CMYK PDFs (11,250 bytes) using Inkscape + Ghostscript pipeline, but pdf-lib converts them back to RGB in final output.
 - **🔧 PURE GHOSTSCRIPT FAILED**: Attempted pure Ghostscript approach but lost template structure and produced only single logos instead of proper two-page format.
