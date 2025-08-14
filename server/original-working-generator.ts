@@ -449,9 +449,13 @@ export class OriginalWorkingGenerator {
         fs.copyFileSync(tempGsPath, tempPdfPath);
         fs.unlinkSync(tempGsPath);
         
-        if (fs.existsSync(cmykProcessedSvgPath)) {
-          fs.unlinkSync(cmykProcessedSvgPath);
-        }
+        // DEBUGGING: Keep CMYK processed files for inspection
+        console.log(`🔍 CMYK processed SVG: ${cmykProcessedSvgPath}`);
+        
+        // Comment out for debugging
+        // if (fs.existsSync(cmykProcessedSvgPath)) {
+        //   fs.unlinkSync(cmykProcessedSvgPath);
+        // }
         
         console.log(`🎨 Enhanced CMYK processing completed: ${tempPdfPath}`);
       } else {
@@ -476,15 +480,35 @@ export class OriginalWorkingGenerator {
       
       console.log(`✅ Successfully embedded SVG as vector PDF with ${hasCMYKColors ? 'CMYK preservation' : 'standard conversion'} at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       
-      // Clean up temp files
-      try {
-        fs.unlinkSync(tempPdfPath);
-        if (needsPageExtraction && finalSvgPath !== logoPath) {
-          fs.unlinkSync(finalSvgPath);
-        }
-      } catch {
-        // Ignore cleanup errors
+      // DEBUGGING: Keep temp files for inspection
+      console.log(`🔍 DEBUG: Keeping temp files for inspection:`);
+      console.log(`🔍 Temp PDF: ${tempPdfPath}`);
+      if (needsPageExtraction && finalSvgPath !== logoPath) {
+        console.log(`🔍 Temp SVG: ${finalSvgPath}`);
       }
+      
+      // Check if the generated PDF has content
+      try {
+        const pdfStats = fs.statSync(tempPdfPath);
+        console.log(`📊 Generated PDF size: ${pdfStats.size} bytes`);
+        
+        // Try to read PDF content to see if it has actual content
+        const pdfBuffer = fs.readFileSync(tempPdfPath);
+        const pdfContentPreview = pdfBuffer.toString('ascii', 0, 200);
+        console.log(`📄 PDF content preview: ${pdfContentPreview.replace(/[^\x20-\x7E]/g, '.')}`);
+      } catch (error) {
+        console.error(`❌ Failed to inspect generated PDF:`, error);
+      }
+      
+      // Comment out cleanup for debugging
+      // try {
+      //   fs.unlinkSync(tempPdfPath);
+      //   if (needsPageExtraction && finalSvgPath !== logoPath) {
+      //     fs.unlinkSync(finalSvgPath);
+      //   }
+      // } catch {
+      //   // Ignore cleanup errors
+      // }
       
     } catch (error) {
       console.error(`❌ Failed to embed SVG logo:`, error);
