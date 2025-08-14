@@ -7,6 +7,7 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
+- **🔧 CRITICAL FILE HANDLING FIX**: Fixed issue where CMYK-converted PDFs (11,250 bytes) were being overwritten by RGB versions (9,705 bytes). System now correctly preserves Ghostscript-generated CMYK PDFs throughout the embedding process with proper file size verification.
 - **🎯 FINAL CMYK SOLUTION**: Fixed device-cmyk() compatibility issue with Inkscape by switching to /LeaveColorUnchanged strategy. System now generates PDFs with proper CMYK color space for accurate print reproduction while maintaining visible content generation.
 - **🎨 EXACT COLOR MAPPING**: Added precise CMYK mappings for user's actual artwork colors: Navy rgb(17%, 17%, 43%) → CMYK(60,60,0,57) and Gold rgb(90%, 61%, 16%) → CMYK(0,33,82,10). System preserves original color intent through professional CMYK separation.
 - **🎨 COLOR PRESERVATION ARCHITECTURE**: Removed original PDF embedding for multi-logo PDFs. SVG conversion already maintains perfect color fidelity through NativeCMYKGenerator, CMYKSVGProcessor, and Inkscape/Ghostscript pipeline. This prevents viewBox distortion while preserving exact RGB/CMYK values.

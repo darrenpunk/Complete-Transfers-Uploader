@@ -479,7 +479,7 @@ export class OriginalWorkingGenerator {
           console.log(`📊 CMYK color space PDF: ${gsStats.size} bytes`);
           
           if (gsStats.size > 1000) {
-            // Replace with CMYK version
+            // CRITICAL FIX: Replace with CMYK version and update the path reference
             fs.copyFileSync(tempGsPath, tempPdfPath);
             console.log(`✅ Applied CMYK color space with /LeaveColorUnchanged - preserves original intent`);
             console.log(`🎨 RGB(17%, 17%, 43%) Navy → Professional CMYK separation`);
@@ -489,6 +489,17 @@ export class OriginalWorkingGenerator {
             try {
               const { stdout } = await execAsync(`pdfinfo "${tempPdfPath}" 2>/dev/null || echo "PDF info unavailable"`);
               console.log(`📊 CMYK PDF Details:\n${stdout}`);
+              
+              // Double-check file size to ensure replacement worked
+              const finalStats = fs.statSync(tempPdfPath);
+              console.log(`🔍 VERIFIED: Final temp PDF size: ${finalStats.size} bytes (should be ${gsStats.size})`);
+              
+              if (finalStats.size === gsStats.size) {
+                console.log(`✅ CMYK PDF successfully replaced RGB version`);
+              } else {
+                console.error(`❌ CRITICAL: File replacement failed! Size mismatch: ${finalStats.size} vs ${gsStats.size}`);
+              }
+              
             } catch (infoError: any) {
               console.log(`📊 PDF info check failed: ${infoError.message}`);
             }
@@ -496,7 +507,11 @@ export class OriginalWorkingGenerator {
           } else {
             console.warn(`⚠️ CMYK conversion produced small file, keeping original`);
           }
-          fs.unlinkSync(tempGsPath);
+          
+          // Clean up temp file after verification
+          if (fs.existsSync(tempGsPath)) {
+            fs.unlinkSync(tempGsPath);
+          }
           
         } catch (gsError: any) {
           console.error(`❌ Ghostscript failed: ${gsError.message}`);
