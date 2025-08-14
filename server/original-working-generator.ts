@@ -87,6 +87,43 @@ export class OriginalWorkingGenerator {
       const pdfBytes = await pdfDoc.save();
       console.log(`✅ Original PDF generated successfully - Size: ${pdfBytes.length} bytes`);
       
+      // CRITICAL: Check if final PDF has CMYK color space
+      const tempFinalPath = path.join(process.cwd(), 'uploads', `final_check_${Date.now()}.pdf`);
+      fs.writeFileSync(tempFinalPath, pdfBytes);
+      
+      try {
+        const { stdout: gsCheck } = await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=inkcov -sOutputFile=/dev/null "${tempFinalPath}" 2>&1 | head -5`);
+        console.log(`🔍 FINAL PDF COLOR SPACE CHECK:\n${gsCheck}`);
+        
+        if (gsCheck.includes('CMYK') || gsCheck.includes('cyan') || gsCheck.includes('magenta')) {
+          console.log(`✅ FINAL PDF CONFIRMED: CMYK color space detected`);
+        } else {
+          console.log(`❌ FINAL PDF ISSUE: RGB color space detected - pdf-lib may be converting CMYK to RGB`);
+          
+          // Try to force CMYK in the final PDF
+          const finalCmykPath = path.join(process.cwd(), 'uploads', `final_cmyk_${Date.now()}.pdf`);
+          const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${finalCmykPath}" "${tempFinalPath}"`;
+          console.log(`🔧 Attempting final CMYK conversion: ${cmykCmd}`);
+          
+          await execAsync(cmykCmd);
+          const cmykBytes = fs.readFileSync(finalCmykPath);
+          console.log(`🎨 Final CMYK conversion applied - Size: ${cmykBytes.length} bytes`);
+          
+          // Cleanup
+          fs.unlinkSync(tempFinalPath);
+          fs.unlinkSync(finalCmykPath);
+          
+          return Buffer.from(cmykBytes);
+        }
+      } catch (finalCheckError: any) {
+        console.log(`📊 Final PDF color space check failed: ${finalCheckError.message}`);
+      }
+      
+      // Cleanup temp file
+      if (fs.existsSync(tempFinalPath)) {
+        fs.unlinkSync(tempFinalPath);
+      }
+      
       return Buffer.from(pdfBytes);
       
     } catch (error) {
