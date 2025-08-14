@@ -85,9 +85,9 @@ export class UniversalColorExtractor {
 
     console.log(`🔍 CMYK Detection: device-cmyk=${colors.length}, markers=${hasCMYKMarkers}`);
 
-    // If we found CMYK colors or markers, prioritize CMYK detection and limit RGB extraction
-    if (colors.length > 0 || hasCMYKMarkers) {
-      console.log(`🎨 CMYK file detected - extracting significant colors only`);
+    // If we found CMYK markers, treat this as a CMYK file and convert RGB to approximate CMYK
+    if (hasCMYKMarkers) {
+      console.log(`🎨 CMYK file detected with markers - converting RGB to CMYK format`);
       hasCMYK = true;
       colorSpace = 'CMYK';
       
@@ -111,11 +111,14 @@ export class UniversalColorExtractor {
           if (uniqueRGBColors.has(roundedKey)) {
             uniqueRGBColors.get(roundedKey)!.count++;
           } else {
+            // For CMYK files, convert RGB to approximate CMYK values
+            const cmykValues = hasCMYKMarkers ? this.rgbToCMYKApprox(values[0], values[1], values[2]) : null;
+            
             uniqueRGBColors.set(roundedKey, {
               count: 1,
               color: {
-                format: 'rgb',
-                values: values,
+                format: hasCMYKMarkers && cmykValues ? 'cmyk' : 'rgb',
+                values: hasCMYKMarkers && cmykValues ? cmykValues : values,
                 originalString: fullMatch,
                 elementSelector: this.findElementSelector(svgContent, rgbMatch.index)
               }
@@ -126,9 +129,9 @@ export class UniversalColorExtractor {
       
       // Second pass: only keep colors that appear frequently (likely main design colors)
       const significantColors = Array.from(uniqueRGBColors.entries())
-        .filter(([key, data]) => data.count >= 5) // Must appear at least 5 times (more strict)
+        .filter(([key, data]) => data.count >= 2) // Must appear at least 2 times 
         .sort((a, b) => b[1].count - a[1].count) // Sort by frequency
-        .slice(0, 8) // Max 8 colors to match expected Pantone count
+        .slice(0, 8) // Max 8 colors for clean results
         .map(([key, data]) => data.color);
       
       colors.push(...significantColors);
@@ -355,6 +358,37 @@ export class UniversalColorExtractor {
       return `${elementType}:nth-of-type(${elementCount})`;
     }
     return 'unknown';
+  }
+
+  /**
+   * Convert RGB to approximate CMYK values
+   */
+  private static rgbToCMYKApprox(r: number, g: number, b: number): number[] {
+    // Normalize RGB values to 0-1 range
+    const rNorm = r / 255;
+    const gNorm = g / 255; 
+    const bNorm = b / 255;
+    
+    // Calculate K (black)
+    const k = 1 - Math.max(rNorm, Math.max(gNorm, bNorm));
+    
+    // Handle pure black case
+    if (k === 1) {
+      return [0, 0, 0, 100];
+    }
+    
+    // Calculate CMY
+    const c = (1 - rNorm - k) / (1 - k);
+    const m = (1 - gNorm - k) / (1 - k);
+    const y = (1 - bNorm - k) / (1 - k);
+    
+    // Convert to percentages and round
+    return [
+      Math.round(c * 100),
+      Math.round(m * 100), 
+      Math.round(y * 100),
+      Math.round(k * 100)
+    ];
   }
 
   /**

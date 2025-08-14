@@ -1228,12 +1228,12 @@ export async function registerRoutes(app: express.Application) {
               elementType: color.elementSelector?.split(':')[0] || 'path',
               attribute: 'fill',
               selector: color.elementSelector || `path:nth-of-type(${index + 1})`,
-              isCMYK: color.format === 'cmyk',
+              isCMYK: color.format === 'cmyk' || universalColors.colorSpace === 'CMYK',
               isExactMatch: true // Always exact since extracted from original
             }));
             
-            // Mark as CMYK preserved if we found CMYK colors
-            if (universalColors.colorSpace === 'CMYK' || universalColors.hasEmbeddedProfile) {
+            // Mark as CMYK preserved if we found CMYK colors or markers
+            if (universalColors.colorSpace === 'CMYK' || universalColors.hasEmbeddedProfile || analysis.colors?.some(c => c.isCMYK)) {
               (file as any).isCMYKPreserved = true;
               console.log(`🎨 CMYK colors detected - marking file as CMYK preserved`);
             }
