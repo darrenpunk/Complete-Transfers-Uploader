@@ -1677,7 +1677,7 @@ export async function registerRoutes(app: express.Application) {
             
             // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation
             const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-            const dimensionResult = detectDimensionsFromSVG(updatedSvgContent2, contentBounds);
+            const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, contentBounds, svgPath);
             
             // Validate accuracy and log any issues
             validateDimensionAccuracy(dimensionResult);

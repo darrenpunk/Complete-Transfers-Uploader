@@ -154,7 +154,7 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
     // Extract coordinates from multiple SVG elements - handle multiline paths and attributes
-    const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/gs;
+    const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/g;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
     const circleRegex = /<circle[^>]*cx="([^"]*)"[^>]*cy="([^"]*)"[^>]*r="([^"]*)"/g;
     const coordinateRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)|[HV]\s*([-\d.]+)|[CSQTA]\s*([-\d.,\s]+)/g;
@@ -435,10 +435,58 @@ export function cleanAIVectorizedSVG(svgContent: string): string {
 
 
 /**
- * Comprehensive dimension detection with multiple fallbacks
+ * Comprehensive dimension detection with multiple fallbacks - FIXED FOR PDF ASPECT RATIO
  */
-export function detectDimensionsFromSVG(svgContent: string, contentBounds?: any): DimensionResult {
+export async function detectDimensionsFromSVG(svgContent: string, contentBounds?: any, originalPdfPath?: string): Promise<DimensionResult> {
   let bestResult: DimensionResult | null = null;
+  
+  // **CRITICAL PDF DIMENSION FIX**: Check if this SVG was converted from a PDF
+  // If so, use the original PDF dimensions instead of SVG content bounds
+  const isPdfDerived = svgContent.includes('data-original-cmyk-pdf="true"') || 
+                       svgContent.includes('CMYK_PDF_CONVERTED');
+  
+  if (isPdfDerived && originalPdfPath) {
+    console.log('🔧 PDF DIMENSION FIX: Detected PDF-derived SVG, using original PDF dimensions...');
+    
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const { PDFDocument } = require('pdf-lib');
+      
+      // Try to find the original PDF file
+      const uploadsDir = path.dirname(originalPdfPath);
+      const pdfFilename = path.basename(originalPdfPath, '.svg');
+      const originalPdfFullPath = path.join(uploadsDir, pdfFilename);
+      
+      if (fs.existsSync(originalPdfFullPath)) {
+        const pdfBytes = fs.readFileSync(originalPdfFullPath);
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const pages = pdfDoc.getPages();
+        
+        if (pages.length > 0) {
+          const { width: pdfWidthPt, height: pdfHeightPt } = pages[0].getSize();
+          // Convert PDF points to mm (1 point = 0.352778 mm)
+          const widthMM = pdfWidthPt * 0.352778;
+          const heightMM = pdfHeightPt * 0.352778;
+          
+          console.log(`🔧 PDF DIMENSION FIX: Using original PDF dimensions: ${widthMM.toFixed(1)}x${heightMM.toFixed(1)}mm (${pdfWidthPt.toFixed(1)}x${pdfHeightPt.toFixed(1)}pt) instead of SVG content bounds`);
+          
+          // Return dimensions based on actual PDF size
+          return {
+            widthPx: Math.round(pdfWidthPt / 0.352778 * 0.35), // Convert to equivalent pixels
+            heightPx: Math.round(pdfHeightPt / 0.352778 * 0.35),
+            widthMm: widthMM,
+            heightMm: heightMM,
+            conversionFactor: 0.35,
+            source: 'content_bounds',
+            accuracy: 'perfect'
+          };
+        }
+      }
+    } catch (pdfError) {
+      console.warn(`⚠️ Could not read original PDF dimensions, falling back to SVG analysis:`, pdfError);
+    }
+  }
   
   // Check if this is an AI-vectorized SVG
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
