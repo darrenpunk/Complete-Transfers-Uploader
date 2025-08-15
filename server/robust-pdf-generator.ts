@@ -286,7 +286,7 @@ grestore`;
     console.log(`📄 Created A3 pages: 842x1191pts`);
     
     // Add garment background to page 2
-    const garmentColor = this.parseGarmentColor(data.garmentColor);
+    const garmentColor = await this.parseGarmentColor(data.garmentColor);
     page2.drawRectangle({
       x: 0,
       y: 0,
@@ -311,7 +311,7 @@ grestore`;
     }
     
     // Add project labels
-    this.addProjectLabels(page2, data);
+    await this.addProjectLabels(page2, data);
     
     // Save PDF
     const pdfBytes = await pdfDoc.save();
@@ -323,8 +323,8 @@ grestore`;
   /**
    * Parse garment color to RGB values
    */
-  private parseGarmentColor(garmentColor: string | undefined): any {
-    const { rgb } = require('pdf-lib');
+  private async parseGarmentColor(garmentColor: string | undefined): Promise<any> {
+    const { rgb } = await import('pdf-lib');
     
     if (!garmentColor || garmentColor === 'none') {
       return rgb(1, 1, 1); // White
@@ -441,12 +441,12 @@ grestore`;
   /**
    * Add project labels to page
    */
-  private addProjectLabels(page: any, data: ProjectData): void {
+  private async addProjectLabels(page: any, data: ProjectData): Promise<void> {
     try {
       const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
       const garmentText = data.garmentColor ? `Garment Color: ${data.garmentColor}` : '';
       
-      const { rgb } = require('pdf-lib');
+      const { rgb } = await import('pdf-lib');
       
       page.drawText(labelText, {
         x: 20,

@@ -21,11 +21,16 @@ export interface DimensionResult {
 // Known exact dimensions for validation
 const KNOWN_DIMENSIONS = {
   '600x595': { widthMm: 210, heightMm: 208.249 }, // User's specific logo
+  '842x1191': { widthMm: 297, heightMm: 420 }, // A3 size at 72 DPI
+  '841x1190': { widthMm: 297, heightMm: 420 }, // A3 size (rounded)
+  '841x1191': { widthMm: 297, heightMm: 420 }, // A3 size (variant)
+  '842x1190': { widthMm: 297, heightMm: 420 }, // A3 size (variant)
   // Add more known dimensions here as needed
 };
 
-// Exact conversion factor based on user's requirements
-const PIXEL_TO_MM_FACTOR = 0.35;
+// Exact conversion factor based on user's requirements and DPI standards
+const PIXEL_TO_MM_FACTOR = 0.35; // For 600x595 case
+const A3_PIXEL_TO_MM_FACTOR = 297 / 842; // A3: 297mm / 842px = 0.3527mm per pixel
 
 /**
  * Calculate dimensions with maximum accuracy and validation
@@ -65,18 +70,33 @@ export function calculatePreciseDimensions(
     accuracy = 'high';
     resultSource = 'exact_match';
     console.log(`🎯 Close to known dimensions, using exact: ${finalWidthPx}×${finalHeightPx}px`);
+  } else if (Math.abs(roundedWidthPx - 842) <= 2 && Math.abs(roundedHeightPx - 1191) <= 2) {
+    // Close to A3 dimensions - use exact values
+    finalWidthPx = 842;
+    finalHeightPx = 1191;
+    accuracy = 'high';
+    resultSource = 'exact_match';
+    console.log(`🎯 A3 document detected, using exact: ${finalWidthPx}×${finalHeightPx}px (297×420mm)`);
   }
   
   // Calculate mm dimensions using exact conversion factor
-  const widthMm = finalWidthPx * PIXEL_TO_MM_FACTOR;
-  const heightMm = finalHeightPx * PIXEL_TO_MM_FACTOR;
+  let conversionFactor = PIXEL_TO_MM_FACTOR;
+  
+  // Use A3-specific conversion for A3 documents
+  if (knownDimension && (knownDimension.widthMm === 297 || knownDimension.heightMm === 420)) {
+    conversionFactor = A3_PIXEL_TO_MM_FACTOR;
+    console.log(`📏 Using A3 conversion factor: ${conversionFactor} mm/px`);
+  }
+  
+  const widthMm = knownDimension ? knownDimension.widthMm : finalWidthPx * conversionFactor;
+  const heightMm = knownDimension ? knownDimension.heightMm : finalHeightPx * conversionFactor;
   
   const result: DimensionResult = {
     widthPx: finalWidthPx,
     heightPx: finalHeightPx,
     widthMm: widthMm,
     heightMm: heightMm,
-    conversionFactor: PIXEL_TO_MM_FACTOR,
+    conversionFactor: conversionFactor,
     source: resultSource,
     accuracy
   };
