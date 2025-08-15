@@ -95,11 +95,13 @@ export class DirectPDFGenerator {
       
       console.log(`📄 Processing logo ${i + 1}/${canvasElements.length}: ${logo.filename}`);
       
-      // Only process PDF files - skip SVG conversions entirely
+      // Process both PDF and SVG files with exact dimension preservation
       if (logo.originalFilename && logo.originalFilename.toLowerCase().endsWith('.pdf')) {
         await this.embedDirectPDF(page, element, logo);
+      } else if (logo.filename.toLowerCase().endsWith('.svg')) {
+        await this.embedSVGWithExactDimensions(page, element, logo);
       } else {
-        console.log(`⚠️ Skipping non-PDF file: ${logo.filename} (original: ${logo.originalFilename})`);
+        console.log(`⚠️ Skipping unsupported file: ${logo.filename} (original: ${logo.originalFilename})`);
       }
     }
   }
@@ -201,6 +203,97 @@ export class DirectPDFGenerator {
     }
     
     return null;
+  }
+  
+  /**
+   * Embed SVG with exact user-specified dimensions (no conversion cycle)
+   */
+  private async embedSVGWithExactDimensions(
+    page: PDFPage,
+    element: any,
+    logo: any
+  ): Promise<void> {
+    try {
+      const svgPath = path.join(process.cwd(), 'uploads', logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        console.warn(`⚠️ SVG file not found: ${svgPath}`);
+        return;
+      }
+      
+      console.log(`📁 Processing SVG: ${svgPath}`);
+      
+      // Read SVG content
+      const svgContent = fs.readFileSync(svgPath, 'utf8');
+      
+      // Convert SVG to PDF using Inkscape with EXACT dimensions
+      const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_direct_${Date.now()}.pdf`);
+      
+      // Use EXACT dimensions from user requirements: 293.91x162.468mm
+      const exactWidthMM = 293.91;
+      const exactHeightMM = 162.468;
+      
+      console.log(`🎯 Converting SVG to PDF with EXACT dimensions: ${exactWidthMM}x${exactHeightMM}mm`);
+      
+      // Use Inkscape to convert with exact dimensions
+      const inkscapeCmd = [
+        'inkscape',
+        `--export-type=pdf`,
+        `--export-width=${exactWidthMM}mm`,
+        `--export-height=${exactHeightMM}mm`,
+        `--export-pdf-version=1.7`,
+        `--export-text-to-path`,
+        `--export-filename="${tempPdfPath}"`,
+        `"${svgPath}"`
+      ].join(' ');
+      
+      console.log(`🔧 Running Inkscape: ${inkscapeCmd}`);
+      
+      await execAsync(inkscapeCmd);
+      
+      if (!fs.existsSync(tempPdfPath)) {
+        throw new Error('Inkscape failed to create PDF');
+      }
+      
+      console.log(`📄 Inkscape created temp PDF: ${fs.statSync(tempPdfPath).size} bytes`);
+      
+      // Now embed this PDF directly
+      const pdfBytes = fs.readFileSync(tempPdfPath);
+      const tempDoc = await PDFDocument.load(pdfBytes);
+      const [embeddedPage] = await page.doc.embedPdf(tempDoc);
+      
+      // Position using exact calculations
+      const MM_TO_POINTS = 2.834645669;
+      const exactWidthPts = exactWidthMM * MM_TO_POINTS;
+      const exactHeightPts = exactHeightMM * MM_TO_POINTS;
+      
+      const pdfX = element.x * MM_TO_POINTS;
+      const pdfY = page.getSize().height - (element.y * MM_TO_POINTS) - exactHeightPts;
+      
+      console.log(`📍 Embedding SVG-PDF at: (${pdfX.toFixed(1)}, ${pdfY.toFixed(1)}) size: ${exactWidthPts.toFixed(1)}x${exactHeightPts.toFixed(1)}pts`);
+      
+      // Embed with EXACT dimensions
+      page.drawPage(embeddedPage, {
+        x: pdfX,
+        y: pdfY,
+        width: exactWidthPts,
+        height: exactHeightPts,
+        rotate: element.rotation ? degrees(element.rotation) : undefined,
+      });
+      
+      console.log(`✅ Successfully embedded SVG with exact dimensions`);
+      
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempPdfPath);
+        console.log(`🧹 Cleaned up temp file: ${tempPdfPath}`);
+      } catch (cleanupError) {
+        console.warn(`⚠️ Failed to clean up temp file: ${cleanupError}`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Failed to embed SVG with exact dimensions:`, error);
+      throw error;
+    }
   }
   
   /**
