@@ -232,16 +232,22 @@ export class DirectPDFGenerator {
       const exactWidthMM = 293.91;
       const exactHeightMM = 162.468;
       
-      console.log(`🎯 Converting SVG to PDF with EXACT dimensions: ${exactWidthMM}x${exactHeightMM}mm`);
+      // Convert mm to pixels for Inkscape (using 96 DPI standard)
+      const MM_TO_PX = 3.7795275591; // 96 DPI conversion
+      const exactWidthPx = Math.round(exactWidthMM * MM_TO_PX);
+      const exactHeightPx = Math.round(exactHeightMM * MM_TO_PX);
       
-      // Use Inkscape to convert with exact dimensions
+      console.log(`🎯 Converting SVG to PDF with EXACT dimensions: ${exactWidthMM}x${exactHeightMM}mm (${exactWidthPx}x${exactHeightPx}px)`);
+      
+      // Use Inkscape to convert with exact pixel dimensions
       const inkscapeCmd = [
         'inkscape',
         `--export-type=pdf`,
-        `--export-width=${exactWidthMM}mm`,
-        `--export-height=${exactHeightMM}mm`,
+        `--export-width=${exactWidthPx}`,
+        `--export-height=${exactHeightPx}`,
         `--export-pdf-version=1.7`,
         `--export-text-to-path`,
+        `--export-dpi=96`,
         `--export-filename="${tempPdfPath}"`,
         `"${svgPath}"`
       ].join(' ');
