@@ -1,56 +1,10 @@
 # Logo Upload and Design Tool
 
 ## Overview
-This full-stack web application streamlines logo uploads and layout creation on garment templates. Its main purpose is to provide a professional, intuitive design experience for positioning logos on various canvas templates and generating production-ready vector graphics, specifically for the custom apparel industry. The project includes a standalone application and a fully integrated Odoo 16 module with comprehensive project structure for seamless integration with Odoo product catalogs.
+This full-stack web application streamlines logo uploads and layout creation on garment templates. Its main purpose is to provide a professional, intuitive design experience for positioning logos on various canvas templates and generating production-ready vector graphics, specifically for the custom apparel industry. The project includes a standalone application and a fully integrated Odoo 16 module.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
-
-## Recent Changes (August 14, 2025)
-- **🎯 ORIGINAL GENERATOR + FORCED CMYK + ASPECT RATIO FIX**: Back to using the proven original working generator that creates perfect two-page template format, now with forced RGB-to-CMYK color space conversion (not LeaveColorUnchanged) and aspect ratio preservation to prevent logo squashing.
-- **🚨 CRITICAL DISCOVERY**: pdf-lib library fundamentally incompatible with CMYK preservation - converts all CMYK content to RGB regardless of input format. User requirement: NO color conversion cycles, preserve original RGB/CMYK values exactly.
-- **✅ DIRECT CMYK SUCCESS**: Successfully created individual CMYK PDFs (11,250 bytes) using Inkscape + Ghostscript pipeline, but pdf-lib converts them back to RGB in final output.
-- **🔧 PURE GHOSTSCRIPT FAILED**: Attempted pure Ghostscript approach but lost template structure and produced only single logos instead of proper two-page format.
-- **🎨 EXACT COLOR MAPPING**: Added precise CMYK mappings for user's actual artwork colors: Navy rgb(17%, 17%, 43%) → CMYK(60,60,0,57) and Gold rgb(90%, 61%, 16%) → CMYK(0,33,82,10). System preserves original color intent through professional CMYK separation.
-- **🔧 MULTI-LOGO PDF HANDLING**: Fixed issue where PDFs containing multiple logos were being embedded with entire viewBox, causing distortion. System now uses SVG with proper single-logo bounds and color preservation.
-- **🔧 CRITICAL PDF DIMENSION FIX**: Implemented proper PDF dimension detection that uses original PDF viewBox dimensions (97x97mm) instead of SVG content bounds (95x52.5mm). System now correctly detects PDF-derived SVGs and preserves the original document aspect ratio, preventing content distortion in output PDFs.
-- **🔧 CRITICAL ASPECT RATIO FIX**: Fixed logo distortion by implementing aspect ratio preservation in PDF embedding. Both `embedOriginalPDF` and `embedImageLogo` methods now maintain original aspect ratios, preventing squashing and stretching of logos in output PDFs.
-- **🔧 CRITICAL CONTENT BOUNDS FIX**: Fixed distortion issue by ensuring ALL files use actual content dimensions instead of document/viewBox dimensions. System now prioritizes calculateSVGContentBounds() for all non-AI-vectorized files, eliminating squashing and proportion issues.
-- **✅ ORIGINAL PDF PRESERVATION**: Implemented direct original PDF embedding in output PDFs, bypassing SVG conversion entirely to maintain perfect CMYK color values and content integrity.
-- **🎨 PDF PREVIEW CMYK DETECTION**: Updated PDF preview modal to correctly detect and display "CMYK colors detected" status matching the sidebar preflight checks.
-- **🎯 COLOR ANALYSIS REMOVED**: Completely removed the color analysis panel from frontend interface to focus solely on PDF output color preservation.
-- **✅ EXACT CMYK MAPPING**: Implemented exact-cmyk-mapping.ts with precise RGB-to-Pantone CMYK lookup table for perfect color matching (C:71 M:1 Y:5 K:0 for PANTONE 306 C).
-- **🔧 TRUE CMYK OUTPUT**: System now generates PDFs with native CMYK color space commands, preserving exact Pantone values throughout the entire PDF generation pipeline.
-
-## Previous Changes (August 13, 2025)
-- **🎨 COMPLETE CMYK PRESERVATION SYSTEM**: Implemented comprehensive CMYK color preservation with CMYKSVGProcessor that converts RGB representations back to device-cmyk format for true color preservation in PDF output.
-- **✅ COLOR DISPLAY FIXED**: Frontend now correctly displays original CMYK values (e.g., "C:0 M:15 Y:96 K:5") instead of RGB conversions in the color analysis panel.
-- **🔧 CMYK PDF PIPELINE**: Enhanced PDF generation with Inkscape + Ghostscript CMYK processing pipeline that preserves original color values through device-cmyk color space conversion.
-- **📊 VERIFIED CMYK DETECTION**: System correctly identifies and processes 42 CMYK colors from user's artwork files with proper isCMYK flag detection.
-
-## Previous Changes (August 8, 2025)
-- **🚀 FUNDAMENTAL PDF GENERATION RESTORED**: Created OriginalWorkingGenerator class that produces rock-solid, multi-page PDFs (308KB) matching user's exact format. Page 1: original artwork, Page 2: artwork with garment color backgrounds, color labels, and CMYK values.
-- **✅ Two-Page PDF Format Enforced**: System now generates proper dual-page PDFs with Page 1 (transparent background) and Page 2 (garment color background + labels) exactly like user's working examples.
-- **🎨 Garment Color Labels & CMYK Values**: Added proper color labeling system matching user's PDF format with garment color names and hex values displayed at bottom of Page 2.
-- **🔧 Clean Architecture**: Eliminated all compilation cache issues, iframe problems, and broken generators. Fresh start with working fundamentals.
-
-## Previous Changes (August 7, 2025)
-- **Software-Specific Guides Removed**: Removed the software application guides section from the Color Modes modal to simplify the interface.
-- **Color Mode Help Modal Restored**: Fixed the "Learn More about Colour Modes" help button in preflight checks to properly trigger when RGB colors are detected.
-- **CMYK Preview Toggle Removed**: Removed the CMYK Preview toggle from the Color Analysis section as requested. Colors now display in their original format without any preview conversion effects.
-- **✅ CRITICAL COLOR DETECTION FIX**: Fixed RGB files being incorrectly marked as CMYK in preflight checks. SVG color analysis now properly identifies RGB/hex colors as `isCMYK: false` and only marks actual CMYK colors (device-cmyk, cmyk formats) as `isCMYK: true`. Preflight now correctly shows "RGB Vector (Preserved)" for RGB files instead of incorrectly showing "CMYK Vector".
-- **Vector Import CMYK Notification Removed**: Eliminated CMYK conversion form notifications when importing vector files since colors are preserved exactly as uploaded without conversion.
-- **✅ CRITICAL MIXED CONTENT PDF FIX VERIFIED**: Successfully fixed mixed PDFs being incorrectly flattened when uploaded. Mixed content PDFs now preserve vector content and bypass vectorization modal, maintaining original quality without forced rasterization. Backend logic updated to differentiate between pure raster PDFs (which get extracted) and mixed content PDFs (which preserve vector elements). PDF generation restored to full functionality with proper size outputs.
-- **PDF Preview Individual Garment Colors**: Fixed Page 2 preview to show individual garment colors per logo instead of single background color, now matching actual PDF generation output.
-- **CRITICAL PDF PREVIEW FIX**: Fixed catastrophic SVG corruption affecting 824+ files with malformed XML syntax (`"/ fill="#000000">` → `fill="#000000"/>`). PDF preview modal now displays actual artwork images instead of filename text placeholders.
-- **SVG Corruption Issue Resolved**: Fixed critical XML parsing errors in 20 corrupted SVG files that were causing PDF generation failures. Implemented comprehensive SVG corruption detection and repair system.
-- **Production Flow Manager**: All 6 production requirements now fully enforced and verified working: color preservation, original content maintenance, proper color detection, content-based bounding boxes, raster file vectorization modals, and mixed content warnings.
-- **PDF Generation Restored**: System now successfully generates proper PDFs (>1000 bytes) instead of previous 29-byte failures.
-- **CRITICAL COLOR PRESERVATION FIX**: Replaced rsvg-convert with Inkscape for SVG-to-PDF conversion to preserve exact original colors. This fixes the critical issue where green/orange colors were being altered during PDF generation, violating Production Flow Requirement 1.
-- **Real PDF Preview**: Added actual PDF viewer using iframe instead of mockup images, with proper server headers for inline display.
-- **🚀 ROBUST PDF GENERATION SYSTEM (Aug 8, 2025)**: Completely rewritten PDF generation using RobustPDFGenerator class. New approach eliminates compilation cache issues, provides simplified coordinate calculation, and ensures reliable single-page output. Direct canvas-to-PDF positioning with proper coordinate system conversion.
-- **✅ PDF Preview Content-Disposition Fixed**: Header correctly set to `inline` for preview mode, eliminating auto-download issues.
-- **🔧 ARCHITECTURAL CHANGE**: Replaced SimplifiedPDFGenerator with RobustPDFGenerator to solve persistent TypeScript compilation cache and positioning issues.
 
 ## System Architecture
 
@@ -102,7 +56,7 @@ Preferred communication style: Simple, everyday language.
 - **Image Processing**: Ghostscript, ImageMagick, `rsvg-convert`.
 - **PDF Manipulation**: `pdf-lib`.
 - **AI Vectorization**: External AI vectorization API.
-- **Odoo Module Specific**: ReportLab (for PDF generation), ColorWorkflowManager (internal module dependency), GarmentColorManager (internal module dependency).
+- **Odoo Module Specific**: ReportLab (for PDF generation).
 
 ### Development Tools
 - **Build**: `esbuild` (backend), Vite (frontend).

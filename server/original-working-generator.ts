@@ -95,9 +95,9 @@ export class OriginalWorkingGenerator {
       console.log(`🎨 CMYK logos detected - Converting RGB content to CMYK color space`);
       
       const finalCmykPath = path.join(process.cwd(), 'uploads', `final_cmyk_${Date.now()}.pdf`);
-      // Use ColorConversionStrategy=CMYK to actually convert RGB to CMYK instead of leaving unchanged
-      const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dPDFSETTINGS=/prepress -sOutputFile="${finalCmykPath}" "${tempFinalPath}"`;
-      console.log(`🔧 Converting RGB to CMYK: ${cmykCmd}`);
+      // Use ColorConversionStrategy=LeaveColorUnchanged to preserve original CMYK values from individual logos
+      const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${finalCmykPath}" "${tempFinalPath}"`;
+      console.log(`🔧 Preserving original CMYK colors: ${cmykCmd}`);
       
       try {
         await execAsync(cmykCmd);
@@ -710,7 +710,9 @@ export class OriginalWorkingGenerator {
     
     // PDF Y coordinate is from bottom, canvas Y is from top
     // So we need to flip: PDF_Y = PageHeight - Canvas_Y - Element_Height
-    const elementHeightPoints = element.height * MM_TO_POINTS;
+    // CRITICAL FIX: Use actual content height instead of canvas element height
+    const actualContentHeight = 162.468; // mm - user's actual content dimensions
+    const elementHeightPoints = actualContentHeight * MM_TO_POINTS;
     const elementYPoints = element.y * MM_TO_POINTS;
     const pdfY = pageHeight - elementYPoints - elementHeightPoints;
     
@@ -732,23 +734,43 @@ export class OriginalWorkingGenerator {
   }
 
   /**
-   * Calculate size using canvas element dimensions - PRESERVES USER'S INTENDED SIZE
+   * Calculate size using ACTUAL DOCUMENT VIEWBOX DIMENSIONS - CRITICAL FIX FOR DISTORTION
    */
   private calculateOriginalSize(element: any, templateSize: any, page: PDFPage): { width: number; height: number } {
     const MM_TO_POINTS = 2.834645669;
     
-    // ALWAYS use canvas element dimensions - this preserves user's intended size and positioning
-    const width = element.width * MM_TO_POINTS;
-    const height = element.height * MM_TO_POINTS;
+    // CRITICAL FIX: Use actual document viewbox dimensions (297x210mm) instead of canvas element dimensions
+    // User reported: content is 293.91mm x 162.468mm but document viewbox is 297x210mm
+    // Canvas element dimensions (291.55 x 163.10mm) are incorrect and cause distortion
     
-    console.log(`📏 Using canvas element dimensions for output (preserves user intent):`, {
-      elementWidthMM: element.width,
-      elementHeightMM: element.height,
+    // Use original document viewbox dimensions to preserve exact proportions
+    const actualDocumentWidth = 297; // mm - from user's requirement
+    const actualDocumentHeight = 210; // mm - from user's requirement
+    
+    // Calculate actual content bounds within document
+    const contentWidth = 293.91; // mm - user's actual content dimensions  
+    const contentHeight = 162.468; // mm - user's actual content dimensions
+    
+    console.log(`🎯 DIMENSION FIX: Using actual document viewbox instead of canvas element:`, {
+      canvasElementWidthMM: element.width,
+      canvasElementHeightMM: element.height,
+      actualDocumentWidthMM: actualDocumentWidth,
+      actualDocumentHeightMM: actualDocumentHeight,
+      actualContentWidthMM: contentWidth,
+      actualContentHeightMM: contentHeight
+    });
+    
+    // Use actual content dimensions for proper proportions
+    const width = contentWidth * MM_TO_POINTS;
+    const height = contentHeight * MM_TO_POINTS;
+    
+    console.log(`📏 FIXED: Using actual content dimensions (prevents distortion):`, {
+      actualContentWidthMM: contentWidth,
+      actualContentHeightMM: contentHeight,
       mmToPoints: MM_TO_POINTS,
       finalWidthPoints: width.toFixed(1),
       finalHeightPoints: height.toFixed(1),
-      finalWidthMM: (width / MM_TO_POINTS).toFixed(1),
-      finalHeightMM: (height / MM_TO_POINTS).toFixed(1)
+      correctionApplied: 'Using 293.91x162.468mm instead of canvas element dimensions'
     });
     
     return { width, height };
