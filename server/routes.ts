@@ -681,8 +681,8 @@ export async function registerRoutes(app: express.Application) {
         console.log('🎨 CMYK content detected - Using Original Generator with CMYK Final Step');
         
         // Use original working generator but apply CMYK conversion at the end
-        const { DirectPDFGenerator } = await import('./direct-pdf-generator');
-        const generator = new DirectPDFGenerator();
+        const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+        const generator = new RobustPDFGenerator();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
@@ -700,10 +700,10 @@ export async function registerRoutes(app: express.Application) {
         return;
       }
 
-      console.log('📦 NEW APPROACH: Using DirectPDFGenerator for perfect CMYK preservation...');
-      const { DirectPDFGenerator } = await import('./direct-pdf-generator');
-      console.log('✅ DirectPDFGenerator imported successfully');
-      const generator = new DirectPDFGenerator();
+      console.log('📦 ROBUST APPROACH: Using RobustPDFGenerator for complete color and dimension control...');
+      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+      console.log('✅ RobustPDFGenerator imported successfully');
+      const generator = new RobustPDFGenerator();
       console.log('📊 Original working generator instance created');
 
       // Generate PDF that preserves original file content
