@@ -422,15 +422,26 @@ grestore`;
       const timestamp = Date.now();
       const pdfPath = path.join(process.cwd(), 'uploads', `logo_${timestamp}.pdf`);
       
-      // Use rsvg-convert for better vector preservation instead of Inkscape
+      // Check if this is a CMYK-preserved SVG
+      let isCMYKPreservedSVG = false;
+      try {
+        const svgContent = fs.readFileSync(svgPath, 'utf8');
+        isCMYKPreservedSVG = svgContent.includes('data-vectorized-cmyk="true"') || svgContent.includes('CMYK_PDF_CONVERTED');
+      } catch (e) {
+        // Continue with default conversion
+      }
+      
+      // Use rsvg-convert for better vector preservation
       const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${svgPath}"`;
       try {
         await execAsync(rsvgCmd);
+        console.log(`✅ rsvg-convert successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
       } catch (rsvgError) {
         console.warn('rsvg-convert failed, falling back to Inkscape');
-        // Fallback to Inkscape with better settings
+        // Fallback to Inkscape with better settings for color preservation
         const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${pdfPath}" "${svgPath}"`;
         await execAsync(inkscapeCmd);
+        console.log(`✅ Inkscape fallback successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
       }
       
       if (fs.existsSync(pdfPath)) {
@@ -502,30 +513,43 @@ grestore`;
         console.warn('Could not read SVG file for CMYK check');
       }
       
-      if (isCMYKPreserved) {
-        console.log(`🎯 CMYK PRESERVED: Skipping Ghostscript conversion to avoid color degradation`);
-        // Copy original PDF as final output
-        fs.copyFileSync(tempPath, cmykPath);
-      } else {
-        // Convert to CMYK using simpler Ghostscript approach for non-CMYK files
-        const gsCmd = [
-          'gs',
-          '-dNOPAUSE',
-          '-dBATCH',
-          '-dSAFER',
-          '-sDEVICE=pdfwrite',
-          '-dProcessColorModel=/DeviceCMYK',
-          '-dColorConversionStrategy=/LeaveColorUnchanged',
-          '-dPDFSETTINGS=/prepress',
-          `-sOutputFile="${cmykPath}"`,
-          `"${tempPath}"`
-        ].join(' ');
-        
-        console.log(`🎯 Converting to CMYK with simplified color preservation`);
-        
-        const gsResult = await execAsync(gsCmd);
-        console.log(`✅ CMYK conversion successful: ${fs.statSync(cmykPath).size} bytes`);
-      }
+      // Always convert to CMYK, but use gentler settings for CMYK-preserved files
+      const gsCmd = isCMYKPreserved 
+        ? [
+            'gs',
+            '-dNOPAUSE',
+            '-dBATCH',
+            '-dSAFER',
+            '-sDEVICE=pdfwrite',
+            '-dProcessColorModel=/DeviceCMYK',
+            '-dColorConversionStrategy=/LeaveColorUnchanged',
+            '-dDoThumbnails=false',
+            '-dCreateJobTicket=false',
+            '-dPreserveEPSInfo=false',
+            '-dPreserveOPIComments=false',
+            '-dEmbedAllFonts=true',
+            '-dSubsetFonts=true',
+            `-sOutputFile="${cmykPath}"`,
+            `"${tempPath}"`
+          ].join(' ')
+        : [
+            'gs',
+            '-dNOPAUSE',
+            '-dBATCH',
+            '-dSAFER',
+            '-sDEVICE=pdfwrite',
+            '-dProcessColorModel=/DeviceCMYK',
+            '-dColorConversionStrategy=/CMYK',
+            '-dPDFSETTINGS=/prepress',
+            `-sOutputFile="${cmykPath}"`,
+            `"${tempPath}"`
+          ].join(' ');
+      
+      const conversionType = isCMYKPreserved ? 'gentle CMYK preservation' : 'full CMYK conversion';
+      console.log(`🎯 Converting to CMYK with ${conversionType}`);
+      
+      const gsResult = await execAsync(gsCmd);
+      console.log(`✅ CMYK conversion successful: ${fs.statSync(cmykPath).size} bytes`);
       
       if (fs.existsSync(cmykPath)) {
         const cmykBytes = fs.readFileSync(cmykPath);
