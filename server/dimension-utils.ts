@@ -195,7 +195,7 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
           // Check if this looks like A3 dimensions (around 842×1191 or 841×1190)
           if ((Math.abs(vbWidth - 842) <= 2 && Math.abs(vbHeight - 1191) <= 2) ||
               (Math.abs(svgWidth - 842) <= 2 && Math.abs(svgHeight - 1191) <= 2)) {
-            console.log(`🎯 A3 PDF DETECTED: Using viewBox dimensions ${vbWidth}×${vbHeight} instead of content bounds`);
+            console.log(`🎯 A3 PDF DETECTED: Using exact viewBox dimensions ${vbWidth}×${vbHeight} to preserve A3 format`);
             return {
               width: Math.round(vbWidth),
               height: Math.round(vbHeight),
@@ -495,6 +495,33 @@ export function cleanAIVectorizedSVG(svgContent: string): string {
  */
 export async function detectDimensionsFromSVG(svgContent: string, contentBounds?: any, originalPdfPath?: string): Promise<DimensionResult> {
   let bestResult: DimensionResult | null = null;
+  
+  // CRITICAL A3 DETECTION: Check for A3 PDF and return exact dimensions immediately
+  const isPdfConverted = svgContent.includes('CMYK_PDF_CONVERTED') || svgContent.includes('data-original-cmyk-pdf="true"');
+  if (isPdfConverted) {
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+    const widthMatch = svgContent.match(/width="([^"]+)"/);
+    const heightMatch = svgContent.match(/height="([^"]+)"/);
+    
+    if (viewBoxMatch && widthMatch && heightMatch) {
+      const svgWidth = parseFloat(widthMatch[1]);
+      const svgHeight = parseFloat(heightMatch[1]);
+      
+      // Check if this is A3 size (841-842 × 1190-1191)
+      if ((Math.abs(svgWidth - 842) <= 2 && Math.abs(svgHeight - 1191) <= 2)) {
+        console.log(`🎯 A3 PDF BYPASS: Using exact A3 dimensions ${svgWidth}×${svgHeight}px = 297×420mm (NO AUTO-SCALING)`);
+        return {
+          widthPx: Math.round(svgWidth),
+          heightPx: Math.round(svgHeight),
+          widthMm: 297,
+          heightMm: 420,
+          conversionFactor: 0.3527777778, // Exact A3 conversion: 842px = 297mm
+          source: 'a3_pdf_exact',
+          accuracy: 'perfect'
+        };
+      }
+    }
+  }
   
   // **CRITICAL PDF DIMENSION FIX**: Check if this SVG was converted from a PDF
   // If so, use the original PDF dimensions instead of SVG content bounds

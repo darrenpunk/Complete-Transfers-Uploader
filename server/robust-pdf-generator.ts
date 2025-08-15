@@ -377,12 +377,12 @@ grestore`;
       const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
       const [logoPage] = logoDoc;
       
-      // Calculate exact position using user's specifications
+      // Calculate exact position using user's actual element dimensions
       const MM_TO_POINTS = 2.834645669;
       
-      // User's exact content dimensions (293.91x162.468mm)
-      const contentWidthMM = 293.91;
-      const contentHeightMM = 162.468;
+      // Use the actual element dimensions from canvas (preserve aspect ratio)
+      const contentWidthMM = element.width;
+      const contentHeightMM = element.height;
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
@@ -480,7 +480,7 @@ grestore`;
       // Write RGB PDF
       fs.writeFileSync(tempPath, pdfBytes);
       
-      // Convert to CMYK using Ghostscript with PRESERVING existing CMYK colors
+      // Convert to CMYK using simpler Ghostscript approach (avoid ICC profile issues)
       const gsCmd = [
         'gs',
         '-dNOPAUSE',
@@ -488,16 +488,13 @@ grestore`;
         '-dSAFER',
         '-sDEVICE=pdfwrite',
         '-dProcessColorModel=/DeviceCMYK',
-        '-dColorConversionStrategy=/CMYK',
-        '-dPreserveCMYKColors=true',
-        '-dOverrideICC=false',
-        '-dConvertCMYKImagesToRGB=false',
-        '-sDefaultCMYKProfile=ISO_Coated_v2_300_eci.icc',
+        '-dColorConversionStrategy=/LeaveColorUnchanged',
+        '-dPDFSETTINGS=/prepress',
         `-sOutputFile="${cmykPath}"`,
         `"${tempPath}"`
       ].join(' ');
       
-      console.log(`🎯 Converting to CMYK with CMYK color preservation strategy`);
+      console.log(`🎯 Converting to CMYK with simplified color preservation`);
       await execAsync(gsCmd);
       
       if (fs.existsSync(cmykPath)) {
