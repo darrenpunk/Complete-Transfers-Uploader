@@ -681,16 +681,17 @@ export async function registerRoutes(app: express.Application) {
         console.log('🎨 CMYK content detected - Using Original Generator with CMYK Final Step');
         
         // Use original working generator but apply CMYK conversion at the end
-        const { OriginalWorkingGenerator } = await import('./original-working-generator');
-        const generator = new OriginalWorkingGenerator();
+        const { DirectPDFGenerator } = await import('./direct-pdf-generator');
+        const generator = new DirectPDFGenerator();
         
         const pdfBuffer = await generator.generatePDF({
-          projectId: project.name,
-          templateSize,
           canvasElements,
           logos: Object.values(logosObject),
+          templateSize,
           garmentColor: project.garmentColor,
-          appliqueBadgesForm: null
+          projectName: project.name || 'Untitled Project',
+          quantity: project.quantity || 1,
+          comments: project.comments || ''
         });
         
         res.setHeader('Content-Type', 'application/pdf');
@@ -699,20 +700,21 @@ export async function registerRoutes(app: express.Application) {
         return;
       }
 
-      console.log('📦 Using OriginalWorkingGenerator for RGB content...');
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      console.log('✅ OriginalWorkingGenerator imported successfully');
-      const generator = new OriginalWorkingGenerator();
+      console.log('📦 NEW APPROACH: Using DirectPDFGenerator for perfect CMYK preservation...');
+      const { DirectPDFGenerator } = await import('./direct-pdf-generator');
+      console.log('✅ DirectPDFGenerator imported successfully');
+      const generator = new DirectPDFGenerator();
       console.log('📊 Original working generator instance created');
 
       // Generate PDF that preserves original file content
       const pdfData = {
-        projectId,
-        templateSize,
         canvasElements,
         logos,
+        templateSize,
         garmentColor: project.garmentColor,
-        appliqueBadgesForm: project.appliqueBadgesForm
+        projectName: project.name || 'Untitled Project',
+        quantity: project.quantity || 1,
+        comments: project.comments || ''
       };
       
       // Debug: Log canvas elements with garment colors
