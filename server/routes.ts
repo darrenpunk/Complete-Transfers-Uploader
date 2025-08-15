@@ -956,13 +956,14 @@ export async function registerRoutes(app: express.Application) {
                 await execAsync(svgCommand);
                 
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
-                  // Clean SVG content to remove stroke scaling issues
-                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
+                  // CRITICAL FIX: DO NOT clean SVG content - removeVectorizedBackgrounds was corrupting artwork
+                  // The function was removing essential content, mistaking artwork for backgrounds
+                  console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity`);
+                  
                   let svgContent = fs.readFileSync(svgPath, 'utf8');
-                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
                   
                   // Add CMYK marker to the SVG so color analysis knows this came from a CMYK PDF
-                  const markedSvg = cleanedSvg.replace(
+                  const markedSvg = svgContent.replace(
                     /<svg/,
                     '<!-- CMYK_PDF_CONVERTED -->\n<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
                   );
@@ -1026,11 +1027,9 @@ export async function registerRoutes(app: express.Application) {
                   fs.writeFileSync(svgPath, cleanedSvg);
                   console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
                 } else {
-                  // Clean SVG content to remove stroke scaling issues (only for non-AI-vectorized files)
-                  const { removeVectorizedBackgrounds } = await import('./svg-color-utils');
-                  const cleanedSvg = removeVectorizedBackgrounds(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Cleaned SVG content for ${svgFilename}`);
+                  // CRITICAL FIX: Preserve original artwork content - removeVectorizedBackgrounds was corrupting artwork  
+                  console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity for ${svgFilename}`);
+                  // No cleaning - preserve original SVG content as-is
                 }
                 
                 // This is an RGB PDF - explicitly mark as NOT CMYK preserved
