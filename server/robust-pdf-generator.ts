@@ -422,8 +422,8 @@ grestore`;
       const timestamp = Date.now();
       const pdfPath = path.join(process.cwd(), 'uploads', `logo_${timestamp}.pdf`);
       
-      // Use Inkscape to convert SVG to PDF with color preservation
-      const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${pdfPath}" "${svgPath}"`;
+      // Use Inkscape to convert SVG to PDF with CMYK color preservation
+      const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-filename="${pdfPath}" "${svgPath}"`;
       await execAsync(inkscapeCmd);
       
       if (fs.existsSync(pdfPath)) {
@@ -480,7 +480,7 @@ grestore`;
       // Write RGB PDF
       fs.writeFileSync(tempPath, pdfBytes);
       
-      // Convert to CMYK using Ghostscript
+      // Convert to CMYK using Ghostscript with PRESERVING existing CMYK colors
       const gsCmd = [
         'gs',
         '-dNOPAUSE',
@@ -488,12 +488,16 @@ grestore`;
         '-dSAFER',
         '-sDEVICE=pdfwrite',
         '-dProcessColorModel=/DeviceCMYK',
-        '-dColorConversionStrategy=/LeaveColorUnchanged',
+        '-dColorConversionStrategy=/CMYK',
+        '-dPreserveCMYKColors=true',
+        '-dOverrideICC=false',
+        '-dConvertCMYKImagesToRGB=false',
+        '-sDefaultCMYKProfile=ISO_Coated_v2_300_eci.icc',
         `-sOutputFile="${cmykPath}"`,
         `"${tempPath}"`
       ].join(' ');
       
-      console.log(`🔧 Converting to CMYK with LeaveColorUnchanged strategy`);
+      console.log(`🎯 Converting to CMYK with CMYK color preservation strategy`);
       await execAsync(gsCmd);
       
       if (fs.existsSync(cmykPath)) {

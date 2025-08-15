@@ -505,9 +505,9 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
     console.log('🔧 PDF DIMENSION FIX: Detected PDF-derived SVG, using original PDF dimensions...');
     
     try {
-      const fs = require('fs');
-      const path = require('path');
-      const { PDFDocument } = require('pdf-lib');
+      const fs = await import('fs');
+      const path = await import('path');
+      const { PDFDocument } = await import('pdf-lib');
       
       // Try to find the original PDF file
       const uploadsDir = path.dirname(originalPdfPath);
@@ -557,16 +557,24 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
     if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
       let contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'ai_vectorized_content');
       
-      // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
-      const maxCanvasSize = 300; // mm
-      if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
-        const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
-        const scaledWidth = actualContentBounds.width * scaleFactor;
-        const scaledHeight = actualContentBounds.height * scaleFactor;
-        contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_scaled');
-        console.log(`🔽 Auto-scaled oversized AI-vectorized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
+      // CRITICAL FIX: Skip auto-scaling for A3 documents that are already correctly sized
+      const isA3Document = (Math.abs(actualContentBounds.width - 842) <= 2 && Math.abs(actualContentBounds.height - 1191) <= 2) ||
+                          (Math.abs(contentResult.widthMm - 297) <= 2 && Math.abs(contentResult.heightMm - 420) <= 2);
+      
+      if (isA3Document) {
+        console.log(`🎯 A3 AI-VECTORIZED DETECTED: Skipping auto-scaling - preserving exact A3 dimensions ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px = ${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm`);
       } else {
-        console.log(`✅ Using actual content bounds for AI-vectorized SVG: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px`);
+        // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
+        const maxCanvasSize = 300; // mm
+        if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
+          const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
+          const scaledWidth = actualContentBounds.width * scaleFactor;
+          const scaledHeight = actualContentBounds.height * scaleFactor;
+          contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_scaled');
+          console.log(`🔽 Auto-scaled oversized AI-vectorized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
+        } else {
+          console.log(`✅ Using actual content bounds for AI-vectorized SVG: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px`);
+        }
       }
       return contentResult;
     }
@@ -622,16 +630,24 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
     if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
       let contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'actual_content');
       
-      // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
-      const maxCanvasSize = 300; // mm
-      if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
-        const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
-        const scaledWidth = actualContentBounds.width * scaleFactor;
-        const scaledHeight = actualContentBounds.height * scaleFactor;
-        contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'actual_content_scaled');
-        console.log(`🔽 Auto-scaled oversized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
+      // CRITICAL FIX: Skip auto-scaling for A3 documents that are already correctly sized
+      const isA3Document = (Math.abs(actualContentBounds.width - 842) <= 2 && Math.abs(actualContentBounds.height - 1191) <= 2) ||
+                          (Math.abs(contentResult.widthMm - 297) <= 2 && Math.abs(contentResult.heightMm - 420) <= 2);
+      
+      if (isA3Document) {
+        console.log(`🎯 A3 DOCUMENT DETECTED: Skipping auto-scaling - preserving exact A3 dimensions ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px = ${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm`);
       } else {
-        console.log(`✅ CONTENT BOUNDS FIX: Using actual content dimensions: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (prevents distortion from viewBox)`);
+        // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
+        const maxCanvasSize = 300; // mm
+        if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
+          const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
+          const scaledWidth = actualContentBounds.width * scaleFactor;
+          const scaledHeight = actualContentBounds.height * scaleFactor;
+          contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'actual_content_scaled');
+          console.log(`🔽 Auto-scaled oversized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
+        } else {
+          console.log(`✅ CONTENT BOUNDS FIX: Using actual content dimensions: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (prevents distortion from viewBox)`);
+        }
       }
       return contentResult;
     }
