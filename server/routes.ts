@@ -678,19 +678,19 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Ghostscript Overlay Generator');
+        console.log('🎨 CMYK content detected - Using Original Generator with CMYK Final Step');
         
-        // Use Ghostscript overlay approach: template creation + CMYK logo overlays
-        const { GhostscriptOverlayGenerator } = await import('./ghostscript-overlay-generator');
-        const generator = new GhostscriptOverlayGenerator();
+        // Use original working generator but apply CMYK conversion at the end
+        const { OriginalWorkingGenerator } = await import('./original-working-generator');
+        const generator = new OriginalWorkingGenerator();
         
         const pdfBuffer = await generator.generatePDF({
-          canvasElements,
-          logos: logosObject,
+          projectId: project.name,
           templateSize,
+          canvasElements,
+          logos: Object.values(logosObject),
           garmentColor: project.garmentColor,
-          projectName: project.name,
-          quantity: project.quantity || 1
+          appliqueBadgesForm: null
         });
         
         res.setHeader('Content-Type', 'application/pdf');
