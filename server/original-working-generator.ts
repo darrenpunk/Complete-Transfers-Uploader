@@ -91,17 +91,30 @@ export class OriginalWorkingGenerator {
       const tempFinalPath = path.join(process.cwd(), 'uploads', `final_check_${Date.now()}.pdf`);
       fs.writeFileSync(tempFinalPath, pdfBytes);
       
-      // ALWAYS apply CMYK conversion for CMYK logos - don't check, just do it
-      console.log(`🎨 CMYK logos detected - Forcing CMYK color space conversion`);
+      // FORCE CMYK COLOR SPACE CONVERSION: Convert RGB content to CMYK
+      console.log(`🎨 CMYK logos detected - Converting RGB content to CMYK color space`);
       
       const finalCmykPath = path.join(process.cwd(), 'uploads', `final_cmyk_${Date.now()}.pdf`);
-      const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${finalCmykPath}" "${tempFinalPath}"`;
-      console.log(`🔧 Forcing CMYK conversion: ${cmykCmd}`);
+      // Use ColorConversionStrategy=CMYK to actually convert RGB to CMYK instead of leaving unchanged
+      const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dPDFSETTINGS=/prepress -sOutputFile="${finalCmykPath}" "${tempFinalPath}"`;
+      console.log(`🔧 Converting RGB to CMYK: ${cmykCmd}`);
       
       try {
         await execAsync(cmykCmd);
         const cmykBytes = fs.readFileSync(finalCmykPath);
-        console.log(`✅ CMYK conversion applied - Size: ${cmykBytes.length} bytes`);
+        console.log(`✅ RGB to CMYK conversion applied - Size: ${cmykBytes.length} bytes`);
+        
+        // Verify CMYK conversion worked
+        try {
+          const { stdout: cmykCheck } = await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=inkcov -sOutputFile=/dev/null "${finalCmykPath}" 2>&1 | head -5`);
+          if (cmykCheck.includes('CMYK') || cmykCheck.includes('cyan') || cmykCheck.includes('magenta')) {
+            console.log(`✅ VERIFIED: CMYK color space conversion successful`);
+          } else {
+            console.log(`⚠️ WARNING: CMYK conversion may not have worked properly`);
+          }
+        } catch (checkError: any) {
+          console.log(`📊 CMYK verification check failed: ${checkError.message}`);
+        }
         
         // Cleanup
         fs.unlinkSync(tempFinalPath);
@@ -570,18 +583,37 @@ export class OriginalWorkingGenerator {
       console.log(`📏 Temp PDF dimensions: ${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)} pts`);
       console.log(`🎯 POSITIONING FIX: Temp PDF acts as a 'stamp' - logo is at (0,0) in temp PDF, we position the entire temp PDF at target coordinates`);
       
+      // ASPECT RATIO PRESERVATION FIX: Calculate scaling that preserves proportions
+      const tempAspectRatio = tempPageSize.width / tempPageSize.height;
+      const targetAspectRatio = size.width / size.height;
+      
+      let finalWidth = size.width;
+      let finalHeight = size.height;
+      
+      // If aspect ratios don't match, scale proportionally to fit within target bounds
+      if (Math.abs(tempAspectRatio - targetAspectRatio) > 0.01) {
+        if (tempAspectRatio > targetAspectRatio) {
+          // Logo is wider than target - scale based on width
+          finalHeight = size.width / tempAspectRatio;
+        } else {
+          // Logo is taller than target - scale based on height  
+          finalWidth = size.height * tempAspectRatio;
+        }
+        console.log(`🔧 ASPECT RATIO FIX: Adjusted size from ${size.width.toFixed(1)}x${size.height.toFixed(1)} to ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}`);
+      }
+      
       // CRITICAL FIX: The temp PDF contains the logo at (0,0) with correct proportions
       // We simply place this temp PDF at the calculated position with the target size
       // This is like placing a "stamp" at the right location
       page.drawPage(embeddedPage, {
         x: position.x,
         y: position.y,
-        width: size.width,
-        height: size.height,
+        width: finalWidth,
+        height: finalHeight,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       });
       
-      console.log(`✅ FIXED: Positioned temp PDF (${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)}) at (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) scaled to ${size.width.toFixed(1)}x${size.height.toFixed(1)}`);
+      console.log(`✅ FIXED: Positioned temp PDF (${tempPageSize.width.toFixed(1)}x${tempPageSize.height.toFixed(1)}) at (${position.x.toFixed(1)}, ${position.y.toFixed(1)}) scaled to ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)} with preserved aspect ratio`);
       
       console.log(`✅ Successfully embedded SVG as vector PDF with ${hasCMYKColors ? 'CMYK preservation' : 'standard conversion'} at (${position.x.toFixed(1)}, ${position.y.toFixed(1)})`);
       

@@ -7,7 +7,7 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (August 14, 2025)
-- **🎯 ORIGINAL GENERATOR + FORCED CMYK**: Back to using the proven original working generator that creates perfect two-page template format, but now forces CMYK color space conversion at the final step to preserve exact CMYK values from logos.
+- **🎯 ORIGINAL GENERATOR + FORCED CMYK + ASPECT RATIO FIX**: Back to using the proven original working generator that creates perfect two-page template format, now with forced RGB-to-CMYK color space conversion (not LeaveColorUnchanged) and aspect ratio preservation to prevent logo squashing.
 - **🚨 CRITICAL DISCOVERY**: pdf-lib library fundamentally incompatible with CMYK preservation - converts all CMYK content to RGB regardless of input format. User requirement: NO color conversion cycles, preserve original RGB/CMYK values exactly.
 - **✅ DIRECT CMYK SUCCESS**: Successfully created individual CMYK PDFs (11,250 bytes) using Inkscape + Ghostscript pipeline, but pdf-lib converts them back to RGB in final output.
 - **🔧 PURE GHOSTSCRIPT FAILED**: Attempted pure Ghostscript approach but lost template structure and produced only single logos instead of proper two-page format.
