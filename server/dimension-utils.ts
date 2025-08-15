@@ -173,6 +173,42 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
  */
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
+    // CRITICAL FIX: For A3 PDFs, use viewBox dimensions directly instead of content bounds
+    // Check if this is a PDF-converted SVG with A3 dimensions
+    const isPdfConverted = svgContent.includes('CMYK_PDF_CONVERTED') || svgContent.includes('data-original-cmyk-pdf="true"');
+    
+    if (isPdfConverted) {
+      // Extract viewBox dimensions for PDF-converted SVGs
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      const widthMatch = svgContent.match(/width="([^"]+)"/);
+      const heightMatch = svgContent.match(/height="([^"]+)"/);
+      
+      if (viewBoxMatch && widthMatch && heightMatch) {
+        const viewBoxValues = viewBoxMatch[1].trim().split(/\s+/);
+        const svgWidth = parseFloat(widthMatch[1]);
+        const svgHeight = parseFloat(heightMatch[1]);
+        
+        if (viewBoxValues.length >= 4) {
+          const vbWidth = parseFloat(viewBoxValues[2]);
+          const vbHeight = parseFloat(viewBoxValues[3]);
+          
+          // Check if this looks like A3 dimensions (around 842×1191 or 841×1190)
+          if ((Math.abs(vbWidth - 842) <= 2 && Math.abs(vbHeight - 1191) <= 2) ||
+              (Math.abs(svgWidth - 842) <= 2 && Math.abs(svgHeight - 1191) <= 2)) {
+            console.log(`🎯 A3 PDF DETECTED: Using viewBox dimensions ${vbWidth}×${vbHeight} instead of content bounds`);
+            return {
+              width: Math.round(vbWidth),
+              height: Math.round(vbHeight),
+              minX: 0,
+              minY: 0,
+              maxX: Math.round(vbWidth),
+              maxY: Math.round(vbHeight)
+            };
+          }
+        }
+      }
+    }
+    
     // Extract coordinates from multiple SVG elements - handle multiline paths and attributes
     const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/g;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
