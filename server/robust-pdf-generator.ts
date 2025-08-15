@@ -317,7 +317,7 @@ grestore`;
     const pdfBytes = await pdfDoc.save();
     
     // Convert to CMYK if possible, otherwise return RGB
-    return await this.convertToCMYK(Buffer.from(pdfBytes));
+    return await this.convertToCMYK(Buffer.from(pdfBytes), data);
   }
   
   /**
@@ -422,9 +422,16 @@ grestore`;
       const timestamp = Date.now();
       const pdfPath = path.join(process.cwd(), 'uploads', `logo_${timestamp}.pdf`);
       
-      // Use Inkscape to convert SVG to PDF with CMYK color preservation
-      const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-filename="${pdfPath}" "${svgPath}"`;
-      await execAsync(inkscapeCmd);
+      // Use rsvg-convert for better vector preservation instead of Inkscape
+      const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${svgPath}"`;
+      try {
+        await execAsync(rsvgCmd);
+      } catch (rsvgError) {
+        console.warn('rsvg-convert failed, falling back to Inkscape');
+        // Fallback to Inkscape with better settings
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${pdfPath}" "${svgPath}"`;
+        await execAsync(inkscapeCmd);
+      }
       
       if (fs.existsSync(pdfPath)) {
         console.log(`✅ SVG converted to PDF: ${fs.statSync(pdfPath).size} bytes`);
@@ -471,7 +478,7 @@ grestore`;
   /**
    * Convert PDF to CMYK if possible
    */
-  private async convertToCMYK(pdfBytes: Buffer): Promise<Buffer> {
+  private async convertToCMYK(pdfBytes: Buffer, data: ProjectData): Promise<Buffer> {
     try {
       const timestamp = Date.now();
       const tempPath = path.join(process.cwd(), 'uploads', `temp_rgb_${timestamp}.pdf`);
@@ -480,22 +487,45 @@ grestore`;
       // Write RGB PDF
       fs.writeFileSync(tempPath, pdfBytes);
       
-      // Convert to CMYK using simpler Ghostscript approach (avoid ICC profile issues)
-      const gsCmd = [
-        'gs',
-        '-dNOPAUSE',
-        '-dBATCH',
-        '-dSAFER',
-        '-sDEVICE=pdfwrite',
-        '-dProcessColorModel=/DeviceCMYK',
-        '-dColorConversionStrategy=/LeaveColorUnchanged',
-        '-dPDFSETTINGS=/prepress',
-        `-sOutputFile="${cmykPath}"`,
-        `"${tempPath}"`
-      ].join(' ');
+      // Skip CMYK conversion for CMYK-preserved files - they're already correct
+      let isCMYKPreserved = false;
+      try {
+        if (data.canvasElements && data.canvasElements.length > 0) {
+          const firstElement = data.canvasElements[0];
+          const firstLogo = data.logos.find(l => l.id === firstElement.logoId);
+          if (firstLogo) {
+            const svgContent = fs.readFileSync(path.join(process.cwd(), 'uploads', firstLogo.filename), 'utf8');
+            isCMYKPreserved = svgContent.includes('data-vectorized-cmyk="true"') || svgContent.includes('CMYK_PDF_CONVERTED');
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read SVG file for CMYK check');
+      }
       
-      console.log(`🎯 Converting to CMYK with simplified color preservation`);
-      await execAsync(gsCmd);
+      if (isCMYKPreserved) {
+        console.log(`🎯 CMYK PRESERVED: Skipping Ghostscript conversion to avoid color degradation`);
+        // Copy original PDF as final output
+        fs.copyFileSync(tempPath, cmykPath);
+      } else {
+        // Convert to CMYK using simpler Ghostscript approach for non-CMYK files
+        const gsCmd = [
+          'gs',
+          '-dNOPAUSE',
+          '-dBATCH',
+          '-dSAFER',
+          '-sDEVICE=pdfwrite',
+          '-dProcessColorModel=/DeviceCMYK',
+          '-dColorConversionStrategy=/LeaveColorUnchanged',
+          '-dPDFSETTINGS=/prepress',
+          `-sOutputFile="${cmykPath}"`,
+          `"${tempPath}"`
+        ].join(' ');
+        
+        console.log(`🎯 Converting to CMYK with simplified color preservation`);
+        
+        const gsResult = await execAsync(gsCmd);
+        console.log(`✅ CMYK conversion successful: ${fs.statSync(cmykPath).size} bytes`);
+      }
       
       if (fs.existsSync(cmykPath)) {
         const cmykBytes = fs.readFileSync(cmykPath);

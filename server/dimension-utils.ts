@@ -516,7 +516,7 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
           widthMm: 297,
           heightMm: 420,
           conversionFactor: 0.3527777778, // Exact A3 conversion: 842px = 297mm
-          source: 'a3_pdf_exact',
+          source: 'exact_match',
           accuracy: 'perfect'
         };
       }
