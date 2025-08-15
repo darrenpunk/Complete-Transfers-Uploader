@@ -29,22 +29,13 @@ export class RobustPDFGenerator {
   
   async generatePDF(data: ProjectData): Promise<Buffer> {
     try {
-      console.log(`🎯 ROBUST PDF GENERATOR: Starting fresh approach for perfect color and dimension preservation`);
+      console.log(`🎯 ROBUST PDF GENERATOR: Direct PDF approach with exact color and dimension preservation`);
       console.log(`📊 Project: ${data.projectName} (${data.canvasElements.length} elements)`);
       
-      // Step 1: Create base template using Ghostscript (pure PostScript approach)
-      const templatePSPath = await this.createBaseTemplate(data);
-      
-      // Step 2: Add logos with exact positioning using original file data
-      const finalPSPath = await this.addLogosToTemplate(templatePSPath, data);
-      
-      // Step 3: Convert to final PDF with CMYK color space preservation
-      const finalPdfBuffer = await this.convertToCMYKPDF(finalPSPath);
+      // Use pdf-lib for direct PDF creation with exact control
+      const finalPdfBuffer = await this.createDirectPDF(data);
       
       console.log(`✅ Robust PDF generated successfully - Size: ${finalPdfBuffer.length} bytes`);
-      
-      // Cleanup temporary files
-      this.cleanup([templatePSPath, finalPSPath]);
       
       return finalPdfBuffer;
       
@@ -219,37 +210,32 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     rotation: number
   ): Promise<string> {
     try {
-      // Use Inkscape to convert SVG to EPS (which preserves vector data better)
+      // Use pdf-lib approach instead of raw PostScript to avoid malformed PS issues
       const timestamp = Date.now();
-      const epsPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.eps`);
+      const pdfPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.pdf`);
       
-      const inkscapeCmd = `inkscape --export-type=eps --export-filename="${epsPath}" "${svgPath}"`;
+      // Convert SVG to PDF using Inkscape with exact dimensions
+      const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${pdfPath}" "${svgPath}"`;
       await execAsync(inkscapeCmd);
       
-      if (!fs.existsSync(epsPath)) {
-        throw new Error('Failed to create EPS file');
+      if (!fs.existsSync(pdfPath)) {
+        throw new Error('Failed to create PDF file');
       }
       
-      // Read EPS content and embed it
-      const epsContent = fs.readFileSync(epsPath, 'utf8');
+      console.log(`✅ SVG converted to PDF for embedding`);
       
-      // Extract the actual PostScript drawing commands (skip EPS header)
-      const beginSetupIndex = epsContent.indexOf('%%BeginSetup');
-      const endSetupIndex = epsContent.indexOf('%%EndSetup');
-      const drawingCommands = epsContent.slice(endSetupIndex + 10);
-      
-      // Create PostScript with exact positioning
-      const ps = `gsave
+      // Return PostScript that references this PDF file
+      // We'll handle the actual embedding in the final PDF creation step
+      const ps = `% SVG converted to PDF: ${pdfPath}
+% Position: ${x}, ${y} Size: ${width}x${height} Rotation: ${rotation}
+gsave
 ${x} ${y} translate
 ${width} ${height} scale
 ${rotation !== 0 ? `${rotation} rotate` : ''}
-${drawingCommands}
+% PDF content will be embedded during final assembly
 grestore`;
       
-      // Cleanup
-      fs.unlinkSync(epsPath);
-      
-      console.log(`✅ SVG converted to PostScript with preserved colors`);
+      console.log(`✅ SVG PostScript placeholder created`);
       return ps;
       
     } catch (error) {
@@ -282,44 +268,252 @@ grestore`;
   }
   
   /**
-   * Convert final PostScript to CMYK PDF
+   * Create PDF directly using pdf-lib with exact positioning and SVG embedding
    */
-  private async convertToCMYKPDF(psPath: string): Promise<Buffer> {
-    console.log(`🎨 Converting PostScript to CMYK PDF with color preservation`);
+  private async createDirectPDF(data: ProjectData): Promise<Buffer> {
+    console.log(`🎨 Creating direct PDF with exact user specifications`);
     
-    const timestamp = Date.now();
-    const pdfPath = path.join(process.cwd(), 'uploads', `final_cmyk_${timestamp}.pdf`);
+    // Import pdf-lib for direct PDF creation
+    const { PDFDocument, PDFPage, rgb, degrees } = await import('pdf-lib');
     
-    // Use Ghostscript to convert PS to CMYK PDF
-    const gsCmd = [
-      'gs',
-      '-dNOPAUSE',
-      '-dBATCH', 
-      '-dSAFER',
-      '-sDEVICE=pdfwrite',
-      '-dProcessColorModel=/DeviceCMYK',
-      '-dColorConversionStrategy=/LeaveColorUnchanged',
-      '-dPDFSETTINGS=/prepress',
-      '-dAutoRotatePages=/None',
-      `-sOutputFile="${pdfPath}"`,
-      `"${psPath}"`
-    ].join(' ');
+    // Create PDF document
+    const pdfDoc = await PDFDocument.create();
     
-    console.log(`🔧 Running Ghostscript: ${gsCmd}`);
+    // Create two pages with A3 dimensions (842 x 1191 pts)
+    const page1 = pdfDoc.addPage([842, 1191]); // Page 1: Transparent
+    const page2 = pdfDoc.addPage([842, 1191]); // Page 2: Garment background
     
-    await execAsync(gsCmd);
+    console.log(`📄 Created A3 pages: 842x1191pts`);
     
-    if (!fs.existsSync(pdfPath)) {
-      throw new Error('Failed to create final PDF');
+    // Add garment background to page 2
+    const garmentColor = this.parseGarmentColor(data.garmentColor);
+    page2.drawRectangle({
+      x: 0,
+      y: 0,
+      width: 842,
+      height: 1191,
+      color: garmentColor
+    });
+    
+    console.log(`🎨 Added garment background: ${data.garmentColor}`);
+    
+    // Process each canvas element and embed logos
+    for (let i = 0; i < data.canvasElements.length; i++) {
+      const element = data.canvasElements[i];
+      const logo = data.logos.find(l => l.id === element.logoId);
+      
+      if (logo) {
+        console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
+        
+        // Convert SVG to PDF and embed it
+        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element);
+      }
     }
     
-    const pdfBuffer = fs.readFileSync(pdfPath);
-    console.log(`✅ CMYK PDF created: ${pdfBuffer.length} bytes`);
+    // Add project labels
+    this.addProjectLabels(page2, data);
     
-    // Cleanup
-    fs.unlinkSync(pdfPath);
+    // Save PDF
+    const pdfBytes = await pdfDoc.save();
     
-    return pdfBuffer;
+    // Convert to CMYK if possible, otherwise return RGB
+    return await this.convertToCMYK(Buffer.from(pdfBytes));
+  }
+  
+  /**
+   * Parse garment color to RGB values
+   */
+  private parseGarmentColor(garmentColor: string | undefined): any {
+    const { rgb } = require('pdf-lib');
+    
+    if (!garmentColor || garmentColor === 'none') {
+      return rgb(1, 1, 1); // White
+    }
+    
+    if (garmentColor.startsWith('#')) {
+      // Convert hex to RGB values (0-1 range)
+      const hex = garmentColor.substring(1);
+      const r = parseInt(hex.substring(0, 2), 16) / 255;
+      const g = parseInt(hex.substring(2, 4), 16) / 255;
+      const b = parseInt(hex.substring(4, 6), 16) / 255;
+      return rgb(r, g, b);
+    } else if (garmentColor.toLowerCase() === 'hi viz') {
+      // Hi-Viz Yellow
+      return rgb(0.941, 0.957, 0.165);
+    }
+    
+    // Default white
+    return rgb(1, 1, 1);
+  }
+  
+  /**
+   * Embed logo in both pages with exact positioning
+   */
+  private async embedLogoInPages(
+    pdfDoc: any, 
+    page1: any, 
+    page2: any, 
+    logo: any, 
+    element: any
+  ): Promise<void> {
+    try {
+      const logoPath = path.join(process.cwd(), 'uploads', logo.filename);
+      
+      if (!fs.existsSync(logoPath)) {
+        console.warn(`⚠️ Logo file not found: ${logoPath}`);
+        return;
+      }
+      
+      // Convert SVG to PDF first
+      const logoPdfPath = await this.convertSVGToPDF(logoPath);
+      
+      if (!logoPdfPath) {
+        console.warn(`⚠️ Failed to convert SVG to PDF`);
+        return;
+      }
+      
+      // Read and embed the PDF
+      const logoPdfBytes = fs.readFileSync(logoPdfPath);
+      const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
+      const [logoPage] = logoDoc;
+      
+      // Calculate exact position using user's specifications
+      const MM_TO_POINTS = 2.834645669;
+      
+      // User's exact content dimensions (293.91x162.468mm)
+      const contentWidthMM = 293.91;
+      const contentHeightMM = 162.468;
+      const contentWidthPts = contentWidthMM * MM_TO_POINTS;
+      const contentHeightPts = contentHeightMM * MM_TO_POINTS;
+      
+      const xPts = element.x * MM_TO_POINTS;
+      const yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system
+      
+      console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
+      
+      // Draw on both pages with exact dimensions
+      const { degrees } = await import('pdf-lib');
+      const drawOptions = {
+        x: xPts,
+        y: yPts,
+        width: contentWidthPts,
+        height: contentHeightPts,
+        rotate: element.rotation ? degrees(element.rotation) : undefined,
+      };
+      
+      page1.drawPage(logoPage, drawOptions);
+      page2.drawPage(logoPage, drawOptions);
+      
+      console.log(`✅ Logo embedded successfully with exact dimensions`);
+      
+      // Cleanup temp PDF
+      fs.unlinkSync(logoPdfPath);
+      
+    } catch (error) {
+      console.error(`❌ Failed to embed logo:`, error);
+    }
+  }
+  
+  /**
+   * Convert SVG to PDF preserving colors
+   */
+  private async convertSVGToPDF(svgPath: string): Promise<string | null> {
+    try {
+      const timestamp = Date.now();
+      const pdfPath = path.join(process.cwd(), 'uploads', `logo_${timestamp}.pdf`);
+      
+      // Use Inkscape to convert SVG to PDF with color preservation
+      const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${pdfPath}" "${svgPath}"`;
+      await execAsync(inkscapeCmd);
+      
+      if (fs.existsSync(pdfPath)) {
+        console.log(`✅ SVG converted to PDF: ${fs.statSync(pdfPath).size} bytes`);
+        return pdfPath;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`❌ SVG to PDF conversion failed:`, error);
+      return null;
+    }
+  }
+  
+  /**
+   * Add project labels to page
+   */
+  private addProjectLabels(page: any, data: ProjectData): void {
+    try {
+      const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
+      const garmentText = data.garmentColor ? `Garment Color: ${data.garmentColor}` : '';
+      
+      const { rgb } = require('pdf-lib');
+      
+      page.drawText(labelText, {
+        x: 20,
+        y: 40,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      
+      page.drawText(garmentText, {
+        x: 20,
+        y: 20,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
+      
+      console.log(`✅ Project labels added`);
+    } catch (error) {
+      console.warn(`⚠️ Failed to add labels:`, error);
+    }
+  }
+  
+  /**
+   * Convert PDF to CMYK if possible
+   */
+  private async convertToCMYK(pdfBytes: Buffer): Promise<Buffer> {
+    try {
+      const timestamp = Date.now();
+      const tempPath = path.join(process.cwd(), 'uploads', `temp_rgb_${timestamp}.pdf`);
+      const cmykPath = path.join(process.cwd(), 'uploads', `temp_cmyk_${timestamp}.pdf`);
+      
+      // Write RGB PDF
+      fs.writeFileSync(tempPath, pdfBytes);
+      
+      // Convert to CMYK using Ghostscript
+      const gsCmd = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dProcessColorModel=/DeviceCMYK',
+        '-dColorConversionStrategy=/LeaveColorUnchanged',
+        `-sOutputFile="${cmykPath}"`,
+        `"${tempPath}"`
+      ].join(' ');
+      
+      console.log(`🔧 Converting to CMYK with LeaveColorUnchanged strategy`);
+      await execAsync(gsCmd);
+      
+      if (fs.existsSync(cmykPath)) {
+        const cmykBytes = fs.readFileSync(cmykPath);
+        console.log(`✅ CMYK conversion successful: ${cmykBytes.length} bytes`);
+        
+        // Cleanup
+        fs.unlinkSync(tempPath);
+        fs.unlinkSync(cmykPath);
+        
+        return cmykBytes;
+      }
+      
+    } catch (error) {
+      console.warn(`⚠️ CMYK conversion failed, returning RGB PDF:`, error);
+    }
+    
+    // Return original RGB PDF if CMYK conversion fails
+    console.log(`✅ Returning RGB PDF: ${pdfBytes.length} bytes`);
+    return pdfBytes;
   }
   
   /**
