@@ -554,136 +554,33 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
                         svgContent.includes('AI_VECTORIZED_FILE');
   
-  // For AI-vectorized content, prioritize actual content bounds over full viewBox
-  if (isAIVectorized) {
-    console.log('🤖 Detected AI-vectorized SVG, calculating actual content dimensions...');
-    
-    // Method 1: Calculate actual content bounds from SVG paths (more accurate than viewBox)
-    const actualContentBounds = calculateSVGContentBounds(svgContent);
-    if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
-      let contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'ai_vectorized_content');
-      
-      // CRITICAL FIX: Skip auto-scaling for A3 documents that are already correctly sized
-      const isA3Document = (Math.abs(actualContentBounds.width - 842) <= 2 && Math.abs(actualContentBounds.height - 1191) <= 2) ||
-                          (Math.abs(contentResult.widthMm - 297) <= 2 && Math.abs(contentResult.heightMm - 420) <= 2);
-      
-      if (isA3Document) {
-        console.log(`🎯 A3 AI-VECTORIZED DETECTED: Skipping auto-scaling - preserving exact A3 dimensions ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px = ${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm`);
-      } else {
-        // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
-        const maxCanvasSize = 300; // mm
-        if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
-          const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
-          const scaledWidth = actualContentBounds.width * scaleFactor;
-          const scaledHeight = actualContentBounds.height * scaleFactor;
-          contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_scaled');
-          console.log(`🔽 Auto-scaled oversized AI-vectorized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
-        } else {
-          console.log(`✅ Using actual content bounds for AI-vectorized SVG: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px`);
-        }
-      }
-      return contentResult;
-    }
-    
-    // Method 2: Use provided content bounds as fallback
-    if (contentBounds && contentBounds.width && contentBounds.height) {
-      let contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
-      
-      // Apply auto-scaling for provided content bounds too
-      const maxCanvasSize = 300; // mm
-      if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
-        const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
-        const scaledWidth = contentBounds.width * scaleFactor;
-        const scaledHeight = contentBounds.height * scaleFactor;
-        contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'content_bounds_scaled');
-        console.log(`🔽 Auto-scaled provided content bounds: ${contentBounds.width}×${contentBounds.height}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px`);
-      } else {
-        console.log(`✅ Using provided content bounds for AI-vectorized SVG: ${contentBounds.width}×${contentBounds.height}px`);
-      }
-      return contentResult;
-    }
-    
-    // Method 3: Use viewBox as last resort (may include extra whitespace)
-    const viewBoxDims = extractViewBoxDimensions(svgContent);
-    if (viewBoxDims && viewBoxDims.width > 0 && viewBoxDims.height > 0) {
-      let viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'ai_vectorized_viewbox');
-      
-      // Apply auto-scaling for viewBox dimensions too
-      const maxCanvasSize = 300; // mm
-      if (viewBoxResult.widthMm > maxCanvasSize || viewBoxResult.heightMm > maxCanvasSize) {
-        const scaleFactor = Math.min(maxCanvasSize / viewBoxResult.widthMm, maxCanvasSize / viewBoxResult.heightMm);
-        const scaledWidth = viewBoxDims.width * scaleFactor;
-        const scaledHeight = viewBoxDims.height * scaleFactor;
-        viewBoxResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'ai_vectorized_viewbox_scaled');
-        console.log(`🔽 Auto-scaled viewBox: ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px`);
-      } else {
-        console.log(`⚠️ Using viewBox for AI-vectorized SVG (may include whitespace): ${viewBoxDims.width.toFixed(1)}×${viewBoxDims.height.toFixed(1)}px`);
-      }
-      return viewBoxResult;
-    }
-    
-    // Method 4: For AI-vectorized content, use reasonable default dimensions if extraction fails
-    console.warn('⚠️ Could not extract dimensions from AI-vectorized SVG, using reasonable defaults');
-    const defaultResult = calculatePreciseDimensions(200, 200, 'ai_vectorized_fallback');
-    console.log(`🎯 Using AI-vectorized fallback dimensions: 200×200px = ${defaultResult.widthMm.toFixed(1)}×${defaultResult.heightMm.toFixed(1)}mm`);
-    return defaultResult;
-  }
-
-  // CRITICAL FIX: Always prioritize actual content bounds for ALL files (non-AI-vectorized)
-  // This prevents distortion by using actual visual content size instead of document/viewBox dimensions
-  if (!isAIVectorized) {
-    const actualContentBounds = calculateSVGContentBounds(svgContent);
-    if (actualContentBounds && actualContentBounds.width > 0 && actualContentBounds.height > 0) {
-      let contentResult = calculatePreciseDimensions(actualContentBounds.width, actualContentBounds.height, 'actual_content');
-      
-      // CRITICAL FIX: Skip auto-scaling for A3 documents that are already correctly sized
-      const isA3Document = (Math.abs(actualContentBounds.width - 842) <= 2 && Math.abs(actualContentBounds.height - 1191) <= 2) ||
-                          (Math.abs(contentResult.widthMm - 297) <= 2 && Math.abs(contentResult.heightMm - 420) <= 2);
-      
-      if (isA3Document) {
-        console.log(`🎯 A3 DOCUMENT DETECTED: Skipping auto-scaling - preserving exact A3 dimensions ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px = ${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm`);
-      } else {
-        // Apply auto-scaling if logo is too large for canvas (>300mm in any dimension)
-        const maxCanvasSize = 300; // mm
-        if (contentResult.widthMm > maxCanvasSize || contentResult.heightMm > maxCanvasSize) {
-          const scaleFactor = Math.min(maxCanvasSize / contentResult.widthMm, maxCanvasSize / contentResult.heightMm);
-          const scaledWidth = actualContentBounds.width * scaleFactor;
-          const scaledHeight = actualContentBounds.height * scaleFactor;
-          contentResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'actual_content_scaled');
-          console.log(`🔽 Auto-scaled oversized logo: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px → ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}px (${contentResult.widthMm.toFixed(1)}×${contentResult.heightMm.toFixed(1)}mm)`);
-        } else {
-          console.log(`✅ CONTENT BOUNDS FIX: Using actual content dimensions: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (prevents distortion from viewBox)`);
-        }
-      }
-      return contentResult;
-    }
-  }
-
-  // Method 3: Try viewBox dimensions (fallback only when content bounds fail)
+  // SIMPLE: Use viewBox dimensions directly - no content bounds, no scaling, no complex logic
+  console.log('📐 SIMPLE: Using raw viewBox dimensions (no content bounds calculation)');
+  
   const viewBoxDims = extractViewBoxDimensions(svgContent);
   if (viewBoxDims) {
-    const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'viewbox');
-    console.log(`⚠️ FALLBACK: Using viewBox dimensions (may include whitespace): ${viewBoxDims.width}×${viewBoxDims.height}px`);
+    const viewBoxResult = calculatePreciseDimensions(viewBoxDims.width, viewBoxDims.height, 'viewbox_direct');
+    console.log(`✅ Using viewBox: ${viewBoxDims.width}×${viewBoxDims.height}px = ${viewBoxResult.widthMm.toFixed(2)}×${viewBoxResult.heightMm.toFixed(2)}mm`);
+    return viewBoxResult;
+  }
+  
+  // Fallback to SVG width/height attributes if no viewBox
+  const widthMatch = svgContent.match(/width="([^"]+)"/);
+  const heightMatch = svgContent.match(/height="([^"]+)"/);
+  
+  if (widthMatch && heightMatch) {
+    const widthValue = parseFloat(widthMatch[1]);
+    const heightValue = parseFloat(heightMatch[1]);
     
-    if (!isAIVectorized && (viewBoxResult.accuracy === 'perfect' || viewBoxResult.accuracy === 'high')) {
-      return viewBoxResult;
-    }
-    bestResult = viewBoxResult;
-  }
-  
-  // Method 4: Use provided content bounds as fallback
-  if (contentBounds && contentBounds.width && contentBounds.height) {
-    const contentResult = calculatePreciseDimensions(contentBounds.width, contentBounds.height, 'content_bounds');
-    if (!bestResult || contentResult.accuracy > bestResult.accuracy) {
-      bestResult = contentResult;
+    if (!isNaN(widthValue) && !isNaN(heightValue) && widthValue > 0 && heightValue > 0) {
+      const attributeResult = calculatePreciseDimensions(widthValue, heightValue, 'svg_attributes');
+      console.log(`✅ Using SVG attributes: ${widthValue}×${heightValue}px = ${attributeResult.widthMm.toFixed(2)}×${attributeResult.heightMm.toFixed(2)}mm`);
+      return attributeResult;
     }
   }
   
-  // Method 5: Fallback to conservative dimensions
-  if (!bestResult) {
-    console.warn('⚠️ No reliable dimensions found, using fallback');
-    bestResult = calculatePreciseDimensions(350, 250, 'fallback');
-  }
-  
-  return bestResult;
+  // Final fallback
+  const fallbackResult = calculatePreciseDimensions(100, 100, 'fallback');
+  console.warn(`⚠️ Using fallback: 100×100px = ${fallbackResult.widthMm.toFixed(2)}×${fallbackResult.heightMm.toFixed(2)}mm`);
+  return fallbackResult;
 }
