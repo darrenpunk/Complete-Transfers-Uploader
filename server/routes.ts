@@ -1548,8 +1548,8 @@ export async function registerRoutes(app: express.Application) {
         logos.push(logo);
 
         // Create canvas element with proper sizing
-        let displayWidth = 200;
-        let displayHeight = 150;
+        let displayWidth = 283.5; // User override: exact target dimensions
+        let displayHeight = 285.2; // User override: exact target dimensions
 
         // Use actual extracted PNG dimensions if available
         console.log('🔍 DEBUG: Checking for extracted PNG dimensions:', {
