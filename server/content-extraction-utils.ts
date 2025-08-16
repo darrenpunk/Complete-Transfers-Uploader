@@ -57,38 +57,11 @@ export class ContentExtractionUtils {
   }
   
   /**
-   * Create a clean SVG with just the content, properly sized
+   * Create a clean SVG with just the content, properly sized and centered
+   * SIMPLE APPROACH: Just center the content without complex calculations
    */
   static createCleanContentSVG(svgContent: string, targetWidth: number = 804, targetHeight: number = 808): string {
-    console.log('🎯 CONTENT EXTRACTION: Creating clean content SVG');
-    
-    // Extract content bounds
-    const bounds = this.extractContentBounds(svgContent);
-    if (!bounds) {
-      console.log('⚠️ Could not extract content bounds, using original');
-      return svgContent;
-    }
-    
-    const contentWidth = bounds.maxX - bounds.minX;
-    const contentHeight = bounds.maxY - bounds.minY;
-    
-    console.log(`📐 CONTENT BOUNDS: ${bounds.minX},${bounds.minY} to ${bounds.maxX},${bounds.maxY} (${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)})`);
-    
-    // Calculate scale to fit content properly in target dimensions
-    const scaleX = (targetWidth * 0.7) / contentWidth; // Use 70% of canvas for content
-    const scaleY = (targetHeight * 0.7) / contentHeight;
-    const scale = Math.min(scaleX, scaleY);
-    
-    // Calculate translation to move content center to canvas center
-    const contentCenterX = bounds.minX + (contentWidth / 2);
-    const contentCenterY = bounds.minY + (contentHeight / 2);
-    const canvasCenterX = targetWidth / 2;
-    const canvasCenterY = targetHeight / 2;
-    
-    const translateX = canvasCenterX - (contentCenterX * scale);
-    const translateY = canvasCenterY - (contentCenterY * scale);
-    
-    console.log(`🎯 CENTERING: scale=${scale.toFixed(3)}, translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
+    console.log('🎯 SIMPLE CONTENT EXTRACTION: Creating centered content SVG');
     
     // Extract the content between <svg> and </svg> tags
     const svgMatch = svgContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
@@ -99,17 +72,28 @@ export class ContentExtractionUtils {
     
     const innerContent = svgMatch[1];
     
-    // Create new clean SVG with proper centering
+    // Simple approach: put content at reasonable scale and center it
+    const scale = 0.6; // Fixed scale that works well for most content
+    const centerX = targetWidth / 2;
+    const centerY = targetHeight / 2;
+    
+    // Center the scaled content in the canvas
+    const translateX = centerX;
+    const translateY = centerY;
+    
+    console.log(`🎯 SIMPLE CENTERING: scale=${scale}, translate(${translateX}, ${translateY}) with transform-origin at center`);
+    
+    // Create new clean SVG with simple centering
     const cleanSVG = `<?xml version="1.0" encoding="UTF-8"?>
-<!-- CLEAN_CONTENT_EXTRACTED -->
+<!-- SIMPLE_CONTENT_EXTRACTED -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
      width="${targetWidth}" height="${targetHeight}" viewBox="0 0 ${targetWidth} ${targetHeight}">
-  <g transform="translate(${translateX}, ${translateY}) scale(${scale})">
+  <g transform="translate(${translateX}, ${translateY}) scale(${scale}) translate(-400, -400)">
 ${innerContent}
   </g>
 </svg>`;
     
-    console.log('✅ CONTENT EXTRACTION: Created clean centered SVG');
+    console.log('✅ SIMPLE CONTENT EXTRACTION: Created clean centered SVG');
     return cleanSVG;
   }
   
@@ -126,7 +110,7 @@ ${innerContent}
     const originalContent = fs.readFileSync(svgPath, 'utf8');
     
     // Skip if already processed
-    if (originalContent.includes('CLEAN_CONTENT_EXTRACTED')) {
+    if (originalContent.includes('SIMPLE_CONTENT_EXTRACTED')) {
       console.log('⏭️ CONTENT EXTRACTION: Already processed, skipping');
       return;
     }
