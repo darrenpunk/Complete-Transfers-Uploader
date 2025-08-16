@@ -177,7 +177,10 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     console.log('📐 Calculating content bounds from actual SVG elements...');
     
     // PRIORITY 1: Check for clipPath definitions which often contain the actual content bounds
+    console.log('🔍 DEBUG: Starting clipPath detection...');
     const clipPaths = svgContent.match(/<clipPath[^>]*>[\s\S]*?<\/clipPath>/g) || [];
+    console.log(`🔍 DEBUG: Found ${clipPaths.length} clipPath definitions`);
+    
     if (clipPaths.length > 0) {
       console.log(`🔍 Found ${clipPaths.length} clipPath definitions, analyzing for content bounds...`);
       
