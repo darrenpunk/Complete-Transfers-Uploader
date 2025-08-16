@@ -678,11 +678,11 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Original Generator with CMYK Final Step');
+        console.log('🎨 CMYK content detected - Using Original PDF Embedder to preserve spot colors');
         
-        // Use original working generator but apply CMYK conversion at the end
-        const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-        const generator = new RobustPDFGenerator();
+        // Use original PDF embedder to preserve exact Pantone/spot colors
+        const { OriginalPDFEmbedder } = await import('./original-pdf-embedder');
+        const generator = new OriginalPDFEmbedder();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
