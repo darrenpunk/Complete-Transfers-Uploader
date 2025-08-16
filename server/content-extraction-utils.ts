@@ -9,34 +9,47 @@ import * as fs from 'fs';
 export class ContentExtractionUtils {
   
   /**
-   * Extract content bounds from SVG content
+   * Extract meaningful content bounds from SVG content
+   * Focus on visible paths, ignore clipping paths and large document areas
    */
   static extractContentBounds(svgContent: string): { minX: number, minY: number, maxX: number, maxY: number } | null {
     try {
-      // Extract all path data to find actual content bounds
-      const pathMatches = svgContent.match(/d="[^"]+"/g) || [];
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      // Look for the most constrained clip path - this often represents the actual content area
+      const clipMatches = svgContent.match(/<clipPath[^>]*>[\s\S]*?<\/clipPath>/g) || [];
+      let contentBounds = null;
+      let smallestArea = Infinity;
       
-      for (const pathData of pathMatches) {
-        // Extract coordinates from path data
-        const coords = pathData.match(/[\d.-]+/g);
-        if (coords) {
-          for (let i = 0; i < coords.length; i += 2) {
-            const x = parseFloat(coords[i]);
-            const y = parseFloat(coords[i + 1]);
-            if (!isNaN(x) && !isNaN(y)) {
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x);
-              maxY = Math.max(maxY, y);
+      for (const clipPath of clipMatches) {
+        const pathData = clipPath.match(/d="([^"]+)"/);
+        if (pathData) {
+          const coords = pathData[1].match(/[\d.]+/g);
+          if (coords && coords.length >= 4) {
+            const minX = parseFloat(coords[0]);
+            const minY = parseFloat(coords[1]);
+            const maxX = parseFloat(coords[2]);
+            const maxY = parseFloat(coords[3]);
+            
+            const width = maxX - minX;
+            const height = maxY - minY;
+            const area = width * height;
+            
+            // Look for reasonably sized content area (not full page, not tiny)
+            if (area > 10000 && area < 500000 && area < smallestArea) {
+              smallestArea = area;
+              contentBounds = { minX, minY, maxX, maxY };
+              console.log(`📐 Found content clip: ${minX},${minY} to ${maxX},${maxY} (${width.toFixed(1)}×${height.toFixed(1)}, area: ${area.toFixed(0)})`);
             }
           }
         }
       }
       
-      if (minX === Infinity) return null;
+      if (!contentBounds) {
+        console.log('⚠️ No suitable clip path found, using simple center positioning');
+        // If no good clip path, assume content is centered
+        return { minX: 200, minY: 200, maxX: 600, maxY: 600 };
+      }
       
-      return { minX, minY, maxX, maxY };
+      return contentBounds;
     } catch (error) {
       console.error('Failed to extract content bounds:', error);
       return null;
@@ -62,15 +75,18 @@ export class ContentExtractionUtils {
     console.log(`📐 CONTENT BOUNDS: ${bounds.minX},${bounds.minY} to ${bounds.maxX},${bounds.maxY} (${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)})`);
     
     // Calculate scale to fit content properly in target dimensions
-    const scaleX = (targetWidth * 0.8) / contentWidth; // Use 80% of canvas for content
-    const scaleY = (targetHeight * 0.8) / contentHeight;
+    const scaleX = (targetWidth * 0.7) / contentWidth; // Use 70% of canvas for content
+    const scaleY = (targetHeight * 0.7) / contentHeight;
     const scale = Math.min(scaleX, scaleY);
     
-    // Calculate translation to center the content
-    const scaledWidth = contentWidth * scale;
-    const scaledHeight = contentHeight * scale;
-    const translateX = (targetWidth - scaledWidth) / 2 - (bounds.minX * scale);
-    const translateY = (targetHeight - scaledHeight) / 2 - (bounds.minY * scale);
+    // Calculate translation to move content center to canvas center
+    const contentCenterX = bounds.minX + (contentWidth / 2);
+    const contentCenterY = bounds.minY + (contentHeight / 2);
+    const canvasCenterX = targetWidth / 2;
+    const canvasCenterY = targetHeight / 2;
+    
+    const translateX = canvasCenterX - (contentCenterX * scale);
+    const translateY = canvasCenterY - (contentCenterY * scale);
     
     console.log(`🎯 CENTERING: scale=${scale.toFixed(3)}, translate(${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
     
