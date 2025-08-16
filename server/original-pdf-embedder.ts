@@ -24,6 +24,8 @@ interface ProjectData {
     originalName: string;
     isPdfWithRasterOnly: boolean;
     isCMYKPreserved: boolean;
+    originalMimeType?: string;
+    originalFilename?: string;
   }>;
 }
 
@@ -37,16 +39,34 @@ export class OriginalPDFEmbedder {
       // Create base A3 template first
       const templatePdfPath = await this.createA3Template(data);
       
-      // Find the original PDF files for each logo
+      // Find the preserved original PDF files for each logo
       const originalPdfPaths: string[] = [];
       
       for (const element of data.canvasElements) {
         const logo = data.logos.find(l => l.id === element.logoId);
         if (logo) {
-          const originalPdfPath = await this.findOriginalPDF(logo);
+          // CRITICAL FIX: Use preserved original PDF instead of searching attached_assets
+          let originalPdfPath = null;
+          
+          // First priority: Use the preserved original PDF file
+          if (logo.originalMimeType === 'application/pdf' && logo.originalFilename) {
+            const preservedPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+            if (fs.existsSync(preservedPath)) {
+              originalPdfPath = preservedPath;
+              console.log(`📄 Using preserved original PDF: ${logo.originalFilename}`);
+            }
+          }
+          
+          // Fallback: Use old search method only if no preserved file found
+          if (!originalPdfPath) {
+            originalPdfPath = await this.findOriginalPDF(logo);
+            if (originalPdfPath) {
+              console.log(`📄 Fallback: Found PDF via search for ${logo.originalName}: ${originalPdfPath}`);
+            }
+          }
+          
           if (originalPdfPath) {
             originalPdfPaths.push(originalPdfPath);
-            console.log(`📄 Found original PDF for ${logo.originalName}: ${originalPdfPath}`);
           }
         }
       }
