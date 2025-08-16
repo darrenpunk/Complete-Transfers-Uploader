@@ -542,6 +542,31 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   
   console.log(`🎯 TARGET OVERRIDE: ${targetWidthPx}×${targetHeightPx}px = ${targetWidthMm}×${targetHeightMm}mm`);
   
+  // CRITICAL: Also update the SVG file to match target dimensions to prevent scaling
+  if (originalPdfPath && require('fs').existsSync(originalPdfPath)) {
+    try {
+      const fs = require('fs');
+      let modifiedSvg = svgContent;
+      
+      // Update viewBox to match target dimensions
+      modifiedSvg = modifiedSvg.replace(
+        /viewBox="[^"]*"/,
+        `viewBox="0 0 ${targetWidthPx} ${targetHeightPx}"`
+      );
+      
+      // Update width and height attributes
+      modifiedSvg = modifiedSvg.replace(/width="[^"]*"/, `width="${targetWidthPx}"`);
+      modifiedSvg = modifiedSvg.replace(/height="[^"]*"/, `height="${targetHeightPx}"`);
+      
+      // Write the updated SVG back to file
+      fs.writeFileSync(originalPdfPath, modifiedSvg, 'utf8');
+      console.log(`✂️ UPDATED SVG viewBox to match target: 0 0 ${targetWidthPx} ${targetHeightPx}`);
+      
+    } catch (error) {
+      console.warn('⚠️ Failed to update SVG viewBox:', error);
+    }
+  }
+  
   return {
     widthPx: targetWidthPx,
     heightPx: targetHeightPx,
