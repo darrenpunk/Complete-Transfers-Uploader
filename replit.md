@@ -3,8 +3,12 @@
 ## Overview
 This full-stack web application streamlines logo uploads and layout creation on garment templates. Its main purpose is to provide a professional, intuitive design experience for positioning logos on various canvas templates and generating production-ready vector graphics, specifically for the custom apparel industry. The project includes a standalone application and a fully integrated Odoo 16 module.
 
+## Known Limitations
+- **Pantone Swatch Preservation**: Original Pantone color swatches from imported PDFs are not fully preserved in output PDFs due to complex color management requirements. CMYK approximations are generated instead.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Current focus: Core functionality over complex color management features.
 
 ## System Architecture
 
