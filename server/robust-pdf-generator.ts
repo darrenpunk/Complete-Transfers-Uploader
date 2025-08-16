@@ -513,43 +513,43 @@ grestore`;
         console.warn('Could not read SVG file for CMYK check');
       }
       
-      // Always convert to CMYK, but use gentler settings for CMYK-preserved files
-      const gsCmd = isCMYKPreserved 
-        ? [
-            'gs',
-            '-dNOPAUSE',
-            '-dBATCH',
-            '-dSAFER',
-            '-sDEVICE=pdfwrite',
-            '-dProcessColorModel=/DeviceCMYK',
-            '-dColorConversionStrategy=/LeaveColorUnchanged',
-            '-dDoThumbnails=false',
-            '-dCreateJobTicket=false',
-            '-dPreserveEPSInfo=false',
-            '-dPreserveOPIComments=false',
-            '-dEmbedAllFonts=true',
-            '-dSubsetFonts=true',
-            `-sOutputFile="${cmykPath}"`,
-            `"${tempPath}"`
-          ].join(' ')
-        : [
-            'gs',
-            '-dNOPAUSE',
-            '-dBATCH',
-            '-dSAFER',
-            '-sDEVICE=pdfwrite',
-            '-dProcessColorModel=/DeviceCMYK',
-            '-dColorConversionStrategy=/CMYK',
-            '-dPDFSETTINGS=/prepress',
-            `-sOutputFile="${cmykPath}"`,
-            `"${tempPath}"`
-          ].join(' ');
+      // Force CMYK conversion with aggressive settings - RGB to CMYK must happen
+      const gsCmd = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dProcessColorModel=/DeviceCMYK',
+        '-dColorConversionStrategy=/CMYK',
+        '-dOverrideICC=true',
+        '-sDefaultCMYKProfile=default_cmyk.icc',
+        '-dPDFSETTINGS=/prepress',
+        '-dColorImageResolution=300',
+        '-dGrayImageResolution=300',
+        '-dMonoImageResolution=1200',
+        `-sOutputFile="${cmykPath}"`,
+        `"${tempPath}"`
+      ].join(' ');
       
-      const conversionType = isCMYKPreserved ? 'gentle CMYK preservation' : 'full CMYK conversion';
-      console.log(`🎯 Converting to CMYK with ${conversionType}`);
+      console.log(`🎯 FORCE CMYK CONVERSION: Converting RGB PDF to CMYK with aggressive settings`);
       
       const gsResult = await execAsync(gsCmd);
       console.log(`✅ CMYK conversion successful: ${fs.statSync(cmykPath).size} bytes`);
+      
+      // Verify the PDF colorspace after conversion
+      try {
+        const checkColorCmd = `gs -o /dev/null -sDEVICE=bbox "${cmykPath}" 2>&1 | head -20`;
+        const colorCheck = await execAsync(checkColorCmd);
+        console.log(`🔍 PDF colorspace check: ${colorCheck.stdout.trim()}`);
+        
+        // Also try to extract color information
+        const pdfInfoCmd = `pdfinfo "${cmykPath}" 2>/dev/null || echo "pdfinfo not available"`;
+        const pdfInfo = await execAsync(pdfInfoCmd);
+        console.log(`📊 PDF info: ${pdfInfo.stdout.trim()}`);
+      } catch (checkError) {
+        console.log(`⚠️ Could not verify PDF colorspace: ${checkError}`);
+      }
       
       if (fs.existsSync(cmykPath)) {
         const cmykBytes = fs.readFileSync(cmykPath);
