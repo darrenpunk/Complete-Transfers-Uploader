@@ -928,8 +928,9 @@ export async function registerRoutes(app: express.Application) {
 
         // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
-          // CRITICAL: Preserve original PDF for exact embedding
-          const originalPdfFilename = `original_${file.filename}.pdf`;
+          // CRITICAL: Preserve original PDF for exact embedding with unique timestamp
+          const timestamp = Date.now();
+          const originalPdfFilename = `original_${file.filename}_${timestamp}.pdf`;
           const originalPdfPath = path.join(uploadDir, originalPdfFilename);
           const sourcePdfPath = path.join(uploadDir, file.filename);
           
