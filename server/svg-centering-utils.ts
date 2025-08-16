@@ -14,7 +14,7 @@ export class SVGCenteringUtils {
     console.log('🎨 UNIVERSAL CENTERING: Applying centering transform');
     
     // Skip if already has centering transform
-    if (svgContent.includes('translate(150, 150) scale(0.6)')) {
+    if (svgContent.includes('translate(402, 404) scale(0.8) translate(-647, -611)')) {
       console.log('⏭️ UNIVERSAL CENTERING: Transform already applied, skipping');
       return svgContent;
     }
@@ -22,16 +22,17 @@ export class SVGCenteringUtils {
     let centeredContent = svgContent;
     
     // Add centering transform after the opening <svg> tag but before content
+    // This centers content at 647,611 (average of content bounds) to canvas center 402,404
     if (centeredContent.includes('<defs>')) {
       centeredContent = centeredContent.replace(
         '<defs>',
-        '<g transform="translate(150, 150) scale(0.6)">\n<defs>'
+        '<g transform="translate(402, 404) scale(0.8) translate(-647, -611)">\n<defs>'
       );
     } else {
       // If no defs, add after svg opening tag
       centeredContent = centeredContent.replace(
         /(<svg[^>]*>)/,
-        '$1\n<g transform="translate(150, 150) scale(0.6)">'
+        '$1\n<g transform="translate(402, 404) scale(0.8) translate(-647, -611)">'
       );
     }
     
