@@ -928,6 +928,17 @@ export async function registerRoutes(app: express.Application) {
 
         // If it's a PDF, check for CMYK colors first
         if (file.mimetype === 'application/pdf') {
+          // CRITICAL: Preserve original PDF for exact embedding
+          const originalPdfFilename = `original_${file.filename}.pdf`;
+          const originalPdfPath = path.join(uploadDir, originalPdfFilename);
+          const sourcePdfPath = path.join(uploadDir, file.filename);
+          
+          if (fs.existsSync(sourcePdfPath)) {
+            fs.copyFileSync(sourcePdfPath, originalPdfPath);
+            console.log(`💾 Original PDF preserved as: ${originalPdfFilename} for exact embedding`);
+            // Mark for later embedding
+            (file as any).originalPdfFilename = originalPdfFilename;
+          }
           try {
             const pdfPath = path.join(uploadDir, file.filename);
             const { CMYKDetector } = await import('./cmyk-detector');
@@ -1476,8 +1487,17 @@ export async function registerRoutes(app: express.Application) {
         
         // Add original PDF info for CMYK PDFs or PDFs with raster only
         if ((file as any).originalPdfPath && ((file as any).isCMYKPreserved || (file as any).isPdfWithRasterOnly)) {
-          logoData.originalFilename = file.filename; // Store the original PDF filename
+          // Use the preserved original PDF filename if available
+          logoData.originalFilename = (file as any).originalPdfFilename || file.filename;
           logoData.originalMimeType = 'application/pdf';
+          console.log(`💾 Set originalFilename to: ${logoData.originalFilename}`);
+        }
+        
+        // For ALL PDF uploads, ensure original PDF is preserved and referenced
+        if (file.mimetype === 'application/pdf' && (file as any).originalPdfFilename) {
+          logoData.originalFilename = (file as any).originalPdfFilename;
+          logoData.originalMimeType = 'application/pdf';
+          console.log(`💾 PDF upload: Set originalFilename to preserved: ${logoData.originalFilename}`);
         }
         
         // Add original AI/EPS info for vector files

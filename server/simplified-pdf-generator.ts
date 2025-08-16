@@ -407,7 +407,46 @@ export class SimplifiedPDFGenerator {
       exists: fs.existsSync(uploadPath)
     });
     
-    // PRIORITY: Check for CMYK-preserved PDFs first
+    // PRIORITY: Check for original PDF embedding first
+    // This preserves exact Pantone/spot colors and artwork as designed
+    const shouldUseOriginalPDF = logo.originalMimeType === 'application/pdf' && logo.originalFilename;
+    
+    if (shouldUseOriginalPDF) {
+      console.log(`📄 Original PDF detected - embedding original file: ${logo.originalFilename}`);
+      
+      // Use the preserved original PDF file
+      const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+      console.log(`🔍 DEBUG: Looking for original PDF at: ${originalPdfPath}`);
+      
+      if (fs.existsSync(originalPdfPath)) {
+        console.log(`✅ Found original PDF file, embedding directly to preserve exact artwork`);
+        try {
+          const existingPdfBytes = fs.readFileSync(originalPdfPath);
+          const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+          
+          // Calculate position and scale
+          const scale = this.calculateScale(element, templateSize);
+          const position = this.calculatePosition(element, templateSize, page);
+          
+          page.drawPage(embeddedPage, {
+            x: position.x,
+            y: position.y,
+            width: element.width * scale,
+            height: element.height * scale,
+            rotate: element.rotation ? degrees(element.rotation) : undefined,
+          });
+          
+          console.log(`✅ Successfully embedded original PDF: ${logo.originalFilename}`);
+          return;
+        } catch (embedError) {
+          console.error(`❌ Failed to embed original PDF:`, embedError);
+        }
+      } else {
+        console.log(`⚠️ Original PDF not found at: ${originalPdfPath}`);
+      }
+    }
+    
+    // FALLBACK: Check for CMYK-preserved PDFs (legacy logic)
     const isOriginalPDF = logo.isCMYKPreserved && logo.originalName && logo.originalName.toLowerCase().endsWith('.pdf');
     
     if (isOriginalPDF) {
