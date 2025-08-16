@@ -6,6 +6,12 @@ This full-stack web application streamlines logo uploads and layout creation on 
 ## Known Limitations
 - **Pantone Swatch Preservation**: Original Pantone color swatches from imported PDFs are not fully preserved in output PDFs due to complex color management requirements. CMYK approximations are generated instead.
 
+## Recent Changes (August 2025)
+- **Original PDF Preservation**: Implemented comprehensive system to preserve original PDF files during upload and use them directly in final PDF output, maintaining exact Pantone/spot colors and artwork as designed.
+- **Enhanced Upload Logic**: Modified upload workflow to create preserved copies of original PDF files with proper references.
+- **PDF Generator Updates**: Updated both simplified and robust PDF generators to prioritize original PDF embedding over converted formats.
+- **Backward Compatibility**: Added fallback logic to support existing files while implementing new preservation system.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Current focus: Core functionality over complex color management features.
