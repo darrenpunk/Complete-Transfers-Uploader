@@ -1618,10 +1618,12 @@ export async function registerRoutes(app: express.Application) {
             const { calculateSVGContentBounds, calculatePreciseDimensions } = await import('./dimension-utils');
             const contentBounds = calculateSVGContentBounds(svgContent);
             
-            // Check if we have recalculated bounds from font outlining OR detect them now
-            // BUT skip cropping for PDF-derived SVGs to preserve original layout
-            const isPdfDerived = file.mimetype === 'application/pdf';
-            if (!isPdfDerived && ((file as any).outlinedContentBounds || (file as any).forceContentBounds || (contentBounds && contentBounds.width > 0 && contentBounds.height > 0 && contentBounds.width < 600))) {
+            // Use content bounds for ALL files to crop to actual artwork content
+            // This ensures we only get the actual logo/artwork, not the full page
+            const shouldUseBounds = (file as any).outlinedContentBounds || (file as any).forceContentBounds || 
+                                  (contentBounds && contentBounds.width > 0 && contentBounds.height > 0);
+            
+            if (shouldUseBounds) {
               const bounds = (file as any).outlinedContentBounds || contentBounds;
               const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
               displayWidth = dimensionResult.widthMm;
@@ -1646,46 +1648,21 @@ export async function registerRoutes(app: express.Application) {
               fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
               console.log(`✂️ Updated SVG viewBox to match content bounds: ${newViewBox}`);
               
-            } else {
-              const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-              let isA3Document = false;
-            
-            if (viewBoxMatch) {
-              const viewBoxValues = viewBoxMatch[1].split(' ').map(parseFloat);
-              if (viewBoxValues.length >= 4) {
-                const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
-                
-                // Check for large format documents - A3, A4, or similar sizes
-                const isA3 = (vbWidth > 800 && vbHeight > 1100) || (vbWidth > 1100 && vbHeight > 800);  // A3: 842×1191
-                const isA4 = (vbWidth > 580 && vbHeight > 800) || (vbWidth > 800 && vbHeight > 580);    // A4: 595×842
-                const isLargeFormat = isA3 || isA4;
-                
-                console.log(`ViewBox: ${vbWidth}×${vbHeight}, A3: ${isA3}, A4: ${isA4}, Large format: ${isLargeFormat}`);
-                
-                if (isLargeFormat) {
-                  isA3Document = true; // Mark as large format for later processing
-                }
-              }
-            }
-            
-            // Get content bounds, but only crop for small AI-vectorized content, not large format PDFs
-            const contentBounds = calculateSVGContentBounds(svgContent);
-            
-            // Use the existing viewBox detection result from above
-            const isLargeFormat = isA3Document; // Already calculated above
-            
-            // Only crop SVG to content bounds for small format documents (AI-vectorized logos)
-            // Skip cropping for large format documents (PDFs) to prevent clipping
-            if (!isLargeFormat && contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
-                contentBounds.maxX !== undefined && contentBounds.maxY !== undefined) {
+            } else if (contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
+                       contentBounds.maxX !== undefined && contentBounds.maxY !== undefined) {
               
+              // Always use content bounds to crop to actual artwork content for ALL files
               const croppedWidth = contentBounds.maxX - contentBounds.minX;
               const croppedHeight = contentBounds.maxY - contentBounds.minY;
+              
+              console.log(`✂️ Using content bounds for ALL files: cropping to actual artwork content`);
+              console.log(`📐 Content bounds: minX=${contentBounds.minX}, minY=${contentBounds.minY}, maxX=${contentBounds.maxX}, maxY=${contentBounds.maxY}`);
+              console.log(`📐 Cropped dimensions: ${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)}px`);
               
               // Create new viewBox that crops to actual content
               const newViewBox = `${contentBounds.minX} ${contentBounds.minY} ${croppedWidth} ${croppedHeight}`;
               
-              // Update SVG with cropped viewBox
+              // Update SVG with cropped viewBox  
               let updatedSvgContent = svgContent.replace(
                 /viewBox="[^"]*"/,
                 `viewBox="${newViewBox}"`
@@ -1701,12 +1678,12 @@ export async function registerRoutes(app: express.Application) {
                 `height="${croppedHeight}"`
               );
               
-              console.log(`✂️ Small format: Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
+              console.log(`✂️ Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
               
               // Write the cropped SVG back to file
               fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
-            } else if (isLargeFormat) {
-              console.log(`📄 Large format: Preserving original viewBox to prevent content clipping`);
+            } else {
+              console.log(`⚠️ No valid content bounds detected for cropping`);
             }
             
             // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation
@@ -1731,8 +1708,6 @@ export async function registerRoutes(app: express.Application) {
             }
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
-            
-            }
           } else {
             // Fallback: for large documents with no detectable content bounds
             console.log(`Large format document with no detectable content bounds, using conservative sizing`);
