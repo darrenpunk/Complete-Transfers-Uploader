@@ -530,26 +530,43 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
                         svgContent.includes('AI_VECTORIZED_FILE');
   
-  // SIMPLE APPROACH: Use reasonable default dimensions for content
+  // Extract SVG viewBox and use dimensions at 100%
+  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+  if (viewBoxMatch) {
+    const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(Number);
+    const pxToMm = 1 / 2.834645669;
+    const targetWidthMm = vbWidth * pxToMm;
+    const targetHeightMm = vbHeight * pxToMm;
+    const targetWidthPx = vbWidth;
+    const targetHeightPx = vbHeight;
+    
+    console.log(`📐 USING 100% SVG SIZE: ${targetWidthPx}×${targetHeightPx}px = ${targetWidthMm.toFixed(1)}×${targetHeightMm.toFixed(1)}mm`);
+  
+    return {
+      widthPx: targetWidthPx,
+      heightPx: targetHeightPx,
+      widthMm: targetWidthMm,
+      heightMm: targetHeightMm,
+      conversionFactor: pxToMm,
+      source: 'svg_viewbox_100',
+      accuracy: 'perfect'
+    };
+  }
+  
+  // Fallback if no viewBox found
   const targetWidthMm = 200;
   const targetHeightMm = 150;
-  console.log('📐 SIMPLE DEFAULT: Using standard logo dimensions 200×150mm');
-  
-  // Convert target mm to pixels using standard conversion
-  const mmToPx = 2.834645669;
-  const targetWidthPx = Math.round(targetWidthMm * mmToPx);
-  const targetHeightPx = Math.round(targetHeightMm * mmToPx);
-  
-  // No SVG modification - preserve original content
+  const targetWidthPx = 567;
+  const targetHeightPx = 425;
   
   return {
     widthPx: targetWidthPx,
     heightPx: targetHeightPx,
     widthMm: targetWidthMm,
     heightMm: targetHeightMm,
-    conversionFactor: 2.834645669, // 72 DPI
-    source: 'simple_default',
-    accuracy: 'perfect'
+    conversionFactor: 2.834645669,
+    source: 'fallback_default',
+    accuracy: 'estimated'
   };
   
   // Fallback to SVG width/height attributes if no viewBox

@@ -1641,7 +1641,7 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
             
-            // No content extraction - preserve original positioning
+            // Use SVG at 100% - no scaling or cropping
           } else {
             // Fallback: for large documents with no detectable content bounds
             console.log(`Large format document with no detectable content bounds, using conservative sizing`);
