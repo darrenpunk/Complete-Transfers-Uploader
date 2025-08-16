@@ -274,44 +274,88 @@ grestore`;
     console.log(`🎨 Creating direct PDF with exact user specifications`);
     
     // Import pdf-lib for direct PDF creation
-    const { PDFDocument, PDFPage, rgb, degrees } = await import('pdf-lib');
+    const { PDFDocument, rgb, degrees } = await import('pdf-lib');
+    const { PDFPage } = await import('pdf-lib');
     
     // Create PDF document
     const pdfDoc = await PDFDocument.create();
     
-    // Create two pages with A3 dimensions (842 x 1191 pts)
-    const page1 = pdfDoc.addPage([842, 1191]); // Page 1: Transparent
-    const page2 = pdfDoc.addPage([842, 1191]); // Page 2: Garment background
+    // Create page 1 (transparent artwork layout)
+    const page1 = pdfDoc.addPage([842, 1191]);
+    console.log(`📄 Created page 1: Artwork layout (transparent)`);
     
-    console.log(`📄 Created A3 pages: 842x1191pts`);
+    // Group canvas elements by garment color
+    const elementsByGarment: { [color: string]: Array<{ element: any, logo: any }> } = {};
     
-    // Add garment background to page 2
-    const garmentColor = await this.parseGarmentColor(data.garmentColor);
-    page2.drawRectangle({
-      x: 0,
-      y: 0,
-      width: 842,
-      height: 1191,
-      color: garmentColor
-    });
-    
-    console.log(`🎨 Added garment background: ${data.garmentColor}`);
-    
-    // Process each canvas element and embed logos
-    for (let i = 0; i < data.canvasElements.length; i++) {
-      const element = data.canvasElements[i];
+    for (const element of data.canvasElements) {
       const logo = data.logos.find(l => l.id === element.logoId);
-      
       if (logo) {
-        console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
-        
-        // Convert SVG to PDF and embed it
-        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element);
+        const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
+        if (!elementsByGarment[garmentColor]) {
+          elementsByGarment[garmentColor] = [];
+        }
+        elementsByGarment[garmentColor].push({ element, logo });
       }
     }
     
-    // Add project labels
-    await this.addProjectLabels(page2, data);
+    const garmentColors = Object.keys(elementsByGarment);
+    console.log(`🎨 Found ${garmentColors.length} unique garment colors: ${garmentColors.join(', ')}`);
+    
+    // Create pages for each garment color
+    const garmentPages: PDFPage[] = [];
+    
+    for (const garmentColor of garmentColors) {
+      const page = pdfDoc.addPage([842, 1191]);
+      garmentPages.push(page);
+      
+      // Add garment background
+      const parsedColor = await this.parseGarmentColor(garmentColor);
+      page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: 842,
+        height: 1191,
+        color: parsedColor
+      });
+      
+      console.log(`🎨 Created page ${garmentPages.length + 1} with garment color: ${garmentColor}`);
+      
+      // Add project labels for this garment color
+      const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
+      const garmentText = `Garment Color: ${garmentColor}`;
+      
+      page.drawText(labelText, {
+        x: 20,
+        y: 40,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      
+      page.drawText(garmentText, {
+        x: 20,
+        y: 20,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
+    }
+    
+    // Process each canvas element and embed logos on appropriate pages
+    for (let colorIndex = 0; colorIndex < garmentColors.length; colorIndex++) {
+      const garmentColor = garmentColors[colorIndex];
+      const elements = elementsByGarment[garmentColor];
+      const garmentPage = garmentPages[colorIndex];
+      
+      console.log(`🎯 Processing ${elements.length} logos for garment color: ${garmentColor}`);
+      
+      for (let i = 0; i < elements.length; i++) {
+        const { element, logo } = elements[i];
+        
+        console.log(`🎯 Processing logo ${i + 1}/${elements.length}: ${logo.filename} on ${garmentColor} garment`);
+        
+        // Embed logo on page 1 (transparent) and the appropriate garment page
+        await this.embedLogoInPages(pdfDoc, page1, garmentPage, logo, element);
+      }
+    }
     
     // Save PDF
     const pdfBytes = await pdfDoc.save();
