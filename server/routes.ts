@@ -1614,81 +1614,13 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // Always try to recalculate content bounds for outlined fonts first
-            const { calculateSVGContentBounds, calculatePreciseDimensions } = await import('./dimension-utils');
-            const contentBounds = calculateSVGContentBounds(svgContent);
+            // DISABLED: Skip all content bounds calculation and viewBox modification
+            // User wants to preserve original SVG viewBox dimensions without any cropping or scaling
+            console.log(`📐 DISABLED: Skipping content bounds calculation - preserving original viewBox`);
             
-            // Use content bounds for ALL files to crop to actual artwork content
-            // This ensures we only get the actual logo/artwork, not the full page
-            const shouldUseBounds = (file as any).outlinedContentBounds || (file as any).forceContentBounds || 
-                                  (contentBounds && contentBounds.width > 0 && contentBounds.height > 0);
-            
-            if (shouldUseBounds) {
-              const bounds = (file as any).outlinedContentBounds || contentBounds;
-              const dimensionResult = calculatePreciseDimensions(bounds.width, bounds.height, 'outlined_content');
-              displayWidth = dimensionResult.widthMm;
-              displayHeight = dimensionResult.heightMm;
-              console.log(`📐 Using ${(file as any).outlinedContentBounds ? 'recalculated' : 'detected'} content bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-              
-              // Also update the SVG viewBox to match the content bounds for outlined fonts
-              const newViewBox = `${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`;
-              let updatedSvgContent = svgContent.replace(
-                /viewBox="[^"]*"/,
-                `viewBox="${newViewBox}"`
-              );
-              updatedSvgContent = updatedSvgContent.replace(
-                /width="[^"]*"/,
-                `width="${bounds.width}"`
-              );
-              updatedSvgContent = updatedSvgContent.replace(
-                /height="[^"]*"/,
-                `height="${bounds.height}"`
-              );
-              
-              fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
-              console.log(`✂️ Updated SVG viewBox to match content bounds: ${newViewBox}`);
-              
-            } else if (contentBounds && contentBounds.minX !== undefined && contentBounds.minY !== undefined && 
-                       contentBounds.maxX !== undefined && contentBounds.maxY !== undefined) {
-              
-              // Always use content bounds to crop to actual artwork content for ALL files
-              const croppedWidth = contentBounds.maxX - contentBounds.minX;
-              const croppedHeight = contentBounds.maxY - contentBounds.minY;
-              
-              console.log(`✂️ Using content bounds for ALL files: cropping to actual artwork content`);
-              console.log(`📐 Content bounds: minX=${contentBounds.minX}, minY=${contentBounds.minY}, maxX=${contentBounds.maxX}, maxY=${contentBounds.maxY}`);
-              console.log(`📐 Cropped dimensions: ${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)}px`);
-              
-              // Create new viewBox that crops to actual content
-              const newViewBox = `${contentBounds.minX} ${contentBounds.minY} ${croppedWidth} ${croppedHeight}`;
-              
-              // Update SVG with cropped viewBox  
-              let updatedSvgContent = svgContent.replace(
-                /viewBox="[^"]*"/,
-                `viewBox="${newViewBox}"`
-              );
-              
-              // Also update width and height to match aspect ratio
-              updatedSvgContent = updatedSvgContent.replace(
-                /width="[^"]*"/,
-                `width="${croppedWidth}"`
-              );
-              updatedSvgContent = updatedSvgContent.replace(
-                /height="[^"]*"/,
-                `height="${croppedHeight}"`
-              );
-              
-              console.log(`✂️ Cropped SVG viewBox from full page to content: ${newViewBox} (${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)})`);
-              
-              // Write the cropped SVG back to file
-              fs.writeFileSync(svgPath, updatedSvgContent, 'utf8');
-            } else {
-              console.log(`⚠️ No valid content bounds detected for cropping`);
-            }
-            
-            // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation
+            // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation (no content bounds)
             const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-            const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, contentBounds, svgPath);
+            const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
             
             // Validate accuracy and log any issues
             validateDimensionAccuracy(dimensionResult);
