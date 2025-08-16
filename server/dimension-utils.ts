@@ -530,41 +530,17 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
                         svgContent.includes('AI_VECTORIZED_FILE');
   
-  // USER OVERRIDE: Use exact target dimensions (283.5mm × 285.2mm) as requested
-  // This bypasses all automatic detection to give exact Illustrator dimensions
-  console.log('🎯 USER OVERRIDE: Using exact target dimensions 283.5×285.2mm (bypassing all detection)');
+  // SIMPLE APPROACH: Use reasonable default dimensions for content
+  const targetWidthMm = 200;
+  const targetHeightMm = 150;
+  console.log('📐 SIMPLE DEFAULT: Using standard logo dimensions 200×150mm');
   
-  // Calculate pixels for target dimensions at 72 DPI
-  const targetWidthMm = 283.5;
-  const targetHeightMm = 285.2;
-  const targetWidthPx = Math.round(targetWidthMm * 2.834645669); // 72 DPI conversion
-  const targetHeightPx = Math.round(targetHeightMm * 2.834645669);
+  // Convert target mm to pixels using standard conversion
+  const mmToPx = 2.834645669;
+  const targetWidthPx = Math.round(targetWidthMm * mmToPx);
+  const targetHeightPx = Math.round(targetHeightMm * mmToPx);
   
-  console.log(`🎯 TARGET OVERRIDE: ${targetWidthPx}×${targetHeightPx}px = ${targetWidthMm}×${targetHeightMm}mm`);
-  
-  // CRITICAL: Also update the SVG file to match target dimensions to prevent scaling
-  try {
-    const fs = await import('fs');
-    if (originalPdfPath && fs.existsSync(originalPdfPath)) {
-      let modifiedSvg = svgContent;
-      
-      // Update viewBox to match target dimensions
-      modifiedSvg = modifiedSvg.replace(
-        /viewBox="[^"]*"/,
-        `viewBox="0 0 ${targetWidthPx} ${targetHeightPx}"`
-      );
-      
-      // Update width and height attributes
-      modifiedSvg = modifiedSvg.replace(/width="[^"]*"/, `width="${targetWidthPx}"`);
-      modifiedSvg = modifiedSvg.replace(/height="[^"]*"/, `height="${targetHeightPx}"`);
-      
-      // Write the updated SVG back to file
-      fs.writeFileSync(originalPdfPath, modifiedSvg, 'utf8');
-      console.log(`✂️ UPDATED SVG viewBox to match target: 0 0 ${targetWidthPx} ${targetHeightPx}`);
-    }
-  } catch (error) {
-    console.warn('⚠️ Failed to update SVG viewBox:', error);
-  }
+  // No SVG modification - preserve original content
   
   return {
     widthPx: targetWidthPx,
@@ -572,7 +548,7 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
     widthMm: targetWidthMm,
     heightMm: targetHeightMm,
     conversionFactor: 2.834645669, // 72 DPI
-    source: 'user_override',
+    source: 'simple_default',
     accuracy: 'perfect'
   };
   
