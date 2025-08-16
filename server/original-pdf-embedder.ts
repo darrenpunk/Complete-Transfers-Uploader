@@ -166,30 +166,62 @@ showpage
       const files = fs.readdirSync(attachedAssetsDir);
       const pdfFiles = files.filter(f => f.toLowerCase().endsWith('.pdf'));
       
-      // Try to match by original name
-      const originalBaseName = logo.originalName.replace(/\.[^/.]+$/, ''); // Remove extension
+      console.log(`🔍 Searching for original PDF among ${pdfFiles.length} PDF files for: ${logo.originalName}`);
       
+      // Extract key identifiers from the original name
+      const originalName = logo.originalName;
+      const soNumber = originalName.match(/SO\d+/)?.[0]; // Extract SO number like SO79297
+      const brandName = originalName.match(/\(([^)]+)\)/)?.[1]; // Extract brand like JAKO
+      
+      console.log(`🔍 Looking for SO number: ${soNumber}, Brand: ${brandName}`);
+      
+      // Try multiple matching strategies
       for (const pdfFile of pdfFiles) {
-        const pdfBaseName = pdfFile.replace(/\.[^/.]+$/, '');
-        if (pdfBaseName.includes(originalBaseName.substring(0, 20)) || 
-            originalBaseName.includes(pdfBaseName.substring(0, 20))) {
+        // Strategy 1: Match SO number if available
+        if (soNumber && pdfFile.includes(soNumber)) {
           const fullPath = path.join(attachedAssetsDir, pdfFile);
-          console.log(`🎯 Matched original PDF: ${pdfFile} for ${logo.originalName}`);
+          console.log(`🎯 SO number matched PDF: ${pdfFile} for ${logo.originalName}`);
           return fullPath;
+        }
+        
+        // Strategy 2: Match brand name if available
+        if (brandName && pdfFile.toUpperCase().includes(brandName.toUpperCase())) {
+          const fullPath = path.join(attachedAssetsDir, pdfFile);
+          console.log(`🎯 Brand matched PDF: ${pdfFile} for ${logo.originalName}`);
+          return fullPath;
+        }
+        
+        // Strategy 3: Match key words from the name
+        const keyWords = originalName.split(/[\s\-\[\]()]+/).filter(word => 
+          word.length > 3 && !word.match(/^(Full|Colour|A3|A4|CTCCA\d*|pdf)$/i)
+        );
+        
+        for (const keyWord of keyWords) {
+          if (pdfFile.toUpperCase().includes(keyWord.toUpperCase())) {
+            const fullPath = path.join(attachedAssetsDir, pdfFile);
+            console.log(`🎯 Keyword "${keyWord}" matched PDF: ${pdfFile} for ${logo.originalName}`);
+            return fullPath;
+          }
         }
       }
       
-      // Try to find any PDF with similar naming pattern
-      const namePattern = logo.originalName.split(' ')[0]; // Use first part of name
-      for (const pdfFile of pdfFiles) {
-        if (pdfFile.includes(namePattern)) {
-          const fullPath = path.join(attachedAssetsDir, pdfFile);
-          console.log(`🎯 Pattern matched PDF: ${pdfFile} for ${logo.originalName}`);
-          return fullPath;
-        }
+      // Strategy 4: If no matches found, try the most recent PDF file that might match
+      const recentPdfs = pdfFiles
+        .map(file => ({
+          name: file,
+          path: path.join(attachedAssetsDir, file),
+          stats: fs.statSync(path.join(attachedAssetsDir, file))
+        }))
+        .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime())
+        .slice(0, 5); // Check 5 most recent PDFs
+      
+      console.log(`🔍 Checking ${recentPdfs.length} most recent PDFs as fallback`);
+      for (const pdfInfo of recentPdfs) {
+        console.log(`   - ${pdfInfo.name} (${pdfInfo.stats.mtime.toISOString()})`);
       }
       
       console.warn(`⚠️ Could not find original PDF for: ${logo.originalName}`);
+      console.log(`📋 Available PDF files: ${pdfFiles.slice(0, 10).join(', ')}${pdfFiles.length > 10 ? '...' : ''}`);
       return null;
       
     } catch (error) {
@@ -212,9 +244,9 @@ showpage
     console.log(`🎨 Overlaying ${originalPdfPaths.length} original PDFs on template using pdf-lib`);
     
     if (originalPdfPaths.length === 0) {
-      // No original PDFs found, just return template
-      fs.copyFileSync(templatePath, finalPath);
-      return finalPath;
+      console.warn(`⚠️ No original PDFs found - falling back to robust PDF generator`);
+      // Fallback to the robust PDF generator that worked before
+      return await this.fallbackToRobustGenerator(data);
     }
     
     try {
@@ -307,6 +339,50 @@ showpage
       // Last resort: just return template
       fs.copyFileSync(templatePath, finalPath);
       return finalPath;
+    }
+  }
+  
+  /**
+   * Fallback to robust generator when no original PDFs found
+   */
+  private async fallbackToRobustGenerator(data: ProjectData): Promise<string> {
+    console.log(`🔄 Falling back to RobustPDFGenerator`);
+    
+    try {
+      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+      const generator = new RobustPDFGenerator();
+      
+      const pdfBuffer = await generator.generatePDF({
+        canvasElements: data.canvasElements,
+        logos: data.logos,
+        templateSize: { width: 297, height: 420, name: 'A3', label: 'A3', id: 'template-A3' },
+        garmentColor: data.garmentColor,
+        projectName: data.projectName,
+        quantity: data.quantity,
+        comments: data.comments || ''
+      });
+      
+      // Save to temp file and return path
+      const timestamp = Date.now();
+      const fallbackPath = path.join(process.cwd(), 'uploads', `fallback_${timestamp}.pdf`);
+      fs.writeFileSync(fallbackPath, pdfBuffer);
+      
+      console.log(`✅ Fallback generator created PDF: ${fallbackPath}`);
+      return fallbackPath;
+      
+    } catch (error) {
+      console.error(`❌ Fallback generator failed:`, error);
+      // Last resort: create empty PDF
+      const timestamp = Date.now();
+      const emptyPath = path.join(process.cwd(), 'uploads', `empty_${timestamp}.pdf`);
+      
+      const { PDFDocument } = await import('pdf-lib');
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage([842, 1191]);
+      const pdfBytes = await pdfDoc.save();
+      fs.writeFileSync(emptyPath, pdfBytes);
+      
+      return emptyPath;
     }
   }
   
