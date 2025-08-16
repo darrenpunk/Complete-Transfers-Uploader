@@ -533,24 +533,29 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   // Extract SVG viewBox and use dimensions at 100%
   const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
   if (viewBoxMatch) {
-    const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(Number);
-    const pxToMm = 1 / 2.834645669;
-    const targetWidthMm = vbWidth * pxToMm;
-    const targetHeightMm = vbHeight * pxToMm;
-    const targetWidthPx = vbWidth;
-    const targetHeightPx = vbHeight;
+    const viewBoxValues = viewBoxMatch[1].split(' ').map(Number);
+    const vbWidth = viewBoxValues[2];
+    const vbHeight = viewBoxValues[3];
     
-    console.log(`📐 USING 100% SVG SIZE: ${targetWidthPx}×${targetHeightPx}px = ${targetWidthMm.toFixed(1)}×${targetHeightMm.toFixed(1)}mm`);
+    if (vbWidth && vbHeight) {
+      const pxToMm = 1 / 2.834645669;
+      const targetWidthMm = vbWidth * pxToMm;
+      const targetHeightMm = vbHeight * pxToMm;
+      const targetWidthPx = vbWidth;
+      const targetHeightPx = vbHeight;
+      
+      console.log(`📐 USING 100% SVG SIZE: ${targetWidthPx}×${targetHeightPx}px = ${targetWidthMm.toFixed(1)}×${targetHeightMm.toFixed(1)}mm`);
   
-    return {
-      widthPx: targetWidthPx,
-      heightPx: targetHeightPx,
-      widthMm: targetWidthMm,
-      heightMm: targetHeightMm,
-      conversionFactor: pxToMm,
-      source: 'svg_viewbox_100',
-      accuracy: 'perfect'
-    };
+      return {
+        widthPx: targetWidthPx,
+        heightPx: targetHeightPx,
+        widthMm: targetWidthMm,
+        heightMm: targetHeightMm,
+        conversionFactor: pxToMm,
+        source: 'svg_viewbox_100',
+        accuracy: 'perfect'
+      };
+    }
   }
   
   // Fallback if no viewBox found
