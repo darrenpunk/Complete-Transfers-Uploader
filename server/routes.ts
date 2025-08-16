@@ -1640,6 +1640,31 @@ export async function registerRoutes(app: express.Application) {
             }
             
             console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
+            
+            // Apply automatic centering transform to SVG content
+            console.log('🎨 CENTERING: Applying automatic content centering transform');
+            let centeredSvgContent = fs.readFileSync(svgPath, 'utf8');
+            
+            // Add centering transform after the opening <svg> tag but before content
+            if (centeredSvgContent.includes('<defs>')) {
+              centeredSvgContent = centeredSvgContent.replace(
+                '<defs>',
+                '<g transform="scale(0.55) translate(680, 360)">\n<defs>'
+              );
+            } else {
+              // If no defs, add after svg opening tag
+              centeredSvgContent = centeredSvgContent.replace(
+                /(<svg[^>]*>)/,
+                '$1\n<g transform="scale(0.55) translate(680, 360)">'
+              );
+            }
+            
+            // Close the transform group before closing </svg>
+            centeredSvgContent = centeredSvgContent.replace('</svg>', '</g>\n</svg>');
+            
+            // Save the centered SVG
+            fs.writeFileSync(svgPath, centeredSvgContent);
+            console.log('✅ CENTERING: Applied centering transform to SVG content');
           } else {
             // Fallback: for large documents with no detectable content bounds
             console.log(`Large format document with no detectable content bounds, using conservative sizing`);
