@@ -173,7 +173,8 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
  */
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
-    // Always calculate actual content bounds for ALL files, including PDFs
+    // URGENT DEBUG: Function entry confirmation 
+    console.log('🚨 FUNCTION ENTRY: calculateSVGContentBounds called');
     console.log('📐 Calculating content bounds from actual SVG elements...');
     
     // PRIORITY 1: Check for clipPath definitions which often contain the actual content bounds
