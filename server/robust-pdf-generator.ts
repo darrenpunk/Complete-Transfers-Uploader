@@ -347,7 +347,7 @@ grestore`;
   }
   
   /**
-   * Embed logo in both pages with exact positioning
+   * Embed logo in both pages with exact positioning - CRITICAL: Use original PDF when available
    */
   private async embedLogoInPages(
     pdfDoc: any, 
@@ -357,19 +357,40 @@ grestore`;
     element: any
   ): Promise<void> {
     try {
-      const logoPath = path.join(process.cwd(), 'uploads', logo.filename);
+      let logoPdfPath: string | null = null;
+      let shouldCleanup = false;
       
-      if (!fs.existsSync(logoPath)) {
-        console.warn(`⚠️ Logo file not found: ${logoPath}`);
-        return;
+      // PRIORITY 1: Use preserved original PDF if available
+      if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+        const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+        console.log(`🎯 Checking for preserved original PDF: ${originalPdfPath}`);
+        
+        if (fs.existsSync(originalPdfPath)) {
+          logoPdfPath = originalPdfPath;
+          shouldCleanup = false; // Don't delete the preserved original
+          console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+        } else {
+          console.warn(`⚠️ Preserved original PDF not found: ${originalPdfPath}`);
+        }
       }
       
-      // Convert SVG to PDF first
-      const logoPdfPath = await this.convertSVGToPDF(logoPath);
-      
+      // FALLBACK: Convert SVG to PDF if no preserved original
       if (!logoPdfPath) {
-        console.warn(`⚠️ Failed to convert SVG to PDF`);
-        return;
+        const logoPath = path.join(process.cwd(), 'uploads', logo.filename);
+        
+        if (!fs.existsSync(logoPath)) {
+          console.warn(`⚠️ Logo file not found: ${logoPath}`);
+          return;
+        }
+        
+        console.log(`🔄 Converting SVG to PDF as fallback: ${logoPath}`);
+        logoPdfPath = await this.convertSVGToPDF(logoPath);
+        shouldCleanup = true; // Clean up converted PDF
+        
+        if (!logoPdfPath) {
+          console.warn(`⚠️ Failed to convert SVG to PDF`);
+          return;
+        }
       }
       
       // Read and embed the PDF
@@ -406,8 +427,10 @@ grestore`;
       
       console.log(`✅ Logo embedded successfully with exact dimensions`);
       
-      // Cleanup temp PDF
-      fs.unlinkSync(logoPdfPath);
+      // Cleanup temp PDF only if it was converted (not preserved original)
+      if (shouldCleanup && logoPdfPath) {
+        fs.unlinkSync(logoPdfPath);
+      }
       
     } catch (error) {
       console.error(`❌ Failed to embed logo:`, error);

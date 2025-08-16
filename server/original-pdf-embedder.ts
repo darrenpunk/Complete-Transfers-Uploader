@@ -17,6 +17,7 @@ interface ProjectData {
     width: number;
     height: number;
     rotation: number;
+    garmentColor?: string; // Individual garment color per logo
   }>;
   logos: Array<{
     id: string;
@@ -170,78 +171,24 @@ showpage
   }
   
   /**
-   * Find the original PDF file for a logo (look for attached files)
+   * Find the original PDF file for a logo - SIMPLE DIRECT APPROACH
    */
   private async findOriginalPDF(logo: any): Promise<string | null> {
     try {
-      // Look in attached_assets for the original PDF
-      const attachedAssetsDir = path.join(process.cwd(), 'attached_assets');
-      
-      if (!fs.existsSync(attachedAssetsDir)) {
-        console.warn(`⚠️ attached_assets directory not found`);
-        return null;
-      }
-      
-      // Look for PDF files that match the original name pattern
-      const files = fs.readdirSync(attachedAssetsDir);
-      const pdfFiles = files.filter(f => f.toLowerCase().endsWith('.pdf'));
-      
-      console.log(`🔍 Searching for original PDF among ${pdfFiles.length} PDF files for: ${logo.originalName}`);
-      
-      // Extract key identifiers from the original name
-      const originalName = logo.originalName;
-      const soNumber = originalName.match(/SO\d+/)?.[0]; // Extract SO number like SO79297
-      const brandName = originalName.match(/\(([^)]+)\)/)?.[1]; // Extract brand like JAKO
-      
-      console.log(`🔍 Looking for SO number: ${soNumber}, Brand: ${brandName}`);
-      
-      // Try multiple matching strategies
-      for (const pdfFile of pdfFiles) {
-        // Strategy 1: Match SO number if available
-        if (soNumber && pdfFile.includes(soNumber)) {
-          const fullPath = path.join(attachedAssetsDir, pdfFile);
-          console.log(`🎯 SO number matched PDF: ${pdfFile} for ${logo.originalName}`);
-          return fullPath;
-        }
+      // CRITICAL: Use preserved original filename if available
+      if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+        const preservedPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+        console.log(`🎯 Checking preserved original PDF: ${preservedPath}`);
         
-        // Strategy 2: Match brand name if available
-        if (brandName && pdfFile.toUpperCase().includes(brandName.toUpperCase())) {
-          const fullPath = path.join(attachedAssetsDir, pdfFile);
-          console.log(`🎯 Brand matched PDF: ${pdfFile} for ${logo.originalName}`);
-          return fullPath;
-        }
-        
-        // Strategy 3: Match key words from the name
-        const keyWords = originalName.split(/[\s\-\[\]()]+/).filter(word => 
-          word.length > 3 && !word.match(/^(Full|Colour|A3|A4|CTCCA\d*|pdf)$/i)
-        );
-        
-        for (const keyWord of keyWords) {
-          if (pdfFile.toUpperCase().includes(keyWord.toUpperCase())) {
-            const fullPath = path.join(attachedAssetsDir, pdfFile);
-            console.log(`🎯 Keyword "${keyWord}" matched PDF: ${pdfFile} for ${logo.originalName}`);
-            return fullPath;
-          }
+        if (fs.existsSync(preservedPath)) {
+          console.log(`✅ Found preserved original PDF: ${logo.originalFilename}`);
+          return preservedPath;
+        } else {
+          console.warn(`⚠️ Preserved original PDF not found: ${preservedPath}`);
         }
       }
       
-      // Strategy 4: If no matches found, try the most recent PDF file that might match
-      const recentPdfs = pdfFiles
-        .map(file => ({
-          name: file,
-          path: path.join(attachedAssetsDir, file),
-          stats: fs.statSync(path.join(attachedAssetsDir, file))
-        }))
-        .sort((a, b) => b.stats.mtime.getTime() - a.stats.mtime.getTime())
-        .slice(0, 5); // Check 5 most recent PDFs
-      
-      console.log(`🔍 Checking ${recentPdfs.length} most recent PDFs as fallback`);
-      for (const pdfInfo of recentPdfs) {
-        console.log(`   - ${pdfInfo.name} (${pdfInfo.stats.mtime.toISOString()})`);
-      }
-      
-      console.warn(`⚠️ Could not find original PDF for: ${logo.originalName}`);
-      console.log(`📋 Available PDF files: ${pdfFiles.slice(0, 10).join(', ')}${pdfFiles.length > 10 ? '...' : ''}`);
+      console.warn(`⚠️ No preserved original PDF available for logo: ${logo.originalName}`);
       return null;
       
     } catch (error) {

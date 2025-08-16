@@ -678,11 +678,11 @@ export async function registerRoutes(app: express.Application) {
       );
 
       if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using Original PDF Embedder to preserve spot colors');
+        console.log('🎨 CMYK content detected - Using RobustPDFGenerator with original PDF preservation');
         
-        // Use original PDF embedder to preserve exact Pantone/spot colors
-        const { OriginalPDFEmbedder } = await import('./original-pdf-embedder');
-        const generator = new OriginalPDFEmbedder();
+        // Use RobustPDFGenerator which already handles individual garment colors correctly
+        const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+        const generator = new RobustPDFGenerator();
         
         const pdfBuffer = await generator.generatePDF({
           canvasElements,
@@ -1494,11 +1494,18 @@ export async function registerRoutes(app: express.Application) {
           console.log(`💾 Set originalFilename to: ${logoData.originalFilename}`);
         }
         
-        // For ALL PDF uploads, ensure original PDF is preserved and referenced
-        if (file.mimetype === 'application/pdf' && (file as any).originalPdfFilename) {
-          logoData.originalFilename = (file as any).originalPdfFilename;
-          logoData.originalMimeType = 'application/pdf';
-          console.log(`💾 PDF upload: Set originalFilename to preserved: ${logoData.originalFilename}`);
+        // CRITICAL: For ALL PDF uploads, save the original PDF filename for exact embedding
+        if (file.mimetype === 'application/pdf') {
+          if ((file as any).originalPdfFilename) {
+            logoData.originalFilename = (file as any).originalPdfFilename;
+            logoData.originalMimeType = 'application/pdf';
+            console.log(`💾 PDF upload: Set originalFilename to preserved: ${logoData.originalFilename}`);
+          } else {
+            // Fallback: If no preserved filename, use the uploaded filename
+            logoData.originalFilename = file.filename;
+            logoData.originalMimeType = 'application/pdf';
+            console.log(`💾 PDF upload fallback: Set originalFilename to: ${logoData.originalFilename}`);
+          }
         }
         
         // Add original AI/EPS info for vector files

@@ -407,19 +407,48 @@ export class SimplifiedPDFGenerator {
       exists: fs.existsSync(uploadPath)
     });
     
-    // PRIORITY: Check for original PDF embedding first
-    // This preserves exact Pantone/spot colors and artwork as designed
-    const shouldUseOriginalPDF = logo.originalMimeType === 'application/pdf' && logo.originalFilename;
-    
-    if (shouldUseOriginalPDF) {
-      console.log(`📄 Original PDF detected - embedding original file: ${logo.originalFilename}`);
+    // CRITICAL FIX: For PDF uploads, ALWAYS use the original PDF to preserve exact artwork
+    if (logo.originalName && logo.originalName.toLowerCase().endsWith('.pdf')) {
+      console.log(`📄 PDF UPLOAD DETECTED - Using original PDF to preserve exact artwork: ${logo.originalName}`);
       
-      // Use the preserved original PDF file
-      const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
-      console.log(`🔍 DEBUG: Looking for original PDF at: ${originalPdfPath}`);
+      // Try preserved original PDF first (new system)
+      if (logo.originalFilename) {
+        const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+        console.log(`🔍 Checking preserved original PDF: ${originalPdfPath}`);
+        
+        if (fs.existsSync(originalPdfPath)) {
+          console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+          try {
+            const existingPdfBytes = fs.readFileSync(originalPdfPath);
+            const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
+            
+            // Calculate position and scale
+            const scale = this.calculateScale(element, templateSize);
+            const position = this.calculatePosition(element, templateSize, page);
+            
+            page.drawPage(embeddedPage, {
+              x: position.x,
+              y: position.y,
+              width: element.width * scale,
+              height: element.height * scale,
+              rotate: element.rotation ? degrees(element.rotation) : undefined,
+            });
+            
+            console.log(`✅ Successfully embedded preserved original PDF: ${logo.originalFilename}`);
+            return;
+          } catch (embedError) {
+            console.error(`❌ Failed to embed preserved original PDF:`, embedError);
+          }
+        }
+      }
+      
+      // Fallback: Try to find original PDF with same base name  
+      const baseFilename = logo.filename.replace(/\.svg$/, '');
+      const originalPdfPath = path.join(process.cwd(), 'uploads', `${baseFilename}.pdf`);
+      console.log(`🔍 Fallback: Looking for original PDF at: ${originalPdfPath}`);
       
       if (fs.existsSync(originalPdfPath)) {
-        console.log(`✅ Found original PDF file, embedding directly to preserve exact artwork`);
+        console.log(`✅ Found fallback original PDF file`);
         try {
           const existingPdfBytes = fs.readFileSync(originalPdfPath);
           const [embeddedPage] = await pdfDoc.embedPdf(await PDFDocument.load(existingPdfBytes));
@@ -436,13 +465,13 @@ export class SimplifiedPDFGenerator {
             rotate: element.rotation ? degrees(element.rotation) : undefined,
           });
           
-          console.log(`✅ Successfully embedded original PDF: ${logo.originalFilename}`);
+          console.log(`✅ Successfully embedded fallback original PDF`);
           return;
         } catch (embedError) {
-          console.error(`❌ Failed to embed original PDF:`, embedError);
+          console.error(`❌ Failed to embed fallback original PDF:`, embedError);
         }
       } else {
-        console.log(`⚠️ Original PDF not found at: ${originalPdfPath}`);
+        console.log(`⚠️ No original PDF found - will use converted SVG`);
       }
     }
     
