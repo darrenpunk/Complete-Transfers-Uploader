@@ -176,6 +176,58 @@ export function calculateSVGContentBounds(svgContent: string): { width: number; 
     // Always calculate actual content bounds for ALL files, including PDFs
     console.log('📐 Calculating content bounds from actual SVG elements...');
     
+    // PRIORITY 1: Check for clipPath definitions which often contain the actual content bounds
+    const clipPaths = svgContent.match(/<clipPath[^>]*>[\s\S]*?<\/clipPath>/g) || [];
+    if (clipPaths.length > 0) {
+      console.log(`🔍 Found ${clipPaths.length} clipPath definitions, analyzing for content bounds...`);
+      
+      let clipMinX = Infinity, clipMinY = Infinity, clipMaxX = -Infinity, clipMaxY = -Infinity;
+      let hasClipBounds = false;
+      
+      clipPaths.forEach((clipPath, index) => {
+        // Extract path data from clipPath
+        const pathMatch = clipPath.match(/d="([^"]*)"/);
+        if (pathMatch) {
+          const pathData = pathMatch[1];
+          console.log(`🔍 ClipPath ${index}: ${pathData.substring(0, 100)}...`);
+          
+          // Extract coordinates from clipPath
+          const coordRegex = /[ML]\s*([-\d.]+)[,\s]+([-\d.]+)/g;
+          let coordMatch;
+          while ((coordMatch = coordRegex.exec(pathData)) !== null) {
+            const x = parseFloat(coordMatch[1]);
+            const y = parseFloat(coordMatch[2]);
+            
+            if (!isNaN(x) && !isNaN(y) && x >= 0 && x <= 2000 && y >= 0 && y <= 2000) {
+              hasClipBounds = true;
+              clipMinX = Math.min(clipMinX, x);
+              clipMaxX = Math.max(clipMaxX, x);
+              clipMinY = Math.min(clipMinY, y);
+              clipMaxY = Math.max(clipMaxY, y);
+              console.log(`📍 ClipPath coordinate: (${x}, ${y})`);
+            }
+          }
+        }
+      });
+      
+      if (hasClipBounds && isFinite(clipMinX) && isFinite(clipMaxX) && isFinite(clipMinY) && isFinite(clipMaxY)) {
+        const clipWidth = clipMaxX - clipMinX;
+        const clipHeight = clipMaxY - clipMinY;
+        
+        if (clipWidth > 0 && clipHeight > 0 && clipWidth <= 1200 && clipHeight <= 1200) {
+          console.log(`✅ Using clipPath content bounds: ${clipMinX},${clipMinY} → ${clipMaxX},${clipMaxY} = ${clipWidth}×${clipHeight}px`);
+          return {
+            width: clipWidth,
+            height: clipHeight,
+            minX: clipMinX,
+            minY: clipMinY,
+            maxX: clipMaxX,
+            maxY: clipMaxY
+          };
+        }
+      }
+    }
+    
     // Extract coordinates from multiple SVG elements - handle multiline paths and attributes
     const pathRegex = /<path[^>]*?d="([^"]*?)"[^>]*?>/g;
     const rectRegex = /<rect[^>]*x="([^"]*)"[^>]*y="([^"]*)"[^>]*width="([^"]*)"[^>]*height="([^"]*)"/g;
