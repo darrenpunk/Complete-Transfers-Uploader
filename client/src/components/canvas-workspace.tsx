@@ -488,7 +488,9 @@ export default function CanvasWorkspace({
   const handleMouseDown = (element: CanvasElement, event: React.MouseEvent) => {
     if (!element) return;
     
+    console.log(`🎯 Mouse down on element ${element.id}, starting drag`);
     event.preventDefault();
+    event.stopPropagation();
     setIsDragging(true);
     onElementSelect(element);
     
@@ -502,9 +504,13 @@ export default function CanvasWorkspace({
       if (isPdfDerived) {
         mmToPixelRatio = 2.834645669; // 72 DPI conversion
       }
+      const dragOffsetX = event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100);
+      const dragOffsetY = event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100);
+      
+      console.log(`🎯 Drag offset calculated: (${dragOffsetX.toFixed(1)}, ${dragOffsetY.toFixed(1)})`);
       setDragOffset({
-        x: event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100),
-        y: event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100)
+        x: dragOffsetX,
+        y: dragOffsetY
       });
     }
   };
@@ -1339,7 +1345,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
-                  className={`canvas-element absolute cursor-move`}
+                  className={`canvas-element absolute ${isDragging && selectedElement?.id === element.id ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: elementX,
                     top: elementY,
