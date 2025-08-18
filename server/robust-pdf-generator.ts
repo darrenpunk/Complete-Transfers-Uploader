@@ -335,6 +335,15 @@ grestore`;
           color: parsedColor
         });
         
+        // Add garment color label above the logo
+        const labelY = yPts + heightPts + 10; // Position label above the logo
+        page2.drawText(garmentColor, {
+          x: xPts + 5,
+          y: labelY,
+          size: 8,
+          color: rgb(0, 0, 0),
+        });
+        
         // Embed logo on both pages
         await this.embedLogoInPages(pdfDoc, page1, page2, logo, element);
       }
