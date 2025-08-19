@@ -1058,7 +1058,7 @@ export function VectorizerModal({
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="vectorizer-modal w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
           <DialogHeader className="flex-shrink-0">
-            <CompleteTransferLogo size="md" className="mb-4" />
+            <CompleteTransferLogo size="sm" className="mb-2" />
             <div className="flex items-center justify-between">
               <DialogTitle>AI Vectorization: {imageFile?.name || fileName}</DialogTitle>
               <div className="flex items-center gap-2">
@@ -1125,28 +1125,7 @@ export function VectorizerModal({
               </p>
             </div>
 
-            {/* Quality Warning */}
-            {qualityWarning && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 flex-shrink-0">
-                <div className="flex items-start">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">Vectorization Quality Warning</h4>
-                    <div className="text-sm text-yellow-700 space-y-1">
-                      {qualityWarning.issues.map((issue, index) => (
-                        <div key={index} className="flex items-start">
-                          <span className="inline-block w-1.5 h-1.5 bg-yellow-600 rounded-full mt-2 mr-2 flex-shrink-0"></span>
-                          <span>{issue}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-sm text-yellow-600 mt-2 font-medium">
-                      {qualityWarning.recommendation}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+
 
           {/* Processing State */}
           {isProcessing && (
