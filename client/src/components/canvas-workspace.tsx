@@ -1150,52 +1150,55 @@ export default function CanvasWorkspace({
               style={{ height: '30px' }}
             >
               <div 
-                className="relative h-full"
+                className="relative h-full flex items-end"
                 style={{
                   marginLeft: '30px', // Account for vertical ruler
                   overflow: 'hidden'
                 }}
               >
-                {/* Ruler ticks and labels */}
-                <svg 
-                  className="absolute inset-0 w-full h-full"
+                {/* Ruler ticks and labels - positioned to align with canvas */}
+                <div 
+                  className="relative h-full"
                   style={{
-                    left: `${((window.innerWidth - canvasWidth * (zoom / 100)) / 2) - 30}px`,
+                    width: canvasWidth * (zoom / 100),
+                    marginLeft: `calc(50% - ${canvasWidth * (zoom / 100) / 2}px)`,
                   }}
                 >
-                  {(() => {
-                    const mmToPixelRatio = template.pixelWidth / template.width;
-                    const pixelsPerMm = mmToPixelRatio * (zoom / 100);
-                    const ticks = [];
-                    
-                    // Generate ticks every 5mm for major, 1mm for minor
-                    for (let mm = 0; mm <= template.width; mm += 1) {
-                      const x = mm * pixelsPerMm;
-                      const isMajor = mm % 10 === 0;
-                      const isMedium = mm % 5 === 0;
+                  <svg className="absolute inset-0 w-full h-full">
+                    {(() => {
+                      const mmToPixelRatio = template.pixelWidth / template.width;
+                      const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                      const ticks = [];
                       
-                      if (isMajor) {
-                        ticks.push(
-                          <g key={`major-${mm}`}>
-                            <line x1={x} y1="15" x2={x} y2="30" stroke="#374151" strokeWidth="1" />
-                            <text x={x} y="12" textAnchor="middle" fontSize="10" fill="#374151">
-                              {mm}
-                            </text>
-                          </g>
-                        );
-                      } else if (isMedium) {
-                        ticks.push(
-                          <line key={`medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#6B7280" strokeWidth="0.5" />
-                        );
-                      } else {
-                        ticks.push(
-                          <line key={`minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="0.25" />
-                        );
+                      // Generate ticks aligned with canvas
+                      for (let mm = 0; mm <= template.width; mm += 1) {
+                        const x = mm * pixelsPerMm;
+                        const isMajor = mm % 10 === 0;
+                        const isMedium = mm % 5 === 0;
+                        
+                        if (isMajor) {
+                          ticks.push(
+                            <g key={`major-${mm}`}>
+                              <line x1={x} y1="15" x2={x} y2="30" stroke="#374151" strokeWidth="1" />
+                              <text x={x} y="12" textAnchor="middle" fontSize="10" fill="#374151">
+                                {mm}
+                              </text>
+                            </g>
+                          );
+                        } else if (isMedium) {
+                          ticks.push(
+                            <line key={`medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#6B7280" strokeWidth="0.5" />
+                          );
+                        } else {
+                          ticks.push(
+                            <line key={`minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="0.25" />
+                          );
+                        }
                       }
-                    }
-                    return ticks;
-                  })()}
-                </svg>
+                      return ticks;
+                    })()}
+                  </svg>
+                </div>
               </div>
             </div>
             
@@ -1205,52 +1208,55 @@ export default function CanvasWorkspace({
               style={{ width: '30px' }}
             >
               <div 
-                className="relative w-full h-full"
+                className="relative w-full h-full flex justify-end"
                 style={{
                   marginTop: '30px', // Account for horizontal ruler
                   overflow: 'hidden'
                 }}
               >
-                {/* Ruler ticks and labels */}
-                <svg 
-                  className="absolute inset-0 w-full h-full"
+                {/* Ruler ticks and labels - positioned to align with canvas */}
+                <div 
+                  className="relative w-full"
                   style={{
-                    top: `${((window.innerHeight - canvasHeight * (zoom / 100)) / 2) - 100}px`, // Adjust for toolbar
+                    height: canvasHeight * (zoom / 100),
+                    marginTop: `calc(50% - ${canvasHeight * (zoom / 100) / 2}px)`,
                   }}
                 >
-                  {(() => {
-                    const mmToPixelRatio = template.pixelHeight / template.height;
-                    const pixelsPerMm = mmToPixelRatio * (zoom / 100);
-                    const ticks = [];
-                    
-                    // Generate ticks every 5mm for major, 1mm for minor
-                    for (let mm = 0; mm <= template.height; mm += 1) {
-                      const y = mm * pixelsPerMm;
-                      const isMajor = mm % 10 === 0;
-                      const isMedium = mm % 5 === 0;
+                  <svg className="absolute inset-0 w-full h-full">
+                    {(() => {
+                      const mmToPixelRatio = template.pixelHeight / template.height;
+                      const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                      const ticks = [];
                       
-                      if (isMajor) {
-                        ticks.push(
-                          <g key={`major-${mm}`}>
-                            <line x1="15" y1={y} x2="30" y2={y} stroke="#374151" strokeWidth="1" />
-                            <text x="12" y={y + 4} textAnchor="middle" fontSize="10" fill="#374151" transform={`rotate(-90, 12, ${y + 4})`}>
-                              {mm}
-                            </text>
-                          </g>
-                        );
-                      } else if (isMedium) {
-                        ticks.push(
-                          <line key={`medium-${mm}`} x1="20" y1={y} x2="30" y2={y} stroke="#6B7280" strokeWidth="0.5" />
-                        );
-                      } else {
-                        ticks.push(
-                          <line key={`minor-${mm}`} x1="25" y1={y} x2="30" y2={y} stroke="#9CA3AF" strokeWidth="0.25" />
-                        );
+                      // Generate ticks aligned with canvas
+                      for (let mm = 0; mm <= template.height; mm += 1) {
+                        const y = mm * pixelsPerMm;
+                        const isMajor = mm % 10 === 0;
+                        const isMedium = mm % 5 === 0;
+                        
+                        if (isMajor) {
+                          ticks.push(
+                            <g key={`major-${mm}`}>
+                              <line x1="15" y1={y} x2="30" y2={y} stroke="#374151" strokeWidth="1" />
+                              <text x="12" y={y + 4} textAnchor="middle" fontSize="10" fill="#374151" transform={`rotate(-90, 12, ${y + 4})`}>
+                                {mm}
+                              </text>
+                            </g>
+                          );
+                        } else if (isMedium) {
+                          ticks.push(
+                            <line key={`medium-${mm}`} x1="20" y1={y} x2="30" y2={y} stroke="#6B7280" strokeWidth="0.5" />
+                          );
+                        } else {
+                          ticks.push(
+                            <line key={`minor-${mm}`} x1="25" y1={y} x2="30" y2={y} stroke="#9CA3AF" strokeWidth="0.25" />
+                          );
+                        }
                       }
-                    }
-                    return ticks;
-                  })()}
-                </svg>
+                      return ticks;
+                    })()}
+                  </svg>
+                </div>
               </div>
             </div>
             
