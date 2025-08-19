@@ -120,29 +120,45 @@ export class MixedContentDetector {
           
           // Check if it's just an image embedded in SVG (which would be raster)
           const hasImage = svgContent.includes('<image');
-          const isOnlyImage = hasImage && !hasPath && !hasRect && !hasCircle && !hasPolygon && !hasLine && !hasEllipse;
+          const hasUse = svgContent.includes('<use');
+          const hasDefs = svgContent.includes('<defs');
+          
+          // Check for clipping paths which are structural, not vector graphics
+          const hasClipPath = svgContent.includes('clip-path=') || svgContent.includes('<clipPath');
+          
+          // Count actual vector elements vs structural elements
+          const pathCount = (svgContent.match(/<path/g) || []).length;
+          const clipPathCount = (svgContent.match(/clip-rule=/g) || []).length;
+          
+          // If we only have clipping paths (rectangular boundaries), it's likely raster
+          const onlyClippingPaths = hasPath && pathCount <= clipPathCount + 1 && hasClipPath;
+          
+          // Check if this is just embedded raster content
+          const isEmbeddedRaster = (hasImage || hasUse) && hasDefs && onlyClippingPaths;
           
           console.log('🔍 SVG element analysis:', {
-            hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, hasImage, isOnlyImage
+            hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, 
+            hasImage, hasUse, hasDefs, hasClipPath, onlyClippingPaths, isEmbeddedRaster,
+            pathCount, clipPathCount
           });
           
-          if (isOnlyImage) {
-            console.log('❌ SVG contains only embedded images - treating as raster content');
+          if (isEmbeddedRaster) {
+            console.log('❌ SVG contains only embedded raster with clipping paths - treating as raster content');
             analysis.hasRasterContent = true;
             analysis.rasterImages.count = 1;
             analysis.rasterImages.formats.push('embedded');
-          } else if (hasPath || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse) {
+          } else if ((hasPath && !onlyClippingPaths) || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse) {
             analysis.hasVectorContent = true;
             console.log('✅ Vector content detected in PDF via pdf2svg');
             
-            if (hasPath) analysis.vectorElements.types.push('paths');
+            if (hasPath && !onlyClippingPaths) analysis.vectorElements.types.push('paths');
             if (hasRect) analysis.vectorElements.types.push('rectangles');
             if (hasCircle) analysis.vectorElements.types.push('circles');
             if (hasLine) analysis.vectorElements.types.push('lines');
             if (hasEllipse) analysis.vectorElements.types.push('ellipses');
             if (hasText) analysis.vectorElements.types.push('text');
           } else {
-            console.log('❌ No vector elements found in converted SVG');
+            console.log('❌ No actual vector elements found - only structural/clipping elements');
           }
           
           // Clean up temp file
