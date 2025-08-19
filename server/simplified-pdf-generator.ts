@@ -807,33 +807,41 @@ export class SimplifiedPDFGenerator {
       if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
         console.log(`🎨 Applying color overrides:`, element.colorOverrides);
         
-        // Get SVG color analysis for format mapping
-        const svgAnalysis = logo.svgColors as any;
-        let originalFormatOverrides: Record<string, string> = {};
-        
-        if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
-          Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
-            // Find the matching color in the SVG analysis
-            const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
-            if (colorInfo && colorInfo.originalFormat) {
-              originalFormatOverrides[colorInfo.originalFormat] = newColor;
-            } else {
-              // Fallback to standardized color if original format not found
-              originalFormatOverrides[standardizedColor] = newColor;
-            }
-          });
+        // Check if this is an ink color override (for single color templates)
+        const colorOverrides = element.colorOverrides as any;
+        if (colorOverrides.inkColor) {
+          console.log(`🎨 Applying ink color recoloring in PDF: ${colorOverrides.inkColor}`);
+          const { recolorSVG } = await import('./svg-recolor');
+          svgToModify = recolorSVG(svgToModify, colorOverrides.inkColor);
         } else {
-          // Fallback if no SVG color analysis available
-          originalFormatOverrides = element.colorOverrides as Record<string, string>;
+          // Handle specific color overrides (regular color replacement)
+          const svgAnalysis = logo.svgColors as any;
+          let originalFormatOverrides: Record<string, string> = {};
+          
+          if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
+            Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
+              // Find the matching color in the SVG analysis
+              const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
+              if (colorInfo && colorInfo.originalFormat) {
+                originalFormatOverrides[colorInfo.originalFormat] = newColor;
+              } else {
+                // Fallback to standardized color if original format not found
+                originalFormatOverrides[standardizedColor] = newColor;
+              }
+            });
+          } else {
+            // Fallback if no SVG color analysis available
+            originalFormatOverrides = element.colorOverrides as Record<string, string>;
+          }
+          
+          // Apply color changes
+          const { applySVGColorChanges } = await import('./svg-color-utils');
+          console.log(`🎨 About to apply color changes with overrides:`, originalFormatOverrides);
+          svgToModify = applySVGColorChanges(svgToModify, originalFormatOverrides);
         }
         
-        // Apply color changes
-        const { applySVGColorChanges } = await import('./svg-color-utils');
-        console.log(`🎨 About to apply color changes with overrides:`, originalFormatOverrides);
-        const modifiedSvgContent = applySVGColorChanges(svgToModify, originalFormatOverrides);
-        
         // Save the modified SVG
-        fs.writeFileSync(modifiedSvgPath, modifiedSvgContent);
+        fs.writeFileSync(modifiedSvgPath, svgToModify);
         console.log(`💾 Saved modified SVG to: ${modifiedSvgPath}`);
       } else {
         // No color changes, but save the potentially cleaned SVG

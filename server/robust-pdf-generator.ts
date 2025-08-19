@@ -449,11 +449,52 @@ grestore`;
       
       // FALLBACK: Convert SVG to PDF if no preserved original
       if (!logoPdfPath) {
-        const logoPath = path.join(process.cwd(), 'uploads', logo.filename);
+        let logoPath = path.join(process.cwd(), 'uploads', logo.filename);
         
         if (!fs.existsSync(logoPath)) {
           console.warn(`⚠️ Logo file not found: ${logoPath}`);
           return;
+        }
+        
+        // Check if we need to apply color overrides before converting
+        if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+          console.log(`🎨 Applying color overrides before PDF conversion:`, element.colorOverrides);
+          
+          const modifiedSvgPath = path.join(process.cwd(), 'uploads', `${element.id}_modified.svg`);
+          let svgContent = fs.readFileSync(logoPath, 'utf8');
+          
+          // Check if this is an ink color override (for single color templates)
+          const colorOverrides = element.colorOverrides as any;
+          if (colorOverrides.inkColor) {
+            console.log(`🎨 Applying ink color recoloring in robust PDF: ${colorOverrides.inkColor}`);
+            const { recolorSVG } = await import('./svg-recolor');
+            svgContent = recolorSVG(svgContent, colorOverrides.inkColor);
+          } else {
+            // Handle specific color overrides (regular color replacement)
+            const svgAnalysis = logo.svgColors as any;
+            let originalFormatOverrides: Record<string, string> = {};
+            
+            if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
+              Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
+                const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
+                if (colorInfo && colorInfo.originalFormat) {
+                  originalFormatOverrides[colorInfo.originalFormat] = newColor;
+                } else {
+                  originalFormatOverrides[standardizedColor] = newColor;
+                }
+              });
+            } else {
+              originalFormatOverrides = element.colorOverrides as Record<string, string>;
+            }
+            
+            const { applySVGColorChanges } = await import('./svg-color-utils');
+            svgContent = applySVGColorChanges(logoPath, originalFormatOverrides);
+          }
+          
+          // Save modified SVG and use that for conversion
+          fs.writeFileSync(modifiedSvgPath, svgContent);
+          logoPath = modifiedSvgPath;
+          console.log(`💾 Saved modified SVG to: ${modifiedSvgPath}`);
         }
         
         console.log(`🔄 Converting SVG to PDF as fallback: ${logoPath}`);
