@@ -539,11 +539,16 @@ grestore`;
       // Template-specific coordinate calculation to avoid affecting other templates
       let yPts: number;
       if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
-        // For DTF large format template, use direct coordinate mapping
-        // DTF template is landscape (1000×550mm) - canvas Y=0 should map to PDF bottom
-        const templateHeightPts = templateSize.height * MM_TO_POINTS;
-        yPts = (templateSize.height - element.y - contentHeightMM) * MM_TO_POINTS;
-        console.log(`🎯 DTF template positioning: templateHeight=${templateSize.height}mm, elementY=${element.y}mm, contentHeight=${contentHeightMM}mm, pdfY=${yPts.toFixed(1)}pt`);
+        // For DTF large format template - handle negative coordinates gracefully
+        // Ensure element.y is never negative (clamp to 0)
+        const clampedElementY = Math.max(0, element.y);
+        // Standard PDF coordinate system: Y=0 is at bottom, increasing upward
+        yPts = (templateSize.height - clampedElementY - contentHeightMM) * MM_TO_POINTS;
+        
+        // Additional safety check - ensure PDF Y coordinate is never negative
+        yPts = Math.max(0, yPts);
+        
+        console.log(`🎯 DTF template positioning: templateHeight=${templateSize.height}mm, elementY=${element.y}mm (clamped=${clampedElementY}mm), contentHeight=${contentHeightMM}mm, pdfY=${yPts.toFixed(1)}pt`);
       } else {
         // For all other templates, maintain existing behavior (A3 assumption for backward compatibility)
         yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts;

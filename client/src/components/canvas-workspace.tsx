@@ -543,13 +543,17 @@ export default function CanvasWorkspace({
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
           
-          // Constrain to safe zone
+          // Constrain to safe zone - ensure coordinates are never negative
           const maxX = template.width - safetyMargin - selectedElement.width;
           const maxY = template.height - safetyMargin - selectedElement.height;
+          
+          // Prevent negative coordinates that break PDF generation
+          const constrainedX = Math.max(safetyMargin, Math.min(newX, maxX));
+          const constrainedY = Math.max(safetyMargin, Math.min(newY, maxY));
 
           updateElementDirect(selectedElement.id, { 
-            x: Math.max(safetyMargin, Math.min(newX, maxX)), 
-            y: Math.max(safetyMargin, Math.min(newY, maxY)) 
+            x: constrainedX, 
+            y: constrainedY 
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
