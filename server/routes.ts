@@ -777,7 +777,8 @@ export async function registerRoutes(app: express.Application) {
       // Get template information to check if this is a single colour template
       const templateSizes = await storage.getTemplateSizes();
       const templateSize = templateSizes.find(t => t.id === project.templateSize);
-      const isSingleColourTemplate = templateSize?.group === "Single Colour Transfers";
+      const isSingleColourTemplate = templateSize?.group === "Screen Printed Transfers" && 
+        templateSize?.label?.includes("Single Colour");
       
       console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}`);
 
@@ -1690,6 +1691,17 @@ export async function registerRoutes(app: express.Application) {
         const centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
         const centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
 
+        // Set color overrides for single colour templates with ink color
+        let colorOverrides = null;
+        if (isSingleColourTemplate && project.inkColor && finalMimeType === 'image/svg+xml') {
+          // Create color overrides to apply ink color to all non-white colors
+          console.log(`🎨 Setting colorOverrides for single colour template with ink: ${project.inkColor}`);
+          colorOverrides = {
+            inkColor: project.inkColor,
+            appliedAt: new Date().toISOString()
+          };
+        }
+
         const canvasElementData = {
           projectId: projectId,
           logoId: logo.id,
@@ -1701,7 +1713,7 @@ export async function registerRoutes(app: express.Application) {
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: null
+          colorOverrides: colorOverrides
         };
 
         await storage.createCanvasElement(canvasElementData);
@@ -1936,29 +1948,37 @@ export async function registerRoutes(app: express.Application) {
       if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
         console.log(`🎨 Applying color overrides to SVG for canvas display:`, element.colorOverrides);
         
-        // Get SVG color analysis for format mapping
-        const svgAnalysis = logo.svgColors as any;
-        let originalFormatOverrides: Record<string, string> = {};
-        
-        if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
-          Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
-            // Find the matching color in the SVG analysis
-            const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
-            if (colorInfo && colorInfo.originalFormat) {
-              originalFormatOverrides[colorInfo.originalFormat] = newColor;
-            } else {
-              // Fallback to standardized color if original format not found
-              originalFormatOverrides[standardizedColor] = newColor;
-            }
-          });
+        // Check if this is an ink color override (for single color templates)
+        const colorOverrides = element.colorOverrides as any;
+        if (colorOverrides.inkColor) {
+          console.log(`🎨 Applying ink color recoloring: ${colorOverrides.inkColor}`);
+          const { recolorSVG } = await import('./svg-recolor');
+          svgContent = recolorSVG(svgContent, colorOverrides.inkColor);
         } else {
-          // Fallback if no SVG color analysis available
-          originalFormatOverrides = element.colorOverrides as Record<string, string>;
+          // Handle specific color overrides (regular color replacement)
+          const svgAnalysis = logo.svgColors as any;
+          let originalFormatOverrides: Record<string, string> = {};
+          
+          if (svgAnalysis && svgAnalysis.colors && Array.isArray(svgAnalysis.colors)) {
+            Object.entries(element.colorOverrides as Record<string, string>).forEach(([standardizedColor, newColor]) => {
+              // Find the matching color in the SVG analysis
+              const colorInfo = svgAnalysis.colors.find((c: any) => c.originalColor === standardizedColor);
+              if (colorInfo && colorInfo.originalFormat) {
+                originalFormatOverrides[colorInfo.originalFormat] = newColor;
+              } else {
+                // Fallback to standardized color if original format not found
+                originalFormatOverrides[standardizedColor] = newColor;
+              }
+            });
+          } else {
+            // Fallback if no SVG color analysis available
+            originalFormatOverrides = element.colorOverrides as Record<string, string>;
+          }
+          
+          // Apply color changes
+          const { applySVGColorChanges } = await import('./svg-color-utils');
+          svgContent = applySVGColorChanges(svgPath, originalFormatOverrides);
         }
-        
-        // Apply color changes
-        const { applySVGColorChanges } = await import('./svg-color-utils');
-        svgContent = applySVGColorChanges(svgPath, originalFormatOverrides);
       }
       
       // Set proper content type and return the SVG

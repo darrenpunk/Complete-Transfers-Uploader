@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
 
 // Load environment variables
 dotenv.config();
@@ -15,6 +16,41 @@ console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ?
 const app = express();
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: false, limit: '200mb' }));
+
+// Handle SVG recoloring middleware (must come before static serving)
+app.get('/uploads/:filename', async (req, res, next) => {
+  const { filename } = req.params;
+  const { inkColor, recolor } = req.query;
+  
+  // Only handle SVG files with recolor parameter
+  if (!filename.endsWith('.svg') || !recolor || !inkColor) {
+    return next(); // Continue to static serving
+  }
+  
+  try {
+    const filePath = path.join('./uploads', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).send('File not found');
+    }
+    
+    // Read SVG content
+    const svgContent = fs.readFileSync(filePath, 'utf8');
+    
+    // Apply recoloring
+    const { recolorSVG } = await import('./svg-recolor');
+    const recoloredContent = recolorSVG(svgContent, inkColor as string);
+    
+    // Send recolored SVG
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(recoloredContent);
+    
+    console.log(`🎨 Served recolored SVG: ${filename} with ink color: ${inkColor}`);
+  } catch (error) {
+    console.error('Error recoloring SVG:', error);
+    next(); // Fall back to static serving
+  }
+});
 
 // Configure proper MIME types for uploads directory
 app.use('/uploads', express.static('./uploads', {
