@@ -16,11 +16,6 @@ export function CompleteTransferLogo({ size = "md", className = "" }: CompleteTr
 
   return (
     <div className={`flex items-center justify-center ${className}`}>
-      <img
-        src={completeTransfersLogoPath}
-        alt="Complete Transfers - No Mess, Just Press"
-        className={`${sizeClasses[size]} object-contain`}
-      />
     </div>
   );
 }
