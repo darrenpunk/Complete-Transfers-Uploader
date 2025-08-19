@@ -2620,6 +2620,10 @@ export async function registerRoutes(app: express.Application) {
       // WEBAPP IDENTICAL CONFIGURATION: Match their exact default behavior
       console.log('🎯 USING VECTOR.AI WEBAPP DEFAULT SETTINGS - Exactly matching vectorizer.ai webapp behavior');
       
+      // CRITICAL FIX: Always request SVG output format explicitly to avoid PNG binary data
+      formData.append('output_format', 'svg');
+      console.log('✅ Explicitly requesting SVG output format to avoid binary PNG data');
+      
       // CRITICAL FIX: Vector.AI API expects specific mode values based on documentation
       if (!isPreview) {
         // Production mode should NOT include mode parameter (uses default)
@@ -2628,10 +2632,6 @@ export async function registerRoutes(app: express.Application) {
         formData.append('mode', 'preview');
         console.log('⚡ Preview mode for testing');
       }
-      
-      // Based on Vector.AI docs, SVG is the default output format
-      // Let's test without specifying output_format to match their examples
-      console.log('📋 Using default SVG output format (not explicitly specified)');
       
       // NO CUSTOM PARAMETERS - Let Vector.AI use exact webapp defaults
       // The webapp works perfectly, so we use NO processing overrides
