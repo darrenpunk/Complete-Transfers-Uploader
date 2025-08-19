@@ -544,12 +544,16 @@ export default function CanvasWorkspace({
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
           
           // Constrain to safe zone - ensure coordinates are never negative
-          const maxX = template.width - safetyMargin - selectedElement.width;
-          const maxY = template.height - safetyMargin - selectedElement.height;
+          const maxX = Math.max(safetyMargin, template.width - safetyMargin - selectedElement.width);
+          const maxY = Math.max(safetyMargin, template.height - safetyMargin - selectedElement.height);
           
           // Prevent negative coordinates that break PDF generation
-          const constrainedX = Math.max(safetyMargin, Math.min(newX, maxX));
-          const constrainedY = Math.max(safetyMargin, Math.min(newY, maxY));
+          // For DTF templates, allow more flexible positioning
+          const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+          const minMargin = isDTFTemplate ? 5 : safetyMargin; // Allow closer to edges for DTF
+          
+          const constrainedX = Math.max(minMargin, Math.min(newX, maxX));
+          const constrainedY = Math.max(minMargin, Math.min(newY, maxY));
 
           updateElementDirect(selectedElement.id, { 
             x: constrainedX, 

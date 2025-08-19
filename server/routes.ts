@@ -1694,11 +1694,16 @@ export async function registerRoutes(app: express.Application) {
           // DTF template is landscape format (1000×550mm) - special handling
           console.log(`🎯 DTF template detected: ${templateSize.width}×${templateSize.height}mm`);
           
-          // For DTF, center horizontally but position closer to top for better visibility
-          centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
-          centerY = Math.max(3, Math.min(50, (templateSize.height - displayHeight) / 4)); // 25% from top or 3mm minimum
+          // For DTF, ensure proper centering that works with rotation
+          // Center both horizontally and vertically, but ensure it fits within template bounds
+          centerX = Math.max(10, (templateSize.width - displayWidth) / 2);
+          centerY = Math.max(10, (templateSize.height - displayHeight) / 2);
           
-          console.log(`📍 DTF positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm`);
+          // Additional safety for large elements that might exceed template
+          if (centerY < 10) centerY = 10; // Minimum 10mm from top
+          if (centerX < 10) centerX = 10; // Minimum 10mm from left
+          
+          console.log(`📍 DTF positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm (template=${templateSize.width}×${templateSize.height}mm, content=${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
         } else {
           // Standard templates (A3, etc.) - existing behavior
           centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
