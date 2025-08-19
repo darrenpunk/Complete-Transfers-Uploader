@@ -1141,36 +1141,34 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
-        {/* Rulers */}
+        {/* Rulers positioned relative to canvas */}
         {showRulers && template && (
-          <>
+          <div className="absolute inset-0 pointer-events-none z-10">
             {/* Horizontal Ruler */}
             <div 
-              className="absolute top-0 left-0 right-0 bg-gray-100 border-b border-gray-300 z-10"
-              style={{ height: '30px' }}
+              className="absolute bg-gray-100 border-b border-gray-300"
+              style={{ 
+                top: 0,
+                left: '30px',
+                right: 0,
+                height: '30px'
+              }}
             >
-              <div 
-                className="relative h-full flex items-end"
-                style={{
-                  marginLeft: '30px', // Account for vertical ruler
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Ruler ticks and labels - positioned to align with canvas */}
+              <div className="relative w-full h-full flex items-center justify-center">
                 <div 
-                  className="relative h-full"
+                  className="relative bg-white"
                   style={{
-                    width: canvasWidth * (zoom / 100),
-                    marginLeft: `calc(50% - ${canvasWidth * (zoom / 100) / 2}px)`,
+                    width: canvasWidth,
+                    height: '30px',
+                    border: '1px solid #D1D5DB'
                   }}
                 >
                   <svg className="absolute inset-0 w-full h-full">
                     {(() => {
                       const mmToPixelRatio = template.pixelWidth / template.width;
-                      const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                      const pixelsPerMm = mmToPixelRatio;
                       const ticks = [];
                       
-                      // Generate ticks aligned with canvas
                       for (let mm = 0; mm <= template.width; mm += 1) {
                         const x = mm * pixelsPerMm;
                         const isMajor = mm % 10 === 0;
@@ -1178,20 +1176,20 @@ export default function CanvasWorkspace({
                         
                         if (isMajor) {
                           ticks.push(
-                            <g key={`major-${mm}`}>
+                            <g key={`h-major-${mm}`}>
                               <line x1={x} y1="15" x2={x} y2="30" stroke="#374151" strokeWidth="1" />
-                              <text x={x} y="12" textAnchor="middle" fontSize="10" fill="#374151">
+                              <text x={x} y="12" textAnchor="middle" fontSize="9" fill="#374151">
                                 {mm}
                               </text>
                             </g>
                           );
                         } else if (isMedium) {
                           ticks.push(
-                            <line key={`medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#6B7280" strokeWidth="0.5" />
+                            <line key={`h-medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#6B7280" strokeWidth="0.5" />
                           );
                         } else {
                           ticks.push(
-                            <line key={`minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="0.25" />
+                            <line key={`h-minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="0.25" />
                           );
                         }
                       }
@@ -1201,34 +1199,32 @@ export default function CanvasWorkspace({
                 </div>
               </div>
             </div>
-            
+
             {/* Vertical Ruler */}
             <div 
-              className="absolute top-0 bottom-0 left-0 bg-gray-100 border-r border-gray-300 z-10"
-              style={{ width: '30px' }}
+              className="absolute bg-gray-100 border-r border-gray-300"
+              style={{ 
+                top: '30px',
+                left: 0,
+                bottom: 0,
+                width: '30px'
+              }}
             >
-              <div 
-                className="relative w-full h-full flex justify-end"
-                style={{
-                  marginTop: '30px', // Account for horizontal ruler
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Ruler ticks and labels - positioned to align with canvas */}
+              <div className="relative w-full h-full flex items-center justify-center">
                 <div 
-                  className="relative w-full"
+                  className="relative bg-white"
                   style={{
-                    height: canvasHeight * (zoom / 100),
-                    marginTop: `calc(50% - ${canvasHeight * (zoom / 100) / 2}px)`,
+                    width: '30px',
+                    height: canvasHeight,
+                    border: '1px solid #D1D5DB'
                   }}
                 >
                   <svg className="absolute inset-0 w-full h-full">
                     {(() => {
                       const mmToPixelRatio = template.pixelHeight / template.height;
-                      const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                      const pixelsPerMm = mmToPixelRatio;
                       const ticks = [];
                       
-                      // Generate ticks aligned with canvas
                       for (let mm = 0; mm <= template.height; mm += 1) {
                         const y = mm * pixelsPerMm;
                         const isMajor = mm % 10 === 0;
@@ -1236,20 +1232,20 @@ export default function CanvasWorkspace({
                         
                         if (isMajor) {
                           ticks.push(
-                            <g key={`major-${mm}`}>
-                              <line x1="15" y1={y} x2="30" y2={y} stroke="#374151" strokeWidth="1" />
-                              <text x="12" y={y + 4} textAnchor="middle" fontSize="10" fill="#374151" transform={`rotate(-90, 12, ${y + 4})`}>
+                            <g key={`v-major-${mm}`}>
+                              <line x1="0" y1={y} x2="15" y2={y} stroke="#374151" strokeWidth="1" />
+                              <text x="18" y={y + 3} textAnchor="start" fontSize="9" fill="#374151" transform={`rotate(-90, 18, ${y + 3})`}>
                                 {mm}
                               </text>
                             </g>
                           );
                         } else if (isMedium) {
                           ticks.push(
-                            <line key={`medium-${mm}`} x1="20" y1={y} x2="30" y2={y} stroke="#6B7280" strokeWidth="0.5" />
+                            <line key={`v-medium-${mm}`} x1="0" y1={y} x2="10" y2={y} stroke="#6B7280" strokeWidth="0.5" />
                           );
                         } else {
                           ticks.push(
-                            <line key={`minor-${mm}`} x1="25" y1={y} x2="30" y2={y} stroke="#9CA3AF" strokeWidth="0.25" />
+                            <line key={`v-minor-${mm}`} x1="0" y1={y} x2="5" y2={y} stroke="#9CA3AF" strokeWidth="0.25" />
                           );
                         }
                       }
@@ -1259,15 +1255,15 @@ export default function CanvasWorkspace({
                 </div>
               </div>
             </div>
-            
-            {/* Ruler Corner */}
+
+            {/* Corner Square */}
             <div 
-              className="absolute top-0 left-0 bg-gray-200 border-r border-b border-gray-300 z-20 flex items-center justify-center"
+              className="absolute top-0 left-0 bg-gray-200 border-r border-b border-gray-300 flex items-center justify-center"
               style={{ width: '30px', height: '30px' }}
             >
-              <span className="text-xs text-gray-500 font-medium">mm</span>
+              <span className="text-xs text-gray-600 font-medium">mm</span>
             </div>
-          </>
+          </div>
         )}
         
         <div 
