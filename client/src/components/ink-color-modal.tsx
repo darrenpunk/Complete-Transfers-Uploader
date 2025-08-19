@@ -11,6 +11,7 @@ interface InkColorModalProps {
   onColorChange: (color: string) => void;
   trigger?: React.ReactNode;
   autoOpen?: boolean;
+  templateId?: string; // Optional template ID to filter colors
 }
 
 // Official Pantone ink colors from the chart
@@ -58,9 +59,21 @@ function getColorName(hex: string): string {
   return color ? `${color.otCode} ${color.name}` : hex;
 }
 
-export default function InkColorModal({ currentColor, onColorChange, trigger, autoOpen = false }: InkColorModalProps) {
+export default function InkColorModal({ currentColor, onColorChange, trigger, autoOpen = false, templateId }: InkColorModalProps) {
   const [open, setOpen] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
+
+  // Filter colors based on template type
+  const getAvailableColors = () => {
+    // For reflective templates, only show silver
+    if (templateId?.includes('reflective')) {
+      return inkColors.filter(color => color.name.toLowerCase().includes('silver'));
+    }
+    // For all other templates, show all colors
+    return inkColors;
+  };
+
+  const availableColors = getAvailableColors();
 
   // Auto-open modal when autoOpen is true and no color is selected (only once)
   useEffect(() => {
@@ -121,7 +134,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Official Pantone Ink Colors</h4>
             <div className="grid grid-cols-9 gap-3">
-              {inkColors.map((color) => (
+              {availableColors.map((color) => (
                 <TooltipProvider key={`${color.hex}-${color.otCode}`}>
                   <Tooltip>
                     <TooltipTrigger asChild>

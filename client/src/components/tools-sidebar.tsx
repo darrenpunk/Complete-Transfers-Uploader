@@ -740,6 +740,7 @@ export default function ToolsSidebar({
                       currentColor={project.inkColor || ""}
                       onColorChange={onInkColorChange}
                       autoOpen={!project.inkColor}
+                      templateId={project.templateSize}
                       trigger={
                         <Button 
                           variant={project.inkColor ? "outline" : "default"} 
