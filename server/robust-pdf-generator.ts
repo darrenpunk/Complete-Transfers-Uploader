@@ -433,12 +433,17 @@ grestore`;
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
       
-      // PRIORITY 1: Use preserved original PDF if available
+      // PRIORITY 1: Use preserved original PDF if available (BUT NOT for ink color overrides)
       if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
         const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
         console.log(`🎯 Checking for preserved original PDF: ${originalPdfPath}`);
         
-        if (fs.existsSync(originalPdfPath)) {
+        // Check if we have ink color overrides - if so, skip original PDF and use recolored SVG
+        const colorOverrides = element.colorOverrides as any;
+        if (colorOverrides && colorOverrides.inkColor) {
+          console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
+          // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
+        } else if (fs.existsSync(originalPdfPath)) {
           logoPdfPath = originalPdfPath;
           shouldCleanup = false; // Don't delete the preserved original
           console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
