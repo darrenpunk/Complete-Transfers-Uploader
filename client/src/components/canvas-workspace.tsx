@@ -1439,7 +1439,7 @@ export default function CanvasWorkspace({
               
               // Check if this is a Single Colour Transfer template requiring ink color recoloring
               const isSingleColourTemplate = template?.group === "Screen Printed Transfers" && 
-                template?.label?.includes("Single Colour");
+                (template?.label?.includes("Single Colour") || template?.label?.includes("Zero"));
               const shouldRecolorForInk = isSingleColourTemplate && !!project.inkColor && !!logo;
               
               // Debug: Log color overrides for this element

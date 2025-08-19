@@ -684,7 +684,7 @@ export default function ToolsSidebar({
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
-          selectedTemplate?.label?.includes("Single Colour");
+          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero"));
         return isSingleColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -763,7 +763,7 @@ export default function ToolsSidebar({
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
-          selectedTemplate?.label?.includes("Single Colour");
+          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero"));
         if (!isSingleColourTemplate) return null;
         
         return (

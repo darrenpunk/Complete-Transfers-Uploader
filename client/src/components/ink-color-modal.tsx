@@ -69,6 +69,16 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
     if (templateId?.includes('reflective')) {
       return inkColors.filter(color => color.name.toLowerCase().includes('silver'));
     }
+    
+    // For Zero templates, show specific Zero ink colors only
+    if (templateId?.includes('zero')) {
+      const zeroColors = [
+        'OT 91', 'OT 10', 'OT 20', 'OT 30', 'OT 33', 'OT 40', 'OT 42', 
+        'OT 51', 'OT 60', 'OT 61', 'OT 70', 'OT 120', 'OT 110'
+      ];
+      return inkColors.filter(color => zeroColors.includes(color.otCode));
+    }
+    
     // For all other templates, show all colors
     return inkColors;
   };

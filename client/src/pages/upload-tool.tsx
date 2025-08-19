@@ -292,7 +292,7 @@ export default function UploadTool() {
       const isFullColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
         !selectedTemplate.label?.includes("Single Colour") && !selectedTemplate.label?.includes("Zero");
       const isSingleColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
-        selectedTemplate.label?.includes("Single Colour");
+        (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero"));
       const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
         (selectedTemplate.label?.includes("Applique") || selectedTemplate.label?.includes("Woven"));
       
