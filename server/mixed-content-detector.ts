@@ -30,6 +30,7 @@ export class MixedContentDetector {
    * Analyze PDF content using Ghostscript or pdfimages
    */
   static async analyzePDF(pdfPath: string): Promise<ContentAnalysis> {
+    console.log('🔍 MixedContentDetector: Starting PDF analysis for:', pdfPath);
     const analysis: ContentAnalysis = {
       hasRasterContent: false,
       hasVectorContent: false,
@@ -183,6 +184,15 @@ export class MixedContentDetector {
     } else {
       analysis.recommendation = 'vector-workflow';
     }
+
+    console.log('🔍 MixedContentDetector: Final analysis results:', {
+      hasRasterContent: analysis.hasRasterContent,
+      hasVectorContent: analysis.hasVectorContent,
+      isMixedContent: analysis.isMixedContent,
+      recommendation: analysis.recommendation,
+      rasterCount: analysis.rasterImages.count,
+      vectorTypes: analysis.vectorElements.types
+    });
 
     return analysis;
   }
