@@ -94,14 +94,24 @@ export default function ImpositionModal({
       return;
     }
 
-    // Check if imposition will fit on canvas
+    // Check if imposition will fit on canvas only if NOT centering
     const totalWidth = (columns * selectedElement.width) + ((columns - 1) * horizontalSpacing);
     const totalHeight = (rows * selectedElement.height) + ((rows - 1) * verticalSpacing);
     
-    if (selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height) {
+    if (!centerOnCanvas && (selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height)) {
       toast({
         title: "Size Warning",
-        description: "Imposition may extend beyond canvas boundaries",
+        description: "Imposition may extend beyond canvas boundaries. Try enabling 'Center grid on canvas'.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If centering, check if grid itself is bigger than template
+    if (centerOnCanvas && (totalWidth > template.width || totalHeight > template.height)) {
+      toast({
+        title: "Size Warning",
+        description: "Grid is too large for this template. Reduce grid size or spacing.",
         variant: "destructive",
       });
       return;
@@ -209,9 +219,14 @@ export default function ImpositionModal({
               <div>Logo size: {Math.round(selectedElement.width)}×{Math.round(selectedElement.height)}mm</div>
             </div>
             
-            {(selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height) && (
+            {!centerOnCanvas && (selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height) && (
               <div className="text-sm text-red-600 font-medium">
-                ⚠️ Grid may extend beyond canvas
+                ⚠️ Grid may extend beyond canvas (try centering)
+              </div>
+            )}
+            {centerOnCanvas && (totalWidth > template.width || totalHeight > template.height) && (
+              <div className="text-sm text-red-600 font-medium">
+                ⚠️ Grid too large for template
               </div>
             )}
           </div>
