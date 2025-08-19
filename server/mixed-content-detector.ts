@@ -108,16 +108,38 @@ export class MixedContentDetector {
           console.log('🔍 Contains circles:', svgContent.includes('<circle'));
           console.log('🔍 Contains polygons:', svgContent.includes('<polygon'));
           
-          // Check for vector elements in SVG
-          if (svgContent.includes('<path') || svgContent.includes('<rect') || 
-              svgContent.includes('<circle') || svgContent.includes('<polygon')) {
+          // Check for vector elements in SVG (more comprehensive check)
+          const hasPath = svgContent.includes('<path');
+          const hasRect = svgContent.includes('<rect');
+          const hasCircle = svgContent.includes('<circle');
+          const hasPolygon = svgContent.includes('<polygon');
+          const hasLine = svgContent.includes('<line');
+          const hasEllipse = svgContent.includes('<ellipse');
+          const hasText = svgContent.includes('<text');
+          
+          // Check if it's just an image embedded in SVG (which would be raster)
+          const hasImage = svgContent.includes('<image');
+          const isOnlyImage = hasImage && !hasPath && !hasRect && !hasCircle && !hasPolygon && !hasLine && !hasEllipse;
+          
+          console.log('🔍 SVG element analysis:', {
+            hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, hasImage, isOnlyImage
+          });
+          
+          if (isOnlyImage) {
+            console.log('❌ SVG contains only embedded images - treating as raster content');
+            analysis.hasRasterContent = true;
+            analysis.rasterImages.count = 1;
+            analysis.rasterImages.formats.push('embedded');
+          } else if (hasPath || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse) {
             analysis.hasVectorContent = true;
             console.log('✅ Vector content detected in PDF via pdf2svg');
             
-            if (svgContent.includes('<path')) analysis.vectorElements.types.push('paths');
-            if (svgContent.includes('<rect')) analysis.vectorElements.types.push('rectangles');
-            if (svgContent.includes('<circle')) analysis.vectorElements.types.push('circles');
-            if (svgContent.includes('<text')) analysis.vectorElements.types.push('text');
+            if (hasPath) analysis.vectorElements.types.push('paths');
+            if (hasRect) analysis.vectorElements.types.push('rectangles');
+            if (hasCircle) analysis.vectorElements.types.push('circles');
+            if (hasLine) analysis.vectorElements.types.push('lines');
+            if (hasEllipse) analysis.vectorElements.types.push('ellipses');
+            if (hasText) analysis.vectorElements.types.push('text');
           } else {
             console.log('❌ No vector elements found in converted SVG');
           }
@@ -131,17 +153,22 @@ export class MixedContentDetector {
         console.log('pdf2svg analysis failed:', error);
       }
 
-      // If we couldn't detect content types, assume it's vector (safer for color preservation)
+      // If we couldn't detect content types, check if we found any raster images
+      // If we found raster images but no vector content, it's likely a raster-only PDF
       if (!analysis.hasRasterContent && !analysis.hasVectorContent) {
-        analysis.hasVectorContent = true;
-        analysis.vectorElements.types.push('unknown');
+        console.log('⚠️ No content type detected - this may be an empty or corrupted PDF');
+        // Default to raster workflow for safety since we can't determine content type
+        analysis.hasRasterContent = true;
+        analysis.rasterImages.count = 1;
+        analysis.rasterImages.formats.push('unknown');
       }
 
     } catch (error) {
       console.error('PDF analysis error:', error);
-      // Default to vector workflow if analysis fails
-      analysis.hasVectorContent = true;
-      analysis.vectorElements.types.push('unknown');
+      // Default to raster workflow if analysis fails - safer assumption
+      analysis.hasRasterContent = true;
+      analysis.rasterImages.count = 1;
+      analysis.rasterImages.formats.push('unknown');
     }
 
     // Determine if mixed content and recommendation
