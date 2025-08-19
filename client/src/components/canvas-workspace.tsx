@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, Ruler } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -131,6 +131,7 @@ export default function CanvasWorkspace({
  // Default to OFF (RGB preview)
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
+  const [showRulers, setShowRulers] = useState(true);
   
   // File upload state
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
@@ -1061,6 +1062,21 @@ export default function CanvasWorkspace({
                   <p>Toggle alignment guides for positioning elements</p>
                 </TooltipContent>
               </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showRulers ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowRulers(!showRulers)}
+                  >
+                    <Ruler className="w-4 h-4 mr-1" />
+                    Rulers
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle rulers for precise measurements in millimeters</p>
+                </TooltipContent>
+              </Tooltip>
               
               {/* Fit to Bounds Button - show when elements exist on canvas */}
               {canvasElements && canvasElements.length > 0 && (
@@ -1125,12 +1141,137 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
+        {/* Rulers */}
+        {showRulers && template && (
+          <>
+            {/* Horizontal Ruler */}
+            <div 
+              className="absolute top-0 left-0 right-0 bg-gray-100 border-b border-gray-300 z-10"
+              style={{ height: '30px' }}
+            >
+              <div 
+                className="relative h-full"
+                style={{
+                  marginLeft: '30px', // Account for vertical ruler
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Ruler ticks and labels */}
+                <svg 
+                  className="absolute inset-0 w-full h-full"
+                  style={{
+                    left: `${((window.innerWidth - canvasWidth * (zoom / 100)) / 2) - 30}px`,
+                  }}
+                >
+                  {(() => {
+                    const mmToPixelRatio = template.pixelWidth / template.width;
+                    const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                    const ticks = [];
+                    
+                    // Generate ticks every 5mm for major, 1mm for minor
+                    for (let mm = 0; mm <= template.width; mm += 1) {
+                      const x = mm * pixelsPerMm;
+                      const isMajor = mm % 10 === 0;
+                      const isMedium = mm % 5 === 0;
+                      
+                      if (isMajor) {
+                        ticks.push(
+                          <g key={`major-${mm}`}>
+                            <line x1={x} y1="15" x2={x} y2="30" stroke="#374151" strokeWidth="1" />
+                            <text x={x} y="12" textAnchor="middle" fontSize="10" fill="#374151">
+                              {mm}
+                            </text>
+                          </g>
+                        );
+                      } else if (isMedium) {
+                        ticks.push(
+                          <line key={`medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#6B7280" strokeWidth="0.5" />
+                        );
+                      } else {
+                        ticks.push(
+                          <line key={`minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="0.25" />
+                        );
+                      }
+                    }
+                    return ticks;
+                  })()}
+                </svg>
+              </div>
+            </div>
+            
+            {/* Vertical Ruler */}
+            <div 
+              className="absolute top-0 bottom-0 left-0 bg-gray-100 border-r border-gray-300 z-10"
+              style={{ width: '30px' }}
+            >
+              <div 
+                className="relative w-full h-full"
+                style={{
+                  marginTop: '30px', // Account for horizontal ruler
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Ruler ticks and labels */}
+                <svg 
+                  className="absolute inset-0 w-full h-full"
+                  style={{
+                    top: `${((window.innerHeight - canvasHeight * (zoom / 100)) / 2) - 100}px`, // Adjust for toolbar
+                  }}
+                >
+                  {(() => {
+                    const mmToPixelRatio = template.pixelHeight / template.height;
+                    const pixelsPerMm = mmToPixelRatio * (zoom / 100);
+                    const ticks = [];
+                    
+                    // Generate ticks every 5mm for major, 1mm for minor
+                    for (let mm = 0; mm <= template.height; mm += 1) {
+                      const y = mm * pixelsPerMm;
+                      const isMajor = mm % 10 === 0;
+                      const isMedium = mm % 5 === 0;
+                      
+                      if (isMajor) {
+                        ticks.push(
+                          <g key={`major-${mm}`}>
+                            <line x1="15" y1={y} x2="30" y2={y} stroke="#374151" strokeWidth="1" />
+                            <text x="12" y={y + 4} textAnchor="middle" fontSize="10" fill="#374151" transform={`rotate(-90, 12, ${y + 4})`}>
+                              {mm}
+                            </text>
+                          </g>
+                        );
+                      } else if (isMedium) {
+                        ticks.push(
+                          <line key={`medium-${mm}`} x1="20" y1={y} x2="30" y2={y} stroke="#6B7280" strokeWidth="0.5" />
+                        );
+                      } else {
+                        ticks.push(
+                          <line key={`minor-${mm}`} x1="25" y1={y} x2="30" y2={y} stroke="#9CA3AF" strokeWidth="0.25" />
+                        );
+                      }
+                    }
+                    return ticks;
+                  })()}
+                </svg>
+              </div>
+            </div>
+            
+            {/* Ruler Corner */}
+            <div 
+              className="absolute top-0 left-0 bg-gray-200 border-r border-b border-gray-300 z-20 flex items-center justify-center"
+              style={{ width: '30px', height: '30px' }}
+            >
+              <span className="text-xs text-gray-500 font-medium">mm</span>
+            </div>
+          </>
+        )}
+        
         <div 
           className="w-full h-full overflow-auto"
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            paddingTop: showRulers ? '30px' : '0',
+            paddingLeft: showRulers ? '30px' : '0'
           }}
         >
           <div 
