@@ -1058,7 +1058,7 @@ export function VectorizerModal({
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="vectorizer-modal w-[95vw] max-w-[95vw] h-[95vh] max-h-[95vh] overflow-hidden flex flex-col resize">
           <DialogHeader className="flex-shrink-0">
-            <CompleteTransferLogo size="sm" className="mb-2" />
+            <CompleteTransferLogo size="xs" className="mb-1" />
             <div className="flex items-center justify-between">
               <DialogTitle>AI Vectorization: {imageFile?.name || fileName}</DialogTitle>
               <div className="flex items-center gap-2">
