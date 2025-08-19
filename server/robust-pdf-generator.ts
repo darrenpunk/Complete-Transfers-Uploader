@@ -316,13 +316,21 @@ grestore`;
     // Create PDF document
     const pdfDoc = await PDFDocument.create();
     
-    // Create page 1 (transparent artwork layout)
-    const page1 = pdfDoc.addPage([842, 1191]);
-    console.log(`📄 Created page 1: Artwork layout (transparent)`);
+    // Calculate correct page dimensions from template size (mm to points conversion)
+    const MM_TO_POINTS = 2.834645669;
+    const pageWidth = data.templateSize.width * MM_TO_POINTS;
+    const pageHeight = data.templateSize.height * MM_TO_POINTS;
     
-    // Create page 2 (combined garment colors view)
-    const page2 = pdfDoc.addPage([842, 1191]);
-    console.log(`📄 Created page 2: Combined garment colors view`);
+    console.log(`📐 Template dimensions: ${data.templateSize.width}×${data.templateSize.height}mm`);
+    console.log(`📐 PDF page dimensions: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    
+    // Create page 1 (transparent artwork layout) with correct dimensions
+    const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+    console.log(`📄 Created page 1: Artwork layout (transparent) - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    
+    // Create page 2 (combined garment colors view) with correct dimensions
+    const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+    console.log(`📄 Created page 2: Combined garment colors view - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
     
     // Add project labels
     const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
@@ -355,11 +363,10 @@ grestore`;
         console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
         
         // Calculate logo bounds in points using PDF coordinate system
-        const MM_TO_POINTS = 2.834645669;
         const contentWidthPts = element.width * MM_TO_POINTS;
         const contentHeightPts = element.height * MM_TO_POINTS;
         const xPts = element.x * MM_TO_POINTS;
-        const yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system (bottom-left origin)
+        const yPts = pageHeight - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system (bottom-left origin)
         
         // Draw garment color background behind this logo
         const parsedColor = await this.parseGarmentColor(garmentColor);
