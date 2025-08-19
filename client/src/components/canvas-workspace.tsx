@@ -799,10 +799,13 @@ export default function CanvasWorkspace({
       return;
     }
     
-    // Calculate 3mm safety margins
-    const safetyMarginMm = 3;
+    // Calculate safety margins - DTF templates need more generous scaling
+    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+    const safetyMarginMm = 3; // Keep standard 3mm for all templates
     const safeWidth = template.width - (safetyMarginMm * 2);
     const safeHeight = template.height - (safetyMarginMm * 2);
+    
+    console.log(`🎯 ${isDTFTemplate ? 'DTF' : 'Standard'} template fit-to-bounds: ${safeWidth}×${safeHeight}mm usable area (${safetyMarginMm}mm margins)`);
     
     // Find the bounding box of all elements
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -822,8 +825,7 @@ export default function CanvasWorkspace({
     const scaleY = safeHeight / contentHeight;
     const scaleFactor = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
     
-    // DTF template-specific positioning adjustments
-    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+    // DTF template-specific positioning adjustments (already defined above)
     
     if (scaleFactor < 1) {
       console.log(`🎯 Scaling content by ${(scaleFactor * 100).toFixed(0)}% to fit within safety margins`);
