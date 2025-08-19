@@ -822,6 +822,9 @@ export default function CanvasWorkspace({
     const scaleY = safeHeight / contentHeight;
     const scaleFactor = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
     
+    // DTF template-specific positioning adjustments
+    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+    
     if (scaleFactor < 1) {
       console.log(`🎯 Scaling content by ${(scaleFactor * 100).toFixed(0)}% to fit within safety margins`);
       
@@ -832,8 +835,19 @@ export default function CanvasWorkspace({
         
         const newWidth = Math.round(element.width * scaleFactor);
         const newHeight = Math.round(element.height * scaleFactor);
-        const newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
-        const newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
+        
+        let newX, newY;
+        if (isDTFTemplate) {
+          // DTF: Center horizontally, position higher for better visibility
+          const scaledContentWidth = contentWidth * scaleFactor;
+          const scaledContentHeight = contentHeight * scaleFactor;
+          newX = Math.round((template.width - scaledContentWidth) / 2 + (relativeX * scaleFactor));
+          newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
+        } else {
+          // Standard templates: existing behavior
+          newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
+          newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
+        }
         
         updateElementDirect(element.id, {
           x: newX,
@@ -844,10 +858,19 @@ export default function CanvasWorkspace({
       });
     } else {
       // Just center the content if it already fits
-      const centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
-      const centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
+      let centerOffsetX, centerOffsetY;
       
-      console.log('🎯 Centering content within safety margins');
+      if (isDTFTemplate) {
+        // DTF: Center horizontally, position closer to top
+        centerOffsetX = (template.width - contentWidth) / 2;
+        centerOffsetY = safetyMarginMm + (safeHeight - contentHeight) / 4; // 25% from top of safe area
+        console.log('🎯 DTF template: Centering horizontally, positioning towards top');
+      } else {
+        // Standard templates: existing behavior
+        centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
+        centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
+        console.log('🎯 Standard template: Centering content within safety margins');
+      }
       
       canvasElements.forEach(element => {
         const relativeX = element.x - minX;

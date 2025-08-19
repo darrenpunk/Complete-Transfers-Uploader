@@ -465,6 +465,10 @@ export default function UploadTool() {
   const handleCenterAllElements = () => {
     if (!currentProject || !canvasElements || canvasElements.length === 0) return;
     
+    // Get current template dimensions
+    const template = templateSizes?.find(t => t.id === currentProject.templateSize);
+    if (!template) return;
+    
     // Calculate bounding box of all elements
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
@@ -480,18 +484,34 @@ export default function UploadTool() {
     
     // Calculate offset to center the group within safe zone
     const safetyMargin = 3; // 3mm safety margin
-    const templateWidth = 297; // A3 width in mm
-    const templateHeight = 420; // A3 height in mm
+    const templateWidth = template.width;
+    const templateHeight = template.height;
     
-    // Safe zone dimensions
-    const safeZoneX = safetyMargin;
-    const safeZoneY = safetyMargin;
-    const safeZoneWidth = templateWidth - (2 * safetyMargin);
-    const safeZoneHeight = templateHeight - (2 * safetyMargin);
+    // DTF template-specific positioning
+    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
     
-    // Center of safe zone
-    const targetCenterX = safeZoneX + (safeZoneWidth / 2);
-    const targetCenterY = safeZoneY + (safeZoneHeight / 2);
+    let targetCenterX, targetCenterY;
+    
+    if (isDTFTemplate) {
+      // DTF: Center horizontally, position closer to top for better visibility
+      const safeZoneWidth = templateWidth - (2 * safetyMargin);
+      const safeZoneHeight = templateHeight - (2 * safetyMargin);
+      
+      targetCenterX = safetyMargin + (safeZoneWidth / 2);
+      targetCenterY = safetyMargin + (safeZoneHeight / 4); // 25% from top of safe area
+      
+      console.log('🎯 DTF centering: horizontal center, positioned towards top');
+    } else {
+      // Standard templates: center both horizontally and vertically
+      const safeZoneWidth = templateWidth - (2 * safetyMargin);
+      const safeZoneHeight = templateHeight - (2 * safetyMargin);
+      
+      targetCenterX = safetyMargin + (safeZoneWidth / 2);
+      targetCenterY = safetyMargin + (safeZoneHeight / 2);
+      
+      console.log('🎯 Standard template centering: full center');
+    }
+    
     const currentCenterX = minX + groupWidth / 2;
     const currentCenterY = minY + groupHeight / 2;
     

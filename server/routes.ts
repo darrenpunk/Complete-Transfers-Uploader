@@ -1687,9 +1687,25 @@ export async function registerRoutes(app: express.Application) {
           throw new Error('Template size not found');
         }
 
-        // Calculate centered position
-        const centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
-        const centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
+        // Calculate centered position with DTF template-specific handling
+        let centerX, centerY;
+        
+        if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
+          // DTF template is landscape format (1000×550mm) - special handling
+          console.log(`🎯 DTF template detected: ${templateSize.width}×${templateSize.height}mm`);
+          
+          // For DTF, center horizontally but position closer to top for better visibility
+          centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
+          centerY = Math.max(3, Math.min(50, (templateSize.height - displayHeight) / 4)); // 25% from top or 3mm minimum
+          
+          console.log(`📍 DTF positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm`);
+        } else {
+          // Standard templates (A3, etc.) - existing behavior
+          centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
+          centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
+          
+          console.log(`📐 Standard template positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm`);
+        }
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
