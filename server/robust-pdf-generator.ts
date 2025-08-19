@@ -389,7 +389,7 @@ grestore`;
         });
         
         // Embed logo on both pages
-        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element);
+        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, pageHeight);
       }
     }
     
@@ -434,7 +434,8 @@ grestore`;
     page1: any, 
     page2: any, 
     logo: any, 
-    element: any
+    element: any,
+    pageHeight: number
   ): Promise<void> {
     try {
       let logoPdfPath: string | null = null;
@@ -534,7 +535,7 @@ grestore`;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
       const xPts = element.x * MM_TO_POINTS;
-      const yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system
+      const yPts = pageHeight - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
       
