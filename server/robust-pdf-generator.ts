@@ -318,29 +318,29 @@ grestore`;
         const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
         console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
         
-        // Calculate logo bounds in points
+        // Calculate logo bounds in points using PDF coordinate system
         const MM_TO_POINTS = 2.834645669;
+        const contentWidthPts = element.width * MM_TO_POINTS;
+        const contentHeightPts = element.height * MM_TO_POINTS;
         const xPts = element.x * MM_TO_POINTS;
-        const yPts = element.y * MM_TO_POINTS; 
-        const widthPts = element.width * MM_TO_POINTS;
-        const heightPts = element.height * MM_TO_POINTS;
+        const yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system (bottom-left origin)
         
         // Draw garment color background behind this logo
         const parsedColor = await this.parseGarmentColor(garmentColor);
         page2.drawRectangle({
           x: xPts,
           y: yPts,
-          width: widthPts,
-          height: heightPts,
+          width: contentWidthPts,
+          height: contentHeightPts,
           color: parsedColor
         });
         
-        // Add garment color label above the logo
-        const labelY = yPts + heightPts + 10; // Position label above the logo
+        // Add garment color label above the logo (in PDF coordinate system)
+        const labelY = yPts + contentHeightPts + 5; // Position label above the logo
         page2.drawText(garmentColor, {
           x: xPts + 5,
           y: labelY,
-          size: 8,
+          size: 10,
           color: rgb(0, 0, 0),
         });
         
