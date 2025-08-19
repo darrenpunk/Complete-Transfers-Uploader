@@ -25,6 +25,42 @@ interface ProjectData {
   comments?: string;
 }
 
+// Garment color mapping for labels
+const GARMENT_COLORS = [
+  { name: "White", hex: "#FFFFFF" },
+  { name: "Black", hex: "#171816" },
+  { name: "Natural Cotton", hex: "#D9D2AB" },
+  { name: "Pastel Yellow", hex: "#F3F590" },
+  { name: "Yellow", hex: "#F0F42A" },
+  { name: "Hi Viz", hex: "#D2E31D" },
+  { name: "Hi Viz Orange", hex: "#D98F17" },
+  { name: "HiViz Green", hex: "#388032" },
+  { name: "HIViz Pink", hex: "#BF0072" },
+  { name: "Sports Grey", hex: "#767878" },
+  { name: "Light Grey Marl", hex: "#919393" },
+  { name: "Ash Grey", hex: "#A6A9A2" },
+  { name: "Light Grey", hex: "#BCBFBB" },
+  { name: "Charcoal Grey", hex: "#353330" },
+  { name: "Pastel Blue", hex: "#B9DBEA" },
+  { name: "Sky Blue", hex: "#5998D4" },
+  { name: "Navy", hex: "#201C3A" },
+  { name: "Royal Blue", hex: "#221866" },
+  { name: "Pastel Green", hex: "#B5D55E" },
+  { name: "Lime Green", hex: "#90BF33" },
+  { name: "Kelly Green", hex: "#3C8A35" },
+  { name: "Pastel Pink", hex: "#E7BBD0" },
+  { name: "Light Pink", hex: "#D287A2" },
+  { name: "Fuchsia Pink", hex: "#C42469" },
+  { name: "Red", hex: "#C02300" },
+  { name: "Burgundy", hex: "#762009" },
+  { name: "Purple", hex: "#4C0A6A" }
+];
+
+function getGarmentColorName(hex: string): string {
+  const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+  return color ? color.name : hex; // Fallback to hex if name not found
+}
+
 export class RobustPDFGenerator {
   
   async generatePDF(data: ProjectData): Promise<Buffer> {
@@ -337,7 +373,8 @@ grestore`;
         
         // Add garment color label above the logo (in PDF coordinate system)
         const labelY = yPts + contentHeightPts + 5; // Position label above the logo
-        page2.drawText(garmentColor, {
+        const garmentName = getGarmentColorName(garmentColor);
+        page2.drawText(garmentName, {
           x: xPts + 5,
           y: labelY,
           size: 10,
