@@ -389,7 +389,7 @@ grestore`;
         });
         
         // Embed logo on both pages
-        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, pageHeight);
+        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, data.templateSize);
       }
     }
     
@@ -435,7 +435,7 @@ grestore`;
     page2: any, 
     logo: any, 
     element: any,
-    pageHeight: number
+    templateSize: any
   ): Promise<void> {
     try {
       let logoPdfPath: string | null = null;
@@ -535,7 +535,19 @@ grestore`;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
       const xPts = element.x * MM_TO_POINTS;
-      const yPts = pageHeight - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system
+      
+      // Template-specific coordinate calculation to avoid affecting other templates
+      let yPts: number;
+      if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
+        // For DTF large format template, use the correct template height
+        const templateHeightPts = templateSize.height * MM_TO_POINTS;
+        yPts = templateHeightPts - (element.y * MM_TO_POINTS) - contentHeightPts;
+        console.log(`🎯 DTF template positioning: height=${templateHeightPts}pt, y=${yPts.toFixed(1)}pt`);
+      } else {
+        // For all other templates, maintain existing behavior (A3 assumption for backward compatibility)
+        yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts;
+        console.log(`📐 Standard template positioning: A3 height=1191pt, y=${yPts.toFixed(1)}pt`);
+      }
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
       
