@@ -13,7 +13,8 @@ import { VectorizerModal } from "./vectorizer-modal";
 import { TextDialog } from "./text-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
-import InkColorModal from "@/components/ink-color-modal";
+import InkColorModal, { getColorName as getInkColorName } from "@/components/ink-color-modal";
+import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
@@ -720,14 +721,16 @@ export default function ToolsSidebar({
                     {/* Current Selection Display */}
                     {project.inkColor && (
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <TShirtSwatch
+                        <InkDropSwatch
                           color={project.inkColor}
-                          size="md"
-                          selected={false}
+                          colorName={getInkColorName(project.inkColor)}
+                          variant="drop1"
+                          isSelected={false}
+                          onClick={() => {}}
                         />
                         <div className="text-sm">
                           <div className="font-medium text-gray-900">Selected Ink</div>
-                          <div className="text-gray-600">{getColorName(project.inkColor)}</div>
+                          <div className="text-gray-600">{getInkColorName(project.inkColor)}</div>
                         </div>
                       </div>
                     )}
@@ -760,7 +763,9 @@ export default function ToolsSidebar({
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
           selectedTemplate?.label?.includes("Single Colour");
-        return isSingleColourTemplate ? (
+        if (!isSingleColourTemplate) return null;
+        
+        return (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
               <CollapsibleTrigger asChild>
@@ -824,7 +829,7 @@ export default function ToolsSidebar({
               </CollapsibleContent>
             </div>
           </Collapsible>
-        ) : null;
+        );
       })()}
 
       {/* Pre-flight Check */}
