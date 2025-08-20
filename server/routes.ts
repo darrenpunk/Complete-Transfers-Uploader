@@ -1577,6 +1577,7 @@ export async function registerRoutes(app: express.Application) {
         }
 
         // Create logo record with potentially updated filename (for tight-content SVGs)
+        const { nanoid } = await import('nanoid');
         const logoRecord = {
           id: nanoid(),
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
