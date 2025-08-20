@@ -20,6 +20,8 @@ import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { UniversalColorExtractor } from './universal-color-extractor';
 import { setupImpositionRoutes } from './imposition-routes';
+import { PDFBoundsExtractor } from './pdf-bounds-extractor';
+import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
 const execAsync = promisify(exec);
 
@@ -3090,6 +3092,148 @@ export async function registerRoutes(app: express.Application) {
     
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
+  });
+
+  // PDF/SVG Content Bounds Extraction API
+  
+  /**
+   * Extract precise vector content bounds from PDF file
+   * POST /api/extract-bounds/pdf
+   * Body: { filePath: string, pageNumber?: number, options?: BoundsExtractionOptions }
+   */
+  app.post('/api/extract-bounds/pdf', async (req, res) => {
+    try {
+      const { filePath, pageNumber = 1, options = {} } = req.body;
+      
+      if (!filePath) {
+        return res.status(400).json({ error: 'filePath is required' });
+      }
+
+      const fullPath = path.resolve(uploadDir, filePath);
+      if (!fs.existsSync(fullPath)) {
+        return res.status(404).json({ error: 'PDF file not found' });
+      }
+
+      console.log(`🔍 Extracting bounds from PDF: ${path.basename(filePath)} (page ${pageNumber})`);
+      
+      const extractor = new PDFBoundsExtractor();
+      const result = await extractor.extractContentBounds(fullPath, pageNumber, options);
+      
+      res.json(result);
+
+    } catch (error) {
+      console.error('❌ PDF bounds extraction error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        method: 'api-error',
+        contentFound: false
+      });
+    }
+  });
+
+  /**
+   * Extract precise vector content bounds from SVG file
+   * POST /api/extract-bounds/svg
+   * Body: { filePath: string, options?: object }
+   */
+  app.post('/api/extract-bounds/svg', async (req, res) => {
+    try {
+      const { filePath, options = {} } = req.body;
+      
+      if (!filePath) {
+        return res.status(400).json({ error: 'filePath is required' });
+      }
+
+      const fullPath = path.resolve(uploadDir, filePath);
+      if (!fs.existsSync(fullPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+
+      console.log(`🔍 Extracting bounds from SVG: ${path.basename(filePath)}`);
+      
+      const analyzer = new SVGBoundsAnalyzer();
+      const result = await analyzer.extractSVGBounds(fullPath);
+      
+      res.json(result);
+
+    } catch (error) {
+      console.error('❌ SVG bounds extraction error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        method: 'api-error',
+        hasContent: false
+      });
+    }
+  });
+
+  /**
+   * Extract bounds from logo by ID (auto-detects PDF/SVG)
+   * GET /api/logos/:logoId/bounds?includeStrokeExtents=true&padding=5
+   */
+  app.get('/api/logos/:logoId/bounds', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const { 
+        includeStrokeExtents = 'true', 
+        padding = '0',
+        returnCroppedSvg = 'false',
+        tolerance = '0.1'
+      } = req.query;
+
+      const logo = await storage.getLogo(logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+
+      const logoPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(logoPath)) {
+        return res.status(404).json({ error: 'Logo file not found' });
+      }
+
+      const options = {
+        includeStrokeExtents: includeStrokeExtents === 'true',
+        padding: parseFloat(padding as string),
+        returnCroppedSvg: returnCroppedSvg === 'true',
+        tolerance: parseFloat(tolerance as string)
+      };
+
+      console.log(`🔍 Extracting bounds for logo ${logoId}: ${logo.filename}`);
+
+      let result;
+      
+      if (logo.mimeType === 'image/svg+xml') {
+        const analyzer = new SVGBoundsAnalyzer();
+        result = await analyzer.extractSVGBounds(logoPath);
+      } else if (logo.mimeType === 'application/pdf') {
+        const extractor = new PDFBoundsExtractor();
+        result = await extractor.extractContentBounds(logoPath, 1, options);
+      } else {
+        return res.status(400).json({ 
+          error: 'Unsupported file type. Only PDF and SVG are supported.',
+          mimeType: logo.mimeType 
+        });
+      }
+
+      // Include logo metadata in response
+      res.json({
+        ...result,
+        logoId: logo.id,
+        filename: logo.filename,
+        mimeType: logo.mimeType,
+        originalName: logo.originalName
+      });
+
+    } catch (error) {
+      console.error('❌ Logo bounds extraction error:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        method: 'api-error',
+        contentFound: false
+      });
+    }
   });
 
   return app;

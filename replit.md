@@ -7,10 +7,10 @@ This full-stack web application streamlines logo uploads and layout creation on 
 - **Pantone Swatch Preservation**: Original Pantone color swatches from imported PDFs are not fully preserved in output PDFs due to complex color management requirements. CMYK approximations are generated instead.
 
 ## Recent Changes (August 2025)
-- **Original PDF Preservation**: Implemented comprehensive system to preserve original PDF files during upload and use them directly in final PDF output, maintaining exact Pantone/spot colors and artwork as designed.
-- **Enhanced Upload Logic**: Modified upload workflow to create preserved copies of original PDF files with proper references.
-- **PDF Generator Updates**: Updated both simplified and robust PDF generators to prioritize original PDF embedding over converted formats.
-- **Backward Compatibility**: Added fallback logic to support existing files while implementing new preservation system.
+- **Vector Bounds Extraction System**: Implemented comprehensive PDF and SVG vector content bounding box detection with multiple extraction methods (Ghostscript, DOM analysis, raster fallback) for precise artwork positioning and scaling.
+- **Bounds Extraction API**: Added REST endpoints `/api/extract-bounds/pdf`, `/api/extract-bounds/svg`, and `/api/logos/:id/bounds` with configurable options for stroke extents, padding, and tolerance.
+- **Testing Infrastructure**: Created interactive bounds extraction demo components and testing pages accessible at `/bounds-demo` and `/bounds-testing` routes.
+- **Algorithm Implementation**: Ghostscript primary method for PDF vector analysis, SVG DOM-based geometric calculation, high-DPI raster fallback for complex cases.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -40,6 +40,7 @@ Current focus: Core functionality over complex color management features.
 - **Mixed Content Detection**: `MixedContentDetector` for flagging mixed raster/vector content in PDFs/SVGs.
 - **File Upload System**: Local filesystem storage; multi-tier PDF conversion (Ghostscript primary, ImageMagick fallback) with color and vector preservation; automatic CMYK conversion for vector files; PNG thumbnail generation for large PDFs; visual indicators for CMYK/RGB.
 - **Canvas System**: Interactive workspace for logo manipulation with real-time property editing.
+- **Vector Bounds Extraction**: Precise vector content bounding box detection system using Ghostscript for PDFs and DOM analysis for SVGs, enabling accurate artwork scaling and positioning.
 - **AI Vectorization System**: Integrated API for raster file detection, offering photographic approval, AI vectorization, and professional services. Includes zoom, transparency, side-by-side comparison, color presets, background removal, advanced color detection, individual color deletion, color reduction, color locking, and credit protection.
 - **Onboarding Tutorial System**: Comprehensive 6-step interactive tutorial.
 - **Imposition Tool**: Grid replication system for logos with customizable rows, columns, and spacing.
