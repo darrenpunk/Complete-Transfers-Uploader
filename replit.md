@@ -11,6 +11,7 @@ This full-stack web application streamlines logo uploads and layout creation on 
 - **Bounds Extraction API**: Added REST endpoints `/api/extract-bounds/pdf`, `/api/extract-bounds/svg`, and `/api/logos/:id/bounds` with configurable options for stroke extents, padding, and tolerance.
 - **Testing Infrastructure**: Created interactive bounds extraction demo components and testing pages accessible at `/bounds-demo` and `/bounds-testing` routes.
 - **Algorithm Implementation**: Ghostscript primary method for PDF vector analysis, SVG DOM-based geometric calculation, high-DPI raster fallback for complex cases.
+- **SVG Tight Content Fix**: Resolved critical PDF generation issue by implementing viewBox-based content cropping instead of coordinate transforms, ensuring both canvas display and PDF output work properly without content corruption (August 20, 2025).
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
