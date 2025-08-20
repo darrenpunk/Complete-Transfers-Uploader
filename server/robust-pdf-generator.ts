@@ -452,9 +452,53 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } else if (fs.existsSync(originalPdfPath)) {
-          logoPdfPath = originalPdfPath;
-          shouldCleanup = false; // Don't delete the preserved original
-          console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+          // CRITICAL FIX: Check if this is from a tight content SVG that needs viewBox offset correction
+          const tightContentSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
+          if (fs.existsSync(tightContentSvgPath) && logo.filename.includes('_tight-content.svg')) {
+            console.log(`🔧 CRITICAL FIX: Tight content SVG detected - applying viewBox offset correction before using original PDF`);
+            
+            try {
+              const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
+              if (svgContent.includes('data-content-extracted="true"')) {
+                console.log(`🔧 Fixing viewBox offset for tight content - converting corrected SVG to PDF instead of using offset original PDF`);
+                const fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
+                
+                if (fixedSvgContent !== svgContent) {
+                  // Create temporary fixed SVG file and convert to PDF
+                  const fixedSvgPath = tightContentSvgPath.replace('.svg', '_viewbox_fixed.svg');
+                  fs.writeFileSync(fixedSvgPath, fixedSvgContent);
+                  
+                  // Convert the fixed SVG to PDF instead of using the offset original
+                  logoPdfPath = await this.convertSVGToPDF(fixedSvgPath);
+                  shouldCleanup = true; // Clean up the converted PDF
+                  
+                  // Clean up the temporary fixed SVG
+                  fs.unlinkSync(fixedSvgPath);
+                  
+                  console.log(`💾 Applied viewBox fix and converted to PDF - bypassing offset original PDF`);
+                } else {
+                  // No fix needed, use original
+                  logoPdfPath = originalPdfPath;
+                  shouldCleanup = false;
+                  console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+                }
+              } else {
+                // Not a tight content SVG, use original
+                logoPdfPath = originalPdfPath;
+                shouldCleanup = false;
+                console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+              }
+            } catch (error) {
+              console.warn(`⚠️ Error checking tight content SVG, falling back to original PDF:`, error);
+              logoPdfPath = originalPdfPath;
+              shouldCleanup = false;
+            }
+          } else {
+            // Regular case - use original PDF
+            logoPdfPath = originalPdfPath;
+            shouldCleanup = false;
+            console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
+          }
         } else {
           console.warn(`⚠️ Preserved original PDF not found: ${originalPdfPath}`);
         }
