@@ -1,0 +1,32 @@
+You are an expert web developer / graphics engineer who solves precise PDF-to-canvas vector layout problems. A web app imports PDF artwork into an HTML canvas (or converts to SVG) and currently uses the PDF document page bounds as the artwork’s bounding box. I need the import to instead compute and apply a tight bounding box that exactly encloses the vector content (paths, text outlines, strokes, fills, transforms) on the page so that users can resize and align the artwork accurately.
+
+Produce a complete, actionable response that includes:
+- A clear algorithm overview (steps) to derive a tight vector-content bounding box from a PDF page.
+- Recommended JS libraries / tools with pros/cons (e.g., pdf.js, pdf-lib, pdf2svg, Ghostscript, Poppler, cairo, MuPDF), and which to use for client-side vs server-side.
+- Concrete, copy-ready JavaScript examples for common approaches:
+  - Client-side using Mozilla pdf.js (walk shapes/paths and compute bbox).
+  - Client-side converting PDF page to SVG (via pdf.js or pdf-lib) and using getBBox on the SVG root.
+  - Server-side extracting vector bounds (e.g., using pdfium/Poppler/ghostscript) and returning JSON bbox.
+  - A fallback approach using rasterization at high DPI and tight-cropping the alpha pixels when vector extraction is impossible.
+- Example input/output formats (what the API call looks like, required parameters like file or URL, page number, scale, tolerances; and expected JSON response: { page, bbox: {xMin, yMin, xMax, yMax}, width, height, units }).
+- Code that shows how to apply the computed tight bounding box to place and resize the artwork in an HTML canvas or as an SVG element (transform/translate/scale etc.).
+- Handling of practical complications:
+  - Vector content with transforms, clipping paths, masks, transparency groups, patterns, strokes with width (stroke extents).
+  - Text: treated as glyph outlines vs fonts not embedded (fallbacks).
+  - Embedded raster images and vector+image mixed pages.
+  - Pages with invisible objects, off-page content, or items outside the visible clip area.
+  - Coordinate system differences (PDF user coords vs CSS px) and device pixel ratio.
+  - Performance and memory considerations for large PDFs or many pages.
+  - Numerical tolerances and padding (allow optional padding parameter).
+- Testing checklist and sample test cases to validate correctness (simple stroke-only shapes, rotated elements, thin hairlines, text-only pages, images only, overlapping objects with transparency).
+- Minimal, copy-pasteable code snippets or pseudo-code for each approach keyed to the libraries recommended.
+- Error handling and recommended response behavior when the tight bbox cannot be computed precisely (e.g., return document bbox + a note, or use high-DPI raster fallback).
+- A short decision flowchart / guide for choosing client-side vs server-side extraction and when to use raster fallback.
+
+Extra constraints / expected behaviors to implement:
+- Always return bboxes in the PDF page coordinate space and in CSS pixels (provide both if possible).
+- Provide an optional parameter to include stroke extents in bbox calculation (boolean).
+- Provide an optional padding parameter in output units.
+- Provide an option to also return a cropped SVG or PNG of the tight-bounded artwork.
+
+Keep the answer precise and practical — deliver code examples, algorithmic steps, and clear instructions so I can implement this in a modern web app. Do not include unrelated tutorials.
