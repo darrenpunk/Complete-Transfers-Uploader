@@ -452,53 +452,10 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } else if (fs.existsSync(originalPdfPath)) {
-          // CRITICAL FIX: Check if this is from a tight content SVG that needs viewBox offset correction
-          const tightContentSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
-          if (fs.existsSync(tightContentSvgPath) && logo.filename.includes('_tight-content.svg')) {
-            console.log(`🔧 CRITICAL FIX: Tight content SVG detected - applying viewBox offset correction before using original PDF`);
-            
-            try {
-              const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
-              if (svgContent.includes('data-content-extracted="true"')) {
-                console.log(`🔧 Fixing viewBox offset for tight content - converting corrected SVG to PDF instead of using offset original PDF`);
-                const fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
-                
-                if (fixedSvgContent !== svgContent) {
-                  // Create temporary fixed SVG file and convert to PDF
-                  const fixedSvgPath = tightContentSvgPath.replace('.svg', '_viewbox_fixed.svg');
-                  fs.writeFileSync(fixedSvgPath, fixedSvgContent);
-                  
-                  // Convert the fixed SVG to PDF instead of using the offset original
-                  logoPdfPath = await this.convertSVGToPDF(fixedSvgPath);
-                  shouldCleanup = true; // Clean up the converted PDF
-                  
-                  // Clean up the temporary fixed SVG
-                  fs.unlinkSync(fixedSvgPath);
-                  
-                  console.log(`💾 Applied viewBox fix and converted to PDF - bypassing offset original PDF`);
-                } else {
-                  // No fix needed, use original
-                  logoPdfPath = originalPdfPath;
-                  shouldCleanup = false;
-                  console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
-                }
-              } else {
-                // Not a tight content SVG, use original
-                logoPdfPath = originalPdfPath;
-                shouldCleanup = false;
-                console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
-              }
-            } catch (error) {
-              console.warn(`⚠️ Error checking tight content SVG, falling back to original PDF:`, error);
-              logoPdfPath = originalPdfPath;
-              shouldCleanup = false;
-            }
-          } else {
-            // Regular case - use original PDF
-            logoPdfPath = originalPdfPath;
-            shouldCleanup = false;
-            console.log(`✅ Using preserved original PDF: ${logo.originalFilename}`);
-          }
+          // ALWAYS use the preserved original PDF to maintain EXACT color data
+          logoPdfPath = originalPdfPath;
+          shouldCleanup = false;
+          console.log(`✅ Using preserved original PDF for EXACT color preservation: ${logo.originalFilename}`);
         } else {
           console.warn(`⚠️ Preserved original PDF not found: ${originalPdfPath}`);
         }
@@ -572,13 +529,38 @@ grestore`;
       // Calculate exact position using user's actual element dimensions
       const MM_TO_POINTS = 2.834645669;
       
+      // CRITICAL FIX: Check if this is from a tight content SVG with viewBox offset
+      let viewBoxOffsetX = 0;
+      let viewBoxOffsetY = 0;
+      
+      if (logo.filename && logo.filename.includes('_tight-content.svg')) {
+        const tightContentSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
+        if (fs.existsSync(tightContentSvgPath)) {
+          try {
+            const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
+            const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+            if (viewBoxMatch) {
+              const [offsetX, offsetY] = viewBoxMatch[1].split(' ').map(Number);
+              if (offsetX !== 0 || offsetY !== 0) {
+                // Convert SVG coordinates to PDF points
+                viewBoxOffsetX = -offsetX * MM_TO_POINTS / 3.7795; // SVG to PDF coordinate conversion
+                viewBoxOffsetY = -offsetY * MM_TO_POINTS / 3.7795;
+                console.log(`🔧 CRITICAL POSITIONING FIX: Applying viewBox offset compensation: X=${viewBoxOffsetX.toFixed(2)}pt, Y=${viewBoxOffsetY.toFixed(2)}pt`);
+              }
+            }
+          } catch (error) {
+            console.warn(`⚠️ Could not read viewBox offset from tight content SVG:`, error);
+          }
+        }
+      }
+      
       // Use the actual element dimensions from canvas (preserve aspect ratio)
       const contentWidthMM = element.width;
       const contentHeightMM = element.height;
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
-      const xPts = element.x * MM_TO_POINTS;
+      const xPts = element.x * MM_TO_POINTS + viewBoxOffsetX;
       
       // Template-specific coordinate calculation to avoid affecting other templates
       let yPts: number;
@@ -589,7 +571,7 @@ grestore`;
         // PDF coordinate system: Y=0 is at bottom, increasing upward
         
         // For DTF: Use direct Y mapping from canvas to PDF bottom-up coordinates
-        yPts = element.y * MM_TO_POINTS;
+        yPts = element.y * MM_TO_POINTS + viewBoxOffsetY;
         
         console.log(`🎯 DTF template: elementY=${element.y}mm, elementX=${element.x}mm, contentSize=${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm, pdfY=${yPts.toFixed(1)}pt`);
         
@@ -597,7 +579,7 @@ grestore`;
         yPts = Math.max(0, yPts);
       } else {
         // For all other templates, maintain existing behavior (A3 assumption for backward compatibility)
-        yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts;
+        yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts + viewBoxOffsetY;
         console.log(`📐 Standard template positioning: A3 height=1191pt, y=${yPts.toFixed(1)}pt`);
       }
       
