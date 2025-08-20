@@ -1446,9 +1446,13 @@ export class EnhancedCMYKGenerator {
         console.error(`Enhanced CMYK: Storage.getLogo exists: ${typeof storage.getLogo}`);
       }
       
-      // Save the CMYK-preserved SVG content
+      // Fix viewBox offset issue for tight content SVGs before saving
+      // This ensures PDF generation starts content at 0,0 instead of offset coordinates
+      const svgOffsetFixed = this.fixSVGViewBoxOffset(svgContentForPDF);
+      
+      // Save the CMYK-preserved SVG content with fixed viewBox
       const preservedSvgPath = svgPath.replace('.svg', '_cmyk_preserved.svg');
-      fs.writeFileSync(preservedSvgPath, svgContentForPDF);
+      fs.writeFileSync(preservedSvgPath, svgOffsetFixed);
       
       // Check if SVG has embedded images
       const svgContent = fs.readFileSync(preservedSvgPath, 'utf8');
@@ -1716,6 +1720,65 @@ export class EnhancedCMYKGenerator {
       if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
       console.error('Enhanced CMYK: ICC profile embedding failed:', error);
       return false;
+    }
+  }
+
+  /**
+   * Fix viewBox offset issue in tight content SVGs
+   * Converts viewBox like "58.90625 22.570312 708.6875 228.367188" to "0 0 708.6875 228.367188"
+   * and adjusts all path coordinates accordingly
+   */
+  private fixSVGViewBoxOffset(svgContent: string): string {
+    try {
+      console.log(`Enhanced CMYK: Fixing SVG viewBox offset for PDF generation`);
+      
+      // Extract viewBox values
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      if (!viewBoxMatch) {
+        console.log(`Enhanced CMYK: No viewBox found, returning SVG as-is`);
+        return svgContent;
+      }
+      
+      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+      if (viewBoxValues.length !== 4) {
+        console.log(`Enhanced CMYK: Invalid viewBox format, returning SVG as-is`);
+        return svgContent;
+      }
+      
+      const [x, y, width, height] = viewBoxValues;
+      
+      // If already starts at 0,0, no fix needed
+      if (x === 0 && y === 0) {
+        console.log(`Enhanced CMYK: ViewBox already starts at 0,0, no fix needed`);
+        return svgContent;
+      }
+      
+      console.log(`Enhanced CMYK: Fixing viewBox offset from ${x},${y} to 0,0 (size: ${width}x${height})`);
+      
+      // Create new viewBox starting at 0,0
+      const newViewBox = `0 0 ${width} ${height}`;
+      
+      // Replace the viewBox
+      let fixedSvg = svgContent.replace(/viewBox="[^"]+"/, `viewBox="${newViewBox}"`);
+      
+      // Shift all path coordinates by the offset amounts
+      // This moves the content to start at 0,0 in the new coordinate system
+      fixedSvg = fixedSvg.replace(/d="([^"]+)"/g, (match, pathData) => {
+        // Parse and adjust path coordinates
+        const adjustedPath = pathData.replace(/([ML])\s*([\d.-]+)\s+([\d.-]+)/g, (coord, command, xVal, yVal) => {
+          const adjustedX = parseFloat(xVal) - x;
+          const adjustedY = parseFloat(yVal) - y;
+          return `${command} ${adjustedX} ${adjustedY}`;
+        });
+        return `d="${adjustedPath}"`;
+      });
+      
+      console.log(`Enhanced CMYK: Successfully fixed SVG viewBox offset - content now starts at 0,0`);
+      return fixedSvg;
+      
+    } catch (error) {
+      console.error(`Enhanced CMYK: Error fixing SVG viewBox offset:`, error);
+      return svgContent; // Return original if fix fails
     }
   }
 }
