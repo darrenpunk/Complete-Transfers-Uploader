@@ -1657,8 +1657,8 @@ export async function registerRoutes(app: express.Application) {
               if (boundsResult.success && boundsResult.contentBounds) {
                 console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
                 
-                // Convert pixel bounds to millimeters using standard web DPI
-                const pxToMm = 25.4 / 96; // 96 DPI standard
+                // Convert pixel bounds to millimeters using PDF standard DPI (72 DPI)
+                const pxToMm = 1 / 2.834645669; // 72 DPI standard used throughout codebase
                 const contentWidth = boundsResult.contentBounds.width * pxToMm;
                 const contentHeight = boundsResult.contentBounds.height * pxToMm;
                 
