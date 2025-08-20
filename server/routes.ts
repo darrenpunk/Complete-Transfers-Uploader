@@ -1576,21 +1576,6 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        // Create logo record with potentially updated filename (for tight-content SVGs)
-        const { nanoid } = await import('nanoid');
-        const logoRecord = {
-          id: nanoid(),
-          filename: finalFilename, // This will be the tight-content version if bounds extraction worked
-          originalName: file.originalname,
-          isPdfWithRasterOnly: !!((file as any).extractedRasterPath),
-          isCMYKPreserved: (file as any).isCMYKPreserved || false,
-          mimeType: finalMimeType,
-          ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
-          ...(analysisData && { svgColors: analysisData })
-        };
-
-        logos.push(logoRecord);
-
         // Create canvas element with proper sizing
         let displayWidth = 283.5; // User override: exact target dimensions
         let displayHeight = 285.2; // User override: exact target dimensions
@@ -1747,6 +1732,23 @@ export async function registerRoutes(app: express.Application) {
           console.error('Failed to calculate content bounds:', error);
         }
 
+        // Create logo record AFTER bounds extraction and finalFilename update
+        const { nanoid } = await import('nanoid');
+        const logoRecord = {
+          id: nanoid(),
+          filename: finalFilename, // This will be the tight-content version if bounds extraction worked
+          originalName: file.originalname,
+          isPdfWithRasterOnly: !!((file as any).extractedRasterPath),
+          isCMYKPreserved: (file as any).isCMYKPreserved || false,
+          mimeType: finalMimeType,
+          ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
+          ...(analysisData && { svgColors: analysisData })
+        };
+
+        console.log(`💾 FINAL LOGO RECORD: filename=${finalFilename}, url=${finalUrl}`);
+        const createdLogo = await storage.createLogo(logoRecord);
+        logos.push(createdLogo);
+
         // Get template size for centering
         const templateSize = await storage.getTemplateSize(project.templateSize);
         if (!templateSize) {
@@ -1791,7 +1793,7 @@ export async function registerRoutes(app: express.Application) {
 
         const canvasElementData = {
           projectId: projectId,
-          logoId: logo.id,
+          logoId: createdLogo.id,
           x: centerX,
           y: centerY,
           width: displayWidth,
