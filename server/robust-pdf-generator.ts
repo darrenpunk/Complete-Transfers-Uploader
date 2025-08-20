@@ -539,20 +539,18 @@ grestore`;
       // Template-specific coordinate calculation to avoid affecting other templates
       let yPts: number;
       if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
-        // For DTF large format template - use actual element position for PDF generation
-        // If element.y is negative, it means it's positioned above visible area - handle appropriately
-        if (element.y < 0) {
-          // Element is positioned above canvas - place it at the top of PDF
-          yPts = templateSize.height * MM_TO_POINTS - contentHeightPts;
-          console.log(`🎯 DTF template (negative Y): elementY=${element.y}mm treated as top position, pdfY=${yPts.toFixed(1)}pt`);
-        } else {
-          // Normal positioning - map canvas coordinates to PDF coordinates
-          yPts = (templateSize.height - element.y - contentHeightMM) * MM_TO_POINTS;
-          console.log(`🎯 DTF template (normal): templateHeight=${templateSize.height}mm, elementY=${element.y}mm, contentHeight=${contentHeightMM}mm, pdfY=${yPts.toFixed(1)}pt`);
-        }
+        // For DTF large format template - direct coordinate mapping
+        // DTF canvas Y coordinate maps directly to PDF Y coordinate
+        // Canvas coordinate system: Y=0 is at top, increasing downward
+        // PDF coordinate system: Y=0 is at bottom, increasing upward
         
-        // Ensure PDF Y coordinate is within valid bounds
-        yPts = Math.max(0, Math.min(yPts, templateSize.height * MM_TO_POINTS));
+        // For DTF: Use direct Y mapping from canvas to PDF bottom-up coordinates
+        yPts = element.y * MM_TO_POINTS;
+        
+        console.log(`🎯 DTF template: elementY=${element.y}mm, elementX=${element.x}mm, contentSize=${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm, pdfY=${yPts.toFixed(1)}pt`);
+        
+        // Ensure PDF Y coordinate is within valid bounds (no negative positioning)
+        yPts = Math.max(0, yPts);
       } else {
         // For all other templates, maintain existing behavior (A3 assumption for backward compatibility)
         yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts;
