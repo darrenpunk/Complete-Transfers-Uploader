@@ -1576,7 +1576,19 @@ export async function registerRoutes(app: express.Application) {
           }
         }
 
-        logos.push(logo);
+        // Create logo record with potentially updated filename (for tight-content SVGs)
+        const logoRecord = {
+          id: nanoid(),
+          filename: finalFilename, // This will be the tight-content version if bounds extraction worked
+          originalName: file.originalname,
+          isPdfWithRasterOnly: !!((file as any).extractedRasterPath),
+          isCMYKPreserved: (file as any).isCMYKPreserved || false,
+          mimeType: finalMimeType,
+          ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
+          ...(analysisData && { svgColors: analysisData })
+        };
+
+        logos.push(logoRecord);
 
         // Create canvas element with proper sizing
         let displayWidth = 283.5; // User override: exact target dimensions
@@ -1657,15 +1669,50 @@ export async function registerRoutes(app: express.Application) {
               if (boundsResult.success && boundsResult.contentBounds) {
                 console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
                 
-                // Convert pixel bounds to millimeters using PDF standard DPI (72 DPI)
+                // CREATE TIGHT CONTENT-ONLY SVG: Extract content and create new SVG with tight bounds
+                console.log(`🔄 CREATING TIGHT CONTENT SVG: Extracting content from viewBox and placing in tight bounds`);
+                
+                const svgContent = fs.readFileSync(svgPath, 'utf8');
+                const contentBounds = boundsResult.contentBounds;
+                
+                // Extract all content elements (paths, circles, rects, etc.)
+                const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
+                if (contentMatch) {
+                  const innerContent = contentMatch[1];
+                  
+                  // Create new SVG with tight bounds around content only
+                  const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
+                    width="${contentBounds.width}" 
+                    height="${contentBounds.height}"
+                    data-content-extracted="true"
+                    data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                    <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
+                      ${innerContent}
+                    </g>
+                  </svg>`;
+                  
+                  // Save the tight-content SVG
+                  const tightSvgPath = svgPath.replace('.svg', '_tight-content.svg');
+                  fs.writeFileSync(tightSvgPath, tightSvg);
+                  console.log(`💾 SAVED TIGHT CONTENT SVG: ${tightSvgPath}`);
+                  
+                  // Update the file to use the tight content version
+                  finalFilename = path.basename(tightSvgPath);
+                  finalUrl = `/uploads/${finalFilename}`;
+                  
+                  console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
+                }
+                
+                // Convert content bounds to millimeters using PDF standard DPI (72 DPI)
                 const pxToMm = 1 / 2.834645669; // 72 DPI standard used throughout codebase
-                const contentWidth = boundsResult.contentBounds.width * pxToMm;
-                const contentHeight = boundsResult.contentBounds.height * pxToMm;
+                const contentWidth = contentBounds.width * pxToMm;
+                const contentHeight = contentBounds.height * pxToMm;
                 
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;
                 
-                console.log(`🎯 USING PRECISE CONTENT BOUNDS: ${contentWidth.toFixed(2)}×${contentHeight.toFixed(2)}mm (converted from ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px)`);
+                console.log(`🎯 USING TIGHT CONTENT DIMENSIONS: ${contentWidth.toFixed(2)}×${contentHeight.toFixed(2)}mm (content at 100% scale within tight ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px bounds)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
