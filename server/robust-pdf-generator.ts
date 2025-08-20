@@ -594,24 +594,48 @@ grestore`;
       
       // Check if this is a CMYK-preserved SVG
       let isCMYKPreservedSVG = false;
+      let svgContent: string;
       try {
-        const svgContent = fs.readFileSync(svgPath, 'utf8');
+        svgContent = fs.readFileSync(svgPath, 'utf8');
         isCMYKPreservedSVG = svgContent.includes('data-vectorized-cmyk="true"') || svgContent.includes('CMYK_PDF_CONVERTED');
       } catch (e) {
         // Continue with default conversion
+        svgContent = '';
+      }
+      
+      // Fix viewBox offset issue for tight content SVGs before PDF conversion
+      // This ensures the PDF content starts at 0,0 instead of offset coordinates
+      let processedSvgPath = svgPath;
+      if (svgContent.includes('data-content-extracted="true"')) {
+        console.log(`🔧 Fixing viewBox offset for tight content SVG before PDF conversion`);
+        const fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
+        
+        if (fixedSvgContent !== svgContent) {
+          // Create temporary fixed SVG file
+          const fixedSvgPath = svgPath.replace('.svg', '_viewbox_fixed.svg');
+          fs.writeFileSync(fixedSvgPath, fixedSvgContent);
+          processedSvgPath = fixedSvgPath;
+          console.log(`💾 Saved viewBox-fixed SVG: ${path.basename(fixedSvgPath)}`);
+        }
       }
       
       // Use rsvg-convert for better vector preservation
-      const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${svgPath}"`;
+      const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${processedSvgPath}"`;
       try {
         await execAsync(rsvgCmd);
         console.log(`✅ rsvg-convert successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
       } catch (rsvgError) {
         console.warn('rsvg-convert failed, falling back to Inkscape');
         // Fallback to Inkscape with better settings for color preservation
-        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${pdfPath}" "${svgPath}"`;
+        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${pdfPath}" "${processedSvgPath}"`;
         await execAsync(inkscapeCmd);
         console.log(`✅ Inkscape fallback successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
+      }
+      
+      // Clean up temporary fixed SVG file if created
+      if (processedSvgPath !== svgPath && fs.existsSync(processedSvgPath)) {
+        fs.unlinkSync(processedSvgPath);
+        console.log(`🧹 Cleaned up temporary viewBox-fixed SVG`);
       }
       
       if (fs.existsSync(pdfPath)) {
@@ -755,5 +779,64 @@ grestore`;
         console.warn(`⚠️ Failed to cleanup ${file}:`, error);
       }
     });
+  }
+
+  /**
+   * Fix viewBox offset issue in tight content SVGs
+   * Converts viewBox like "58.90625 22.570312 708.6875 228.367188" to "0 0 708.6875 228.367188"
+   * and adjusts all path coordinates accordingly
+   */
+  private fixSVGViewBoxOffset(svgContent: string): string {
+    try {
+      console.log(`🔧 RobustPDF: Fixing SVG viewBox offset for PDF generation`);
+      
+      // Extract viewBox values
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      if (!viewBoxMatch) {
+        console.log(`🔧 RobustPDF: No viewBox found, returning SVG as-is`);
+        return svgContent;
+      }
+      
+      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+      if (viewBoxValues.length !== 4) {
+        console.log(`🔧 RobustPDF: Invalid viewBox format, returning SVG as-is`);
+        return svgContent;
+      }
+      
+      const [x, y, width, height] = viewBoxValues;
+      
+      // If already starts at 0,0, no fix needed
+      if (x === 0 && y === 0) {
+        console.log(`🔧 RobustPDF: ViewBox already starts at 0,0, no fix needed`);
+        return svgContent;
+      }
+      
+      console.log(`🔧 RobustPDF: Fixing viewBox offset from ${x},${y} to 0,0 (size: ${width}x${height})`);
+      
+      // Create new viewBox starting at 0,0
+      const newViewBox = `0 0 ${width} ${height}`;
+      
+      // Replace the viewBox
+      let fixedSvg = svgContent.replace(/viewBox="[^"]+"/, `viewBox="${newViewBox}"`);
+      
+      // Shift all path coordinates by the offset amounts
+      // This moves the content to start at 0,0 in the new coordinate system
+      fixedSvg = fixedSvg.replace(/d="([^"]+)"/g, (match: string, pathData: string) => {
+        // Parse and adjust path coordinates
+        const adjustedPath = pathData.replace(/([ML])\s*([\d.-]+)\s+([\d.-]+)/g, (coord: string, command: string, xVal: string, yVal: string) => {
+          const adjustedX = parseFloat(xVal) - x;
+          const adjustedY = parseFloat(yVal) - y;
+          return `${command} ${adjustedX} ${adjustedY}`;
+        });
+        return `d="${adjustedPath}"`;
+      });
+      
+      console.log(`🔧 RobustPDF: Successfully fixed SVG viewBox offset - content now starts at 0,0`);
+      return fixedSvg;
+      
+    } catch (error) {
+      console.error(`🔧 RobustPDF: Error fixing SVG viewBox offset:`, error);
+      return svgContent; // Return original if fix fails
+    }
   }
 }
