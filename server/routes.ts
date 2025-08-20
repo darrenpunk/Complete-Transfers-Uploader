@@ -1645,34 +1645,50 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // DISABLED: Skip all content bounds calculation and viewBox modification
-            // User wants to preserve original SVG viewBox dimensions without any cropping or scaling
-            console.log(`📐 DISABLED: Skipping content bounds calculation - preserving original viewBox`);
+            // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
+            console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
-            // ROBUST DIMENSION SYSTEM: Use centralized dimension calculation (no content bounds)
-            const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-            const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
-            
-            // Validate accuracy and log any issues
-            validateDimensionAccuracy(dimensionResult);
-            
-            // Check if this is AI-vectorized content that needs auto-fitting
-            const isAIVectorized = updatedSvgContent2.includes('data-ai-vectorized="true"') || 
-                                   updatedSvgContent2.includes('vector-effect="non-scaling-stroke"');
-            
-            // Use the calculated mm dimensions directly
-            displayWidth = dimensionResult.widthMm;
-            displayHeight = dimensionResult.heightMm;
-            
-            // For AI-vectorized content, use actual SVG viewBox dimensions without arbitrary scaling
-            if (isAIVectorized) {
-              console.log(`✅ AI-VECTORIZED: Using actual SVG dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm for proper canvas display`);
-              // No arbitrary scaling - let the canvas handle display scaling appropriately based on actual vector bounds
+            try {
+              // Extract precise vector content bounds using the new bounds extraction system
+              const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+              const svgAnalyzer = new SVGBoundsAnalyzer();
+              const boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
+              
+              if (boundsResult.success && boundsResult.contentBounds) {
+                console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
+                
+                // Convert pixel bounds to millimeters using standard web DPI
+                const pxToMm = 25.4 / 96; // 96 DPI standard
+                const contentWidth = boundsResult.contentBounds.width * pxToMm;
+                const contentHeight = boundsResult.contentBounds.height * pxToMm;
+                
+                displayWidth = contentWidth;
+                displayHeight = contentHeight;
+                
+                console.log(`🎯 USING PRECISE CONTENT BOUNDS: ${contentWidth.toFixed(2)}×${contentHeight.toFixed(2)}mm (converted from ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px)`);
+              } else {
+                console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
+                
+                // Fallback to the original robust dimension system
+                const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+                const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+                displayWidth = dimensionResult.widthMm;
+                displayHeight = dimensionResult.heightMm;
+                
+                console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
+              }
+              
+            } catch (boundsError) {
+              console.error('❌ Bounds extraction error:', boundsError);
+              // Fallback to the original robust dimension system
+              const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+              const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+              displayWidth = dimensionResult.widthMm;
+              displayHeight = dimensionResult.heightMm;
+              
+              console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
             }
-            
-            console.log(`🎯 ROBUST DIMENSIONS: ${dimensionResult.widthPx}×${dimensionResult.heightPx}px → ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.accuracy} accuracy, ${dimensionResult.source})`);
-            
-            // Use SVG at 100% - no scaling or cropping
+
           } else {
             // Fallback: for large documents with no detectable content bounds
             console.log(`Large format document with no detectable content bounds, using conservative sizing`);
