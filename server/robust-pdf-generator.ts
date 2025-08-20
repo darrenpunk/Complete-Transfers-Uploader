@@ -606,6 +606,11 @@ grestore`;
       // Fix viewBox offset issue for tight content SVGs before PDF conversion
       // This ensures the PDF content starts at 0,0 instead of offset coordinates
       let processedSvgPath = svgPath;
+      console.log(`🔍 DEBUG: Checking SVG content for tight content marker...`);
+      console.log(`🔍 DEBUG: SVG content length: ${svgContent.length}`);
+      console.log(`🔍 DEBUG: Contains data-content-extracted: ${svgContent.includes('data-content-extracted="true"')}`);
+      console.log(`🔍 DEBUG: SVG path: ${svgPath}`);
+      
       if (svgContent.includes('data-content-extracted="true"')) {
         console.log(`🔧 Fixing viewBox offset for tight content SVG before PDF conversion`);
         const fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
@@ -616,7 +621,11 @@ grestore`;
           fs.writeFileSync(fixedSvgPath, fixedSvgContent);
           processedSvgPath = fixedSvgPath;
           console.log(`💾 Saved viewBox-fixed SVG: ${path.basename(fixedSvgPath)}`);
+        } else {
+          console.log(`⚠️ No changes needed for SVG viewBox`);
         }
+      } else {
+        console.log(`ℹ️ Not a tight content SVG, using original file`);
       }
       
       // Use rsvg-convert for better vector preservation
