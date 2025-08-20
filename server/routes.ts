@@ -1667,15 +1667,44 @@ export async function registerRoutes(app: express.Application) {
                   const innerContent = contentMatch[1];
                   
                   // Create new SVG with tight bounds around content only
+                  // IMPORTANT: Apply transforms to actual coordinates rather than using translate transform
+                  // This ensures PDF generators can process the content correctly
+                  
+                  // Extract paths and apply coordinate transformation directly
+                  let transformedContent = innerContent;
+                  
+                  // Apply coordinate transformation to path data
+                  transformedContent = transformedContent.replace(/d="([^"]+)"/g, (match, pathData) => {
+                    // Transform coordinates in path data by subtracting offset
+                    const transformedPathData = pathData.replace(/([ML])\s*([\d.-]+)\s+([\d.-]+)/g, 
+                      (coordMatch: string, command: string, x: string, y: string) => {
+                        const newX = parseFloat(x) - contentBounds.xMin;
+                        const newY = parseFloat(y) - contentBounds.yMin;
+                        return `${command} ${newX.toFixed(6)} ${newY.toFixed(6)}`;
+                      });
+                    return `d="${transformedPathData}"`;
+                  });
+                  
+                  // Apply transformation to other coordinate attributes
+                  transformedContent = transformedContent.replace(/\s(x|cx)="([\d.-]+)"/g, 
+                    (match, attr, value) => {
+                      const newValue = parseFloat(value) - contentBounds.xMin;
+                      return ` ${attr}="${newValue.toFixed(6)}"`;
+                    });
+                  
+                  transformedContent = transformedContent.replace(/\s(y|cy)="([\d.-]+)"/g, 
+                    (match, attr, value) => {
+                      const newValue = parseFloat(value) - contentBounds.yMin;
+                      return ` ${attr}="${newValue.toFixed(6)}"`;
+                    });
+                  
                   const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                     viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
                     width="${contentBounds.width}" 
                     height="${contentBounds.height}"
                     data-content-extracted="true"
                     data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                    <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
-                      ${innerContent}
-                    </g>
+                      ${transformedContent}
                   </svg>`;
                   
                   // Save the tight-content SVG
