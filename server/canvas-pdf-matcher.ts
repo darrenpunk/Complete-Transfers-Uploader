@@ -20,88 +20,87 @@ interface CorrectedDimensions {
 }
 
 export class CanvasPDFMatcher {
-  private readonly CONTENT_RATIO = 0.75; // 75% content ratio for better visibility
   private readonly MM_TO_PT = 2.834645669; // 72 DPI conversion
-  private readonly OVERSIZED_THRESHOLD = 200; // mm
   
   /**
-   * Extract corrected dimensions from tight content SVG, completely ignoring canvas element size
+   * Extract EXACT content bounds from tight content SVG using SVG Bounds Analyzer
    */
   async extractCorrectedDimensions(tightContentSvgPath: string): Promise<CorrectedDimensions> {
-    console.log(`🔧 MATCHER: Extracting corrected dimensions from ${path.basename(tightContentSvgPath)}`);
+    console.log(`🎯 MATCHER: EXACT BOUNDS EXTRACTION from ${path.basename(tightContentSvgPath)}`);
     
     if (!fs.existsSync(tightContentSvgPath)) {
       throw new Error(`Tight content SVG not found: ${tightContentSvgPath}`);
     }
     
-    const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
-    
-    // Parse SVG using DOM for accurate dimension extraction
-    const dom = new JSDOM(svgContent, { contentType: 'image/svg+xml' });
-    const svgElement = dom.window.document.querySelector('svg');
-    
-    if (!svgElement) {
-      throw new Error('Invalid SVG: no svg element found');
-    }
-    
-    // Extract viewBox dimensions (these are the oversized dimensions we need to correct)
-    const viewBox = svgElement.getAttribute('viewBox');
-    if (!viewBox) {
-      throw new Error('SVG missing viewBox attribute');
-    }
-    
-    const [, , viewBoxWidth, viewBoxHeight] = viewBox.split(' ').map(parseFloat);
-    console.log(`📊 MATCHER: ViewBox dimensions: ${viewBoxWidth.toFixed(1)}×${viewBoxHeight.toFixed(1)}px`);
-    
-    // Convert pixels to mm using 72 DPI standard
-    let widthMm = viewBoxWidth / this.MM_TO_PT;
-    let heightMm = viewBoxHeight / this.MM_TO_PT;
-    
-    console.log(`📏 MATCHER: Initial dimensions: ${widthMm.toFixed(1)}×${heightMm.toFixed(1)}mm`);
-    
-    // Check if dimensions are oversized
-    const isOversized = widthMm > this.OVERSIZED_THRESHOLD || heightMm > this.OVERSIZED_THRESHOLD;
-    let appliedContentRatio = false;
-    
-    if (isOversized) {
-      // Apply a more intelligent scaling based on the specific dimensions
-      // For very wide logos (like 260×92), use a different ratio than square logos
-      const aspectRatio = widthMm / heightMm;
-      let scalingRatio = this.CONTENT_RATIO;
+    try {
+      // Direct analysis of tight content SVG for exact bounds
+      const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
       
-      if (aspectRatio > 2.5) {
-        // Wide logos: use less aggressive scaling
-        scalingRatio = 0.85; // 85% for wide logos
-        console.log(`🎯 MATCHER: Wide logo detected (${aspectRatio.toFixed(1)}:1), applying ${scalingRatio * 100}% content ratio`);
-      } else if (aspectRatio < 0.4) {
-        // Tall logos: use less aggressive scaling  
-        scalingRatio = 0.85; // 85% for tall logos
-        console.log(`🎯 MATCHER: Tall logo detected (${aspectRatio.toFixed(1)}:1), applying ${scalingRatio * 100}% content ratio`);
-      } else {
-        console.log(`🎯 MATCHER: Standard logo detected, applying ${scalingRatio * 100}% content ratio`);
+      // Check if this is a tight content SVG (has data-content-extracted attribute)
+      if (svgContent.includes('data-content-extracted="true"')) {
+        console.log(`🎯 MATCHER: Processing tight content SVG for EXACT bounds`);
+        
+        // Parse the DOM to get actual content bounds
+        const dom = new JSDOM(svgContent, { contentType: 'image/svg+xml' });
+        const svgElement = dom.window.document.querySelector('svg');
+        
+        if (svgElement) {
+          // For tight content SVGs, use the width/height attributes as they represent actual content
+          const widthAttr = svgElement.getAttribute('width');
+          const heightAttr = svgElement.getAttribute('height');
+          
+          if (widthAttr && heightAttr) {
+            const exactWidthPx = parseFloat(widthAttr);
+            const exactHeightPx = parseFloat(heightAttr);
+            
+            const exactWidthMm = exactWidthPx / this.MM_TO_PT;
+            const exactHeightMm = exactHeightPx / this.MM_TO_PT;
+            
+            console.log(`✅ MATCHER: EXACT TIGHT CONTENT BOUNDS: ${exactWidthMm.toFixed(1)}×${exactHeightMm.toFixed(1)}mm`);
+            console.log(`📐 MATCHER: EXACT TIGHT CONTENT BOUNDS: ${exactWidthPx.toFixed(1)}×${exactHeightPx.toFixed(1)}pts`);
+            
+            return {
+              widthMm: exactWidthMm,
+              heightMm: exactHeightMm,
+              widthPts: exactWidthPx,
+              heightPts: exactHeightPx,
+              isOversized: false,
+              appliedContentRatio: true
+            };
+          }
+        }
       }
       
-      widthMm *= scalingRatio;
-      heightMm *= scalingRatio;
-      appliedContentRatio = true;
-      console.log(`✅ MATCHER: Corrected dimensions: ${widthMm.toFixed(1)}×${heightMm.toFixed(1)}mm`);
-    } else {
-      console.log(`✅ MATCHER: Dimensions are reasonable, using as-is`);
+      console.log(`🔄 MATCHER: Not tight content SVG, extracting from viewBox with analysis`);
+      
+    } catch (error) {
+      console.error(`❌ MATCHER: Failed to analyze tight content bounds:`, error);
     }
     
-    // Convert to points for PDF embedding
-    const widthPts = widthMm * this.MM_TO_PT;
-    const heightPts = heightMm * this.MM_TO_PT;
+    // Fallback: Use viewBox but with no scaling - keep original dimensions
+    console.log(`🔄 MATCHER: Fallback to viewBox (no scaling)`);
+    const svgContent = fs.readFileSync(tightContentSvgPath, 'utf8');
+    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
     
-    console.log(`📐 MATCHER: Final PDF dimensions: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+    if (!viewBoxMatch) {
+      throw new Error('SVG missing viewBox attribute and bounds analysis failed');
+    }
+    
+    const [, , viewBoxWidth, viewBoxHeight] = viewBoxMatch[1].split(' ').map(parseFloat);
+    const widthMm = viewBoxWidth / this.MM_TO_PT;
+    const heightMm = viewBoxHeight / this.MM_TO_PT;
+    const widthPts = viewBoxWidth;
+    const heightPts = viewBoxHeight;
+    
+    console.log(`📊 MATCHER: Fallback viewBox dimensions: ${widthMm.toFixed(1)}×${heightMm.toFixed(1)}mm`);
     
     return {
       widthMm,
       heightMm,
       widthPts,
       heightPts,
-      isOversized,
-      appliedContentRatio
+      isOversized: true,
+      appliedContentRatio: false
     };
   }
   
