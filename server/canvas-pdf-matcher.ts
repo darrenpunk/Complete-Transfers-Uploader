@@ -20,7 +20,7 @@ interface CorrectedDimensions {
 }
 
 export class CanvasPDFMatcher {
-  private readonly CONTENT_RATIO = 0.15; // 15% aggressive content ratio
+  private readonly CONTENT_RATIO = 0.75; // 75% content ratio for better visibility
   private readonly MM_TO_PT = 2.834645669; // 72 DPI conversion
   private readonly OVERSIZED_THRESHOLD = 200; // mm
   
@@ -64,9 +64,25 @@ export class CanvasPDFMatcher {
     let appliedContentRatio = false;
     
     if (isOversized) {
-      console.log(`🎯 MATCHER: Oversized content detected, applying ${this.CONTENT_RATIO * 100}% content ratio`);
-      widthMm *= this.CONTENT_RATIO;
-      heightMm *= this.CONTENT_RATIO;
+      // Apply a more intelligent scaling based on the specific dimensions
+      // For very wide logos (like 260×92), use a different ratio than square logos
+      const aspectRatio = widthMm / heightMm;
+      let scalingRatio = this.CONTENT_RATIO;
+      
+      if (aspectRatio > 2.5) {
+        // Wide logos: use less aggressive scaling
+        scalingRatio = 0.85; // 85% for wide logos
+        console.log(`🎯 MATCHER: Wide logo detected (${aspectRatio.toFixed(1)}:1), applying ${scalingRatio * 100}% content ratio`);
+      } else if (aspectRatio < 0.4) {
+        // Tall logos: use less aggressive scaling  
+        scalingRatio = 0.85; // 85% for tall logos
+        console.log(`🎯 MATCHER: Tall logo detected (${aspectRatio.toFixed(1)}:1), applying ${scalingRatio * 100}% content ratio`);
+      } else {
+        console.log(`🎯 MATCHER: Standard logo detected, applying ${scalingRatio * 100}% content ratio`);
+      }
+      
+      widthMm *= scalingRatio;
+      heightMm *= scalingRatio;
       appliedContentRatio = true;
       console.log(`✅ MATCHER: Corrected dimensions: ${widthMm.toFixed(1)}×${heightMm.toFixed(1)}mm`);
     } else {

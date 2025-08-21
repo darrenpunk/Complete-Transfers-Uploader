@@ -603,7 +603,14 @@ grestore`;
       // Update canvas element if corrected dimensions were applied
       if ((element as any)._correctedDimensions?.appliedContentRatio) {
         console.log(`🔄 CANVAS-PDF MATCHER: Canvas element will be updated to match PDF dimensions for consistency`);
-        // Note: Canvas element update happens after PDF generation to avoid affecting this generation
+        
+        // Store corrected dimensions for later canvas sync
+        (element as any)._pendingCanvasUpdate = {
+          width: contentWidthMM,
+          height: contentHeightMM
+        };
+        console.log(`📝 CANVAS-PDF MATCHER: Marked canvas element for update to ${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm`);
+        // Note: Canvas element update will be handled by the calling function to avoid import issues
       }
       
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
