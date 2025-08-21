@@ -437,6 +437,9 @@ grestore`;
     element: any,
     templateSize: any
   ): Promise<void> {
+    console.log(`🔍 DEBUG: Starting embedLogoInPages for logo: ${logo.filename}`);
+    console.log(`🔍 DEBUG: Element position: (${element.x}, ${element.y}) size: ${element.width}x${element.height}`);
+    console.log(`🔍 DEBUG: Original filename: ${logo.originalFilename}, original mime: ${logo.originalMimeType}`);
     try {
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
@@ -452,10 +455,11 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } else if (fs.existsSync(originalPdfPath)) {
-          // ALWAYS use the preserved original PDF to maintain EXACT color data
+              // ALWAYS use the preserved original PDF to maintain EXACT color data
           logoPdfPath = originalPdfPath;
           shouldCleanup = false;
           console.log(`✅ Using preserved original PDF for EXACT color preservation: ${logo.originalFilename}`);
+          console.log(`🔍 DEBUG: Original PDF exists and will be used: ${originalPdfPath}`);
         } else {
           console.warn(`⚠️ Preserved original PDF not found: ${originalPdfPath}`);
         }
@@ -584,6 +588,7 @@ grestore`;
       }
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
+      console.log(`🔍 DEBUG: Logo PDF path: ${logoPdfPath}`);
       
       // Draw on both pages with exact dimensions
       const { degrees } = await import('pdf-lib');
