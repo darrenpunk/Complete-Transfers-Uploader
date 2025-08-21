@@ -2219,6 +2219,78 @@ export async function registerRoutes(app: express.Application) {
 
   // Removed duplicate /uploads route handler - already handled in server/index.ts
 
+  // Fix oversized canvas elements endpoint
+  app.post('/api/projects/:projectId/fix-oversized-elements', async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      console.log(`🔧 FIXING OVERSIZED CANVAS ELEMENTS for project: ${projectId}`);
+      
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      const oversizedElements = canvasElements.filter(el => el.width > 200 || el.height > 200);
+      
+      console.log(`🔍 Found ${oversizedElements.length} oversized elements to fix`);
+      
+      let fixedCount = 0;
+      for (const element of oversizedElements) {
+        try {
+          const logo = await storage.getLogo(element.logoId);
+          if (!logo || !logo.filename || !logo.filename.includes('_tight-content.svg')) {
+            console.log(`⚠️ Skipping element ${element.id}: no tight content SVG`);
+            continue;
+          }
+          
+          // Extract corrected bounds using the same logic as upload
+          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+          const svgAnalyzer = new SVGBoundsAnalyzer();
+          const tightSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
+          
+          if (!fs.existsSync(tightSvgPath)) {
+            console.log(`⚠️ Skipping element ${element.id}: tight SVG not found`);
+            continue;
+          }
+          
+          const boundsResult = await svgAnalyzer.extractSVGBounds(tightSvgPath);
+          if (!boundsResult.success || !boundsResult.contentBounds) {
+            console.log(`⚠️ Skipping element ${element.id}: bounds extraction failed`);
+            continue;
+          }
+          
+          // Calculate corrected dimensions using the same content ratio logic
+          const pxToMm = 1 / 2.834645669; // 72 DPI standard
+          let correctedWidthMm = boundsResult.contentBounds.width * pxToMm;
+          let correctedHeightMm = boundsResult.contentBounds.height * pxToMm;
+          
+          // Apply the same aggressive content ratio if dimensions are still oversized
+          if (correctedWidthMm > 1000 || correctedHeightMm > 1000) {
+            const CONTENT_RATIO = 0.15; // 15% content ratio
+            correctedWidthMm *= CONTENT_RATIO;
+            correctedHeightMm *= CONTENT_RATIO;
+            console.log(`🎯 Applied 15% content ratio: ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm`);
+          }
+          
+          // Update the canvas element with corrected dimensions
+          await storage.updateCanvasElement(element.id, {
+            width: correctedWidthMm,
+            height: correctedHeightMm
+          });
+          
+          console.log(`✅ Fixed element ${element.id}: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm`);
+          fixedCount++;
+          
+        } catch (error) {
+          console.error(`❌ Error fixing element ${element.id}:`, error);
+        }
+      }
+      
+      console.log(`🎉 Fixed ${fixedCount} oversized canvas elements`);
+      res.json({ success: true, fixedCount, totalOversized: oversizedElements.length });
+      
+    } catch (error) {
+      console.error('Fix oversized elements error:', error);
+      res.status(500).json({ error: 'Failed to fix oversized elements' });
+    }
+  });
+
   // SVG Analysis endpoint for stroke width detection
   app.post('/api/logos/:logoId/analyze', async (req, res) => {
     try {
