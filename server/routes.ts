@@ -1711,8 +1711,28 @@ export async function registerRoutes(app: express.Application) {
                 
                 // Convert content bounds to millimeters using PDF standard DPI (72 DPI)
                 const pxToMm = 1 / 2.834645669; // 72 DPI standard used throughout codebase
-                const contentWidth = contentBounds.width * pxToMm;
-                const contentHeight = contentBounds.height * pxToMm;
+                let contentWidth = contentBounds.width * pxToMm;
+                let contentHeight = contentBounds.height * pxToMm;
+                
+                // CRITICAL SCALING FIX: If dimensions are too large for practical use, scale them down
+                // A3 template is 297×420mm, so content larger than ~250mm is likely oversized
+                const MAX_REASONABLE_SIZE = 250; // Maximum reasonable dimension in mm
+                
+                console.log(`📏 DIMENSION CHECK: width=${contentWidth.toFixed(1)}mm, height=${contentHeight.toFixed(1)}mm, max=${MAX_REASONABLE_SIZE}mm`);
+                console.log(`📏 SCALING CONDITIONS: width>${MAX_REASONABLE_SIZE}? ${contentWidth > MAX_REASONABLE_SIZE}, height>${MAX_REASONABLE_SIZE}? ${contentHeight > MAX_REASONABLE_SIZE}`);
+                
+                if (contentWidth > MAX_REASONABLE_SIZE || contentHeight > MAX_REASONABLE_SIZE) {
+                  const scaleFactor = Math.min(MAX_REASONABLE_SIZE / contentWidth, MAX_REASONABLE_SIZE / contentHeight);
+                  const originalWidth = contentWidth;
+                  const originalHeight = contentHeight;
+                  
+                  contentWidth = contentWidth * scaleFactor;
+                  contentHeight = contentHeight * scaleFactor;
+                  
+                  console.log(`📏 SCALING DOWN OVERSIZED CONTENT: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}mm → ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (scale: ${scaleFactor.toFixed(3)}x)`);
+                } else {
+                  console.log(`📏 NO SCALING NEEDED: dimensions are within reasonable limits`);
+                }
                 
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;

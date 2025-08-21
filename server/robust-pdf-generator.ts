@@ -554,9 +554,9 @@ grestore`;
             if (viewBoxMatch) {
               const [offsetX, offsetY] = viewBoxMatch[1].split(' ').map(Number);
               if (offsetX !== 0 || offsetY !== 0) {
-                // Convert SVG coordinates to PDF points
-                viewBoxOffsetX = -offsetX * MM_TO_POINTS / 3.7795; // SVG to PDF coordinate conversion
-                viewBoxOffsetY = -offsetY * MM_TO_POINTS / 3.7795;
+                // Direct SVG coordinate to PDF points conversion (SVG pixels are 1:1 with PDF points for vector content)
+                viewBoxOffsetX = -offsetX; 
+                viewBoxOffsetY = -offsetY;
                 console.log(`🔧 CRITICAL POSITIONING FIX: Applying viewBox offset compensation: X=${viewBoxOffsetX.toFixed(2)}pt, Y=${viewBoxOffsetY.toFixed(2)}pt`);
               }
             }
@@ -590,9 +590,12 @@ grestore`;
         // Ensure PDF Y coordinate is within valid bounds (no negative positioning)
         yPts = Math.max(0, yPts);
       } else {
-        // For all other templates, maintain existing behavior (A3 assumption for backward compatibility)
-        yPts = 1191 - (element.y * MM_TO_POINTS) - contentHeightPts + viewBoxOffsetY;
-        console.log(`📐 Standard template positioning: A3 height=1191pt, y=${yPts.toFixed(1)}pt`);
+        // For all other templates (A3, etc.) - convert canvas coordinates to PDF coordinates
+        // Canvas Y=0 is at top, PDF Y=0 is at bottom
+        // For A3: height is 420mm = 1190.55pts, so we need to flip Y coordinate
+        const templateHeightPts = 1190.55; // Exact A3 height in points
+        yPts = templateHeightPts - (element.y * MM_TO_POINTS) - contentHeightPts + viewBoxOffsetY;
+        console.log(`📐 Standard template positioning: A3 height=${templateHeightPts}pt, element.y=${element.y}mm, contentHeight=${contentHeightMM}mm, y=${yPts.toFixed(1)}pt`);
       }
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
