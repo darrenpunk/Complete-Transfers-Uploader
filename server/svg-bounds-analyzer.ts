@@ -77,7 +77,25 @@ export class SVGBoundsAnalyzer {
       const geometryResult = this.analyzeGeometryBounds(svgElement);
 
       // Choose the most accurate result
-      const contentBounds = pathResult || geometryResult || viewBoxResult;
+      // For tight content SVGs, prefer path calculation over viewBox to get actual content size
+      const isTightContent = svgContent.includes('data-content-extracted="true"');
+      console.log(`🔍 DEBUG: isTightContent=${isTightContent}, svgContent includes data-content-extracted: ${svgContent.includes('data-content-extracted')}`);
+      console.log(`🔍 DEBUG: SVG content preview: ${svgContent.substring(0, 200)}...`);
+      let contentBounds;
+      
+      if (isTightContent) {
+        // For tight content SVGs, calculate the actual visible content bounds
+        console.log(`🎯 TIGHT CONTENT DETECTED: Calculating actual visible content bounds`);
+        const visibleBounds = this.calculateVisibleContentBounds(svgElement);
+        contentBounds = visibleBounds || pathResult || geometryResult;
+        
+        if (visibleBounds) {
+          console.log(`📐 VISIBLE CONTENT BOUNDS: ${visibleBounds.width.toFixed(1)}×${visibleBounds.height.toFixed(1)}px (actual rendered size)`);
+        }
+      } else {
+        // For normal SVGs, use the original priority
+        contentBounds = pathResult || geometryResult || viewBoxResult;
+      }
       
       if (contentBounds) {
         console.log(`✅ SVG content bounds: ${contentBounds.xMin},${contentBounds.yMin} to ${contentBounds.xMax},${contentBounds.yMax}`);
@@ -106,6 +124,84 @@ export class SVGBoundsAnalyzer {
         error: error instanceof Error ? error.message : 'SVG analysis failed'
       };
     }
+  }
+
+  /**
+   * Calculate actual visible content bounds for tight content SVGs
+   * This measures the content within the viewBox, not the absolute coordinates
+   */
+  private calculateVisibleContentBounds(svgElement: Element): SVGBounds | null {
+    const viewBox = svgElement.getAttribute('viewBox');
+    if (!viewBox) return null;
+    
+    const values = viewBox.split(/\s+/).map(Number);
+    if (values.length !== 4) return null;
+    
+    const [vbX, vbY, vbWidth, vbHeight] = values;
+    
+    // For tight content SVGs, the viewBox represents the actual content bounds
+    // We calculate dimensions relative to this viewBox, not absolute coordinates
+    console.log(`📊 VIEWBOX ANALYSIS: viewBox="${viewBox}" (${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}px)`);
+    
+    // Check if paths extend beyond the viewBox or are contained within it
+    const paths = svgElement.querySelectorAll('path');
+    if (paths.length === 0) return null;
+    
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+    let hasValidPath = false;
+    
+    paths.forEach(path => {
+      const d = path.getAttribute('d');
+      if (!d) return;
+      
+      const bounds = this.parsePathData(d);
+      if (bounds) {
+        // Clip bounds to viewBox (content cannot render outside viewBox)
+        const clippedMinX = Math.max(bounds.xMin, vbX);
+        const clippedMinY = Math.max(bounds.yMin, vbY);
+        const clippedMaxX = Math.min(bounds.xMax, vbX + vbWidth);
+        const clippedMaxY = Math.min(bounds.yMax, vbY + vbHeight);
+        
+        if (clippedMaxX > clippedMinX && clippedMaxY > clippedMinY) {
+          minX = Math.min(minX, clippedMinX);
+          minY = Math.min(minY, clippedMinY);
+          maxX = Math.max(maxX, clippedMaxX);
+          maxY = Math.max(maxY, clippedMaxY);
+          hasValidPath = true;
+        }
+      }
+    });
+    
+    if (!hasValidPath) {
+      // Fallback: use the viewBox as content bounds
+      console.log(`📐 NO VISIBLE PATHS: Using viewBox as content bounds`);
+      return {
+        xMin: 0,
+        yMin: 0,
+        xMax: vbWidth,
+        yMax: vbHeight,
+        width: vbWidth,
+        height: vbHeight,
+        units: 'px'
+      };
+    }
+    
+    // Calculate the actual visible content size
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    
+    console.log(`📏 VISIBLE CONTENT: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px within ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}px viewBox`);
+    
+    return {
+      xMin: minX - vbX,  // Relative to viewBox origin
+      yMin: minY - vbY,  // Relative to viewBox origin
+      xMax: maxX - vbX,  // Relative to viewBox origin
+      yMax: maxY - vbY,  // Relative to viewBox origin
+      width: contentWidth,
+      height: contentHeight,
+      units: 'px'
+    };
   }
 
   /**
