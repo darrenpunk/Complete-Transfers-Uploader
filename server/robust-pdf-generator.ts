@@ -566,9 +566,47 @@ grestore`;
         }
       }
       
-      // Use the actual element dimensions from canvas (preserve aspect ratio)
-      const contentWidthMM = element.width;
-      const contentHeightMM = element.height;
+      // CRITICAL FIX: Calculate corrected content bounds instead of using outdated canvas element dimensions
+      // The canvas elements may have outdated dimensions from before the content ratio fix
+      console.log(`🔍 DEBUG: Canvas element dimensions: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+      
+      // Apply the same content ratio correction that's used during logo upload
+      let contentWidthMM = element.width;
+      let contentHeightMM = element.height;
+      
+      // If the canvas element dimensions are oversized (indicating they're from before the fix),
+      // calculate corrected dimensions using the tight content SVG analysis
+      if ((contentWidthMM > 200 && contentHeightMM > 50) || (contentWidthMM > 50 && contentHeightMM > 200)) {
+        console.log(`🎯 OVERSIZED CANVAS ELEMENT DETECTED: Applying content bounds correction in PDF generator`);
+        
+        // Try to get corrected bounds from the tight content SVG
+        if (logo.filename && logo.filename.includes('_tight-content.svg')) {
+          const tightContentSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
+          if (fs.existsSync(tightContentSvgPath)) {
+            try {
+              const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+              const svgAnalyzer = new SVGBoundsAnalyzer();
+              const boundsResult = await svgAnalyzer.extractSVGBounds(tightContentSvgPath);
+              
+              if (boundsResult.success && boundsResult.contentBounds) {
+                const pxToMm = 1 / 2.834645669; // 72 DPI standard
+                const correctedWidthMm = boundsResult.contentBounds.width * pxToMm;
+                const correctedHeightMm = boundsResult.contentBounds.height * pxToMm;
+                
+                console.log(`✅ CORRECTED DIMENSIONS: Using tight content bounds ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm instead of canvas ${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm`);
+                
+                contentWidthMM = correctedWidthMm;
+                contentHeightMM = correctedHeightMm;
+              }
+            } catch (error) {
+              console.warn(`⚠️ Could not extract corrected bounds, using canvas dimensions:`, error);
+            }
+          }
+        }
+      } else {
+        console.log(`✅ REASONABLE CANVAS DIMENSIONS: Using canvas element size as-is`);
+      }
+      
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
