@@ -67,6 +67,9 @@ export class RobustPDFGenerator {
     try {
       console.log(`🎯 ROBUST PDF GENERATOR: Direct PDF approach with exact color and dimension preservation`);
       console.log(`📊 Project: ${data.projectName} (${data.canvasElements.length} elements)`);
+      console.log(`🔍 DEBUG: Input data - Elements: ${data.canvasElements.length}, Logos: ${data.logos.length}`);
+      console.log(`🔍 DEBUG: Elements:`, data.canvasElements.map(e => `${e.id}: logoId=${e.logoId}, pos=(${e.x},${e.y}), size=${e.width}x${e.height}`));
+      console.log(`🔍 DEBUG: Logos:`, data.logos.map(l => `${l.id}: ${l.filename}`));
       
       // Use pdf-lib for direct PDF creation with exact control
       const finalPdfBuffer = await this.createDirectPDF(data);

@@ -673,6 +673,11 @@ export async function registerRoutes(app: express.Application) {
       logos.forEach(logo => {
         logosObject[logo.id] = logo;
       });
+      
+      console.log(`🔍 DEBUG: Logo object construction:`);
+      console.log(`  - Raw logos from DB:`, logos.map(l => ({ id: l.id, filename: l.filename })));
+      console.log(`  - LogosObject keys:`, Object.keys(logosObject));
+      console.log(`  - Canvas element logoIds:`, canvasElements.map(e => e.logoId));
 
       // Check if any logos have CMYK colors that need native preservation
       const hasCMYKLogos = Object.values(logosObject).some(logo => 
@@ -686,7 +691,7 @@ export async function registerRoutes(app: express.Application) {
         const { RobustPDFGenerator } = await import('./robust-pdf-generator');
         const generator = new RobustPDFGenerator();
         
-        const pdfBuffer = await generator.generatePDF({
+        const pdfData = {
           canvasElements,
           logos: Object.values(logosObject),
           templateSize,
@@ -694,7 +699,14 @@ export async function registerRoutes(app: express.Application) {
           projectName: project.name || 'Untitled Project',
           quantity: project.quantity || 1,
           comments: project.comments || ''
-        });
+        };
+        
+        console.log(`🔍 DEBUG: CMYK Path - PDF Data being passed to generator:`);
+        console.log(`  - Elements: ${canvasElements.length}, Logos: ${Object.values(logosObject).length}`);
+        console.log(`  - Element logoIds:`, canvasElements.map(e => e.logoId));
+        console.log(`  - Logo ids:`, Object.values(logosObject).map(l => l.id));
+        
+        const pdfBuffer = await generator.generatePDF(pdfData);
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
@@ -718,6 +730,11 @@ export async function registerRoutes(app: express.Application) {
         quantity: project.quantity || 1,
         comments: project.comments || ''
       };
+      
+      console.log(`🔍 DEBUG: PDF Data being passed to generator:`);
+      console.log(`  - Elements: ${canvasElements.length}, Logos: ${logos.length}`);
+      console.log(`  - Element logoIds:`, canvasElements.map(e => e.logoId));
+      console.log(`  - Logo ids:`, logos.map(l => l.id));
       
       // Debug: Log canvas elements with garment colors
       console.log('📊 Canvas elements with garment colors:');
@@ -1524,6 +1541,9 @@ export async function registerRoutes(app: express.Application) {
           isPdfWithRasterOnly: logo.isPdfWithRasterOnly,
           extractedRasterPath: logo.extractedRasterPath
         });
+        
+        // Add the logo to the logos array immediately after creation
+        logos.push(logo);
 
         // Auto-recolor for single colour templates with ink color
         if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
@@ -1731,22 +1751,27 @@ export async function registerRoutes(app: express.Application) {
           console.error('Failed to calculate content bounds:', error);
         }
 
-        // Create logo record AFTER bounds extraction and finalFilename update
-        const { nanoid } = await import('nanoid');
-        const logoRecord = {
-          id: nanoid(),
+        // Update the existing logo with the final filename after bounds extraction
+        console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
+        const updatedLogo = await storage.updateLogo(logo.id, {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
-          originalName: file.originalname,
-          isPdfWithRasterOnly: !!((file as any).extractedRasterPath),
-          isCMYKPreserved: (file as any).isCMYKPreserved || false,
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData })
-        };
-
-        console.log(`💾 FINAL LOGO RECORD: filename=${finalFilename}, url=${finalUrl}`);
-        const createdLogo = await storage.createLogo(logoRecord);
-        logos.push(createdLogo);
+        });
+        
+        if (!updatedLogo) {
+          throw new Error(`Failed to update logo ${logo.id}`);
+        }
+        
+        console.log(`🔍 DEBUG: Using existing logo with updated filename: ${updatedLogo.id}`);
+        
+        // Update the logo in the logos array with the updated information
+        const logoIndex = logos.findIndex(l => l.id === logo.id);
+        if (logoIndex !== -1) {
+          logos[logoIndex] = updatedLogo;
+          console.log(`🔄 Updated logo in logos array at index ${logoIndex}`);
+        }
 
         // Get template size for centering
         const templateSize = await storage.getTemplateSize(project.templateSize);
@@ -1790,9 +1815,10 @@ export async function registerRoutes(app: express.Application) {
           };
         }
 
+        console.log(`🔍 DEBUG: About to create canvas element with logoId: ${logo.id}`);
         const canvasElementData = {
           projectId: projectId,
-          logoId: createdLogo.id,
+          logoId: logo.id,
           x: centerX,
           y: centerY,
           width: displayWidth,

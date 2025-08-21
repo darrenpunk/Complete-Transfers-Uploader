@@ -215,7 +215,8 @@ export class MemStorage implements IStorage {
   }
 
   async createLogo(insertLogo: InsertLogo): Promise<Logo> {
-    const id = randomUUID();
+    // Use provided ID if available, otherwise generate new one
+    const id = insertLogo.id || randomUUID();
     const logo: Logo = { 
       ...insertLogo, 
       id,
@@ -264,6 +265,7 @@ export class MemStorage implements IStorage {
   }
 
   async createCanvasElement(insertElement: InsertCanvasElement): Promise<CanvasElement> {
+    console.log(`🔍 DEBUG: Creating canvas element with logoId: ${insertElement.logoId}`);
     const id = randomUUID();
     const element: CanvasElement = { 
       ...insertElement, 
