@@ -351,9 +351,12 @@ grestore`;
     });
     
     // Process each canvas element and embed logos with individual garment backgrounds
+    console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
+      console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}`);
       const logo = data.logos.find(l => l.id === element.logoId);
+      console.log(`🔍 DEBUG: Logo lookup result:`, logo ? `Found logo: ${logo.filename}` : 'Logo not found');
       
       if (logo) {
         console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
@@ -389,7 +392,9 @@ grestore`;
         });
         
         // Embed logo on both pages
+        console.log(`🎯 About to call embedLogoInPages for logo: ${logo.filename}`);
         await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, data.templateSize);
+        console.log(`✅ Completed embedLogoInPages for logo: ${logo.filename}`);
       }
     }
     
