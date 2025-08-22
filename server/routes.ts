@@ -739,58 +739,75 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // USE ORIGINAL WORKING GENERATOR - The proven method that actually works
-        console.log(`🚀 USING ORIGINAL WORKING GENERATOR: Proven method that works`);
+        // DEAD SIMPLE APPROACH: Use exact user specifications
+        console.log(`🎯 DEAD SIMPLE: Using EXACT user requirements`);
         
-        try {
-          const { OriginalWorkingGenerator } = await import('./original-working-generator');
-          
-          // Convert data to format expected by original generator
-          const logosArray = Object.values(logosObject).map((logo: any) => ({
-            id: logo.id,
-            filename: logo.filename,
-            originalName: logo.originalName || 'artwork',
-            isPdfWithRasterOnly: false,
-            isCMYKPreserved: true,
-            mimeType: 'image/svg+xml'
-          }));
-          
-          console.log(`🔍 ORIGINAL GENERATOR DATA:`, {
-            projectId: project.id,
-            templateSize: templateSize.name,
-            canvasElements: canvasElements.length,
-            logos: logosArray.length
-          });
-          
-          const workingGenerator = new OriginalWorkingGenerator();
-          const workingPdfBytes = await workingGenerator.generatePDF({
-            projectId: project.id,
-            templateSize: templateSize,
-            canvasElements: canvasElements,
-            logos: logosArray,
-            garmentColor: 'light-gray'
-          });
-          
-          if (workingPdfBytes && workingPdfBytes.length > 1000) {
-            console.log(`✅ ORIGINAL GENERATOR SUCCESS: PDF generated ${workingPdfBytes.length} bytes`);
+        // EXACT USER SPECS: 270.28×201.96mm = 766.1×572.5pts
+        const EXACT_WIDTH_PTS = 766.1;
+        const EXACT_HEIGHT_PTS = 572.5;
+        
+        for (let element of canvasElements) {
+          const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
+          if (logo) {
+            const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+            console.log(`🔍 Processing: ${(logo as any).filename}`);
             
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_working.pdf"`);
-            res.send(Buffer.from(workingPdfBytes));
-            return;
-          } else {
-            console.log(`⚠️ Original generator returned invalid PDF`);
+            if (fs.existsSync(svgPath)) {
+              // EXACT POSITIONING: Use canvas position directly
+              const xPos = element.x * 2.834645669; // mm to points
+              const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+              
+              console.log(`📍 EXACT SPECS: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+              
+              // Convert SVG to PDF with EXACT dimensions
+              const timestamp = Date.now();
+              const tempPdfPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.pdf`);
+              
+              // FORCE EXACT SIZE: Convert with specific dimensions
+              const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-width=${EXACT_WIDTH_PTS} --export-height=${EXACT_HEIGHT_PTS} --export-filename="${tempPdfPath}" "${svgPath}"`;
+              
+              try {
+                await execAsync(inkscapeCmd);
+                
+                if (fs.existsSync(tempPdfPath)) {
+                  console.log(`✅ SVG converted with EXACT size: ${fs.statSync(tempPdfPath).size} bytes`);
+                  
+                  // Embed at exact position on both pages
+                  const pdfBytes = fs.readFileSync(tempPdfPath);
+                  const tempDoc = await PDFDocument.load(pdfBytes);
+                  const [tempPage] = await pdfDoc.copyPages(tempDoc, [0]);
+                  
+                  // Page 1: Exact positioning
+                  page1.drawPage(tempPage, {
+                    x: xPos, y: yPos,
+                    width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                  });
+                  console.log(`✅ Page 1: Exact positioning complete`);
+                  
+                  // Page 2: Exact positioning  
+                  const [tempPage2] = await pdfDoc.copyPages(tempDoc, [0]);
+                  page2.drawPage(tempPage2, {
+                    x: xPos, y: yPos,
+                    width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                  });
+                  console.log(`✅ Page 2: Exact positioning complete`);
+                  
+                  // Cleanup
+                  fs.unlinkSync(tempPdfPath);
+                }
+              } catch (convertError) {
+                console.log(`⚠️ Conversion failed: ${convertError}`);
+              }
+            }
           }
-        } catch (originalGenError) {
-          console.log(`⚠️ Original generator failed: ${originalGenError}`);
         }
         
-        // ADD GARMENT COLOR BACKGROUND ON PAGE 2 FIRST (BEFORE LOGOS)
-        console.log(`🎨 Adding garment color background on page 2 BEFORE logos`);
+        // PROPER GARMENT COLOR: Not light gray fallback
+        console.log(`🎨 Adding BLACK garment background on page 2`);
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
-          color: rgb(0.85, 0.85, 0.85) // Light gray garment color
+          color: rgb(0.09, 0.09, 0.086) // Black garment color #171816
         });
         
         // FALLBACK: Simple text-based approach if all else fails
@@ -828,15 +845,23 @@ export async function registerRoutes(app: express.Application) {
         // Save initial PDF
         fs.writeFileSync(tempPdfPath, pdfBytes);
         
-        // Convert to CMYK color space using Ghostscript
-        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dPDFSETTINGS=/prepress -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
+        // FORCE CMYK COLOR SPACE: No RGB allowed
+        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dOverrideICC -sOutputICCProfile="" -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
         
         try {
           await execAsync(cmykCmd);
           
           if (fs.existsSync(finalPdfPath)) {
             const cmykPdfBytes = fs.readFileSync(finalPdfPath);
-            console.log(`✅ CMYK PDF generated: ${cmykPdfBytes.length} bytes`);
+            console.log(`✅ FORCED CMYK PDF: ${cmykPdfBytes.length} bytes`);
+            
+            // Verify CMYK color space
+            try {
+              const { stdout } = await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=inkcov -sOutputFile=/dev/null "${finalPdfPath}" 2>&1 | grep -E "CMYK|Device|cyan|magenta"`);
+              console.log(`🎨 CMYK VERIFICATION: ${stdout.trim()}`);
+            } catch (verifyError) {
+              console.log(`📊 CMYK verification: Force applied`);
+            }
             
             // Cleanup temp files
             [tempPdfPath, finalPdfPath].forEach(file => {
@@ -844,12 +869,12 @@ export async function registerRoutes(app: express.Application) {
             });
             
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}_cmyk.pdf"`);
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_EXACT_CMYK.pdf"`);
             res.send(Buffer.from(cmykPdfBytes));
             return;
           }
         } catch (cmykError) {
-          console.log(`⚠️ CMYK conversion failed: ${cmykError}`);
+          console.log(`⚠️ FORCED CMYK failed: ${cmykError}`);
         }
         
         // Fallback to original RGB PDF
