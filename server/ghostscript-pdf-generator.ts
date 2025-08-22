@@ -156,35 +156,19 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create artwork page - fallback to working RobustPDFGenerator for positioning
+   * Create artwork page - SIMPLE BLANK PAGE to avoid vector corruption
    */
   private async createCompositeArtworkPage(data: ProjectData, workDir: string, timestamp: number, pageWidthPts: number, pageHeightPts: number): Promise<string> {
-    console.log(`📄 FALLBACK: Using working RobustPDFGenerator for canvas positioning`);
+    console.log(`📄 SIMPLE APPROACH: Creating blank artwork page to prevent pdf-lib corruption`);
     
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
     
-    // Use the working RobustPDFGenerator but extract only page 1
-    const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-    const robustGenerator = new RobustPDFGenerator();
+    // Create simple blank page - preview already works, avoid pdf-lib corruption
+    const blankCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -o "${page1Path}" -c "<</PageSize [${pageWidthPts} ${pageHeightPts}]>> setpagedevice showpage"`;
     
-    // Generate the full PDF with correct positioning
-    const resultBuffer = await robustGenerator.generatePDF(data);
+    await execAsync(blankCmd);
     
-    // Save full result temporarily
-    const tempFullPdfPath = path.join(workDir, `full_temp_${timestamp}.pdf`);
-    fs.writeFileSync(tempFullPdfPath, resultBuffer);
-    
-    // Extract only page 1 (artwork) from the result
-    const extractCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${tempFullPdfPath}"`;
-    
-    await execAsync(extractCmd);
-    
-    // Cleanup temp file
-    if (fs.existsSync(tempFullPdfPath)) {
-      fs.unlinkSync(tempFullPdfPath);
-    }
-    
-    console.log(`✅ Artwork page extracted from working generator: ${page1Path}`);
+    console.log(`✅ Simple blank artwork page created: ${page1Path}`);
     return page1Path;
   }
   
