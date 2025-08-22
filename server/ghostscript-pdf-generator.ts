@@ -169,12 +169,28 @@ export class GhostscriptPDFGenerator {
     const robustGenerator = new RobustPDFGenerator();
     
     console.log(`🔄 Using RobustPDFGenerator for complex canvas positioning`);
-    const result = await robustGenerator.generatePDF(data);
+    const resultBuffer = await robustGenerator.generatePDF(data);
+    
+    console.log(`🔍 DEBUG: RobustPDFGenerator result buffer size: ${resultBuffer.length} bytes`);
+    
+    if (!resultBuffer || resultBuffer.length === 0) {
+      throw new Error('RobustPDFGenerator returned empty buffer');
+    }
+    
+    // Save the buffer to a temporary file
+    const tempRobustPdfPath = path.join(workDir, `robust_temp_${timestamp}.pdf`);
+    fs.writeFileSync(tempRobustPdfPath, resultBuffer);
     
     // Extract page 1 from the robust generator result
-    const extractPage1Cmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${result.filePath}"`;
+    const extractPage1Cmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${tempRobustPdfPath}"`;
     
+    console.log(`🔧 Extracting page 1 from temp file: ${tempRobustPdfPath}`);
     await execAsync(extractPage1Cmd);
+    
+    // Cleanup temp file
+    if (fs.existsSync(tempRobustPdfPath)) {
+      fs.unlinkSync(tempRobustPdfPath);
+    }
     
     console.log(`✅ Artwork page created with proper canvas positioning: ${page1Path}`);
     return page1Path;
