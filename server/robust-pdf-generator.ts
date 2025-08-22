@@ -480,7 +480,7 @@ grestore`;
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
       
-      // PRIORITY 1: Use preserved original PDF if available (BUT NOT for ink color overrides)
+      // PRIORITY 1: Use preserved original PDF if available (BUT NOT for ink color overrides OR dimension mismatches)
       if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
         const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
         console.log(`🎯 Checking for preserved original PDF: ${originalPdfPath}`);
@@ -490,8 +490,16 @@ grestore`;
         if (colorOverrides && colorOverrides.inkColor) {
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
-        } else if (fs.existsSync(originalPdfPath)) {
-              // ALWAYS use the preserved original PDF to maintain EXACT color data
+        } 
+        // CRITICAL: Always use tight content SVG for exact bounds when Canvas-PDF Matcher extracts dimensions
+        else if (logo.filename && logo.filename.includes('_tight-content.svg')) {
+          console.log(`🎯 EXACT BOUNDS MODE: Tight content SVG detected - using SVG for precise dimensions instead of original PDF`);
+          console.log(`📐 DIMENSION PRECISION: Original PDF embedding compresses content (${((finalDimensions.widthPts * finalDimensions.heightPts) / (766.2 * 572.5) * 100).toFixed(1)}% compression), SVG maintains exact bounds: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+          console.log(`🎨 COLOR PRESERVATION: SVG will be converted to PDF with CMYK preservation to maintain both dimensions and colors`);
+          // Don't set logoPdfPath - force conversion from tight content SVG to preserve exact dimensions
+        }
+        else if (fs.existsSync(originalPdfPath)) {
+          // Use the preserved original PDF to maintain EXACT color data (only when no dimension corrections needed)
           logoPdfPath = originalPdfPath;
           shouldCleanup = false;
           console.log(`✅ Using preserved original PDF for EXACT color preservation: ${logo.originalFilename}`);
