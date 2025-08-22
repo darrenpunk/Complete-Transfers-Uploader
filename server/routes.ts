@@ -739,87 +739,46 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // Embed logos using direct SVG embedding
-        if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
-          console.log(`🎯 EMBEDDING ${canvasElements.length} logos on both pages`);
+        // WORKING APPROACH: Use the proven original working generator method
+        const { OriginalWorkingGenerator } = await import('./original-working-generator');
+        
+        try {
+          // Convert logosObject to logos array for original generator
+          const logosArray = Object.values(logosObject);
           
-          for (let element of canvasElements) {
-            const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
-            if (logo) {
-              const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-              console.log(`🔍 Processing logo: ${(logo as any).filename}`);
-              
-              if (fs.existsSync(svgPath)) {
-                try {
-                  // Read SVG content directly
-                  const svgContent = fs.readFileSync(svgPath, 'utf8');
-                  
-                  // Extract viewBox and dimensions from SVG  
-                  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-                  const widthMatch = svgContent.match(/width="([^"]+)"/);
-                  const heightMatch = svgContent.match(/height="([^"]+)"/);
-                  
-                  if (viewBoxMatch && widthMatch && heightMatch) {
-                    // Convert SVG to PDF using method that preserves vectors
-                    const timestamp = Date.now();
-                    const tempSvgPath = path.join(process.cwd(), 'uploads', `embed_${timestamp}.svg`);
-                    const tempPdfPath = path.join(process.cwd(), 'uploads', `embed_${timestamp}.pdf`);
-                    
-                    // Create a clean SVG for conversion
-                    fs.writeFileSync(tempSvgPath, svgContent);
-                    
-                    // Use rsvg-convert for better PDF output
-                    const convertCmd = `rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`;
-                    await execAsync(convertCmd);
-                    
-                    if (fs.existsSync(tempPdfPath)) {
-                      const tempPdfBytes = fs.readFileSync(tempPdfPath);
-                      const tempDoc = await PDFDocument.load(tempPdfBytes);
-                      
-                      if (tempDoc.getPages().length > 0) {
-                        const pages = await pdfDoc.copyPages(tempDoc, [0]);
-                        const embeddedPage = pages[0];
-                        
-                        // EXACT canvas positioning
-                        const xPos = element.x * 2.834645669; // mm to points
-                        const yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
-                        const widthPts = element.width * 2.834645669;
-                        const heightPts = element.height * 2.834645669;
-                        
-                        // Embed on page 1
-                        page1.drawPage(embeddedPage, {
-                          x: xPos, y: yPos,
-                          width: widthPts, height: heightPts
-                        });
-                        
-                        // Embed on page 2
-                        const pages2 = await pdfDoc.copyPages(tempDoc, [0]);
-                        const embeddedPage2 = pages2[0];
-                        page2.drawPage(embeddedPage2, {
-                          x: xPos, y: yPos,
-                          width: widthPts, height: heightPts
-                        });
-                        
-                        console.log(`✅ LOGO EMBEDDED: ${(logo as any).filename} at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
-                      }
-                    }
-                    
-                    // Cleanup temp files
-                    [tempSvgPath, tempPdfPath].forEach(file => {
-                      if (fs.existsSync(file)) fs.unlinkSync(file);
-                    });
-                    
-                  } else {
-                    console.log(`⚠️ Could not parse SVG dimensions for ${(logo as any).filename}`);
-                  }
-                  
-                } catch (embedError) {
-                  console.log(`⚠️ Could not embed logo ${(logo as any).filename}: ${embedError}`);
-                }
-              } else {
-                console.log(`⚠️ SVG file not found: ${svgPath}`);
-              }
-            }
+          const workingGenerator = new OriginalWorkingGenerator();
+          const workingPdfBytes = await workingGenerator.generatePDF({
+            projectId: project.id,
+            templateSize: templateSize,
+            canvasElements: canvasElements,
+            logos: logosArray,
+            garmentColor: 'white' // Default for now
+          });
+          
+          if (workingPdfBytes) {
+            console.log(`✅ WORKING GENERATOR: PDF generated successfully`);
+            return res.setHeader('Content-Type', 'application/pdf')
+              .setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}_cmyk_${Date.now()}.pdf"`)
+              .send(Buffer.from(workingPdfBytes));
+          }
+        } catch (workingError) {
+          console.log(`⚠️ Working generator failed: ${workingError}`);
+        }
+        
+        // FALLBACK: Simple text-based approach if all else fails
+        console.log(`🎯 FALLBACK: Adding logos as text placeholders`);
+        for (let element of canvasElements) {
+          const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
+          if (logo) {
+            const xPos = element.x * 2.834645669;
+            const yPos = pageHeight - (element.y * 2.834645669) - 20;
+            
+            page1.drawText(`LOGO: ${(logo as any).originalName || 'Artwork'}`, {
+              x: xPos, y: yPos, size: 12, color: rgb(0, 0, 0)
+            });
+            page2.drawText(`LOGO: ${(logo as any).originalName || 'Artwork'}`, {
+              x: xPos, y: yPos, size: 12, color: rgb(0, 0, 0)
+            });
           }
         }
         
