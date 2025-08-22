@@ -768,58 +768,44 @@ export async function registerRoutes(app: express.Application) {
                   
                   fs.writeFileSync(tempSvgPath, exactSvg);
                   
-                  // Convert with exact size preservation using Ghostscript for reliability
-                  const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -g${Math.round(EXACT_WIDTH_PTS * 4)}x${Math.round(EXACT_HEIGHT_PTS * 4)} -r288 -sOutputFile="${tempPdfPath}" "${tempSvgPath}"`;
+                  // RELIABLE APPROACH: Convert SVG to PNG and embed as image
+                  const tempPngPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.png`);
                   
-                  try {
-                    await execAsync(gsCmd);
-                  } catch (gsError) {
-                    // Fallback to rsvg-convert if Ghostscript fails
-                    const convertCmd = `rsvg-convert -f pdf -w ${EXACT_WIDTH_PTS} -h ${EXACT_HEIGHT_PTS} -o "${tempPdfPath}" "${tempSvgPath}"`;
-                    await execAsync(convertCmd);
-                  }
+                  // Convert SVG to high-quality PNG with exact dimensions
+                  const pngCmd = `rsvg-convert -f png -w ${Math.round(EXACT_WIDTH_PTS * 4)} -h ${Math.round(EXACT_HEIGHT_PTS * 4)} -o "${tempPngPath}" "${tempSvgPath}"`;
+                  await execAsync(pngCmd);
                   
-                  if (fs.existsSync(tempPdfPath)) {
-                    console.log(`📄 Temp PDF created: ${fs.statSync(tempPdfPath).size} bytes`);
-                    const tempPdfBytes = fs.readFileSync(tempPdfPath);
+                  if (fs.existsSync(tempPngPath)) {
+                    console.log(`🖼️ PNG created: ${fs.statSync(tempPngPath).size} bytes`);
                     
-                    try {
-                      const tempDoc = await PDFDocument.load(tempPdfBytes);
-                      const pages = tempDoc.getPages();
-                      
-                      if (pages.length > 0) {
-                        console.log(`📊 Temp PDF has ${pages.length} pages`);
-                        
-                        // EXACT POSITIONING: Use element position directly
-                        const xPos = element.x * 2.834645669; // mm to points
-                        const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
-                        
-                        console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-                        
-                        // Copy pages properly
-                        const copiedPages1 = await pdfDoc.copyPages(tempDoc, [0]);
-                        if (copiedPages1.length > 0 && copiedPages1[0]) {
-                          page1.drawPage(copiedPages1[0], {
-                            x: xPos, y: yPos,
-                            width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                          });
-                          console.log(`✅ Page 1: Logo embedded successfully`);
-                        }
-                        
-                        const copiedPages2 = await pdfDoc.copyPages(tempDoc, [0]);
-                        if (copiedPages2.length > 0 && copiedPages2[0]) {
-                          page2.drawPage(copiedPages2[0], {
-                            x: xPos, y: yPos,
-                            width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                          });
-                          console.log(`✅ Page 2: Logo embedded successfully`);
-                        }
-                        
-                        console.log(`✅ EXACT EMBED: Logo embedded at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
-                      }
-                    } catch (pdfLoadError) {
-                      console.log(`⚠️ Could not load temp PDF: ${pdfLoadError}`);
-                    }
+                    // Read PNG and embed as image
+                    const pngBytes = fs.readFileSync(tempPngPath);
+                    const pngImage = await pdfDoc.embedPng(pngBytes);
+                    
+                    // EXACT POSITIONING: Use element position directly
+                    const xPos = element.x * 2.834645669; // mm to points
+                    const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                    
+                    console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                    
+                    // Draw image on page 1
+                    page1.drawImage(pngImage, {
+                      x: xPos, y: yPos,
+                      width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                    });
+                    console.log(`✅ Page 1: PNG image embedded successfully`);
+                    
+                    // Draw image on page 2
+                    page2.drawImage(pngImage, {
+                      x: xPos, y: yPos,
+                      width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                    });
+                    console.log(`✅ Page 2: PNG image embedded successfully`);
+                    
+                    console.log(`✅ IMAGE EMBED: Logo embedded as PNG at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
+                    
+                    // Cleanup PNG file
+                    fs.unlinkSync(tempPngPath);
                   }
                   
                   // Cleanup temp files
