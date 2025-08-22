@@ -645,15 +645,26 @@ grestore`;
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);
       console.log(`🔍 DEBUG: Logo PDF path: ${logoPdfPath}`);
       
-      // Draw on both pages with exact dimensions
+      // CRITICAL FIX: Force exact dimensions and centering for PDF embedding
       const { degrees } = await import('pdf-lib');
+      
+      // Calculate centered position to fix off-center positioning  
+      const templateWidth = 841.89; // A3 width in pts
+      const centerX = (templateWidth - contentWidthPts) / 2;
+      const finalX = element.x === 0 ? centerX : xPts; // Use calculated center if user hasn't positioned manually
+      
+      console.log(`🎯 CENTERING FIX: Template width=${templateWidth}pts, content width=${contentWidthPts.toFixed(1)}pts, centered X=${centerX.toFixed(1)}pts, final X=${finalX.toFixed(1)}pts`);
+      console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from tight content SVG`);
+      
       const drawOptions = {
-        x: xPts,
+        x: finalX,
         y: yPts,
         width: contentWidthPts,
         height: contentHeightPts,
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       };
+      
+      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
       page1.drawPage(logoPage, drawOptions);
       page2.drawPage(logoPage, drawOptions);
