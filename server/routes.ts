@@ -749,9 +749,9 @@ export async function registerRoutes(app: express.Application) {
           canvasElements[0].height = scaledHeight;
         }
         
-        // Use RobustPDFGenerator which already handles individual garment colors correctly
-        const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-        const generator = new RobustPDFGenerator();
+        // Use GhostscriptPDFGenerator for perfect vector preservation without corruption
+        const { GhostscriptPDFGenerator } = await import('./ghostscript-pdf-generator');
+        const generator = new GhostscriptPDFGenerator();
         
         const pdfData = {
           canvasElements,
@@ -776,11 +776,11 @@ export async function registerRoutes(app: express.Application) {
         return;
       }
 
-      console.log('📦 ROBUST APPROACH: Using RobustPDFGenerator for complete color and dimension control...');
-      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-      console.log('✅ RobustPDFGenerator imported successfully');
-      const generator = new RobustPDFGenerator();
-      console.log('📊 Original working generator instance created');
+      console.log('📦 GHOSTSCRIPT APPROACH: Using GhostscriptPDFGenerator for perfect vector preservation...');
+      const { GhostscriptPDFGenerator } = await import('./ghostscript-pdf-generator');
+      console.log('✅ GhostscriptPDFGenerator imported successfully');
+      const generator = new GhostscriptPDFGenerator();
+      console.log('📊 Vector-preserving generator instance created');
 
       // ASPECT-RATIO PRESERVING: Scale to fit target area while preserving vector quality  
       console.log(`🎯 APPLYING ASPECT-RATIO PRESERVING SCALING for clean vectors`);
