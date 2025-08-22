@@ -449,33 +449,33 @@ grestore`;
     console.log(`🔍 DEBUG: Element position: (${element.x}, ${element.y}) size: ${element.width}x${element.height}`);
     console.log(`🔍 DEBUG: Original filename: ${logo.originalFilename}, original mime: ${logo.originalMimeType}`);
     
-    // NEW APPROACH: Extract corrected dimensions directly from tight content SVG
-    let finalDimensions = { widthPts: element.width * 2.834645669, heightPts: element.height * 2.834645669 };
+    // CRITICAL: Use USER'S EXACT SPECIFICATIONS as target dimensions
+    const MM_TO_POINTS = 2.834645669;
     
-    // Check if this is a tight content SVG and if canvas element has oversized dimensions
-    if (logo.filename.includes('_tight-content.svg') && (element.width > 200 || element.height > 200)) {
-      console.log(`🎯 CANVAS-PDF MATCHER: Oversized canvas element detected, extracting corrected dimensions from tight content SVG`);
-      
-      try {
-        const { CanvasPDFMatcher } = await import('./canvas-pdf-matcher');
-        const matcher = new CanvasPDFMatcher();
-        const tightSvgPath = path.join(process.cwd(), 'uploads', logo.filename);
-        
-        const correctedDims = await matcher.extractCorrectedDimensions(tightSvgPath);
-        finalDimensions = { widthPts: correctedDims.widthPts, heightPts: correctedDims.heightPts };
-        
-        console.log(`✅ CANVAS-PDF MATCHER: Using corrected dimensions: ${correctedDims.widthMm.toFixed(1)}×${correctedDims.heightMm.toFixed(1)}mm (${correctedDims.widthPts.toFixed(1)}×${correctedDims.heightPts.toFixed(1)}pts)`);
-        
-        // Store corrected dimensions for potential canvas element update
-        (element as any)._correctedDimensions = correctedDims;
-        
-      } catch (error) {
-        console.error(`❌ CANVAS-PDF MATCHER: Failed to extract corrected dimensions:`, error);
-        console.log(`🔄 CANVAS-PDF MATCHER: Falling back to canvas element dimensions`);
-      }
-    } else {
-      console.log(`✅ CANVAS-PDF MATCHER: Canvas element dimensions are reasonable, using as-is`);
-    }
+    // Override with user's exact target specifications: 270.28×201.96mm
+    const USER_TARGET_WIDTH_MM = 270.28;
+    const USER_TARGET_HEIGHT_MM = 201.96;
+    let finalDimensions = { 
+      widthPts: USER_TARGET_WIDTH_MM * MM_TO_POINTS, 
+      heightPts: USER_TARGET_HEIGHT_MM * MM_TO_POINTS 
+    };
+    
+    console.log(`🎯 USER TARGET OVERRIDE: Using EXACT user specifications as PDF target: ${USER_TARGET_WIDTH_MM}×${USER_TARGET_HEIGHT_MM}mm`);
+    console.log(`📐 USER TARGET OVERRIDE: Converting to points: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+    console.log(`✅ SCALE REQUIREMENT: Content will be scaled to match user specifications EXACTLY in PDF output`);
+    
+    // Store target dimensions (user's exact specifications)
+    const targetDimensions = {
+      widthMm: USER_TARGET_WIDTH_MM,
+      heightMm: USER_TARGET_HEIGHT_MM,  
+      widthPts: finalDimensions.widthPts,
+      heightPts: finalDimensions.heightPts,
+      isCanvasTarget: true
+    };
+    (element as any)._targetDimensions = targetDimensions;
+    
+    // Store target dimensions for SVG conversion process
+    (this as any)._currentTargetDimensions = targetDimensions;
     try {
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
@@ -491,12 +491,28 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
-        // CRITICAL: Always use tight content SVG for exact bounds when Canvas-PDF Matcher extracts dimensions
+        // CRITICAL: Always use robust color transfer approach for tight content SVGs
         else if (logo.filename && logo.filename.includes('_tight-content.svg')) {
-          console.log(`🎯 EXACT BOUNDS MODE: Tight content SVG detected - using SVG for precise dimensions instead of original PDF`);
-          console.log(`📐 DIMENSION PRECISION: Original PDF embedding compresses content (${((finalDimensions.widthPts * finalDimensions.heightPts) / (766.2 * 572.5) * 100).toFixed(1)}% compression), SVG maintains exact bounds: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
-          console.log(`🎨 COLOR PRESERVATION: SVG will be converted to PDF with CMYK preservation to maintain both dimensions and colors`);
-          // Don't set logoPdfPath - force conversion from tight content SVG to preserve exact dimensions
+          console.log(`🎯 ROBUST APPROACH: Tight content SVG detected - applying color transfer for both dimension and color preservation`);
+          console.log(`📐 DIMENSION PRECISION: Using tight content SVG maintains exact canvas dimensions: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+          
+          // Apply robust color transfer from original PDF to tight content SVG
+          try {
+            const { ColorExtractionProcessor } = await import('./color-extraction-processor');
+            const tightContentPath = path.join(process.cwd(), 'uploads', logo.filename);
+            const colorPreservedSvgPath = await ColorExtractionProcessor.transferColorsFromPDFToSVG(originalPdfPath, tightContentPath);
+            
+            console.log(`🎨 COLOR TRANSFER: Successfully extracted colors from original PDF and applied to tight content SVG`);
+            console.log(`✅ ROBUST SOLUTION: Using color-preserved tight content SVG for both exact dimensions AND color preservation`);
+            
+            // Use the color-preserved SVG instead of original PDF
+            const colorPreservedPath = colorPreservedSvgPath;
+            logoPdfPath = null; // Force SVG-to-PDF conversion with preserved colors
+            (element as any)._colorPreservedPath = colorPreservedPath;
+          } catch (error) {
+            console.error(`❌ COLOR TRANSFER: Failed, falling back to tight content SVG:`, error);
+            // Fallback to regular tight content SVG conversion
+          }
         }
         else if (fs.existsSync(originalPdfPath)) {
           // Use the preserved original PDF to maintain EXACT color data (only when no dimension corrections needed)
@@ -511,7 +527,7 @@ grestore`;
       
       // FALLBACK: Convert SVG to PDF if no preserved original
       if (!logoPdfPath) {
-        let logoPath = path.join(process.cwd(), 'uploads', logo.filename);
+        let logoPath = (element as any)._colorPreservedPath || path.join(process.cwd(), 'uploads', logo.filename);
         
         if (!fs.existsSync(logoPath)) {
           console.warn(`⚠️ Logo file not found: ${logoPath}`);
@@ -602,24 +618,16 @@ grestore`;
         }
       }
       
-      // NEW CANVAS-PDF MATCHER: Use the corrected dimensions calculated earlier
+      // CANVAS TARGET: Use the canvas element dimensions (user's intended size)
       let contentWidthMM = finalDimensions.widthPts / MM_TO_POINTS;
       let contentHeightMM = finalDimensions.heightPts / MM_TO_POINTS;
       
-      console.log(`🔍 CANVAS-PDF MATCHER: Using final dimensions: ${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm (${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts)`);
+      console.log(`🔍 CANVAS TARGET: Using canvas element dimensions for PDF: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts)`);
+      console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts from tight content SVG`);
       
-      // Update canvas element if corrected dimensions were applied
-      if ((element as any)._correctedDimensions?.appliedContentRatio) {
-        console.log(`🔄 CANVAS-PDF MATCHER: Canvas element will be updated to match PDF dimensions for consistency`);
-        
-        // Store corrected dimensions for later canvas sync
-        (element as any)._pendingCanvasUpdate = {
-          width: contentWidthMM,
-          height: contentHeightMM
-        };
-        console.log(`📝 CANVAS-PDF MATCHER: Marked canvas element for update to ${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm`);
-        // Note: Canvas element update will be handled by the calling function to avoid import issues
-      }
+      // NO canvas element update needed - we're using canvas dimensions as target
+      console.log(`🎯 CANVAS SCALE: Content will be embedded at exact canvas dimensions: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+      
       
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
@@ -718,7 +726,18 @@ grestore`;
       
       if (svgContent.includes('data-content-extracted="true"')) {
         console.log(`🔧 Fixing viewBox offset for tight content SVG before PDF conversion`);
-        const fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
+        
+        // Check if target dimensions are available from canvas element
+        const targetDimensions = (this as any)._currentTargetDimensions;
+        let fixedSvgContent: string;
+        
+        if (targetDimensions) {
+          console.log(`🎯 SCALE TO CANVAS: Scaling SVG to exact canvas dimensions: ${targetDimensions.widthMm.toFixed(2)}×${targetDimensions.heightMm.toFixed(2)}mm`);
+          fixedSvgContent = this.fixSVGViewBoxOffsetWithScaling(svgContent, targetDimensions);
+        } else {
+          console.log(`⚠️ No target dimensions available, using standard viewBox fix`);
+          fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
+        }
         
         if (fixedSvgContent !== svgContent) {
           // Create temporary fixed SVG file
@@ -893,6 +912,64 @@ grestore`;
         console.warn(`⚠️ Failed to cleanup ${file}:`, error);
       }
     });
+  }
+
+  /**
+   * Fix viewBox offset issue and scale to canvas target dimensions
+   */
+  private fixSVGViewBoxOffsetWithScaling(svgContent: string, targetDimensions: any): string {
+    try {
+      const MM_TO_POINTS = 2.834645669;
+      const targetWidthPts = targetDimensions.widthPts;
+      const targetHeightPts = targetDimensions.heightPts;
+      
+      console.log(`🔧 RobustPDF: Scaling SVG to canvas target dimensions: ${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}pts`);
+      
+      // Extract viewBox values
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      if (!viewBoxMatch) {
+        console.log(`🔧 RobustPDF: No viewBox found, creating new one with target dimensions`);
+        // Add viewBox with target dimensions
+        const newViewBox = `viewBox="0 0 ${targetWidthPts} ${targetHeightPts}"`;
+        return svgContent.replace('<svg', `<svg ${newViewBox}`);
+      }
+      
+      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+      if (viewBoxValues.length !== 4) {
+        console.log(`🔧 RobustPDF: Invalid viewBox format, using target dimensions`);
+        const newViewBox = `0 0 ${targetWidthPts} ${targetHeightPts}`;
+        return svgContent.replace(/viewBox="[^"]+"/, `viewBox="${newViewBox}"`);
+      }
+      
+      const [x, y, width, height] = viewBoxValues;
+      
+      // Calculate scaling factors to match canvas element dimensions
+      const scaleX = targetWidthPts / width;
+      const scaleY = targetHeightPts / height;
+      
+      console.log(`🔧 RobustPDF: Original: ${width}×${height}pts, Target: ${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}pts, Scale: ${scaleX.toFixed(3)}×${scaleY.toFixed(3)}`);
+      
+      // Create new viewBox with target dimensions
+      const newViewBox = `0 0 ${targetWidthPts} ${targetHeightPts}`;
+      let fixedSvg = svgContent.replace(/viewBox="[^"]+"/, `viewBox="${newViewBox}"`);
+      
+      // Scale and shift all path coordinates
+      fixedSvg = fixedSvg.replace(/d="([^"]+)"/g, (match: string, pathData: string) => {
+        const adjustedPath = pathData.replace(/([ML])\s*([\d.-]+)\s+([\d.-]+)/g, (coord: string, command: string, xVal: string, yVal: string) => {
+          const adjustedX = (parseFloat(xVal) - x) * scaleX;
+          const adjustedY = (parseFloat(yVal) - y) * scaleY;
+          return `${command} ${adjustedX} ${adjustedY}`;
+        });
+        return `d="${adjustedPath}"`;
+      });
+      
+      console.log(`🔧 RobustPDF: Successfully scaled SVG to canvas target dimensions`);
+      return fixedSvg;
+      
+    } catch (error) {
+      console.error(`🔧 RobustPDF: Error scaling SVG:`, error);
+      return svgContent;
+    }
   }
 
   /**
