@@ -680,41 +680,41 @@ export async function registerRoutes(app: express.Application) {
           console.log(`🔍 DEBUG: logoPath=${logoPath}, fileExists=${fileExists}`);
           
           if (fileExists) {
-            console.log(`🎯 TRYING CONTENT EXTRACTION APPROACH for original PDF: ${logo.originalFilename}`);
+            console.log(`🎯 TRYING IMAGE CONTROLLED APPROACH for original PDF: ${logo.originalFilename}`);
             
-            // Try Content Extraction first - this should give us exact dimensional control
+            // Try Image Controlled approach - convert to image then embed with exact control
             try {
-              const { ContentExtractionEmbedder } = await import('./content-extraction-embedder');
-              const pdfBuffer = await ContentExtractionEmbedder.createWithExtractedContent(logoPath, 270.28, 201.96);
+              const { ImageControlledEmbedder } = await import('./image-controlled-embedder');
+              const pdfBuffer = await ImageControlledEmbedder.createWithImageControl(logoPath, 270.28, 201.96);
               
-              const filename = `${project.name || 'project'}_qty1_extracted.pdf`;
+              const filename = `${project.name || 'project'}_qty1_controlled.pdf`;
               res.set({
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `attachment; filename="${filename}"`,
                 'Content-Length': pdfBuffer.length.toString()
               });
               
-              console.log(`✅ CONTENT EXTRACTION: PDF generation successful - exact dimensional control achieved`);
+              console.log(`✅ IMAGE CONTROLLED: PDF generation successful - exact dimensional control achieved`);
               return res.send(pdfBuffer);
-            } catch (extractionError) {
-              console.error(`❌ Content extraction failed, trying Simple PDF Embedder:`, extractionError);
+            } catch (imageError) {
+              console.error(`❌ Image controlled approach failed, trying Content Extraction:`, imageError);
               
-              // Fallback to Simple PDF Embedder
+              // Fallback to Content Extraction
               try {
-                const { SimplePDFEmbedder } = await import('./simple-pdf-embedder');
-                const pdfBuffer = await SimplePDFEmbedder.embedUsingPDFLib(logoPath, 270.28, 201.96);
+                const { ContentExtractionEmbedder } = await import('./content-extraction-embedder');
+                const pdfBuffer = await ContentExtractionEmbedder.createWithExtractedContent(logoPath, 270.28, 201.96);
                 
-                const filename = `${project.name || 'project'}_qty1_simple.pdf`;
+                const filename = `${project.name || 'project'}_qty1_extracted.pdf`;
                 res.set({
                   'Content-Type': 'application/pdf',
                   'Content-Disposition': `attachment; filename="${filename}"`,
                   'Content-Length': pdfBuffer.length.toString()
                 });
                 
-                console.log(`✅ SIMPLE EMBEDDER: PDF generation successful as fallback`);
+                console.log(`✅ CONTENT EXTRACTION: PDF generation successful as fallback`);
                 return res.send(pdfBuffer);
-              } catch (embedError) {
-                console.error(`❌ Both extraction methods failed, falling back to robust generator:`, embedError);
+              } catch (extractionError) {
+                console.error(`❌ Both advanced methods failed, falling back to robust generator:`, extractionError);
                 // Continue to robust generator
               }
             }
