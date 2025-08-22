@@ -491,28 +491,15 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
-        // CRITICAL: Always use robust color transfer approach for tight content SVGs
+        // OPTIMIZED: Use tight content SVG directly - colors already preserved during extraction
         else if (logo.filename && logo.filename.includes('_tight-content.svg')) {
-          console.log(`🎯 ROBUST APPROACH: Tight content SVG detected - applying color transfer for both dimension and color preservation`);
-          console.log(`📐 DIMENSION PRECISION: Using tight content SVG maintains exact canvas dimensions: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+          console.log(`🎯 OPTIMIZED APPROACH: Using tight content SVG directly - colors preserved during bounds extraction`);
+          console.log(`📐 DIMENSION PRECISION: Tight content SVG has exact target dimensions: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+          console.log(`🎨 COLOR PRESERVED: Original colors maintained in tight content SVG`);
           
-          // Apply robust color transfer from original PDF to tight content SVG
-          try {
-            const { ColorExtractionProcessor } = await import('./color-extraction-processor');
-            const tightContentPath = path.join(process.cwd(), 'uploads', logo.filename);
-            const colorPreservedSvgPath = await ColorExtractionProcessor.transferColorsFromPDFToSVG(originalPdfPath, tightContentPath);
-            
-            console.log(`🎨 COLOR TRANSFER: Successfully extracted colors from original PDF and applied to tight content SVG`);
-            console.log(`✅ ROBUST SOLUTION: Using color-preserved tight content SVG for both exact dimensions AND color preservation`);
-            
-            // Use the color-preserved SVG instead of original PDF
-            const colorPreservedPath = colorPreservedSvgPath;
-            logoPdfPath = null; // Force SVG-to-PDF conversion with preserved colors
-            (element as any)._colorPreservedPath = colorPreservedPath;
-          } catch (error) {
-            console.error(`❌ COLOR TRANSFER: Failed, falling back to tight content SVG:`, error);
-            // Fallback to regular tight content SVG conversion
-          }
+          // Use tight content SVG directly - no color transfer needed
+          logoPdfPath = null; // Force direct SVG-to-PDF conversion with preserved vectors and colors
+          console.log(`✅ DIRECT CONVERSION: Using tight content SVG with preserved vectors and colors`);
         }
         else if (fs.existsSync(originalPdfPath)) {
           // Use the preserved original PDF to maintain EXACT color data (only when no dimension corrections needed)
@@ -664,10 +651,10 @@ grestore`;
       // CRITICAL FIX: Force exact dimensions and centering for PDF embedding
       const { degrees } = await import('pdf-lib');
       
-      // Calculate centered position to fix off-center positioning  
+      // FORCE CENTERING: Always center content regardless of element position
       const templateWidth = 841.89; // A3 width in pts
       const centerX = (templateWidth - contentWidthPts) / 2;
-      const finalX = element.x === 0 ? centerX : xPts; // Use calculated center if user hasn't positioned manually
+      const finalX = centerX; // Always use calculated center for user target override
       
       console.log(`🎯 CENTERING FIX: Template width=${templateWidth}pts, content width=${contentWidthPts.toFixed(1)}pts, centered X=${centerX.toFixed(1)}pts, final X=${finalX.toFixed(1)}pts`);
       console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from tight content SVG`);
@@ -752,17 +739,17 @@ grestore`;
         console.log(`ℹ️ Not a tight content SVG, using original file`);
       }
       
-      // Use rsvg-convert for better vector preservation
-      const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${processedSvgPath}"`;
+      // Use Inkscape with optimal vector preservation settings
+      const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-area-page --export-filename="${pdfPath}" "${processedSvgPath}"`;
       try {
-        await execAsync(rsvgCmd);
-        console.log(`✅ rsvg-convert successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
-      } catch (rsvgError) {
-        console.warn('rsvg-convert failed, falling back to Inkscape');
-        // Fallback to Inkscape with better settings for color preservation
-        const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.4 --export-text-to-path --export-dpi=300 --export-filename="${pdfPath}" "${processedSvgPath}"`;
         await execAsync(inkscapeCmd);
-        console.log(`✅ Inkscape fallback successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
+        console.log(`✅ Inkscape conversion successful with vector preservation for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
+      } catch (inkscapeError) {
+        console.warn('Inkscape failed, falling back to rsvg-convert');
+        // Fallback to rsvg-convert
+        const rsvgCmd = `rsvg-convert --format=pdf --keep-aspect-ratio --output="${pdfPath}" "${processedSvgPath}"`;
+        await execAsync(rsvgCmd);
+        console.log(`✅ rsvg-convert fallback successful for ${isCMYKPreservedSVG ? 'CMYK-preserved' : 'standard'} SVG`);
       }
       
       // Clean up temporary fixed SVG file if created
