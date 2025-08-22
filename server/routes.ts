@@ -739,8 +739,8 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // EXACT SIZE AND POSITIONING FIX
-        console.log(`🎯 FIXING: Content size and positioning for exact canvas match`);
+        // EXACT SIZE AND POSITIONING FIX WITH VECTOR CONTENT
+        console.log(`🎯 FIXING: Content size and positioning for exact canvas match with VECTOR preservation`);
         
         if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
           for (let element of canvasElements) {
@@ -768,44 +768,49 @@ export async function registerRoutes(app: express.Application) {
                   
                   fs.writeFileSync(tempSvgPath, exactSvg);
                   
-                  // RELIABLE APPROACH: Convert SVG to PNG and embed as image
-                  const tempPngPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.png`);
+                  // VECTOR APPROACH: Use original PDF directly for CMYK preservation
+                  const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
                   
-                  // Convert SVG to high-quality PNG with exact dimensions
-                  const pngCmd = `rsvg-convert -f png -w ${Math.round(EXACT_WIDTH_PTS * 4)} -h ${Math.round(EXACT_HEIGHT_PTS * 4)} -o "${tempPngPath}" "${tempSvgPath}"`;
-                  await execAsync(pngCmd);
-                  
-                  if (fs.existsSync(tempPngPath)) {
-                    console.log(`🖼️ PNG created: ${fs.statSync(tempPngPath).size} bytes`);
+                  if (fs.existsSync(originalPdfPath)) {
+                    console.log(`📄 Using original PDF: ${originalPdfPath}`);
                     
-                    // Read PNG and embed as image
-                    const pngBytes = fs.readFileSync(tempPngPath);
-                    const pngImage = await pdfDoc.embedPng(pngBytes);
-                    
-                    // EXACT POSITIONING: Use element position directly
-                    const xPos = element.x * 2.834645669; // mm to points
-                    const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
-                    
-                    console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-                    
-                    // Draw image on page 1
-                    page1.drawImage(pngImage, {
-                      x: xPos, y: yPos,
-                      width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                    });
-                    console.log(`✅ Page 1: PNG image embedded successfully`);
-                    
-                    // Draw image on page 2
-                    page2.drawImage(pngImage, {
-                      x: xPos, y: yPos,
-                      width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                    });
-                    console.log(`✅ Page 2: PNG image embedded successfully`);
-                    
-                    console.log(`✅ IMAGE EMBED: Logo embedded as PNG at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
-                    
-                    // Cleanup PNG file
-                    fs.unlinkSync(tempPngPath);
+                    try {
+                      const originalPdfBytes = fs.readFileSync(originalPdfPath);
+                      const originalPdf = await PDFDocument.load(originalPdfBytes);
+                      
+                      if (originalPdf.getPages().length > 0) {
+                        // Get the first page and copy it
+                        const [originalPage] = originalPdf.getPages();
+                        const { width: origWidth, height: origHeight } = originalPage.getSize();
+                        
+                        console.log(`📐 Original PDF size: ${origWidth.toFixed(1)}×${origHeight.toFixed(1)}pts`);
+                        
+                        // EXACT POSITIONING: Use element position directly
+                        const xPos = element.x * 2.834645669; // mm to points
+                        const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                        
+                        console.log(`✅ EXACT VECTOR FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                        
+                        // Copy and embed original PDF page
+                        const [copiedPage1] = await pdfDoc.copyPages(originalPdf, [0]);
+                        page1.drawPage(copiedPage1, {
+                          x: xPos, y: yPos,
+                          width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                        });
+                        console.log(`✅ Page 1: VECTOR PDF embedded successfully`);
+                        
+                        const [copiedPage2] = await pdfDoc.copyPages(originalPdf, [0]);
+                        page2.drawPage(copiedPage2, {
+                          x: xPos, y: yPos,
+                          width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                        });
+                        console.log(`✅ Page 2: VECTOR PDF embedded successfully`);
+                        
+                        console.log(`✅ VECTOR EMBED: Original PDF embedded with CMYK preservation at exact user specs`);
+                      }
+                    } catch (originalPdfError) {
+                      console.log(`⚠️ Could not use original PDF: ${originalPdfError}`);
+                    }
                   }
                   
                   // Cleanup temp files
@@ -821,8 +826,8 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // ADD GARMENT COLOR BACKGROUND ON PAGE 2 FIRST
-        console.log(`🎨 Adding garment color background on page 2`);
+        // ADD GARMENT COLOR BACKGROUND ON PAGE 2 FIRST (BEFORE LOGOS)
+        console.log(`🎨 Adding garment color background on page 2 BEFORE logos`);
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
@@ -850,7 +855,46 @@ export async function registerRoutes(app: express.Application) {
         page2.drawText(`Project: ${project.name || 'Untitled'}`, { x: 20, y: pageHeight - 40, size: 12, color: rgb(0, 0, 0) });
         page2.drawText(`Quantity: ${project.quantity || 1}`, { x: 20, y: pageHeight - 60, size: 12, color: rgb(0, 0, 0) });
         
-        const pdfBytes = await pdfDoc.save();
+        // Save with CMYK color space preservation
+        const pdfBytes = await pdfDoc.save({
+          useObjectStreams: false,
+          addDefaultPage: false
+        });
+        
+        // Convert to CMYK color space for print production
+        const timestamp = Date.now();
+        const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_output_${timestamp}.pdf`);
+        const finalPdfPath = path.join(process.cwd(), 'uploads', `final_cmyk_${timestamp}.pdf`);
+        
+        // Save initial PDF
+        fs.writeFileSync(tempPdfPath, pdfBytes);
+        
+        // Convert to CMYK color space using Ghostscript
+        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dPDFSETTINGS=/prepress -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
+        
+        try {
+          await execAsync(cmykCmd);
+          
+          if (fs.existsSync(finalPdfPath)) {
+            const cmykPdfBytes = fs.readFileSync(finalPdfPath);
+            console.log(`✅ CMYK PDF generated: ${cmykPdfBytes.length} bytes`);
+            
+            // Cleanup temp files
+            [tempPdfPath, finalPdfPath].forEach(file => {
+              if (fs.existsSync(file)) fs.unlinkSync(file);
+            });
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}_cmyk.pdf"`);
+            res.send(Buffer.from(cmykPdfBytes));
+            return;
+          }
+        } catch (cmykError) {
+          console.log(`⚠️ CMYK conversion failed: ${cmykError}`);
+        }
+        
+        // Fallback to original RGB PDF
+        const fallbackPdfBytes = pdfBytes;
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
