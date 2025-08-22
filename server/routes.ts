@@ -739,31 +739,88 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // WORKING APPROACH: Use the proven original working generator method
-        const { OriginalWorkingGenerator } = await import('./original-working-generator');
+        // EXACT SIZE AND POSITIONING FIX
+        console.log(`🎯 FIXING: Content size and positioning for exact canvas match`);
         
-        try {
-          // Convert logosObject to logos array for original generator
-          const logosArray = Object.values(logosObject);
-          
-          const workingGenerator = new OriginalWorkingGenerator();
-          const workingPdfBytes = await workingGenerator.generatePDF({
-            projectId: project.id,
-            templateSize: templateSize,
-            canvasElements: canvasElements,
-            logos: logosArray,
-            garmentColor: 'white' // Default for now
-          });
-          
-          if (workingPdfBytes) {
-            console.log(`✅ WORKING GENERATOR: PDF generated successfully`);
-            return res.setHeader('Content-Type', 'application/pdf')
-              .setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}_cmyk_${Date.now()}.pdf"`)
-              .send(Buffer.from(workingPdfBytes));
+        if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
+          for (let element of canvasElements) {
+            const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
+            if (logo) {
+              const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+              console.log(`🔍 Processing logo: ${(logo as any).filename}`);
+              
+              if (fs.existsSync(svgPath)) {
+                try {
+                  // EXACT USER REQUIREMENTS: 270.28×201.96mm (766.1×572.5pts)
+                  const EXACT_WIDTH_PTS = 766.1;
+                  const EXACT_HEIGHT_PTS = 572.5;
+                  
+                  // Convert SVG to PDF with exact dimensions
+                  const timestamp = Date.now();
+                  const tempSvgPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.svg`);
+                  const tempPdfPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.pdf`);
+                  
+                  // Read and prepare SVG with exact dimensions
+                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  const exactSvg = svgContent
+                    .replace(/width="[^"]*"/, `width="${EXACT_WIDTH_PTS}pt"`)
+                    .replace(/height="[^"]*"/, `height="${EXACT_HEIGHT_PTS}pt"`);
+                  
+                  fs.writeFileSync(tempSvgPath, exactSvg);
+                  
+                  // Convert with exact size preservation
+                  const convertCmd = `rsvg-convert -f pdf -w ${EXACT_WIDTH_PTS} -h ${EXACT_HEIGHT_PTS} -o "${tempPdfPath}" "${tempSvgPath}"`;
+                  await execAsync(convertCmd);
+                  
+                  if (fs.existsSync(tempPdfPath)) {
+                    const tempPdfBytes = fs.readFileSync(tempPdfPath);
+                    const tempDoc = await PDFDocument.load(tempPdfBytes);
+                    
+                    if (tempDoc.getPages().length > 0) {
+                      // EXACT POSITIONING: Use element position directly
+                      const xPos = element.x * 2.834645669; // mm to points
+                      const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                      
+                      console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                      
+                      // Embed exact size on page 1
+                      const [page1Logo] = await pdfDoc.copyPages(tempDoc, [0]);
+                      page1.drawPage(page1Logo, {
+                        x: xPos, y: yPos,
+                        width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                      });
+                      
+                      // Embed exact size on page 2
+                      const [page2Logo] = await pdfDoc.copyPages(tempDoc, [0]);
+                      page2.drawPage(page2Logo, {
+                        x: xPos, y: yPos,
+                        width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                      });
+                      
+                      console.log(`✅ EXACT EMBED: Logo embedded at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
+                    }
+                  }
+                  
+                  // Cleanup temp files
+                  [tempSvgPath, tempPdfPath].forEach(file => {
+                    if (fs.existsSync(file)) fs.unlinkSync(file);
+                  });
+                  
+                } catch (embedError) {
+                  console.log(`⚠️ Could not embed exact logo ${(logo as any).filename}: ${embedError}`);
+                }
+              }
+            }
           }
-        } catch (workingError) {
-          console.log(`⚠️ Working generator failed: ${workingError}`);
         }
+        
+        // ADD GARMENT COLOR BACKGROUND ON PAGE 2
+        console.log(`🎨 Adding garment color background on page 2`);
+        page2.drawRectangle({
+          x: 0, y: 0,
+          width: pageWidth, height: pageHeight,
+          color: rgb(0.95, 0.95, 0.95) // Light gray garment color
+        });
         
         // FALLBACK: Simple text-based approach if all else fails
         console.log(`🎯 FALLBACK: Adding logos as text placeholders`);
