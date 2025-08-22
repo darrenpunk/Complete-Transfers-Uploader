@@ -768,36 +768,57 @@ export async function registerRoutes(app: express.Application) {
                   
                   fs.writeFileSync(tempSvgPath, exactSvg);
                   
-                  // Convert with exact size preservation
-                  const convertCmd = `rsvg-convert -f pdf -w ${EXACT_WIDTH_PTS} -h ${EXACT_HEIGHT_PTS} -o "${tempPdfPath}" "${tempSvgPath}"`;
-                  await execAsync(convertCmd);
+                  // Convert with exact size preservation using Ghostscript for reliability
+                  const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -g${Math.round(EXACT_WIDTH_PTS * 4)}x${Math.round(EXACT_HEIGHT_PTS * 4)} -r288 -sOutputFile="${tempPdfPath}" "${tempSvgPath}"`;
+                  
+                  try {
+                    await execAsync(gsCmd);
+                  } catch (gsError) {
+                    // Fallback to rsvg-convert if Ghostscript fails
+                    const convertCmd = `rsvg-convert -f pdf -w ${EXACT_WIDTH_PTS} -h ${EXACT_HEIGHT_PTS} -o "${tempPdfPath}" "${tempSvgPath}"`;
+                    await execAsync(convertCmd);
+                  }
                   
                   if (fs.existsSync(tempPdfPath)) {
+                    console.log(`📄 Temp PDF created: ${fs.statSync(tempPdfPath).size} bytes`);
                     const tempPdfBytes = fs.readFileSync(tempPdfPath);
-                    const tempDoc = await PDFDocument.load(tempPdfBytes);
                     
-                    if (tempDoc.getPages().length > 0) {
-                      // EXACT POSITIONING: Use element position directly
-                      const xPos = element.x * 2.834645669; // mm to points
-                      const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                    try {
+                      const tempDoc = await PDFDocument.load(tempPdfBytes);
+                      const pages = tempDoc.getPages();
                       
-                      console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-                      
-                      // Embed exact size on page 1
-                      const [page1Logo] = await pdfDoc.copyPages(tempDoc, [0]);
-                      page1.drawPage(page1Logo, {
-                        x: xPos, y: yPos,
-                        width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                      });
-                      
-                      // Embed exact size on page 2
-                      const [page2Logo] = await pdfDoc.copyPages(tempDoc, [0]);
-                      page2.drawPage(page2Logo, {
-                        x: xPos, y: yPos,
-                        width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                      });
-                      
-                      console.log(`✅ EXACT EMBED: Logo embedded at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
+                      if (pages.length > 0) {
+                        console.log(`📊 Temp PDF has ${pages.length} pages`);
+                        
+                        // EXACT POSITIONING: Use element position directly
+                        const xPos = element.x * 2.834645669; // mm to points
+                        const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                        
+                        console.log(`✅ EXACT FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                        
+                        // Copy pages properly
+                        const copiedPages1 = await pdfDoc.copyPages(tempDoc, [0]);
+                        if (copiedPages1.length > 0 && copiedPages1[0]) {
+                          page1.drawPage(copiedPages1[0], {
+                            x: xPos, y: yPos,
+                            width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                          });
+                          console.log(`✅ Page 1: Logo embedded successfully`);
+                        }
+                        
+                        const copiedPages2 = await pdfDoc.copyPages(tempDoc, [0]);
+                        if (copiedPages2.length > 0 && copiedPages2[0]) {
+                          page2.drawPage(copiedPages2[0], {
+                            x: xPos, y: yPos,
+                            width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                          });
+                          console.log(`✅ Page 2: Logo embedded successfully`);
+                        }
+                        
+                        console.log(`✅ EXACT EMBED: Logo embedded at exact user specs ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
+                      }
+                    } catch (pdfLoadError) {
+                      console.log(`⚠️ Could not load temp PDF: ${pdfLoadError}`);
                     }
                   }
                   
@@ -814,12 +835,12 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // ADD GARMENT COLOR BACKGROUND ON PAGE 2
+        // ADD GARMENT COLOR BACKGROUND ON PAGE 2 FIRST
         console.log(`🎨 Adding garment color background on page 2`);
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
-          color: rgb(0.95, 0.95, 0.95) // Light gray garment color
+          color: rgb(0.85, 0.85, 0.85) // Light gray garment color
         });
         
         // FALLBACK: Simple text-based approach if all else fails
