@@ -739,20 +739,24 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // Embed logos on BOTH pages using ORIGINAL PDF files
+        // Embed logos using SVG conversion to maintain quality  
         if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
           for (let element of canvasElements) {
             const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
-            if (logo && (logo as any).originalFilename && (logo as any).originalFilename.endsWith('.pdf')) {
-              const originalPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
-              if (fs.existsSync(originalPath)) {
+            if (logo) {
+              const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+              if (fs.existsSync(svgPath)) {
                 try {
-                  const originalPdfBytes = fs.readFileSync(originalPath);
-                  const originalPdf = await PDFDocument.load(originalPdfBytes);
+                  // Convert SVG to PDF for embedding
+                  const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
+                  const convertCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${svgPath}"`;
                   
-                  if (originalPdf.getPages().length > 0) {
-                    const embeddedPages = await pdfDoc.copyPages(originalPdf, [0]);
-                    const embeddedPage = embeddedPages[0];
+                  await execAsync(convertCmd);
+                  
+                  if (fs.existsSync(tempPdfPath)) {
+                    const tempPdfBytes = fs.readFileSync(tempPdfPath);
+                    const tempPdf = await PDFDocument.load(tempPdfBytes);
+                    const [tempPage] = await pdfDoc.copyPages(tempPdf, [0]);
                     
                     // EXACT canvas positioning - no transformations
                     const xPos = element.x * 2.834645669; // mm to points
@@ -761,21 +765,31 @@ export async function registerRoutes(app: express.Application) {
                     const heightPts = element.height * 2.834645669;
                     
                     // Embed on page 1
-                    page1.drawPage(embeddedPage, {
+                    page1.drawPage(tempPage, {
                       x: xPos, y: yPos,
                       width: widthPts, height: heightPts
                     });
                     
-                    // Embed on page 2  
-                    page2.drawPage(embeddedPage, {
+                    // Create second page for page 2  
+                    const [tempPage2] = await pdfDoc.copyPages(tempPdf, [0]);
+                    page2.drawPage(tempPage2, {
                       x: xPos, y: yPos,
                       width: widthPts, height: heightPts
                     });
                     
-                    console.log(`✅ DIRECT EMBED: Original PDF embedded at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
+                    console.log(`✅ SVG EMBED: Logo embedded at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
+                    
+                    // Cleanup temp file
+                    fs.unlinkSync(tempPdfPath);
                   }
                 } catch (embedError) {
-                  console.log(`⚠️ Could not embed original PDF: ${embedError}`);
+                  console.log(`⚠️ Could not embed SVG: ${embedError}`);
+                  // Fallback - show placeholder
+                  page1.drawText('Logo will appear here', { 
+                    x: element.x * 2.834645669, 
+                    y: pageHeight - (element.y * 2.834645669), 
+                    size: 12 
+                  });
                 }
               }
             }
