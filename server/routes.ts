@@ -711,69 +711,31 @@ export async function registerRoutes(app: express.Application) {
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
-      // BYPASS ALL COMPLEX SYSTEMS - Use Ghostscript directly
-      console.log('📄 GHOSTSCRIPT DIRECT: Bypassing pdf-lib entirely');
+      // RESTORE ORIGINAL WORKING SYSTEM
+      console.log('📄 ORIGINAL: Using the original working PDF generator that actually embeds logos');
       
-      try {
-        const fs = await import('fs');
-        const timestamp = Date.now();
-        const workDir = path.join(process.cwd(), 'uploads');
-        
-        // Create simple 2-page PDF with Ghostscript PostScript
-        const psContent = `%!PS-Adobe-3.0
-%%Pages: 2
-%%PageOrder: Ascend
-%%BoundingBox: 0 0 842 1191
-%%DocumentMedia: A3 842 1191 0 () ()
-
-%%Page: 1 1
-<</PageSize [842 1191]>> setpagedevice
-% Page 1 - Artwork placeholder
-/Helvetica findfont 16 scalefont setfont
-50 600 moveto
-(Artwork: ${project.name || 'Untitled Project'}) show
-
-%%Page: 2 2  
-<</PageSize [842 1191]>> setpagedevice
-% Page 2 - Project info
-/Helvetica findfont 12 scalefont setfont
-20 1150 moveto
-(Project: ${project.name || 'Untitled'}) show
-20 1130 moveto
-(Quantity: ${project.quantity || 1}) show
-
-%%EOF`;
-
-        // Save PostScript file
-        const psPath = path.join(workDir, `simple_${timestamp}.ps`);
-        fs.writeFileSync(psPath, psContent);
-        
-        // Convert to PDF with Ghostscript
-        const pdfPath = path.join(workDir, `simple_${timestamp}.pdf`);
-        const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -o "${pdfPath}" "${psPath}"`;
-        
-        await execAsync(gsCmd);
-        
-        // Read the generated PDF
-        const pdfBuffer = fs.readFileSync(pdfPath);
-        
-        // Cleanup
-        [psPath, pdfPath].forEach(file => {
-          if (fs.existsSync(file)) {
-            fs.unlinkSync(file);
-          }
-        });
-        
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
-        res.send(pdfBuffer);
-        return;
-        
-      } catch (error) {
-        console.error('❌ Ghostscript direct failed:', error);
-        res.status(500).json({ error: 'PDF generation failed' });
-        return;
-      }
+      const { OriginalWorkingGenerator } = await import('./original-working-generator');
+      const generator = new OriginalWorkingGenerator();
+      
+      const pdfData = {
+        projectId: projectId,
+        canvasElements,
+        logos: Object.values(logosObject),
+        templateSize,
+        garmentColor: project.garmentColor,
+        projectName: project.name || 'Untitled Project',
+        quantity: project.quantity || 1,
+        comments: project.comments || ''
+      };
+      
+      console.log(`🔍 DEBUG: PDF Data - Elements: ${canvasElements.length}, Logos: ${Object.values(logosObject).length}`);
+      
+      const pdfBuffer = await generator.generatePDF(pdfData);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
+      res.send(pdfBuffer);
+      return;
 
       // This should never be reached due to early return above
       console.log('❌ Unexpected fallthrough - this should not happen');
