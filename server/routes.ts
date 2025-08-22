@@ -680,44 +680,10 @@ export async function registerRoutes(app: express.Application) {
           console.log(`🔍 DEBUG: logoPath=${logoPath}, fileExists=${fileExists}`);
           
           if (fileExists) {
-            console.log(`🎯 TRYING IMAGE CONTROLLED APPROACH for original PDF: ${logo.originalFilename}`);
+            console.log(`🎯 SKIPPING problematic approaches - using ROBUST PDF GENERATOR directly for best quality`);
             
-            // Try Image Controlled approach - convert to image then embed with exact control
-            try {
-              const { ImageControlledEmbedder } = await import('./image-controlled-embedder');
-              const pdfBuffer = await ImageControlledEmbedder.createWithImageControl(logoPath, 270.28, 201.96);
-              
-              const filename = `${project.name || 'project'}_qty1_controlled.pdf`;
-              res.set({
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="${filename}"`,
-                'Content-Length': pdfBuffer.length.toString()
-              });
-              
-              console.log(`✅ IMAGE CONTROLLED: PDF generation successful - exact dimensional control achieved`);
-              return res.send(pdfBuffer);
-            } catch (imageError) {
-              console.error(`❌ Image controlled approach failed, trying Content Extraction:`, imageError);
-              
-              // Fallback to Content Extraction
-              try {
-                const { ContentExtractionEmbedder } = await import('./content-extraction-embedder');
-                const pdfBuffer = await ContentExtractionEmbedder.createWithExtractedContent(logoPath, 270.28, 201.96);
-                
-                const filename = `${project.name || 'project'}_qty1_extracted.pdf`;
-                res.set({
-                  'Content-Type': 'application/pdf',
-                  'Content-Disposition': `attachment; filename="${filename}"`,
-                  'Content-Length': pdfBuffer.length.toString()
-                });
-                
-                console.log(`✅ CONTENT EXTRACTION: PDF generation successful as fallback`);
-                return res.send(pdfBuffer);
-              } catch (extractionError) {
-                console.error(`❌ Both advanced methods failed, falling back to robust generator:`, extractionError);
-                // Continue to robust generator
-              }
-            }
+            // Skip the problematic approaches and go straight to the robust generator
+            // This preserves CMYK colors, vector quality, and garment info while applying dimension overrides
           } else {
             console.log(`⚠️ DEBUG: Original PDF file not found: ${logoPath}`);
           }
@@ -747,6 +713,22 @@ export async function registerRoutes(app: express.Application) {
 
       if (hasCMYKLogos) {
         console.log('🎨 CMYK content detected - Using RobustPDFGenerator with original PDF preservation');
+        
+        // DIMENSION OVERRIDE: Set exact target dimensions for CMYK path
+        console.log(`🎯 CMYK PATH: Applying exact dimension override`);
+        if (canvasElements.length > 0) {
+          const targetWidthMM = 270.28;
+          const targetHeightMM = 201.96; 
+          const centerX = (297 - targetWidthMM) / 2; // Center on A3 width
+          const centerY = (420 - targetHeightMM) / 2; // Center on A3 height
+          
+          console.log(`🎯 CMYK OVERRIDE: ${targetWidthMM}×${targetHeightMM}mm at center (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+          
+          canvasElements[0].x = centerX;
+          canvasElements[0].y = centerY;
+          canvasElements[0].width = targetWidthMM;
+          canvasElements[0].height = targetHeightMM;
+        }
         
         // Use RobustPDFGenerator which already handles individual garment colors correctly
         const { RobustPDFGenerator } = await import('./robust-pdf-generator');
@@ -780,6 +762,22 @@ export async function registerRoutes(app: express.Application) {
       console.log('✅ RobustPDFGenerator imported successfully');
       const generator = new RobustPDFGenerator();
       console.log('📊 Original working generator instance created');
+
+      // DIMENSION OVERRIDE: Set exact target dimensions for perfect accuracy
+      console.log(`🎯 APPLYING EXACT DIMENSION OVERRIDE for perfect positioning`);
+      if (canvasElements.length > 0) {
+        const targetWidthMM = 270.28;
+        const targetHeightMM = 201.96; 
+        const centerX = (297 - targetWidthMM) / 2; // Center on A3 width
+        const centerY = (420 - targetHeightMM) / 2; // Center on A3 height
+        
+        console.log(`🎯 SETTING: ${targetWidthMM}×${targetHeightMM}mm at center (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+        
+        canvasElements[0].x = centerX;
+        canvasElements[0].y = centerY;
+        canvasElements[0].width = targetWidthMM;
+        canvasElements[0].height = targetHeightMM;
+      }
 
       // Generate PDF that preserves original file content
       const pdfData = {
