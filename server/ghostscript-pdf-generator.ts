@@ -107,51 +107,23 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create Page 1: Pure artwork on transparent background
+   * Create Page 1: Artwork positioned correctly on template-sized canvas
    */
   private async createArtworkPage(data: ProjectData, workDir: string, timestamp: number): Promise<string> {
-    console.log(`📄 Creating Page 1: Artwork layout (transparent background)`);
+    console.log(`📄 Creating Page 1: Artwork layout with correct canvas positioning`);
     
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
     const MM_TO_POINTS = 2.834645669;
     
-    // Target dimensions: 270.28×201.96mm = 766.1×572.5pts
-    const USER_TARGET_WIDTH_MM = 270.28;
-    const USER_TARGET_HEIGHT_MM = 201.96;
-    const pageWidthPts = USER_TARGET_WIDTH_MM * MM_TO_POINTS;
-    const pageHeightPts = USER_TARGET_HEIGHT_MM * MM_TO_POINTS;
+    // Use template size for the page (A3: 297×420mm)
+    const templateWidthMM = data.templateSize.width;
+    const templateHeightMM = data.templateSize.height;
+    const pageWidthPts = templateWidthMM * MM_TO_POINTS;
+    const pageHeightPts = templateHeightMM * MM_TO_POINTS;
     
-    console.log(`📐 Page 1 exact dimensions: ${USER_TARGET_WIDTH_MM}×${USER_TARGET_HEIGHT_MM}mm = ${pageWidthPts.toFixed(1)}×${pageHeightPts.toFixed(1)}pts`);
+    console.log(`📐 Page 1 template dimensions: ${templateWidthMM}×${templateHeightMM}mm = ${pageWidthPts.toFixed(1)}×${pageHeightPts.toFixed(1)}pts`);
     
-    // For single element, center it on the page
-    if (data.canvasElements.length === 1) {
-      const element = data.canvasElements[0];
-      const logo = data.logos.find(l => l.id === element.logoId);
-      
-      if (logo) {
-        console.log(`🎯 Single element: Using direct PDF positioning for perfect vector preservation`);
-        
-        // Use the original PDF directly with exact target dimensions
-        let logoSourcePath = this.getLogoSourcePath(logo, element);
-        
-        if (!fs.existsSync(logoSourcePath)) {
-          throw new Error(`Logo source file not found: ${logoSourcePath}`);
-        }
-        
-        // Create the artwork page by scaling the logo to exact target size and centering it
-        // First, create a blank page of exact target size, then scale and center the logo content
-        const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -o "${page1Path}" -c "<</PageSize [${pageWidthPts} ${pageHeightPts}]>> setpagedevice" -c "0 0 translate" -c "${pageWidthPts} ${pageHeightPts} scale" -f "${logoSourcePath}"`;
-        
-        console.log(`🔧 GHOSTSCRIPT: Creating exactly sized PDF (${pageWidthPts.toFixed(1)}×${pageHeightPts.toFixed(1)}pts) with centered vector content`);
-        console.log(`📋 Command: ${gsCmd}`);
-        await execAsync(gsCmd);
-        
-        console.log(`✅ Page 1 created with perfect vector scaling: ${page1Path}`);
-        return page1Path;
-      }
-    }
-    
-    // For multiple elements, create composite layout
+    // Create composite layout with all elements positioned correctly
     return await this.createCompositeArtworkPage(data, workDir, timestamp, pageWidthPts, pageHeightPts);
   }
   
@@ -184,78 +156,98 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create composite artwork page for multiple elements
+   * Create artwork page with proper canvas positioning using single PostScript approach
    */
   private async createCompositeArtworkPage(data: ProjectData, workDir: string, timestamp: number, pageWidthPts: number, pageHeightPts: number): Promise<string> {
-    console.log(`📄 Creating composite artwork page for ${data.canvasElements.length} elements`);
+    console.log(`📄 Creating artwork page with canvas positioning for ${data.canvasElements.length} elements`);
     
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
     const MM_TO_POINTS = 2.834645669;
     
-    // Create base PostScript file
+    // Create PostScript file with positioned logos
     const psPath = path.join(workDir, `artwork_${timestamp}.ps`);
     let psContent = `%!PS-Adobe-3.0
 %%BoundingBox: 0 0 ${pageWidthPts} ${pageHeightPts}
 %%Pages: 1
 %%Page: 1 1
-% Artwork page - transparent background
+% Artwork page with transparent background
 `;
     
-    // Add each logo with exact positioning
+    // Add each logo with proper canvas positioning
     for (const element of data.canvasElements) {
       const logo = data.logos.find(l => l.id === element.logoId);
       if (logo) {
         const logoSourcePath = this.getLogoSourcePath(logo, element);
-        const logoPS = await this.createLogoPS(logoSourcePath, element, MM_TO_POINTS, pageHeightPts);
-        psContent += logoPS + '\n';
+        
+        // Calculate position in PostScript coordinates (bottom-left origin)
+        const xPts = element.x * MM_TO_POINTS;
+        const yPts = pageHeightPts - (element.y * MM_TO_POINTS) - (element.height * MM_TO_POINTS);
+        const widthPts = element.width * MM_TO_POINTS;
+        const heightPts = element.height * MM_TO_POINTS;
+        
+        console.log(`📍 Adding logo to PostScript at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+        
+        // Convert logo to PDF first if it's SVG
+        let logoPdfPath = logoSourcePath;
+        if (logoSourcePath.toLowerCase().endsWith('.svg')) {
+          const tempPdfPath = path.join(workDir, `temp_${element.id}_${timestamp}.pdf`);
+          const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoSourcePath}"`;
+          await execAsync(inkscapeCmd);
+          logoPdfPath = tempPdfPath;
+        }
+        
+        // Add logo positioning to PostScript
+        psContent += `
+% Logo: ${logo.filename}
+gsave
+${xPts} ${yPts} translate
+${widthPts} ${heightPts} scale
+% Use external PDF inclusion for vector preservation
+(${logoPdfPath}) (r) file runpdfbegin
+1 pdfgetpage pdfshowpage
+runpdfend
+grestore
+`;
       }
     }
     
-    psContent += '%%EOF';
+    psContent += `
+showpage
+%%EOF`;
+    
     fs.writeFileSync(psPath, psContent);
     
     // Convert PostScript to PDF using Ghostscript
     const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${page1Path}" "${psPath}"`;
-    await execAsync(gsCmd);
     
-    // Cleanup PS file
-    if (fs.existsSync(psPath)) {
-      fs.unlinkSync(psPath);
+    try {
+      console.log(`🔧 Converting PostScript to PDF with positioned logos`);
+      await execAsync(gsCmd);
+      console.log(`✅ Artwork page created successfully`);
+    } catch (error) {
+      console.error(`❌ PostScript conversion failed:`, error);
+      throw error;
     }
     
-    console.log(`✅ Composite artwork page created: ${page1Path}`);
+    // Cleanup PostScript file and temporary PDFs
+    [psPath].forEach(file => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+      }
+    });
+    
+    // Cleanup temporary logo PDFs
+    for (const element of data.canvasElements) {
+      const tempPdfPath = path.join(workDir, `temp_${element.id}_${timestamp}.pdf`);
+      if (fs.existsSync(tempPdfPath)) {
+        fs.unlinkSync(tempPdfPath);
+      }
+    }
+    
+    console.log(`✅ Artwork page created with proper canvas positioning: ${page1Path}`);
     return page1Path;
   }
   
-  /**
-   * Create PostScript for individual logo positioning
-   */
-  private async createLogoPS(logoPath: string, element: any, mmToPoints: number, pageHeightPts: number): Promise<string> {
-    const xPts = element.x * mmToPoints;
-    const yPts = pageHeightPts - (element.y * mmToPoints) - (element.height * mmToPoints); // PDF coordinate system
-    const widthPts = element.width * mmToPoints;
-    const heightPts = element.height * mmToPoints;
-    
-    console.log(`📍 Logo positioning: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
-    
-    // For SVG files, convert to PDF first
-    if (logoPath.toLowerCase().endsWith('.svg')) {
-      const timestamp = Date.now();
-      const tempPdfPath = path.join(path.dirname(logoPath), `temp_logo_${timestamp}.pdf`);
-      
-      // Convert SVG to PDF with exact dimensions
-      const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" --export-width=${widthPts} --export-height=${heightPts} "${logoPath}"`;
-      await execAsync(inkscapeCmd);
-      
-      logoPath = tempPdfPath;
-    }
-    
-    return `gsave
-${xPts} ${yPts} translate
-${widthPts} ${heightPts} scale
-% Embed PDF content here via external PDF inclusion
-grestore`;
-  }
   
   /**
    * Create Page 2: Garment color backgrounds with project info
@@ -266,11 +258,11 @@ grestore`;
     const page2Path = path.join(workDir, `page2_${timestamp}.pdf`);
     const MM_TO_POINTS = 2.834645669;
     
-    // Same dimensions as page 1
-    const USER_TARGET_WIDTH_MM = 270.28;
-    const USER_TARGET_HEIGHT_MM = 201.96;
-    const pageWidthPts = USER_TARGET_WIDTH_MM * MM_TO_POINTS;
-    const pageHeightPts = USER_TARGET_HEIGHT_MM * MM_TO_POINTS;
+    // Use template size for page 2 as well
+    const templateWidthMM = data.templateSize.width;
+    const templateHeightMM = data.templateSize.height;
+    const pageWidthPts = templateWidthMM * MM_TO_POINTS;
+    const pageHeightPts = templateHeightMM * MM_TO_POINTS;
     
     // Create PostScript for page 2
     const psPath = path.join(workDir, `garment_${timestamp}.ps`);
