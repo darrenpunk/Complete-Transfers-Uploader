@@ -739,118 +739,50 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // EXACT SIZE AND POSITIONING FIX WITH VECTOR CONTENT
-        console.log(`🎯 FIXING: Content size and positioning for exact canvas match with VECTOR preservation`);
+        // USE ORIGINAL WORKING GENERATOR - The proven method that actually works
+        console.log(`🚀 USING ORIGINAL WORKING GENERATOR: Proven method that works`);
         
-        if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
-          for (let element of canvasElements) {
-            const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
-            if (logo) {
-              const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-              console.log(`🔍 Processing logo: ${(logo as any).filename}`);
-              
-              if (fs.existsSync(svgPath)) {
-                try {
-                  // EXACT USER REQUIREMENTS: 270.28×201.96mm (766.1×572.5pts)
-                  const EXACT_WIDTH_PTS = 766.1;
-                  const EXACT_HEIGHT_PTS = 572.5;
-                  
-                  // Convert SVG to PDF with exact dimensions
-                  const timestamp = Date.now();
-                  const tempSvgPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.svg`);
-                  const tempPdfPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.pdf`);
-                  
-                  // Read and prepare SVG with exact dimensions
-                  const svgContent = fs.readFileSync(svgPath, 'utf8');
-                  const exactSvg = svgContent
-                    .replace(/width="[^"]*"/, `width="${EXACT_WIDTH_PTS}pt"`)
-                    .replace(/height="[^"]*"/, `height="${EXACT_HEIGHT_PTS}pt"`);
-                  
-                  fs.writeFileSync(tempSvgPath, exactSvg);
-                  
-                  // GHOSTSCRIPT APPROACH: Composite original PDF directly onto template
-                  const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
-                  
-                  if (fs.existsSync(originalPdfPath)) {
-                    console.log(`📄 Using Ghostscript compositing with original PDF: ${originalPdfPath}`);
-                    
-                    // Create base template first
-                    const basePdfBytes = await pdfDoc.save();
-                    const basePdfPath = path.join(process.cwd(), 'uploads', `base_${timestamp}.pdf`);
-                    fs.writeFileSync(basePdfPath, basePdfBytes);
-                    
-                    // Calculate exact positioning for Ghostscript
-                    const xPos = element.x * 2.834645669; // mm to points  
-                    const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
-                    
-                    console.log(`🎯 GHOSTSCRIPT: Positioning at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
-                    
-                    // Create Ghostscript command to composite PDFs
-                    const outputPdfPath = path.join(process.cwd(), 'uploads', `composite_${timestamp}.pdf`);
-                    
-                    // Use Ghostscript to stamp the original PDF onto both pages of the base
-                    const gsCompositeCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress \\
-                      -c "
-                      <</BeginPage{
-                        gsave
-                        ${xPos} ${yPos} translate
-                        ${EXACT_WIDTH_PTS / 836.2} ${EXACT_HEIGHT_PTS / 283.5} scale
-                      }>> setpagedevice
-                      " \\
-                      -f "${basePdfPath}" \\
-                      -c "
-                      <</EndPage{
-                        grestore
-                        (${originalPdfPath}) run
-                      }>> setpagedevice
-                      " \\
-                      -sOutputFile="${outputPdfPath}"`;
-                    
-                    try {
-                      await execAsync(gsCompositeCmd.replace(/\s+/g, ' '));
-                      
-                      if (fs.existsSync(outputPdfPath)) {
-                        const compositePdfBytes = fs.readFileSync(outputPdfPath);
-                        console.log(`✅ GHOSTSCRIPT COMPOSITE: Vector PDF created ${compositePdfBytes.length} bytes`);
-                        
-                        // Replace our PDF with the composite version
-                        const compositePdf = await PDFDocument.load(compositePdfBytes);
-                        const compositePages = compositePdf.getPages();
-                        
-                        // Replace page content
-                        if (compositePages.length >= 2) {
-                          // Clear existing pages and add composite pages
-                          pdfDoc.removePage(0);
-                          pdfDoc.removePage(0);
-                          
-                          const [newPage1, newPage2] = await pdfDoc.copyPages(compositePdf, [0, 1]);
-                          pdfDoc.addPage(newPage1);
-                          pdfDoc.addPage(newPage2);
-                          
-                          console.log(`✅ COMPOSITE SUCCESS: Both pages replaced with vector content`);
-                        }
-                        
-                        // Cleanup temp files
-                        [basePdfPath, outputPdfPath].forEach(file => {
-                          if (fs.existsSync(file)) fs.unlinkSync(file);
-                        });
-                      }
-                    } catch (gsError) {
-                      console.log(`⚠️ Ghostscript composite failed: ${gsError}`);
-                    }
-                  }
-                  
-                  // Cleanup temp files
-                  [tempSvgPath, tempPdfPath].forEach(file => {
-                    if (fs.existsSync(file)) fs.unlinkSync(file);
-                  });
-                  
-                } catch (embedError) {
-                  console.log(`⚠️ Could not embed exact logo ${(logo as any).filename}: ${embedError}`);
-                }
-              }
-            }
+        try {
+          const { OriginalWorkingGenerator } = await import('./original-working-generator');
+          
+          // Convert data to format expected by original generator
+          const logosArray = Object.values(logosObject).map((logo: any) => ({
+            id: logo.id,
+            filename: logo.filename,
+            originalName: logo.originalName || 'artwork',
+            isPdfWithRasterOnly: false,
+            isCMYKPreserved: true,
+            mimeType: 'image/svg+xml'
+          }));
+          
+          console.log(`🔍 ORIGINAL GENERATOR DATA:`, {
+            projectId: project.id,
+            templateSize: templateSize.name,
+            canvasElements: canvasElements.length,
+            logos: logosArray.length
+          });
+          
+          const workingGenerator = new OriginalWorkingGenerator();
+          const workingPdfBytes = await workingGenerator.generatePDF({
+            projectId: project.id,
+            templateSize: templateSize,
+            canvasElements: canvasElements,
+            logos: logosArray,
+            garmentColor: 'light-gray'
+          });
+          
+          if (workingPdfBytes && workingPdfBytes.length > 1000) {
+            console.log(`✅ ORIGINAL GENERATOR SUCCESS: PDF generated ${workingPdfBytes.length} bytes`);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_working.pdf"`);
+            res.send(Buffer.from(workingPdfBytes));
+            return;
+          } else {
+            console.log(`⚠️ Original generator returned invalid PDF`);
           }
+        } catch (originalGenError) {
+          console.log(`⚠️ Original generator failed: ${originalGenError}`);
         }
         
         // ADD GARMENT COLOR BACKGROUND ON PAGE 2 FIRST (BEFORE LOGOS)
