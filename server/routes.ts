@@ -739,58 +739,85 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // Embed logos using SVG conversion to maintain quality  
+        // Embed logos using direct SVG embedding
         if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
+          console.log(`🎯 EMBEDDING ${canvasElements.length} logos on both pages`);
+          
           for (let element of canvasElements) {
             const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
             if (logo) {
               const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+              console.log(`🔍 Processing logo: ${(logo as any).filename}`);
+              
               if (fs.existsSync(svgPath)) {
                 try {
-                  // Convert SVG to PDF for embedding
-                  const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.pdf`);
-                  const convertCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${svgPath}"`;
+                  // Read SVG content directly
+                  const svgContent = fs.readFileSync(svgPath, 'utf8');
                   
-                  await execAsync(convertCmd);
+                  // Extract viewBox and dimensions from SVG  
+                  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+                  const widthMatch = svgContent.match(/width="([^"]+)"/);
+                  const heightMatch = svgContent.match(/height="([^"]+)"/);
                   
-                  if (fs.existsSync(tempPdfPath)) {
-                    const tempPdfBytes = fs.readFileSync(tempPdfPath);
-                    const tempPdf = await PDFDocument.load(tempPdfBytes);
-                    const [tempPage] = await pdfDoc.copyPages(tempPdf, [0]);
+                  if (viewBoxMatch && widthMatch && heightMatch) {
+                    // Convert SVG to PDF using method that preserves vectors
+                    const timestamp = Date.now();
+                    const tempSvgPath = path.join(process.cwd(), 'uploads', `embed_${timestamp}.svg`);
+                    const tempPdfPath = path.join(process.cwd(), 'uploads', `embed_${timestamp}.pdf`);
                     
-                    // EXACT canvas positioning - no transformations
-                    const xPos = element.x * 2.834645669; // mm to points
-                    const yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
-                    const widthPts = element.width * 2.834645669;
-                    const heightPts = element.height * 2.834645669;
+                    // Create a clean SVG for conversion
+                    fs.writeFileSync(tempSvgPath, svgContent);
                     
-                    // Embed on page 1
-                    page1.drawPage(tempPage, {
-                      x: xPos, y: yPos,
-                      width: widthPts, height: heightPts
+                    // Use rsvg-convert for better PDF output
+                    const convertCmd = `rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`;
+                    await execAsync(convertCmd);
+                    
+                    if (fs.existsSync(tempPdfPath)) {
+                      const tempPdfBytes = fs.readFileSync(tempPdfPath);
+                      const tempDoc = await PDFDocument.load(tempPdfBytes);
+                      
+                      if (tempDoc.getPages().length > 0) {
+                        const pages = await pdfDoc.copyPages(tempDoc, [0]);
+                        const embeddedPage = pages[0];
+                        
+                        // EXACT canvas positioning
+                        const xPos = element.x * 2.834645669; // mm to points
+                        const yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+                        const widthPts = element.width * 2.834645669;
+                        const heightPts = element.height * 2.834645669;
+                        
+                        // Embed on page 1
+                        page1.drawPage(embeddedPage, {
+                          x: xPos, y: yPos,
+                          width: widthPts, height: heightPts
+                        });
+                        
+                        // Embed on page 2
+                        const pages2 = await pdfDoc.copyPages(tempDoc, [0]);
+                        const embeddedPage2 = pages2[0];
+                        page2.drawPage(embeddedPage2, {
+                          x: xPos, y: yPos,
+                          width: widthPts, height: heightPts
+                        });
+                        
+                        console.log(`✅ LOGO EMBEDDED: ${(logo as any).filename} at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
+                      }
+                    }
+                    
+                    // Cleanup temp files
+                    [tempSvgPath, tempPdfPath].forEach(file => {
+                      if (fs.existsSync(file)) fs.unlinkSync(file);
                     });
                     
-                    // Create second page for page 2  
-                    const [tempPage2] = await pdfDoc.copyPages(tempPdf, [0]);
-                    page2.drawPage(tempPage2, {
-                      x: xPos, y: yPos,
-                      width: widthPts, height: heightPts
-                    });
-                    
-                    console.log(`✅ SVG EMBED: Logo embedded at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
-                    
-                    // Cleanup temp file
-                    fs.unlinkSync(tempPdfPath);
+                  } else {
+                    console.log(`⚠️ Could not parse SVG dimensions for ${(logo as any).filename}`);
                   }
+                  
                 } catch (embedError) {
-                  console.log(`⚠️ Could not embed SVG: ${embedError}`);
-                  // Fallback - show placeholder
-                  page1.drawText('Logo will appear here', { 
-                    x: element.x * 2.834645669, 
-                    y: pageHeight - (element.y * 2.834645669), 
-                    size: 12 
-                  });
+                  console.log(`⚠️ Could not embed logo ${(logo as any).filename}: ${embedError}`);
                 }
+              } else {
+                console.log(`⚠️ SVG file not found: ${svgPath}`);
               }
             }
           }
