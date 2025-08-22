@@ -711,50 +711,30 @@ export async function registerRoutes(app: express.Application) {
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
-      // SIMPLE WORKING APPROACH - DON'T MODIFY CANVAS ELEMENTS  
-      console.log('📄 SIMPLE PDF: Using basic pdf-lib without modifications to preserve preview');
+      // USE WORKING GENERATOR WITHOUT MODIFICATIONS
+      console.log('📄 WORKING PDF: Using RobustPDFGenerator WITHOUT canvas modifications');
       
-      try {
-        const { PDFDocument } = await import('pdf-lib');
-        
-        // Create simple A3 PDF 
-        const pdfDoc = await PDFDocument.create();
-        const pageWidth = templateSize.width * 2.834645669; // mm to points
-        const pageHeight = templateSize.height * 2.834645669;
-        
-        // Page 1: Blank artwork page (preview works, no corruption)
-        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
-        page1.drawText('Artwork Preview Available in Canvas', {
-          x: 50,
-          y: pageHeight / 2,
-          size: 16
-        });
-        
-        // Page 2: Garment info
-        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-        page2.drawText(`Project: ${project.name || 'Untitled'}`, {
-          x: 20,
-          y: pageHeight - 40,
-          size: 12
-        });
-        page2.drawText(`Quantity: ${project.quantity || 1}`, {
-          x: 20,
-          y: pageHeight - 60,
-          size: 12
-        });
-        
-        const pdfBytes = await pdfDoc.save();
-        
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
-        res.send(Buffer.from(pdfBytes));
-        return;
-        
-      } catch (error) {
-        console.error('❌ Simple PDF generation failed:', error);
-        res.status(500).json({ error: 'PDF generation failed' });
-        return;
-      }
+      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+      const generator = new RobustPDFGenerator();
+      
+      const pdfData = {
+        canvasElements,
+        logos: Object.values(logosObject),
+        templateSize,
+        garmentColor: project.garmentColor,
+        projectName: project.name || 'Untitled Project',
+        quantity: project.quantity || 1,
+        comments: project.comments || ''
+      };
+      
+      console.log(`🔍 DEBUG: PDF Data - Elements: ${canvasElements.length}, Logos: ${Object.values(logosObject).length}`);
+      
+      const pdfBuffer = await generator.generatePDF(pdfData);
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
+      res.send(pdfBuffer);
+      return;
 
       // This should never be reached due to early return above
       console.log('❌ Unexpected fallthrough - this should not happen');
