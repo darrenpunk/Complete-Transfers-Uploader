@@ -739,8 +739,13 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // DEAD SIMPLE APPROACH: Use exact user specifications
-        console.log(`🎯 DEAD SIMPLE: Using EXACT user requirements`);
+        // BYPASS PDF-LIB COMPLETELY: Use direct Ghostscript compositing
+        console.log(`🎯 BYPASS PDF-LIB: Direct Ghostscript approach`);
+        
+        // First, save the base template
+        const basePdfBytes = await pdfDoc.save();
+        const basePdfPath = path.join(process.cwd(), 'uploads', `base_${timestamp}.pdf`);
+        fs.writeFileSync(basePdfPath, basePdfBytes);
         
         // EXACT USER SPECS: 270.28×201.96mm = 766.1×572.5pts
         const EXACT_WIDTH_PTS = 766.1;
@@ -750,64 +755,81 @@ export async function registerRoutes(app: express.Application) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
             const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-            console.log(`🔍 Processing: ${(logo as any).filename}`);
+            console.log(`🔍 GHOSTSCRIPT DIRECT: ${(logo as any).filename}`);
             
             if (fs.existsSync(svgPath)) {
-              // EXACT POSITIONING: Use canvas position directly
-              const xPos = element.x * 2.834645669; // mm to points
-              const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
-              
-              console.log(`📍 EXACT SPECS: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-              
-              // Convert SVG to PDF with EXACT dimensions
-              const timestamp = Date.now();
-              const tempPdfPath = path.join(process.cwd(), 'uploads', `exact_${timestamp}.pdf`);
-              
-              // FORCE EXACT SIZE: Convert with specific dimensions
-              const inkscapeCmd = `inkscape --export-type=pdf --export-pdf-version=1.7 --export-width=${EXACT_WIDTH_PTS} --export-height=${EXACT_HEIGHT_PTS} --export-filename="${tempPdfPath}" "${svgPath}"`;
+              // Convert SVG to PDF first
+              const artworkPdfPath = path.join(process.cwd(), 'uploads', `artwork_${timestamp}.pdf`);
+              const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${artworkPdfPath}" "${svgPath}"`;
               
               try {
                 await execAsync(inkscapeCmd);
                 
-                if (fs.existsSync(tempPdfPath)) {
-                  console.log(`✅ SVG converted with EXACT size: ${fs.statSync(tempPdfPath).size} bytes`);
+                if (fs.existsSync(artworkPdfPath)) {
+                  console.log(`✅ Artwork PDF created: ${fs.statSync(artworkPdfPath).size} bytes`);
                   
-                  // Embed at exact position on both pages
-                  const pdfBytes = fs.readFileSync(tempPdfPath);
-                  const tempDoc = await PDFDocument.load(pdfBytes);
-                  const [tempPage] = await pdfDoc.copyPages(tempDoc, [0]);
+                  // EXACT POSITIONING with Ghostscript
+                  const xPos = element.x * 2.834645669;
+                  const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
                   
-                  // Page 1: Exact positioning
-                  page1.drawPage(tempPage, {
-                    x: xPos, y: yPos,
-                    width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                  });
-                  console.log(`✅ Page 1: Exact positioning complete`);
+                  console.log(`📍 GHOSTSCRIPT POSITIONING: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
-                  // Page 2: Exact positioning  
-                  const [tempPage2] = await pdfDoc.copyPages(tempDoc, [0]);
-                  page2.drawPage(tempPage2, {
-                    x: xPos, y: yPos,
-                    width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                  });
-                  console.log(`✅ Page 2: Exact positioning complete`);
+                  // Create final PDF with Ghostscript stamping
+                  const finalCompositePath = path.join(process.cwd(), 'uploads', `final_composite_${timestamp}.pdf`);
                   
-                  // Cleanup
-                  fs.unlinkSync(tempPdfPath);
+                  // Use pdfmarks for exact positioning  
+                  const pdfmarkPath = path.join(process.cwd(), 'uploads', `marks_${timestamp}.ps`);
+                  const pdfmarks = `
+                    << /BeginPage {
+                      gsave
+                      ${xPos} ${yPos} translate
+                      ${EXACT_WIDTH_PTS} 0 0 ${EXACT_HEIGHT_PTS} 0 0 cm
+                      (${artworkPdfPath}) run
+                      grestore
+                    } >> setpagedevice
+                  `;
+                  fs.writeFileSync(pdfmarkPath, pdfmarks);
+                  
+                  const gsCompositeCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile="${finalCompositePath}" "${basePdfPath}" "${pdfmarkPath}"`;
+                  
+                  await execAsync(gsCompositeCmd);
+                  
+                  if (fs.existsSync(finalCompositePath)) {
+                    const compositeBytes = fs.readFileSync(finalCompositePath);
+                    console.log(`✅ GHOSTSCRIPT COMPOSITE SUCCESS: ${compositeBytes.length} bytes`);
+                    
+                    // Replace base PDF with composite result
+                    fs.writeFileSync(basePdfPath, compositeBytes);
+                    
+                    // Cleanup
+                    [artworkPdfPath, pdfmarkPath, finalCompositePath].forEach(file => {
+                      if (fs.existsSync(file)) fs.unlinkSync(file);
+                    });
+                  }
                 }
-              } catch (convertError) {
-                console.log(`⚠️ Conversion failed: ${convertError}`);
+              } catch (gsError) {
+                console.log(`⚠️ Ghostscript composite error: ${gsError}`);
               }
             }
           }
         }
         
-        // PROPER GARMENT COLOR: Not light gray fallback
-        console.log(`🎨 Adding BLACK garment background on page 2`);
+        // Load the composite result back
+        const finalPdfBytes = fs.readFileSync(basePdfPath);
+        fs.unlinkSync(basePdfPath);
+        
+        // Skip all the pdf-lib processing and send directly
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_DIRECT.pdf"`);
+        res.send(Buffer.from(finalPdfBytes));
+        return;
+        
+        // CORRECT GARMENT COLOR: White garment background 
+        console.log(`🎨 Adding WHITE garment background on page 2`);
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
-          color: rgb(0.09, 0.09, 0.086) // Black garment color #171816
+          color: rgb(1, 1, 1) // White garment color
         });
         
         // FALLBACK: Simple text-based approach if all else fails
