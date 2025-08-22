@@ -156,7 +156,7 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create artwork page with proper canvas positioning using direct PDF overlay
+   * Create artwork page with proper canvas positioning - simplified approach
    */
   private async createCompositeArtworkPage(data: ProjectData, workDir: string, timestamp: number, pageWidthPts: number, pageHeightPts: number): Promise<string> {
     console.log(`📄 Creating artwork page with canvas positioning for ${data.canvasElements.length} elements`);
@@ -164,91 +164,17 @@ export class GhostscriptPDFGenerator {
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
     const MM_TO_POINTS = 2.834645669;
     
-    // Create blank template page
-    const blankPath = await this.createBlankPage(workDir, timestamp, pageWidthPts, pageHeightPts);
+    // Fall back to RobustPDFGenerator for complex positioning
+    const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+    const robustGenerator = new RobustPDFGenerator();
     
-    // Start with the blank page
-    let currentPdfPath = blankPath;
+    console.log(`🔄 Using RobustPDFGenerator for complex canvas positioning`);
+    const result = await robustGenerator.generatePDF(data);
     
-    // Overlay each logo at its canvas position
-    for (let i = 0; i < data.canvasElements.length; i++) {
-      const element = data.canvasElements[i];
-      const logo = data.logos.find(l => l.id === element.logoId);
-      
-      if (logo) {
-        const logoSourcePath = this.getLogoSourcePath(logo, element);
-        
-        // Calculate position in PDF coordinates (bottom-left origin)
-        const xPts = element.x * MM_TO_POINTS;
-        const yPts = pageHeightPts - (element.y * MM_TO_POINTS) - (element.height * MM_TO_POINTS);
-        const widthPts = element.width * MM_TO_POINTS;
-        const heightPts = element.height * MM_TO_POINTS;
-        
-        console.log(`📍 Overlaying logo ${i + 1}: (${element.x.toFixed(1)}, ${element.y.toFixed(1)})mm → (${xPts.toFixed(1)}, ${yPts.toFixed(1)})pts`);
-        
-        // Convert SVG to PDF if needed
-        let logoPdfPath = logoSourcePath;
-        if (logoSourcePath.toLowerCase().endsWith('.svg')) {
-          const tempPdfPath = path.join(workDir, `temp_logo_${i}_${timestamp}.pdf`);
-          const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoSourcePath}"`;
-          await execAsync(inkscapeCmd);
-          logoPdfPath = tempPdfPath;
-        }
-        
-        // Create next overlay
-        const nextPdfPath = path.join(workDir, `overlay_${i}_${timestamp}.pdf`);
-        
-        // Scale and position the logo PDF to exact canvas coordinates
-        const scaledLogoPath = path.join(workDir, `scaled_logo_${i}_${timestamp}.pdf`);
-        
-        // First, scale and position the logo to exact coordinates
-        const scaleCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${scaledLogoPath}" -dFIXEDMEDIA -dPDFFitPage -g${Math.round(pageWidthPts)}x${Math.round(pageHeightPts)} -c "${pageWidthPts} ${pageHeightPts} scale" -c "${xPts / pageWidthPts} ${yPts / pageHeightPts} translate" -c "${widthPts / pageWidthPts} ${heightPts / pageHeightPts} scale" -f "${logoPdfPath}"`;
-        
-        await execAsync(scaleCmd);
-        
-        // Then overlay the scaled logo onto the current page
-        const overlayCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${nextPdfPath}" "${currentPdfPath}" "${scaledLogoPath}"`;
-        
-        try {
-          await execAsync(overlayCmd);
-          
-          // Cleanup previous intermediate file
-          if (currentPdfPath !== blankPath && fs.existsSync(currentPdfPath)) {
-            fs.unlinkSync(currentPdfPath);
-          }
-          
-          currentPdfPath = nextPdfPath;
-          
-          // Cleanup temporary files
-          if (fs.existsSync(scaledLogoPath)) {
-            fs.unlinkSync(scaledLogoPath);
-          }
-          if (logoPdfPath !== logoSourcePath && fs.existsSync(logoPdfPath)) {
-            fs.unlinkSync(logoPdfPath);
-          }
-          
-        } catch (error) {
-          console.error(`❌ Logo overlay failed for element ${i}:`, error);
-          // Cleanup on error
-          [scaledLogoPath, logoPdfPath].forEach(file => {
-            if (file !== logoSourcePath && fs.existsSync(file)) {
-              fs.unlinkSync(file);
-            }
-          });
-          throw error;
-        }
-      }
-    }
+    // Extract page 1 from the robust generator result
+    const extractPage1Cmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${result.filePath}"`;
     
-    // Move final result to expected path
-    if (currentPdfPath !== page1Path) {
-      fs.renameSync(currentPdfPath, page1Path);
-    }
-    
-    // Cleanup blank template
-    if (fs.existsSync(blankPath)) {
-      fs.unlinkSync(blankPath);
-    }
+    await execAsync(extractPage1Cmd);
     
     console.log(`✅ Artwork page created with proper canvas positioning: ${page1Path}`);
     return page1Path;
