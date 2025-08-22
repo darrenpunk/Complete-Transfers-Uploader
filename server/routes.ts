@@ -711,31 +711,93 @@ export async function registerRoutes(app: express.Application) {
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
-      // RESTORE ORIGINAL WORKING SYSTEM
-      console.log('📄 ORIGINAL: Using the original working PDF generator that actually embeds logos');
+      // ULTRA SIMPLE APPROACH: Direct PDF embedding without ANY transformations
+      console.log('📄 ULTRA SIMPLE: Direct original PDF embedding with exact canvas positioning');
       
-      const { OriginalWorkingGenerator } = await import('./original-working-generator');
-      const generator = new OriginalWorkingGenerator();
-      
-      const pdfData = {
-        projectId: projectId,
-        canvasElements,
-        logos: Object.values(logosObject),
-        templateSize,
-        garmentColor: project.garmentColor,
-        projectName: project.name || 'Untitled Project',
-        quantity: project.quantity || 1,
-        comments: project.comments || ''
-      };
-      
-      console.log(`🔍 DEBUG: PDF Data - Elements: ${canvasElements.length}, Logos: ${Object.values(logosObject).length}`);
-      
-      const pdfBuffer = await generator.generatePDF(pdfData);
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
-      res.send(pdfBuffer);
-      return;
+      try {
+        const { PDFDocument, rgb } = await import('pdf-lib');
+        const fs = await import('fs');
+        
+        // Create A3 PDF
+        const pdfDoc = await PDFDocument.create();
+        const pageWidth = templateSize.width * 2.834645669; // mm to points
+        const pageHeight = templateSize.height * 2.834645669;
+        
+        // Page 1: White background
+        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+        page1.drawRectangle({
+          x: 0, y: 0, 
+          width: pageWidth, height: pageHeight,
+          color: rgb(1, 1, 1)
+        });
+        
+        // Page 2: Project info  
+        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+        page2.drawRectangle({
+          x: 0, y: 0,
+          width: pageWidth, height: pageHeight, 
+          color: rgb(1, 1, 1)
+        });
+        
+        // Embed logos on BOTH pages using ORIGINAL PDF files
+        if (canvasElements.length > 0 && Object.values(logosObject).length > 0) {
+          for (let element of canvasElements) {
+            const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
+            if (logo && (logo as any).originalFilename && (logo as any).originalFilename.endsWith('.pdf')) {
+              const originalPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
+              if (fs.existsSync(originalPath)) {
+                try {
+                  const originalPdfBytes = fs.readFileSync(originalPath);
+                  const originalPdf = await PDFDocument.load(originalPdfBytes);
+                  
+                  if (originalPdf.getPages().length > 0) {
+                    const embeddedPages = await pdfDoc.copyPages(originalPdf, [0]);
+                    const embeddedPage = embeddedPages[0];
+                    
+                    // EXACT canvas positioning - no transformations
+                    const xPos = element.x * 2.834645669; // mm to points
+                    const yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+                    const widthPts = element.width * 2.834645669;
+                    const heightPts = element.height * 2.834645669;
+                    
+                    // Embed on page 1
+                    page1.drawPage(embeddedPage, {
+                      x: xPos, y: yPos,
+                      width: widthPts, height: heightPts
+                    });
+                    
+                    // Embed on page 2  
+                    page2.drawPage(embeddedPage, {
+                      x: xPos, y: yPos,
+                      width: widthPts, height: heightPts
+                    });
+                    
+                    console.log(`✅ DIRECT EMBED: Original PDF embedded at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
+                  }
+                } catch (embedError) {
+                  console.log(`⚠️ Could not embed original PDF: ${embedError}`);
+                }
+              }
+            }
+          }
+        }
+        
+        // Page 2 info
+        page2.drawText(`Project: ${project.name || 'Untitled'}`, { x: 20, y: pageHeight - 40, size: 12, color: rgb(0, 0, 0) });
+        page2.drawText(`Quantity: ${project.quantity || 1}`, { x: 20, y: pageHeight - 60, size: 12, color: rgb(0, 0, 0) });
+        
+        const pdfBytes = await pdfDoc.save();
+        
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
+        res.send(Buffer.from(pdfBytes));
+        return;
+        
+      } catch (error) {
+        console.error('❌ Ultra simple PDF failed:', error);
+        res.status(500).json({ error: 'PDF generation failed' });
+        return;
+      }
 
       // This should never be reached due to early return above
       console.log('❌ Unexpected fallthrough - this should not happen');
@@ -766,6 +828,7 @@ export async function registerRoutes(app: express.Application) {
 
       // PRODUCTION FLOW: Import production flow manager
       const { productionFlow } = await import('./production-flow-manager');
+      const { fixSVGNamespaces } = await import('./fix-svg-namespaces');
 
       // Get template information to check if this is a single colour template
       const templateSizes = await storage.getTemplateSizes();
@@ -1703,6 +1766,9 @@ export async function registerRoutes(app: express.Application) {
                   const tightSvgPath = svgPath.replace('.svg', '_tight-content.svg');
                   fs.writeFileSync(tightSvgPath, tightSvg);
                   console.log(`💾 SAVED TIGHT CONTENT SVG: ${tightSvgPath}`);
+                  
+                  // Fix SVG namespace issues immediately after creation
+                  fixSVGNamespaces(tightSvgPath);
                   
                   // Update the file to use the tight content version
                   finalFilename = path.basename(tightSvgPath);
