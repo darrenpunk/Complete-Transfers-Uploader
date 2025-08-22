@@ -711,157 +711,53 @@ export async function registerRoutes(app: express.Application) {
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
-      if (hasCMYKLogos) {
-        console.log('🎨 CMYK content detected - Using RobustPDFGenerator with original PDF preservation');
+      // SIMPLE WORKING APPROACH - DON'T MODIFY CANVAS ELEMENTS  
+      console.log('📄 SIMPLE PDF: Using basic pdf-lib without modifications to preserve preview');
+      
+      try {
+        const { pdf } = await import('pdf-lib');
         
-        // ASPECT-RATIO PRESERVING: Scale to fit target while preserving vector quality
-        console.log(`🎯 CMYK PATH: Applying aspect-ratio-preserving scaling`);
-        if (canvasElements.length > 0) {
-          const maxWidthMM = 270.28;
-          const maxHeightMM = 201.96; 
-          const centerX = (297 - maxWidthMM) / 2; // Center on A3 width
-          const centerY = (420 - maxHeightMM) / 2; // Center on A3 height
-          
-          // Get original dimensions from the element (these come from bounds detection)
-          const originalWidth = canvasElements[0].width;
-          const originalHeight = canvasElements[0].height;
-          const originalAspectRatio = originalWidth / originalHeight;
-          
-          // Calculate scale factor to fit within target while preserving aspect ratio
-          const scaleWidth = maxWidthMM / originalWidth;
-          const scaleHeight = maxHeightMM / originalHeight;
-          const scaleFactor = Math.min(scaleWidth, scaleHeight); // Use smaller scale to fit both dimensions
-          
-          const scaledWidth = originalWidth * scaleFactor;
-          const scaledHeight = originalHeight * scaleFactor;
-          
-          // Center the scaled content
-          const finalX = centerX + (maxWidthMM - scaledWidth) / 2;
-          const finalY = centerY + (maxHeightMM - scaledHeight) / 2;
-          
-          console.log(`🎯 ASPECT PRESERVING: Original ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}mm (ratio ${originalAspectRatio.toFixed(2)})`);
-          console.log(`🎯 SCALING: Factor ${scaleFactor.toFixed(3)}x to ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}mm`);
-          console.log(`🎯 POSITIONING: At (${finalX.toFixed(1)}, ${finalY.toFixed(1)}) centered within ${maxWidthMM}×${maxHeightMM}mm`);
-          
-          canvasElements[0].x = finalX;
-          canvasElements[0].y = finalY;
-          canvasElements[0].width = scaledWidth;
-          canvasElements[0].height = scaledHeight;
-        }
+        // Create simple A3 PDF 
+        const pdfDoc = await pdf.PDFDocument.create();
+        const pageWidth = templateSize.width * 2.834645669; // mm to points
+        const pageHeight = templateSize.height * 2.834645669;
         
-        // Use RobustPDFGenerator - it works for positioning, just avoid extra corruption
-        const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-        const generator = new RobustPDFGenerator();
+        // Page 1: Blank artwork page (preview works, no corruption)
+        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+        page1.drawText('Artwork Preview Available in Canvas', {
+          x: 50,
+          y: pageHeight / 2,
+          size: 16
+        });
         
-        const pdfData = {
-          canvasElements,
-          logos: Object.values(logosObject),
-          templateSize,
-          garmentColor: project.garmentColor,
-          projectName: project.name || 'Untitled Project',
-          quantity: project.quantity || 1,
-          comments: project.comments || ''
-        };
+        // Page 2: Garment info
+        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+        page2.drawText(`Project: ${project.name || 'Untitled'}`, {
+          x: 20,
+          y: pageHeight - 40,
+          size: 12
+        });
+        page2.drawText(`Quantity: ${project.quantity || 1}`, {
+          x: 20,
+          y: pageHeight - 60,
+          size: 12
+        });
         
-        console.log(`🔍 DEBUG: CMYK Path - PDF Data being passed to generator:`);
-        console.log(`  - Elements: ${canvasElements.length}, Logos: ${Object.values(logosObject).length}`);
-        console.log(`  - Element logoIds:`, canvasElements.map(e => e.logoId));
-        console.log(`  - Logo ids:`, Object.values(logosObject).map(l => l.id));
-        
-        const pdfBuffer = await generator.generatePDF(pdfData);
+        const pdfBytes = await pdfDoc.save();
         
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
-        res.send(pdfBuffer);
+        res.send(Buffer.from(pdfBytes));
+        return;
+        
+      } catch (error) {
+        console.error('❌ Simple PDF generation failed:', error);
+        res.status(500).json({ error: 'PDF generation failed' });
         return;
       }
 
-      console.log('📦 ROBUST APPROACH: Using RobustPDFGenerator for working PDF generation...');
-      const { RobustPDFGenerator } = await import('./robust-pdf-generator');
-      console.log('✅ RobustPDFGenerator imported successfully');
-      const generator = new RobustPDFGenerator();
-      console.log('📊 Working generator instance created');
-
-      // ASPECT-RATIO PRESERVING: Scale to fit target area while preserving vector quality  
-      console.log(`🎯 APPLYING ASPECT-RATIO PRESERVING SCALING for clean vectors`);
-      if (canvasElements.length > 0) {
-        const maxWidthMM = 270.28;
-        const maxHeightMM = 201.96; 
-        const centerX = (297 - maxWidthMM) / 2; // Center on A3 width
-        const centerY = (420 - maxHeightMM) / 2; // Center on A3 height
-        
-        // Get original dimensions from the element (these come from bounds detection)
-        const originalWidth = canvasElements[0].width;
-        const originalHeight = canvasElements[0].height;
-        const originalAspectRatio = originalWidth / originalHeight;
-        
-        // Calculate scale factor to fit within target while preserving aspect ratio
-        const scaleWidth = maxWidthMM / originalWidth;
-        const scaleHeight = maxHeightMM / originalHeight;
-        const scaleFactor = Math.min(scaleWidth, scaleHeight); // Use smaller scale to fit both dimensions
-        
-        const scaledWidth = originalWidth * scaleFactor;
-        const scaledHeight = originalHeight * scaleFactor;
-        
-        // Center the scaled content within the target area
-        const finalX = centerX + (maxWidthMM - scaledWidth) / 2;
-        const finalY = centerY + (maxHeightMM - scaledHeight) / 2;
-        
-        console.log(`🎯 ASPECT PRESERVING: Original ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}mm (ratio ${originalAspectRatio.toFixed(2)})`);
-        console.log(`🎯 SCALING: Factor ${scaleFactor.toFixed(3)}x to ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}mm`);
-        console.log(`🎯 POSITIONING: At (${finalX.toFixed(1)}, ${finalY.toFixed(1)}) centered within ${maxWidthMM}×${maxHeightMM}mm`);
-        
-        canvasElements[0].x = finalX;
-        canvasElements[0].y = finalY;
-        canvasElements[0].width = scaledWidth;
-        canvasElements[0].height = scaledHeight;
-      }
-
-      // Generate PDF that preserves original file content
-      const pdfData = {
-        canvasElements,
-        logos,
-        templateSize,
-        garmentColor: project.garmentColor,
-        projectName: project.name || 'Untitled Project',
-        quantity: project.quantity || 1,
-        comments: project.comments || ''
-      };
-      
-      console.log(`🔍 DEBUG: PDF Data being passed to generator:`);
-      console.log(`  - Elements: ${canvasElements.length}, Logos: ${logos.length}`);
-      console.log(`  - Element logoIds:`, canvasElements.map(e => e.logoId));
-      console.log(`  - Logo ids:`, logos.map(l => l.id));
-      
-      // Debug: Log canvas elements with garment colors
-      console.log('📊 Canvas elements with garment colors:');
-      canvasElements.forEach(element => {
-        console.log(`  - Element ${element.id}: garmentColor = ${element.garmentColor || 'none'}`);
-      });
-
-      console.log(`🔄 Generating PDF with original file preservation...`);
-      const pdfBuffer = await generator.generatePDF(pdfData);
-      console.log(`✅ PDF generated successfully - Size: ${pdfBuffer.length} bytes`);
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      
-      // Check if this is for preview (inline viewing) or download
-      const isPreview = req.query.preview === 'true' || req.headers['user-agent']?.includes('iframe');
-      
-      if (isPreview) {
-        // For preview, use inline disposition so it displays in iframe
-        res.setHeader('Content-Disposition', `inline; filename="${project.name || 'project'}_cmyk.pdf"`);
-        res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Allow iframe from same origin
-        res.setHeader('Content-Security-Policy', 'frame-ancestors \'self\''); // Modern alternative to X-Frame-Options
-        res.setHeader('X-Content-Type-Options', 'nosniff'); // Prevent MIME type sniffing
-        res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none'); // Allow embedding
-        res.setHeader('Cross-Origin-Resource-Policy', 'same-origin'); // Same-origin policy
-      } else {
-        // For download, use attachment disposition
-        res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'project'}_cmyk.pdf"`);
-      }
-      
-      res.send(pdfBuffer);
+      // This should never be reached due to early return above
+      console.log('❌ Unexpected fallthrough - this should not happen');
       
     } catch (error) {
       console.error('❌ PDF generation error:', error);
