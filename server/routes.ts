@@ -667,33 +667,65 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
-      // Try simple embedder for original PDFs when requested
-      if (req.query.simple === 'true' && logos.length > 0) {
-        console.log(`🎯 USING SIMPLE PDF EMBEDDER for maximum accuracy`);
-        
+      // CRITICAL DEBUG: Check if simple embedder conditions are met
+      console.log(`🔍 DEBUG SIMPLE EMBEDDER: logos.length=${logos.length}`);
+      if (logos.length > 0) {
         const logo = logos[0];
+        console.log(`🔍 DEBUG: logo.originalFilename=${logo.originalFilename}, ends with .pdf=${logo.originalFilename?.endsWith('.pdf')}`);
+        
         if (logo.originalFilename && logo.originalFilename.endsWith('.pdf')) {
           const logoPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+          const fileExists = fs.existsSync(logoPath);
           
-          if (fs.existsSync(logoPath)) {
+          console.log(`🔍 DEBUG: logoPath=${logoPath}, fileExists=${fileExists}`);
+          
+          if (fileExists) {
+            console.log(`🎯 TRYING CONTENT EXTRACTION APPROACH for original PDF: ${logo.originalFilename}`);
+            
+            // Try Content Extraction first - this should give us exact dimensional control
             try {
-              const { SimplePDFEmbedder } = await import('./simple-pdf-embedder');
-              const pdfBuffer = await SimplePDFEmbedder.embedUsingPDFLib(logoPath, 270.28, 201.96);
+              const { ContentExtractionEmbedder } = await import('./content-extraction-embedder');
+              const pdfBuffer = await ContentExtractionEmbedder.createWithExtractedContent(logoPath, 270.28, 201.96);
               
-              const filename = `${project.name || 'project'}_qty${project.quantity || 1}_simple.pdf`;
+              const filename = `${project.name || 'project'}_qty1_extracted.pdf`;
               res.set({
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `attachment; filename="${filename}"`,
                 'Content-Length': pdfBuffer.length.toString()
               });
               
-              console.log(`✅ SIMPLE EMBEDDER: PDF generated successfully`);
+              console.log(`✅ CONTENT EXTRACTION: PDF generation successful - exact dimensional control achieved`);
               return res.send(pdfBuffer);
-            } catch (embedError) {
-              console.error(`❌ Simple embedder failed, falling back to robust generator:`, embedError);
+            } catch (extractionError) {
+              console.error(`❌ Content extraction failed, trying Simple PDF Embedder:`, extractionError);
+              
+              // Fallback to Simple PDF Embedder
+              try {
+                const { SimplePDFEmbedder } = await import('./simple-pdf-embedder');
+                const pdfBuffer = await SimplePDFEmbedder.embedUsingPDFLib(logoPath, 270.28, 201.96);
+                
+                const filename = `${project.name || 'project'}_qty1_simple.pdf`;
+                res.set({
+                  'Content-Type': 'application/pdf',
+                  'Content-Disposition': `attachment; filename="${filename}"`,
+                  'Content-Length': pdfBuffer.length.toString()
+                });
+                
+                console.log(`✅ SIMPLE EMBEDDER: PDF generation successful as fallback`);
+                return res.send(pdfBuffer);
+              } catch (embedError) {
+                console.error(`❌ Both extraction methods failed, falling back to robust generator:`, embedError);
+                // Continue to robust generator
+              }
             }
+          } else {
+            console.log(`⚠️ DEBUG: Original PDF file not found: ${logoPath}`);
           }
+        } else {
+          console.log(`⚠️ DEBUG: Logo is not an original PDF file`);
         }
+      } else {
+        console.log(`⚠️ DEBUG: No logos found for simple embedder`);
       }
 
       // Import the ORIGINAL WORKING PDF generator

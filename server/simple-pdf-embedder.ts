@@ -6,10 +6,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 export class SimplePDFEmbedder {
   
@@ -70,10 +66,8 @@ export class SimplePDFEmbedder {
       const psPath = path.join(process.cwd(), 'uploads', `simple_${Date.now()}.ps`);
       fs.writeFileSync(psPath, psCommands);
       
-      // Use Ghostscript to convert PS to PDF with exact specifications
-      const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${outputPath}" "${psPath}"`;
-      
-      await execAsync(gsCmd);
+      // This method is simplified - using pdf-lib approach instead
+      throw new Error('PostScript method not implemented - using PDF-lib instead');
       console.log(`✅ SIMPLE EMBEDDER: PDF generated successfully`);
       
       // Cleanup
@@ -104,40 +98,72 @@ export class SimplePDFEmbedder {
     console.log(`🔄 PDF-LIB EMBEDDER: Processing ${logoPath}`);
     
     try {
-      // Create new PDF document
+      // Create new PDF document with exact A3 specifications
       const pdfDoc = await PDFDocument.create();
       
-      // Add pages for A3 template
-      const page1 = pdfDoc.addPage([841.89, 1190.55]);
-      const page2 = pdfDoc.addPage([841.89, 1190.55]);
+      // A3 dimensions in points: 841.89 × 1190.55
+      const A3_WIDTH = 841.89;
+      const A3_HEIGHT = 1190.55;
       
-      // Load the logo PDF
+      // Add pages for A3 template
+      const page1 = pdfDoc.addPage([A3_WIDTH, A3_HEIGHT]);
+      const page2 = pdfDoc.addPage([A3_WIDTH, A3_HEIGHT]);
+      
+      // Load the logo PDF and get its first page
       const logoBytes = fs.readFileSync(logoPath);
       const logoPdf = await PDFDocument.load(logoBytes);
-      const logoPage = await pdfDoc.embedPage(logoPdf.getPages()[0]);
+      const logoFirstPage = logoPdf.getPages()[0];
       
-      // Calculate exact positioning and sizing
+      // Get the actual content bounds from the logo page
+      const logoMediaBox = logoFirstPage.getMediaBox();
+      console.log(`🔍 LOGO DEBUG: Original logo dimensions=${logoMediaBox.width}×${logoMediaBox.height}pts`);
+      
+      // Embed the page and override its dimensions completely
+      const logoPage = await pdfDoc.embedPage(logoFirstPage);
+      console.log(`🔍 EMBED DEBUG: Logo page embedded successfully`);
+      
+      // Calculate exact positioning and sizing for A3 template
       const targetWidthPts = targetWidthMM * MM_TO_POINTS;
       const targetHeightPts = targetHeightMM * MM_TO_POINTS;
-      const centerX = (841.89 - targetWidthPts) / 2;
-      const centerY = (1190.55 - targetHeightPts) / 2;
+      const centerX = (A3_WIDTH - targetWidthPts) / 2;
+      const centerY = (A3_HEIGHT - targetHeightPts) / 2;
       
-      console.log(`📐 PDF-LIB: Position=(${centerX.toFixed(1)}, ${centerY.toFixed(1)}) Size=${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}pts`);
+      console.log(`🔍 SIMPLE EMBEDDER DEBUG: A3=${A3_WIDTH}×${A3_HEIGHT}pts, Target=${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}pts`);
+      console.log(`🔍 SIMPLE EMBEDDER DEBUG: Calculated center=(${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
       
-      // Embed on both pages with exact dimensions
+      // For PDF coordinate system, Y=0 is at bottom, but we want centered positioning
+      // Use a more predictable Y position for now 
+      const adjustedY = centerY;
+      
+      console.log(`📐 PDF-LIB: Position=(${centerX.toFixed(1)}, ${adjustedY.toFixed(1)}) Size=${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}pts`);
+      
+      // FORCE EXACT DIMENSIONS: Override any original page dimensions
       const embedOptions = {
         x: centerX,
-        y: centerY,
-        width: targetWidthPts,
-        height: targetHeightPts,
+        y: adjustedY,
+        width: targetWidthPts,  // Override original width completely
+        height: targetHeightPts, // Override original height completely
       };
       
+      console.log(`🔍 EMBED OPTIONS: x=${embedOptions.x.toFixed(1)}, y=${embedOptions.y.toFixed(1)}, w=${embedOptions.width.toFixed(1)}, h=${embedOptions.height.toFixed(1)}`);
+      console.log(`🎯 FORCING EXACT DIMENSIONS: Will override original ${logoMediaBox.width}×${logoMediaBox.height} to ${targetWidthPts.toFixed(1)}×${targetHeightPts.toFixed(1)}`);
+      
+      // Draw the logo page at exact coordinates with exact dimensions
       page1.drawPage(logoPage, embedOptions);
       page2.drawPage(logoPage, embedOptions);
       
+      console.log(`✅ FORCED EXACT EMBEDDING: Both pages updated with exact target dimensions`);
+      
+      // Set media box to ensure PDF bounds match our content
+      page1.setMediaBox(0, 0, A3_WIDTH, A3_HEIGHT);
+      page2.setMediaBox(0, 0, A3_WIDTH, A3_HEIGHT);
+      
+      console.log(`✅ MEDIA BOX SET: Pages configured with A3 dimensions`);
+      
       console.log(`✅ PDF-LIB EMBEDDER: Successfully embedded with exact dimensions`);
       
-      return await pdfDoc.save();
+      const pdfBytes = await pdfDoc.save();
+      return Buffer.from(pdfBytes);
       
     } catch (error) {
       console.error(`❌ PDF-LIB EMBEDDER: Failed`, error);
