@@ -156,45 +156,38 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create artwork page with proper canvas positioning - simplified approach
+   * Create artwork page - fallback to working RobustPDFGenerator for positioning
    */
   private async createCompositeArtworkPage(data: ProjectData, workDir: string, timestamp: number, pageWidthPts: number, pageHeightPts: number): Promise<string> {
-    console.log(`📄 Creating artwork page with canvas positioning for ${data.canvasElements.length} elements`);
+    console.log(`📄 FALLBACK: Using working RobustPDFGenerator for canvas positioning`);
     
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
-    const MM_TO_POINTS = 2.834645669;
     
-    // Fall back to RobustPDFGenerator for complex positioning
+    // Use the working RobustPDFGenerator but extract only page 1
     const { RobustPDFGenerator } = await import('./robust-pdf-generator');
     const robustGenerator = new RobustPDFGenerator();
     
-    console.log(`🔄 Using RobustPDFGenerator for complex canvas positioning`);
+    // Generate the full PDF with correct positioning
     const resultBuffer = await robustGenerator.generatePDF(data);
     
-    console.log(`🔍 DEBUG: RobustPDFGenerator result buffer size: ${resultBuffer.length} bytes`);
+    // Save full result temporarily
+    const tempFullPdfPath = path.join(workDir, `full_temp_${timestamp}.pdf`);
+    fs.writeFileSync(tempFullPdfPath, resultBuffer);
     
-    if (!resultBuffer || resultBuffer.length === 0) {
-      throw new Error('RobustPDFGenerator returned empty buffer');
-    }
+    // Extract only page 1 (artwork) from the result
+    const extractCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${tempFullPdfPath}"`;
     
-    // Save the buffer to a temporary file
-    const tempRobustPdfPath = path.join(workDir, `robust_temp_${timestamp}.pdf`);
-    fs.writeFileSync(tempRobustPdfPath, resultBuffer);
-    
-    // Extract page 1 from the robust generator result
-    const extractPage1Cmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dFirstPage=1 -dLastPage=1 -o "${page1Path}" "${tempRobustPdfPath}"`;
-    
-    console.log(`🔧 Extracting page 1 from temp file: ${tempRobustPdfPath}`);
-    await execAsync(extractPage1Cmd);
+    await execAsync(extractCmd);
     
     // Cleanup temp file
-    if (fs.existsSync(tempRobustPdfPath)) {
-      fs.unlinkSync(tempRobustPdfPath);
+    if (fs.existsSync(tempFullPdfPath)) {
+      fs.unlinkSync(tempFullPdfPath);
     }
     
-    console.log(`✅ Artwork page created with proper canvas positioning: ${page1Path}`);
+    console.log(`✅ Artwork page extracted from working generator: ${page1Path}`);
     return page1Path;
   }
+  
   
   /**
    * Create blank PDF page of specified size
