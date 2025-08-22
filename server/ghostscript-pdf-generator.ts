@@ -156,7 +156,7 @@ export class GhostscriptPDFGenerator {
   }
   
   /**
-   * Create artwork page with proper canvas positioning using single PostScript approach
+   * Create artwork page with proper canvas positioning using direct PDF overlay
    */
   private async createCompositeArtworkPage(data: ProjectData, workDir: string, timestamp: number, pageWidthPts: number, pageHeightPts: number): Promise<string> {
     console.log(`📄 Creating artwork page with canvas positioning for ${data.canvasElements.length} elements`);
@@ -164,88 +164,108 @@ export class GhostscriptPDFGenerator {
     const page1Path = path.join(workDir, `page1_${timestamp}.pdf`);
     const MM_TO_POINTS = 2.834645669;
     
-    // Create PostScript file with positioned logos
-    const psPath = path.join(workDir, `artwork_${timestamp}.ps`);
-    let psContent = `%!PS-Adobe-3.0
-%%BoundingBox: 0 0 ${pageWidthPts} ${pageHeightPts}
-%%Pages: 1
-%%Page: 1 1
-% Artwork page with transparent background
-`;
+    // Create blank template page
+    const blankPath = await this.createBlankPage(workDir, timestamp, pageWidthPts, pageHeightPts);
     
-    // Add each logo with proper canvas positioning
-    for (const element of data.canvasElements) {
+    // Start with the blank page
+    let currentPdfPath = blankPath;
+    
+    // Overlay each logo at its canvas position
+    for (let i = 0; i < data.canvasElements.length; i++) {
+      const element = data.canvasElements[i];
       const logo = data.logos.find(l => l.id === element.logoId);
+      
       if (logo) {
         const logoSourcePath = this.getLogoSourcePath(logo, element);
         
-        // Calculate position in PostScript coordinates (bottom-left origin)
+        // Calculate position in PDF coordinates (bottom-left origin)
         const xPts = element.x * MM_TO_POINTS;
         const yPts = pageHeightPts - (element.y * MM_TO_POINTS) - (element.height * MM_TO_POINTS);
         const widthPts = element.width * MM_TO_POINTS;
         const heightPts = element.height * MM_TO_POINTS;
         
-        console.log(`📍 Adding logo to PostScript at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+        console.log(`📍 Overlaying logo ${i + 1}: (${element.x.toFixed(1)}, ${element.y.toFixed(1)})mm → (${xPts.toFixed(1)}, ${yPts.toFixed(1)})pts`);
         
-        // Convert logo to PDF first if it's SVG
+        // Convert SVG to PDF if needed
         let logoPdfPath = logoSourcePath;
         if (logoSourcePath.toLowerCase().endsWith('.svg')) {
-          const tempPdfPath = path.join(workDir, `temp_${element.id}_${timestamp}.pdf`);
+          const tempPdfPath = path.join(workDir, `temp_logo_${i}_${timestamp}.pdf`);
           const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${logoSourcePath}"`;
           await execAsync(inkscapeCmd);
           logoPdfPath = tempPdfPath;
         }
         
-        // Add logo positioning to PostScript
-        psContent += `
-% Logo: ${logo.filename}
-gsave
-${xPts} ${yPts} translate
-${widthPts} ${heightPts} scale
-% Use external PDF inclusion for vector preservation
-(${logoPdfPath}) (r) file runpdfbegin
-1 pdfgetpage pdfshowpage
-runpdfend
-grestore
-`;
+        // Create next overlay
+        const nextPdfPath = path.join(workDir, `overlay_${i}_${timestamp}.pdf`);
+        
+        // Scale and position the logo PDF to exact canvas coordinates
+        const scaledLogoPath = path.join(workDir, `scaled_logo_${i}_${timestamp}.pdf`);
+        
+        // First, scale and position the logo to exact coordinates
+        const scaleCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${scaledLogoPath}" -dFIXEDMEDIA -dPDFFitPage -g${Math.round(pageWidthPts)}x${Math.round(pageHeightPts)} -c "${pageWidthPts} ${pageHeightPts} scale" -c "${xPts / pageWidthPts} ${yPts / pageHeightPts} translate" -c "${widthPts / pageWidthPts} ${heightPts / pageHeightPts} scale" -f "${logoPdfPath}"`;
+        
+        await execAsync(scaleCmd);
+        
+        // Then overlay the scaled logo onto the current page
+        const overlayCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${nextPdfPath}" "${currentPdfPath}" "${scaledLogoPath}"`;
+        
+        try {
+          await execAsync(overlayCmd);
+          
+          // Cleanup previous intermediate file
+          if (currentPdfPath !== blankPath && fs.existsSync(currentPdfPath)) {
+            fs.unlinkSync(currentPdfPath);
+          }
+          
+          currentPdfPath = nextPdfPath;
+          
+          // Cleanup temporary files
+          if (fs.existsSync(scaledLogoPath)) {
+            fs.unlinkSync(scaledLogoPath);
+          }
+          if (logoPdfPath !== logoSourcePath && fs.existsSync(logoPdfPath)) {
+            fs.unlinkSync(logoPdfPath);
+          }
+          
+        } catch (error) {
+          console.error(`❌ Logo overlay failed for element ${i}:`, error);
+          // Cleanup on error
+          [scaledLogoPath, logoPdfPath].forEach(file => {
+            if (file !== logoSourcePath && fs.existsSync(file)) {
+              fs.unlinkSync(file);
+            }
+          });
+          throw error;
+        }
       }
     }
     
-    psContent += `
-showpage
-%%EOF`;
-    
-    fs.writeFileSync(psPath, psContent);
-    
-    // Convert PostScript to PDF using Ghostscript
-    const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -o "${page1Path}" "${psPath}"`;
-    
-    try {
-      console.log(`🔧 Converting PostScript to PDF with positioned logos`);
-      await execAsync(gsCmd);
-      console.log(`✅ Artwork page created successfully`);
-    } catch (error) {
-      console.error(`❌ PostScript conversion failed:`, error);
-      throw error;
+    // Move final result to expected path
+    if (currentPdfPath !== page1Path) {
+      fs.renameSync(currentPdfPath, page1Path);
     }
     
-    // Cleanup PostScript file and temporary PDFs
-    [psPath].forEach(file => {
-      if (fs.existsSync(file)) {
-        fs.unlinkSync(file);
-      }
-    });
-    
-    // Cleanup temporary logo PDFs
-    for (const element of data.canvasElements) {
-      const tempPdfPath = path.join(workDir, `temp_${element.id}_${timestamp}.pdf`);
-      if (fs.existsSync(tempPdfPath)) {
-        fs.unlinkSync(tempPdfPath);
-      }
+    // Cleanup blank template
+    if (fs.existsSync(blankPath)) {
+      fs.unlinkSync(blankPath);
     }
     
     console.log(`✅ Artwork page created with proper canvas positioning: ${page1Path}`);
     return page1Path;
+  }
+  
+  /**
+   * Create blank PDF page of specified size
+   */
+  private async createBlankPage(workDir: string, timestamp: number, widthPts: number, heightPts: number): Promise<string> {
+    const blankPath = path.join(workDir, `blank_${timestamp}.pdf`);
+    
+    const blankCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -o "${blankPath}" -c "<</PageSize [${widthPts} ${heightPts}]>> setpagedevice showpage"`;
+    
+    await execAsync(blankCmd);
+    
+    console.log(`✅ Created blank page: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+    return blankPath;
   }
   
   
