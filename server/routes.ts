@@ -714,20 +714,39 @@ export async function registerRoutes(app: express.Application) {
       if (hasCMYKLogos) {
         console.log('🎨 CMYK content detected - Using RobustPDFGenerator with original PDF preservation');
         
-        // DIMENSION OVERRIDE: Set exact target dimensions for CMYK path
-        console.log(`🎯 CMYK PATH: Applying exact dimension override`);
+        // ASPECT-RATIO PRESERVING: Scale to fit target while preserving vector quality
+        console.log(`🎯 CMYK PATH: Applying aspect-ratio-preserving scaling`);
         if (canvasElements.length > 0) {
-          const targetWidthMM = 270.28;
-          const targetHeightMM = 201.96; 
-          const centerX = (297 - targetWidthMM) / 2; // Center on A3 width
-          const centerY = (420 - targetHeightMM) / 2; // Center on A3 height
+          const maxWidthMM = 270.28;
+          const maxHeightMM = 201.96; 
+          const centerX = (297 - maxWidthMM) / 2; // Center on A3 width
+          const centerY = (420 - maxHeightMM) / 2; // Center on A3 height
           
-          console.log(`🎯 CMYK OVERRIDE: ${targetWidthMM}×${targetHeightMM}mm at center (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+          // Get original dimensions from the element (these come from bounds detection)
+          const originalWidth = canvasElements[0].width;
+          const originalHeight = canvasElements[0].height;
+          const originalAspectRatio = originalWidth / originalHeight;
           
-          canvasElements[0].x = centerX;
-          canvasElements[0].y = centerY;
-          canvasElements[0].width = targetWidthMM;
-          canvasElements[0].height = targetHeightMM;
+          // Calculate scale factor to fit within target while preserving aspect ratio
+          const scaleWidth = maxWidthMM / originalWidth;
+          const scaleHeight = maxHeightMM / originalHeight;
+          const scaleFactor = Math.min(scaleWidth, scaleHeight); // Use smaller scale to fit both dimensions
+          
+          const scaledWidth = originalWidth * scaleFactor;
+          const scaledHeight = originalHeight * scaleFactor;
+          
+          // Center the scaled content
+          const finalX = centerX + (maxWidthMM - scaledWidth) / 2;
+          const finalY = centerY + (maxHeightMM - scaledHeight) / 2;
+          
+          console.log(`🎯 ASPECT PRESERVING: Original ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}mm (ratio ${originalAspectRatio.toFixed(2)})`);
+          console.log(`🎯 SCALING: Factor ${scaleFactor.toFixed(3)}x to ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}mm`);
+          console.log(`🎯 POSITIONING: At (${finalX.toFixed(1)}, ${finalY.toFixed(1)}) centered within ${maxWidthMM}×${maxHeightMM}mm`);
+          
+          canvasElements[0].x = finalX;
+          canvasElements[0].y = finalY;
+          canvasElements[0].width = scaledWidth;
+          canvasElements[0].height = scaledHeight;
         }
         
         // Use RobustPDFGenerator which already handles individual garment colors correctly
@@ -763,20 +782,39 @@ export async function registerRoutes(app: express.Application) {
       const generator = new RobustPDFGenerator();
       console.log('📊 Original working generator instance created');
 
-      // DIMENSION OVERRIDE: Set exact target dimensions for perfect accuracy
-      console.log(`🎯 APPLYING EXACT DIMENSION OVERRIDE for perfect positioning`);
+      // ASPECT-RATIO PRESERVING: Scale to fit target area while preserving vector quality  
+      console.log(`🎯 APPLYING ASPECT-RATIO PRESERVING SCALING for clean vectors`);
       if (canvasElements.length > 0) {
-        const targetWidthMM = 270.28;
-        const targetHeightMM = 201.96; 
-        const centerX = (297 - targetWidthMM) / 2; // Center on A3 width
-        const centerY = (420 - targetHeightMM) / 2; // Center on A3 height
+        const maxWidthMM = 270.28;
+        const maxHeightMM = 201.96; 
+        const centerX = (297 - maxWidthMM) / 2; // Center on A3 width
+        const centerY = (420 - maxHeightMM) / 2; // Center on A3 height
         
-        console.log(`🎯 SETTING: ${targetWidthMM}×${targetHeightMM}mm at center (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+        // Get original dimensions from the element (these come from bounds detection)
+        const originalWidth = canvasElements[0].width;
+        const originalHeight = canvasElements[0].height;
+        const originalAspectRatio = originalWidth / originalHeight;
         
-        canvasElements[0].x = centerX;
-        canvasElements[0].y = centerY;
-        canvasElements[0].width = targetWidthMM;
-        canvasElements[0].height = targetHeightMM;
+        // Calculate scale factor to fit within target while preserving aspect ratio
+        const scaleWidth = maxWidthMM / originalWidth;
+        const scaleHeight = maxHeightMM / originalHeight;
+        const scaleFactor = Math.min(scaleWidth, scaleHeight); // Use smaller scale to fit both dimensions
+        
+        const scaledWidth = originalWidth * scaleFactor;
+        const scaledHeight = originalHeight * scaleFactor;
+        
+        // Center the scaled content within the target area
+        const finalX = centerX + (maxWidthMM - scaledWidth) / 2;
+        const finalY = centerY + (maxHeightMM - scaledHeight) / 2;
+        
+        console.log(`🎯 ASPECT PRESERVING: Original ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}mm (ratio ${originalAspectRatio.toFixed(2)})`);
+        console.log(`🎯 SCALING: Factor ${scaleFactor.toFixed(3)}x to ${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}mm`);
+        console.log(`🎯 POSITIONING: At (${finalX.toFixed(1)}, ${finalY.toFixed(1)}) centered within ${maxWidthMM}×${maxHeightMM}mm`);
+        
+        canvasElements[0].x = finalX;
+        canvasElements[0].y = finalY;
+        canvasElements[0].width = scaledWidth;
+        canvasElements[0].height = scaledHeight;
       }
 
       // Generate PDF that preserves original file content

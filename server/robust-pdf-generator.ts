@@ -839,26 +839,75 @@ grestore`;
         console.warn('Could not read SVG file for CMYK check');
       }
       
-      // Force CMYK conversion with aggressive settings - RGB to CMYK must happen
-      const gsCmd = [
+      // Check if PDF already has CMYK colors - if so, preserve them
+      console.log(`🎨 CHECKING EXISTING COLOR SPACE: Analyzing PDF for CMYK content`);
+      const colorCheckCmd = [
         'gs',
         '-dNOPAUSE',
         '-dBATCH',
-        '-dSAFER',
-        '-sDEVICE=pdfwrite',
-        '-dProcessColorModel=/DeviceCMYK',
-        '-dColorConversionStrategy=/CMYK',
-        '-dOverrideICC=true',
-        '-sDefaultCMYKProfile=default_cmyk.icc',
-        '-dPDFSETTINGS=/prepress',
-        '-dColorImageResolution=300',
-        '-dGrayImageResolution=300',
-        '-dMonoImageResolution=1200',
-        `-sOutputFile="${cmykPath}"`,
+        '-sDEVICE=inkcov',
         `"${tempPath}"`
       ].join(' ');
       
-      console.log(`🎯 FORCE CMYK CONVERSION: Converting RGB PDF to CMYK with aggressive settings`);
+      let hasCMYK = false;
+      try {
+        const { stdout: colorOutput } = await execAsync(colorCheckCmd);
+        // If we get ink coverage values, PDF has CMYK colors
+        hasCMYK = /\b0\.\d+\s+0\.\d+\s+0\.\d+\s+0\.\d+/.test(colorOutput);
+        console.log(`🔍 CMYK CHECK RESULT: ${hasCMYK ? 'CMYK colors detected - will preserve' : 'No CMYK colors - will convert'}`);
+        if (hasCMYK) {
+          console.log(`📊 Ink coverage found: ${colorOutput.split('\n').find(line => /\b0\.\d+\s+0\.\d+\s+0\.\d+\s+0\.\d+/.test(line))}`);
+        }
+      } catch (error) {
+        console.log(`⚠️ Could not check CMYK status, defaulting to conversion:`, error);
+      }
+      
+      let gsCmd: string;
+      
+      if (hasCMYK) {
+        console.log(`🎨 CMYK PRESERVATION: Original CMYK colors detected - using preservation mode`);
+        // Preserve existing CMYK colors, only convert RGB elements
+        gsCmd = [
+          'gs',
+          '-dNOPAUSE',
+          '-dBATCH',
+          '-dSAFER',
+          '-sDEVICE=pdfwrite',
+          '-dPreserveDeviceN=true',
+          '-dPreserveSeparation=true',
+          '-dPreserveSpotColor=true',
+          '-dColorConversionStrategy=/LeaveColorUnchanged',
+          '-dAutoFilterColorImages=false',
+          '-dAutoFilterGrayImages=false', 
+          '-dDownsampleColorImages=false',
+          '-dDownsampleGrayImages=false',
+          '-dPDFSETTINGS=/prepress',
+          `-sOutputFile="${cmykPath}"`,
+          `"${tempPath}"`
+        ].join(' ');
+      } else {
+        console.log(`🎯 RGB TO CMYK CONVERSION: No CMYK detected - converting RGB to CMYK`);
+        // Convert RGB to CMYK for RGB-only content
+        gsCmd = [
+          'gs',
+          '-dNOPAUSE',
+          '-dBATCH',
+          '-dSAFER',
+          '-sDEVICE=pdfwrite',
+          '-dProcessColorModel=/DeviceCMYK',
+          '-dColorConversionStrategy=/CMYK',
+          '-dOverrideICC=true',
+          '-sDefaultCMYKProfile=default_cmyk.icc',
+          '-dPDFSETTINGS=/prepress',
+          '-dColorImageResolution=300',
+          '-dGrayImageResolution=300',
+          '-dMonoImageResolution=1200',
+          `-sOutputFile="${cmykPath}"`,
+          `"${tempPath}"`
+        ].join(' ');
+      }
+      
+      console.log(`🎨 COLOR PROCESSING: Using ${hasCMYK ? 'preservation' : 'conversion'} approach`);
       
       const gsResult = await execAsync(gsCmd);
       console.log(`✅ CMYK conversion successful: ${fs.statSync(cmykPath).size} bytes`);
