@@ -135,12 +135,13 @@ export default function PDFPreviewModal({
                           }}
                         >
                           <img
-                            src={`/uploads/${logo.filename}`}
+                            src={`/uploads/${logo.filename}?t=${Date.now()}`}
                             alt="Logo"
                             className="w-full h-full object-contain"
                             onError={(e) => {
                               console.error('Image failed to load:', `/uploads/${logo.filename}`);
-                              e.currentTarget.style.display = 'none';
+                              // Show placeholder instead of hiding
+                              e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwIiB5PSI1MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvZ288L3RleHQ+PC9zdmc+';
                             }}
                             style={{ 
                               filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
