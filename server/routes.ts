@@ -715,10 +715,10 @@ export async function registerRoutes(app: express.Application) {
       console.log('📄 SIMPLE PDF: Using basic pdf-lib without modifications to preserve preview');
       
       try {
-        const { pdf } = await import('pdf-lib');
+        const { PDFDocument } = await import('pdf-lib');
         
         // Create simple A3 PDF 
-        const pdfDoc = await pdf.PDFDocument.create();
+        const pdfDoc = await PDFDocument.create();
         const pageWidth = templateSize.width * 2.834645669; // mm to points
         const pageHeight = templateSize.height * 2.834645669;
         
