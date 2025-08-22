@@ -768,48 +768,75 @@ export async function registerRoutes(app: express.Application) {
                   
                   fs.writeFileSync(tempSvgPath, exactSvg);
                   
-                  // VECTOR APPROACH: Use original PDF directly for CMYK preservation
+                  // GHOSTSCRIPT APPROACH: Composite original PDF directly onto template
                   const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
                   
                   if (fs.existsSync(originalPdfPath)) {
-                    console.log(`📄 Using original PDF: ${originalPdfPath}`);
+                    console.log(`📄 Using Ghostscript compositing with original PDF: ${originalPdfPath}`);
+                    
+                    // Create base template first
+                    const basePdfBytes = await pdfDoc.save();
+                    const basePdfPath = path.join(process.cwd(), 'uploads', `base_${timestamp}.pdf`);
+                    fs.writeFileSync(basePdfPath, basePdfBytes);
+                    
+                    // Calculate exact positioning for Ghostscript
+                    const xPos = element.x * 2.834645669; // mm to points  
+                    const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                    
+                    console.log(`🎯 GHOSTSCRIPT: Positioning at ${xPos.toFixed(1)}, ${yPos.toFixed(1)} size ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts`);
+                    
+                    // Create Ghostscript command to composite PDFs
+                    const outputPdfPath = path.join(process.cwd(), 'uploads', `composite_${timestamp}.pdf`);
+                    
+                    // Use Ghostscript to stamp the original PDF onto both pages of the base
+                    const gsCompositeCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress \\
+                      -c "
+                      <</BeginPage{
+                        gsave
+                        ${xPos} ${yPos} translate
+                        ${EXACT_WIDTH_PTS / 836.2} ${EXACT_HEIGHT_PTS / 283.5} scale
+                      }>> setpagedevice
+                      " \\
+                      -f "${basePdfPath}" \\
+                      -c "
+                      <</EndPage{
+                        grestore
+                        (${originalPdfPath}) run
+                      }>> setpagedevice
+                      " \\
+                      -sOutputFile="${outputPdfPath}"`;
                     
                     try {
-                      const originalPdfBytes = fs.readFileSync(originalPdfPath);
-                      const originalPdf = await PDFDocument.load(originalPdfBytes);
+                      await execAsync(gsCompositeCmd.replace(/\s+/g, ' '));
                       
-                      if (originalPdf.getPages().length > 0) {
-                        // Get the first page and copy it
-                        const [originalPage] = originalPdf.getPages();
-                        const { width: origWidth, height: origHeight } = originalPage.getSize();
+                      if (fs.existsSync(outputPdfPath)) {
+                        const compositePdfBytes = fs.readFileSync(outputPdfPath);
+                        console.log(`✅ GHOSTSCRIPT COMPOSITE: Vector PDF created ${compositePdfBytes.length} bytes`);
                         
-                        console.log(`📐 Original PDF size: ${origWidth.toFixed(1)}×${origHeight.toFixed(1)}pts`);
+                        // Replace our PDF with the composite version
+                        const compositePdf = await PDFDocument.load(compositePdfBytes);
+                        const compositePages = compositePdf.getPages();
                         
-                        // EXACT POSITIONING: Use element position directly
-                        const xPos = element.x * 2.834645669; // mm to points
-                        const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                        // Replace page content
+                        if (compositePages.length >= 2) {
+                          // Clear existing pages and add composite pages
+                          pdfDoc.removePage(0);
+                          pdfDoc.removePage(0);
+                          
+                          const [newPage1, newPage2] = await pdfDoc.copyPages(compositePdf, [0, 1]);
+                          pdfDoc.addPage(newPage1);
+                          pdfDoc.addPage(newPage2);
+                          
+                          console.log(`✅ COMPOSITE SUCCESS: Both pages replaced with vector content`);
+                        }
                         
-                        console.log(`✅ EXACT VECTOR FIX: Positioning ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-                        
-                        // Copy and embed original PDF page
-                        const [copiedPage1] = await pdfDoc.copyPages(originalPdf, [0]);
-                        page1.drawPage(copiedPage1, {
-                          x: xPos, y: yPos,
-                          width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
+                        // Cleanup temp files
+                        [basePdfPath, outputPdfPath].forEach(file => {
+                          if (fs.existsSync(file)) fs.unlinkSync(file);
                         });
-                        console.log(`✅ Page 1: VECTOR PDF embedded successfully`);
-                        
-                        const [copiedPage2] = await pdfDoc.copyPages(originalPdf, [0]);
-                        page2.drawPage(copiedPage2, {
-                          x: xPos, y: yPos,
-                          width: EXACT_WIDTH_PTS, height: EXACT_HEIGHT_PTS
-                        });
-                        console.log(`✅ Page 2: VECTOR PDF embedded successfully`);
-                        
-                        console.log(`✅ VECTOR EMBED: Original PDF embedded with CMYK preservation at exact user specs`);
                       }
-                    } catch (originalPdfError) {
-                      console.log(`⚠️ Could not use original PDF: ${originalPdfError}`);
+                    } catch (gsError) {
+                      console.log(`⚠️ Ghostscript composite failed: ${gsError}`);
                     }
                   }
                   
