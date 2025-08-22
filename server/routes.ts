@@ -667,6 +667,35 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`📐 Template size: ${templateSize.name} (${templateSize.width}×${templateSize.height}mm)`);
 
+      // Try simple embedder for original PDFs when requested
+      if (req.query.simple === 'true' && logos.length > 0) {
+        console.log(`🎯 USING SIMPLE PDF EMBEDDER for maximum accuracy`);
+        
+        const logo = logos[0];
+        if (logo.originalFilename && logo.originalFilename.endsWith('.pdf')) {
+          const logoPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+          
+          if (fs.existsSync(logoPath)) {
+            try {
+              const { SimplePDFEmbedder } = await import('./simple-pdf-embedder');
+              const pdfBuffer = await SimplePDFEmbedder.embedUsingPDFLib(logoPath, 270.28, 201.96);
+              
+              const filename = `${project.name || 'project'}_qty${project.quantity || 1}_simple.pdf`;
+              res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="${filename}"`,
+                'Content-Length': pdfBuffer.length.toString()
+              });
+              
+              console.log(`✅ SIMPLE EMBEDDER: PDF generated successfully`);
+              return res.send(pdfBuffer);
+            } catch (embedError) {
+              console.error(`❌ Simple embedder failed, falling back to robust generator:`, embedError);
+            }
+          }
+        }
+      }
+
       // Import the ORIGINAL WORKING PDF generator
       // Convert logos array to object keyed by logo ID for proper lookup
       const logosObject: { [key: string]: any } = {};

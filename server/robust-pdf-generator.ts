@@ -657,17 +657,29 @@ grestore`;
       const finalX = centerX; // Always use calculated center for user target override
       
       console.log(`🎯 CENTERING FIX: Template width=${templateWidth}pts, content width=${contentWidthPts.toFixed(1)}pts, centered X=${centerX.toFixed(1)}pts, final X=${finalX.toFixed(1)}pts`);
+      
+      // CRITICAL: Check if original PDF exists and use it directly to avoid all conversion issues
+      if (logo.originalFilename && logo.originalFilename.endsWith('.pdf')) {
+        const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+        if (fs.existsSync(originalPdfPath)) {
+          console.log(`🎯 USING ORIGINAL PDF DIRECTLY: Bypassing all conversions to preserve vectors and colors`);
+          logoPdfPath = originalPdfPath;
+          shouldCleanup = false;
+          console.log(`✅ ORIGINAL PDF SET: Will use direct embedding with exact positioning and sizing`);
+        }
+      }
       console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from tight content SVG`);
       
+      // SIMPLIFIED POSITIONING: Use exact target dimensions and proper centering
       const drawOptions = {
         x: finalX,
         y: yPts,
-        width: contentWidthPts,
-        height: contentHeightPts,
+        width: USER_TARGET_WIDTH_MM * MM_TO_POINTS,  // Always use exact target width
+        height: USER_TARGET_HEIGHT_MM * MM_TO_POINTS, // Always use exact target height
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       };
       
-      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
+      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${USER_TARGET_WIDTH_MM * MM_TO_POINTS}×${USER_TARGET_HEIGHT_MM * MM_TO_POINTS}pts (EXACT TARGET)`);
       
       page1.drawPage(logoPage, drawOptions);
       page2.drawPage(logoPage, drawOptions);

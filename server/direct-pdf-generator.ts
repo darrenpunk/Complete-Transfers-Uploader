@@ -1,360 +1,128 @@
 /**
- * DIRECT PDF EMBEDDING GENERATOR
- * 
- * NEW APPROACH: Directly embed original PDFs without any conversion
- * - Preserves exact CMYK colors from original files
- * - Maintains exact dimensions and positioning
- * - No SVG conversion that causes color loss
- * - Uses original PDF files as-is for perfect preservation
+ * DIRECT PDF GENERATOR
+ * Simple, reliable approach that eliminates complex transformations
+ * and focuses on direct, accurate PDF embedding
  */
 
-import fs from 'fs';
-import path from 'path';
-import { PDFDocument, PDFPage, rgb, degrees } from 'pdf-lib';
-import { promisify } from 'util';
-import { exec } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import { execAsync } from './utils';
 
-const execAsync = promisify(exec);
-
-interface ProjectData {
-  canvasElements: any[];
-  logos: any[];
-  templateSize: any;
-  garmentColor?: string;
-  projectName: string;
-  quantity: number;
-  comments?: string;
+interface DirectEmbedOptions {
+  elementX: number;
+  elementY: number; 
+  elementWidth: number;
+  elementHeight: number;
+  logoFilePath: string;
+  templatePageSize: { width: number; height: number };
 }
 
 export class DirectPDFGenerator {
   
-  async generatePDF(data: ProjectData): Promise<Buffer> {
-    try {
-      console.log(`🎯 DIRECT PDF APPROACH: Embedding original PDFs without conversion`);
-      console.log(`📊 Project: ${data.projectName} (${data.canvasElements.length} elements)`);
-      
-      // Create new PDF document with A3 dimensions
-      const pdfDoc = await PDFDocument.create();
-      
-      // Template dimensions in points (A3 = 842 x 1191 pts)
-      const templateWidthPoints = 842;
-      const templateHeightPoints = 1191;
-      
-      // Create Page 1: Original artwork with transparent background
-      const page1 = pdfDoc.addPage([templateWidthPoints, templateHeightPoints]);
-      console.log(`📄 Created Page 1: ${templateWidthPoints}x${templateHeightPoints}pts (transparent background)`);
-      
-      // Create Page 2: Artwork with garment color background
-      const page2 = pdfDoc.addPage([templateWidthPoints, templateHeightPoints]);
-      console.log(`📄 Created Page 2: ${templateWidthPoints}x${templateHeightPoints}pts (garment background)`);
-      
-      // Add garment color background to page 2
-      if (data.garmentColor && data.garmentColor !== 'none') {
-        this.addGarmentBackground(page2, data.garmentColor, templateWidthPoints, templateHeightPoints);
-      }
-      
-      // Embed logos directly from original PDFs
-      await this.embedOriginalPDFs(page1, data.canvasElements, data.logos);
-      await this.embedOriginalPDFs(page2, data.canvasElements, data.logos);
-      
-      // Add project information labels to page 2
-      this.addProjectLabels(page2, data);
-      
-      // Generate final PDF
-      const pdfBytes = await pdfDoc.save();
-      console.log(`✅ Direct PDF generated successfully - Size: ${pdfBytes.length} bytes`);
-      
-      return Buffer.from(pdfBytes);
-      
-    } catch (error) {
-      console.error('❌ Direct PDF generation failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Direct PDF generation failed: ${errorMessage}`);
-    }
-  }
-  
   /**
-   * Embed original PDFs directly without any conversion
+   * Direct approach: Use original PDF when possible, minimal transformations
    */
-  private async embedOriginalPDFs(
-    page: PDFPage,
-    canvasElements: any[],
-    logos: any[]
-  ): Promise<void> {
-    console.log(`🎯 Embedding ${canvasElements.length} original PDFs directly`);
+  static async embedLogoDirect(options: DirectEmbedOptions): Promise<Buffer> {
+    const { elementX, elementY, elementWidth, elementHeight, logoFilePath, templatePageSize } = options;
     
-    for (let i = 0; i < canvasElements.length; i++) {
-      const element = canvasElements[i];
-      
-      // Find matching logo
-      const logo = logos.find(l => l.id === element.logoId);
-      if (!logo) {
-        console.warn(`⚠️ No logo found for element ${element.id}`);
-        continue;
-      }
-      
-      console.log(`📄 Processing logo ${i + 1}/${canvasElements.length}: ${logo.filename}`);
-      
-      // Process both PDF and SVG files with exact dimension preservation
-      if (logo.originalFilename && logo.originalFilename.toLowerCase().endsWith('.pdf')) {
-        await this.embedDirectPDF(page, element, logo);
-      } else if (logo.filename.toLowerCase().endsWith('.svg')) {
-        await this.embedSVGWithExactDimensions(page, element, logo);
-      } else {
-        console.log(`⚠️ Skipping unsupported file: ${logo.filename} (original: ${logo.originalFilename})`);
-      }
-    }
-  }
-  
-  /**
-   * Embed PDF directly using exact dimensions from user's requirements
-   */
-  private async embedDirectPDF(
-    page: PDFPage,
-    element: any,
-    logo: any
-  ): Promise<void> {
+    console.log(`🎯 DIRECT APPROACH: Embedding logo without complex transformations`);
+    console.log(`📐 Element: x=${elementX}mm, y=${elementY}mm, size=${elementWidth}×${elementHeight}mm`);
+    console.log(`📄 Template: ${templatePageSize.width}×${templatePageSize.height}pts`);
+    
+    // Convert mm to points (1mm = 2.834645669 points)
+    const MM_TO_POINTS = 2.834645669;
+    const xPts = elementX * MM_TO_POINTS;
+    const yPts = elementY * MM_TO_POINTS;
+    const widthPts = elementWidth * MM_TO_POINTS;  
+    const heightPts = elementHeight * MM_TO_POINTS;
+    
+    // Center the logo on the template
+    const centerX = (templatePageSize.width - widthPts) / 2;
+    const centerY = (templatePageSize.height - heightPts) / 2;
+    
+    console.log(`🎯 DIRECT CENTERING: Center position=${centerX.toFixed(1)}, ${centerY.toFixed(1)}pts`);
+    
     try {
-      // Find the original PDF file
-      const originalPdfPath = this.findOriginalPDF(logo);
-      if (!originalPdfPath) {
-        console.warn(`⚠️ Original PDF not found for: ${logo.filename}`);
-        return;
-      }
+      // Use Ghostscript to directly embed the logo into a template
+      const outputPath = path.join(process.cwd(), 'uploads', `direct_output_${Date.now()}.pdf`);
       
-      console.log(`📁 Found original PDF: ${originalPdfPath}`);
+      // Create a simple PostScript file that embeds the logo
+      const psContent = `
+%!PS-Adobe-3.0
+%%BoundingBox: 0 0 ${templatePageSize.width} ${templatePageSize.height}
+%%Pages: 1
+%%Page: 1 1
+save
+${centerX} ${centerY} translate
+${widthPts} ${heightPts} scale
+(${logoFilePath}) run
+restore
+showpage
+%%EOF
+`;
       
-      // Load and embed the original PDF
-      const pdfBytes = fs.readFileSync(originalPdfPath);
-      const originalDoc = await PDFDocument.load(pdfBytes);
-      const [embeddedPage] = await page.doc.embedPdf(originalDoc);
+      const psPath = path.join(process.cwd(), 'uploads', `temp_${Date.now()}.ps`);
+      fs.writeFileSync(psPath, psContent);
       
-      // Get original PDF dimensions
-      const originalSize = embeddedPage.size();
-      console.log(`📏 Original PDF size: ${originalSize.width.toFixed(1)}x${originalSize.height.toFixed(1)}pts`);
+      // Convert PS to PDF using Ghostscript
+      const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -o "${outputPath}" "${psPath}"`;
+      await execAsync(gsCmd);
       
-      // Use EXACT dimensions from user requirements
-      // User specified: content is 293.91mm x 162.468mm, document viewbox is 297x210mm
-      const MM_TO_POINTS = 2.834645669;
-      const exactContentWidthMM = 293.91;
-      const exactContentHeightMM = 162.468;
-      const exactWidthPts = exactContentWidthMM * MM_TO_POINTS;
-      const exactHeightPts = exactContentHeightMM * MM_TO_POINTS;
-      
-      console.log(`🎯 Using EXACT user dimensions: ${exactContentWidthMM}x${exactContentHeightMM}mm = ${exactWidthPts.toFixed(1)}x${exactHeightPts.toFixed(1)}pts`);
-      
-      // Calculate position using element coordinates
-      const pdfX = element.x * MM_TO_POINTS;
-      const pdfY = page.getSize().height - (element.y * MM_TO_POINTS) - exactHeightPts;
-      
-      console.log(`📍 Direct embedding at: (${pdfX.toFixed(1)}, ${pdfY.toFixed(1)}) size: ${exactWidthPts.toFixed(1)}x${exactHeightPts.toFixed(1)}`);
-      
-      // Embed with EXACT dimensions - no aspect ratio changes
-      page.drawPage(embeddedPage, {
-        x: pdfX,
-        y: pdfY,
-        width: exactWidthPts,
-        height: exactHeightPts,
-        rotate: element.rotation ? degrees(element.rotation) : undefined,
-      });
-      
-      console.log(`✅ Successfully embedded original PDF with exact dimensions`);
-      
-    } catch (error) {
-      console.error(`❌ Failed to embed direct PDF:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Find the original PDF file for a logo
-   */
-  private findOriginalPDF(logo: any): string | null {
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    
-    // Try to find the original PDF file
-    const possiblePaths = [
-      path.join(uploadsDir, logo.originalFilename || ''),
-      path.join(uploadsDir, logo.filename.replace('.svg', '.pdf')),
-      path.join(uploadsDir, logo.id + '.pdf')
-    ];
-    
-    for (const possiblePath of possiblePaths) {
-      if (fs.existsSync(possiblePath)) {
-        console.log(`📁 Found original PDF at: ${possiblePath}`);
-        return possiblePath;
-      }
-    }
-    
-    // Search for any PDF with similar name
-    try {
-      const files = fs.readdirSync(uploadsDir);
-      const pdfFiles = files.filter(f => f.toLowerCase().endsWith('.pdf'));
-      
-      for (const pdfFile of pdfFiles) {
-        if (pdfFile.includes(logo.id) || logo.filename.includes(pdfFile.replace('.pdf', ''))) {
-          const foundPath = path.join(uploadsDir, pdfFile);
-          console.log(`📁 Found matching PDF: ${foundPath}`);
-          return foundPath;
-        }
-      }
-    } catch (error) {
-      console.warn(`⚠️ Error searching for PDF files:`, error);
-    }
-    
-    return null;
-  }
-  
-  /**
-   * Embed SVG with exact user-specified dimensions (no conversion cycle)
-   */
-  private async embedSVGWithExactDimensions(
-    page: PDFPage,
-    element: any,
-    logo: any
-  ): Promise<void> {
-    try {
-      const svgPath = path.join(process.cwd(), 'uploads', logo.filename);
-      if (!fs.existsSync(svgPath)) {
-        console.warn(`⚠️ SVG file not found: ${svgPath}`);
-        return;
-      }
-      
-      console.log(`📁 Processing SVG: ${svgPath}`);
-      
-      // Read SVG content
-      const svgContent = fs.readFileSync(svgPath, 'utf8');
-      
-      // Convert SVG to PDF using Inkscape with EXACT dimensions
-      const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_direct_${Date.now()}.pdf`);
-      
-      // Use EXACT dimensions from user requirements: 293.91x162.468mm
-      const exactWidthMM = 293.91;
-      const exactHeightMM = 162.468;
-      
-      // Convert mm to pixels for Inkscape (using 96 DPI standard)
-      const MM_TO_PX = 3.7795275591; // 96 DPI conversion
-      const exactWidthPx = Math.round(exactWidthMM * MM_TO_PX);
-      const exactHeightPx = Math.round(exactHeightMM * MM_TO_PX);
-      
-      console.log(`🎯 Converting SVG to PDF with EXACT dimensions: ${exactWidthMM}x${exactHeightMM}mm (${exactWidthPx}x${exactHeightPx}px)`);
-      
-      // Use Inkscape to convert with exact pixel dimensions
-      const inkscapeCmd = [
-        'inkscape',
-        `--export-type=pdf`,
-        `--export-width=${exactWidthPx}`,
-        `--export-height=${exactHeightPx}`,
-        `--export-pdf-version=1.7`,
-        `--export-text-to-path`,
-        `--export-dpi=96`,
-        `--export-filename="${tempPdfPath}"`,
-        `"${svgPath}"`
-      ].join(' ');
-      
-      console.log(`🔧 Running Inkscape: ${inkscapeCmd}`);
-      
-      await execAsync(inkscapeCmd);
-      
-      if (!fs.existsSync(tempPdfPath)) {
-        throw new Error('Inkscape failed to create PDF');
-      }
-      
-      console.log(`📄 Inkscape created temp PDF: ${fs.statSync(tempPdfPath).size} bytes`);
-      
-      // Now embed this PDF directly
-      const pdfBytes = fs.readFileSync(tempPdfPath);
-      const tempDoc = await PDFDocument.load(pdfBytes);
-      const [embeddedPage] = await page.doc.embedPdf(tempDoc);
-      
-      // Position using exact calculations
-      const MM_TO_POINTS = 2.834645669;
-      const exactWidthPts = exactWidthMM * MM_TO_POINTS;
-      const exactHeightPts = exactHeightMM * MM_TO_POINTS;
-      
-      const pdfX = element.x * MM_TO_POINTS;
-      const pdfY = page.getSize().height - (element.y * MM_TO_POINTS) - exactHeightPts;
-      
-      console.log(`📍 Embedding SVG-PDF at: (${pdfX.toFixed(1)}, ${pdfY.toFixed(1)}) size: ${exactWidthPts.toFixed(1)}x${exactHeightPts.toFixed(1)}pts`);
-      
-      // Embed with EXACT dimensions
-      page.drawPage(embeddedPage, {
-        x: pdfX,
-        y: pdfY,
-        width: exactWidthPts,
-        height: exactHeightPts,
-        rotate: element.rotation ? degrees(element.rotation) : undefined,
-      });
-      
-      console.log(`✅ Successfully embedded SVG with exact dimensions`);
+      console.log(`✅ DIRECT GENERATION: PDF created successfully`);
       
       // Clean up temp file
-      try {
-        fs.unlinkSync(tempPdfPath);
-        console.log(`🧹 Cleaned up temp file: ${tempPdfPath}`);
-      } catch (cleanupError) {
-        console.warn(`⚠️ Failed to clean up temp file: ${cleanupError}`);
-      }
+      fs.unlinkSync(psPath);
+      
+      return fs.readFileSync(outputPath);
       
     } catch (error) {
-      console.error(`❌ Failed to embed SVG with exact dimensions:`, error);
+      console.error(`❌ DIRECT GENERATION: Failed`, error);
       throw error;
     }
   }
   
   /**
-   * Add garment color background
+   * Simplified SVG to PDF conversion with minimal transformations
    */
-  private addGarmentBackground(page: PDFPage, garmentColor: string, width: number, height: number): void {
-    console.log(`🎨 Adding garment background: ${garmentColor}`);
+  static async convertSVGDirectly(svgPath: string, targetWidth: number, targetHeight: number): Promise<string> {
+    console.log(`🔄 DIRECT SVG CONVERSION: ${svgPath} to ${targetWidth}×${targetHeight}pts`);
     
-    // Parse garment color
-    let backgroundColor = rgb(1, 1, 1); // Default white
+    const outputPath = svgPath.replace('.svg', '_direct.pdf');
     
-    if (garmentColor.startsWith('#')) {
-      const hex = garmentColor.substring(1);
-      const r = parseInt(hex.substring(0, 2), 16) / 255;
-      const g = parseInt(hex.substring(2, 4), 16) / 255;
-      const b = parseInt(hex.substring(4, 6), 16) / 255;
-      backgroundColor = rgb(r, g, b);
-    } else if (garmentColor.toLowerCase() === 'hi viz') {
-      // Hi-Viz Yellow
-      backgroundColor = rgb(240/255, 244/255, 42/255);
+    try {
+      // Use Inkscape with exact dimensions, no scaling
+      const inkscapeCmd = `inkscape --export-type=pdf --export-width=${targetWidth} --export-height=${targetHeight} --export-filename="${outputPath}" "${svgPath}"`;
+      await execAsync(inkscapeCmd);
+      
+      console.log(`✅ DIRECT SVG CONVERSION: Successful`);
+      return outputPath;
+      
+    } catch (error) {
+      console.error(`❌ DIRECT SVG CONVERSION: Failed`, error);
+      throw error;
     }
-    
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: width,
-      height: height,
-      color: backgroundColor,
-    });
-    
-    console.log(`✅ Added ${garmentColor} background`);
   }
   
   /**
-   * Add project information labels
+   * Use original file directly when possible to preserve all attributes
    */
-  private addProjectLabels(page: PDFPage, data: ProjectData): void {
-    const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
-    
-    page.drawText(labelText, {
-      x: 20,
-      y: 40,
-      size: 12,
-      color: rgb(0, 0, 0),
-    });
-    
-    if (data.garmentColor) {
-      page.drawText(`Garment Color: ${data.garmentColor}`, {
-        x: 20,
-        y: 20,
-        size: 10,
-        color: rgb(0, 0, 0),
-      });
+  static async useOriginalWhenPossible(originalPath: string, targetDimensions: { width: number; height: number }): Promise<string> {
+    if (!fs.existsSync(originalPath)) {
+      throw new Error(`Original file not found: ${originalPath}`);
     }
     
-    console.log(`🏷️ Added project labels: ${labelText}`);
+    const ext = path.extname(originalPath).toLowerCase();
+    
+    if (ext === '.pdf') {
+      console.log(`✅ DIRECT USE: Using original PDF without conversion`);
+      return originalPath;
+    }
+    
+    if (ext === '.svg') {
+      console.log(`🔄 DIRECT USE: Converting SVG with exact dimensions`);
+      return await this.convertSVGDirectly(originalPath, targetDimensions.width, targetDimensions.height);
+    }
+    
+    throw new Error(`Unsupported file type for direct use: ${ext}`);
   }
 }
