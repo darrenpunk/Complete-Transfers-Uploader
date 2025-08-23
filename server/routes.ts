@@ -774,28 +774,45 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
                 
                 if (sourcePages.length > 0) {
+                  // Get original PDF page dimensions to prevent scaling distortion
+                  const sourcePage = sourcePages[0];
+                  const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
+                  
+                  console.log(`📏 Original PDF size: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
+                  
+                  // Calculate scale to fit canvas size while preserving aspect ratio
+                  const scaleX = widthPts / originalWidth;
+                  const scaleY = heightPts / originalHeight;
+                  const uniformScale = Math.min(scaleX, scaleY); // Preserve aspect ratio
+                  
+                  const finalWidth = originalWidth * uniformScale;
+                  const finalHeight = originalHeight * uniformScale;
+                  
+                  console.log(`🔧 Uniform scale: ${uniformScale.toFixed(3)}x, Final size: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}pts`);
+                  
                   // Use embedPages instead of copyPages to avoid NaN issue
                   const embeddedPages = await pdfDoc.embedPages([sourcePages[0]]);
                   const embeddedPage = embeddedPages[0];
                   
                   console.log(`✅ Original vector page embedded successfully`);
                   
-                  // Draw embedded vector page on both pages with exact positioning
+                  // Draw embedded vector page on page 1 with uniform scaling
                   page1.drawPage(embeddedPage, {
                     x: xPos,
                     y: yPos,
-                    width: widthPts,
-                    height: heightPts
+                    width: finalWidth,
+                    height: finalHeight
                   });
-                  console.log(`✅ Page 1: Original vector positioned at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 1: Vector positioned with uniform scale at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
+                  // Draw embedded vector page on page 2 with uniform scaling  
                   page2.drawPage(embeddedPage, {
                     x: xPos,
                     y: yPos,
-                    width: widthPts,
-                    height: heightPts
+                    width: finalWidth,
+                    height: finalHeight
                   });
-                  console.log(`✅ Page 2: Original vector positioned at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 2: Vector positioned with uniform scale at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                 }
               } catch (vectorError) {
                 console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
@@ -834,8 +851,10 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // Add proper garment background to page 2 BEFORE artwork
-        console.log(`🎨 Adding garment background BEFORE artwork on page 2`);
+        // Add proper garment background to page 2 AFTER white background but BEFORE artwork
+        console.log(`🎨 Adding garment background AFTER white base on page 2`);
+        
+        // First remove the white background from page 2 by drawing over it
         
         // Get garment color from canvas elements
         const garmentColor = canvasElements.find(el => el.garmentColor)?.garmentColor || '#FFFFFF';
@@ -852,15 +871,18 @@ export async function registerRoutes(app: express.Application) {
           bgColor = rgb(r, g, b);
         }
         
+        // Draw garment color background over the entire page 2
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
           color: bgColor
         });
+        console.log(`✅ Page 2 garment background applied: ${garmentColorName} (${garmentColor})`);
         
-        // Add garment color label at bottom
-        page2.drawText(`Garment Color: ${garmentColorName} (${garmentColor})`, {
-          x: 20, y: 60, size: 12, color: rgb(0, 0, 0)
+        // Add garment color label at bottom  
+        const labelColor = garmentColor === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1); // Black text on white, white text on dark
+        page2.drawText(`Garment Color: ${garmentColorName}`, {
+          x: 20, y: 60, size: 12, color: labelColor
         });
         
         // Remove fallback text - if mirroring worked, no fallback needed
