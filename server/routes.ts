@@ -1198,11 +1198,44 @@ export async function registerRoutes(app: express.Application) {
                 const svgFilename = `${file.filename}.svg`;
                 const svgPath = path.join(uploadDir, svgFilename);
                 
-                // Use pdf2svg for high-quality vector conversion
+                // Apply FOGRA 51 color correction during PDF→SVG conversion
                 let svgCommand;
                 try {
                   await execAsync('which pdf2svg');
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  
+                  // FOGRA 51 COLOR-CORRECTED PDF→SVG CONVERSION
+                  const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+                  const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
+                  
+                  if (hasFogra51Svg) {
+                    console.log(`🎨 APPLYING FOGRA 51 COLOR CORRECTION DURING PDF→SVG CONVERSION`);
+                    
+                    // First: Apply FOGRA 51 color correction to PDF
+                    const tempColorCorrectedPdf = path.join(uploadDir, `temp_fogra51_${file.filename}.pdf`);
+                    const fogra51Cmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+                      `-dProcessColorModel=/DeviceCMYK ` +
+                      `-dColorConversionStrategy=/CMYK ` +
+                      `-dRenderIntent=0 ` +
+                      `-dBlackPtComp=1 ` +
+                      `-sDefaultCMYKProfile="${fogra51SvgPath}" ` +
+                      `-sOutputICCProfile="${fogra51SvgPath}" ` +
+                      `-sOutputFile="${tempColorCorrectedPdf}" "${pdfPath}"`;
+                    
+                    await execAsync(fogra51Cmd);
+                    
+                    // Then: Convert color-corrected PDF to SVG
+                    svgCommand = `pdf2svg "${tempColorCorrectedPdf}" "${svgPath}"`;
+                    
+                    // Cleanup temp file after SVG creation
+                    setTimeout(() => {
+                      if (fs.existsSync(tempColorCorrectedPdf)) {
+                        fs.unlinkSync(tempColorCorrectedPdf);
+                      }
+                    }, 1000);
+                  } else {
+                    console.log(`⚠️ FOGRA 51 profile not found, using standard PDF→SVG conversion`);
+                    svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  }
                 } catch {
                   // Fallback to Inkscape if pdf2svg not available
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
