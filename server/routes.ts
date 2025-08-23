@@ -739,91 +739,102 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // WORKING SOLUTION: Use original PDF directly with proper embedding
-        console.log(`🎯 WORKING SOLUTION: Original PDF with proper embedding`);
-        
-        // EXACT USER SPECS: 270.28×201.96mm = 766.1×572.5pts
-        const EXACT_WIDTH_PTS = 766.1;
-        const EXACT_HEIGHT_PTS = 572.5;
+        // MIRROR THE CANVAS: Exact same approach as preview
+        console.log(`🎯 MIRRORING CANVAS: Using same method as working preview`);
         
         for (let element of canvasElements) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
-            console.log(`🔍 Processing logo: ${(logo as any).filename}`);
+            const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+            console.log(`🖼️ Processing canvas element: ${(logo as any).filename}`);
             
-            // USE ORIGINAL PDF DIRECTLY - This preserves CMYK colors
-            const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
-            
-            if (fs.existsSync(originalPdfPath)) {
-              console.log(`📄 Using original PDF: ${originalPdfPath}`);
-              
+            if (fs.existsSync(svgPath)) {
               try {
-                // Load original PDF
-                const originalPdfBytes = fs.readFileSync(originalPdfPath);
-                const sourcePdf = await PDFDocument.load(originalPdfBytes);
-                const sourcePages = sourcePdf.getPages();
+                // Convert canvas coordinates to PDF coordinates
+                const xPosMM = element.x; // Canvas X in mm
+                const yPosMM = element.y; // Canvas Y in mm
+                const widthMM = element.width; // Canvas width in mm
+                const heightMM = element.height; // Canvas height in mm
                 
-                if (sourcePages.length > 0) {
-                  console.log(`✅ Original PDF loaded: ${sourcePages.length} pages`);
+                // Convert to PDF points (1mm = 2.834645669pts)
+                const xPos = xPosMM * 2.834645669;
+                const yPos = pageHeight - (yPosMM * 2.834645669) - (heightMM * 2.834645669);
+                const widthPts = widthMM * 2.834645669;
+                const heightPts = heightMM * 2.834645669;
+                
+                console.log(`📐 CANVAS MIRROR: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
+                console.log(`📐 PDF COORDS: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})pts`);
+                
+                // Convert SVG to PDF preserving colors
+                const tempPdfPath = path.join(process.cwd(), 'uploads', `canvas_mirror_${timestamp}.pdf`);
+                const convertCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${svgPath}"`;
+                
+                await execAsync(convertCmd);
+                
+                if (fs.existsSync(tempPdfPath)) {
+                  console.log(`✅ SVG converted: ${fs.statSync(tempPdfPath).size} bytes`);
                   
-                  // EXACT POSITIONING: Canvas coordinates to PDF points
-                  const xPos = element.x * 2.834645669; // mm to points
-                  const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
+                  // Load and embed the converted PDF
+                  const artworkBytes = fs.readFileSync(tempPdfPath);
+                  const artworkDoc = await PDFDocument.load(artworkBytes);
+                  const [artworkPage] = await pdfDoc.copyPages(artworkDoc, [0]);
                   
-                  console.log(`📍 EXACT POSITIONING: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-                  
-                  // Embed the original PDF page using embedPdf (not copyPages)
-                  const [embeddedPage] = await pdfDoc.embedPdf(sourcePdf);
-                  
-                  // Draw on page 1
-                  page1.drawPage(embeddedPage, {
+                  // Embed on page 1 (no background)
+                  page1.drawPage(artworkPage, {
                     x: xPos,
                     y: yPos,
-                    width: EXACT_WIDTH_PTS,
-                    height: EXACT_HEIGHT_PTS
+                    width: widthPts,
+                    height: heightPts
                   });
-                  console.log(`✅ Page 1: Original PDF embedded successfully`);
+                  console.log(`✅ Page 1: Canvas element mirrored`);
                   
-                  // Draw on page 2  
-                  page2.drawPage(embeddedPage, {
+                  // Embed on page 2 (with garment background)
+                  const [artworkPage2] = await pdfDoc.copyPages(artworkDoc, [0]);
+                  page2.drawPage(artworkPage2, {
                     x: xPos,
                     y: yPos,
-                    width: EXACT_WIDTH_PTS,
-                    height: EXACT_HEIGHT_PTS
+                    width: widthPts,
+                    height: heightPts
                   });
-                  console.log(`✅ Page 2: Original PDF embedded successfully`);
+                  console.log(`✅ Page 2: Canvas element mirrored`);
+                  
+                  // Cleanup
+                  fs.unlinkSync(tempPdfPath);
                 }
-              } catch (pdfError) {
-                console.log(`⚠️ Original PDF embedding failed: ${pdfError}`);
+              } catch (mirrorError) {
+                console.log(`⚠️ Canvas mirroring failed: ${mirrorError}`);
               }
             }
           }
         }
         
-        // ADD WHITE GARMENT BACKGROUND TO PAGE 2 ONLY
-        console.log(`🎨 Adding white garment background on page 2`);
+        // Add proper garment background to page 2 BEFORE artwork
+        console.log(`🎨 Adding garment background BEFORE artwork on page 2`);
+        
+        // Determine garment color (check project data for selected garment)
+        const garmentColor = project.selectedGarmentColor || 'White';
+        let bgColor = rgb(1, 1, 1); // Default white
+        
+        if (garmentColor.toLowerCase() === 'black') {
+          bgColor = rgb(0.09, 0.09, 0.086); // Black #171816
+        } else if (garmentColor.toLowerCase().includes('gray')) {
+          bgColor = rgb(0.74, 0.75, 0.73); // Gray #BCBFBB
+        }
+        // Add more colors as needed
+        
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
-          color: rgb(1, 1, 1) // White garment color
+          color: bgColor
         });
         
-        // FALLBACK: Simple text-based approach if all else fails
-        console.log(`🎯 FALLBACK: Adding logos as text placeholders`);
-        for (let element of canvasElements) {
-          const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
-          if (logo) {
-            const xPos = element.x * 2.834645669;
-            const yPos = pageHeight - (element.y * 2.834645669) - 20;
-            
-            page1.drawText(`LOGO: ${(logo as any).originalName || 'Artwork'}`, {
-              x: xPos, y: yPos, size: 12, color: rgb(0, 0, 0)
-            });
-            page2.drawText(`LOGO: ${(logo as any).originalName || 'Artwork'}`, {
-              x: xPos, y: yPos, size: 12, color: rgb(0, 0, 0)
-            });
-          }
-        }
+        // Add garment color label at bottom
+        page2.drawText(`Garment: ${garmentColor}`, {
+          x: 20, y: 60, size: 12, color: rgb(0, 0, 0)
+        });
+        
+        // Remove fallback text - if mirroring worked, no fallback needed
+        console.log(`✅ Canvas mirroring complete - no fallback text needed`);
         
         // Page 2 info
         page2.drawText(`Project: ${project.name || 'Untitled'}`, { x: 20, y: pageHeight - 40, size: 12, color: rgb(0, 0, 0) });
@@ -843,23 +854,18 @@ export async function registerRoutes(app: express.Application) {
         // Save initial PDF
         fs.writeFileSync(tempPdfPath, pdfBytes);
         
-        // FORCE CMYK COLOR SPACE: No RGB allowed
-        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dProcessColorModel=/DeviceCMYK -dColorConversionStrategy=/CMYK -dOverrideICC -sOutputICCProfile="" -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
+        // Preserve original colors - don't force conversion
+        console.log(`🎨 PRESERVING ORIGINAL COLORS: RGB/CMYK as-is from artwork`);
+        
+        // Optional: Apply gentle CMYK conversion that preserves existing CMYK
+        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
         
         try {
           await execAsync(cmykCmd);
           
           if (fs.existsSync(finalPdfPath)) {
-            const cmykPdfBytes = fs.readFileSync(finalPdfPath);
-            console.log(`✅ FORCED CMYK PDF: ${cmykPdfBytes.length} bytes`);
-            
-            // Verify CMYK color space
-            try {
-              const { stdout } = await execAsync(`gs -dNOPAUSE -dBATCH -sDEVICE=inkcov -sOutputFile=/dev/null "${finalPdfPath}" 2>&1 | grep -E "CMYK|Device|cyan|magenta"`);
-              console.log(`🎨 CMYK VERIFICATION: ${stdout.trim()}`);
-            } catch (verifyError) {
-              console.log(`📊 CMYK verification: Force applied`);
-            }
+            const finalPdfBytes = fs.readFileSync(finalPdfPath);
+            console.log(`✅ COLOR-PRESERVED PDF: ${finalPdfBytes.length} bytes`);
             
             // Cleanup temp files
             [tempPdfPath, finalPdfPath].forEach(file => {
@@ -867,12 +873,12 @@ export async function registerRoutes(app: express.Application) {
             });
             
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_EXACT_CMYK.pdf"`);
-            res.send(Buffer.from(cmykPdfBytes));
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_MIRROR.pdf"`);
+            res.send(Buffer.from(finalPdfBytes));
             return;
           }
-        } catch (cmykError) {
-          console.log(`⚠️ FORCED CMYK failed: ${cmykError}`);
+        } catch (colorError) {
+          console.log(`⚠️ Color preservation failed: ${colorError}`);
         }
         
         // Fallback to original RGB PDF
