@@ -797,32 +797,35 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
                 
                 if (sourcePages.length > 0) {
-                  // Use original PDF at natural size - no scaling distortion
+                  // Scale PDF to EXACT canvas size to match preview perfectly
                   const sourcePage = sourcePages[0];
                   const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
                   
                   console.log(`📏 Original PDF natural size: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
+                  console.log(`📐 Target canvas size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                   
                   // Use embedPdf instead of embedPages to preserve transparency
                   const embeddedPage = await pdfDoc.embedPdf(sourcePdfDoc);
                   
-                  console.log(`✅ Original PDF embedded at natural size`);
+                  console.log(`✅ Original PDF embedded successfully`);
                   
-                  // Position at canvas coordinates but use natural PDF size (no scaling)
+                  // Scale to EXACT canvas dimensions to match preview
                   page1.drawPage(embeddedPage[0], {
                     x: xPos,
-                    y: yPos
-                    // No width/height = use natural size
+                    y: yPos,
+                    width: widthPts,
+                    height: heightPts
                   });
-                  console.log(`✅ Page 1: Vector at natural size positioned at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 1: Vector scaled to exact canvas size at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
                   // Same on page 2
                   page2.drawPage(embeddedPage[0], {
                     x: xPos,
-                    y: yPos
-                    // No width/height = use natural size
+                    y: yPos,
+                    width: widthPts,
+                    height: heightPts
                   });
-                  console.log(`✅ Page 2: Vector at natural size positioned at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 2: Vector scaled to exact canvas size at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                 }
               } catch (vectorError) {
                 console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
