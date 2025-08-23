@@ -771,12 +771,23 @@ export async function registerRoutes(app: express.Application) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (!logo) continue;
           
+          // CRITICAL: Use ORIGINAL PDF if available to preserve exact CMYK colors
+          const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename || '');
           const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-          console.log(`📄 Processing SVG through Adobe conversion: ${(logo as any).filename}`);
           
-          if (!fs.existsSync(svgPath)) {
-            console.log(`❌ SVG not found: ${svgPath}`);
-            continue;
+          let usePath = svgPath;
+          let useOriginalPdf = false;
+          
+          if ((logo as any).originalFilename && fs.existsSync(originalPdfPath)) {
+            console.log(`🎯 USING ORIGINAL PDF WITH EXACT CMYK COLORS: ${(logo as any).originalFilename}`);
+            usePath = originalPdfPath;
+            useOriginalPdf = true;
+          } else {
+            console.log(`📄 Processing SVG (colors already corrupted): ${(logo as any).filename}`);
+            if (!fs.existsSync(svgPath)) {
+              console.log(`❌ SVG not found: ${svgPath}`);
+              continue;
+            }
           }
           
           try {
@@ -788,30 +799,42 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`📐 Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
             
-            // Read SVG and remove any background fills (keep viewBox for size)
-            let svgContent = fs.readFileSync(svgPath, 'utf8');
+            let vectorBytes: Buffer;
             
-            // Remove any background rectangles or fills that create boundaries
-            svgContent = svgContent.replace(/<rect[^>]*fill="white"[^>]*>/g, '');
-            svgContent = svgContent.replace(/<rect[^>]*fill="#ffffff"[^>]*>/g, '');
-            svgContent = svgContent.replace(/<rect[^>]*fill="#FFFFFF"[^>]*>/g, '');
-            
-            console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
-            
-            // Create temp files
-            const ts = Date.now() + Math.random();
-            const tempSvg = path.join(process.cwd(), 'uploads', `temp_${ts}.svg`);
-            const tempPdf = path.join(process.cwd(), 'uploads', `temp_${ts}.pdf`);
-            
-            fs.writeFileSync(tempSvg, svgContent);
-            
-            // Convert SVG → PDF with transparency preserved (no background)
-            const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
-            execSync(rsvgCmd);
-            console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+            if (useOriginalPdf) {
+              // DIRECT EMBEDDING: Use original PDF with exact CMYK colors preserved
+              console.log(`✅ EMBEDDING ORIGINAL PDF DIRECTLY - EXACT CMYK COLORS PRESERVED`);
+              vectorBytes = fs.readFileSync(originalPdfPath);
+            } else {
+              // Fallback: Process corrupted SVG
+              let svgContent = fs.readFileSync(svgPath, 'utf8');
+              
+              // Remove any background rectangles or fills that create boundaries
+              svgContent = svgContent.replace(/<rect[^>]*fill="white"[^>]*>/g, '');
+              svgContent = svgContent.replace(/<rect[^>]*fill="#ffffff"[^>]*>/g, '');
+              svgContent = svgContent.replace(/<rect[^>]*fill="#FFFFFF"[^>]*>/g, '');
+              
+              console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
+              
+              // Create temp files
+              const ts = Date.now() + Math.random();
+              const tempSvg = path.join(process.cwd(), 'uploads', `temp_${ts}.svg`);
+              const tempPdf = path.join(process.cwd(), 'uploads', `temp_${ts}.pdf`);
+              
+              fs.writeFileSync(tempSvg, svgContent);
+              
+              // Convert SVG → PDF with transparency preserved (no background)
+              const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
+              execSync(rsvgCmd);
+              console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+              
+              vectorBytes = fs.readFileSync(tempPdf);
+              
+              // Cleanup temp files
+              [tempSvg, tempPdf].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
+            }
             
             // Load and embed artwork
-            const vectorBytes = fs.readFileSync(tempPdf);
             const vectorDoc = await PDFDocument.load(vectorBytes);
             const [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
             
@@ -1098,13 +1121,8 @@ export async function registerRoutes(app: express.Application) {
                   const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
                   const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
                   
-                  console.log(`🎯 GHOSTSCRIPT PDF→SVG WITH CMYK PRESERVATION`);
-                  svgCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=svg ` +
-                    `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-                    `-dPreserveMarkedContent=true ` +
-                    `-dPreserveSeparation=true ` +
-                    `-dPreserveDeviceN=true ` +
-                    `-sOutputFile="${svgPath}" "${pdfPath}"`;
+                  console.log(`🎯 BASIC PDF→SVG CONVERSION - WORKING IMPORT`);
+                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
                 } catch {
                   // Fallback to Inkscape if pdf2svg not available
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
