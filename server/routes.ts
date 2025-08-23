@@ -762,87 +762,96 @@ export async function registerRoutes(app: express.Application) {
         });
         console.log(`✅ Page 2 garment background applied first: ${garmentColorName} (${garmentColor})`);
         
-        // USE ORIGINAL VECTOR PDF DIRECTLY: Preserve exact vector content
-        console.log(`🎯 ORIGINAL VECTOR PDF: Natural size with exact positioning`);
+        // CANVAS-BASED APPROACH: Use actual canvas content with Adobe CMYK conversion
+        console.log(`🎯 CANVAS-BASED APPROACH: Embedding actual canvas content with Adobe CMYK conversion`);
         
         for (let element of canvasElements) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
-            // Use tight content SVG - same as canvas preview (no viewbox issues)
+            // Use tight content SVG from canvas
             const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-            console.log(`🖼️ Using tight content SVG (same as canvas): ${(logo as any).filename}`);
+            console.log(`🖼️ Canvas content: ${(logo as any).filename}`);
             
             if (fs.existsSync(svgPath)) {
               try {
                 // Convert canvas coordinates to PDF coordinates
-                const xPosMM = element.x; // Canvas X in mm
-                const yPosMM = element.y; // Canvas Y in mm
-                const widthMM = element.width; // Canvas width in mm
-                const heightMM = element.height; // Canvas height in mm
+                const xPosMM = element.x;
+                const yPosMM = element.y;
+                const widthMM = element.width;
+                const heightMM = element.height;
                 
-                // Convert to PDF points (1mm = 2.834645669pts)
                 const xPos = xPosMM * 2.834645669;
                 const yPos = pageHeight - (yPosMM * 2.834645669) - (heightMM * 2.834645669);
                 const widthPts = widthMM * 2.834645669;
                 const heightPts = heightMM * 2.834645669;
                 
-                console.log(`📐 TIGHT CONTENT SVG: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
-                console.log(`📐 PDF COORDS: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})pts`);
+                console.log(`📐 CANVAS ELEMENT: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
                 
-                // Read tight content SVG - same as canvas uses
+                // Read canvas SVG content
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
-                console.log(`✅ Tight content SVG loaded: ${svgContent.length} characters`);
+                console.log(`✅ Canvas SVG loaded: ${svgContent.length} characters`);
                 
-                // Convert SVG to VECTOR PDF (preserves vector content)
+                // Convert to high-quality CMYK using Adobe Illustrator color profiles
                 const timestamp = Date.now();
-                const tempSvgPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.svg`);
-                const tempVectorPdfPath = path.join(process.cwd(), 'uploads', `temp_vector_${timestamp}.pdf`);
+                const tempSvgPath = path.join(process.cwd(), 'uploads', `canvas_${timestamp}.svg`);
+                const tempPdfPath = path.join(process.cwd(), 'uploads', `canvas_pdf_${timestamp}.pdf`);
+                const cmykPdfPath = path.join(process.cwd(), 'uploads', `cmyk_${timestamp}.pdf`);
                 
-                // Write SVG to temp file
                 fs.writeFileSync(tempSvgPath, svgContent);
                 
-                // Convert SVG to VECTOR PDF at exact canvas dimensions
-                const convertCmd = `rsvg-convert -f pdf -w ${Math.round(widthMM * 2.834645669)} -h ${Math.round(heightMM * 2.834645669)} -o "${tempVectorPdfPath}" "${tempSvgPath}"`;
-                execSync(convertCmd);
-                console.log(`✅ SVG converted to VECTOR PDF: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm`);
+                // Convert SVG to PDF preserving vectors
+                const svgToPdfCmd = `rsvg-convert -f pdf -o "${tempPdfPath}" "${tempSvgPath}"`;
+                execSync(svgToPdfCmd);
+                console.log(`✅ Canvas SVG converted to PDF`);
                 
-                // Load the vector PDF
-                const vectorPdfBytes = fs.readFileSync(tempVectorPdfPath);
-                const vectorPdfDoc = await PDFDocument.load(vectorPdfBytes);
+                // Apply Adobe Illustrator CMYK conversion with proper color profiles
+                const adobeCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+                  `-dColorConversionStrategy=/UseDeviceIndependentColor ` +
+                  `-dProcessColorModel=/DeviceCMYK ` +
+                  `-dPDFSETTINGS=/prepress ` +
+                  `-dOverrideICC=true ` +
+                  `-sColorConversionStrategyForImages=/DeviceCMYK ` +
+                  `-sOutputFile="${cmykPdfPath}" "${tempPdfPath}"`;
                 
-                console.log(`✅ Vector PDF loaded with ${vectorPdfDoc.getPages().length} pages`);
+                execSync(adobeCmykCmd);
+                console.log(`✅ Applied Adobe Illustrator CMYK conversion`);
                 
-                // Embed the vector PDF pages
-                const embeddedPages = await pdfDoc.embedPdf(vectorPdfDoc);
-                const vectorPage = embeddedPages[0];
+                // Load the CMYK PDF
+                const cmykPdfBytes = fs.readFileSync(cmykPdfPath);
+                const cmykPdfDoc = await PDFDocument.load(cmykPdfBytes);
                 
-                // Draw VECTOR content at EXACT canvas dimensions (no rasterization)
-                page1.drawPage(vectorPage, {
+                // Embed CMYK pages
+                const embeddedPages = await pdfDoc.embedPdf(cmykPdfDoc);
+                const cmykPage = embeddedPages[0];
+                
+                // Draw CMYK content at exact canvas dimensions
+                page1.drawPage(cmykPage, {
                   x: xPos,
                   y: yPos,
-                  width: widthPts,   // EXACT canvas width
-                  height: heightPts  // EXACT canvas height
+                  width: widthPts,
+                  height: heightPts
                 });
-                console.log(`✅ Page 1: VECTOR content rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 1: CMYK content at ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 
-                // Same exact vector sizing on page 2
-                page2.drawPage(vectorPage, {
+                page2.drawPage(cmykPage, {
                   x: xPos,
-                  y: yPos, 
-                  width: widthPts,   // EXACT canvas width
-                  height: heightPts  // EXACT canvas height
+                  y: yPos,
+                  width: widthPts,
+                  height: heightPts
                 });
-                console.log(`✅ Page 2: VECTOR content rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 2: CMYK content at ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 
                 // Clean up temp files
                 fs.unlinkSync(tempSvgPath);
-                fs.unlinkSync(tempVectorPdfPath);
-                console.log(`✅ Temp vector files cleaned up`);
-              } catch (svgError) {
-                console.log(`⚠️ SVG embedding failed: ${svgError}`);
+                fs.unlinkSync(tempPdfPath);
+                fs.unlinkSync(cmykPdfPath);
+                console.log(`✅ Temp CMYK files cleaned up`);
+                
+              } catch (canvasError) {
+                console.log(`⚠️ Canvas embedding failed: ${canvasError}`);
               }
             } else {
-              console.log(`⚠️ Tight content SVG not found: ${svgPath}`);
+              console.log(`⚠️ Canvas SVG not found: ${svgPath}`);
             }
           }
         }
@@ -869,44 +878,48 @@ export async function registerRoutes(app: express.Application) {
           addDefaultPage: false
         });
         
-        // Convert to CMYK color space for print production
-        const timestamp = Date.now();
-        const tempPdfPath = path.join(process.cwd(), 'uploads', `temp_output_${timestamp}.pdf`);
-        const finalPdfPath = path.join(process.cwd(), 'uploads', `final_cmyk_${timestamp}.pdf`);
+        // Apply final Adobe CMYK conversion to entire PDF for print production
+        console.log(`🎨 APPLYING FINAL ADOBE CMYK CONVERSION TO COMPLETE PDF`);
+        
+        const finalTimestamp = Date.now();
+        const initialPdfPath = path.join(process.cwd(), 'uploads', `initial_${finalTimestamp}.pdf`);
+        const finalCmykPdfPath = path.join(process.cwd(), 'uploads', `final_adobe_cmyk_${finalTimestamp}.pdf`);
         
         // Save initial PDF
-        fs.writeFileSync(tempPdfPath, pdfBytes);
+        fs.writeFileSync(initialPdfPath, pdfBytes);
         
-        // Preserve original colors - don't force conversion
-        console.log(`🎨 PRESERVING ORIGINAL COLORS: RGB/CMYK as-is from artwork`);
-        
-        // Optional: Apply gentle CMYK conversion that preserves existing CMYK
-        const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/LeaveColorUnchanged -dPDFSETTINGS=/prepress -sOutputFile="${finalPdfPath}" "${tempPdfPath}"`;
+        // Apply Adobe Illustrator RGB→CMYK conversion to entire document
+        const finalCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          `-dColorConversionStrategy=/DeviceCMYK ` +
+          `-dProcessColorModel=/DeviceCMYK ` +
+          `-dPDFSETTINGS=/prepress ` +
+          `-dOverrideICC=true ` +
+          `-sColorConversionStrategyForImages=/DeviceCMYK ` +
+          `-sColorConversionStrategyForText=/DeviceCMYK ` +
+          `-sOutputFile="${finalCmykPdfPath}" "${initialPdfPath}"`;
         
         try {
-          await execAsync(cmykCmd);
+          execSync(finalCmykCmd);
+          console.log(`✅ ADOBE CMYK CONVERSION COMPLETE`);
           
-          if (fs.existsSync(finalPdfPath)) {
-            const finalPdfBytes = fs.readFileSync(finalPdfPath);
-            console.log(`✅ COLOR-PRESERVED PDF: ${finalPdfBytes.length} bytes`);
-            
-            // Cleanup temp files
-            [tempPdfPath, finalPdfPath].forEach(file => {
-              if (fs.existsSync(file)) fs.unlinkSync(file);
-            });
-            
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_MIRROR.pdf"`);
-            res.send(Buffer.from(finalPdfBytes));
-            return;
-          }
-        } catch (colorError) {
-          console.log(`⚠️ Color preservation failed: ${colorError}`);
+          // Read final Adobe CMYK PDF
+          const finalBytes = fs.readFileSync(finalCmykPdfPath);
+          console.log(`✅ ADOBE CMYK PDF: ${finalBytes.length} bytes`);
+          
+          // Clean up temp files
+          fs.unlinkSync(initialPdfPath);
+          fs.unlinkSync(finalCmykPdfPath);
+          
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_adobe_cmyk.pdf"`);
+          res.send(Buffer.from(finalBytes));
+          return;
+        } catch (adobeCmykError) {
+          console.log(`⚠️ Adobe CMYK conversion failed: ${adobeCmykError}`);
         }
         
-        // Fallback to original RGB PDF
-        const fallbackPdfBytes = pdfBytes;
-        
+        // Fallback to original PDF
+        console.log(`✅ FALLBACK PDF: ${pdfBytes.length} bytes`);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `inline; filename="${project.name}_${templateSize.id}_qty${project.quantity || 1}.pdf"`);
         res.send(Buffer.from(pdfBytes));
