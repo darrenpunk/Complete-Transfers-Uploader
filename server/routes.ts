@@ -793,28 +793,51 @@ export async function registerRoutes(app: express.Application) {
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
                 console.log(`✅ Tight content SVG loaded: ${svgContent.length} characters`);
                 
-                // Embed SVG directly as image to match canvas exactly
-                const svgImage = await pdfDoc.embedSvg(svgContent);
+                // Convert SVG to high-quality PNG for pdf-lib embedding
+                const timestamp = Date.now();
+                const tempSvgPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.svg`);
+                const tempPngPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.png`);
                 
-                console.log(`✅ SVG embedded without viewbox distortion`);
+                // Write SVG to temp file
+                fs.writeFileSync(tempSvgPath, svgContent);
                 
-                // Draw SVG at EXACT canvas dimensions (no viewbox scaling)
-                page1.drawSvg(svgImage, {
+                // Convert SVG to PNG at exact canvas dimensions (at high DPI for quality)
+                const dpi = 300; // High quality
+                const pngWidthPx = Math.round(widthMM * dpi / 25.4);
+                const pngHeightPx = Math.round(heightMM * dpi / 25.4);
+                
+                const convertCmd = `rsvg-convert -w ${pngWidthPx} -h ${pngHeightPx} -o "${tempPngPath}" "${tempSvgPath}"`;
+                execSync(convertCmd);
+                console.log(`✅ SVG converted to PNG: ${pngWidthPx}×${pngHeightPx}px at ${dpi} DPI`);
+                
+                // Embed PNG with exact canvas dimensions
+                const pngBytes = fs.readFileSync(tempPngPath);
+                const pngImage = await pdfDoc.embedPng(pngBytes);
+                
+                console.log(`✅ PNG embedded with exact dimensions`);
+                
+                // Draw PNG at EXACT canvas dimensions (no scaling)
+                page1.drawImage(pngImage, {
                   x: xPos,
                   y: yPos,
                   width: widthPts,   // EXACT canvas width
                   height: heightPts  // EXACT canvas height
                 });
-                console.log(`✅ Page 1: SVG rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 1: Image rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 
                 // Same exact sizing on page 2
-                page2.drawSvg(svgImage, {
+                page2.drawImage(pngImage, {
                   x: xPos,
                   y: yPos, 
                   width: widthPts,   // EXACT canvas width
                   height: heightPts  // EXACT canvas height
                 });
-                console.log(`✅ Page 2: SVG rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 2: Image rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                
+                // Clean up temp files
+                fs.unlinkSync(tempSvgPath);
+                fs.unlinkSync(tempPngPath);
+                console.log(`✅ Temp files cleaned up`);
               } catch (svgError) {
                 console.log(`⚠️ SVG embedding failed: ${svgError}`);
               }
