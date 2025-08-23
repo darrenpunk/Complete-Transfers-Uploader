@@ -737,11 +737,15 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // Page 2: Garment color background (same as canvas)
-        const garmentColor = canvasElements.find(el => el.garmentColor)?.garmentColor || '#FFFFFF';
+        // Page 2: Garment color background (from project or elements)
+        const garmentColor = project.garmentColor || canvasElements.find(el => el.garmentColor)?.garmentColor || '#D98F17'; // Default to orange
         const garmentColorName = garmentColor === '#FFFFFF' ? 'White' : 
                                  garmentColor === '#D98F17' ? 'Orange' : 
-                                 garmentColor === '#171816' ? 'Black' : 'Custom';
+                                 garmentColor === '#171816' ? 'Black' : 
+                                 garmentColor === '#1a1a1a' ? 'Black' :
+                                 garmentColor === '#FFD700' ? 'Gold' : 'Custom';
+        
+        console.log(`🎨 DEBUG: Project garmentColor: ${project.garmentColor}, Element garmentColor: ${canvasElements.find(el => el.garmentColor)?.garmentColor}, Final: ${garmentColor}`);
         
         // Convert hex to RGB for garment background
         let garmentBg = rgb(1, 1, 1); // Default white
@@ -791,25 +795,34 @@ export async function registerRoutes(app: express.Application) {
             
             fs.writeFileSync(tempSvg, svgContent);
             
-            // Convert SVG → PDF (vector)
-            execSync(`rsvg-convert -f pdf -o "${tempPdf}" "${tempSvg}"`);
-            console.log(`✅ SVG → PDF conversion complete`);
+            // Convert SVG → PDF (vector) with explicit size
+            const rsvgCmd = `rsvg-convert -f pdf -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
+            execSync(rsvgCmd);
+            console.log(`✅ SVG → PDF conversion: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
             
-            // Load and embed
+            // Load and embed artwork
             const vectorBytes = fs.readFileSync(tempPdf);
             const vectorDoc = await PDFDocument.load(vectorBytes);
             const [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
             
-            // Draw on both pages
-            [page1, page2].forEach((page, i) => {
-              page.drawPage(embeddedPage, {
-                x: xPos,
-                y: yPos,
-                width: widthPts,
-                height: heightPts
-              });
-              console.log(`✅ Page ${i + 1}: Content placed at exact canvas position`);
+            console.log(`📐 Embedding at: x=${xPos.toFixed(1)}, y=${yPos.toFixed(1)}, w=${widthPts.toFixed(1)}, h=${heightPts.toFixed(1)}`);
+            
+            // Embed artwork on both pages
+            page1.drawPage(embeddedPage, {
+              x: xPos,
+              y: yPos,
+              width: widthPts,
+              height: heightPts
             });
+            console.log(`✅ Page 1: Artwork embedded at canvas position`);
+            
+            page2.drawPage(embeddedPage, {
+              x: xPos,
+              y: yPos,
+              width: widthPts,
+              height: heightPts
+            });
+            console.log(`✅ Page 2: Artwork embedded on garment background`);
             
             // Cleanup
             [tempSvg, tempPdf].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
@@ -845,19 +858,22 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // Adobe Illustrator RGB→CMYK conversion (professional grade)
+          // Force CMYK color space conversion (Adobe Illustrator style)
           const adobeCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-            `-dColorConversionStrategy=/UseDeviceIndependentColor ` +
+            `-dColorConversionStrategy=/RGB ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dPDFSETTINGS=/prepress ` +
-            `-dOverrideICC=true ` +
-            `-sColorConversionStrategyForImages=/DeviceCMYK ` +
-            `-sColorConversionStrategyForText=/DeviceCMYK ` +
-            `-dRenderIntent=3 ` +
+            `-dColorImageResolution=300 ` +
+            `-dGrayImageResolution=300 ` +
+            `-dMonoImageResolution=1200 ` +
+            `-dDownsampleColorImages=false ` +
+            `-dDownsampleGrayImages=false ` +
+            `-dAutoRotatePages=/None ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          execSync(adobeCmykCmd, { stdio: 'inherit' });
-          console.log(`✅ Adobe Illustrator CMYK conversion successful`);
+          console.log(`🎨 Converting to CMYK: ${adobeCmykCmd}`);
+          execSync(adobeCmykCmd);
+          console.log(`✅ FORCED CMYK conversion successful`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
