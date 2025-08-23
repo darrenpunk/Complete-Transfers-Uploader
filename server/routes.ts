@@ -868,10 +868,10 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // ENHANCED ADOBE CMYK CONVERSION - Prevent Value Contamination
-          const enhancedCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // FIXED ADOBE CMYK CONVERSION - Maintain CMYK Output
+          const fixedCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/RGB ` +
+            `-dColorConversionStrategy=/CMYK ` +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
@@ -888,9 +888,9 @@ export async function registerRoutes(app: express.Application) {
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 ENHANCED ADOBE CMYK CONVERSION - PREVENT VALUE CONTAMINATION`);
-          execSync(enhancedCmykCmd);
-          console.log(`✅ ENHANCED CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 FIXED ADOBE CMYK CONVERSION - MAINTAIN CMYK OUTPUT`);
+          execSync(fixedCmykCmd);
+          console.log(`✅ FIXED CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
@@ -1133,8 +1133,39 @@ export async function registerRoutes(app: express.Application) {
           const sourcePdfPath = path.join(uploadDir, file.filename);
           
           if (fs.existsSync(sourcePdfPath)) {
-            fs.copyFileSync(sourcePdfPath, originalPdfPath);
-            console.log(`💾 Original PDF preserved as: ${originalPdfFilename} for exact embedding`);
+            // ADOBE RGB-TO-CMYK CONVERSION ON IMPORT
+            try {
+              const tempConvertedPath = path.join(uploadDir, `temp_converted_${timestamp}.pdf`);
+              const adobeImportCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+                `-dProcessColorModel=/DeviceCMYK ` +
+                `-dColorConversionStrategy=/CMYK ` +
+                `-dGrayDetection=false ` +
+                `-dAutoFilterColorImages=false ` +
+                `-dAutoFilterGrayImages=false ` +
+                `-dEncodeColorImages=false ` +
+                `-dEncodeGrayImages=false ` +
+                `-dCompressPages=false ` +
+                `-dUseFlateCompression=false ` +
+                `-dDownsampleColorImages=false ` +
+                `-dDownsampleGrayImages=false ` +
+                `-dMonoImageDownsampleType=/Bicubic ` +
+                `-dPreserveCopyPage=true ` +
+                `-dEmbedAllFonts=true ` +
+                `-dCompatibilityLevel=1.4 ` +
+                `-sOutputFile="${tempConvertedPath}" "${sourcePdfPath}"`;
+              
+              console.log(`🎨 ADOBE RGB-TO-CMYK CONVERSION ON IMPORT`);
+              await execAsync(adobeImportCmd);
+              
+              // Use converted PDF as source and preserve as original
+              fs.copyFileSync(tempConvertedPath, originalPdfPath);
+              fs.unlinkSync(tempConvertedPath);
+              console.log(`💾 Adobe CMYK-converted PDF preserved as: ${originalPdfFilename}`);
+            } catch (importError) {
+              console.log(`⚠️ Adobe conversion on import failed, using original: ${importError.message}`);
+              fs.copyFileSync(sourcePdfPath, originalPdfPath);
+              console.log(`💾 Original PDF preserved as: ${originalPdfFilename} for exact embedding`);
+            }
             // Mark for later embedding
             (file as any).originalPdfFilename = originalPdfFilename;
           }
