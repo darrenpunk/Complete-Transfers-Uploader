@@ -750,13 +750,13 @@ export async function registerRoutes(app: express.Application) {
           garmentBg = rgb(r, g, b);
         }
         
-        // Create pages
+        // Create pages with no backgrounds
         const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
         const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
         
-        // Page 1: NO BACKGROUND - production ready artwork only (transparent/white)
-        // Page 1 gets no background rectangle - just artwork
-        console.log(`✅ Page 1: NO background - production ready artwork only`);
+        // Page 1: COMPLETELY TRANSPARENT - just clean vectors
+        // NO background rectangle, NO white, NO viewboxes - pure transparency
+        console.log(`✅ Page 1: TRANSPARENT - clean vectors only`);
         
         // Page 2: Garment color background (preview with garment)
         page2.drawRectangle({
@@ -798,10 +798,10 @@ export async function registerRoutes(app: express.Application) {
             
             fs.writeFileSync(tempSvg, svgContent);
             
-            // Convert SVG → PDF (vector) with explicit size
-            const rsvgCmd = `rsvg-convert -f pdf -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
+            // Convert SVG → PDF with transparency preserved (no background)
+            const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
             execSync(rsvgCmd);
-            console.log(`✅ SVG → PDF conversion: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+            console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
             
             // Load and embed artwork
             const vectorBytes = fs.readFileSync(tempPdf);
