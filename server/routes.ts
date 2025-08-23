@@ -788,8 +788,16 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`📐 Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
             
-            // Read SVG
-            const svgContent = fs.readFileSync(svgPath, 'utf8');
+            // Read SVG and remove viewBox for free-floating content
+            let svgContent = fs.readFileSync(svgPath, 'utf8');
+            
+            // Remove viewBox attribute to eliminate boundaries
+            svgContent = svgContent.replace(/viewBox="[^"]*"/g, '');
+            // Remove width/height constraints to let content float freely
+            svgContent = svgContent.replace(/width="[^"]*"/g, '');
+            svgContent = svgContent.replace(/height="[^"]*"/g, '');
+            
+            console.log(`🎯 Removed viewBox and size constraints for free-floating vectors`);
             
             // Create temp files
             const ts = Date.now() + Math.random();
@@ -861,18 +869,21 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // FORCE TRUE CMYK OUTPUT - Simplified but effective
-          const trueCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // PRESERVE ORIGINAL COLOR BRIGHTNESS IN CMYK
+          const preserveColorCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dPDFSETTINGS=/prepress ` +
-            `-dConvertCMYKImagesToRGB=false ` +
-            `-dConvertImagesToIndexed=false ` +
-            `-dColorConversionStrategy=/CMYK ` +
+            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+            `-dPreserveOverprintSettings=true ` +
+            `-dPreserveHalftoneInfo=true ` +
+            `-dTransferFunctionInfo=/Preserve ` +
+            `-dUCRandBGInfo=/Preserve ` +
+            `-dUseCIEColor=true ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 FORCING TRUE CMYK OUTPUT`);
-          execSync(trueCmykCmd);
-          console.log(`✅ TRUE CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 PRESERVING ORIGINAL COLOR BRIGHTNESS IN CMYK`);
+          execSync(preserveColorCmd);
+          console.log(`✅ COLOR-PRESERVING CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
