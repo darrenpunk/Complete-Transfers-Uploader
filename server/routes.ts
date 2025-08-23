@@ -868,22 +868,23 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // DIRECT CMYK PRESERVATION - No Color Conversion
-          const preserveCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // TWEAKED ADOBE CMYK CONVERSION - Better Color Fidelity
+          const tweakedCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-            `-dConvertCMYKImagesToRGB=false ` +
-            `-dConvertImagesToIndexed=false ` +
-            `-dAutoFilterColorImages=false ` +
-            `-dAutoFilterGrayImages=false ` +
-            `-dDownsampleColorImages=false ` +
-            `-dDownsampleGrayImages=false ` +
-            `-dOptimize=false ` +
+            `-dColorConversionStrategy=/CMYK ` +
+            `-dGrayDetection=false ` +
+            `-dTransferFunctionInfo=/Preserve ` +
+            `-dPreserveHalftoneInfo=true ` +
+            `-dPreserveOPIComments=true ` +
+            `-dColorImageResolution=300 ` +
+            `-dGrayImageResolution=300 ` +
+            `-dPDFSETTINGS=/prepress ` +
+            `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 DIRECT CMYK PRESERVATION - NO COLOR CONVERSION`);
-          execSync(preserveCmykCmd);
-          console.log(`✅ DIRECT CMYK PRESERVATION SUCCESSFUL`);
+          console.log(`🎨 TWEAKED ADOBE CMYK CONVERSION - BETTER COLOR FIDELITY`);
+          execSync(tweakedCmykCmd);
+          console.log(`✅ TWEAKED CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
