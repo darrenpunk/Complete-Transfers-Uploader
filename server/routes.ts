@@ -768,41 +768,84 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 CANVAS MIRROR: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
                 console.log(`📐 PDF COORDS: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})pts`);
                 
-                // Convert SVG to PDF preserving colors
-                const tempPdfPath = path.join(process.cwd(), 'uploads', `canvas_mirror_${canvasTimestamp}_${element.id}.pdf`);
-                const convertCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${svgPath}"`;
+                // BYPASS ALL PDF EMBEDDING - Use Ghostscript direct compositing
+                console.log(`🎯 DIRECT GHOSTSCRIPT: Compositing SVG directly into PDF`);
+                
+                // Save current PDF state
+                const basePdfBytes = await pdfDoc.save();
+                const basePdfPath = path.join(process.cwd(), 'uploads', `base_${canvasTimestamp}.pdf`);
+                fs.writeFileSync(basePdfPath, basePdfBytes);
+                
+                // Convert SVG to high-quality PDF
+                const artworkPdfPath = path.join(process.cwd(), 'uploads', `artwork_${canvasTimestamp}_${element.id}.pdf`);
+                const convertCmd = `inkscape --export-type=pdf --export-dpi=300 --export-filename="${artworkPdfPath}" "${svgPath}"`;
                 
                 await execAsync(convertCmd);
                 
-                if (fs.existsSync(tempPdfPath)) {
-                  console.log(`✅ SVG converted: ${fs.statSync(tempPdfPath).size} bytes`);
+                if (fs.existsSync(artworkPdfPath)) {
+                  console.log(`✅ High-quality artwork PDF: ${fs.statSync(artworkPdfPath).size} bytes`);
                   
-                  // Load and embed the converted PDF
-                  const artworkBytes = fs.readFileSync(tempPdfPath);
-                  const artworkDoc = await PDFDocument.load(artworkBytes);
-                  const [artworkPage] = await pdfDoc.copyPages(artworkDoc, [0]);
+                  // Use Ghostscript to composite artwork onto both pages
+                  const finalPdfPath = path.join(process.cwd(), 'uploads', `final_${canvasTimestamp}.pdf`);
                   
-                  // Embed on page 1 (no background)
-                  page1.drawPage(artworkPage, {
-                    x: xPos,
-                    y: yPos,
-                    width: widthPts,
-                    height: heightPts
-                  });
-                  console.log(`✅ Page 1: Canvas element mirrored at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  // Create PostScript program for precise positioning
+                  const psProgram = `
+                    % Page 1: Artwork on transparent background
+                    1 setpagedevice
+                    gsave
+                    ${xPos} ${yPos} translate
+                    ${widthPts} ${heightPts} scale
+                    (${artworkPdfPath}) run
+                    grestore
+                    showpage
+                    
+                    % Page 2: Artwork on garment background  
+                    2 setpagedevice
+                    gsave
+                    ${xPos} ${yPos} translate
+                    ${widthPts} ${heightPts} scale
+                    (${artworkPdfPath}) run
+                    grestore
+                    showpage
+                  `;
                   
-                  // Embed on page 2 (with garment background)
-                  const [artworkPage2] = await pdfDoc.copyPages(artworkDoc, [0]);
-                  page2.drawPage(artworkPage2, {
-                    x: xPos,
-                    y: yPos,
-                    width: widthPts,
-                    height: heightPts
-                  });
-                  console.log(`✅ Page 2: Canvas element mirrored at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  const psPath = path.join(process.cwd(), 'uploads', `composite_${canvasTimestamp}.ps`);
+                  fs.writeFileSync(psPath, psProgram);
                   
-                  // Cleanup
-                  fs.unlinkSync(tempPdfPath);
+                  // Composite with Ghostscript
+                  const gsCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -dColorConversionStrategy=/LeaveColorUnchanged -sOutputFile="${finalPdfPath}" "${basePdfPath}" "${psPath}"`;
+                  
+                  try {
+                    await execAsync(gsCmd);
+                    
+                    if (fs.existsSync(finalPdfPath)) {
+                      // Replace the current PDF with composite result
+                      const compositePdfBytes = fs.readFileSync(finalPdfPath);
+                      const compositeDoc = await PDFDocument.load(compositePdfBytes);
+                      
+                      console.log(`✅ GHOSTSCRIPT COMPOSITE SUCCESS: ${compositePdfBytes.length} bytes`);
+                      
+                      // Replace current pages with composite result
+                      const compositePages = compositeDoc.getPages();
+                      if (compositePages.length >= 2) {
+                        // Copy composite pages into our PDF
+                        const [newPage1, newPage2] = await pdfDoc.copyPages(compositeDoc, [0, 1]);
+                        
+                        // Replace page content (this is a workaround)
+                        page1.drawPage(newPage1, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+                        page2.drawPage(newPage2, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+                        
+                        console.log(`✅ Both pages updated with composite artwork`);
+                      }
+                      
+                      // Cleanup
+                      [basePdfPath, artworkPdfPath, psPath, finalPdfPath].forEach(file => {
+                        if (fs.existsSync(file)) fs.unlinkSync(file);
+                      });
+                    }
+                  } catch (gsError) {
+                    console.log(`⚠️ Ghostscript compositing failed: ${gsError}`);
+                  }
                 }
               } catch (mirrorError) {
                 console.log(`⚠️ Canvas mirroring failed: ${mirrorError}`);
