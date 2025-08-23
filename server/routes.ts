@@ -802,31 +802,52 @@ export async function registerRoutes(app: express.Application) {
             let vectorBytes: Buffer;
             
             if (useOriginalPdf) {
-              // SCALE ORIGINAL PDF: Preserve CMYK colors but match canvas dimensions
-              console.log(`🎯 SCALING ORIGINAL PDF TO CANVAS DIMENSIONS - PRESERVING EXACT CMYK COLORS`);
+              // CROP TO CONTENT: Extract just the content at its ACTUAL SIZE (no scaling)
+              console.log(`🎯 CROPPING ORIGINAL PDF TO CONTENT BOUNDS - NO SCALING`);
               
-              // Use Ghostscript to create a scaled version with exact dimensions
               const ts = Date.now() + Math.random();
-              const scaledPdf = path.join(process.cwd(), 'uploads', `scaled_${ts}.pdf`);
+              const croppedPdf = path.join(process.cwd(), 'uploads', `cropped_${ts}.pdf`);
               
-              // Create a PDF with exact canvas dimensions using Ghostscript
-              const scaleCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
-                `-sDEVICE=pdfwrite ` +
-                `-dDEVICEWIDTHPOINTS=${widthPts.toFixed(0)} ` +
-                `-dDEVICEHEIGHTPOINTS=${heightPts.toFixed(0)} ` +
-                `-dFIXEDMEDIA ` +
-                `-dPDFFitPage ` +
-                `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-                `-dPreserveMarkedContent=true ` +
-                `-dPreserveSeparation=true ` +
-                `-dPreserveDeviceN=true ` +
-                `-sOutputFile="${scaledPdf}" "${originalPdfPath}"`;
-              
-              execSync(scaleCmd);
-              console.log(`✅ Original PDF scaled to ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts with CMYK preserved`);
-              
-              vectorBytes = fs.readFileSync(scaledPdf);
-              fs.unlinkSync(scaledPdf); // Cleanup
+              try {
+                // Get the actual content bounding box
+                const bboxCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=bbox "${originalPdfPath}" 2>&1 | grep "%%HiResBoundingBox"`;
+                const bboxOutput = execSync(bboxCmd, { encoding: 'utf8' });
+                console.log(`📊 BBox: ${bboxOutput}`);
+                
+                const match = bboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                if (!match) throw new Error('No bbox found');
+                
+                const [, x1, y1, x2, y2] = match.map(Number);
+                const contentWidth = x2 - x1;
+                const contentHeight = y2 - y1;
+                
+                console.log(`📐 Content is ${contentWidth}×${contentHeight}pts at offset ${x1},${y1}`);
+                console.log(`📐 Canvas expects ${widthPts}×${heightPts}pts`);
+                
+                // Crop PDF to EXACT content bounds (no scaling!)
+                const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
+                  `-sDEVICE=pdfwrite ` +
+                  `-dDEVICEWIDTHPOINTS=${contentWidth} ` +
+                  `-dDEVICEHEIGHTPOINTS=${contentHeight} ` +
+                  `-dFIXEDMEDIA ` +
+                  `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+                  `-dPreserveMarkedContent=true ` +
+                  `-dPreserveSeparation=true ` +
+                  `-dPreserveDeviceN=true ` +
+                  `-c "<</PageOffset [-${x1} -${y1}]>> setpagedevice" ` +
+                  `-f "${originalPdfPath}" ` +
+                  `-sOutputFile="${croppedPdf}"`;
+                
+                execSync(cropCmd);
+                console.log(`✅ PDF cropped to exact content: ${contentWidth}×${contentHeight}pts`);
+                
+                vectorBytes = fs.readFileSync(croppedPdf);
+                fs.unlinkSync(croppedPdf);
+                
+              } catch (error) {
+                console.log(`⚠️ Crop failed, using original: ${error}`);
+                vectorBytes = fs.readFileSync(originalPdfPath);
+              }
             } else {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');
