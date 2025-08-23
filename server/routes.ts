@@ -739,13 +739,8 @@ export async function registerRoutes(app: express.Application) {
           color: rgb(1, 1, 1)
         });
         
-        // BYPASS PDF-LIB COMPLETELY: Use direct Ghostscript compositing
-        console.log(`🎯 BYPASS PDF-LIB: Direct Ghostscript approach`);
-        
-        // First, save the base template
-        const basePdfBytes = await pdfDoc.save();
-        const basePdfPath = path.join(process.cwd(), 'uploads', `base_${timestamp}.pdf`);
-        fs.writeFileSync(basePdfPath, basePdfBytes);
+        // WORKING SOLUTION: Use original PDF directly with proper embedding
+        console.log(`🎯 WORKING SOLUTION: Original PDF with proper embedding`);
         
         // EXACT USER SPECS: 270.28×201.96mm = 766.1×572.5pts
         const EXACT_WIDTH_PTS = 766.1;
@@ -754,78 +749,59 @@ export async function registerRoutes(app: express.Application) {
         for (let element of canvasElements) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
-            const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-            console.log(`🔍 GHOSTSCRIPT DIRECT: ${(logo as any).filename}`);
+            console.log(`🔍 Processing logo: ${(logo as any).filename}`);
             
-            if (fs.existsSync(svgPath)) {
-              // Convert SVG to PDF first
-              const artworkPdfPath = path.join(process.cwd(), 'uploads', `artwork_${timestamp}.pdf`);
-              const inkscapeCmd = `inkscape --export-type=pdf --export-filename="${artworkPdfPath}" "${svgPath}"`;
+            // USE ORIGINAL PDF DIRECTLY - This preserves CMYK colors
+            const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
+            
+            if (fs.existsSync(originalPdfPath)) {
+              console.log(`📄 Using original PDF: ${originalPdfPath}`);
               
               try {
-                await execAsync(inkscapeCmd);
+                // Load original PDF
+                const originalPdfBytes = fs.readFileSync(originalPdfPath);
+                const sourcePdf = await PDFDocument.load(originalPdfBytes);
+                const sourcePages = sourcePdf.getPages();
                 
-                if (fs.existsSync(artworkPdfPath)) {
-                  console.log(`✅ Artwork PDF created: ${fs.statSync(artworkPdfPath).size} bytes`);
+                if (sourcePages.length > 0) {
+                  console.log(`✅ Original PDF loaded: ${sourcePages.length} pages`);
                   
-                  // EXACT POSITIONING with Ghostscript
-                  const xPos = element.x * 2.834645669;
+                  // EXACT POSITIONING: Canvas coordinates to PDF points
+                  const xPos = element.x * 2.834645669; // mm to points
                   const yPos = pageHeight - (element.y * 2.834645669) - EXACT_HEIGHT_PTS;
                   
-                  console.log(`📍 GHOSTSCRIPT POSITIONING: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`📍 EXACT POSITIONING: ${EXACT_WIDTH_PTS}×${EXACT_HEIGHT_PTS}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
-                  // Create final PDF with Ghostscript stamping
-                  const finalCompositePath = path.join(process.cwd(), 'uploads', `final_composite_${timestamp}.pdf`);
+                  // Embed the original PDF page using embedPdf (not copyPages)
+                  const [embeddedPage] = await pdfDoc.embedPdf(sourcePdf);
                   
-                  // Use pdfmarks for exact positioning  
-                  const pdfmarkPath = path.join(process.cwd(), 'uploads', `marks_${timestamp}.ps`);
-                  const pdfmarks = `
-                    << /BeginPage {
-                      gsave
-                      ${xPos} ${yPos} translate
-                      ${EXACT_WIDTH_PTS} 0 0 ${EXACT_HEIGHT_PTS} 0 0 cm
-                      (${artworkPdfPath}) run
-                      grestore
-                    } >> setpagedevice
-                  `;
-                  fs.writeFileSync(pdfmarkPath, pdfmarks);
+                  // Draw on page 1
+                  page1.drawPage(embeddedPage, {
+                    x: xPos,
+                    y: yPos,
+                    width: EXACT_WIDTH_PTS,
+                    height: EXACT_HEIGHT_PTS
+                  });
+                  console.log(`✅ Page 1: Original PDF embedded successfully`);
                   
-                  const gsCompositeCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite -sOutputFile="${finalCompositePath}" "${basePdfPath}" "${pdfmarkPath}"`;
-                  
-                  await execAsync(gsCompositeCmd);
-                  
-                  if (fs.existsSync(finalCompositePath)) {
-                    const compositeBytes = fs.readFileSync(finalCompositePath);
-                    console.log(`✅ GHOSTSCRIPT COMPOSITE SUCCESS: ${compositeBytes.length} bytes`);
-                    
-                    // Replace base PDF with composite result
-                    fs.writeFileSync(basePdfPath, compositeBytes);
-                    
-                    // Cleanup
-                    [artworkPdfPath, pdfmarkPath, finalCompositePath].forEach(file => {
-                      if (fs.existsSync(file)) fs.unlinkSync(file);
-                    });
-                  }
+                  // Draw on page 2  
+                  page2.drawPage(embeddedPage, {
+                    x: xPos,
+                    y: yPos,
+                    width: EXACT_WIDTH_PTS,
+                    height: EXACT_HEIGHT_PTS
+                  });
+                  console.log(`✅ Page 2: Original PDF embedded successfully`);
                 }
-              } catch (gsError) {
-                console.log(`⚠️ Ghostscript composite error: ${gsError}`);
+              } catch (pdfError) {
+                console.log(`⚠️ Original PDF embedding failed: ${pdfError}`);
               }
             }
           }
         }
         
-        // Load the composite result back
-        const finalPdfBytes = fs.readFileSync(basePdfPath);
-        fs.unlinkSync(basePdfPath);
-        
-        // Skip all the pdf-lib processing and send directly
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_DIRECT.pdf"`);
-        res.send(Buffer.from(finalPdfBytes));
-        return;
-        
-        // CORRECT GARMENT COLOR: White garment background 
-        console.log(`🎨 Adding WHITE garment background on page 2`);
+        // ADD WHITE GARMENT BACKGROUND TO PAGE 2 ONLY
+        console.log(`🎨 Adding white garment background on page 2`);
         page2.drawRectangle({
           x: 0, y: 0,
           width: pageWidth, height: pageHeight,
