@@ -1166,8 +1166,8 @@ export async function registerRoutes(app: express.Application) {
                   const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
                   const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
                   
-                  console.log(`🎯 STANDARD PDF→SVG CONVERSION - PRESERVING ORIGINAL WORKFLOW`);
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  console.log(`🎯 INKSCAPE PDF→SVG WITH COLOR MANAGEMENT - PRESERVING NEUTRAL GREYS`);
+                  svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" --export-text-to-path --export-ignore-filters --export-ps-level=3`;
                 } catch {
                   // Fallback to Inkscape if pdf2svg not available
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
