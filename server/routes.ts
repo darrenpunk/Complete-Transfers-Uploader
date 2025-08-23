@@ -788,16 +788,15 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`📐 Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
             
-            // Read SVG and remove viewBox for free-floating content
+            // Read SVG and remove any background fills (keep viewBox for size)
             let svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // Remove viewBox attribute to eliminate boundaries
-            svgContent = svgContent.replace(/viewBox="[^"]*"/g, '');
-            // Remove width/height constraints to let content float freely
-            svgContent = svgContent.replace(/width="[^"]*"/g, '');
-            svgContent = svgContent.replace(/height="[^"]*"/g, '');
+            // Remove any background rectangles or fills that create boundaries
+            svgContent = svgContent.replace(/<rect[^>]*fill="white"[^>]*>/g, '');
+            svgContent = svgContent.replace(/<rect[^>]*fill="#ffffff"[^>]*>/g, '');
+            svgContent = svgContent.replace(/<rect[^>]*fill="#FFFFFF"[^>]*>/g, '');
             
-            console.log(`🎯 Removed viewBox and size constraints for free-floating vectors`);
+            console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
             
             // Create temp files
             const ts = Date.now() + Math.random();
@@ -869,21 +868,17 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // PRESERVE ORIGINAL COLOR BRIGHTNESS IN CMYK
-          const preserveColorCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // RELIABLE CMYK CONVERSION - Simple and effective
+          const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dPDFSETTINGS=/prepress ` +
-            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-            `-dPreserveOverprintSettings=true ` +
-            `-dPreserveHalftoneInfo=true ` +
-            `-dTransferFunctionInfo=/Preserve ` +
-            `-dUCRandBGInfo=/Preserve ` +
-            `-dUseCIEColor=true ` +
+            `-dColorConversionStrategy=/CMYK ` +
+            `-dConvertCMYKImagesToRGB=false ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 PRESERVING ORIGINAL COLOR BRIGHTNESS IN CMYK`);
-          execSync(preserveColorCmd);
-          console.log(`✅ COLOR-PRESERVING CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 RELIABLE CMYK CONVERSION`);
+          execSync(cmykCmd);
+          console.log(`✅ CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
