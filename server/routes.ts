@@ -873,7 +873,7 @@ export async function registerRoutes(app: express.Application) {
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dColorConversionStrategy=/CMYK ` +
             `-dRenderIntent=3 ` +
-            `-dBlackPtComp=0 ` +
+            `-dBlackPtComp=1 ` +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
@@ -1142,7 +1142,7 @@ export async function registerRoutes(app: express.Application) {
                 `-dProcessColorModel=/DeviceCMYK ` +
                 `-dColorConversionStrategy=/CMYK ` +
                 `-dRenderIntent=3 ` +
-                `-dBlackPtComp=0 ` +
+                `-dBlackPtComp=1 ` +
                 `-dGrayDetection=false ` +
                 `-dAutoFilterColorImages=false ` +
                 `-dAutoFilterGrayImages=false ` +
