@@ -793,51 +793,51 @@ export async function registerRoutes(app: express.Application) {
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
                 console.log(`✅ Tight content SVG loaded: ${svgContent.length} characters`);
                 
-                // Convert SVG to high-quality PNG for pdf-lib embedding
+                // Convert SVG to VECTOR PDF (preserves vector content)
                 const timestamp = Date.now();
                 const tempSvgPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.svg`);
-                const tempPngPath = path.join(process.cwd(), 'uploads', `temp_${timestamp}.png`);
+                const tempVectorPdfPath = path.join(process.cwd(), 'uploads', `temp_vector_${timestamp}.pdf`);
                 
                 // Write SVG to temp file
                 fs.writeFileSync(tempSvgPath, svgContent);
                 
-                // Convert SVG to PNG at exact canvas dimensions (at high DPI for quality)
-                const dpi = 300; // High quality
-                const pngWidthPx = Math.round(widthMM * dpi / 25.4);
-                const pngHeightPx = Math.round(heightMM * dpi / 25.4);
-                
-                const convertCmd = `rsvg-convert -w ${pngWidthPx} -h ${pngHeightPx} -o "${tempPngPath}" "${tempSvgPath}"`;
+                // Convert SVG to VECTOR PDF at exact canvas dimensions
+                const convertCmd = `rsvg-convert -f pdf -w ${Math.round(widthMM * 2.834645669)} -h ${Math.round(heightMM * 2.834645669)} -o "${tempVectorPdfPath}" "${tempSvgPath}"`;
                 execSync(convertCmd);
-                console.log(`✅ SVG converted to PNG: ${pngWidthPx}×${pngHeightPx}px at ${dpi} DPI`);
+                console.log(`✅ SVG converted to VECTOR PDF: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm`);
                 
-                // Embed PNG with exact canvas dimensions
-                const pngBytes = fs.readFileSync(tempPngPath);
-                const pngImage = await pdfDoc.embedPng(pngBytes);
+                // Load the vector PDF
+                const vectorPdfBytes = fs.readFileSync(tempVectorPdfPath);
+                const vectorPdfDoc = await PDFDocument.load(vectorPdfBytes);
                 
-                console.log(`✅ PNG embedded with exact dimensions`);
+                console.log(`✅ Vector PDF loaded with ${vectorPdfDoc.getPages().length} pages`);
                 
-                // Draw PNG at EXACT canvas dimensions (no scaling)
-                page1.drawImage(pngImage, {
+                // Embed the vector PDF pages
+                const embeddedPages = await pdfDoc.embedPdf(vectorPdfDoc);
+                const vectorPage = embeddedPages[0];
+                
+                // Draw VECTOR content at EXACT canvas dimensions (no rasterization)
+                page1.drawPage(vectorPage, {
                   x: xPos,
                   y: yPos,
                   width: widthPts,   // EXACT canvas width
                   height: heightPts  // EXACT canvas height
                 });
-                console.log(`✅ Page 1: Image rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 1: VECTOR content rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 
-                // Same exact sizing on page 2
-                page2.drawImage(pngImage, {
+                // Same exact vector sizing on page 2
+                page2.drawPage(vectorPage, {
                   x: xPos,
                   y: yPos, 
                   width: widthPts,   // EXACT canvas width
                   height: heightPts  // EXACT canvas height
                 });
-                console.log(`✅ Page 2: Image rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                console.log(`✅ Page 2: VECTOR content rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 
                 // Clean up temp files
                 fs.unlinkSync(tempSvgPath);
-                fs.unlinkSync(tempPngPath);
-                console.log(`✅ Temp files cleaned up`);
+                fs.unlinkSync(tempVectorPdfPath);
+                console.log(`✅ Temp vector files cleaned up`);
               } catch (svgError) {
                 console.log(`⚠️ SVG embedding failed: ${svgError}`);
               }
