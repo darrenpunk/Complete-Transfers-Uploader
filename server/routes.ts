@@ -797,35 +797,33 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
                 
                 if (sourcePages.length > 0) {
-                  // Scale PDF to EXACT canvas size to match preview perfectly
+                  // NO SCALING - use original vector content as-is
                   const sourcePage = sourcePages[0];
                   const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
                   
-                  console.log(`📏 Original PDF natural size: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
-                  console.log(`📐 Target canvas size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                  console.log(`📏 Original PDF size: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts (preserving exact vector content)`);
                   
-                  // Use embedPdf instead of embedPages to preserve transparency
-                  const embeddedPage = await pdfDoc.embedPdf(sourcePdfDoc);
+                  // Copy the original page directly without any modifications
+                  const copiedPages = await pdfDoc.copyPages(sourcePdfDoc, [0]);
+                  const originalPage = copiedPages[0];
                   
-                  console.log(`✅ Original PDF embedded successfully`);
+                  console.log(`✅ Original PDF page copied without modifications`);
                   
-                  // Scale to EXACT canvas dimensions to match preview
-                  page1.drawPage(embeddedPage[0], {
+                  // Insert the original page content at canvas position (NO SCALING)
+                  page1.drawPage(originalPage, {
                     x: xPos,
-                    y: yPos,
-                    width: widthPts,
-                    height: heightPts
+                    y: yPos
+                    // NO width/height = preserves original vector content exactly
                   });
-                  console.log(`✅ Page 1: Vector scaled to exact canvas size at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 1: Original vector content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) - NO SCALING`);
                   
-                  // Same on page 2
-                  page2.drawPage(embeddedPage[0], {
+                  // Same on page 2  
+                  page2.drawPage(originalPage, {
                     x: xPos,
-                    y: yPos,
-                    width: widthPts,
-                    height: heightPts
+                    y: yPos
+                    // NO width/height = preserves original vector content exactly
                   });
-                  console.log(`✅ Page 2: Vector scaled to exact canvas size at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+                  console.log(`✅ Page 2: Original vector content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) - NO SCALING`);
                 }
               } catch (vectorError) {
                 console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
