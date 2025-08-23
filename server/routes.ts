@@ -797,33 +797,40 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
                 
                 if (sourcePages.length > 0) {
-                  // NO SCALING - use original vector content as-is
+                  // EXTRACT RAW VECTOR CONTENT - position only, no scaling
                   const sourcePage = sourcePages[0];
                   const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
                   
-                  console.log(`📏 Original PDF size: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts (preserving exact vector content)`);
+                  console.log(`📏 Original vector content: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
                   
-                  // Copy the original page directly without any modifications
-                  const copiedPages = await pdfDoc.copyPages(sourcePdfDoc, [0]);
-                  const originalPage = copiedPages[0];
+                  // Use embedPdf to get the vector content as-is
+                  const embeddedPdf = await pdfDoc.embedPdf(sourcePdfDoc);
+                  const vectorPage = embeddedPdf[0];
                   
-                  console.log(`✅ Original PDF page copied without modifications`);
+                  console.log(`✅ Raw vector content extracted`);
                   
-                  // Insert the original page content at canvas position (NO SCALING)
-                  page1.drawPage(originalPage, {
-                    x: xPos,
-                    y: yPos
-                    // NO width/height = preserves original vector content exactly
+                  // Calculate position offset to move content to canvas position
+                  // Canvas shows content at specific position, so translate by that amount
+                  const offsetX = xPos;
+                  const offsetY = yPos;
+                  
+                  console.log(`📐 Positioning vector content at canvas position: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`);
+                  
+                  // Draw raw vector content with position translation only
+                  page1.drawPage(vectorPage, {
+                    x: offsetX,
+                    y: offsetY,
+                    // No width/height = keeps original vector size exactly
                   });
-                  console.log(`✅ Page 1: Original vector content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) - NO SCALING`);
+                  console.log(`✅ Page 1: Raw vector content positioned`);
                   
-                  // Same on page 2  
-                  page2.drawPage(originalPage, {
-                    x: xPos,
-                    y: yPos
-                    // NO width/height = preserves original vector content exactly
+                  // Same positioning on page 2
+                  page2.drawPage(vectorPage, {
+                    x: offsetX,
+                    y: offsetY,
+                    // No width/height = keeps original vector size exactly  
                   });
-                  console.log(`✅ Page 2: Original vector content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) - NO SCALING`);
+                  console.log(`✅ Page 2: Raw vector content positioned`);
                 }
               } catch (vectorError) {
                 console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
