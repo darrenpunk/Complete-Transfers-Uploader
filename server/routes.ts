@@ -730,11 +730,11 @@ export async function registerRoutes(app: express.Application) {
         const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
         const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
         
-        // Page 1: White background (artwork page)
+        // Page 1: Garment color background (same as canvas)
         page1.drawRectangle({
           x: 0, y: 0, 
           width: pageWidth, height: pageHeight,
-          color: rgb(1, 1, 1)
+          color: garmentBg
         });
         
         // Page 2: Garment color background (from project or elements)
@@ -743,7 +743,12 @@ export async function registerRoutes(app: express.Application) {
                                  garmentColor === '#D98F17' ? 'Orange' : 
                                  garmentColor === '#171816' ? 'Black' : 
                                  garmentColor === '#1a1a1a' ? 'Black' :
-                                 garmentColor === '#FFD700' ? 'Gold' : 'Custom';
+                                 garmentColor === '#FFD700' ? 'Gold' : 
+                                 garmentColor === '#D9D2AB' ? 'Natural' :
+                                 garmentColor === '#8B4513' ? 'Brown' :
+                                 garmentColor === '#4169E1' ? 'Royal Blue' :
+                                 garmentColor === '#DC143C' ? 'Red' :
+                                 garmentColor === '#228B22' ? 'Green' : `Custom (${garmentColor})`;
         
         console.log(`🎨 DEBUG: Project garmentColor: ${project.garmentColor}, Element garmentColor: ${canvasElements.find(el => el.garmentColor)?.garmentColor}, Final: ${garmentColor}`);
         
@@ -858,22 +863,23 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // Force CMYK color space conversion (Adobe Illustrator style)
-          const adobeCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-            `-dColorConversionStrategy=/RGB ` +
+          // FORCE CMYK OUTPUT - Adobe Illustrator equivalent 
+          const forceCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
+            `-dColorConversionStrategy=/UseDeviceIndependentColor ` +
             `-dPDFSETTINGS=/prepress ` +
-            `-dColorImageResolution=300 ` +
-            `-dGrayImageResolution=300 ` +
-            `-dMonoImageResolution=1200 ` +
-            `-dDownsampleColorImages=false ` +
-            `-dDownsampleGrayImages=false ` +
+            `-dOverrideICC=true ` +
+            `-dRenderIntent=1 ` +
+            `-sDefaultCMYKProfile=default.cmyk ` +
+            `-sColorConversionStrategyForImages=/CMYK ` +
+            `-sColorConversionStrategyForText=/CMYK ` +
             `-dAutoRotatePages=/None ` +
+            `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 Converting to CMYK: ${adobeCmykCmd}`);
-          execSync(adobeCmykCmd);
-          console.log(`✅ FORCED CMYK conversion successful`);
+          console.log(`🎨 FORCING CMYK OUTPUT - Adobe equivalent settings`);
+          execSync(forceCmykCmd, { stdio: 'pipe' });
+          console.log(`✅ ADOBE CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
