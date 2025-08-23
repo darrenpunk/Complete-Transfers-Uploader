@@ -742,6 +742,9 @@ export async function registerRoutes(app: express.Application) {
         // MIRROR THE CANVAS: Exact same approach as preview
         console.log(`🎯 MIRRORING CANVAS: Using same method as working preview`);
         
+        // Generate timestamp for temp files
+        const canvasTimestamp = Date.now();
+        
         for (let element of canvasElements) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
@@ -766,7 +769,7 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 PDF COORDS: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})pts`);
                 
                 // Convert SVG to PDF preserving colors
-                const tempPdfPath = path.join(process.cwd(), 'uploads', `canvas_mirror_${timestamp}.pdf`);
+                const tempPdfPath = path.join(process.cwd(), 'uploads', `canvas_mirror_${canvasTimestamp}_${element.id}.pdf`);
                 const convertCmd = `inkscape --export-type=pdf --export-filename="${tempPdfPath}" "${svgPath}"`;
                 
                 await execAsync(convertCmd);
@@ -786,7 +789,7 @@ export async function registerRoutes(app: express.Application) {
                     width: widthPts,
                     height: heightPts
                   });
-                  console.log(`✅ Page 1: Canvas element mirrored`);
+                  console.log(`✅ Page 1: Canvas element mirrored at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
                   // Embed on page 2 (with garment background)
                   const [artworkPage2] = await pdfDoc.copyPages(artworkDoc, [0]);
@@ -796,7 +799,7 @@ export async function registerRoutes(app: express.Application) {
                     width: widthPts,
                     height: heightPts
                   });
-                  console.log(`✅ Page 2: Canvas element mirrored`);
+                  console.log(`✅ Page 2: Canvas element mirrored at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
                   
                   // Cleanup
                   fs.unlinkSync(tempPdfPath);
@@ -811,16 +814,20 @@ export async function registerRoutes(app: express.Application) {
         // Add proper garment background to page 2 BEFORE artwork
         console.log(`🎨 Adding garment background BEFORE artwork on page 2`);
         
-        // Determine garment color (check project data for selected garment)
-        const garmentColor = project.selectedGarmentColor || 'White';
+        // Get garment color from canvas elements
+        const garmentColor = canvasElements.find(el => el.garmentColor)?.garmentColor || '#FFFFFF';
+        const garmentColorName = garmentColor === '#FFFFFF' ? 'White' : 
+                                 garmentColor === '#D98F17' ? 'Orange' : 
+                                 garmentColor === '#171816' ? 'Black' : 'Custom';
+        // Convert hex color to RGB
         let bgColor = rgb(1, 1, 1); // Default white
         
-        if (garmentColor.toLowerCase() === 'black') {
-          bgColor = rgb(0.09, 0.09, 0.086); // Black #171816
-        } else if (garmentColor.toLowerCase().includes('gray')) {
-          bgColor = rgb(0.74, 0.75, 0.73); // Gray #BCBFBB
+        if (garmentColor.startsWith('#') && garmentColor.length === 7) {
+          const r = parseInt(garmentColor.slice(1, 3), 16) / 255;
+          const g = parseInt(garmentColor.slice(3, 5), 16) / 255;
+          const b = parseInt(garmentColor.slice(5, 7), 16) / 255;
+          bgColor = rgb(r, g, b);
         }
-        // Add more colors as needed
         
         page2.drawRectangle({
           x: 0, y: 0,
@@ -829,7 +836,7 @@ export async function registerRoutes(app: express.Application) {
         });
         
         // Add garment color label at bottom
-        page2.drawText(`Garment: ${garmentColor}`, {
+        page2.drawText(`Garment Color: ${garmentColorName} (${garmentColor})`, {
           x: 20, y: 60, size: 12, color: rgb(0, 0, 0)
         });
         
