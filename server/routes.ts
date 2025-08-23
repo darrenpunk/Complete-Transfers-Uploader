@@ -868,20 +868,22 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // RELIABLE CMYK CONVERSION - Removed Deprecated Parameters
-          const reliableCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // DIRECT CMYK PRESERVATION - No Color Conversion
+          const preserveCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/CMYK ` +
-            `-dOverrideICC=true ` +
-            `-dPDFSETTINGS=/prepress ` +
-            `-dEmbedAllFonts=true ` +
-            `-dSubsetFonts=true ` +
-            `-dCompatibilityLevel=1.4 ` +
+            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+            `-dConvertCMYKImagesToRGB=false ` +
+            `-dConvertImagesToIndexed=false ` +
+            `-dAutoFilterColorImages=false ` +
+            `-dAutoFilterGrayImages=false ` +
+            `-dDownsampleColorImages=false ` +
+            `-dDownsampleGrayImages=false ` +
+            `-dOptimize=false ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 RELIABLE CMYK CONVERSION - REMOVED DEPRECATED PARAMETERS`);
-          execSync(reliableCmykCmd);
-          console.log(`✅ RELIABLE CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 DIRECT CMYK PRESERVATION - NO COLOR CONVERSION`);
+          execSync(preserveCmykCmd);
+          console.log(`✅ DIRECT CMYK PRESERVATION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
