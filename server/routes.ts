@@ -868,10 +868,11 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // PURE ADOBE CMYK CONVERSION - No Color Contamination
-          const pureCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // ENHANCED ADOBE CMYK CONVERSION - Prevent Value Contamination
+          const enhancedCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/CMYK ` +
+            `-dColorConversionStrategy=/RGB ` +
+            `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
             `-dAutoFilterGrayImages=false ` +
@@ -879,13 +880,17 @@ export async function registerRoutes(app: express.Application) {
             `-dEncodeGrayImages=false ` +
             `-dCompressPages=false ` +
             `-dUseFlateCompression=false ` +
+            `-dDownsampleColorImages=false ` +
+            `-dDownsampleGrayImages=false ` +
+            `-dMonoImageDownsampleType=/Bicubic ` +
+            `-dPreserveCopyPage=true ` +
             `-dEmbedAllFonts=true ` +
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 PURE ADOBE CMYK CONVERSION - NO COLOR CONTAMINATION`);
-          execSync(pureCmykCmd);
-          console.log(`✅ PURE CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 ENHANCED ADOBE CMYK CONVERSION - PREVENT VALUE CONTAMINATION`);
+          execSync(enhancedCmykCmd);
+          console.log(`✅ ENHANCED CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
