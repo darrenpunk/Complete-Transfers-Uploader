@@ -768,11 +768,11 @@ export async function registerRoutes(app: express.Application) {
         for (let element of canvasElements) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (logo) {
-            // Use original PDF file, not converted SVG
-            const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename);
-            console.log(`🖼️ Using original vector PDF: ${(logo as any).originalFilename}`);
+            // Use tight content SVG - same as canvas preview (no viewbox issues)
+            const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+            console.log(`🖼️ Using tight content SVG (same as canvas): ${(logo as any).filename}`);
             
-            if (fs.existsSync(originalPdfPath)) {
+            if (fs.existsSync(svgPath)) {
               try {
                 // Convert canvas coordinates to PDF coordinates
                 const xPosMM = element.x; // Canvas X in mm
@@ -786,81 +786,40 @@ export async function registerRoutes(app: express.Application) {
                 const widthPts = widthMM * 2.834645669;
                 const heightPts = heightMM * 2.834645669;
                 
-                console.log(`📐 ORIGINAL VECTOR: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
+                console.log(`📐 TIGHT CONTENT SVG: ${widthMM.toFixed(1)}×${heightMM.toFixed(1)}mm at (${xPosMM.toFixed(1)}, ${yPosMM.toFixed(1)})mm`);
                 console.log(`📐 PDF COORDS: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})pts`);
                 
-                // Load original vector PDF
-                const originalBytes = fs.readFileSync(originalPdfPath);
-                const sourcePdfDoc = await PDFDocument.load(originalBytes);
-                const sourcePages = sourcePdfDoc.getPages();
+                // Read tight content SVG - same as canvas uses
+                const svgContent = fs.readFileSync(svgPath, 'utf8');
+                console.log(`✅ Tight content SVG loaded: ${svgContent.length} characters`);
                 
-                console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
+                // Embed SVG directly as image to match canvas exactly
+                const svgImage = await pdfDoc.embedSvg(svgContent);
                 
-                if (sourcePages.length > 0) {
-                  // FORCE EXACT CANVAS DIMENSIONS - override original PDF size completely
-                  const sourcePage = sourcePages[0];
-                  const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
-                  
-                  console.log(`📏 Original PDF: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
-                  console.log(`🎯 Canvas target: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
-                  
-                  // Extract vector content and force it to canvas dimensions
-                  const embeddedPdf = await pdfDoc.embedPdf(sourcePdfDoc);
-                  const vectorPage = embeddedPdf[0];
-                  
-                  console.log(`✅ Vector content extracted`);
-                  
-                  // FORCE EXACT CANVAS SIZE - override original PDF viewbox completely
-                  page1.drawPage(vectorPage, {
-                    x: xPos,
-                    y: yPos,
-                    width: widthPts,   // FORCE canvas width
-                    height: heightPts  // FORCE canvas height
-                  });
-                  console.log(`✅ Page 1: Vector FORCED to canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
-                  
-                  // Same forced sizing on page 2
-                  page2.drawPage(vectorPage, {
-                    x: xPos,
-                    y: yPos, 
-                    width: widthPts,   // FORCE canvas width
-                    height: heightPts  // FORCE canvas height
-                  });
-                  console.log(`✅ Page 2: Vector FORCED to canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
-                }
-              } catch (vectorError) {
-                console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
+                console.log(`✅ SVG embedded without viewbox distortion`);
                 
-                // Fallback: Try direct file-based approach
-                try {
-                  const originalBytes = fs.readFileSync(originalPdfPath);
-                  const sourcePdf = await PDFDocument.load(originalBytes, { ignoreEncryption: true });
-                  const firstPage = sourcePdf.getPage(0);
-                  
-                  // Get the raw page content stream
-                  const { width: srcWidth, height: srcHeight } = firstPage.getSize();
-                  console.log(`📄 Source PDF page: ${srcWidth}×${srcHeight}pts`);
-                  
-                  // Scale factors
-                  const scaleX = widthPts / srcWidth;
-                  const scaleY = heightPts / srcHeight;
-                  
-                  console.log(`🔧 Scale factors: ${scaleX.toFixed(3)}x, ${scaleY.toFixed(3)}x`);
-                  
-                  // Direct content embedding approach
-                  const contentStream = firstPage.node.Contents;
-                  if (contentStream) {
-                    console.log(`✅ Found page content stream - attempting direct embedding`);
-                    // This would require more complex PDF manipulation
-                    // For now, log the attempt
-                    console.log(`⚠️ Direct content stream embedding needs implementation`);
-                  }
-                } catch (fallbackError) {
-                  console.log(`⚠️ Direct embedding fallback failed: ${fallbackError}`);
-                }
+                // Draw SVG at EXACT canvas dimensions (no viewbox scaling)
+                page1.drawSvg(svgImage, {
+                  x: xPos,
+                  y: yPos,
+                  width: widthPts,   // EXACT canvas width
+                  height: heightPts  // EXACT canvas height
+                });
+                console.log(`✅ Page 1: SVG rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+                
+                // Same exact sizing on page 2
+                page2.drawSvg(svgImage, {
+                  x: xPos,
+                  y: yPos, 
+                  width: widthPts,   // EXACT canvas width
+                  height: heightPts  // EXACT canvas height
+                });
+                console.log(`✅ Page 2: SVG rendered at exact canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+              } catch (svgError) {
+                console.log(`⚠️ SVG embedding failed: ${svgError}`);
               }
             } else {
-              console.log(`⚠️ Original PDF not found: ${originalPdfPath}`);
+              console.log(`⚠️ Tight content SVG not found: ${svgPath}`);
             }
           }
         }
