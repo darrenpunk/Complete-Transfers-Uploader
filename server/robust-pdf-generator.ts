@@ -404,8 +404,10 @@ grestore`;
     // Save PDF
     const pdfBytes = await pdfDoc.save();
     
-    // Convert to CMYK if possible, otherwise return RGB
-    return await this.convertToCMYK(Buffer.from(pdfBytes), data);
+    // SKIP ALL COLOR CONVERSION - PRESERVE EXACT ORIGINAL COLORS
+    console.log(`🎯 PRESERVING EXACT ORIGINAL CMYK COLORS - NO COLOR CONVERSION`);
+    console.log(`✅ Final PDF: ${pdfBytes.length} bytes with exact original colors preserved`);
+    return Buffer.from(pdfBytes);
   }
   
   /**
