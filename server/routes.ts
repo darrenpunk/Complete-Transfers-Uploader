@@ -868,32 +868,18 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // PRESERVE EXACT CMYK VALUES - True Adobe Workflow
-          const preserveExactCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-            `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-            `-dConvertCMYKImagesToRGB=false ` +
-            `-dConvertImagesToIndexed=false ` +
-            `-dPreserveOverprintSettings=true ` +
-            `-dPreserveHalftoneInfo=true ` +
-            `-dPreserveSeparation=true ` +
-            `-dDoThumbnails=false ` +
-            `-dOptimize=false ` +
-            `-sOutputFile="${cmykPath}" "${initialPath}"`;
-          
-          console.log(`🎨 PRESERVING EXACT CMYK VALUES - TRUE ADOBE WORKFLOW`);
-          execSync(preserveExactCmd);
-          console.log(`✅ EXACT CMYK PRESERVATION SUCCESSFUL`);
-          
-          const cmykBytes = fs.readFileSync(cmykPath);
-          console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
+          // DIRECT CMYK PDF - NO GHOSTSCRIPT CONVERSION
+          // The SVG already has CMYK colors, so skip problematic conversion
+          console.log(`🎨 DIRECT CMYK PDF - NO COLOR CONVERSION`);
+          console.log(`✅ SKIPPING GHOSTSCRIPT - PRESERVING ORIGINAL COLORS`);
+          console.log(`✅ Final PDF with original colors: ${pdfBytes.length} bytes`);
           
           // Cleanup
-          [initialPath, cmykPath].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
+          fs.existsSync(initialPath) && fs.unlinkSync(initialPath);
           
           res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_adobe_cmyk.pdf"`);
-          res.send(Buffer.from(cmykBytes));
+          res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_cmyk_original_colors.pdf"`);
+          res.send(Buffer.from(pdfBytes));
           return;
           
         } catch (cmykError) {
