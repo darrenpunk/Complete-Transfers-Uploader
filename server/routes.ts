@@ -802,9 +802,31 @@ export async function registerRoutes(app: express.Application) {
             let vectorBytes: Buffer;
             
             if (useOriginalPdf) {
-              // DIRECT EMBEDDING: Use original PDF with exact CMYK colors preserved
-              console.log(`✅ EMBEDDING ORIGINAL PDF DIRECTLY - EXACT CMYK COLORS PRESERVED`);
-              vectorBytes = fs.readFileSync(originalPdfPath);
+              // SCALE ORIGINAL PDF: Preserve CMYK colors but match canvas dimensions
+              console.log(`🎯 SCALING ORIGINAL PDF TO CANVAS DIMENSIONS - PRESERVING EXACT CMYK COLORS`);
+              
+              // Use Ghostscript to create a scaled version with exact dimensions
+              const ts = Date.now() + Math.random();
+              const scaledPdf = path.join(process.cwd(), 'uploads', `scaled_${ts}.pdf`);
+              
+              // Create a PDF with exact canvas dimensions using Ghostscript
+              const scaleCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
+                `-sDEVICE=pdfwrite ` +
+                `-dDEVICEWIDTHPOINTS=${widthPts.toFixed(0)} ` +
+                `-dDEVICEHEIGHTPOINTS=${heightPts.toFixed(0)} ` +
+                `-dFIXEDMEDIA ` +
+                `-dPDFFitPage ` +
+                `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+                `-dPreserveMarkedContent=true ` +
+                `-dPreserveSeparation=true ` +
+                `-dPreserveDeviceN=true ` +
+                `-sOutputFile="${scaledPdf}" "${originalPdfPath}"`;
+              
+              execSync(scaleCmd);
+              console.log(`✅ Original PDF scaled to ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts with CMYK preserved`);
+              
+              vectorBytes = fs.readFileSync(scaledPdf);
+              fs.unlinkSync(scaledPdf); // Cleanup
             } else {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');
@@ -858,7 +880,8 @@ export async function registerRoutes(app: express.Application) {
             console.log(`✅ Page 2: Artwork embedded on garment background`);
             
             // Cleanup
-            [tempSvg, tempPdf].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
+            if (fs.existsSync(tempSvg)) fs.unlinkSync(tempSvg);
+            if (fs.existsSync(tempPdf)) fs.unlinkSync(tempPdf);
             
           } catch (error) {
             console.log(`❌ Element processing failed: ${error}`);
