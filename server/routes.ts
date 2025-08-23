@@ -1208,30 +1208,19 @@ export async function registerRoutes(app: express.Application) {
                   const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
                   
                   if (hasFogra51Svg) {
-                    console.log(`🎨 APPLYING FOGRA 51 COLOR CORRECTION DURING PDF→SVG CONVERSION`);
+                    console.log(`🎨 USING GHOSTSCRIPT SVG DEVICE WITH FOGRA 51 COLOR CORRECTION`);
                     
-                    // First: Apply FOGRA 51 color correction to PDF
-                    const tempColorCorrectedPdf = path.join(uploadDir, `temp_fogra51_${file.filename}.pdf`);
-                    const fogra51Cmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+                    // Use Ghostscript's SVG device with FOGRA 51 color profile
+                    svgCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=svg ` +
                       `-dProcessColorModel=/DeviceCMYK ` +
                       `-dColorConversionStrategy=/CMYK ` +
                       `-dRenderIntent=0 ` +
                       `-dBlackPtComp=1 ` +
                       `-sDefaultCMYKProfile="${fogra51SvgPath}" ` +
                       `-sOutputICCProfile="${fogra51SvgPath}" ` +
-                      `-sOutputFile="${tempColorCorrectedPdf}" "${pdfPath}"`;
-                    
-                    await execAsync(fogra51Cmd);
-                    
-                    // Then: Convert color-corrected PDF to SVG
-                    svgCommand = `pdf2svg "${tempColorCorrectedPdf}" "${svgPath}"`;
-                    
-                    // Cleanup temp file after SVG creation
-                    setTimeout(() => {
-                      if (fs.existsSync(tempColorCorrectedPdf)) {
-                        fs.unlinkSync(tempColorCorrectedPdf);
-                      }
-                    }, 1000);
+                      `-dUseCIEColor=true ` +
+                      `-r300 ` +
+                      `-sOutputFile="${svgPath}" "${pdfPath}"`;
                   } else {
                     console.log(`⚠️ FOGRA 51 profile not found, using standard PDF→SVG conversion`);
                     svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
