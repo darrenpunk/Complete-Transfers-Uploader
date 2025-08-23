@@ -726,18 +726,7 @@ export async function registerRoutes(app: express.Application) {
         // CANVAS REPLICA: Match canvas preview exactly with garment colors
         console.log(`🚀 CANVAS REPLICA: Exact canvas preview with garment colors and Adobe CMYK`);
         
-        // Create pages
-        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
-        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-        
-        // Page 1: Garment color background (same as canvas)
-        page1.drawRectangle({
-          x: 0, y: 0, 
-          width: pageWidth, height: pageHeight,
-          color: garmentBg
-        });
-        
-        // Page 2: Garment color background (from project or elements)
+        // Get garment color and convert FIRST
         const garmentColor = project.garmentColor || canvasElements.find(el => el.garmentColor)?.garmentColor || '#D98F17'; // Default to orange
         const garmentColorName = garmentColor === '#FFFFFF' ? 'White' : 
                                  garmentColor === '#D98F17' ? 'Orange' : 
@@ -761,12 +750,19 @@ export async function registerRoutes(app: express.Application) {
           garmentBg = rgb(r, g, b);
         }
         
-        page2.drawRectangle({
-          x: 0, y: 0,
-          width: pageWidth, height: pageHeight,
-          color: garmentBg
+        // Create pages with garment color backgrounds
+        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
+        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+        
+        // Both pages: Garment color background (same as canvas)
+        [page1, page2].forEach(page => {
+          page.drawRectangle({
+            x: 0, y: 0, 
+            width: pageWidth, height: pageHeight,
+            color: garmentBg
+          });
         });
-        console.log(`✅ Page 2 garment background: ${garmentColorName} (${garmentColor})`);
+        console.log(`✅ Both pages: ${garmentColorName} background (${garmentColor})`);
         
         // Process canvas elements
         for (let element of canvasElements) {
