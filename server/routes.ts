@@ -868,17 +868,22 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // BASIC CMYK CONVERSION - Adobe Standard
-          const cmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // PRESERVE EXACT CMYK VALUES - True Adobe Workflow
+          const preserveExactCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/CMYK ` +
-            `-dPDFSETTINGS=/prepress ` +
-            `-dCompatibilityLevel=1.4 ` +
+            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+            `-dConvertCMYKImagesToRGB=false ` +
+            `-dConvertImagesToIndexed=false ` +
+            `-dPreserveOverprintSettings=true ` +
+            `-dPreserveHalftoneInfo=true ` +
+            `-dPreserveSeparation=true ` +
+            `-dDoThumbnails=false ` +
+            `-dOptimize=false ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 BASIC CMYK CONVERSION - ADOBE STANDARD`);
-          execSync(cmykCmd);
-          console.log(`✅ CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 PRESERVING EXACT CMYK VALUES - TRUE ADOBE WORKFLOW`);
+          execSync(preserveExactCmd);
+          console.log(`✅ EXACT CMYK PRESERVATION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
