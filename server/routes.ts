@@ -797,40 +797,36 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`✅ Original vector PDF loaded: ${sourcePages.length} pages, ${originalBytes.length} bytes`);
                 
                 if (sourcePages.length > 0) {
-                  // EXTRACT RAW VECTOR CONTENT - position only, no scaling
+                  // FORCE EXACT CANVAS DIMENSIONS - override original PDF size completely
                   const sourcePage = sourcePages[0];
                   const { width: originalWidth, height: originalHeight } = sourcePage.getSize();
                   
-                  console.log(`📏 Original vector content: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
+                  console.log(`📏 Original PDF: ${originalWidth.toFixed(1)}×${originalHeight.toFixed(1)}pts`);
+                  console.log(`🎯 Canvas target: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                   
-                  // Use embedPdf to get the vector content as-is
+                  // Extract vector content and force it to canvas dimensions
                   const embeddedPdf = await pdfDoc.embedPdf(sourcePdfDoc);
                   const vectorPage = embeddedPdf[0];
                   
-                  console.log(`✅ Raw vector content extracted`);
+                  console.log(`✅ Vector content extracted`);
                   
-                  // Calculate position offset to move content to canvas position
-                  // Canvas shows content at specific position, so translate by that amount
-                  const offsetX = xPos;
-                  const offsetY = yPos;
-                  
-                  console.log(`📐 Positioning vector content at canvas position: (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})`);
-                  
-                  // Draw raw vector content with position translation only
+                  // FORCE EXACT CANVAS SIZE - override original PDF viewbox completely
                   page1.drawPage(vectorPage, {
-                    x: offsetX,
-                    y: offsetY,
-                    // No width/height = keeps original vector size exactly
+                    x: xPos,
+                    y: yPos,
+                    width: widthPts,   // FORCE canvas width
+                    height: heightPts  // FORCE canvas height
                   });
-                  console.log(`✅ Page 1: Raw vector content positioned`);
+                  console.log(`✅ Page 1: Vector FORCED to canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                   
-                  // Same positioning on page 2
+                  // Same forced sizing on page 2
                   page2.drawPage(vectorPage, {
-                    x: offsetX,
-                    y: offsetY,
-                    // No width/height = keeps original vector size exactly  
+                    x: xPos,
+                    y: yPos, 
+                    width: widthPts,   // FORCE canvas width
+                    height: heightPts  // FORCE canvas height
                   });
-                  console.log(`✅ Page 2: Raw vector content positioned`);
+                  console.log(`✅ Page 2: Vector FORCED to canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
                 }
               } catch (vectorError) {
                 console.log(`⚠️ Original vector embedding failed: ${vectorError}`);
