@@ -872,7 +872,7 @@ export async function registerRoutes(app: express.Application) {
           const absoluteRenderingCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dColorConversionStrategy=/CMYK ` +
-            `-dRenderIntent=3 ` +
+            `-dRenderIntent=0 ` +
             `-dBlackPtComp=1 ` +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
@@ -890,9 +890,9 @@ export async function registerRoutes(app: express.Application) {
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION`);
+          console.log(`🎨 ADOBE PERCEPTUAL INTENT - FIERY PRO CMYK OUTPUT CONVERSION`);
           execSync(absoluteRenderingCmd);
-          console.log(`✅ ABSOLUTE RENDERING INTENT CONVERSION SUCCESSFUL`);
+          console.log(`✅ ADOBE PERCEPTUAL INTENT CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
@@ -1141,7 +1141,7 @@ export async function registerRoutes(app: express.Application) {
               const adobeImportCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
                 `-dProcessColorModel=/DeviceCMYK ` +
                 `-dColorConversionStrategy=/CMYK ` +
-                `-dRenderIntent=3 ` +
+                `-dRenderIntent=0 ` +
                 `-dBlackPtComp=1 ` +
                 `-dGrayDetection=false ` +
                 `-dAutoFilterColorImages=false ` +
@@ -1158,7 +1158,7 @@ export async function registerRoutes(app: express.Application) {
                 `-dCompatibilityLevel=1.4 ` +
                 `-sOutputFile="${tempConvertedPath}" "${sourcePdfPath}"`;
               
-              console.log(`🎨 ABSOLUTE RENDERING INTENT - ADOBE RGB-TO-CMYK CONVERSION ON IMPORT`);
+              console.log(`🎨 ADOBE PERCEPTUAL INTENT - FIERY PRO CMYK CONVERSION ON IMPORT`);
               await execAsync(adobeImportCmd);
               
               // Use converted PDF as source and preserve as original
