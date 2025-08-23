@@ -868,12 +868,17 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION
+          // FOGRA 51 ICC PROFILE PATH
+          const fogra51Path = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+          const hasFogra51 = fs.existsSync(fogra51Path);
+          
+          // ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION WITH FOGRA 51
           const absoluteRenderingCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dColorConversionStrategy=/CMYK ` +
             `-dRenderIntent=0 ` +
             `-dBlackPtComp=1 ` +
+            (hasFogra51 ? `-sDefaultCMYKProfile="${fogra51Path}" -sOutputICCProfile="${fogra51Path}" ` : '') +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
@@ -890,7 +895,7 @@ export async function registerRoutes(app: express.Application) {
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 ADOBE PERCEPTUAL INTENT - FIERY PRO CMYK OUTPUT CONVERSION`);
+          console.log(`🎨 ADOBE PERCEPTUAL INTENT - FOGRA 51 CMYK OUTPUT CONVERSION`);
           execSync(absoluteRenderingCmd);
           console.log(`✅ ADOBE PERCEPTUAL INTENT CONVERSION SUCCESSFUL`);
           
@@ -1138,11 +1143,16 @@ export async function registerRoutes(app: express.Application) {
             // ADOBE RGB-TO-CMYK CONVERSION ON IMPORT
             try {
               const tempConvertedPath = path.join(uploadDir, `temp_converted_${timestamp}.pdf`);
+              // FOGRA 51 ICC PROFILE PATH FOR IMPORT
+              const fogra51ImportPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+              const hasFogra51Import = fs.existsSync(fogra51ImportPath);
+              
               const adobeImportCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
                 `-dProcessColorModel=/DeviceCMYK ` +
                 `-dColorConversionStrategy=/CMYK ` +
                 `-dRenderIntent=0 ` +
                 `-dBlackPtComp=1 ` +
+                (hasFogra51Import ? `-sDefaultCMYKProfile="${fogra51ImportPath}" -sOutputICCProfile="${fogra51ImportPath}" ` : '') +
                 `-dGrayDetection=false ` +
                 `-dAutoFilterColorImages=false ` +
                 `-dAutoFilterGrayImages=false ` +
@@ -1158,7 +1168,7 @@ export async function registerRoutes(app: express.Application) {
                 `-dCompatibilityLevel=1.4 ` +
                 `-sOutputFile="${tempConvertedPath}" "${sourcePdfPath}"`;
               
-              console.log(`🎨 ADOBE PERCEPTUAL INTENT - FIERY PRO CMYK CONVERSION ON IMPORT`);
+              console.log(`🎨 ADOBE PERCEPTUAL INTENT - FOGRA 51 CMYK CONVERSION ON IMPORT`);
               await execAsync(adobeImportCmd);
               
               // Use converted PDF as source and preserve as original
