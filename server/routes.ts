@@ -868,10 +868,12 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // FIXED ADOBE CMYK CONVERSION - Maintain CMYK Output
-          const fixedCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION
+          const absoluteRenderingCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
             `-dColorConversionStrategy=/CMYK ` +
+            `-dRenderIntent=3 ` +
+            `-dBlackPtComp=0 ` +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
@@ -888,9 +890,9 @@ export async function registerRoutes(app: express.Application) {
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 FIXED ADOBE CMYK CONVERSION - MAINTAIN CMYK OUTPUT`);
-          execSync(fixedCmykCmd);
-          console.log(`✅ FIXED CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION`);
+          execSync(absoluteRenderingCmd);
+          console.log(`✅ ABSOLUTE RENDERING INTENT CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
@@ -1139,6 +1141,8 @@ export async function registerRoutes(app: express.Application) {
               const adobeImportCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
                 `-dProcessColorModel=/DeviceCMYK ` +
                 `-dColorConversionStrategy=/CMYK ` +
+                `-dRenderIntent=3 ` +
+                `-dBlackPtComp=0 ` +
                 `-dGrayDetection=false ` +
                 `-dAutoFilterColorImages=false ` +
                 `-dAutoFilterGrayImages=false ` +
@@ -1154,7 +1158,7 @@ export async function registerRoutes(app: express.Application) {
                 `-dCompatibilityLevel=1.4 ` +
                 `-sOutputFile="${tempConvertedPath}" "${sourcePdfPath}"`;
               
-              console.log(`🎨 ADOBE RGB-TO-CMYK CONVERSION ON IMPORT`);
+              console.log(`🎨 ABSOLUTE RENDERING INTENT - ADOBE RGB-TO-CMYK CONVERSION ON IMPORT`);
               await execAsync(adobeImportCmd);
               
               // Use converted PDF as source and preserve as original
