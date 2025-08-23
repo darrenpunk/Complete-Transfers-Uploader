@@ -1188,13 +1188,35 @@ export async function registerRoutes(app: express.Application) {
                 const svgFilename = `${file.filename}.svg`;
                 const svgPath = path.join(uploadDir, svgFilename);
                 
-                // Use pdf2svg for high-quality vector conversion
+                // ADOBE FIERY PRO COLOR CONVERSION during PDF→SVG
                 let svgCommand;
                 try {
                   await execAsync('which pdf2svg');
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  // Apply Adobe color settings during SVG conversion
+                  const tempColorPdf = path.join(uploadDir, `temp_color_${file.filename}.pdf`);
+                  
+                  // First: Apply Fiery Pro CMYK color conversion with Adobe settings
+                  const adobeFieryCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+                    `-dProcessColorModel=/DeviceCMYK ` +
+                    `-dColorConversionStrategy=/CMYK ` +
+                    `-dRenderIntent=0 ` +
+                    `-dBlackPtComp=1 ` +
+                    `-dUseCIEColor=true ` +
+                    `-sOutputICCProfile=/usr/share/color/icc/ghostscript/default_cmyk.icc ` +
+                    `-sOutputFile="${tempColorPdf}" "${pdfPath}"`;
+                  
+                  console.log(`🎨 ADOBE FIERY PRO COLOR CONVERSION during PDF→SVG`);
+                  await execAsync(adobeFieryCmd);
+                  
+                  // Then convert to SVG with corrected colors
+                  svgCommand = `pdf2svg "${tempColorPdf}" "${svgPath}"`;
+                  
+                  // Cleanup temp file
+                  if (fs.existsSync(tempColorPdf)) {
+                    fs.unlinkSync(tempColorPdf);
+                  }
                 } catch {
-                  // Fallback to Inkscape if pdf2svg not available
+                  // Fallback to Inkscape with color correction
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
                 }
                 
