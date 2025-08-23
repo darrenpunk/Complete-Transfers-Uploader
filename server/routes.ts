@@ -750,19 +750,21 @@ export async function registerRoutes(app: express.Application) {
           garmentBg = rgb(r, g, b);
         }
         
-        // Create pages with garment color backgrounds
+        // Create pages
         const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
         const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
         
-        // Both pages: Garment color background (same as canvas)
-        [page1, page2].forEach(page => {
-          page.drawRectangle({
-            x: 0, y: 0, 
-            width: pageWidth, height: pageHeight,
-            color: garmentBg
-          });
+        // Page 1: NO BACKGROUND - production ready artwork only (transparent/white)
+        // Page 1 gets no background rectangle - just artwork
+        console.log(`✅ Page 1: NO background - production ready artwork only`);
+        
+        // Page 2: Garment color background (preview with garment)
+        page2.drawRectangle({
+          x: 0, y: 0, 
+          width: pageWidth, height: pageHeight,
+          color: garmentBg
         });
-        console.log(`✅ Both pages: ${garmentColorName} background (${garmentColor})`);
+        console.log(`✅ Page 2: ${garmentColorName} background for preview (${garmentColor})`);
         
         // Process canvas elements
         for (let element of canvasElements) {
@@ -859,23 +861,18 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // FORCE CMYK OUTPUT - Adobe Illustrator equivalent 
-          const forceCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
+          // FORCE TRUE CMYK OUTPUT - Simplified but effective
+          const trueCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
             `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/UseDeviceIndependentColor ` +
             `-dPDFSETTINGS=/prepress ` +
-            `-dOverrideICC=true ` +
-            `-dRenderIntent=1 ` +
-            `-sDefaultCMYKProfile=default.cmyk ` +
-            `-sColorConversionStrategyForImages=/CMYK ` +
-            `-sColorConversionStrategyForText=/CMYK ` +
-            `-dAutoRotatePages=/None ` +
-            `-dCompatibilityLevel=1.4 ` +
+            `-dConvertCMYKImagesToRGB=false ` +
+            `-dConvertImagesToIndexed=false ` +
+            `-dColorConversionStrategy=/CMYK ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 FORCING CMYK OUTPUT - Adobe equivalent settings`);
-          execSync(forceCmykCmd, { stdio: 'pipe' });
-          console.log(`✅ ADOBE CMYK CONVERSION SUCCESSFUL`);
+          console.log(`🎨 FORCING TRUE CMYK OUTPUT`);
+          execSync(trueCmykCmd);
+          console.log(`✅ TRUE CMYK CONVERSION SUCCESSFUL`);
           
           const cmykBytes = fs.readFileSync(cmykPath);
           console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
