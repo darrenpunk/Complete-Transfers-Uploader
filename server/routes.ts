@@ -1135,46 +1135,10 @@ export async function registerRoutes(app: express.Application) {
           const sourcePdfPath = path.join(uploadDir, file.filename);
           
           if (fs.existsSync(sourcePdfPath)) {
-            // ADOBE RGB-TO-CMYK CONVERSION ON IMPORT
-            try {
-              const tempConvertedPath = path.join(uploadDir, `temp_converted_${timestamp}.pdf`);
-              // FOGRA 51 ICC PROFILE PATH FOR IMPORT
-              const fogra51ImportPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
-              const hasFogra51Import = fs.existsSync(fogra51ImportPath);
-              
-              const adobeImportCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-                `-dProcessColorModel=/DeviceCMYK ` +
-                `-dColorConversionStrategy=/CMYK ` +
-                `-dRenderIntent=0 ` +
-                `-dBlackPtComp=1 ` +
-                (hasFogra51Import ? `-sDefaultCMYKProfile="${fogra51ImportPath}" -sOutputICCProfile="${fogra51ImportPath}" ` : '') +
-                `-dGrayDetection=false ` +
-                `-dAutoFilterColorImages=false ` +
-                `-dAutoFilterGrayImages=false ` +
-                `-dEncodeColorImages=false ` +
-                `-dEncodeGrayImages=false ` +
-                `-dCompressPages=false ` +
-                `-dUseFlateCompression=false ` +
-                `-dDownsampleColorImages=false ` +
-                `-dDownsampleGrayImages=false ` +
-                `-dMonoImageDownsampleType=/Bicubic ` +
-                `-dPreserveCopyPage=true ` +
-                `-dEmbedAllFonts=true ` +
-                `-dCompatibilityLevel=1.4 ` +
-                `-sOutputFile="${tempConvertedPath}" "${sourcePdfPath}"`;
-              
-              console.log(`🎨 ADOBE PERCEPTUAL INTENT - FOGRA 51 CMYK CONVERSION ON IMPORT`);
-              await execAsync(adobeImportCmd);
-              
-              // Use converted PDF as source and preserve as original
-              fs.copyFileSync(tempConvertedPath, originalPdfPath);
-              fs.unlinkSync(tempConvertedPath);
-              console.log(`💾 Adobe CMYK-converted PDF preserved as: ${originalPdfFilename}`);
-            } catch (importError) {
-              console.log(`⚠️ Adobe conversion on import failed, using original: ${importError.message}`);
-              fs.copyFileSync(sourcePdfPath, originalPdfPath);
-              console.log(`💾 Original PDF preserved as: ${originalPdfFilename} for exact embedding`);
-            }
+            // PRESERVE EXACT ORIGINAL COLORS - NO IMPORT CONVERSION
+            console.log(`🎯 PRESERVING EXACT ORIGINAL PDF COLORS - NO IMPORT CONVERSION`);
+            fs.copyFileSync(sourcePdfPath, originalPdfPath);
+            console.log(`💾 Original PDF preserved as: ${originalPdfFilename} with exact original colors`);
             // Mark for later embedding
             (file as any).originalPdfFilename = originalPdfFilename;
           }
@@ -1202,16 +1166,8 @@ export async function registerRoutes(app: express.Application) {
                   const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
                   const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
                   
-                  console.log(`🎯 PRESERVING EXACT ORIGINAL CMYK COLORS - NO COLOR CONVERSION`);
-                  
-                  // Use Ghostscript SVG device with NO color conversion to preserve exact original colors
-                  svgCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=svg ` +
-                    `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-                    `-dPreserveMarkedContent=true ` +
-                    `-dPreserveSeparation=true ` +
-                    `-dPreserveDeviceN=true ` +
-                    `-r300 ` +
-                    `-sOutputFile="${svgPath}" "${pdfPath}"`;
+                  console.log(`🎯 STANDARD PDF→SVG CONVERSION - PRESERVING ORIGINAL WORKFLOW`);
+                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
                 } catch {
                   // Fallback to Inkscape if pdf2svg not available
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
