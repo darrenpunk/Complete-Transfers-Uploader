@@ -711,8 +711,8 @@ export async function registerRoutes(app: express.Application) {
         logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
       );
 
-      // ULTRA SIMPLE APPROACH: Direct PDF embedding without ANY transformations
-      console.log('📄 ULTRA SIMPLE: Direct original PDF embedding with exact canvas positioning');
+      // FORCE SVG-BASED ADOBE COLOR CONVERSION - Skip direct PDF embedding 
+      console.log('📄 FORCING SVG CONVERSION: Skipping direct PDF embedding for Adobe color processing');
       
       try {
         const { PDFDocument, rgb } = await import('pdf-lib');
@@ -772,7 +772,7 @@ export async function registerRoutes(app: express.Application) {
           if (!logo) continue;
           
           const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-          console.log(`📄 Processing: ${(logo as any).filename}`);
+          console.log(`📄 Processing SVG through Adobe conversion: ${(logo as any).filename}`);
           
           if (!fs.existsSync(svgPath)) {
             console.log(`❌ SVG not found: ${svgPath}`);
