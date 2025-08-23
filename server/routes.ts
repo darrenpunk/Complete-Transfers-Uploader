@@ -860,79 +860,11 @@ export async function registerRoutes(app: express.Application) {
         const pdfBytes = await pdfDoc.save();
         console.log(`✅ Initial PDF: ${pdfBytes.length} bytes`);
         
-        // Adobe CMYK conversion
-        const timestamp = Date.now();
-        const initialPath = path.join(process.cwd(), 'uploads', `initial_${timestamp}.pdf`);
-        const cmykPath = path.join(process.cwd(), 'uploads', `cmyk_${timestamp}.pdf`);
+        // SKIP ALL COLOR CONVERSION - RETURN ORIGINAL PDF DIRECTLY
+        console.log(`🎯 BYPASSING ALL COLOR CONVERSION - RETURNING ORIGINAL PDF WITH EXACT COLORS`);
         
-        fs.writeFileSync(initialPath, pdfBytes);
-        
-        try {
-          // PRESERVE EXACT ORIGINAL COLORS - NO CONVERSION
-          const absoluteRenderingCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-            `-dPreserveMarkedContent=true ` +
-            `-dPreserveSeparation=true ` +
-            `-dPreserveDeviceN=true ` +
-            `-dDetectDuplicateImages=false ` +
-            `-dGrayDetection=false ` +
-            `-dAutoFilterColorImages=false ` +
-            `-dAutoFilterGrayImages=false ` +
-            `-dEncodeColorImages=false ` +
-            `-dEncodeGrayImages=false ` +
-            `-dCompressPages=false ` +
-            `-dUseFlateCompression=false ` +
-            `-dDownsampleColorImages=false ` +
-            `-dDownsampleGrayImages=false ` +
-            `-dMonoImageDownsampleType=/Bicubic ` +
-            `-dPreserveCopyPage=true ` +
-            `-dEmbedAllFonts=true ` +
-            `-dCompatibilityLevel=1.4 ` +
-            `-sOutputFile="${cmykPath}" "${initialPath}"`;
-          
-          console.log(`🎯 PRESERVING EXACT ORIGINAL CMYK COLORS - NO COLOR CONVERSION`);
-          execSync(absoluteRenderingCmd);
-          console.log(`✅ ADOBE PERCEPTUAL INTENT CONVERSION SUCCESSFUL`);
-          
-          const cmykBytes = fs.readFileSync(cmykPath);
-          console.log(`✅ Final Adobe CMYK PDF: ${cmykBytes.length} bytes`);
-          
-          // Cleanup
-          [initialPath, cmykPath].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
-          
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_adobe_cmyk.pdf"`);
-          res.send(Buffer.from(cmykBytes));
-          return;
-          
-        } catch (cmykError) {
-          console.log(`❌ Adobe CMYK conversion failed: ${cmykError.message}`);
-          
-          // Try simpler CMYK conversion
-          try {
-            const simpleCmykCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-              `-dProcessColorModel=/DeviceCMYK ` +
-              `-sOutputFile="${cmykPath}" "${initialPath}"`;
-            
-            execSync(simpleCmykCmd);
-            console.log(`✅ Simple CMYK conversion successful`);
-            
-            const cmykBytes = fs.readFileSync(cmykPath);
-            [initialPath, cmykPath].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
-            
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_cmyk.pdf"`);
-            res.send(Buffer.from(cmykBytes));
-            return;
-          } catch (fallbackError) {
-            console.log(`❌ Simple CMYK conversion also failed: ${fallbackError.message}`);
-            fs.existsSync(initialPath) && fs.unlinkSync(initialPath);
-          }
-        }
-        
-        // Fallback to original
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}.pdf"`);
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_original.pdf"`);
         res.send(Buffer.from(pdfBytes));
         return;
         
