@@ -868,17 +868,12 @@ export async function registerRoutes(app: express.Application) {
         fs.writeFileSync(initialPath, pdfBytes);
         
         try {
-          // FOGRA 51 ICC PROFILE PATH
-          const fogra51Path = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
-          const hasFogra51 = fs.existsSync(fogra51Path);
-          
-          // ABSOLUTE RENDERING INTENT - CMYK OUTPUT CONVERSION WITH FOGRA 51
+          // PRESERVE EXACT ORIGINAL COLORS - NO CONVERSION
           const absoluteRenderingCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pdfwrite ` +
-            `-dProcessColorModel=/DeviceCMYK ` +
-            `-dColorConversionStrategy=/CMYK ` +
-            `-dRenderIntent=0 ` +
-            `-dBlackPtComp=1 ` +
-            (hasFogra51 ? `-sDefaultCMYKProfile="${fogra51Path}" -sOutputICCProfile="${fogra51Path}" ` : '') +
+            `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+            `-dPreserveMarkedContent=true ` +
+            `-dPreserveSeparation=true ` +
+            `-dPreserveDeviceN=true ` +
             `-dDetectDuplicateImages=false ` +
             `-dGrayDetection=false ` +
             `-dAutoFilterColorImages=false ` +
@@ -895,7 +890,7 @@ export async function registerRoutes(app: express.Application) {
             `-dCompatibilityLevel=1.4 ` +
             `-sOutputFile="${cmykPath}" "${initialPath}"`;
           
-          console.log(`🎨 ADOBE PERCEPTUAL INTENT - FOGRA 51 CMYK OUTPUT CONVERSION`);
+          console.log(`🎯 PRESERVING EXACT ORIGINAL CMYK COLORS - NO COLOR CONVERSION`);
           execSync(absoluteRenderingCmd);
           console.log(`✅ ADOBE PERCEPTUAL INTENT CONVERSION SUCCESSFUL`);
           
@@ -1207,24 +1202,16 @@ export async function registerRoutes(app: express.Application) {
                   const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
                   const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
                   
-                  if (hasFogra51Svg) {
-                    console.log(`🎨 USING GHOSTSCRIPT SVG DEVICE WITH FOGRA 51 COLOR CORRECTION`);
-                    
-                    // Use Ghostscript's SVG device with FOGRA 51 color profile
-                    svgCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=svg ` +
-                      `-dProcessColorModel=/DeviceCMYK ` +
-                      `-dColorConversionStrategy=/CMYK ` +
-                      `-dRenderIntent=0 ` +
-                      `-dBlackPtComp=1 ` +
-                      `-sDefaultCMYKProfile="${fogra51SvgPath}" ` +
-                      `-sOutputICCProfile="${fogra51SvgPath}" ` +
-                      `-dUseCIEColor=true ` +
-                      `-r300 ` +
-                      `-sOutputFile="${svgPath}" "${pdfPath}"`;
-                  } else {
-                    console.log(`⚠️ FOGRA 51 profile not found, using standard PDF→SVG conversion`);
-                    svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
-                  }
+                  console.log(`🎯 PRESERVING EXACT ORIGINAL CMYK COLORS - NO COLOR CONVERSION`);
+                  
+                  // Use Ghostscript SVG device with NO color conversion to preserve exact original colors
+                  svgCommand = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=svg ` +
+                    `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+                    `-dPreserveMarkedContent=true ` +
+                    `-dPreserveSeparation=true ` +
+                    `-dPreserveDeviceN=true ` +
+                    `-r300 ` +
+                    `-sOutputFile="${svgPath}" "${pdfPath}"`;
                 } catch {
                   // Fallback to Inkscape if pdf2svg not available
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
