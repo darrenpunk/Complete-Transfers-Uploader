@@ -2075,6 +2075,20 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
+            // CRITICAL: Store ORIGINAL document dimensions BEFORE any bounds processing
+            // These are the dimensions we want to preserve for canvas display
+            let originalDocumentWidthMm = displayWidth; // Use current display dimensions as original
+            let originalDocumentHeightMm = displayHeight;
+            
+            // Get original SVG dimensions for canvas display preservation
+            const { detectDimensionsFromSVG } = await import('./dimension-utils');
+            const initialDimensionResult = await detectDimensionsFromSVG(svgContent, null, svgPath);
+            if (initialDimensionResult) {
+              originalDocumentWidthMm = initialDimensionResult.widthMm;
+              originalDocumentHeightMm = initialDimensionResult.heightMm;
+              console.log(`📐 PRESERVED ORIGINAL DOCUMENT DIMENSIONS: ${originalDocumentWidthMm.toFixed(1)}×${originalDocumentHeightMm.toFixed(1)}mm (before any bounds processing)`);
+            }
+            
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
@@ -2170,11 +2184,6 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ REASONABLE BOUNDS: Using detected bounds as-is`);
                 }
                 
-                // CRITICAL FIX: Store original canvas dimensions BEFORE any tight cropping
-                // These dimensions should be used for canvas display to avoid scaling
-                const originalCanvasWidthMm = boundsResult.contentBounds.width * pxToMm;
-                const originalCanvasHeightMm = boundsResult.contentBounds.height * pxToMm;
-                console.log(`📐 ORIGINAL CANVAS DIMENSIONS: ${originalCanvasWidthMm.toFixed(1)}×${originalCanvasHeightMm.toFixed(1)}mm (preserving for canvas display)`);
                 
                 // CRITICAL FIX: Only create tight content SVG for oversized or incorrectly bounded content
                 // For A3 and properly sized artwork, keep original to avoid clipping
@@ -2309,11 +2318,11 @@ export async function registerRoutes(app: express.Application) {
                 
                 console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (after content ratio correction)`);
                 
-                // FIX: Use ORIGINAL dimensions for canvas display, NOT tight content bounds
+                // FIX: Use ORIGINAL DOCUMENT dimensions for canvas display, NOT tight content bounds
                 // This prevents the canvas from scaling down the content
-                displayWidth = originalCanvasWidthMm;
-                displayHeight = originalCanvasHeightMm;
-                console.log(`🎯 CANVAS DISPLAY: Using original dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (not tight bounds)`);
+                displayWidth = originalDocumentWidthMm;
+                displayHeight = originalDocumentHeightMm;
+                console.log(`🎯 CANVAS DISPLAY: Using original document dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (preserving exact size)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
