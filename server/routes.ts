@@ -2178,18 +2178,24 @@ export async function registerRoutes(app: express.Application) {
                 const contentWidthMm = boundsResult.contentBounds.width * pxToMm;
                 const contentHeightMm = boundsResult.contentBounds.height * pxToMm;
                 
-                // Check if content is A3 or larger (landscape or portrait)
-                const isA3OrLarger = (contentWidthMm >= A3_WIDTH_MM - 10 && contentHeightMm >= A3_HEIGHT_MM - 10) ||
-                                     (contentWidthMm >= A3_HEIGHT_MM - 10 && contentHeightMm >= A3_WIDTH_MM - 10);
+                // Get original SVG dimensions to compare with content bounds
+                const { detectDimensionsFromSVG } = await import('./dimension-utils');
+                const originalSvgDimensions = await detectDimensionsFromSVG(svgContent, null, svgPath);
+                const originalWidthMm = originalSvgDimensions.widthMm;
+                const originalHeightMm = originalSvgDimensions.heightMm;
                 
-                // Don't create tight crop for A3 or properly sized content
-                const needsTightCrop = !usingPdfContentBounds && !isA3OrLarger && 
-                                      (contentWidthMm > A3_HEIGHT_MM * 1.5 || contentHeightMm > A3_HEIGHT_MM * 1.5);
+                // Calculate the difference between original viewBox and content bounds
+                const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
+                const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
-                if (isA3OrLarger) {
-                  console.log(`📐 A3 OR LARGER CONTENT DETECTED: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm - Keeping original SVG to avoid clipping`);
-                } else if (!needsTightCrop) {
-                  console.log(`✅ CONTENT SIZE APPROPRIATE: No tight crop needed`);
+                // ALWAYS create tight content if there's ANY significant padding
+                // This ensures canvas displays at exact content size
+                const needsTightCrop = !usingPdfContentBounds && (widthDiff > 2 || heightDiff > 2);
+                
+                if (needsTightCrop) {
+                  console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
+                } else {
+                  console.log(`✅ CONTENT MATCHES VIEWBOX: No tight crop needed (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
                 }
                 
                 if (needsTightCrop) {
