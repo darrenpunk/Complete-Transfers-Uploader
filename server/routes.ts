@@ -826,18 +826,27 @@ export async function registerRoutes(app: express.Application) {
               console.log(`✅ Content fits within page: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             }
             
-            // Center the content on the page when it's been scaled or positioned off-page
+            // Calculate position - handle centering differently for rotated content
             let xPos: number;
             let yPos: number;
             
-            // Calculate centered position based on scaled dimensions
+            // If content is positioned off-page or needs centering
             if (element.x < 0 || element.y < 0) {
-              // If positioned off-page, center it
-              const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
-              const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
-              xPos = centerX;
-              yPos = centerY;
-              console.log(`📍 Centered content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+              // For rotated content, we need to center based on the effective (visual) dimensions
+              if (rotation === 90 || rotation === 270) {
+                // Content will be rotated, so center based on final visual appearance
+                const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
+                const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
+                xPos = centerX;
+                yPos = centerY;
+              } else {
+                // No rotation or 180° rotation - center normally
+                const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
+                const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
+                xPos = centerX;
+                yPos = centerY;
+              }
+              console.log(`📍 Centered content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) for rotation ${rotation}°`);
             } else {
               // Use the element's position
               xPos = element.x * 2.834645669;
@@ -966,14 +975,34 @@ export async function registerRoutes(app: express.Application) {
             
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
-              // For 90° rotation: content rotates clockwise
-              // pdf-lib rotates around the bottom-left corner of the content
-              // After rotation, we need to adjust position for the swapped dimensions
+              // For 90° rotation: content rotates clockwise around bottom-left corner
+              // After rotation, original width becomes visual height, original height becomes visual width
               
-              // When rotating 90°, the content pivots around its bottom-left corner
-              // This means we need to shift it up by its original width
-              const rotatedX = xPos;
-              const rotatedY = yPos + widthPts;
+              let rotatedX: number;
+              let rotatedY: number;
+              
+              if (element.x < 0 || element.y < 0) {
+                // Content needs centering - calculate position for centered rotated content
+                // After 90° rotation: heightPts becomes visual width, widthPts becomes visual height
+                const visualWidthAfterRotation = heightPts;
+                const visualHeightAfterRotation = widthPts;
+                
+                // Center the rotated content on the page
+                const centerX = (pageWidth - visualWidthAfterRotation) / 2;
+                const centerY = (pageHeight - visualHeightAfterRotation) / 2;
+                
+                // For 90° rotation, pdf-lib rotates around bottom-left
+                // The visual result after rotation needs to be centered
+                // So we position at centerX, and centerY + visualHeight (which is widthPts)
+                rotatedX = centerX;
+                rotatedY = centerY + visualHeightAfterRotation;
+                
+                console.log(`📍 Centering rotated content: visual ${visualWidthAfterRotation.toFixed(1)}×${visualHeightAfterRotation.toFixed(1)}pts at (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+              } else {
+                // Use specified position with rotation adjustment
+                rotatedX = xPos;
+                rotatedY = yPos + widthPts;
+              }
               
               console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
               
