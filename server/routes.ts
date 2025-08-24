@@ -998,12 +998,15 @@ export async function registerRoutes(app: express.Application) {
               const visualHeight = widthPts;  // Original width becomes visual height
               
               // To center the rotated content:
-              // 1. Find where bottom-left corner should be to center the visual result
-              // 2. Account for the rotation pivot point
-              const rotatedX = pageCenterX - visualWidth / 2;
-              const rotatedY = pageCenterY - visualHeight / 2 + visualHeight; // Add visualHeight because pivot is at bottom
+              // After 90° rotation, content extends:
+              // - Leftward from pivot by heightPts (visual width)
+              // - Upward from pivot by widthPts (visual height)
+              // To center, we need pivot at:
+              const rotatedX = pageCenterX + visualWidth / 2;  // Right edge of centered content
+              const rotatedY = pageCenterY - visualHeight / 2;  // Bottom edge of centered content
               
               console.log(`📐 90° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 Original dims: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
               console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
               
