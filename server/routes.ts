@@ -838,40 +838,30 @@ export async function registerRoutes(app: express.Application) {
               scaledHeight *= scale;
               console.log(`⚠️ Rotated content scaled by ${(scale * 100).toFixed(1)}% to fit page`);
             } else {
-              const effectiveWidth = isRotated ? scaledHeight : scaledWidth;
-              const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
-              console.log(`✅ Content fits within page: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
+              console.log(`✅ Content fits within page`);
             }
             
             // Calculate effective dimensions after rotation for positioning
             const effectiveWidth = isRotated ? scaledHeight : scaledWidth;
             const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
+            console.log(`📐 Effective dimensions: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             
-            // Calculate position - handle centering differently for rotated content
+            // Calculate position - center the content on the page
             let xPos: number;
             let yPos: number;
             
-            // If content is positioned off-page or needs centering
-            if (element.x < 0 || element.y < 0) {
-              // For rotated content, we need to center based on the effective (visual) dimensions
-              if (rotation === 90 || rotation === 270) {
-                // Content will be rotated, so center based on final visual appearance
-                const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
-                const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
-                xPos = centerX;
-                yPos = centerY;
-              } else {
-                // No rotation or 180° rotation - center normally
-                const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
-                const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
-                xPos = centerX;
-                yPos = centerY;
-              }
-              console.log(`📍 Centered content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) for rotation ${rotation}°`);
+            // Always center content when it's rotated or positioned off-page
+            if (rotation === 90 || rotation === 270 || element.x < 0 || element.y < 0) {
+              // Center based on effective (visual) dimensions after rotation
+              const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
+              const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
+              xPos = centerX;
+              yPos = centerY;
+              console.log(`📍 Centering content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) for effective size ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             } else {
               // Use the element's position
               xPos = element.x * 2.834645669;
-              yPos = pageHeight - (element.y * 2.834645669) - (visualHeight * 2.834645669);
+              yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
               
               // Ensure it stays on page
               xPos = Math.max(0, xPos);
@@ -997,42 +987,12 @@ export async function registerRoutes(app: express.Application) {
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
               // For 90° rotation: content rotates clockwise around bottom-left corner
-              // After rotation, original width becomes visual height, original height becomes visual width
+              // After rotation, width and height are visually swapped
               
-              let rotatedX: number;
-              let rotatedY: number;
-              
-              if (element.x < 0 || element.y < 0) {
-                // Content needs centering - calculate position for centered rotated content
-                // After 90° rotation: heightPts becomes visual width, widthPts becomes visual height
-                const visualWidthAfterRotation = heightPts;
-                const visualHeightAfterRotation = widthPts;
-                
-                // Center the rotated content on the page
-                // We want the visual result to be centered after rotation
-                const centerX = (pageWidth - visualWidthAfterRotation) / 2;
-                const centerY = (pageHeight - visualHeightAfterRotation) / 2;
-                
-                // For 90° rotation, pdf-lib rotates around bottom-left corner
-                // To get centered visual result, position at:
-                // X: centerX (this becomes the left edge after rotation)
-                // Y: centerY + visualHeightAfterRotation (account for pivot point)
-                rotatedX = centerX;
-                rotatedY = centerY + visualHeightAfterRotation;
-                
-                // Clamp Y to ensure it doesn't exceed page bounds
-                const maxY = pageHeight - 10; // Leave small margin
-                if (rotatedY > maxY) {
-                  rotatedY = maxY;
-                  console.log(`⚠️ Clamped Y position to ${maxY.toFixed(1)} to stay on page`);
-                }
-                
-                console.log(`📍 Centering 90° rotated content: position (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
-              } else {
-                // Use specified position with rotation adjustment
-                rotatedX = xPos;
-                rotatedY = yPos + widthPts;
-              }
+              // When rotating 90°, pdf-lib rotates around the bottom-left corner
+              // To center the rotated content, we need to adjust the position
+              const rotatedX = xPos;
+              const rotatedY = yPos + widthPts; // Add width because of rotation pivot
               
               console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
               
