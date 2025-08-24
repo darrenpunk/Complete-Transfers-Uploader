@@ -1876,29 +1876,82 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
             try {
-              // Extract precise vector content bounds using the new bounds extraction system
-              const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-              const svgAnalyzer = new SVGBoundsAnalyzer();
-              const boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
+              // For PDF-converted SVGs, try to use the original PDF bounds first
+              let boundsResult = null;
+              
+              if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
+                // Try to extract bounds from the original PDF for accuracy
+                console.log('📐 Attempting to extract bounds from original PDF for accuracy');
+                const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
+                const pdfExtractor = new PDFBoundsExtractor();
+                const pdfBoundsResult = await pdfExtractor.extractContentBounds(
+                  (file as any).originalPdfPath,
+                  1,
+                  { includeStrokeExtents: true, highDpiRasterFallback: true }
+                );
+                
+                if (pdfBoundsResult.success && pdfBoundsResult.bbox) {
+                  console.log(`✅ PDF BOUNDS EXTRACTED: ${pdfBoundsResult.bbox.width.toFixed(1)}×${pdfBoundsResult.bbox.height.toFixed(1)}pts`);
+                  // Convert PDF bounds to SVG analyzer format
+                  boundsResult = {
+                    success: true,
+                    contentBounds: {
+                      xMin: pdfBoundsResult.bbox.xMin,
+                      yMin: pdfBoundsResult.bbox.yMin,
+                      xMax: pdfBoundsResult.bbox.xMax,
+                      yMax: pdfBoundsResult.bbox.yMax,
+                      width: pdfBoundsResult.bbox.width,
+                      height: pdfBoundsResult.bbox.height
+                    },
+                    method: 'pdf-original'
+                  };
+                }
+              }
+              
+              // If PDF bounds extraction failed, use SVG bounds analyzer
+              if (!boundsResult) {
+                const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+                const svgAnalyzer = new SVGBoundsAnalyzer();
+                boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
+              }
               
               if (boundsResult.success && boundsResult.contentBounds) {
                 console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
                 
-                // CONTENT RATIO FIX: Apply intelligent content sizing for oversized bounding boxes
+                // Convert to millimeters
                 const pxToMm = 1 / 2.834645669; // 72 DPI standard
                 const detectedWidthMm = boundsResult.contentBounds.width * pxToMm;
                 const detectedHeightMm = boundsResult.contentBounds.height * pxToMm;
                 
                 console.log(`📐 INITIAL BOUNDS: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm`);
                 
-                // Check if this appears to be measuring bounding box coordinates rather than actual content
-                if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
-                  // Apply aggressive content-to-bounding-box ratio for very oversized detections
-                  const CONTENT_RATIO = 0.15; // Only 15% of very large bounding box is typically actual content
-                  const correctedWidthMm = detectedWidthMm * CONTENT_RATIO;
-                  const correctedHeightMm = detectedHeightMm * CONTENT_RATIO;
+                // Only apply correction if bounds are truly unreasonable (larger than A3)
+                const A3_WIDTH_MM = 297;
+                const A3_HEIGHT_MM = 420;
+                
+                if (detectedWidthMm > A3_HEIGHT_MM * 2 || detectedHeightMm > A3_HEIGHT_MM * 2) {
+                  // This is likely a coordinate system issue, not actual content bounds
+                  console.log(`⚠️ UNREASONABLE BOUNDS DETECTED: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm (> 2×A3)`);
                   
-                  console.log(`🎯 APPLYING CONTENT RATIO: ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm (${(CONTENT_RATIO*100).toFixed(0)}% of bounding area)`);
+                  // Try to detect the actual content scale based on common patterns
+                  // Many PDFs use coordinates in the thousands but actual content is much smaller
+                  let scaleFactor = 1.0;
+                  
+                  if (detectedWidthMm > 2000 || detectedHeightMm > 2000) {
+                    // Coordinates are likely in points but misinterpreted
+                    scaleFactor = 0.1; // 10% of detected size
+                  } else if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
+                    // Moderately oversized, likely coordinate offset issue
+                    scaleFactor = 0.2; // 20% of detected size
+                  } else {
+                    // Slightly oversized
+                    scaleFactor = 0.5; // 50% of detected size
+                  }
+                  
+                  const correctedWidthMm = detectedWidthMm * scaleFactor;
+                  const correctedHeightMm = detectedHeightMm * scaleFactor;
+                  
+                  console.log(`🎯 APPLYING SCALE CORRECTION: ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm (${(scaleFactor*100).toFixed(0)}% of detected)`);
                   
                   // Update the bounds to reflect more realistic content size
                   boundsResult.contentBounds = {
@@ -1971,15 +2024,29 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`📐 DETECTED SIZE: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm`);
                     
-                    // Check if this is an oversized detection (much larger than reasonable content)
-                    if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
-                      // This appears to be measuring bounding box coordinates, not actual content
-                      // Apply aggressive content-to-bounding-box ratio for very oversized detections
-                      const CONTENT_RATIO = 0.15; // Only 15% of very large bounding box is typically actual content
-                      let contentWidth = detectedWidthMm * CONTENT_RATIO;
-                      let contentHeight = detectedHeightMm * CONTENT_RATIO;
+                    // Only apply correction if bounds are truly unreasonable (larger than A3)
+                    const A3_WIDTH_MM = 297;
+                    const A3_HEIGHT_MM = 420;
+                    
+                    if (detectedWidthMm > A3_HEIGHT_MM * 2 || detectedHeightMm > A3_HEIGHT_MM * 2) {
+                      // This is likely a coordinate system issue
+                      console.log(`⚠️ UNREASONABLE TIGHT BOUNDS: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm (> 2×A3)`);
                       
-                      console.log(`🎯 OVERSIZED DETECTION - Applying content ratio: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (${(CONTENT_RATIO*100).toFixed(0)}% of bounding box)`);
+                      // Apply progressive scale correction based on size
+                      let scaleFactor = 1.0;
+                      
+                      if (detectedWidthMm > 2000 || detectedHeightMm > 2000) {
+                        scaleFactor = 0.1; // Very large coordinates
+                      } else if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
+                        scaleFactor = 0.2; // Large coordinates
+                      } else {
+                        scaleFactor = 0.5; // Moderately oversized
+                      }
+                      
+                      let contentWidth = detectedWidthMm * scaleFactor;
+                      let contentHeight = detectedHeightMm * scaleFactor;
+                      
+                      console.log(`🎯 TIGHT BOUNDS CORRECTION: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (${(scaleFactor*100).toFixed(0)}% scale)`);
                       
                       // Update the bounds to reflect actual content size
                       boundsResult.contentBounds = {
@@ -1988,7 +2055,7 @@ export async function registerRoutes(app: express.Application) {
                         height: contentHeight / pxToMm
                       };
                     } else {
-                      console.log(`✅ REASONABLE SIZE DETECTED: Using detected bounds as-is`);
+                      console.log(`✅ REASONABLE SIZE DETECTED: Using tight bounds as-is`);
                       boundsResult.contentBounds = actualContentBounds;
                     }
                   } else {

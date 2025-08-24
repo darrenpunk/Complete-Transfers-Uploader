@@ -246,35 +246,78 @@ export class PDFBoundsExtractor {
    */
   private async getPDFPageInfo(pdfPath: string, pageNumber: number): Promise<{ bbox: BoundingBox }> {
     try {
+      // Try to get MediaBox using Ghostscript for more accurate results
+      const gsInfoCommand = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dQUIET',
+        '-dNODISPLAY',
+        `-c`,
+        `"(${pdfPath}) (r) file runpdfbegin ${pageNumber} pdfgetpage /MediaBox get {=print ( ) print} forall quit"`
+      ].join(' ');
+      
+      try {
+        const gsOutput = execSync(gsInfoCommand, { encoding: 'utf8', stdio: 'pipe' }).trim();
+        const mediaBoxValues = gsOutput.split(' ').filter(v => v).map(Number);
+        
+        if (mediaBoxValues.length === 4 && !mediaBoxValues.some(isNaN)) {
+          const [x1, y1, x2, y2] = mediaBoxValues;
+          const width = Math.abs(x2 - x1);
+          const height = Math.abs(y2 - y1);
+          
+          console.log(`📄 PDF MediaBox: [${x1}, ${y1}, ${x2}, ${y2}] = ${width}×${height}pts`);
+          
+          return {
+            bbox: {
+              xMin: Math.min(x1, x2),
+              yMin: Math.min(y1, y2),
+              xMax: Math.max(x1, x2),
+              yMax: Math.max(y1, y2),
+              width,
+              height,
+              units: 'pt'
+            }
+          };
+        }
+      } catch (gsError) {
+        // Silently fall back to ImageMagick
+      }
+      
+      // Fallback to ImageMagick
       const identifyCommand = `identify -format "%[fx:page.width],%[fx:page.height]" "${pdfPath}[${pageNumber - 1}]"`;
       const output = execSync(identifyCommand, { encoding: 'utf8' }).trim();
       const [width, height] = output.split(',').map(Number);
 
-      return {
-        bbox: {
-          xMin: 0,
-          yMin: 0,
-          xMax: width,
-          yMax: height,
-          width,
-          height,
-          units: 'pt'
-        }
-      };
+      if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+        return {
+          bbox: {
+            xMin: 0,
+            yMin: 0,
+            xMax: width,
+            yMax: height,
+            width,
+            height,
+            units: 'pt'
+          }
+        };
+      }
     } catch (error) {
-      // Default to A4 if detection fails
-      return {
-        bbox: {
-          xMin: 0,
-          yMin: 0,
-          xMax: 595.28,
-          yMax: 841.89,
-          width: 595.28,
-          height: 841.89,
-          units: 'pt'
-        }
-      };
+      console.log('⚠️ Failed to get PDF page info, using default A4');
     }
+    
+    // Default to A4 if detection fails
+    return {
+      bbox: {
+        xMin: 0,
+        yMin: 0,
+        xMax: 595.28,
+        yMax: 841.89,
+        width: 595.28,
+        height: 841.89,
+        units: 'pt'
+      }
+    };
   }
 
   /**
@@ -288,17 +331,37 @@ export class PDFBoundsExtractor {
     const match = hiResMatch || bboxMatch;
     
     if (match) {
-      const [, xMin, yMin, xMax, yMax] = match.map(Number);
+      let [, xMin, yMin, xMax, yMax] = match.map(Number);
       
-      return {
-        xMin,
-        yMin,
-        xMax,
-        yMax,
-        width: xMax - xMin,
-        height: yMax - yMin,
-        units: 'pt'
-      };
+      // Handle PDFs with offset bounds (negative coordinates)
+      if (xMin < -100 || yMin < -100) {
+        console.log(`🔄 Adjusting offset bounds: (${xMin}, ${yMin}) -> normalized`);
+        // Normalize the bounds to start at (0,0)
+        const offsetX = Math.min(0, xMin);
+        const offsetY = Math.min(0, yMin);
+        xMax = xMax - offsetX;
+        yMax = yMax - offsetY;
+        xMin = 0;
+        yMin = 0;
+      }
+      
+      const width = xMax - xMin;
+      const height = yMax - yMin;
+      
+      // Validate bounds are reasonable
+      if (width > 0 && height > 0 && width < 10000 && height < 10000) {
+        return {
+          xMin,
+          yMin,
+          xMax,
+          yMax,
+          width,
+          height,
+          units: 'pt'
+        };
+      } else {
+        console.log(`⚠️ Invalid bounds detected: ${width}×${height}`);
+      }
     }
     
     return null;
