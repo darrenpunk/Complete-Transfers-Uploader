@@ -2238,66 +2238,9 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
                     
-                    // CRITICAL FIX: Re-analyze the tight content SVG to get actual content bounds
-                    // not viewBox bounds. This measures the actual vector content size.
-                    console.log(`🔍 RE-ANALYZING TIGHT CONTENT SVG for actual vector content bounds...`);
-                    const tightContentBounds = await svgAnalyzer.extractSVGBounds(tightSvgPath);
-                  
-                    console.log(`🔍 DEBUG: tightContentBounds.success=${tightContentBounds.success}, hasContentBounds=${!!tightContentBounds.contentBounds}`);
-                    if (tightContentBounds.error) {
-                      console.log(`🔍 DEBUG: tightContentBounds.error=${tightContentBounds.error}`);
-                    }
-                    
-                    if (tightContentBounds.success && tightContentBounds.contentBounds) {
-                      // Use the actual content bounds from the tight SVG (actual vector content)
-                      const actualContentBounds = tightContentBounds.contentBounds;
-                      console.log(`📏 DETECTED CONTENT BOUNDS: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (method: ${tightContentBounds.method})`);
-                    
-                    // CRITICAL FIX: For this specific logo type, use known actual content dimensions
-                    // The user reported that actual content is 211.846×64.9mm, not the bounding box size
-                    const pxToMm = 1 / 2.834645669; // 72 DPI standard
-                    const detectedWidthMm = actualContentBounds.width * pxToMm;
-                    const detectedHeightMm = actualContentBounds.height * pxToMm;
-                    
-                    console.log(`📐 DETECTED SIZE: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm`);
-                    
-                    // Only apply correction if bounds are truly unreasonable (larger than A3)
-                    const A3_WIDTH_MM = 297;
-                    const A3_HEIGHT_MM = 420;
-                    
-                    if (detectedWidthMm > A3_HEIGHT_MM * 2 || detectedHeightMm > A3_HEIGHT_MM * 2) {
-                      // This is likely a coordinate system issue
-                      console.log(`⚠️ UNREASONABLE TIGHT BOUNDS: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm (> 2×A3)`);
-                      
-                      // Apply progressive scale correction based on size
-                      let scaleFactor = 1.0;
-                      
-                      if (detectedWidthMm > 2000 || detectedHeightMm > 2000) {
-                        scaleFactor = 0.1; // Very large coordinates
-                      } else if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
-                        scaleFactor = 0.2; // Large coordinates
-                      } else {
-                        scaleFactor = 0.5; // Moderately oversized
-                      }
-                      
-                      let contentWidth = detectedWidthMm * scaleFactor;
-                      let contentHeight = detectedHeightMm * scaleFactor;
-                      
-                      console.log(`🎯 TIGHT BOUNDS CORRECTION: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (${(scaleFactor*100).toFixed(0)}% scale)`);
-                      
-                      // Update the bounds to reflect actual content size
-                      boundsResult.contentBounds = {
-                        ...actualContentBounds,
-                        width: contentWidth / pxToMm,
-                        height: contentHeight / pxToMm
-                      };
-                    } else {
-                      console.log(`✅ REASONABLE SIZE DETECTED: Using tight bounds as-is`);
-                      boundsResult.contentBounds = actualContentBounds;
-                    }
-                    } else {
-                      console.log(`⚠️ Failed to re-analyze tight content bounds, keeping original bounds`);
-                    }
+                    // DON'T RE-ANALYZE! Use the original content bounds we already have
+                    // Re-analyzing the tight content SVG gives wrong dimensions
+                    console.log(`✅ USING ORIGINAL CONTENT BOUNDS: No re-analysis needed, we already have correct dimensions`);
                   }
                 } else if (usingPdfContentBounds) {
                   // We have exact PDF content bounds, use them directly
