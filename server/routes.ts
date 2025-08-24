@@ -800,10 +800,27 @@ export async function registerRoutes(app: express.Application) {
             const visualWidth = isRotated ? element.height : element.width;
             const visualHeight = isRotated ? element.width : element.height;
             
+            // Ensure dimensions fit within the page
+            const maxWidth = pageWidth / 2.834645669;  // Max width in mm
+            const maxHeight = pageHeight / 2.834645669; // Max height in mm
+            
+            // Scale down if necessary
+            let scaledWidth = element.width;
+            let scaledHeight = element.height;
+            
+            if (scaledWidth > maxWidth || scaledHeight > maxHeight) {
+              const scaleX = maxWidth / scaledWidth;
+              const scaleY = maxHeight / scaledHeight;
+              const scale = Math.min(scaleX, scaleY);
+              scaledWidth *= scale;
+              scaledHeight *= scale;
+              console.log(`⚠️ Content too large, scaling by ${(scale * 100).toFixed(1)}%`);
+            }
+            
             const xPos = element.x * 2.834645669;
             const yPos = pageHeight - (element.y * 2.834645669) - (visualHeight * 2.834645669);
-            const widthPts = element.width * 2.834645669;
-            const heightPts = element.height * 2.834645669;
+            const widthPts = scaledWidth * 2.834645669;
+            const heightPts = scaledHeight * 2.834645669;
             
             console.log(`📐 Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
             console.log(`📐 Visual size (rotated ${rotation}°): ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}mm`);
@@ -921,11 +938,15 @@ export async function registerRoutes(app: express.Application) {
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
               // For 90° rotation: content rotates clockwise
-              // Width and height are swapped, and position needs adjustment
-              const rotatedX = xPos - (widthPts - heightPts) / 2;
-              const rotatedY = yPos + (widthPts - heightPts) / 2;
+              // pdf-lib rotates around the bottom-left corner of the content
+              // After rotation, width becomes height and vice versa visually
               
-              console.log(`📐 90° rotation adjustment: original (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) → rotated (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              // Calculate the position after rotation
+              // When rotated 90°, the content moves up by its width
+              const rotatedX = xPos;
+              const rotatedY = yPos + widthPts;
+              
+              console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -971,11 +992,11 @@ export async function registerRoutes(app: express.Application) {
               console.log(`✅ Page 2: Artwork embedded with 180° rotation`);
             } else if (rotation === 270) {
               // For 270° rotation: content rotates counter-clockwise
-              // Width and height are swapped, and position needs adjustment
-              const rotatedX = xPos - (widthPts - heightPts) / 2;
-              const rotatedY = yPos + (widthPts - heightPts) / 2;
+              // After rotation, the content needs position adjustment
+              const rotatedX = xPos + heightPts;
+              const rotatedY = yPos;
               
-              console.log(`📐 270° rotation adjustment: original (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) → rotated (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              console.log(`📐 270° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
               
               // Embed with 270° rotation on page 1
               page1.drawPage(embeddedPage, {
