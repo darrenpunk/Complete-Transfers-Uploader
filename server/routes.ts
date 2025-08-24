@@ -792,12 +792,21 @@ export async function registerRoutes(app: express.Application) {
           
           try {
             // Canvas dimensions to PDF coordinates
+            // Need to account for rotation when calculating position
+            const rotation = element.rotation || 0;
+            const isRotated = rotation === 90 || rotation === 270;
+            
+            // When rotated 90 or 270, visual dimensions are swapped
+            const visualWidth = isRotated ? element.height : element.width;
+            const visualHeight = isRotated ? element.width : element.height;
+            
             const xPos = element.x * 2.834645669;
-            const yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+            const yPos = pageHeight - (element.y * 2.834645669) - (visualHeight * 2.834645669);
             const widthPts = element.width * 2.834645669;
             const heightPts = element.height * 2.834645669;
             
             console.log(`📐 Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm → ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+            console.log(`📐 Visual size (rotated ${rotation}°): ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}mm`);
             
             let vectorBytes: Buffer;
             
@@ -906,44 +915,87 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📐 Embedding at: x=${xPos.toFixed(1)}, y=${yPos.toFixed(1)}, w=${widthPts.toFixed(1)}, h=${heightPts.toFixed(1)}`);
             
             // Handle rotation if element has rotation property
-            const rotation = element.rotation || 0;
+            // rotation already declared above
             console.log(`🔄 Element rotation: ${rotation}°`);
             
             // Embed artwork on both pages with rotation
-            if (rotation !== 0) {
-              // For rotated elements, we need to translate and rotate
-              const radians = (rotation * Math.PI) / 180;
+            if (rotation === 90) {
+              // For 90° rotation: content rotates clockwise
+              // Width and height are swapped, and position needs adjustment
+              const rotatedX = xPos - (widthPts - heightPts) / 2;
+              const rotatedY = yPos + (widthPts - heightPts) / 2;
               
-              // Calculate center point for rotation
-              const centerX = xPos + widthPts / 2;
-              const centerY = yPos + heightPts / 2;
+              console.log(`📐 90° rotation adjustment: original (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) → rotated (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
-              // For 90 or 270 degree rotation, swap width and height
-              const isRightAngle = rotation === 90 || rotation === 270;
-              const drawWidth = isRightAngle ? heightPts : widthPts;
-              const drawHeight = isRightAngle ? widthPts : heightPts;
-              const drawX = centerX - drawWidth / 2;
-              const drawY = centerY - drawHeight / 2;
-              
-              // Embed with rotation on page 1
+              // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
-                x: drawX,
-                y: drawY,
-                width: drawWidth,
-                height: drawHeight,
-                rotate: degrees(rotation)
+                x: rotatedX,
+                y: rotatedY,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(90)
               });
-              console.log(`✅ Page 1: Artwork embedded with ${rotation}° rotation`);
+              console.log(`✅ Page 1: Artwork embedded with 90° rotation`);
               
-              // Embed with rotation on page 2
+              // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
-                x: drawX,
-                y: drawY,
-                width: drawWidth,
-                height: drawHeight,
-                rotate: degrees(rotation)
+                x: rotatedX,
+                y: rotatedY,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(90)
               });
-              console.log(`✅ Page 2: Artwork embedded with ${rotation}° rotation`);
+              console.log(`✅ Page 2: Artwork embedded with 90° rotation`);
+            } else if (rotation === 180) {
+              // For 180° rotation: content is upside down
+              // No dimension swap, but position needs adjustment
+              
+              // Embed with 180° rotation on page 1
+              page1.drawPage(embeddedPage, {
+                x: xPos,
+                y: yPos,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(180)
+              });
+              console.log(`✅ Page 1: Artwork embedded with 180° rotation`);
+              
+              // Embed with 180° rotation on page 2
+              page2.drawPage(embeddedPage, {
+                x: xPos,
+                y: yPos,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(180)
+              });
+              console.log(`✅ Page 2: Artwork embedded with 180° rotation`);
+            } else if (rotation === 270) {
+              // For 270° rotation: content rotates counter-clockwise
+              // Width and height are swapped, and position needs adjustment
+              const rotatedX = xPos - (widthPts - heightPts) / 2;
+              const rotatedY = yPos + (widthPts - heightPts) / 2;
+              
+              console.log(`📐 270° rotation adjustment: original (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) → rotated (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              
+              // Embed with 270° rotation on page 1
+              page1.drawPage(embeddedPage, {
+                x: rotatedX,
+                y: rotatedY,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(270)
+              });
+              console.log(`✅ Page 1: Artwork embedded with 270° rotation`);
+              
+              // Embed with 270° rotation on page 2
+              page2.drawPage(embeddedPage, {
+                x: rotatedX,
+                y: rotatedY,
+                width: widthPts,
+                height: heightPts,
+                rotate: degrees(270)
+              });
+              console.log(`✅ Page 2: Artwork embedded with 270° rotation`);
             } else {
               // No rotation - embed normally
               page1.drawPage(embeddedPage, {
