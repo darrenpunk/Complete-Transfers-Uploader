@@ -804,27 +804,48 @@ export async function registerRoutes(app: express.Application) {
             const maxWidth = pageWidth / 2.834645669;  // Max width in mm (297 for A3)
             const maxHeight = pageHeight / 2.834645669; // Max height in mm (420 for A3)
             
-            // Check actual dimensions against page bounds considering rotation
+            // Original dimensions
             let scaledWidth = element.width;
             let scaledHeight = element.height;
             
-            // When rotated 90 or 270, we need to check if rotated dimensions fit
-            let effectiveWidth = isRotated ? scaledHeight : scaledWidth;
-            let effectiveHeight = isRotated ? scaledWidth : scaledHeight;
+            // Check if original dimensions fit within page in ANY orientation
+            const fitsNormally = scaledWidth <= maxWidth && scaledHeight <= maxHeight;
+            const fitsRotated = scaledHeight <= maxWidth && scaledWidth <= maxHeight;
             
-            // Scale if content doesn't fit when considering rotation
-            if (effectiveWidth > maxWidth || effectiveHeight > maxHeight) {
-              const scaleX = maxWidth / effectiveWidth;
-              const scaleY = maxHeight / effectiveHeight;
+            // If content is larger than page in both orientations, we must scale
+            if (!fitsNormally && !fitsRotated) {
+              // Content too large for page - must scale
+              let scale = 1;
+              if (isRotated) {
+                // When rotated, height becomes width and width becomes height visually
+                const scaleX = maxWidth / scaledHeight;
+                const scaleY = maxHeight / scaledWidth;
+                scale = Math.min(scaleX, scaleY);
+              } else {
+                const scaleX = maxWidth / scaledWidth;
+                const scaleY = maxHeight / scaledHeight;
+                scale = Math.min(scaleX, scaleY);
+              }
+              scaledWidth *= scale;
+              scaledHeight *= scale;
+              console.log(`⚠️ Content scaled by ${(scale * 100).toFixed(1)}% to fit A3 page`);
+            } else if (isRotated && !fitsRotated) {
+              // Content doesn't fit when rotated, scale it
+              const scaleX = maxWidth / scaledHeight;
+              const scaleY = maxHeight / scaledWidth;
               const scale = Math.min(scaleX, scaleY);
               scaledWidth *= scale;
               scaledHeight *= scale;
-              effectiveWidth *= scale;
-              effectiveHeight *= scale;
-              console.log(`⚠️ Content scaled by ${(scale * 100).toFixed(1)}% to fit page (rotated: ${isRotated})`);
+              console.log(`⚠️ Rotated content scaled by ${(scale * 100).toFixed(1)}% to fit page`);
             } else {
+              const effectiveWidth = isRotated ? scaledHeight : scaledWidth;
+              const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
               console.log(`✅ Content fits within page: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             }
+            
+            // Calculate effective dimensions after rotation for positioning
+            const effectiveWidth = isRotated ? scaledHeight : scaledWidth;
+            const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
             
             // Calculate position - handle centering differently for rotated content
             let xPos: number;
@@ -988,16 +1009,25 @@ export async function registerRoutes(app: express.Application) {
                 const visualHeightAfterRotation = widthPts;
                 
                 // Center the rotated content on the page
+                // We want the visual result to be centered after rotation
                 const centerX = (pageWidth - visualWidthAfterRotation) / 2;
                 const centerY = (pageHeight - visualHeightAfterRotation) / 2;
                 
-                // For 90° rotation, pdf-lib rotates around bottom-left
-                // The visual result after rotation needs to be centered
-                // So we position at centerX, and centerY + visualHeight (which is widthPts)
+                // For 90° rotation, pdf-lib rotates around bottom-left corner
+                // To get centered visual result, position at:
+                // X: centerX (this becomes the left edge after rotation)
+                // Y: centerY + visualHeightAfterRotation (account for pivot point)
                 rotatedX = centerX;
                 rotatedY = centerY + visualHeightAfterRotation;
                 
-                console.log(`📍 Centering rotated content: visual ${visualWidthAfterRotation.toFixed(1)}×${visualHeightAfterRotation.toFixed(1)}pts at (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+                // Clamp Y to ensure it doesn't exceed page bounds
+                const maxY = pageHeight - 10; // Leave small margin
+                if (rotatedY > maxY) {
+                  rotatedY = maxY;
+                  console.log(`⚠️ Clamped Y position to ${maxY.toFixed(1)} to stay on page`);
+                }
+                
+                console.log(`📍 Centering 90° rotated content: position (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               } else {
                 // Use specified position with rotation adjustment
                 rotatedX = xPos;
