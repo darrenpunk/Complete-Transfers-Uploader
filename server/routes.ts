@@ -824,22 +824,34 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 Content is ${contentWidth}×${contentHeight}pts at offset ${x1},${y1}`);
                 console.log(`📐 Canvas expects ${widthPts}×${heightPts}pts`);
                 
-                // Crop PDF to EXACT content bounds (no scaling!)
+                // Create PDF with content scaled to match canvas exactly
+                // Canvas shows content at 271.5×394.9mm (769.5×1119.5pts)
+                // We need to scale the original content to this exact size
+                const scaleX = widthPts / contentWidth;
+                const scaleY = heightPts / contentHeight;
+                
+                console.log(`📊 Scale factors: X=${scaleX}, Y=${scaleY}`);
+                
                 const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
                   `-sDEVICE=pdfwrite ` +
-                  `-dDEVICEWIDTHPOINTS=${contentWidth} ` +
-                  `-dDEVICEHEIGHTPOINTS=${contentHeight} ` +
+                  `-sOutputFile="${croppedPdf}" ` +
+                  `-dDEVICEWIDTHPOINTS=${widthPts} ` +
+                  `-dDEVICEHEIGHTPOINTS=${heightPts} ` +
                   `-dFIXEDMEDIA ` +
                   `-dColorConversionStrategy=/LeaveColorUnchanged ` +
                   `-dPreserveMarkedContent=true ` +
                   `-dPreserveSeparation=true ` +
                   `-dPreserveDeviceN=true ` +
-                  `-c "<</PageOffset [-${x1} -${y1}]>> setpagedevice" ` +
-                  `-f "${originalPdfPath}" ` +
-                  `-sOutputFile="${croppedPdf}"`;
+                  `-c "<<` +
+                    `/Install {` +
+                      `-${x1} -${y1} translate ` +
+                      `${scaleX} ${scaleY} scale` +
+                    `}` +
+                  `>> setpagedevice" ` +
+                  `-f "${originalPdfPath}"`;
                 
                 execSync(cropCmd);
-                console.log(`✅ PDF cropped to exact content: ${contentWidth}×${contentHeight}pts`);
+                console.log(`✅ Content scaled to exact canvas size: ${widthPts}×${heightPts}pts`);
                 
                 vectorBytes = fs.readFileSync(croppedPdf);
                 fs.unlinkSync(croppedPdf);
@@ -881,16 +893,18 @@ export async function registerRoutes(app: express.Application) {
             const vectorDoc = await PDFDocument.load(vectorBytes);
             const [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
             
+            // CRITICAL: For original PDFs, we embed at EXACT canvas dimensions
+            // This ensures the content appears at the same size as in the canvas
             console.log(`📐 Embedding at: x=${xPos.toFixed(1)}, y=${yPos.toFixed(1)}, w=${widthPts.toFixed(1)}, h=${heightPts.toFixed(1)}`);
             
-            // Embed artwork on both pages
+            // Embed artwork on both pages at EXACT canvas dimensions
             page1.drawPage(embeddedPage, {
               x: xPos,
               y: yPos,
               width: widthPts,
               height: heightPts
             });
-            console.log(`✅ Page 1: Artwork embedded at canvas position`);
+            console.log(`✅ Page 1: Artwork embedded at exact canvas size`);
             
             page2.drawPage(embeddedPage, {
               x: xPos,
@@ -898,7 +912,7 @@ export async function registerRoutes(app: express.Application) {
               width: widthPts,
               height: heightPts
             });
-            console.log(`✅ Page 2: Artwork embedded on garment background`);
+            console.log(`✅ Page 2: Artwork embedded at exact canvas size`);
             
             // Cleanup
             if (fs.existsSync(tempSvg)) fs.unlinkSync(tempSvg);
