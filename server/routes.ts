@@ -1970,10 +1970,10 @@ export async function registerRoutes(app: express.Application) {
                 // CRITICAL FIX: Always create tight content SVG for better canvas display
                 // This ensures content fills its bounds completely on the canvas
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
-                const needsTightCrop = !usingPdfContentBounds; // Always create tight content unless we have PDF content bounds
+                const needsTightCrop = true; // ALWAYS create tight content SVG for proper canvas display
                 
                 if (needsTightCrop) {
-                  console.log(`🔄 CREATING TIGHT CONTENT SVG: Ensuring content fills bounds completely`);
+                  console.log(`🔄 CREATING TIGHT CONTENT SVG: Ensuring content fills bounds completely (even with PDF bounds)`);
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
                   const contentBounds = boundsResult.contentBounds;
