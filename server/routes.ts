@@ -800,25 +800,44 @@ export async function registerRoutes(app: express.Application) {
             const visualWidth = isRotated ? element.height : element.width;
             const visualHeight = isRotated ? element.width : element.height;
             
-            // Ensure dimensions fit within the page
-            const maxWidth = pageWidth / 2.834645669;  // Max width in mm
-            const maxHeight = pageHeight / 2.834645669; // Max height in mm
+            // For A3 content, don't scale if it fits when considering rotation
+            const maxWidth = pageWidth / 2.834645669;  // Max width in mm (297 for A3)
+            const maxHeight = pageHeight / 2.834645669; // Max height in mm (420 for A3)
             
-            // Scale down if necessary
+            // Use original dimensions without scaling for A3 content
             let scaledWidth = element.width;
             let scaledHeight = element.height;
             
-            if (scaledWidth > maxWidth || scaledHeight > maxHeight) {
-              const scaleX = maxWidth / scaledWidth;
-              const scaleY = maxHeight / scaledHeight;
-              const scale = Math.min(scaleX, scaleY);
-              scaledWidth *= scale;
-              scaledHeight *= scale;
-              console.log(`⚠️ Content too large, scaling by ${(scale * 100).toFixed(1)}%`);
+            // Check if this is A3 content (landscape or portrait)
+            const isA3Content = (scaledWidth >= 280 && scaledWidth <= 430 && scaledHeight >= 200 && scaledHeight <= 300) ||
+                               (scaledHeight >= 280 && scaledHeight <= 430 && scaledWidth >= 200 && scaledWidth <= 300);
+            
+            if (!isA3Content) {
+              // Only scale non-A3 content if it's too large
+              if (scaledWidth > maxWidth || scaledHeight > maxHeight) {
+                const scaleX = maxWidth / scaledWidth;
+                const scaleY = maxHeight / scaledHeight;
+                const scale = Math.min(scaleX, scaleY);
+                scaledWidth *= scale;
+                scaledHeight *= scale;
+                console.log(`⚠️ Content too large, scaling by ${(scale * 100).toFixed(1)}%`);
+              }
+            } else {
+              console.log(`📐 A3 content detected (${scaledWidth.toFixed(1)}×${scaledHeight.toFixed(1)}mm), no scaling applied`);
             }
             
-            const xPos = element.x * 2.834645669;
-            const yPos = pageHeight - (element.y * 2.834645669) - (visualHeight * 2.834645669);
+            // Fix negative positions - ensure content stays on page
+            const xPosRaw = element.x * 2.834645669;
+            const yPosRaw = pageHeight - (element.y * 2.834645669) - (visualHeight * 2.834645669);
+            
+            // Clamp positions to ensure content stays on page
+            const xPos = Math.max(0, xPosRaw);
+            const yPos = Math.max(0, yPosRaw);
+            
+            if (xPosRaw < 0 || yPosRaw < 0) {
+              console.log(`⚠️ Position adjusted: (${xPosRaw.toFixed(1)}, ${yPosRaw.toFixed(1)}) → (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+            }
+            
             const widthPts = scaledWidth * 2.834645669;
             const heightPts = scaledHeight * 2.834645669;
             
@@ -946,12 +965,16 @@ export async function registerRoutes(app: express.Application) {
               const rotatedX = xPos;
               const rotatedY = yPos + widthPts;
               
-              console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
+              // Ensure rotated content stays within page bounds
+              const maxRotatedY = pageHeight;
+              const finalRotatedY = Math.min(rotatedY, maxRotatedY);
+              
+              console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${finalRotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
                 x: rotatedX,
-                y: rotatedY,
+                y: finalRotatedY,
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(90)
@@ -961,7 +984,7 @@ export async function registerRoutes(app: express.Application) {
               // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
                 x: rotatedX,
-                y: rotatedY,
+                y: finalRotatedY,
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(90)
