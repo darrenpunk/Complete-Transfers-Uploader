@@ -1881,7 +1881,7 @@ export async function registerRoutes(app: express.Application) {
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
                 // Try to extract bounds from the original PDF for accuracy
-                console.log('📐 Attempting to extract bounds from original PDF for accuracy');
+                console.log('📐 Attempting to extract CONTENT bounds from original PDF (not page bounds)');
                 const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
                 const pdfExtractor = new PDFBoundsExtractor();
                 const pdfBoundsResult = await pdfExtractor.extractContentBounds(
@@ -1891,8 +1891,10 @@ export async function registerRoutes(app: express.Application) {
                 );
                 
                 if (pdfBoundsResult.success && pdfBoundsResult.bbox) {
-                  console.log(`✅ PDF BOUNDS EXTRACTED: ${pdfBoundsResult.bbox.width.toFixed(1)}×${pdfBoundsResult.bbox.height.toFixed(1)}pts`);
-                  // Convert PDF bounds to SVG analyzer format
+                  console.log(`✅ PDF CONTENT BOUNDS EXTRACTED: ${pdfBoundsResult.bbox.width.toFixed(1)}×${pdfBoundsResult.bbox.height.toFixed(1)}pts`);
+                  console.log(`📄 Content bounds: (${pdfBoundsResult.bbox.xMin.toFixed(1)}, ${pdfBoundsResult.bbox.yMin.toFixed(1)}) to (${pdfBoundsResult.bbox.xMax.toFixed(1)}, ${pdfBoundsResult.bbox.yMax.toFixed(1)})`);
+                  
+                  // These are CONTENT bounds, not page bounds - use them directly
                   boundsResult = {
                     success: true,
                     contentBounds: {
@@ -1903,15 +1905,17 @@ export async function registerRoutes(app: express.Application) {
                       width: pdfBoundsResult.bbox.width,
                       height: pdfBoundsResult.bbox.height
                     },
-                    method: 'pdf-original'
+                    method: 'pdf-content-bounds'
                   };
                 }
               }
               
+              // Import SVG analyzer for later use
+              const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+              const svgAnalyzer = new SVGBoundsAnalyzer();
+              
               // If PDF bounds extraction failed, use SVG bounds analyzer
               if (!boundsResult) {
-                const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-                const svgAnalyzer = new SVGBoundsAnalyzer();
                 boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
               }
               
@@ -1963,58 +1967,62 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ REASONABLE BOUNDS: Using detected bounds as-is`);
                 }
                 
-                // CRITICAL FIX: Re-analyze the actual content bounds from the created tight content SVG
-                // This ensures we get the actual vector content size, not the viewBox size
-                console.log(`🔄 CREATING TIGHT CONTENT SVG: Extracting content from viewBox and placing in tight bounds`);
+                // CRITICAL FIX: Only create tight content SVG if we're using SVG bounds (not PDF content bounds)
+                // If we have PDF content bounds, we already have the exact content size
+                const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
+                const needsTightCrop = !usingPdfContentBounds && (detectedWidthMm > A3_HEIGHT_MM || detectedHeightMm > A3_HEIGHT_MM);
                 
-                const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const contentBounds = boundsResult.contentBounds;
-                
-                // Extract all content elements (paths, circles, rects, etc.)
-                const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
-                console.log(`🔍 DEBUG: Content extraction - contentMatch found: ${!!contentMatch}`);
-                if (contentMatch) {
-                  const innerContent = contentMatch[1];
+                if (needsTightCrop) {
+                  console.log(`🔄 CREATING TIGHT CONTENT SVG: SVG bounds are oversized, cropping to actual bounds`);
                   
-                  // Create new SVG with tight bounds around content only
-                  // Use viewBox to crop content and simple translate transform for better compatibility
-                  const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                    viewBox="${contentBounds.xMin} ${contentBounds.yMin} ${contentBounds.width} ${contentBounds.height}" 
-                    width="${contentBounds.width}" 
-                    height="${contentBounds.height}"
-                    data-content-extracted="true"
-                    data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                      ${innerContent}
-                  </svg>`;
+                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  const contentBounds = boundsResult.contentBounds;
                   
-                  // Save the tight-content SVG
-                  const tightSvgPath = svgPath.replace('.svg', '_tight-content.svg');
-                  fs.writeFileSync(tightSvgPath, tightSvg);
-                  console.log(`💾 SAVED TIGHT CONTENT SVG: ${tightSvgPath}`);
+                  // Extract all content elements (paths, circles, rects, etc.)
+                  const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
+                  console.log(`🔍 DEBUG: Content extraction - contentMatch found: ${!!contentMatch}`);
+                  if (contentMatch) {
+                    const innerContent = contentMatch[1];
+                    
+                    // Create new SVG with tight bounds around content only
+                    // Use viewBox to crop content and simple translate transform for better compatibility
+                    const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="${contentBounds.xMin} ${contentBounds.yMin} ${contentBounds.width} ${contentBounds.height}" 
+                      width="${contentBounds.width}" 
+                      height="${contentBounds.height}"
+                      data-content-extracted="true"
+                      data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                        ${innerContent}
+                    </svg>`;
+                    
+                    // Save the tight-content SVG
+                    const tightSvgPath = svgPath.replace('.svg', '_tight-content.svg');
+                    fs.writeFileSync(tightSvgPath, tightSvg);
+                    console.log(`💾 SAVED TIGHT CONTENT SVG: ${tightSvgPath}`);
+                    
+                    // Fix SVG namespace issues immediately after creation
+                    fixSVGNamespaces(tightSvgPath);
+                    
+                    // Update the file to use the tight content version
+                    finalFilename = path.basename(tightSvgPath);
+                    finalUrl = `/uploads/${finalFilename}`;
+                    
+                    console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
+                    
+                    // CRITICAL FIX: Re-analyze the tight content SVG to get actual content bounds
+                    // not viewBox bounds. This measures the actual vector content size.
+                    console.log(`🔍 RE-ANALYZING TIGHT CONTENT SVG for actual vector content bounds...`);
+                    const tightContentBounds = await svgAnalyzer.extractSVGBounds(tightSvgPath);
                   
-                  // Fix SVG namespace issues immediately after creation
-                  fixSVGNamespaces(tightSvgPath);
-                  
-                  // Update the file to use the tight content version
-                  finalFilename = path.basename(tightSvgPath);
-                  finalUrl = `/uploads/${finalFilename}`;
-                  
-                  console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
-                  
-                  // CRITICAL FIX: Re-analyze the tight content SVG to get actual content bounds
-                  // not viewBox bounds. This measures the actual vector content size.
-                  console.log(`🔍 RE-ANALYZING TIGHT CONTENT SVG for actual vector content bounds...`);
-                  const tightContentBounds = await svgAnalyzer.extractSVGBounds(tightSvgPath);
-                  
-                  console.log(`🔍 DEBUG: tightContentBounds.success=${tightContentBounds.success}, hasContentBounds=${!!tightContentBounds.contentBounds}`);
-                  if (tightContentBounds.error) {
-                    console.log(`🔍 DEBUG: tightContentBounds.error=${tightContentBounds.error}`);
-                  }
-                  
-                  if (tightContentBounds.success && tightContentBounds.contentBounds) {
-                    // Use the actual content bounds from the tight SVG (actual vector content)
-                    const actualContentBounds = tightContentBounds.contentBounds;
-                    console.log(`📏 DETECTED CONTENT BOUNDS: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (method: ${tightContentBounds.method})`);
+                    console.log(`🔍 DEBUG: tightContentBounds.success=${tightContentBounds.success}, hasContentBounds=${!!tightContentBounds.contentBounds}`);
+                    if (tightContentBounds.error) {
+                      console.log(`🔍 DEBUG: tightContentBounds.error=${tightContentBounds.error}`);
+                    }
+                    
+                    if (tightContentBounds.success && tightContentBounds.contentBounds) {
+                      // Use the actual content bounds from the tight SVG (actual vector content)
+                      const actualContentBounds = tightContentBounds.contentBounds;
+                      console.log(`📏 DETECTED CONTENT BOUNDS: ${actualContentBounds.width.toFixed(1)}×${actualContentBounds.height.toFixed(1)}px (method: ${tightContentBounds.method})`);
                     
                     // CRITICAL FIX: For this specific logo type, use known actual content dimensions
                     // The user reported that actual content is 211.846×64.9mm, not the bounding box size
@@ -2058,9 +2066,16 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`✅ REASONABLE SIZE DETECTED: Using tight bounds as-is`);
                       boundsResult.contentBounds = actualContentBounds;
                     }
-                  } else {
-                    console.log(`⚠️ Failed to re-analyze tight content bounds, keeping original bounds`);
+                    } else {
+                      console.log(`⚠️ Failed to re-analyze tight content bounds, keeping original bounds`);
+                    }
                   }
+                } else if (usingPdfContentBounds) {
+                  // We have exact PDF content bounds, use them directly
+                  console.log(`✅ USING PDF CONTENT BOUNDS: Exact content size from original PDF`);
+                } else {
+                  // Content is already reasonable size, use as-is
+                  console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
                 // Convert the final corrected content bounds to millimeters 
