@@ -2233,26 +2233,28 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Create new SVG with tight bounds around content only
-                    // Add generous padding to account for stroke widths and text that may extend beyond geometric bounds
-                    // Text glyphs can extend significantly beyond their coordinate points
-                    const leftPadding = 15;
-                    const rightPadding = 150; // Extremely generous padding on right for text overflow (some fonts can extend 60-80px beyond coordinates)
-                    const topPadding = 15;
-                    const bottomPadding = 15;
-                    const paddedWidth = contentBounds.width + leftPadding + rightPadding;
-                    const paddedHeight = contentBounds.height + topPadding + bottomPadding;
+                    // Account for text glyph overflow beyond path coordinates
+                    // Text can extend significantly beyond the geometric bounds
+                    const textOverflowLeft = 5;   // Small amount on left
+                    const textOverflowRight = 50; // Large amount on right for trailing characters
+                    const textOverflowTop = 5;    // Small amount on top
+                    const textOverflowBottom = 5; // Small amount on bottom
                     
-                    // viewBox starts at 0,0 with padded dimensions
-                    // content is translated to position it with appropriate padding on all sides
+                    // Calculate true content bounds including text overflow
+                    const trueContentWidth = contentBounds.width + textOverflowLeft + textOverflowRight;
+                    const trueContentHeight = contentBounds.height + textOverflowTop + textOverflowBottom;
+                    
+                    // Create SVG with exact content bounds (including text overflow)
+                    // Content is centered within these bounds
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${paddedWidth} ${paddedHeight}" 
-                      width="${paddedWidth}" 
-                      height="${paddedHeight}"
+                      viewBox="0 0 ${trueContentWidth} ${trueContentHeight}" 
+                      width="${trueContentWidth}" 
+                      height="${trueContentHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
+                      data-text-overflow="left:${textOverflowLeft},right:${textOverflowRight},top:${textOverflowTop},bottom:${textOverflowBottom}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin + leftPadding}, ${-contentBounds.yMin + topPadding})">
+                        <g transform="translate(${-contentBounds.xMin + textOverflowLeft}, ${-contentBounds.yMin + textOverflowTop})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2284,13 +2286,13 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 // Convert the final corrected content bounds to millimeters 
-                // Add padding if we created a tight content SVG
-                const horizontalPadding = needsTightCrop ? 165 : 0; // Total horizontal padding (15px left + 150px right)
-                const verticalPadding = needsTightCrop ? 30 : 0; // Total vertical padding (15px top + 15px bottom)
-                let contentWidth = (boundsResult.contentBounds.width + horizontalPadding) * pxToMm;
-                let contentHeight = (boundsResult.contentBounds.height + verticalPadding) * pxToMm;
+                // Add text overflow to bounds if we created a tight content SVG
+                const horizontalOverflow = needsTightCrop ? 55 : 0; // Total horizontal overflow (5px left + 50px right)
+                const verticalOverflow = needsTightCrop ? 10 : 0; // Total vertical overflow (5px top + 5px bottom)
+                let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
+                let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (with ${horizontalPadding}px horizontal, ${verticalPadding}px vertical padding)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (including ${horizontalOverflow}px horizontal, ${verticalOverflow}px vertical text overflow)`);
                 
                 // Use CONTENT BOUNDS for canvas display
                 // This shows the actual artwork size with padding to prevent clipping
