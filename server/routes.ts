@@ -2075,20 +2075,6 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // CRITICAL: Store ORIGINAL document dimensions BEFORE any bounds processing
-            // These are the dimensions we want to preserve for canvas display
-            let originalDocumentWidthMm = displayWidth; // Use current display dimensions as original
-            let originalDocumentHeightMm = displayHeight;
-            
-            // Get original SVG dimensions for canvas display preservation
-            const { detectDimensionsFromSVG } = await import('./dimension-utils');
-            const initialDimensionResult = await detectDimensionsFromSVG(svgContent, null, svgPath);
-            if (initialDimensionResult) {
-              originalDocumentWidthMm = initialDimensionResult.widthMm;
-              originalDocumentHeightMm = initialDimensionResult.heightMm;
-              console.log(`📐 PRESERVED ORIGINAL DOCUMENT DIMENSIONS: ${originalDocumentWidthMm.toFixed(1)}×${originalDocumentHeightMm.toFixed(1)}mm (before any bounds processing)`);
-            }
-            
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
@@ -2318,15 +2304,16 @@ export async function registerRoutes(app: express.Application) {
                 
                 console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (after content ratio correction)`);
                 
-                // FIX: Use ORIGINAL DOCUMENT dimensions for canvas display, NOT tight content bounds
-                // This prevents the canvas from scaling down the content
-                displayWidth = originalDocumentWidthMm;
-                displayHeight = originalDocumentHeightMm;
-                console.log(`🎯 CANVAS DISPLAY: Using original document dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (preserving exact size)`);
+                // FIX: Use ACTUAL CONTENT dimensions for canvas display
+                // This ensures content is displayed at its TRUE size without scaling
+                displayWidth = contentWidth;
+                displayHeight = contentHeight;
+                console.log(`🎯 CANVAS DISPLAY: Using actual content dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (exact content size)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
                 // Fallback to the original robust dimension system
+                const { detectDimensionsFromSVG } = await import('./dimension-utils');
                 const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
                 const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
                 displayWidth = dimensionResult.widthMm;
