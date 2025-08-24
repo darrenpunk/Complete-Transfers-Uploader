@@ -2235,12 +2235,16 @@ export async function registerRoutes(app: express.Application) {
                     
                     // Create new SVG with tight bounds around content only
                     // Add generous padding to account for stroke widths and text that may extend beyond geometric bounds
-                    const padding = 15; // 15px padding to prevent any clipping (text can extend beyond path bounds)
-                    const paddedWidth = contentBounds.width + (padding * 2);
-                    const paddedHeight = contentBounds.height + (padding * 2);
+                    // Text glyphs can extend significantly beyond their coordinate points
+                    const leftPadding = 15;
+                    const rightPadding = 30; // Extra padding on right for text overflow
+                    const topPadding = 15;
+                    const bottomPadding = 15;
+                    const paddedWidth = contentBounds.width + leftPadding + rightPadding;
+                    const paddedHeight = contentBounds.height + topPadding + bottomPadding;
                     
                     // viewBox starts at 0,0 with padded dimensions
-                    // content is translated to position it with padding on all sides
+                    // content is translated to position it with appropriate padding on all sides
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${paddedWidth} ${paddedHeight}" 
                       width="${paddedWidth}" 
@@ -2248,7 +2252,7 @@ export async function registerRoutes(app: express.Application) {
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin + padding}, ${-contentBounds.yMin + padding})">
+                        <g transform="translate(${-contentBounds.xMin + leftPadding}, ${-contentBounds.yMin + topPadding})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2281,11 +2285,12 @@ export async function registerRoutes(app: express.Application) {
                 
                 // Convert the final corrected content bounds to millimeters 
                 // Add padding if we created a tight content SVG
-                const padding = needsTightCrop ? 15 : 0; // Match the padding used in tight content SVG (increased to 15px)
-                let contentWidth = (boundsResult.contentBounds.width + (padding * 2)) * pxToMm;
-                let contentHeight = (boundsResult.contentBounds.height + (padding * 2)) * pxToMm;
+                const horizontalPadding = needsTightCrop ? 45 : 0; // Total horizontal padding (15px left + 30px right)
+                const verticalPadding = needsTightCrop ? 30 : 0; // Total vertical padding (15px top + 15px bottom)
+                let contentWidth = (boundsResult.contentBounds.width + horizontalPadding) * pxToMm;
+                let contentHeight = (boundsResult.contentBounds.height + verticalPadding) * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (including ${padding}px padding)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (with ${horizontalPadding}px horizontal, ${verticalPadding}px vertical padding)`);
                 
                 // Use CONTENT BOUNDS for canvas display
                 // This shows the actual artwork size with padding to prevent clipping
