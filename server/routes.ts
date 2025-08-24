@@ -825,12 +825,19 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 Canvas expects ${widthPts}×${heightPts}pts`);
                 
                 // Create PDF with content scaled to match canvas exactly
-                // Canvas shows content at 271.5×394.9mm (769.5×1119.5pts)
-                // We need to scale the original content to this exact size
+                // We need to scale AND center the content properly
                 const scaleX = widthPts / contentWidth;
                 const scaleY = heightPts / contentHeight;
                 
+                // When scaling down, we need to center the content
+                // Calculate centering offset after scaling
+                const scaledWidth = contentWidth * scaleX;
+                const scaledHeight = contentHeight * scaleY;
+                const centerOffsetX = (widthPts - scaledWidth) / 2;
+                const centerOffsetY = (heightPts - scaledHeight) / 2;
+                
                 console.log(`📊 Scale factors: X=${scaleX}, Y=${scaleY}`);
+                console.log(`📊 Centering offsets: X=${centerOffsetX}, Y=${centerOffsetY}`);
                 
                 const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
                   `-sDEVICE=pdfwrite ` +
@@ -844,8 +851,9 @@ export async function registerRoutes(app: express.Application) {
                   `-dPreserveDeviceN=true ` +
                   `-c "<<` +
                     `/Install {` +
-                      `-${x1} -${y1} translate ` +
-                      `${scaleX} ${scaleY} scale` +
+                      `${centerOffsetX} ${centerOffsetY} translate ` +
+                      `${scaleX} ${scaleY} scale ` +
+                      `-${x1} -${y1} translate` +
                     `}` +
                   `>> setpagedevice" ` +
                   `-f "${originalPdfPath}"`;
