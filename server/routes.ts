@@ -2234,15 +2234,15 @@ export async function registerRoutes(app: express.Application) {
                     const innerContent = contentMatch[1];
                     
                     // Create new SVG with tight bounds around content only
-                    // Add padding to account for stroke widths that may extend beyond geometric bounds
-                    const padding = 5; // 5px padding to prevent clipping
+                    // Add generous padding to account for stroke widths and text that may extend beyond geometric bounds
+                    const padding = 15; // 15px padding to prevent any clipping (text can extend beyond path bounds)
                     const paddedWidth = contentBounds.width + (padding * 2);
                     const paddedHeight = contentBounds.height + (padding * 2);
                     
-                    // viewBox starts with negative padding to include stroke overflow
-                    // content is translated to center with padding
+                    // viewBox starts at 0,0 with padded dimensions
+                    // content is translated to position it with padding on all sides
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${-padding} ${-padding} ${paddedWidth} ${paddedHeight}" 
+                      viewBox="0 0 ${paddedWidth} ${paddedHeight}" 
                       width="${paddedWidth}" 
                       height="${paddedHeight}"
                       preserveAspectRatio="xMidYMid meet"
@@ -2281,7 +2281,7 @@ export async function registerRoutes(app: express.Application) {
                 
                 // Convert the final corrected content bounds to millimeters 
                 // Add padding if we created a tight content SVG
-                const padding = needsTightCrop ? 5 : 0; // Match the padding used in tight content SVG
+                const padding = needsTightCrop ? 15 : 0; // Match the padding used in tight content SVG (increased to 15px)
                 let contentWidth = (boundsResult.contentBounds.width + (padding * 2)) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + (padding * 2)) * pxToMm;
                 
