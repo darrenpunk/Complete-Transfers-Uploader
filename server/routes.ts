@@ -715,7 +715,7 @@ export async function registerRoutes(app: express.Application) {
       console.log('📄 FORCING SVG CONVERSION: Skipping direct PDF embedding for Adobe color processing');
       
       try {
-        const { PDFDocument, rgb } = await import('pdf-lib');
+        const { PDFDocument, rgb, degrees } = await import('pdf-lib');
         const fs = await import('fs');
         
         // Create A3 PDF
@@ -905,26 +905,65 @@ export async function registerRoutes(app: express.Application) {
             // This ensures the content appears at the same size as in the canvas
             console.log(`📐 Embedding at: x=${xPos.toFixed(1)}, y=${yPos.toFixed(1)}, w=${widthPts.toFixed(1)}, h=${heightPts.toFixed(1)}`);
             
-            // Embed artwork on both pages at EXACT canvas dimensions
-            page1.drawPage(embeddedPage, {
-              x: xPos,
-              y: yPos,
-              width: widthPts,
-              height: heightPts
-            });
-            console.log(`✅ Page 1: Artwork embedded at exact canvas size`);
+            // Handle rotation if element has rotation property
+            const rotation = element.rotation || 0;
+            console.log(`🔄 Element rotation: ${rotation}°`);
             
-            page2.drawPage(embeddedPage, {
-              x: xPos,
-              y: yPos,
-              width: widthPts,
-              height: heightPts
-            });
-            console.log(`✅ Page 2: Artwork embedded at exact canvas size`);
+            // Embed artwork on both pages with rotation
+            if (rotation !== 0) {
+              // For rotated elements, we need to translate and rotate
+              const radians = (rotation * Math.PI) / 180;
+              
+              // Calculate center point for rotation
+              const centerX = xPos + widthPts / 2;
+              const centerY = yPos + heightPts / 2;
+              
+              // For 90 or 270 degree rotation, swap width and height
+              const isRightAngle = rotation === 90 || rotation === 270;
+              const drawWidth = isRightAngle ? heightPts : widthPts;
+              const drawHeight = isRightAngle ? widthPts : heightPts;
+              const drawX = centerX - drawWidth / 2;
+              const drawY = centerY - drawHeight / 2;
+              
+              // Embed with rotation on page 1
+              page1.drawPage(embeddedPage, {
+                x: drawX,
+                y: drawY,
+                width: drawWidth,
+                height: drawHeight,
+                rotate: degrees(rotation)
+              });
+              console.log(`✅ Page 1: Artwork embedded with ${rotation}° rotation`);
+              
+              // Embed with rotation on page 2
+              page2.drawPage(embeddedPage, {
+                x: drawX,
+                y: drawY,
+                width: drawWidth,
+                height: drawHeight,
+                rotate: degrees(rotation)
+              });
+              console.log(`✅ Page 2: Artwork embedded with ${rotation}° rotation`);
+            } else {
+              // No rotation - embed normally
+              page1.drawPage(embeddedPage, {
+                x: xPos,
+                y: yPos,
+                width: widthPts,
+                height: heightPts
+              });
+              console.log(`✅ Page 1: Artwork embedded at exact canvas size`);
+              
+              page2.drawPage(embeddedPage, {
+                x: xPos,
+                y: yPos,
+                width: widthPts,
+                height: heightPts
+              });
+              console.log(`✅ Page 2: Artwork embedded at exact canvas size`);
+            }
             
-            // Cleanup
-            if (fs.existsSync(tempSvg)) fs.unlinkSync(tempSvg);
-            if (fs.existsSync(tempPdf)) fs.unlinkSync(tempPdf);
+            // Cleanup handled inside each branch
             
           } catch (error) {
             console.log(`❌ Element processing failed: ${error}`);
@@ -1967,13 +2006,29 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ REASONABLE BOUNDS: Using detected bounds as-is`);
                 }
                 
-                // CRITICAL FIX: Always create tight content SVG for better canvas display
-                // This ensures content fills its bounds completely on the canvas
+                // CRITICAL FIX: Only create tight content SVG for oversized or incorrectly bounded content
+                // For A3 and properly sized artwork, keep original to avoid clipping
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
-                const needsTightCrop = true; // ALWAYS create tight content SVG for proper canvas display
+                // A3_WIDTH_MM, A3_HEIGHT_MM, and pxToMm are already declared above
+                const contentWidthMm = boundsResult.contentBounds.width * pxToMm;
+                const contentHeightMm = boundsResult.contentBounds.height * pxToMm;
+                
+                // Check if content is A3 or larger (landscape or portrait)
+                const isA3OrLarger = (contentWidthMm >= A3_WIDTH_MM - 10 && contentHeightMm >= A3_HEIGHT_MM - 10) ||
+                                     (contentWidthMm >= A3_HEIGHT_MM - 10 && contentHeightMm >= A3_WIDTH_MM - 10);
+                
+                // Don't create tight crop for A3 or properly sized content
+                const needsTightCrop = !usingPdfContentBounds && !isA3OrLarger && 
+                                      (contentWidthMm > A3_HEIGHT_MM * 1.5 || contentHeightMm > A3_HEIGHT_MM * 1.5);
+                
+                if (isA3OrLarger) {
+                  console.log(`📐 A3 OR LARGER CONTENT DETECTED: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm - Keeping original SVG to avoid clipping`);
+                } else if (!needsTightCrop) {
+                  console.log(`✅ CONTENT SIZE APPROPRIATE: No tight crop needed`);
+                }
                 
                 if (needsTightCrop) {
-                  console.log(`🔄 CREATING TIGHT CONTENT SVG: Ensuring content fills bounds completely (even with PDF bounds)`);
+                  console.log(`🔄 CREATING TIGHT CONTENT SVG: Content is oversized, cropping to actual bounds`);
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
                   const contentBounds = boundsResult.contentBounds;
