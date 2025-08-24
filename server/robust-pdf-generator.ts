@@ -220,9 +220,9 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     const xPts = element.x * MM_TO_POINTS;
     const yPts = element.y * MM_TO_POINTS;
     
-    // User's exact content dimensions
-    const contentWidthMM = 293.91;
-    const contentHeightMM = 162.468;
+    // Use actual element dimensions from canvas (not hardcoded values)
+    const contentWidthMM = element.width;  // Use actual element width
+    const contentHeightMM = element.height; // Use actual element height
     const contentWidthPts = contentWidthMM * MM_TO_POINTS;
     const contentHeightPts = contentHeightMM * MM_TO_POINTS;
     
@@ -451,25 +451,25 @@ grestore`;
     console.log(`🔍 DEBUG: Element position: (${element.x}, ${element.y}) size: ${element.width}x${element.height}`);
     console.log(`🔍 DEBUG: Original filename: ${logo.originalFilename}, original mime: ${logo.originalMimeType}`);
     
-    // CRITICAL: Use USER'S EXACT SPECIFICATIONS as target dimensions
+    // Use ACTUAL element dimensions from canvas (no overrides)
     const MM_TO_POINTS = 2.834645669;
     
-    // Override with user's exact target specifications: 270.28×201.96mm
-    const USER_TARGET_WIDTH_MM = 270.28;
-    const USER_TARGET_HEIGHT_MM = 201.96;
+    // Use the element's actual dimensions as exported from canvas
+    const elementWidthMM = element.width;
+    const elementHeightMM = element.height;
     let finalDimensions = { 
-      widthPts: USER_TARGET_WIDTH_MM * MM_TO_POINTS, 
-      heightPts: USER_TARGET_HEIGHT_MM * MM_TO_POINTS 
+      widthPts: elementWidthMM * MM_TO_POINTS, 
+      heightPts: elementHeightMM * MM_TO_POINTS 
     };
     
-    console.log(`🎯 USER TARGET OVERRIDE: Using EXACT user specifications as PDF target: ${USER_TARGET_WIDTH_MM}×${USER_TARGET_HEIGHT_MM}mm`);
-    console.log(`📐 USER TARGET OVERRIDE: Converting to points: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
-    console.log(`✅ SCALE REQUIREMENT: Content will be scaled to match user specifications EXACTLY in PDF output`);
+    console.log(`🎯 USING ELEMENT DIMENSIONS: ${elementWidthMM.toFixed(2)}×${elementHeightMM.toFixed(2)}mm from canvas`);
+    console.log(`📐 Converting to points: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
+    console.log(`✅ NO SCALING: Content will be embedded at exact original size`);
     
-    // Store target dimensions (user's exact specifications)
+    // Store target dimensions (element's actual dimensions)
     const targetDimensions = {
-      widthMm: USER_TARGET_WIDTH_MM,
-      heightMm: USER_TARGET_HEIGHT_MM,  
+      widthMm: elementWidthMM,
+      heightMm: elementHeightMM,  
       widthPts: finalDimensions.widthPts,
       heightPts: finalDimensions.heightPts,
       isCanvasTarget: true
@@ -603,15 +603,15 @@ grestore`;
         }
       }
       
-      // CANVAS TARGET: Use the canvas element dimensions (user's intended size)
-      let contentWidthMM = finalDimensions.widthPts / MM_TO_POINTS;
-      let contentHeightMM = finalDimensions.heightPts / MM_TO_POINTS;
+      // Use the actual element dimensions (no scaling or overrides)
+      let contentWidthMM = element.width;
+      let contentHeightMM = element.height;
       
-      console.log(`🔍 CANVAS TARGET: Using canvas element dimensions for PDF: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts)`);
-      console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts from tight content SVG`);
+      console.log(`🔍 ELEMENT DIMENSIONS: Using actual element size for PDF: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
+      console.log(`✅ NO SCALING: Content embedded at exact original size`);
       
-      // NO canvas element update needed - we're using canvas dimensions as target
-      console.log(`🎯 CANVAS SCALE: Content will be embedded at exact canvas dimensions: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+      // Verify dimensions match
+      console.log(`🎯 EXACT SIZE: Element=${element.width.toFixed(2)}×${element.height.toFixed(2)}mm, Content=${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
       
       
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
@@ -649,12 +649,10 @@ grestore`;
       // CRITICAL FIX: Force exact dimensions and centering for PDF embedding
       const { degrees } = await import('pdf-lib');
       
-      // FORCE CENTERING: Always center content regardless of element position
-      const templateWidth = 841.89; // A3 width in pts
-      const centerX = (templateWidth - contentWidthPts) / 2;
-      const finalX = centerX; // Always use calculated center for user target override
+      // Use actual element position (no forced centering)
+      const finalX = xPts; // Use the element's actual X position
       
-      console.log(`🎯 CENTERING FIX: Template width=${templateWidth}pts, content width=${contentWidthPts.toFixed(1)}pts, centered X=${centerX.toFixed(1)}pts, final X=${finalX.toFixed(1)}pts`);
+      console.log(`📍 ELEMENT POSITION: Using actual position X=${finalX.toFixed(1)}pts (from element.x=${element.x}mm)`);
       
       // CRITICAL: Check if original PDF exists and use it directly to avoid all conversion issues
       if (logo.originalFilename && logo.originalFilename.endsWith('.pdf')) {
@@ -666,18 +664,18 @@ grestore`;
           console.log(`✅ ORIGINAL PDF SET: Will use direct embedding with exact positioning and sizing`);
         }
       }
-      console.log(`✅ EXACT BOUNDS APPLIED: Canvas-PDF Matcher extracted content=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from tight content SVG`);
+      console.log(`✅ EXACT ELEMENT SIZE: Using ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from element dimensions`);
       
-      // SIMPLIFIED POSITIONING: Use exact target dimensions and proper centering
+      // Use element dimensions and position exactly as specified
       const drawOptions = {
         x: finalX,
         y: yPts,
-        width: USER_TARGET_WIDTH_MM * MM_TO_POINTS,  // Always use exact target width
-        height: USER_TARGET_HEIGHT_MM * MM_TO_POINTS, // Always use exact target height
+        width: contentWidthPts,  // Use actual element width
+        height: contentHeightPts, // Use actual element height
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       };
       
-      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${USER_TARGET_WIDTH_MM * MM_TO_POINTS}×${USER_TARGET_HEIGHT_MM * MM_TO_POINTS}pts (EXACT TARGET)`);
+      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
       page1.drawPage(logoPage, drawOptions);
       page2.drawPage(logoPage, drawOptions);
@@ -724,17 +722,9 @@ grestore`;
       if (svgContent.includes('data-content-extracted="true"')) {
         console.log(`🔧 Fixing viewBox offset for tight content SVG before PDF conversion`);
         
-        // Check if target dimensions are available from canvas element
-        const targetDimensions = (this as any)._currentTargetDimensions;
-        let fixedSvgContent: string;
-        
-        if (targetDimensions) {
-          console.log(`🎯 SCALE TO CANVAS: Scaling SVG to exact canvas dimensions: ${targetDimensions.widthMm.toFixed(2)}×${targetDimensions.heightMm.toFixed(2)}mm`);
-          fixedSvgContent = this.fixSVGViewBoxOffsetWithScaling(svgContent, targetDimensions);
-        } else {
-          console.log(`⚠️ No target dimensions available, using standard viewBox fix`);
-          fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
-        }
+        // NO SCALING - just fix the viewBox offset without any scaling
+        console.log(`✅ NO SCALING: Using viewBox offset fix only - preserving original dimensions`);
+        let fixedSvgContent = this.fixSVGViewBoxOffset(svgContent);
         
         if (fixedSvgContent !== svgContent) {
           // Create temporary fixed SVG file
