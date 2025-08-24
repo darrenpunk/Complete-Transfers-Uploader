@@ -2212,14 +2212,21 @@ export async function registerRoutes(app: express.Application) {
                     const innerContent = contentMatch[1];
                     
                     // Create new SVG with tight bounds around content only
-                    // CRITICAL: viewBox must start at 0,0 and content must be translated
+                    // Add padding to account for stroke widths that may extend beyond geometric bounds
+                    const padding = 5; // 5px padding to prevent clipping
+                    const paddedWidth = contentBounds.width + (padding * 2);
+                    const paddedHeight = contentBounds.height + (padding * 2);
+                    
+                    // viewBox starts with negative padding to include stroke overflow
+                    // content is translated to center with padding
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
-                      width="${contentBounds.width}" 
-                      height="${contentBounds.height}"
+                      viewBox="${-padding} ${-padding} ${paddedWidth} ${paddedHeight}" 
+                      width="${paddedWidth}" 
+                      height="${paddedHeight}"
+                      preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
+                        <g transform="translate(${-contentBounds.xMin + padding}, ${-contentBounds.yMin + padding})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2251,16 +2258,18 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 // Convert the final corrected content bounds to millimeters 
-                let contentWidth = boundsResult.contentBounds.width * pxToMm;
-                let contentHeight = boundsResult.contentBounds.height * pxToMm;
+                // Add padding if we created a tight content SVG
+                const padding = needsTightCrop ? 5 : 0; // Match the padding used in tight content SVG
+                let contentWidth = (boundsResult.contentBounds.width + (padding * 2)) * pxToMm;
+                let contentHeight = (boundsResult.contentBounds.height + (padding * 2)) * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (after content ratio correction)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (including ${padding}px padding)`);
                 
                 // Use CONTENT BOUNDS for canvas display
-                // This shows the actual artwork size without padding
+                // This shows the actual artwork size with padding to prevent clipping
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;
-                console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (actual artwork size)`);
+                console.log(`🎯 CANVAS DISPLAY: Using padded bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (prevents clipping)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
