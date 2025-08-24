@@ -47,16 +47,10 @@ export default function SvgInlineRenderer({
         // Ensure viewBox is preserved for proper scaling
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
         if (viewBoxMatch) {
-          // For tight content SVGs, preserve aspect ratio without padding
-          if (cleanedSvg.includes('data-content-extracted="true"')) {
-            // Tight content SVG - use slice to fill container completely
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style="display:block">');
-            console.log('🎯 Tight content SVG detected - using slice to fill container');
-          } else {
-            // Regular SVG - scale to fit
-            if (!cleanedSvg.includes('width="100%"')) {
-              cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style="display:block">');
-            }
+          // Always use "meet" to ensure content fits within bounds properly
+          // Since canvas element size is now based on content bounds, the SVG should scale to fit
+          if (!cleanedSvg.includes('width="100%"')) {
+            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style="display:block">');
           }
         }
         

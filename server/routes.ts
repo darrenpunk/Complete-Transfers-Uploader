@@ -2075,14 +2075,6 @@ export async function registerRoutes(app: express.Application) {
             // Check viewBox first - most reliable for A3 detection
             const svgContent = fs.readFileSync(svgPath, 'utf8');
             
-            // CRITICAL: Get ORIGINAL SVG dimensions for canvas display
-            // These should NEVER be changed - canvas must show SVG at its natural size
-            const { detectDimensionsFromSVG } = await import('./dimension-utils');
-            const originalSvgDimensions = await detectDimensionsFromSVG(svgContent, null, svgPath);
-            const canvasDisplayWidth = originalSvgDimensions.widthMm;
-            const canvasDisplayHeight = originalSvgDimensions.heightMm;
-            console.log(`🎯 CANVAS DIMENSIONS LOCKED: ${canvasDisplayWidth.toFixed(1)}×${canvasDisplayHeight.toFixed(1)}mm (original SVG viewBox - will NOT change)`);
-            
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
@@ -2312,29 +2304,34 @@ export async function registerRoutes(app: express.Application) {
                 
                 console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (after content ratio correction)`);
                 
-                // FIX: ALWAYS use ORIGINAL SVG dimensions for canvas display
-                // This prevents any scaling - SVG displays at its natural viewBox size
-                displayWidth = canvasDisplayWidth;
-                displayHeight = canvasDisplayHeight;
-                console.log(`🎯 CANVAS DISPLAY: Using original SVG dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (NO SCALING - natural SVG size)`);
-                console.log(`📐 PDF will use content bounds: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm for positioning`);
+                // Use CONTENT BOUNDS for canvas display
+                // This shows the actual artwork size without padding
+                displayWidth = contentWidth;
+                displayHeight = contentHeight;
+                console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (actual artwork size)`);
               } else {
-                console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), using original SVG dimensions`);
+                console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
-                // Use the original SVG dimensions we captured earlier
-                displayWidth = canvasDisplayWidth;
-                displayHeight = canvasDisplayHeight;
+                // Fallback to the original robust dimension system
+                const { detectDimensionsFromSVG } = await import('./dimension-utils');
+                const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+                const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+                displayWidth = dimensionResult.widthMm;
+                displayHeight = dimensionResult.heightMm;
                 
-                console.log(`🔄 USING ORIGINAL SVG: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (viewBox dimensions)`);
+                console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
               }
               
             } catch (boundsError) {
               console.error('❌ Bounds extraction error:', boundsError);
-              // Use the original SVG dimensions we captured earlier
-              displayWidth = canvasDisplayWidth;
-              displayHeight = canvasDisplayHeight;
+              // Fallback to the original robust dimension system
+              const { detectDimensionsFromSVG } = await import('./dimension-utils');
+              const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+              const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+              displayWidth = dimensionResult.widthMm;
+              displayHeight = dimensionResult.heightMm;
               
-              console.log(`🔄 ERROR FALLBACK: Using original SVG ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (viewBox dimensions)`);
+              console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
             }
 
           } else {
