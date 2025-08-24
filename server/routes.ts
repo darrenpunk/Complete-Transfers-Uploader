@@ -2190,7 +2190,8 @@ export async function registerRoutes(app: express.Application) {
                 
                 // ALWAYS create tight content if there's ANY significant padding
                 // This ensures canvas displays at exact content size
-                const needsTightCrop = !usingPdfContentBounds && (widthDiff > 2 || heightDiff > 2);
+                // Remove the !usingPdfContentBounds check - we want tight crop even with PDF bounds
+                const needsTightCrop = widthDiff > 2 || heightDiff > 2;
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
