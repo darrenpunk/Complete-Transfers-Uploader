@@ -2170,6 +2170,12 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ REASONABLE BOUNDS: Using detected bounds as-is`);
                 }
                 
+                // CRITICAL FIX: Store original canvas dimensions BEFORE any tight cropping
+                // These dimensions should be used for canvas display to avoid scaling
+                const originalCanvasWidthMm = boundsResult.contentBounds.width * pxToMm;
+                const originalCanvasHeightMm = boundsResult.contentBounds.height * pxToMm;
+                console.log(`📐 ORIGINAL CANVAS DIMENSIONS: ${originalCanvasWidthMm.toFixed(1)}×${originalCanvasHeightMm.toFixed(1)}mm (preserving for canvas display)`);
+                
                 // CRITICAL FIX: Only create tight content SVG for oversized or incorrectly bounded content
                 // For A3 and properly sized artwork, keep original to avoid clipping
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
@@ -2303,8 +2309,11 @@ export async function registerRoutes(app: express.Application) {
                 
                 console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (after content ratio correction)`);
                 
-                displayWidth = contentWidth;
-                displayHeight = contentHeight;
+                // FIX: Use ORIGINAL dimensions for canvas display, NOT tight content bounds
+                // This prevents the canvas from scaling down the content
+                displayWidth = originalCanvasWidthMm;
+                displayHeight = originalCanvasHeightMm;
+                console.log(`🎯 CANVAS DISPLAY: Using original dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (not tight bounds)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
