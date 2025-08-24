@@ -2237,7 +2237,7 @@ export async function registerRoutes(app: express.Application) {
                     // Add generous padding to account for stroke widths and text that may extend beyond geometric bounds
                     // Text glyphs can extend significantly beyond their coordinate points
                     const leftPadding = 15;
-                    const rightPadding = 30; // Extra padding on right for text overflow
+                    const rightPadding = 60; // Much extra padding on right for text overflow (text can extend 20-30px beyond coordinates)
                     const topPadding = 15;
                     const bottomPadding = 15;
                     const paddedWidth = contentBounds.width + leftPadding + rightPadding;
@@ -2285,7 +2285,7 @@ export async function registerRoutes(app: express.Application) {
                 
                 // Convert the final corrected content bounds to millimeters 
                 // Add padding if we created a tight content SVG
-                const horizontalPadding = needsTightCrop ? 45 : 0; // Total horizontal padding (15px left + 30px right)
+                const horizontalPadding = needsTightCrop ? 75 : 0; // Total horizontal padding (15px left + 60px right)
                 const verticalPadding = needsTightCrop ? 30 : 0; // Total vertical padding (15px top + 15px bottom)
                 let contentWidth = (boundsResult.contentBounds.width + horizontalPadding) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalPadding) * pxToMm;
