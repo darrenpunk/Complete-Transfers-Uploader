@@ -986,25 +986,26 @@ export async function registerRoutes(app: express.Application) {
             
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
-              // Calculate center point of where we want the content to appear
-              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
-              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
+              // For 90° rotation, the content rotates clockwise around its bottom-left corner
+              // After rotation: width becomes visual height, height becomes visual width
               
-              // For 90° rotation, pdf-lib rotates around bottom-left corner
-              // After rotation, original width becomes visual height, original height becomes visual width
-              // To position content so its center ends up at targetCenter after rotation:
-              // We need to offset from the rotation pivot point
+              // Calculate where we want the center of the rotated content to be
+              const pageCenterX = pageWidth / 2;
+              const pageCenterY = pageHeight / 2;
               
-              // After 90° rotation:
-              // - Original bottom-left corner moves to bottom-right
-              // - Content extends leftward by original height (now visual width)
-              // - Content extends upward by original width (now visual height)
+              // After 90° rotation, the visual dimensions are swapped
+              const visualWidth = heightPts;  // Original height becomes visual width
+              const visualHeight = widthPts;  // Original width becomes visual height
               
-              // Calculate position so rotated content's center aligns with target center
-              const rotatedX = targetCenterX - heightPts / 2;  // heightPts becomes visual width after rotation
-              const rotatedY = targetCenterY - widthPts / 2 + widthPts; // Adjust for pivot point
+              // To center the rotated content:
+              // 1. Find where bottom-left corner should be to center the visual result
+              // 2. Account for the rotation pivot point
+              const rotatedX = pageCenterX - visualWidth / 2;
+              const rotatedY = pageCenterY - visualHeight / 2 + visualHeight; // Add visualHeight because pivot is at bottom
               
-              console.log(`📐 90° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              console.log(`📐 90° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1026,17 +1027,24 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 2: Artwork embedded with 90° rotation centered`);
             } else if (rotation === 180) {
-              // Calculate center point of where we want the content to appear
-              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
-              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
+              // For 180° rotation, content is flipped upside down
+              // No dimension swap occurs
               
-              // For 180° rotation, pdf-lib rotates around bottom-left corner
-              // Content is flipped upside down, no dimension swap
-              // Calculate position so rotated content's center aligns with target center
-              const rotatedX = targetCenterX - widthPts / 2 + widthPts;  // Adjust for pivot
-              const rotatedY = targetCenterY - heightPts / 2 + heightPts; // Adjust for pivot
+              // Calculate where we want the center of the rotated content to be
+              const pageCenterX = pageWidth / 2;
+              const pageCenterY = pageHeight / 2;
               
-              console.log(`📐 180° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              // For 180° rotation, dimensions stay the same
+              const visualWidth = widthPts;
+              const visualHeight = heightPts;
+              
+              // To center the rotated content:
+              // Account for rotation around bottom-left corner
+              const rotatedX = pageCenterX - visualWidth / 2 + visualWidth;  // Add width for pivot
+              const rotatedY = pageCenterY - visualHeight / 2 + visualHeight; // Add height for pivot
+              
+              console.log(`📐 180° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
               
               // Embed with 180° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1058,17 +1066,25 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 2: Artwork embedded with 180° rotation centered`);
             } else if (rotation === 270) {
-              // Calculate center point of where we want the content to appear
-              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
-              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
+              // For 270° rotation, content rotates counter-clockwise around bottom-left corner
+              // After rotation: width becomes visual height, height becomes visual width
               
-              // For 270° rotation, pdf-lib rotates around bottom-left corner
-              // After rotation, original width becomes visual height, original height becomes visual width
-              // Calculate position so rotated content's center aligns with target center
-              const rotatedX = targetCenterX - heightPts / 2 + heightPts;  // Adjust for pivot
-              const rotatedY = targetCenterY - widthPts / 2; // No additional adjustment needed
+              // Calculate where we want the center of the rotated content to be
+              const pageCenterX = pageWidth / 2;
+              const pageCenterY = pageHeight / 2;
               
-              console.log(`📐 270° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              // After 270° rotation, the visual dimensions are swapped
+              const visualWidth = heightPts;  // Original height becomes visual width
+              const visualHeight = widthPts;  // Original width becomes visual height
+              
+              // To center the rotated content:
+              // Account for rotation around bottom-left corner
+              const rotatedX = pageCenterX - visualWidth / 2 + visualWidth;  // Add visual width for pivot
+              const rotatedY = pageCenterY - visualHeight / 2; // No additional adjustment for Y
+              
+              console.log(`📐 270° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
               
               // Embed with 270° rotation on page 1
               page1.drawPage(embeddedPage, {
