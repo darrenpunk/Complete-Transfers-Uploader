@@ -1967,13 +1967,13 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ REASONABLE BOUNDS: Using detected bounds as-is`);
                 }
                 
-                // CRITICAL FIX: Only create tight content SVG if we're using SVG bounds (not PDF content bounds)
-                // If we have PDF content bounds, we already have the exact content size
+                // CRITICAL FIX: Always create tight content SVG for better canvas display
+                // This ensures content fills its bounds completely on the canvas
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
-                const needsTightCrop = !usingPdfContentBounds && (detectedWidthMm > A3_HEIGHT_MM || detectedHeightMm > A3_HEIGHT_MM);
+                const needsTightCrop = !usingPdfContentBounds; // Always create tight content unless we have PDF content bounds
                 
                 if (needsTightCrop) {
-                  console.log(`🔄 CREATING TIGHT CONTENT SVG: SVG bounds are oversized, cropping to actual bounds`);
+                  console.log(`🔄 CREATING TIGHT CONTENT SVG: Ensuring content fills bounds completely`);
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
                   const contentBounds = boundsResult.contentBounds;
