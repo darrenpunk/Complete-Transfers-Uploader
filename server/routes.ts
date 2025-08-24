@@ -2212,14 +2212,16 @@ export async function registerRoutes(app: express.Application) {
                     const innerContent = contentMatch[1];
                     
                     // Create new SVG with tight bounds around content only
-                    // Use viewBox to crop content and simple translate transform for better compatibility
+                    // CRITICAL: viewBox must start at 0,0 and content must be translated
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${contentBounds.xMin} ${contentBounds.yMin} ${contentBounds.width} ${contentBounds.height}" 
+                      viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
                       width="${contentBounds.width}" 
                       height="${contentBounds.height}"
                       data-content-extracted="true"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        ${innerContent}
+                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
+                          ${innerContent}
+                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
