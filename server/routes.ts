@@ -2203,7 +2203,29 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`🔄 CREATING TIGHT CONTENT SVG: Content is oversized, cropping to actual bounds`);
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
-                  const contentBounds = boundsResult.contentBounds;
+                  
+                  // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
+                  // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
+                  const { calculateSVGContentBounds } = await import('./dimension-utils');
+                  const svgContentBounds = calculateSVGContentBounds(svgContent);
+                  
+                  let contentBounds = boundsResult.contentBounds;
+                  if (svgContentBounds && svgContentBounds.width > 0 && svgContentBounds.height > 0) {
+                    console.log(`📐 SVG CONTENT BOUNDS: ${svgContentBounds.minX.toFixed(1)},${svgContentBounds.minY.toFixed(1)} → ${svgContentBounds.maxX.toFixed(1)},${svgContentBounds.maxY.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
+                    
+                    // Use SVG content bounds instead of PDF bounds to avoid clipping
+                    contentBounds = {
+                      xMin: svgContentBounds.minX,
+                      yMin: svgContentBounds.minY,
+                      xMax: svgContentBounds.maxX,
+                      yMax: svgContentBounds.maxY,
+                      width: svgContentBounds.width,
+                      height: svgContentBounds.height
+                    };
+                    console.log(`✅ USING SVG CONTENT BOUNDS: More accurate than PDF bounds, prevents clipping`);
+                  } else {
+                    console.log(`⚠️ Could not calculate SVG content bounds, using PDF bounds`);
+                  }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
