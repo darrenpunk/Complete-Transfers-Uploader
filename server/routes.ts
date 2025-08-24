@@ -986,15 +986,25 @@ export async function registerRoutes(app: express.Application) {
             
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
-              // For 90° rotation: content rotates clockwise around bottom-left corner
-              // After rotation, width and height are visually swapped
+              // Calculate center point of where we want the content to appear
+              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
+              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
               
-              // When rotating 90°, pdf-lib rotates around the bottom-left corner
-              // To center the rotated content, we need to adjust the position
-              const rotatedX = xPos;
-              const rotatedY = yPos + widthPts; // Add width because of rotation pivot
+              // For 90° rotation, pdf-lib rotates around bottom-left corner
+              // After rotation, original width becomes visual height, original height becomes visual width
+              // To position content so its center ends up at targetCenter after rotation:
+              // We need to offset from the rotation pivot point
               
-              console.log(`📐 90° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
+              // After 90° rotation:
+              // - Original bottom-left corner moves to bottom-right
+              // - Content extends leftward by original height (now visual width)
+              // - Content extends upward by original width (now visual height)
+              
+              // Calculate position so rotated content's center aligns with target center
+              const rotatedX = targetCenterX - heightPts / 2;  // heightPts becomes visual width after rotation
+              const rotatedY = targetCenterY - widthPts / 2 + widthPts; // Adjust for pivot point
+              
+              console.log(`📐 90° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1004,7 +1014,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 1: Artwork embedded with 90° rotation`);
+              console.log(`✅ Page 1: Artwork embedded with 90° rotation centered`);
               
               // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1014,37 +1024,51 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 2: Artwork embedded with 90° rotation`);
+              console.log(`✅ Page 2: Artwork embedded with 90° rotation centered`);
             } else if (rotation === 180) {
-              // For 180° rotation: content is upside down
-              // No dimension swap, but position needs adjustment
+              // Calculate center point of where we want the content to appear
+              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
+              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
+              
+              // For 180° rotation, pdf-lib rotates around bottom-left corner
+              // Content is flipped upside down, no dimension swap
+              // Calculate position so rotated content's center aligns with target center
+              const rotatedX = targetCenterX - widthPts / 2 + widthPts;  // Adjust for pivot
+              const rotatedY = targetCenterY - heightPts / 2 + heightPts; // Adjust for pivot
+              
+              console.log(`📐 180° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
               // Embed with 180° rotation on page 1
               page1.drawPage(embeddedPage, {
-                x: xPos,
-                y: yPos,
+                x: rotatedX,
+                y: rotatedY,
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 1: Artwork embedded with 180° rotation`);
+              console.log(`✅ Page 1: Artwork embedded with 180° rotation centered`);
               
               // Embed with 180° rotation on page 2
               page2.drawPage(embeddedPage, {
-                x: xPos,
-                y: yPos,
+                x: rotatedX,
+                y: rotatedY,
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 2: Artwork embedded with 180° rotation`);
+              console.log(`✅ Page 2: Artwork embedded with 180° rotation centered`);
             } else if (rotation === 270) {
-              // For 270° rotation: content rotates counter-clockwise
-              // After rotation, the content needs position adjustment
-              const rotatedX = xPos + heightPts;
-              const rotatedY = yPos;
+              // Calculate center point of where we want the content to appear
+              const targetCenterX = xPos + (effectiveWidth * 2.834645669) / 2;
+              const targetCenterY = yPos + (effectiveHeight * 2.834645669) / 2;
               
-              console.log(`📐 270° rotation: embedding at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with dims ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}`);
+              // For 270° rotation, pdf-lib rotates around bottom-left corner
+              // After rotation, original width becomes visual height, original height becomes visual width
+              // Calculate position so rotated content's center aligns with target center
+              const rotatedX = targetCenterX - heightPts / 2 + heightPts;  // Adjust for pivot
+              const rotatedY = targetCenterY - widthPts / 2; // No additional adjustment needed
+              
+              console.log(`📐 270° rotation: Center at (${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
               // Embed with 270° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1054,7 +1078,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 1: Artwork embedded with 270° rotation`);
+              console.log(`✅ Page 1: Artwork embedded with 270° rotation centered`);
               
               // Embed with 270° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1064,7 +1088,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 2: Artwork embedded with 270° rotation`);
+              console.log(`✅ Page 2: Artwork embedded with 270° rotation centered`);
             } else {
               // No rotation - embed normally
               page1.drawPage(embeddedPage, {
