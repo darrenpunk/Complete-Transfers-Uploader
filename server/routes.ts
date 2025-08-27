@@ -846,12 +846,12 @@ export async function registerRoutes(app: express.Application) {
             const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
             console.log(`📐 Effective dimensions: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             
-            // Calculate position - center the content on the page
+            // Calculate position - use actual canvas position for all elements
             let xPos: number;
             let yPos: number;
             
-            // Always center content when it's rotated or positioned off-page
-            if (rotation === 90 || rotation === 270 || element.x < 0 || element.y < 0) {
+            // Only center if positioned off-page
+            if (element.x < 0 || element.y < 0) {
               // Center based on effective (visual) dimensions after rotation
               const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
               const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
@@ -859,9 +859,10 @@ export async function registerRoutes(app: express.Application) {
               yPos = centerY;
               console.log(`📍 Centering content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) for effective size ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             } else {
-              // Use the element's position
+              // Use the element's position - convert mm to points
+              // For rotated elements, use the visual position
               xPos = element.x * 2.834645669;
-              yPos = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+              yPos = pageHeight - (element.y * 2.834645669) - (effectiveHeight * 2.834645669);
               
               // Ensure it stays on page
               xPos = Math.max(0, xPos);
