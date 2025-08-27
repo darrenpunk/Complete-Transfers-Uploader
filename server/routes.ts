@@ -2207,25 +2207,9 @@ export async function registerRoutes(app: express.Application) {
                   // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
                   // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
                   const { calculateSVGContentBounds } = await import('./dimension-utils');
-                  const svgContentBounds = calculateSVGContentBounds(svgContent);
-                  
+                  // Always use PDF content bounds - they are the authoritative source
                   let contentBounds = boundsResult.contentBounds;
-                  if (svgContentBounds && svgContentBounds.width > 0 && svgContentBounds.height > 0) {
-                    console.log(`📐 SVG CONTENT BOUNDS: ${svgContentBounds.minX.toFixed(1)},${svgContentBounds.minY.toFixed(1)} → ${svgContentBounds.maxX.toFixed(1)},${svgContentBounds.maxY.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
-                    
-                    // Use SVG content bounds instead of PDF bounds to avoid clipping
-                    contentBounds = {
-                      xMin: svgContentBounds.minX,
-                      yMin: svgContentBounds.minY,
-                      xMax: svgContentBounds.maxX,
-                      yMax: svgContentBounds.maxY,
-                      width: svgContentBounds.width,
-                      height: svgContentBounds.height
-                    };
-                    console.log(`✅ USING SVG CONTENT BOUNDS: More accurate than PDF bounds, prevents clipping`);
-                  } else {
-                    console.log(`⚠️ Could not calculate SVG content bounds, using PDF bounds`);
-                  }
+                  console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
@@ -2233,28 +2217,16 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Account for text glyph overflow beyond path coordinates
-                    // Text can extend significantly beyond the geometric bounds
-                    const textOverflowLeft = 5;   // Small amount on left
-                    const textOverflowRight = 150; // Extremely large amount on right for trailing characters (text can extend 80-100px beyond coordinates)
-                    const textOverflowTop = 5;    // Small amount on top
-                    const textOverflowBottom = 5; // Small amount on bottom
-                    
-                    // Calculate true content bounds including text overflow
-                    const trueContentWidth = contentBounds.width + textOverflowLeft + textOverflowRight;
-                    const trueContentHeight = contentBounds.height + textOverflowTop + textOverflowBottom;
-                    
-                    // Create SVG with exact content bounds (including text overflow)
-                    // Content is centered within these bounds
+                    // Use exact content dimensions from the PDF - no padding, no overflow
+                    // The viewBox should match the exact content bounds
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${trueContentWidth} ${trueContentHeight}" 
-                      width="${trueContentWidth}" 
-                      height="${trueContentHeight}"
-                      preserveAspectRatio="xMidYMid meet"
+                      viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
+                      width="${contentBounds.width}" 
+                      height="${contentBounds.height}"
+                      preserveAspectRatio="none"
                       data-content-extracted="true"
-                      data-text-overflow="left:${textOverflowLeft},right:${textOverflowRight},top:${textOverflowTop},bottom:${textOverflowBottom}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin + textOverflowLeft}, ${-contentBounds.yMin + textOverflowTop})">
+                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2285,20 +2257,18 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Convert the final corrected content bounds to millimeters 
-                // Add text overflow to bounds if we created a tight content SVG
-                const horizontalOverflow = needsTightCrop ? 155 : 0; // Total horizontal overflow (5px left + 150px right)
-                const verticalOverflow = needsTightCrop ? 10 : 0; // Total vertical overflow (5px top + 5px bottom)
-                let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
-                let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
+                // Use exact content bounds from PDF - no padding, no overflow
+                // Canvas bounds = exact content dimensions
+                let contentWidth = boundsResult.contentBounds.width * pxToMm;
+                let contentHeight = boundsResult.contentBounds.height * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (including ${horizontalOverflow}px horizontal, ${verticalOverflow}px vertical text overflow)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (exact content bounds from PDF)`);
                 
-                // Use CONTENT BOUNDS for canvas display
-                // This shows the actual artwork size with padding to prevent clipping
+                // Use exact content bounds for canvas display
+                // No padding, no scaling - exact content dimensions
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;
-                console.log(`🎯 CANVAS DISPLAY: Using padded bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (prevents clipping)`);
+                console.log(`🎯 CANVAS DISPLAY: Using exact content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
