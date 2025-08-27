@@ -2217,11 +2217,12 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Add small overflow to capture text glyph extents
-                    // Text can extend beyond coordinate points
-                    const overflow = 20; // Pixels to add on all sides for text overflow
-                    const expandedWidth = contentBounds.width + (overflow * 2);
-                    const expandedHeight = contentBounds.height + (overflow * 2);
+                    // Add minimal overflow only where needed for text glyphs
+                    // Text extends mainly on right and bottom edges
+                    const rightOverflow = 10;  // Small amount for trailing text
+                    const bottomOverflow = 5;  // Small amount for descenders
+                    const expandedWidth = contentBounds.width + rightOverflow;
+                    const expandedHeight = contentBounds.height + bottomOverflow;
                     
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
@@ -2229,9 +2230,9 @@ export async function registerRoutes(app: express.Application) {
                       height="${expandedHeight}"
                       preserveAspectRatio="none"
                       data-content-extracted="true"
-                      data-overflow="${overflow}"
+                      data-overflow="right:${rightOverflow},bottom:${bottomOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin + overflow}, ${-contentBounds.yMin + overflow})">
+                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2262,13 +2263,14 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Add small overflow to content bounds to capture text glyph extents
-                // Text can extend beyond the coordinate points in the PDF
-                const overflow = needsTightCrop ? 40 : 0; // 20px on each side = 40px total
-                let contentWidth = (boundsResult.contentBounds.width + overflow) * pxToMm;
-                let contentHeight = (boundsResult.contentBounds.height + overflow) * pxToMm;
+                // Add minimal overflow only where needed for text glyphs
+                // Keep bounds as accurate as possible for customer resizing
+                const horizontalOverflow = needsTightCrop ? 10 : 0; // Just 10px on right for text
+                const verticalOverflow = needsTightCrop ? 5 : 0;   // Just 5px on bottom for descenders
+                let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
+                let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (PDF bounds + ${overflow}px for text overflow)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (PDF bounds + minimal overflow)`);
                 
                 // Use content bounds with overflow for canvas display
                 // This ensures text glyphs are not clipped
