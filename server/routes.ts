@@ -989,26 +989,21 @@ export async function registerRoutes(app: express.Application) {
               // For 90° rotation, the content rotates clockwise around its bottom-left corner
               // After rotation: width becomes visual height, height becomes visual width
               
-              // Calculate where we want the center of the rotated content to be
-              const pageCenterX = pageWidth / 2;
-              const pageCenterY = pageHeight / 2;
-              
+              // Use the actual canvas position from xPos and yPos
               // After 90° rotation, the visual dimensions are swapped
               const visualWidth = heightPts;  // Original height becomes visual width
               const visualHeight = widthPts;  // Original width becomes visual height
               
-              // To center the rotated content:
-              // After 90° rotation, content extends:
-              // - Leftward from pivot by heightPts (visual width)
-              // - Upward from pivot by widthPts (visual height)
-              // To center, we need pivot at:
-              const rotatedX = pageCenterX + visualWidth / 2;  // Right edge of centered content
-              const rotatedY = pageCenterY - visualHeight / 2;  // Bottom edge of centered content
+              // For 90° rotation, we need to adjust the position
+              // The rotation pivot is at the bottom-left corner of the original content
+              // After rotation, content extends leftward and upward from the pivot
+              const rotatedX = xPos + visualWidth;  // Adjust for rotation pivot
+              const rotatedY = yPos;  // Y position stays the same for bottom-left pivot
               
-              console.log(`📐 90° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 90° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
               console.log(`📐 Original dims: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
               console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1018,7 +1013,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 1: Artwork embedded with 90° rotation centered`);
+              console.log(`✅ Page 1: Artwork embedded with 90° rotation at canvas position`);
               
               // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1028,26 +1023,23 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 2: Artwork embedded with 90° rotation centered`);
+              console.log(`✅ Page 2: Artwork embedded with 90° rotation at canvas position`);
             } else if (rotation === 180) {
               // For 180° rotation, content is flipped upside down
               // No dimension swap occurs
               
-              // Calculate where we want the center of the rotated content to be
-              const pageCenterX = pageWidth / 2;
-              const pageCenterY = pageHeight / 2;
-              
+              // Use the actual canvas position
               // For 180° rotation, dimensions stay the same
               const visualWidth = widthPts;
               const visualHeight = heightPts;
               
-              // To center the rotated content:
-              // Account for rotation around bottom-left corner
-              const rotatedX = pageCenterX - visualWidth / 2 + visualWidth;  // Add width for pivot
-              const rotatedY = pageCenterY - visualHeight / 2 + visualHeight; // Add height for pivot
+              // For 180° rotation around bottom-left corner:
+              // Content extends leftward and downward from pivot
+              const rotatedX = xPos + visualWidth;  // Add width for pivot
+              const rotatedY = yPos + visualHeight; // Add height for pivot
               
-              console.log(`📐 180° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
+              console.log(`📐 180° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
               
               // Embed with 180° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1057,7 +1049,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 1: Artwork embedded with 180° rotation centered`);
+              console.log(`✅ Page 1: Artwork embedded with 180° rotation at canvas position`);
               
               // Embed with 180° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1067,27 +1059,24 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 2: Artwork embedded with 180° rotation centered`);
+              console.log(`✅ Page 2: Artwork embedded with 180° rotation at canvas position`);
             } else if (rotation === 270) {
               // For 270° rotation, content rotates counter-clockwise around bottom-left corner
               // After rotation: width becomes visual height, height becomes visual width
               
-              // Calculate where we want the center of the rotated content to be
-              const pageCenterX = pageWidth / 2;
-              const pageCenterY = pageHeight / 2;
-              
+              // Use the actual canvas position
               // After 270° rotation, the visual dimensions are swapped
               const visualWidth = heightPts;  // Original height becomes visual width
               const visualHeight = widthPts;  // Original width becomes visual height
               
-              // To center the rotated content:
-              // Account for rotation around bottom-left corner
-              const rotatedX = pageCenterX - visualWidth / 2 + visualWidth;  // Add visual width for pivot
-              const rotatedY = pageCenterY - visualHeight / 2; // No additional adjustment for Y
+              // For 270° rotation around bottom-left corner:
+              // Content extends rightward and upward from pivot
+              const rotatedX = xPos;  // X position stays the same
+              const rotatedY = yPos + visualHeight; // Adjust Y for rotation
               
-              console.log(`📐 270° rotation: Page center (${pageCenterX.toFixed(1)}, ${pageCenterY.toFixed(1)})`);
+              console.log(`📐 270° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
               console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for centered result`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
               
               // Embed with 270° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1097,7 +1086,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 1: Artwork embedded with 270° rotation centered`);
+              console.log(`✅ Page 1: Artwork embedded with 270° rotation at canvas position`);
               
               // Embed with 270° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1107,7 +1096,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 2: Artwork embedded with 270° rotation centered`);
+              console.log(`✅ Page 2: Artwork embedded with 270° rotation at canvas position`);
             } else {
               // No rotation - embed normally
               page1.drawPage(embeddedPage, {
