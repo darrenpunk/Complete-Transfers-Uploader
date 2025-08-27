@@ -2220,14 +2220,14 @@ export async function registerRoutes(app: express.Application) {
                     // Add minimal overflow only where needed for text glyphs
                     // Text extends mainly on right and bottom edges
                     const rightOverflow = 10;  // Small amount for trailing text
-                    const bottomOverflow = 5;  // Small amount for descenders
+                    const bottomOverflow = 15;  // More space for descenders and bottom text
                     const expandedWidth = contentBounds.width + rightOverflow;
                     const expandedHeight = contentBounds.height + bottomOverflow;
                     
-                    // Center the content within the expanded bounds
-                    // Half of overflow on left/top to center it
+                    // Center horizontally but not vertically 
+                    // Keep content at top to prevent bottom clipping
                     const xOffset = rightOverflow / 2;
-                    const yOffset = bottomOverflow / 2;
+                    const yOffset = 0;  // No vertical offset - keep at top
                     
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
@@ -2271,7 +2271,7 @@ export async function registerRoutes(app: express.Application) {
                 // Add minimal overflow only where needed for text glyphs
                 // Keep bounds as accurate as possible for customer resizing
                 const horizontalOverflow = needsTightCrop ? 10 : 0; // Just 10px on right for text
-                const verticalOverflow = needsTightCrop ? 5 : 0;   // Just 5px on bottom for descenders
+                const verticalOverflow = needsTightCrop ? 15 : 0;   // 15px on bottom for descenders and text
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
