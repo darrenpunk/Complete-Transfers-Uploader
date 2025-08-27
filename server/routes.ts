@@ -2236,7 +2236,7 @@ export async function registerRoutes(app: express.Application) {
                     // Account for text glyph overflow beyond path coordinates
                     // Text can extend significantly beyond the geometric bounds
                     const textOverflowLeft = 5;   // Small amount on left
-                    const textOverflowRight = 100; // Very large amount on right for trailing characters (text can extend 60-80px beyond coordinates)
+                    const textOverflowRight = 150; // Extremely large amount on right for trailing characters (text can extend 80-100px beyond coordinates)
                     const textOverflowTop = 5;    // Small amount on top
                     const textOverflowBottom = 5; // Small amount on bottom
                     
@@ -2287,7 +2287,7 @@ export async function registerRoutes(app: express.Application) {
                 
                 // Convert the final corrected content bounds to millimeters 
                 // Add text overflow to bounds if we created a tight content SVG
-                const horizontalOverflow = needsTightCrop ? 105 : 0; // Total horizontal overflow (5px left + 100px right)
+                const horizontalOverflow = needsTightCrop ? 155 : 0; // Total horizontal overflow (5px left + 150px right)
                 const verticalOverflow = needsTightCrop ? 10 : 0; // Total vertical overflow (5px top + 5px bottom)
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
