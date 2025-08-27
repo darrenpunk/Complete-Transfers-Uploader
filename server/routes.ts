@@ -2217,16 +2217,21 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Use exact content dimensions from the PDF - no padding, no overflow
-                    // The viewBox should match the exact content bounds
+                    // Add small overflow to capture text glyph extents
+                    // Text can extend beyond coordinate points
+                    const overflow = 20; // Pixels to add on all sides for text overflow
+                    const expandedWidth = contentBounds.width + (overflow * 2);
+                    const expandedHeight = contentBounds.height + (overflow * 2);
+                    
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${contentBounds.width} ${contentBounds.height}" 
-                      width="${contentBounds.width}" 
-                      height="${contentBounds.height}"
+                      viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
+                      width="${expandedWidth}" 
+                      height="${expandedHeight}"
                       preserveAspectRatio="none"
                       data-content-extracted="true"
+                      data-overflow="${overflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
+                        <g transform="translate(${-contentBounds.xMin + overflow}, ${-contentBounds.yMin + overflow})">
                           ${innerContent}
                         </g>
                     </svg>`;
@@ -2257,18 +2262,19 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Use exact content bounds from PDF - no padding, no overflow
-                // Canvas bounds = exact content dimensions
-                let contentWidth = boundsResult.contentBounds.width * pxToMm;
-                let contentHeight = boundsResult.contentBounds.height * pxToMm;
+                // Add small overflow to content bounds to capture text glyph extents
+                // Text can extend beyond the coordinate points in the PDF
+                const overflow = needsTightCrop ? 40 : 0; // 20px on each side = 40px total
+                let contentWidth = (boundsResult.contentBounds.width + overflow) * pxToMm;
+                let contentHeight = (boundsResult.contentBounds.height + overflow) * pxToMm;
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (exact content bounds from PDF)`);
+                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (PDF bounds + ${overflow}px for text overflow)`);
                 
-                // Use exact content bounds for canvas display
-                // No padding, no scaling - exact content dimensions
+                // Use content bounds with overflow for canvas display
+                // This ensures text glyphs are not clipped
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;
-                console.log(`🎯 CANVAS DISPLAY: Using exact content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+                console.log(`🎯 CANVAS DISPLAY: Using content bounds with overflow ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
