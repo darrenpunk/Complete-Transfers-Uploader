@@ -2224,6 +2224,11 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + rightOverflow;
                     const expandedHeight = contentBounds.height + bottomOverflow;
                     
+                    // Center the content within the expanded bounds
+                    // Half of overflow on left/top to center it
+                    const xOffset = rightOverflow / 2;
+                    const yOffset = bottomOverflow / 2;
+                    
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
                       width="${expandedWidth}" 
@@ -2232,7 +2237,7 @@ export async function registerRoutes(app: express.Application) {
                       data-content-extracted="true"
                       data-overflow="right:${rightOverflow},bottom:${bottomOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin}, ${-contentBounds.yMin})">
+                        <g transform="translate(${-contentBounds.xMin + xOffset}, ${-contentBounds.yMin + yOffset})">
                           ${innerContent}
                         </g>
                     </svg>`;
