@@ -229,7 +229,7 @@ export class PDFBoundsExtractor {
   }
 
   /**
-   * Comprehensive SVG content bounds analysis - bulletproof approach
+   * Smart SVG content bounds analysis - focused on actual content
    */
   private analyzeSvgContentBounds(
     svgContent: string, 
@@ -237,56 +237,73 @@ export class PDFBoundsExtractor {
   ): BoundingBox | null {
     
     try {
-      console.log(`🔍 Analyzing SVG content for precise bounds...`);
+      console.log(`🔍 Analyzing SVG for actual content bounds (not coordinate system)...`);
       
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       let hasContent = false;
       
-      // Extract all numeric coordinates from the entire SVG
-      // This captures paths, rects, circles, polygons, transforms, etc.
-      const allNumbers = svgContent.match(/[\d.-]+/g);
-      if (allNumbers && allNumbers.length >= 2) {
-        console.log(`📊 Found ${allNumbers.length} numeric values in SVG`);
+      // Focus on path elements which contain the actual vector content
+      const pathMatches = svgContent.matchAll(/<path[^>]+d="([^"]+)"/g);
+      let pathCount = 0;
+      
+      for (const pathMatch of pathMatches) {
+        pathCount++;
+        const pathData = pathMatch[1];
         
-        // Analyze all coordinate pairs
-        for (let i = 0; i < allNumbers.length - 1; i++) {
-          const x = parseFloat(allNumbers[i]);
-          const y = parseFloat(allNumbers[i + 1]);
-          
-          // Filter out obviously non-coordinate values (stroke widths, etc.)
-          if (!isNaN(x) && !isNaN(y) && 
-              Math.abs(x) < 10000 && Math.abs(y) < 10000 && // Reasonable coordinate range
-              (Math.abs(x) > 0.001 || Math.abs(y) > 0.001)) { // Not zero/tiny values
-            
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-            hasContent = true;
+        // Extract M (moveto), L (lineto), C (curveto) coordinates from path data
+        // This is much more targeted than grabbing all numbers
+        const commands = pathData.match(/[ML]\s*[\d.-]+[\s,]+[\d.-]+|C\s*[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+/g);
+        
+        if (commands) {
+          for (const command of commands) {
+            const coords = command.match(/[\d.-]+/g);
+            if (coords && coords.length >= 2) {
+              // Take coordinate pairs (x, y)
+              for (let i = 0; i < coords.length - 1; i += 2) {
+                const x = parseFloat(coords[i]);
+                const y = parseFloat(coords[i + 1]);
+                
+                if (!isNaN(x) && !isNaN(y) && Math.abs(x) < 5000 && Math.abs(y) < 5000) {
+                  minX = Math.min(minX, x);
+                  minY = Math.min(minY, y);
+                  maxX = Math.max(maxX, x);
+                  maxY = Math.max(maxY, y);
+                  hasContent = true;
+                }
+              }
+            }
           }
         }
       }
       
-      // Also look for specific SVG elements for validation
-      const elementPatterns = [
-        /<rect[^>]+x="([^"]+)"[^>]+y="([^"]+)"[^>]+width="([^"]+)"[^>]+height="([^"]+)"/g,
-        /<circle[^>]+cx="([^"]+)"[^>]+cy="([^"]+)"[^>]+r="([^"]+)"/g,
-        /<ellipse[^>]+cx="([^"]+)"[^>]+cy="([^"]+)"[^>]+rx="([^"]+)"[^>]+ry="([^"]+)"/g
+      console.log(`📊 Analyzed ${pathCount} path elements for content bounds`);
+      
+      // Also check for simple shapes with reasonable coordinates
+      const shapeElements = [
+        { pattern: /<rect[^>]+x="([^"]+)"[^>]+y="([^"]+)"[^>]+width="([^"]+)"[^>]+height="([^"]+)"/g, type: 'rect' },
+        { pattern: /<circle[^>]+cx="([^"]+)"[^>]+cy="([^"]+)"[^>]+r="([^"]+)"/g, type: 'circle' }
       ];
       
-      for (const pattern of elementPatterns) {
+      for (const { pattern, type } of shapeElements) {
         const matches = svgContent.matchAll(pattern);
         for (const match of matches) {
-          const values = match.slice(1).map(parseFloat).filter(v => !isNaN(v));
-          if (values.length >= 2) {
-            for (let i = 0; i < values.length; i++) {
-              if (Math.abs(values[i]) < 10000) {
-                minX = Math.min(minX, values[i]);
-                minY = Math.min(minY, values[i]);
-                maxX = Math.max(maxX, values[i]);
-                maxY = Math.max(maxY, values[i]);
-                hasContent = true;
-              }
+          const values = match.slice(1).map(parseFloat);
+          
+          if (values.every(v => !isNaN(v) && Math.abs(v) < 1000)) {
+            if (type === 'rect') {
+              const [x, y, width, height] = values;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + width);
+              maxY = Math.max(maxY, y + height);
+              hasContent = true;
+            } else if (type === 'circle') {
+              const [cx, cy, r] = values;
+              minX = Math.min(minX, cx - r);
+              minY = Math.min(minY, cy - r);
+              maxX = Math.max(maxX, cx + r);
+              maxY = Math.max(maxY, cy + r);
+              hasContent = true;
             }
           }
         }
@@ -296,23 +313,20 @@ export class PDFBoundsExtractor {
         const width = maxX - minX;
         const height = maxY - minY;
         
-        // Add small buffer to ensure we don't clip anything (1pt = ~0.35mm)
-        const buffer = 1;
-        
-        console.log(`✅ SVG bounds analysis: ${width.toFixed(1)}×${height.toFixed(1)}pts (${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)})`);
+        console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts at (${minX.toFixed(1)},${minY.toFixed(1)})`);
         
         return {
-          xMin: minX - buffer,
-          yMin: minY - buffer,
-          xMax: maxX + buffer,
-          yMax: maxY + buffer,
-          width: width + (buffer * 2),
-          height: height + (buffer * 2),
+          xMin: minX,
+          yMin: minY,
+          xMax: maxX,
+          yMax: maxY,
+          width: width,
+          height: height,
           units: 'pt'
         };
       }
       
-      console.log(`⚠️ No valid content bounds found in SVG`);
+      console.log(`⚠️ No reasonable content bounds found in SVG paths and shapes`);
       return null;
       
     } catch (error) {
