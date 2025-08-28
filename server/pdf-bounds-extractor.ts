@@ -125,7 +125,7 @@ export class PDFBoundsExtractor {
         const bboxOutput = fs.readFileSync(bboxFile, 'utf8');
         fs.unlinkSync(bboxFile); // Cleanup
         
-        const bounds = this.parseGhostscriptBounds(bboxOutput);
+        const bounds = this.parseGhostscriptBounds(bboxOutput, pageInfo.bbox);
         
         if (bounds) {
           console.log(`✅ Ghostscript bounds: ${bounds.xMin},${bounds.yMin} to ${bounds.xMax},${bounds.yMax}`);
@@ -323,7 +323,7 @@ export class PDFBoundsExtractor {
   /**
    * Parse Ghostscript bounding box output
    */
-  private parseGhostscriptBounds(output: string): BoundingBox | null {
+  private parseGhostscriptBounds(output: string, pageBounds?: BoundingBox): BoundingBox | null {
     // Look for %%HiResBoundingBox or %%BoundingBox lines
     const hiResMatch = output.match(/%%HiResBoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
     const bboxMatch = output.match(/%%BoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
@@ -347,6 +347,44 @@ export class PDFBoundsExtractor {
       
       const width = xMax - xMin;
       const height = yMax - yMin;
+      
+      // Check if bounds seem too conservative using page dimensions
+      if (pageBounds) {
+        const pageWidth = pageBounds.width;
+        const pageHeight = pageBounds.height;
+        
+        const bboxArea = width * height;
+        const pageArea = pageWidth * pageHeight;
+        const coverage = bboxArea / pageArea;
+        
+        if (coverage < 0.4 && width < pageWidth * 0.8 && height < pageHeight * 0.8) {
+          console.log(`🚨 CONSERVATIVE BOUNDS DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
+          console.log(`🔧 EXPANDING BOUNDS: Adding generous padding for complex artwork`);
+          
+          // Add significant padding to capture missed content
+          const paddingX = Math.min(50, (pageWidth - width) * 0.3);
+          const paddingY = Math.min(50, (pageHeight - height) * 0.3);
+          
+          xMin = Math.max(0, xMin - paddingX);
+          yMin = Math.max(0, yMin - paddingY);
+          xMax = Math.min(pageWidth, xMax + paddingX);
+          yMax = Math.min(pageHeight, yMax + paddingY);
+          
+          const newWidth = xMax - xMin;
+          const newHeight = yMax - yMin;
+          console.log(`✅ EXPANDED BOUNDS: ${newWidth.toFixed(1)}×${newHeight.toFixed(1)}pts (${((newWidth*newHeight/pageArea)*100).toFixed(1)}% coverage)`);
+          
+          return {
+            xMin,
+            yMin,
+            xMax,
+            yMax,
+            width: newWidth,
+            height: newHeight,
+            units: 'pt'
+          };
+        }
+      }
       
       // Validate bounds are reasonable
       if (width > 0 && height > 0 && width < 10000 && height < 10000) {
