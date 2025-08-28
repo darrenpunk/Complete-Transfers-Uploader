@@ -220,10 +220,10 @@ export default function PropertiesPanel({
     const safeZoneWidth = templateWidth;
     const safeZoneHeight = templateHeight;
     
-    // Account for rotation when aligning
-    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
-    const visualWidth = isRotated ? currentElement.height : currentElement.width;
-    const visualHeight = isRotated ? currentElement.width : currentElement.height;
+    // Canvas bounds don't change with rotation - use stored dimensions
+    // Content rotates within fixed canvas bounds
+    const elementWidth = currentElement.width;
+    const elementHeight = currentElement.height;
     
     let x = currentElement.x;
     let y = currentElement.y;
@@ -234,36 +234,36 @@ export default function PropertiesPanel({
         y = safeZoneY;
         break;
       case 'top-center':
-        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
+        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
         y = safeZoneY;
         break;
       case 'top-right':
-        x = safeZoneX + safeZoneWidth - visualWidth;
+        x = safeZoneX + safeZoneWidth - elementWidth;
         y = safeZoneY;
         break;
       case 'middle-left':
         x = safeZoneX;
-        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
+        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
         break;
       case 'center':
-        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
-        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
+        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
+        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
         break;
       case 'middle-right':
-        x = safeZoneX + safeZoneWidth - visualWidth;
-        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
+        x = safeZoneX + safeZoneWidth - elementWidth;
+        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
         break;
       case 'bottom-left':
         x = safeZoneX;
-        y = safeZoneY + safeZoneHeight - visualHeight;
+        y = safeZoneY + safeZoneHeight - elementHeight;
         break;
       case 'bottom-center':
-        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
-        y = safeZoneY + safeZoneHeight - visualHeight;
+        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
+        y = safeZoneY + safeZoneHeight - elementHeight;
         break;
       case 'bottom-right':
-        x = safeZoneX + safeZoneWidth - visualWidth;
-        y = safeZoneY + safeZoneHeight - visualHeight;
+        x = safeZoneX + safeZoneWidth - elementWidth;
+        y = safeZoneY + safeZoneHeight - elementHeight;
         break;
     }
     

@@ -543,16 +543,15 @@ export default function CanvasWorkspace({
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
           
-          // Account for rotation when calculating constraints
-          // NOTE: Visual dimensions swap when rotated, but element x,y is always top-left of the visual box
-          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
-          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
-          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
+          // Canvas bounds don't change with rotation - content rotates within fixed canvas
+          // Always use stored dimensions for constraints, not visual dimensions
+          const elementWidth = selectedElement.width;
+          const elementHeight = selectedElement.height;
           
           // Allow free movement within template bounds
-          // Only prevent going beyond template edges
-          const maxX = template.width - visualWidth;
-          const maxY = template.height - visualHeight;
+          // Content can go anywhere as long as its origin point is within bounds
+          const maxX = template.width - elementWidth;
+          const maxY = template.height - elementHeight;
           
           // Allow positioning at edges but not beyond
           const constrainedX = Math.max(0, Math.min(newX, maxX));
