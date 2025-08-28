@@ -1413,30 +1413,39 @@ export default function CanvasWorkspace({
                         const hasElementsOutsideMargins = canvasElements.some(element => {
                           if (!element.isVisible) return false;
                           
-                          let mmToPixelRatio = template.pixelWidth / template.width;
-                          
-                          // Use proper DPI for PDF-derived elements
-                          const isPdfDerived = element.width > 200 || element.height > 200;
-                          if (isPdfDerived) {
-                            mmToPixelRatio = 2.834645669; // 72 DPI conversion
-                          }
-                          
                           const marginInMm = 3; // 3mm safety margin
+                          
+                          // Center-based coordinate system
+                          // (0,0) is at the center of the template
+                          const templateHalfWidth = template.width / 2;
+                          const templateHalfHeight = template.height / 2;
                           
                           // Account for rotation when checking bounds
                           const isRotated = element.rotation === 90 || element.rotation === 270;
                           const visualWidth = isRotated ? element.height : element.width;
                           const visualHeight = isRotated ? element.width : element.height;
                           
-                          // Convert element position and size from mm to check margins
-                          const elementRight = element.x + visualWidth;
-                          const elementBottom = element.y + visualHeight;
+                          // Calculate element bounds from center position
+                          const elementHalfWidth = visualWidth / 2;
+                          const elementHalfHeight = visualHeight / 2;
+                          
+                          // Element edges in center-based coordinates
+                          const elementLeft = element.x - elementHalfWidth;
+                          const elementRight = element.x + elementHalfWidth;
+                          const elementTop = element.y - elementHalfHeight;
+                          const elementBottom = element.y + elementHalfHeight;
+                          
+                          // Safety margins in center-based coordinates
+                          const marginLeft = -templateHalfWidth + marginInMm;
+                          const marginRight = templateHalfWidth - marginInMm;
+                          const marginTop = -templateHalfHeight + marginInMm;
+                          const marginBottom = templateHalfHeight - marginInMm;
                           
                           // Check if element is outside safety margins
-                          const outsideLeft = element.x < marginInMm;
-                          const outsideTop = element.y < marginInMm;
-                          const outsideRight = elementRight > (template.width - marginInMm);
-                          const outsideBottom = elementBottom > (template.height - marginInMm);
+                          const outsideLeft = elementLeft < marginLeft;
+                          const outsideTop = elementTop < marginTop;
+                          const outsideRight = elementRight > marginRight;
+                          const outsideBottom = elementBottom > marginBottom;
                           
                           return outsideLeft || outsideTop || outsideRight || outsideBottom;
                         });

@@ -216,9 +216,18 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     }
     
     // Calculate exact position in points
+    // Convert center-based coordinates to PDF bottom-left coordinates
     const MM_TO_POINTS = 2.834645669;
-    const xPts = element.x * MM_TO_POINTS;
-    const yPts = element.y * MM_TO_POINTS;
+    const templateWidthMM = 297; // A3 width
+    const templateHeightMM = 420; // A3 height
+    const templateCenterX = templateWidthMM / 2;
+    const templateCenterY = templateHeightMM / 2;
+    
+    // Convert center position to bottom-left corner for PDF
+    const elementCenterX = templateCenterX + element.x;
+    const elementCenterY = templateCenterY + element.y;
+    const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
+    const yPts = (templateHeightMM - elementCenterY - element.height / 2) * MM_TO_POINTS; // Flip Y for PDF
     
     // Use actual element dimensions from canvas (not hardcoded values)
     // When rotated 90° or 270°, visual dimensions are swapped but we keep original for embedding
@@ -371,10 +380,19 @@ grestore`;
         console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
         
         // Calculate logo bounds in points using PDF coordinate system
+        // Convert center-based coordinates to PDF bottom-left coordinates
         const contentWidthPts = element.width * MM_TO_POINTS;
         const contentHeightPts = element.height * MM_TO_POINTS;
-        const xPts = element.x * MM_TO_POINTS;
-        const yPts = pageHeight - (element.y * MM_TO_POINTS) - contentHeightPts; // PDF coordinate system (bottom-left origin)
+        const templateWidthMM = 297; // A3 width
+        const templateHeightMM = 420; // A3 height
+        const templateCenterX = templateWidthMM / 2;
+        const templateCenterY = templateHeightMM / 2;
+        
+        // Convert center position to bottom-left corner for PDF
+        const elementCenterX = templateCenterX + element.x;
+        const elementCenterY = templateCenterY + element.y;
+        const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
+        const yPts = pageHeight - ((elementCenterY + element.height / 2) * MM_TO_POINTS); // PDF coordinate system (bottom-left origin)
         
         // Draw garment color background behind this logo
         const parsedColor = await this.parseGarmentColor(garmentColor);
@@ -627,7 +645,16 @@ grestore`;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
       // Position calculation needs to account for visual dimensions when rotated
-      let xPts = element.x * MM_TO_POINTS + viewBoxOffsetX;
+      // Convert center-based coordinates to PDF bottom-left coordinates
+      const templateWidthMM = 297; // A3 width
+      const templateHeightMM = 420; // A3 height
+      const templateCenterX = templateWidthMM / 2;
+      const templateCenterY = templateHeightMM / 2;
+      
+      // Convert center position to bottom-left corner
+      const elementCenterX = templateCenterX + element.x;
+      const elementCenterY = templateCenterY + element.y;
+      let xPts = (elementCenterX - contentWidthMM / 2) * MM_TO_POINTS + viewBoxOffsetX;
       
       // Adjust position for rotation (rotation happens around center point)
       if (isRotated) {
@@ -670,12 +697,17 @@ grestore`;
         yPts = Math.max(0, yPts);
       } else {
         // For all other templates (A3, etc.) - convert canvas coordinates to PDF coordinates
-        // Canvas Y=0 is at top, PDF Y=0 is at bottom
-        // For A3: height is 420mm = 1190.55pts, so we need to flip Y coordinate
+        // Convert center-based Y to PDF bottom-left Y
+        // Template center Y = 0 in our coordinate system
         const templateHeightPts = 1190.55; // Exact A3 height in points
+        const templateHeightMM = 420; // A3 height in mm
+        const templateCenterYMM = templateHeightMM / 2;
+        
+        // Convert element center position to absolute position
+        const elementCenterYMM = templateCenterYMM + element.y;
         // Use visual height for positioning when rotated
         const effectiveHeightPts = isRotated ? (element.width * MM_TO_POINTS) : contentHeightPts;
-        yPts = templateHeightPts - (element.y * MM_TO_POINTS) - effectiveHeightPts + viewBoxOffsetY;
+        yPts = templateHeightPts - ((elementCenterYMM + contentHeightMM / 2) * MM_TO_POINTS) + viewBoxOffsetY;
         
         // Adjust Y for rotation since we're positioning based on visual bounds
         if (isRotated) {
