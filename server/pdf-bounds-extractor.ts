@@ -357,48 +357,56 @@ export class PDFBoundsExtractor {
         const pageArea = pageWidth * pageHeight;
         const coverage = bboxArea / pageArea;
         
-        // Check for various clipping indicators
+        // Check for edge clipping by examining each edge individually
         const isLowCoverage = coverage < 0.4;
-        const isNearEdges = xMin < pageWidth * 0.1 || yMin < pageHeight * 0.1 || 
-                           (pageWidth - xMax) < pageWidth * 0.1 || (pageHeight - yMax) < pageHeight * 0.1;
-        const isSignificantlySmaller = width < pageWidth * 0.9 && height < pageHeight * 0.9;
+        const needsExpansion = isLowCoverage && (width < pageWidth * 0.9 || height < pageHeight * 0.9);
         
-        if (isLowCoverage || (isNearEdges && isSignificantlySmaller)) {
-          console.log(`🚨 CLIPPING DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
-          console.log(`🔧 EDGE ANALYSIS: xMin=${xMin.toFixed(1)} yMin=${yMin.toFixed(1)} (${isNearEdges ? 'near edges' : 'not near edges'})`);
+        if (needsExpansion) {
+          console.log(`🚨 CONTENT CLIPPING: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
           
-          // More aggressive padding, especially for edge cases
-          let paddingX = Math.min(50, Math.max(15, (pageWidth - width) * 0.4));
-          let paddingY = Math.min(50, Math.max(15, (pageHeight - height) * 0.4));
+          // Analyze each edge individually for clipping
+          const leftMargin = xMin;
+          const rightMargin = pageWidth - xMax;
+          const bottomMargin = yMin; // In PDF coordinates, yMin is distance from bottom
+          const topMargin = pageHeight - yMax;
           
-          // Extra aggressive padding if very close to edges (likely content cut off)
-          if (yMin < pageHeight * 0.05) { // Very close to bottom edge
-            console.log(`🚨 BOTTOM EDGE CLIPPING: yMin=${yMin.toFixed(1)} is very close to bottom, expanding aggressively`);
-            paddingY = Math.max(paddingY, yMin + 20); // Expand to nearly reach page bottom
-            yMin = Math.max(0, yMin - paddingY);
-          } else {
-            yMin = Math.max(0, yMin - paddingY);
+          console.log(`🔍 EDGE MARGINS: left=${leftMargin.toFixed(1)} right=${rightMargin.toFixed(1)} bottom=${bottomMargin.toFixed(1)} top=${topMargin.toFixed(1)}`);
+          
+          let adjustedXMin = xMin;
+          let adjustedYMin = yMin;
+          let adjustedXMax = xMax;
+          let adjustedYMax = yMax;
+          
+          // Only expand edges that are suspiciously close to page boundaries
+          if (bottomMargin < pageHeight * 0.12) { // Less than 12% from bottom edge
+            console.log(`🚨 BOTTOM CLIPPING: Expanding from yMin=${yMin.toFixed(1)} to capture bottom content`);
+            adjustedYMin = Math.max(0, yMin * 0.3); // Expand significantly toward bottom
           }
           
-          if (xMin < pageWidth * 0.05) { // Very close to left edge  
-            paddingX = Math.max(paddingX, xMin + 20);
-            xMin = Math.max(0, xMin - paddingX);
-          } else {
-            xMin = Math.max(0, xMin - paddingX);
+          if (topMargin < pageHeight * 0.12) { // Less than 12% from top edge
+            console.log(`🚨 TOP CLIPPING: Expanding from yMax=${yMax.toFixed(1)} to capture top content`);
+            adjustedYMax = Math.min(pageHeight, yMax + (topMargin * 0.7));
           }
           
-          xMax = Math.min(pageWidth, xMax + paddingX);
-          yMax = Math.min(pageHeight, yMax + paddingY);
+          if (leftMargin < pageWidth * 0.12) { // Less than 12% from left edge
+            console.log(`🚨 LEFT CLIPPING: Expanding from xMin=${xMin.toFixed(1)} to capture left content`);
+            adjustedXMin = Math.max(0, xMin * 0.3);
+          }
           
-          const newWidth = xMax - xMin;
-          const newHeight = yMax - yMin;
-          console.log(`✅ EXPANDED BOUNDS: ${newWidth.toFixed(1)}×${newHeight.toFixed(1)}pts (${((newWidth*newHeight/pageArea)*100).toFixed(1)}% coverage)`);
+          if (rightMargin < pageWidth * 0.12) { // Less than 12% from right edge
+            console.log(`🚨 RIGHT CLIPPING: Expanding from xMax=${xMax.toFixed(1)} to capture right content`);
+            adjustedXMax = Math.min(pageWidth, xMax + (rightMargin * 0.7));
+          }
+          
+          const newWidth = adjustedXMax - adjustedXMin;
+          const newHeight = adjustedYMax - adjustedYMin;
+          console.log(`✅ SURGICAL EXPANSION: ${newWidth.toFixed(1)}×${newHeight.toFixed(1)}pts (only expanded clipped edges)`);
           
           return {
-            xMin,
-            yMin,
-            xMax,
-            yMax,
+            xMin: adjustedXMin,
+            yMin: adjustedYMin,
+            xMax: adjustedXMax,
+            yMax: adjustedYMax,
             width: newWidth,
             height: newHeight,
             units: 'pt'
