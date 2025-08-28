@@ -47,17 +47,23 @@ export default function SvgInlineRenderer({
         // Ensure viewBox is preserved for proper scaling
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
         if (viewBoxMatch) {
-          // Check if this is oversized content that needs to be fitted
-          const [, , vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(Number);
-          const elementAspect = element.width / element.height;
-          const viewBoxAspect = vbWidth / vbHeight;
+          // Always use "xMidYMid meet" to ensure content is fully visible and centered
+          // This ensures the entire SVG fits within the bounds and is centered both horizontally and vertically
+          const preserveAspectRatio = 'xMidYMid meet';
           
-          // Use "slice" for oversized content to ensure it fills the container and is centered
-          // This prevents clipping at the edges when content is larger than the container
-          const aspectRatio = Math.abs(elementAspect - viewBoxAspect) > 0.1 ? 'xMidYMid slice' : 'xMidYMid meet';
+          // Replace existing preserveAspectRatio if present, or add it
+          if (cleanedSvg.includes('preserveAspectRatio')) {
+            cleanedSvg = cleanedSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, `preserveAspectRatio="${preserveAspectRatio}"`);
+          }
           
+          // Ensure width and height are 100% and preserveAspectRatio is set
           if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" preserveAspectRatio="${aspectRatio}" style="display:block">`);
+            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" preserveAspectRatio="${preserveAspectRatio}" style="display:block;">`);
+          } else {
+            // Make sure preserveAspectRatio is set even if width/height already exist
+            if (!cleanedSvg.includes('preserveAspectRatio')) {
+              cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 preserveAspectRatio="${preserveAspectRatio}">`);
+            }
           }
         }
         
