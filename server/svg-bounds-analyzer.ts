@@ -577,20 +577,35 @@ export class SVGBoundsAnalyzer {
     // Sort by area to identify potential background paths
     allBounds.sort((a, b) => a.area - b.area);
     
-    // Calculate median area to identify outliers
+    // Calculate statistics for smarter filtering
     const areas = allBounds.map(b => b.area);
-    const medianArea = areas[Math.floor(areas.length / 2)];
-    const totalViewBoxArea = 1762.7 * 1344.7; // From the logs
+    const widths = allBounds.map(b => b.width);
+    const heights = allBounds.map(b => b.height);
     
-    // Filter out paths that are likely backgrounds
-    // 1. Paths that cover more than 80% of the total viewBox
-    // 2. Paths that are more than 50x larger than the median
+    // Sort to get percentiles
+    areas.sort((a, b) => a - b);
+    widths.sort((a, b) => a - b);
+    heights.sort((a, b) => a - b);
+    
+    const medianArea = areas[Math.floor(areas.length * 0.5)];
+    const area75th = areas[Math.floor(areas.length * 0.75)];
+    const area90th = areas[Math.floor(areas.length * 0.9)];
+    
+    console.log(`📊 Path statistics: median area=${medianArea.toFixed(0)}, 75th=${area75th.toFixed(0)}, 90th=${area90th.toFixed(0)}`);
+    
+    // More aggressive filtering for tight cropping
+    // 1. Remove paths larger than 10x the 75th percentile area
+    // 2. Remove paths with width or height > 500px (likely backgrounds)
+    // 3. Remove outlier paths that are much larger than the median
     const contentPaths = allBounds.filter(pathBounds => {
-      const isLikelyBackground = pathBounds.area > totalViewBoxArea * 0.8 || 
-                                pathBounds.area > medianArea * 50;
+      const isTooLarge = pathBounds.area > area75th * 10;
+      const isTooWide = pathBounds.width > 500 || pathBounds.height > 500;
+      const isOutlier = pathBounds.area > medianArea * 25;
+      
+      const isLikelyBackground = isTooLarge || isTooWide || isOutlier;
       
       if (isLikelyBackground) {
-        console.log(`🚫 Excluding likely background path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
+        console.log(`🚫 Excluding background path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isTooLarge ? 'too large' : isTooWide ? 'too wide' : 'outlier'}`);
         return false;
       }
       return true;
