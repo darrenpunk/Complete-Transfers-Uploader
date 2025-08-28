@@ -89,11 +89,12 @@ export class RobustPDFGenerator {
    * Create base template as PostScript file for maximum control
    */
   private async createBaseTemplate(data: ProjectData): Promise<string> {
-    console.log(`📄 Creating base template with exact A3 dimensions`);
+    console.log(`📄 Creating base template with exact dimensions`);
     
-    // A3 dimensions in points (842 x 1191)
-    const templateWidthPts = 842;
-    const templateHeightPts = 1191;
+    // Template dimensions in points
+    const MM_TO_POINTS = 2.834645669;
+    const templateWidthPts = (data.templateSize?.width || 297) * MM_TO_POINTS;
+    const templateHeightPts = (data.templateSize?.height || 420) * MM_TO_POINTS;
     
     const timestamp = Date.now();
     const templatePSPath = path.join(process.cwd(), 'uploads', `template_${timestamp}.ps`);
@@ -218,8 +219,8 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     // Calculate exact position in points
     // Convert center-based coordinates to PDF bottom-left coordinates
     const MM_TO_POINTS = 2.834645669;
-    const templateWidthMM = 297; // A3 width
-    const templateHeightMM = 420; // A3 height
+    const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
+    const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
     const templateCenterX = templateWidthMM / 2;
     const templateCenterY = templateHeightMM / 2;
     
@@ -383,8 +384,8 @@ grestore`;
         // Convert center-based coordinates to PDF bottom-left coordinates
         const contentWidthPts = element.width * MM_TO_POINTS;
         const contentHeightPts = element.height * MM_TO_POINTS;
-        const templateWidthMM = 297; // A3 width
-        const templateHeightMM = 420; // A3 height
+        const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
+        const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
         const templateCenterX = templateWidthMM / 2;
         const templateCenterY = templateHeightMM / 2;
         
@@ -646,8 +647,8 @@ grestore`;
       
       // Position calculation needs to account for visual dimensions when rotated
       // Convert center-based coordinates to PDF bottom-left coordinates
-      const templateWidthMM = 297; // A3 width
-      const templateHeightMM = 420; // A3 height
+      const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
+      const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
       const templateCenterX = templateWidthMM / 2;
       const templateCenterY = templateHeightMM / 2;
       
@@ -695,8 +696,8 @@ grestore`;
         // For all other templates (A3, etc.) - convert canvas coordinates to PDF coordinates
         // Convert center-based Y to PDF bottom-left Y
         // Template center Y = 0 in our coordinate system
-        const templateHeightPts = 1190.55; // Exact A3 height in points
-        const templateHeightMM = 420; // A3 height in mm
+        const templateHeightPts = (data.templateSize?.height || 420) * MM_TO_POINTS; // Exact template height in points
+        const templateHeightMM = data.templateSize?.height || 420; // Template height in mm
         const templateCenterYMM = templateHeightMM / 2;
         
         // Convert element center position to absolute position
@@ -708,7 +709,7 @@ grestore`;
         // No adjustment needed for center-based rotation
         // Rotation adjustments are handled in the drawOptions section
         
-        console.log(`📐 Standard template positioning: A3 height=${templateHeightPts}pt, element.y=${element.y}mm, visualHeight=${visualHeightMM}mm, y=${yPts.toFixed(1)}pt`);
+        console.log(`📐 Standard template positioning: Template height=${templateHeightPts}pt, element.y=${element.y}mm, visualHeight=${visualHeightMM}mm, y=${yPts.toFixed(1)}pt`);
       }
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);

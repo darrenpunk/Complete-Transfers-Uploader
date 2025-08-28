@@ -964,8 +964,8 @@ export async function registerRoutes(app: express.Application) {
             
             // Convert center-based coordinates to PDF coordinates
             // Element x,y is the center position relative to template center (0,0)
-            const templateWidthMM = 297; // A3 width
-            const templateHeightMM = 420; // A3 height
+            const templateWidthMM = templateSize?.width || 297; // Use actual template width
+            const templateHeightMM = templateSize?.height || 420; // Use actual template height
             const templateCenterXMM = templateWidthMM / 2;
             const templateCenterYMM = templateHeightMM / 2;
             
