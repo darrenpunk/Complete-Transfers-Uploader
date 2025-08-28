@@ -981,13 +981,21 @@ export async function registerRoutes(app: express.Application) {
               const visualWidth = heightPts;
               const visualHeight = widthPts;
               
-              // Rotation happens around bottom-left corner in PDF
-              // After 90° rotation, content extends leftward by its height
-              const rotatedX = xPosPts + heightPts;
-              const rotatedY = yPosPts;
+              // For 90° rotation in pdf-lib:
+              // - Rotation happens around the origin point (0,0) first
+              // - Then the result is translated by (x,y)
+              // - After 90° rotation, the original width extends upward (becomes height)
+              // - The original height extends to the right (becomes width)
+              
+              // We need to account for the fact that after rotation:
+              // - The bottom-left corner of the rotated content is at (0, -originalWidth)
+              // - So we need to shift up by originalWidth to get it back to (0,0)
+              const rotatedX = xPosPts + heightPts; // Shift right by the rotated width (original height)
+              const rotatedY = yPosPts; // Y position stays the same after accounting for rotation
               
               console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
+              console.log(`📐 Original dims: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
