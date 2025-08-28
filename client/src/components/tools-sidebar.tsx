@@ -975,14 +975,11 @@ export default function ToolsSidebar({
             });
           }
           
-          // Position Check - use visual dimensions when rotated
-          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
-          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
-          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
-          
+          // Position Check - canvas stays at 297×420mm, content rotates within it
+          // Just check that the position itself is within canvas
           const isWithinBounds = selectedElement.x >= 0 && selectedElement.y >= 0 && 
-                                selectedElement.x + visualWidth <= 297 && 
-                                selectedElement.y + visualHeight <= 420;
+                                selectedElement.x <= 297 && 
+                                selectedElement.y <= 420;
           checks.push({
             name: "Position",
             status: isWithinBounds ? "pass" : "warning",
@@ -990,6 +987,10 @@ export default function ToolsSidebar({
           });
           
           // Size Check - display visual dimensions
+          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
+          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
+          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
+          
           const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
                                    visualWidth <= 280 && visualHeight <= 400;
           checks.push({
