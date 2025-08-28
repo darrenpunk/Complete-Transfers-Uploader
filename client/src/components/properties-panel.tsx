@@ -220,50 +220,52 @@ export default function PropertiesPanel({
     const safeZoneWidth = templateWidth;
     const safeZoneHeight = templateHeight;
     
-    // Canvas stays fixed - use stored dimensions for alignment
-    // Content rotates within fixed bounds
-    const elementWidth = currentElement.width;
-    const elementHeight = currentElement.height;
+    // Center-based coordinate system
+    // (0,0) is at the center of the template
+    const templateHalfWidth = templateWidth / 2;
+    const templateHalfHeight = templateHeight / 2;
+    const elementHalfWidth = currentElement.width / 2;
+    const elementHalfHeight = currentElement.height / 2;
     
     let x = currentElement.x;
     let y = currentElement.y;
     
     switch (alignment) {
       case 'top-left':
-        x = safeZoneX;
-        y = safeZoneY;
+        x = -templateHalfWidth + elementHalfWidth;
+        y = -templateHalfHeight + elementHalfHeight;
         break;
       case 'top-center':
-        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
-        y = safeZoneY;
+        x = 0;
+        y = -templateHalfHeight + elementHalfHeight;
         break;
       case 'top-right':
-        x = safeZoneX + safeZoneWidth - elementWidth;
-        y = safeZoneY;
+        x = templateHalfWidth - elementHalfWidth;
+        y = -templateHalfHeight + elementHalfHeight;
         break;
       case 'middle-left':
-        x = safeZoneX;
-        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
+        x = -templateHalfWidth + elementHalfWidth;
+        y = 0;
         break;
       case 'center':
-        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
-        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
+        x = 0;
+        y = 0;
         break;
       case 'middle-right':
-        x = safeZoneX + safeZoneWidth - elementWidth;
-        y = safeZoneY + (safeZoneHeight - elementHeight) / 2;
+        x = templateHalfWidth - elementHalfWidth;
+        y = 0;
         break;
       case 'bottom-left':
-        x = safeZoneX;
-        y = safeZoneY + safeZoneHeight - elementHeight;
+        x = -templateHalfWidth + elementHalfWidth;
+        y = templateHalfHeight - elementHalfHeight;
         break;
       case 'bottom-center':
-        x = safeZoneX + (safeZoneWidth - elementWidth) / 2;
-        y = safeZoneY + safeZoneHeight - elementHeight;
+        x = 0;
+        y = templateHalfHeight - elementHalfHeight;
         break;
       case 'bottom-right':
-        x = safeZoneX + safeZoneWidth - elementWidth;
-        y = safeZoneY + safeZoneHeight - elementHeight;
+        x = templateHalfWidth - elementHalfWidth;
+        y = templateHalfHeight - elementHalfHeight;
         break;
     }
     

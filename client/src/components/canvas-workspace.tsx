@@ -505,8 +505,15 @@ export default function CanvasWorkspace({
       if (isPdfDerived) {
         mmToPixelRatio = 2.834645669; // 72 DPI conversion
       }
-      const dragOffsetX = event.clientX - rect.left - element.x * mmToPixelRatio * (zoom / 100);
-      const dragOffsetY = event.clientY - rect.top - element.y * mmToPixelRatio * (zoom / 100);
+      // Convert element center position to screen coordinates
+      const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
+      const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
+      const elementCenterX = templateCenterX + element.x * mmToPixelRatio * (zoom / 100);
+      const elementCenterY = templateCenterY + element.y * mmToPixelRatio * (zoom / 100);
+      
+      // Calculate drag offset from mouse to element center
+      const dragOffsetX = event.clientX - rect.left - elementCenterX;
+      const dragOffsetY = event.clientY - rect.top - elementCenterY;
       
       console.log(`🎯 Drag offset calculated: (${dragOffsetX.toFixed(1)}, ${dragOffsetY.toFixed(1)})`);
       setDragOffset({
@@ -538,22 +545,30 @@ export default function CanvasWorkspace({
           if (isPdfDerived) {
             mmToPixelRatio = 2.834645669; // 72 DPI conversion
           }
-          const safetyMargin = 0; // Remove safety margin for free positioning
+          // Convert mouse position to center-based coordinates
+          const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
+          const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
           
-          const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
-          const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
+          // Convert to center-based coordinates (relative to template center)
+          const templateCenterX = template.width / 2;
+          const templateCenterY = template.height / 2;
           
-          // Canvas stays the same size - only content rotates within fixed bounds
+          // Calculate new center position (accounting for drag offset)
+          const newCenterX = mouseX - templateCenterX - (dragOffset.x / scaleFactor / mmToPixelRatio);
+          const newCenterY = mouseY - templateCenterY - (dragOffset.y / scaleFactor / mmToPixelRatio);
+          
           // Constrain movement to keep element within canvas bounds
-          const elementWidth = selectedElement.width;
-          const elementHeight = selectedElement.height;
+          const halfWidth = selectedElement.width / 2;
+          const halfHeight = selectedElement.height / 2;
           
-          // Allow movement within canvas bounds accounting for element size
-          const maxX = Math.max(0, template.width - elementWidth);
-          const maxY = Math.max(0, template.height - elementHeight);
+          // Bounds in center-based coordinates
+          const minX = -templateCenterX + halfWidth;
+          const maxX = templateCenterX - halfWidth;
+          const minY = -templateCenterY + halfHeight;
+          const maxY = templateCenterY - halfHeight;
           
-          const constrainedX = Math.max(0, Math.min(newX, maxX));
-          const constrainedY = Math.max(0, Math.min(newY, maxY));
+          const constrainedX = Math.max(minX, Math.min(newCenterX, maxX));
+          const constrainedY = Math.max(minY, Math.min(newCenterY, maxY));
 
           updateElementDirect(selectedElement.id, { 
             x: constrainedX, 
@@ -1502,8 +1517,16 @@ export default function CanvasWorkspace({
               // Apply zoom to match the canvas scaling
               const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
               const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
-              const elementX = element.x * mmToPixelRatio * (zoom / 100);
-              const elementY = element.y * mmToPixelRatio * (zoom / 100);
+              
+              // Convert center-based coordinates to top-left for rendering
+              // element.x/y is the center position relative to template center
+              // Template center in pixels
+              const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
+              const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
+              
+              // Convert center position to top-left corner for CSS positioning
+              const elementX = templateCenterX + (element.x * mmToPixelRatio * (zoom / 100)) - elementWidth / 2;
+              const elementY = templateCenterY + (element.y * mmToPixelRatio * (zoom / 100)) - elementHeight / 2;
               
               // For the bounding box, we need the exact content size without extra padding
               // The element dimensions from the database should already be cropped to content

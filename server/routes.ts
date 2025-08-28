@@ -962,13 +962,18 @@ export async function registerRoutes(app: express.Application) {
             // Use actual canvas positions with rotation adjustments
             console.log(`🔄 Element rotation: ${rotation}°`);
             
-            // Convert element position from mm to PDF points
-            // Element x,y is the position in canvas coordinates
-            const xPosPts = element.x * 2.834645669;
+            // Convert center-based coordinates to PDF coordinates
+            // Element x,y is the center position relative to template center
+            const templateCenterX = pageWidth / 2;
+            const templateCenterY = pageHeight / 2;
             
-            // For Y position: PDF coordinates are bottom-up, canvas is top-down
-            // Always use stored height for Y position calculation
-            const yPosPts = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+            // Convert center position to PDF bottom-left coordinates
+            const elementCenterX = templateCenterX + (element.x * 2.834645669);
+            const elementCenterY = templateCenterY - (element.y * 2.834645669); // Flip Y for PDF
+            
+            // Calculate top-left corner from center position
+            const xPosPts = elementCenterX - (element.width * 2.834645669 / 2);
+            const yPosPts = elementCenterY - (element.height * 2.834645669 / 2);
             
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
@@ -2312,30 +2317,14 @@ export async function registerRoutes(app: express.Application) {
           throw new Error('Template size not found');
         }
 
-        // Calculate centered position with DTF template-specific handling
-        let centerX, centerY;
+        // Use center-based coordinate system
+        // Origin (0,0) is at the center of the template
+        // Content is positioned by its center point
+        let centerX = 0;  // Center of template
+        let centerY = 0;  // Center of template
         
-        if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
-          // DTF template is landscape format (1000×550mm) - special handling
-          console.log(`🎯 DTF template detected: ${templateSize.width}×${templateSize.height}mm`);
-          
-          // For DTF, ensure proper centering that works with rotation
-          // Center both horizontally and vertically, but ensure it fits within template bounds
-          centerX = Math.max(10, (templateSize.width - displayWidth) / 2);
-          centerY = Math.max(10, (templateSize.height - displayHeight) / 2);
-          
-          // Additional safety for large elements that might exceed template
-          if (centerY < 10) centerY = 10; // Minimum 10mm from top
-          if (centerX < 10) centerX = 10; // Minimum 10mm from left
-          
-          console.log(`📍 DTF positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm (template=${templateSize.width}×${templateSize.height}mm, content=${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
-        } else {
-          // Standard templates (A3, etc.) - existing behavior
-          centerX = Math.max(0, (templateSize.width - displayWidth) / 2);
-          centerY = Math.max(0, (templateSize.height - displayHeight) / 2);
-          
-          console.log(`📐 Standard template positioning: centerX=${centerX.toFixed(1)}mm, centerY=${centerY.toFixed(1)}mm`);
-        }
+        console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
+        console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
