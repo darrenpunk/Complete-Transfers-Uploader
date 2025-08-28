@@ -544,9 +544,16 @@ export default function CanvasWorkspace({
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
           
           // Canvas stays the same size - only content rotates within fixed bounds
-          // Allow free movement anywhere in the canvas regardless of rotation
-          const constrainedX = Math.max(0, Math.min(newX, template.width));
-          const constrainedY = Math.max(0, Math.min(newY, template.height));
+          // Constrain movement to keep element within canvas bounds
+          const elementWidth = selectedElement.width;
+          const elementHeight = selectedElement.height;
+          
+          // Allow movement within canvas bounds accounting for element size
+          const maxX = Math.max(0, template.width - elementWidth);
+          const maxY = Math.max(0, template.height - elementHeight);
+          
+          const constrainedX = Math.max(0, Math.min(newX, maxX));
+          const constrainedY = Math.max(0, Math.min(newY, maxY));
 
           updateElementDirect(selectedElement.id, { 
             x: constrainedX, 

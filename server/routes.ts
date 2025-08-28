@@ -967,9 +967,8 @@ export async function registerRoutes(app: express.Application) {
             const xPosPts = element.x * 2.834645669;
             
             // For Y position: PDF coordinates are bottom-up, canvas is top-down
-            // When rotated, we need to account for visual height, not stored height
-            const visualHeightMm = isRotated ? element.width : element.height;
-            const yPosPts = pageHeight - (element.y * 2.834645669) - (visualHeightMm * 2.834645669);
+            // Always use stored height for Y position calculation
+            const yPosPts = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
             
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
