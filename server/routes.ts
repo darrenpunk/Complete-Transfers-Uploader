@@ -989,10 +989,13 @@ export async function registerRoutes(app: express.Application) {
               // - The content that extended up now extends left
               // This means after rotation, the content is to the LEFT of the rotation point
               
-              // To position correctly, we need to shift right by the visual width (original height)
-              // because the rotated content extends leftward from the rotation point
-              const rotatedX = xPosPts + visualWidth; // Shift right by visual width (original height)
-              const rotatedY = yPosPts;
+              // To position correctly for 90° rotation:
+              // pdf-lib rotates around (0,0) and then translates
+              // After 90° rotation, a box at (0,0) with width W and height H
+              // will have its bottom-left at (0, -W) and extends to (H, 0)
+              // We need to compensate by adding W to Y to bring it back up
+              const rotatedX = xPosPts;
+              const rotatedY = yPosPts + widthPts; // Add original width to Y
               
               console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);

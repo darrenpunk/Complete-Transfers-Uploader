@@ -975,23 +975,27 @@ export default function ToolsSidebar({
             });
           }
           
-          // Position Check
+          // Position Check - use visual dimensions when rotated
+          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
+          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
+          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
+          
           const isWithinBounds = selectedElement.x >= 0 && selectedElement.y >= 0 && 
-                                selectedElement.x + selectedElement.width <= 297 && 
-                                selectedElement.y + selectedElement.height <= 420;
+                                selectedElement.x + visualWidth <= 297 && 
+                                selectedElement.y + visualHeight <= 420;
           checks.push({
             name: "Position",
             status: isWithinBounds ? "pass" : "warning",
             value: isWithinBounds ? "In Bounds" : "Check Position"
           });
           
-          // Size Check
-          const hasReasonableSize = selectedElement.width >= 5 && selectedElement.height >= 5 &&
-                                   selectedElement.width <= 280 && selectedElement.height <= 400;
+          // Size Check - display visual dimensions
+          const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
+                                   visualWidth <= 280 && visualHeight <= 400;
           checks.push({
             name: "Print Size",
             status: hasReasonableSize ? "pass" : "warning",
-            value: `${Math.round(selectedElement.width)}×${Math.round(selectedElement.height)}mm`
+            value: `${Math.round(visualWidth)}×${Math.round(visualHeight)}mm`
           });
 
           // Font Check
