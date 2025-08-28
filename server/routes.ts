@@ -2203,17 +2203,17 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Add minimal overflow only where needed for text glyphs
-                    // Text extends mainly on right and bottom edges
-                    const rightOverflow = 10;  // Small amount for trailing text
-                    const bottomOverflow = 15;  // More space for descenders and bottom text
-                    const expandedWidth = contentBounds.width + rightOverflow;
-                    const expandedHeight = contentBounds.height + bottomOverflow;
+                    // Add equal overflow on all sides to ensure proper centering
+                    // This ensures the content is truly centered within the viewBox
+                    const horizontalOverflow = 10;  // Equal padding left/right
+                    const verticalOverflow = 10;    // Equal padding top/bottom for true centering
+                    const expandedWidth = contentBounds.width + horizontalOverflow;
+                    const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // Center horizontally but not vertically 
-                    // Keep content at top to prevent bottom clipping
-                    const xOffset = rightOverflow / 2;
-                    const yOffset = 0;  // No vertical offset - keep at top
+                    // Center both horizontally and vertically
+                    // Equal offset on all sides ensures proper centering
+                    const xOffset = horizontalOverflow / 2;
+                    const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
@@ -2221,7 +2221,7 @@ export async function registerRoutes(app: express.Application) {
                       height="${expandedHeight}"
                       preserveAspectRatio="none"
                       data-content-extracted="true"
-                      data-overflow="right:${rightOverflow},bottom:${bottomOverflow}"
+                      data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
                         <g transform="translate(${-contentBounds.xMin + xOffset}, ${-contentBounds.yMin + yOffset})">
                           ${innerContent}
@@ -2254,10 +2254,10 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Add minimal overflow only where needed for text glyphs
+                // Add equal overflow on all sides for proper centering
                 // Keep bounds as accurate as possible for customer resizing
-                const horizontalOverflow = needsTightCrop ? 10 : 0; // Just 10px on right for text
-                const verticalOverflow = needsTightCrop ? 15 : 0;   // 15px on bottom for descenders and text
+                const horizontalOverflow = needsTightCrop ? 10 : 0; // Equal padding left/right
+                const verticalOverflow = needsTightCrop ? 10 : 0;   // Equal padding top/bottom
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
