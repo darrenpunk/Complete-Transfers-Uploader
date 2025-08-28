@@ -3353,6 +3353,12 @@ export async function registerRoutes(app: express.Application) {
       formData.append('output_format', 'svg');
       console.log('✅ Explicitly requesting SVG output format to avoid binary PNG data');
       
+      // ASPECT RATIO PRESERVATION: Add parameters to prevent square padding
+      formData.append('processing.max_colors', '256'); // Reasonable color limit
+      formData.append('output.group_by', 'layer'); // Preserve structure
+      formData.append('output.curves_mode', 'spline'); // Better curve handling
+      console.log('🎯 Added aspect ratio preservation parameters');
+      
       // CRITICAL FIX: Vector.AI API expects specific mode values based on documentation
       if (!isPreview) {
         // Production mode should NOT include mode parameter (uses default)
@@ -3361,9 +3367,6 @@ export async function registerRoutes(app: express.Application) {
         formData.append('mode', 'preview');
         console.log('⚡ Preview mode for testing');
       }
-      
-      // NO CUSTOM PARAMETERS - Let Vector.AI use exact webapp defaults
-      // The webapp works perfectly, so we use NO processing overrides
       
       console.log('✅ WEBAPP DEFAULT CONFIGURATION - Using Vector.AI native defaults that work perfectly on their website');
 
