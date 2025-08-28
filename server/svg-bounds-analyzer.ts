@@ -593,20 +593,36 @@ export class SVGBoundsAnalyzer {
     
     console.log(`📊 Path statistics: median area=${medianArea.toFixed(0)}, 75th=${area75th.toFixed(0)}, 90th=${area90th.toFixed(0)}`);
     
-    // BALANCED filtering for tight cropping - preserve actual content
-    // Remove both massive containers AND tiny artifacts that create extra bounds
-    // 1. Remove paths larger than 50x the median area (huge containers)
-    // 2. Remove paths with width or height > 1500px (massive backgrounds)  
-    // 3. Remove tiny artifact paths that are extremely thin (<2px width/height)
-    const contentPaths = allBounds.filter(pathBounds => {
+    // DENSITY-BASED filtering - find the actual content cluster
+    // Vectorizer.ai creates huge square canvases, we need to find where the real logo is
+    
+    // Step 1: Remove obvious artifacts and containers
+    const filteredPaths = allBounds.filter(pathBounds => {
       const isHugeContainer = pathBounds.area > medianArea * 50;
       const isMassiveBackground = pathBounds.width > 1500 || pathBounds.height > 1500;
       const isTinyArtifact = (pathBounds.width < 2 || pathBounds.height < 2) && pathBounds.area < 200;
       
-      const isLikelyBackground = isHugeContainer || isMassiveBackground || isTinyArtifact;
+      if (isHugeContainer || isMassiveBackground || isTinyArtifact) {
+        console.log(`🚫 Excluding ${isHugeContainer ? 'huge container' : isMassiveBackground ? 'massive background' : 'tiny artifact'}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)}`);
+        return false;
+      }
+      return true;
+    });
+    
+    // Step 2: Find center of mass of remaining paths (where the logo actually is)
+    const centerX = filteredPaths.reduce((sum, p) => sum + (p.xMin + p.xMax) / 2, 0) / filteredPaths.length;
+    const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
+    console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+    
+    // Step 3: Keep only paths that are close to the center (actual logo content)
+    const maxDistanceFromCenter = Math.min(400, Math.sqrt(medianArea) * 2); // Reasonable logo spread
+    const contentPaths = filteredPaths.filter(pathBounds => {
+      const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
+      const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;
+      const distance = Math.sqrt(Math.pow(pathCenterX - centerX, 2) + Math.pow(pathCenterY - centerY, 2));
       
-      if (isLikelyBackground) {
-        console.log(`🚫 Excluding path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isHugeContainer ? 'huge container' : isMassiveBackground ? 'massive background' : 'tiny artifact'}`);
+      if (distance > maxDistanceFromCenter) {
+        console.log(`🚫 Excluding distant path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (${distance.toFixed(0)}px from center)`);
         return false;
       }
       return true;
