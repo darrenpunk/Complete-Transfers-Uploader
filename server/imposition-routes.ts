@@ -39,7 +39,7 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
         totalGridSize: { width: totalGridWidth, height: totalGridHeight }
       });
       
-      // Calculate starting position (top-left of grid)
+      // Calculate starting position (top-left of grid in center-based coordinate system)
       let startX = originalElement.x;
       let startY = originalElement.y;
       
@@ -49,13 +49,18 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
         const templateSize = project ? await storage.getTemplateSize(project.templateSize) : null;
         
         if (templateSize) {
-          startX = Math.max(0, (templateSize.width - totalGridWidth) / 2);
-          startY = Math.max(0, (templateSize.height - totalGridHeight) / 2);
+          // In center-based system: (0,0) is at template center
+          // To center the grid, the top-left corner should be at:
+          // x: -totalGridWidth/2 (negative = left of center)
+          // y: -totalGridHeight/2 (negative = above center)
+          startX = -totalGridWidth / 2;
+          startY = -totalGridHeight / 2;
           
-          console.log('Centering calculation:', {
+          console.log('Center-based grid centering:', {
             templateSize: { width: templateSize.width, height: templateSize.height },
             gridSize: { width: totalGridWidth, height: totalGridHeight },
-            calculatedStart: { x: startX, y: startY }
+            centerBasedStart: { x: startX, y: startY },
+            description: 'Grid centered at template origin (0,0)'
           });
           
           // Update original element position if centering
