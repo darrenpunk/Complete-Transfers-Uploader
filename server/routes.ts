@@ -967,9 +967,9 @@ export async function registerRoutes(app: express.Application) {
             const xPosPts = element.x * 2.834645669;
             
             // For Y position: PDF coordinates are bottom-up, canvas is top-down
-            // We need to flip the Y coordinate and account for element height
-            // Use stored height, not visual height, for position calculation
-            const yPosPts = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
+            // When rotated, we need to account for visual height, not stored height
+            const visualHeightMm = isRotated ? element.width : element.height;
+            const yPosPts = pageHeight - (element.y * 2.834645669) - (visualHeightMm * 2.834645669);
             
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
@@ -981,13 +981,10 @@ export async function registerRoutes(app: express.Application) {
               const visualHeight = widthPts;
               
               // For 90° rotation in pdf-lib:
-              // The rotation happens around the point where we place the element
-              // We need to position based on where the visual top-left should be
-              
-              // The canvas position (element.x, element.y) is the visual top-left
-              // After 90° rotation, the original content's bottom-left becomes the visual top-left
-              // So we position at the canvas coordinates directly
-              const rotatedX = xPosPts;
+              // Rotation happens around the bottom-left corner of the content
+              // After rotation, the content that was horizontal becomes vertical
+              // We need to shift right by the visual width (original height)
+              const rotatedX = xPosPts + visualWidth;
               const rotatedY = yPosPts;
               
               console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);

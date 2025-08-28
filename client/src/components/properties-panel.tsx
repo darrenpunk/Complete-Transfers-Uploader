@@ -220,10 +220,10 @@ export default function PropertiesPanel({
     const safeZoneWidth = templateWidth;
     const safeZoneHeight = templateHeight;
     
-    // Use visual dimensions for alignment when rotated
-    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
-    const elementWidth = isRotated ? currentElement.height : currentElement.width;
-    const elementHeight = isRotated ? currentElement.width : currentElement.height;
+    // Canvas stays fixed - use stored dimensions for alignment
+    // Content rotates within fixed bounds
+    const elementWidth = currentElement.width;
+    const elementHeight = currentElement.height;
     
     let x = currentElement.x;
     let y = currentElement.y;
