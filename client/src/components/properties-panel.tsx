@@ -162,15 +162,20 @@ export default function PropertiesPanel({
   // Update local input values when the current element changes
   useEffect(() => {
     if (currentElement) {
+      // When rotated 90° or 270°, visual dimensions are swapped
+      const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+      const visualWidth = isRotated ? currentElement.height : currentElement.width;
+      const visualHeight = isRotated ? currentElement.width : currentElement.height;
+      
       setLocalInputValues({
         x: (currentElement.x || 0).toFixed(2),
         y: (currentElement.y || 0).toFixed(2),
-        width: (currentElement.width || 0).toFixed(2),
-        height: (currentElement.height || 0).toFixed(2),
+        width: (visualWidth || 0).toFixed(2),
+        height: (visualHeight || 0).toFixed(2),
         opacity: Math.round((currentElement.opacity || 1) * 100).toString()
       });
     }
-  }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.opacity]);
+  }, [currentElement?.id, currentElement?.x, currentElement?.y, currentElement?.width, currentElement?.height, currentElement?.opacity, currentElement?.rotation]);
   
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -215,6 +220,11 @@ export default function PropertiesPanel({
     const safeZoneWidth = templateWidth - (2 * safetyMargin);
     const safeZoneHeight = templateHeight - (2 * safetyMargin);
     
+    // Account for rotation when aligning
+    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+    const visualWidth = isRotated ? currentElement.height : currentElement.width;
+    const visualHeight = isRotated ? currentElement.width : currentElement.height;
+    
     let x = currentElement.x;
     let y = currentElement.y;
     
@@ -224,36 +234,36 @@ export default function PropertiesPanel({
         y = safeZoneY;
         break;
       case 'top-center':
-        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
+        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
         y = safeZoneY;
         break;
       case 'top-right':
-        x = safeZoneX + safeZoneWidth - currentElement.width;
+        x = safeZoneX + safeZoneWidth - visualWidth;
         y = safeZoneY;
         break;
       case 'middle-left':
         x = safeZoneX;
-        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
+        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
         break;
       case 'center':
-        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
-        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
+        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
+        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
         break;
       case 'middle-right':
-        x = safeZoneX + safeZoneWidth - currentElement.width;
-        y = safeZoneY + (safeZoneHeight - currentElement.height) / 2;
+        x = safeZoneX + safeZoneWidth - visualWidth;
+        y = safeZoneY + (safeZoneHeight - visualHeight) / 2;
         break;
       case 'bottom-left':
         x = safeZoneX;
-        y = safeZoneY + safeZoneHeight - currentElement.height;
+        y = safeZoneY + safeZoneHeight - visualHeight;
         break;
       case 'bottom-center':
-        x = safeZoneX + (safeZoneWidth - currentElement.width) / 2;
-        y = safeZoneY + safeZoneHeight - currentElement.height;
+        x = safeZoneX + (safeZoneWidth - visualWidth) / 2;
+        y = safeZoneY + safeZoneHeight - visualHeight;
         break;
       case 'bottom-right':
-        x = safeZoneX + safeZoneWidth - currentElement.width;
-        y = safeZoneY + safeZoneHeight - currentElement.height;
+        x = safeZoneX + safeZoneWidth - visualWidth;
+        y = safeZoneY + safeZoneHeight - visualHeight;
         break;
     }
     
@@ -399,7 +409,15 @@ export default function PropertiesPanel({
     
     // Set new timeout to update the server
     debouncedUpdateRef.current = setTimeout(() => {
-      handlePropertyChange(property, value);
+      // For rotated elements, swap width/height back before saving
+      const isRotated = currentElement?.rotation === 90 || currentElement?.rotation === 270;
+      let actualProperty = property;
+      if (isRotated && property === 'width') {
+        actualProperty = 'height';
+      } else if (isRotated && property === 'height') {
+        actualProperty = 'width';
+      }
+      handlePropertyChange(actualProperty as keyof CanvasElement, value);
     }, 500); // 500ms delay
   };
 
@@ -452,11 +470,22 @@ export default function PropertiesPanel({
 
     // Handle aspect ratio maintenance for width/height changes (only if not a rotation change)
     if (maintainAspectRatio && (property === 'width' || property === 'height')) {
-      const aspectRatio = currentElement.width / currentElement.height;
+      // Use visual dimensions for aspect ratio when rotated
+      const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+      const visualWidth = isRotated ? currentElement.height : currentElement.width;
+      const visualHeight = isRotated ? currentElement.width : currentElement.height;
+      const aspectRatio = visualWidth / visualHeight;
+      
       if (property === 'width') {
-        updates.height = Math.round(processedValue / aspectRatio);
+        // When updating width visually, update height (which may be stored width when rotated)
+        const newVisualHeight = Math.round(processedValue / aspectRatio);
+        updates.height = isRotated ? updates.width : newVisualHeight;
+        updates.width = isRotated ? newVisualHeight : processedValue;
       } else {
-        updates.width = Math.round(processedValue * aspectRatio);
+        // When updating height visually, update width (which may be stored height when rotated)
+        const newVisualWidth = Math.round(processedValue * aspectRatio);
+        updates.width = isRotated ? updates.height : newVisualWidth;
+        updates.height = isRotated ? newVisualWidth : processedValue;
       }
     }
 
@@ -634,7 +663,9 @@ export default function PropertiesPanel({
               <Label className="text-sm font-medium">Size</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <div>
-                  <Label className="text-xs text-gray-500">Width (mm)</Label>
+                  <Label className="text-xs text-gray-500">
+                    Width (mm) {(currentElement?.rotation === 90 || currentElement?.rotation === 270) && "(↔️ visual)"}
+                  </Label>
                   <Input
                     type="number"
                     value={localInputValues.width}
@@ -646,7 +677,9 @@ export default function PropertiesPanel({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Height (mm)</Label>
+                  <Label className="text-xs text-gray-500">
+                    Height (mm) {(currentElement?.rotation === 90 || currentElement?.rotation === 270) && "(↕️ visual)"}
+                  </Label>
                   <Input
                     type="number"
                     value={localInputValues.height}

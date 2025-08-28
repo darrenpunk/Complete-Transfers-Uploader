@@ -1413,9 +1413,14 @@ export default function CanvasWorkspace({
                           
                           const marginInMm = 3; // 3mm safety margin
                           
+                          // Account for rotation when checking bounds
+                          const isRotated = element.rotation === 90 || element.rotation === 270;
+                          const visualWidth = isRotated ? element.height : element.width;
+                          const visualHeight = isRotated ? element.width : element.height;
+                          
                           // Convert element position and size from mm to check margins
-                          const elementRight = element.x + element.width;
-                          const elementBottom = element.y + element.height;
+                          const elementRight = element.x + visualWidth;
+                          const elementBottom = element.y + visualHeight;
                           
                           // Check if element is outside safety margins
                           const outsideLeft = element.x < marginInMm;
