@@ -963,14 +963,13 @@ export async function registerRoutes(app: express.Application) {
             console.log(`🔄 Element rotation: ${rotation}°`);
             
             // Convert element position from mm to PDF points
-            // Element x,y is always the top-left corner of the VISUAL box
-            // This is important when rotated!
+            // Element x,y is the position in canvas coordinates
             const xPosPts = element.x * 2.834645669;
             
             // For Y position: PDF coordinates are bottom-up, canvas is top-down
-            // When rotated 90° or 270°, the visual height is different from the stored height
-            const visualHeightMm = isRotated ? element.width : element.height;
-            const yPosPts = pageHeight - (element.y * 2.834645669) - (visualHeightMm * 2.834645669);
+            // We need to flip the Y coordinate and account for element height
+            // Use stored height, not visual height, for position calculation
+            const yPosPts = pageHeight - (element.y * 2.834645669) - (element.height * 2.834645669);
             
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
