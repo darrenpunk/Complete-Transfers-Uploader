@@ -543,9 +543,14 @@ export default function CanvasWorkspace({
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
           
+          // Account for rotation when calculating constraints
+          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
+          const effectiveWidth = isRotated ? selectedElement.height : selectedElement.width;
+          const effectiveHeight = isRotated ? selectedElement.width : selectedElement.height;
+          
           // Constrain to safe zone - ensure coordinates are never negative
-          const maxX = Math.max(safetyMargin, template.width - safetyMargin - selectedElement.width);
-          const maxY = Math.max(safetyMargin, template.height - safetyMargin - selectedElement.height);
+          const maxX = Math.max(safetyMargin, template.width - safetyMargin - effectiveWidth);
+          const maxY = Math.max(safetyMargin, template.height - safetyMargin - effectiveHeight);
           
           // Prevent negative coordinates that break PDF generation
           // For DTF templates, allow more flexible positioning
