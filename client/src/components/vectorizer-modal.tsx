@@ -1657,12 +1657,18 @@ export function VectorizerModal({
                                 }]);
                                 
                                 // Replace the target color with the picked color using more robust replacement
+                                console.log(`🎨 Replacing color: ${colorItem.color} → ${eyedropperColor}`);
                                 const updatedSvg = replaceColorInSvg(currentSvg, colorItem.color, eyedropperColor);
+                                
+                                console.log(`🎨 SVG length before: ${currentSvg.length}, after: ${updatedSvg.length}`);
+                                console.log(`🎨 Replacement successful: ${currentSvg !== updatedSvg}`);
                                 
                                 setColoredSvg(updatedSvg);
                                 const newColors = detectColorsInSvg(updatedSvg);
                                 setDetectedColors(newColors);
                                 setSvgRevision(prev => prev + 1);
+                                
+                                console.log(`🎨 New colors detected: ${newColors.length}`);
                                 
                                 toast({
                                   title: "Color Applied",

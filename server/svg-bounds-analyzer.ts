@@ -77,23 +77,22 @@ export class SVGBoundsAnalyzer {
       const geometryResult = this.analyzeGeometryBounds(svgElement);
 
       // Choose the most accurate result
-      // For tight content SVGs, prefer path calculation over viewBox to get actual content size
-      const isTightContent = svgContent.includes('data-content-extracted="true"');
-      console.log(`🔍 DEBUG: isTightContent=${isTightContent}, svgContent includes data-content-extracted: ${svgContent.includes('data-content-extracted')}`);
-      console.log(`🔍 DEBUG: SVG content preview: ${svgContent.substring(0, 200)}...`);
+      // For AI-vectorized content, always calculate actual content bounds, not viewBox
+      const isAIVectorized = svgContent.includes('data-ai-vectorized="true"');
+      console.log(`🔍 DEBUG: isAIVectorized=${isAIVectorized}, SVG content preview: ${svgContent.substring(0, 200)}...`);
       let contentBounds;
       
-      if (isTightContent) {
-        // For tight content SVGs, calculate the actual visible content bounds
-        console.log(`🎯 TIGHT CONTENT DETECTED: Calculating actual visible content bounds`);
+      if (isAIVectorized) {
+        // For AI-vectorized content, calculate the actual visible content bounds
+        console.log(`🎯 AI-VECTORIZED CONTENT DETECTED: Calculating actual content bounds`);
         const visibleBounds = this.calculateVisibleContentBounds(svgElement);
         contentBounds = visibleBounds || pathResult || geometryResult;
         
         if (visibleBounds) {
-          console.log(`📐 VISIBLE CONTENT BOUNDS: ${visibleBounds.width.toFixed(1)}×${visibleBounds.height.toFixed(1)}px (actual rendered size)`);
+          console.log(`📐 AI-VECTORIZED CONTENT BOUNDS: ${visibleBounds.width.toFixed(1)}×${visibleBounds.height.toFixed(1)}px (actual content size)`);
         }
       } else {
-        // For normal SVGs, use the original priority
+        // For normal SVGs, prioritize path and geometry calculations over viewBox
         contentBounds = pathResult || geometryResult || viewBoxResult;
       }
       
@@ -144,11 +143,17 @@ export class SVGBoundsAnalyzer {
     
     // Analyze all drawable elements, not just paths
     const allElements = svgElement.querySelectorAll('path, circle, rect, ellipse, line, polyline, polygon');
-    if (allElements.length === 0) return null;
+    if (allElements.length === 0) {
+      console.log(`⚠️ No drawable elements found in SVG`);
+      return null;
+    }
+    
+    console.log(`🔍 Found ${allElements.length} drawable elements to analyze`);
     
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;
     let hasValidElement = false;
+    let processedElements = 0;
     
     allElements.forEach(element => {
       const tagName = element.tagName.toLowerCase();
@@ -188,19 +193,15 @@ export class SVGBoundsAnalyzer {
       }
       
       if (bounds) {
-        // Clip bounds to viewBox (content cannot render outside viewBox)
-        const clippedMinX = Math.max(bounds.xMin, vbX);
-        const clippedMinY = Math.max(bounds.yMin, vbY);
-        const clippedMaxX = Math.min(bounds.xMax, vbX + vbWidth);
-        const clippedMaxY = Math.min(bounds.yMax, vbY + vbHeight);
+        processedElements++;
+        console.log(`📏 Element ${processedElements}: ${tagName} bounds (${bounds.xMin.toFixed(1)},${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)},${bounds.yMax.toFixed(1)})`);
         
-        if (clippedMaxX > clippedMinX && clippedMaxY > clippedMinY) {
-          minX = Math.min(minX, clippedMinX);
-          minY = Math.min(minY, clippedMinY);
-          maxX = Math.max(maxX, clippedMaxX);
-          maxY = Math.max(maxY, clippedMaxY);
-          hasValidElement = true;
-        }
+        // For AI-vectorized content, don't clip to viewBox - find the natural content bounds
+        minX = Math.min(minX, bounds.xMin);
+        minY = Math.min(minY, bounds.yMin);
+        maxX = Math.max(maxX, bounds.xMax);
+        maxY = Math.max(maxY, bounds.yMax);
+        hasValidElement = true;
       }
     });
     
