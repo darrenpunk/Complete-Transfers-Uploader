@@ -479,15 +479,29 @@ export default function PropertiesPanel({
       const aspectRatio = visualWidth / visualHeight;
       
       if (property === 'width') {
-        // When updating width visually, update height (which may be stored width when rotated)
+        // When updating width visually, calculate new height
         const newVisualHeight = Math.round(processedValue / aspectRatio);
-        updates.height = isRotated ? updates.width : newVisualHeight;
-        updates.width = isRotated ? newVisualHeight : processedValue;
+        if (isRotated) {
+          // For rotated: visual width -> stored height, visual height -> stored width
+          updates.height = processedValue;
+          updates.width = newVisualHeight;
+        } else {
+          // For normal: visual width -> stored width, visual height -> stored height
+          updates.width = processedValue;
+          updates.height = newVisualHeight;
+        }
       } else {
-        // When updating height visually, update width (which may be stored height when rotated)
+        // When updating height visually, calculate new width
         const newVisualWidth = Math.round(processedValue * aspectRatio);
-        updates.width = isRotated ? updates.height : newVisualWidth;
-        updates.height = isRotated ? newVisualWidth : processedValue;
+        if (isRotated) {
+          // For rotated: visual height -> stored width, visual width -> stored height
+          updates.width = processedValue;
+          updates.height = newVisualWidth;
+        } else {
+          // For normal: visual height -> stored height, visual width -> stored width
+          updates.height = processedValue;
+          updates.width = newVisualWidth;
+        }
       }
     }
 
