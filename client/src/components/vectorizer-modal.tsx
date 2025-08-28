@@ -372,23 +372,95 @@ export function VectorizerModal({
     }
   };
 
+  // Function to replace colors in SVG with robust color matching
+  const replaceColorInSvg = (svg: string, oldColor: string, newColor: string): string => {
+    // Normalize colors to hex format for consistent matching
+    const normalizeColor = (color: string): string => {
+      color = color.toLowerCase().trim();
+      
+      // Convert rgb to hex
+      if (color.startsWith('rgb')) {
+        const match = color.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+        if (match) {
+          let r, g, b;
+          if (match[1].includes('%')) {
+            r = Math.round(parseFloat(match[1]) * 2.55);
+            g = Math.round(parseFloat(match[2]) * 2.55);
+            b = Math.round(parseFloat(match[3]) * 2.55);
+          } else {
+            r = parseInt(match[1]);
+            g = parseInt(match[2]);
+            b = parseInt(match[3]);
+          }
+          return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+      }
+      
+      // Ensure hex colors start with #
+      if (!color.startsWith('#') && /^[0-9a-f]{6}$/.test(color)) {
+        return '#' + color;
+      }
+      
+      return color;
+    };
+    
+    const normalizedOldColor = normalizeColor(oldColor);
+    const normalizedNewColor = normalizeColor(newColor);
+    
+    // Replace in various attribute formats
+    let updatedSvg = svg;
+    
+    // Replace fill attributes
+    updatedSvg = updatedSvg.replace(
+      new RegExp(`fill\\s*=\\s*["']${escapeRegExp(oldColor)}["']`, 'gi'),
+      `fill="${newColor}"`
+    );
+    
+    // Replace stroke attributes
+    updatedSvg = updatedSvg.replace(
+      new RegExp(`stroke\\s*=\\s*["']${escapeRegExp(oldColor)}["']`, 'gi'),
+      `stroke="${newColor}"`
+    );
+    
+    // Replace style attributes
+    updatedSvg = updatedSvg.replace(
+      new RegExp(`fill\\s*:\\s*${escapeRegExp(oldColor)}`, 'gi'),
+      `fill:${newColor}`
+    );
+    
+    updatedSvg = updatedSvg.replace(
+      new RegExp(`stroke\\s*:\\s*${escapeRegExp(oldColor)}`, 'gi'),
+      `stroke:${newColor}`
+    );
+    
+    return updatedSvg;
+  };
+  
+  // Helper function to escape special regex characters
+  const escapeRegExp = (string: string): string => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
+
   // Function to detect all colors in SVG
   const detectColorsInSvg = (svg: string): {color: string, count: number}[] => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, 'image/svg+xml');
     const colorMap = new Map<string, number>();
     
-    // Find all elements with fill attribute
-    const elementsWithFill = doc.querySelectorAll('*[fill]');
-    elementsWithFill.forEach(el => {
-      const fill = el.getAttribute('fill');
-      if (fill && fill !== 'none' && !fill.startsWith('url(')) {
-        // Normalize color format
-        let normalizedColor = fill.toLowerCase();
-        
-        // Convert rgb to hex if needed
-        if (normalizedColor.startsWith('rgb')) {
-          const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+    // Also check for colors in style attributes and CSS
+    const extractColorsFromText = (text: string) => {
+      // Find hex colors
+      const hexMatches = text.match(/#[0-9a-f]{6}/gi);
+      if (hexMatches) {
+        hexMatches.forEach(color => {
+          const normalizedColor = color.toLowerCase();
+          colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+        });
+      }
+      
+      // Find rgb colors
+      const rgbMatches = text.match(/rgb\s*\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*\)/gi);
+      if (rgbMatches) {
+        rgbMatches.forEach(color => {
+          const match = color.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
           if (match) {
             let r, g, b;
             if (match[1].includes('%')) {
@@ -400,42 +472,82 @@ export function VectorizerModal({
               g = parseInt(match[2]);
               b = parseInt(match[3]);
             }
-            normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            const hexColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            colorMap.set(hexColor, (colorMap.get(hexColor) || 0) + 1);
           }
-        }
-        
-        colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+        });
       }
-    });
+    };
     
-    // Find all elements with stroke attribute
-    const elementsWithStroke = doc.querySelectorAll('*[stroke]');
-    elementsWithStroke.forEach(el => {
-      const stroke = el.getAttribute('stroke');
-      if (stroke && stroke !== 'none' && !stroke.startsWith('url(')) {
-        let normalizedColor = stroke.toLowerCase();
-        
-        // Convert rgb to hex if needed
-        if (normalizedColor.startsWith('rgb')) {
-          const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
-          if (match) {
-            let r, g, b;
-            if (match[1].includes('%')) {
-              r = Math.round(parseFloat(match[1]) * 2.55);
-              g = Math.round(parseFloat(match[2]) * 2.55);
-              b = Math.round(parseFloat(match[3]) * 2.55);
-            } else {
-              r = parseInt(match[1]);
-              g = parseInt(match[2]);
-              b = parseInt(match[3]);
+    // Extract colors directly from SVG text to catch all formats
+    extractColorsFromText(svg);
+    
+    // Also parse DOM for structured analysis
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svg, 'image/svg+xml');
+      
+      // Find all elements with fill attribute
+      const elementsWithFill = doc.querySelectorAll('*[fill]');
+      elementsWithFill.forEach(el => {
+        const fill = el.getAttribute('fill');
+        if (fill && fill !== 'none' && !fill.startsWith('url(')) {
+          // Normalize color format
+          let normalizedColor = fill.toLowerCase();
+          
+          // Convert rgb to hex if needed
+          if (normalizedColor.startsWith('rgb')) {
+            const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+            if (match) {
+              let r, g, b;
+              if (match[1].includes('%')) {
+                r = Math.round(parseFloat(match[1]) * 2.55);
+                g = Math.round(parseFloat(match[2]) * 2.55);
+                b = Math.round(parseFloat(match[3]) * 2.55);
+              } else {
+                r = parseInt(match[1]);
+                g = parseInt(match[2]);
+                b = parseInt(match[3]);
+              }
+              normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
             }
-            normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
           }
+          
+          colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
         }
-        
-        colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
-      }
-    });
+      });
+      
+      // Find all elements with stroke attribute
+      const elementsWithStroke = doc.querySelectorAll('*[stroke]');
+      elementsWithStroke.forEach(el => {
+        const stroke = el.getAttribute('stroke');
+        if (stroke && stroke !== 'none' && !stroke.startsWith('url(')) {
+          let normalizedColor = stroke.toLowerCase();
+          
+          // Convert rgb to hex if needed
+          if (normalizedColor.startsWith('rgb')) {
+            const match = normalizedColor.match(/rgb\s*\(\s*(\d+%?)\s*,\s*(\d+%?)\s*,\s*(\d+%?)\s*\)/);
+            if (match) {
+              let r, g, b;
+              if (match[1].includes('%')) {
+                r = Math.round(parseFloat(match[1]) * 2.55);
+                g = Math.round(parseFloat(match[2]) * 2.55);
+                b = Math.round(parseFloat(match[3]) * 2.55);
+              } else {
+                r = parseInt(match[1]);
+                g = parseInt(match[2]);
+                b = parseInt(match[3]);
+              }
+              normalizedColor = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+            }
+          }
+          
+          colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+        }
+      });
+    } catch (error) {
+      console.warn('Error parsing SVG for color detection:', error);
+    }
     
     // Convert map to array and sort by count
     return Array.from(colorMap.entries())
@@ -1544,14 +1656,8 @@ export function VectorizerModal({
                                   colors: [...detectedColors]
                                 }]);
                                 
-                                // Replace the target color with the picked color
-                                const updatedSvg = currentSvg.replace(
-                                  new RegExp(`fill="${colorItem.color}"`, 'gi'),
-                                  `fill="${eyedropperColor}"`
-                                ).replace(
-                                  new RegExp(`stroke="${colorItem.color}"`, 'gi'),
-                                  `stroke="${eyedropperColor}"`
-                                );
+                                // Replace the target color with the picked color using more robust replacement
+                                const updatedSvg = replaceColorInSvg(currentSvg, colorItem.color, eyedropperColor);
                                 
                                 setColoredSvg(updatedSvg);
                                 const newColors = detectColorsInSvg(updatedSvg);

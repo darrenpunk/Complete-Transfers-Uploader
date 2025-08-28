@@ -139,23 +139,54 @@ export class SVGBoundsAnalyzer {
     
     const [vbX, vbY, vbWidth, vbHeight] = values;
     
-    // For tight content SVGs, the viewBox represents the actual content bounds
-    // We calculate dimensions relative to this viewBox, not absolute coordinates
+    // For AI-vectorized content, analyze actual path coordinates to find true content bounds
     console.log(`📊 VIEWBOX ANALYSIS: viewBox="${viewBox}" (${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}px)`);
     
-    // Check if paths extend beyond the viewBox or are contained within it
-    const paths = svgElement.querySelectorAll('path');
-    if (paths.length === 0) return null;
+    // Analyze all drawable elements, not just paths
+    const allElements = svgElement.querySelectorAll('path, circle, rect, ellipse, line, polyline, polygon');
+    if (allElements.length === 0) return null;
     
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;
-    let hasValidPath = false;
+    let hasValidElement = false;
     
-    paths.forEach(path => {
-      const d = path.getAttribute('d');
-      if (!d) return;
+    allElements.forEach(element => {
+      const tagName = element.tagName.toLowerCase();
+      let bounds: SVGBounds | null = null;
       
-      const bounds = this.parsePathData(d);
+      if (tagName === 'path') {
+        const d = element.getAttribute('d');
+        if (d) {
+          bounds = this.parsePathData(d);
+        }
+      } else if (tagName === 'circle') {
+        const cx = parseFloat(element.getAttribute('cx') || '0');
+        const cy = parseFloat(element.getAttribute('cy') || '0');
+        const r = parseFloat(element.getAttribute('r') || '0');
+        bounds = {
+          xMin: cx - r, yMin: cy - r, xMax: cx + r, yMax: cy + r,
+          width: r * 2, height: r * 2, units: 'px'
+        };
+      } else if (tagName === 'rect') {
+        const x = parseFloat(element.getAttribute('x') || '0');
+        const y = parseFloat(element.getAttribute('y') || '0');
+        const width = parseFloat(element.getAttribute('width') || '0');
+        const height = parseFloat(element.getAttribute('height') || '0');
+        bounds = {
+          xMin: x, yMin: y, xMax: x + width, yMax: y + height,
+          width, height, units: 'px'
+        };
+      } else if (tagName === 'ellipse') {
+        const cx = parseFloat(element.getAttribute('cx') || '0');
+        const cy = parseFloat(element.getAttribute('cy') || '0');
+        const rx = parseFloat(element.getAttribute('rx') || '0');
+        const ry = parseFloat(element.getAttribute('ry') || '0');
+        bounds = {
+          xMin: cx - rx, yMin: cy - ry, xMax: cx + rx, yMax: cy + ry,
+          width: rx * 2, height: ry * 2, units: 'px'
+        };
+      }
+      
       if (bounds) {
         // Clip bounds to viewBox (content cannot render outside viewBox)
         const clippedMinX = Math.max(bounds.xMin, vbX);
@@ -168,14 +199,14 @@ export class SVGBoundsAnalyzer {
           minY = Math.min(minY, clippedMinY);
           maxX = Math.max(maxX, clippedMaxX);
           maxY = Math.max(maxY, clippedMaxY);
-          hasValidPath = true;
+          hasValidElement = true;
         }
       }
     });
     
-    if (!hasValidPath) {
+    if (!hasValidElement) {
       // Fallback: use the viewBox as content bounds
-      console.log(`📐 NO VISIBLE PATHS: Using viewBox as content bounds`);
+      console.log(`📐 NO VISIBLE ELEMENTS: Using viewBox as content bounds`);
       return {
         xMin: 0,
         yMin: 0,
