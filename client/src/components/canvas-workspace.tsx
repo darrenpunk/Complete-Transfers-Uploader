@@ -538,7 +538,7 @@ export default function CanvasWorkspace({
           if (isPdfDerived) {
             mmToPixelRatio = 2.834645669; // 72 DPI conversion
           }
-          const safetyMargin = 3; // 3mm safety margin
+          const safetyMargin = 0; // Remove safety margin for free positioning
           
           const newX = (event.clientX - rect.left - dragOffset.x) / scaleFactor / mmToPixelRatio;
           const newY = (event.clientY - rect.top - dragOffset.y) / scaleFactor / mmToPixelRatio;
@@ -549,18 +549,14 @@ export default function CanvasWorkspace({
           const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
           const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
           
-          // Constrain to safe zone - ensure coordinates are never negative
-          // Use visual dimensions for constraint calculations
-          const maxX = Math.max(safetyMargin, template.width - safetyMargin - visualWidth);
-          const maxY = Math.max(safetyMargin, template.height - safetyMargin - visualHeight);
+          // Allow free movement within template bounds
+          // Only prevent going beyond template edges
+          const maxX = template.width - visualWidth;
+          const maxY = template.height - visualHeight;
           
-          // Prevent negative coordinates that break PDF generation
-          // For DTF templates, allow more flexible positioning
-          const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
-          const minMargin = isDTFTemplate ? 5 : safetyMargin; // Allow closer to edges for DTF
-          
-          const constrainedX = Math.max(minMargin, Math.min(newX, maxX));
-          const constrainedY = Math.max(minMargin, Math.min(newY, maxY));
+          // Allow positioning at edges but not beyond
+          const constrainedX = Math.max(0, Math.min(newX, maxX));
+          const constrainedY = Math.max(0, Math.min(newY, maxY));
 
           updateElementDirect(selectedElement.id, { 
             x: constrainedX, 

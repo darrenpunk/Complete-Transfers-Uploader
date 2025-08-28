@@ -210,15 +210,15 @@ export default function PropertiesPanel({
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     if (!currentTemplate) return;
     
-    const safetyMargin = 3; // 3mm safety margin
+    const safetyMargin = 0; // No safety margin for free positioning
     const templateWidth = currentTemplate.width;
     const templateHeight = currentTemplate.height;
     
-    // Calculate safe zone dimensions
-    const safeZoneX = safetyMargin;
-    const safeZoneY = safetyMargin;
-    const safeZoneWidth = templateWidth - (2 * safetyMargin);
-    const safeZoneHeight = templateHeight - (2 * safetyMargin);
+    // Use full template dimensions
+    const safeZoneX = 0;
+    const safeZoneY = 0;
+    const safeZoneWidth = templateWidth;
+    const safeZoneHeight = templateHeight;
     
     // Account for rotation when aligning
     const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
