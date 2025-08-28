@@ -192,35 +192,83 @@ export class PDFBoundsExtractor {
       execSync(convertCommand);
 
       if (fs.existsSync(rasterPath)) {
-        // Use ImageMagick to find tight bounds
-        const identifyCommand = `identify -format "%[fx:page.x],%[fx:page.y],%[fx:page.width],%[fx:page.height]" "${rasterPath}"`;
-        const boundsOutput = execSync(identifyCommand, { encoding: 'utf8' }).trim();
+        console.log(`🔍 Analyzing raster content with ImageMagick trim...`);
         
-        const [x, y, width, height] = boundsOutput.split(',').map(Number);
+        // Use ImageMagick trim to crop transparent pixels and get actual content bounds
+        const trimPath = path.join(tempDir, `trimmed_${timestamp}.png`);
+        const trimCommand = `convert "${rasterPath}" -trim +repage "${trimPath}"`;
         
-        // Convert pixel bounds back to points
-        const scale = 72 / dpi;
-        const bounds: BoundingBox = {
-          xMin: x * scale,
-          yMin: y * scale,
-          xMax: (x + width) * scale,
-          yMax: (y + height) * scale,
-          width: width * scale,
-          height: height * scale,
-          units: 'pt'
-        };
+        try {
+          execSync(trimCommand);
+          
+          if (fs.existsSync(trimPath)) {
+            // Get original dimensions
+            const originalSizeCmd = `identify -format "%w,%h" "${rasterPath}"`;
+            const [origWidth, origHeight] = execSync(originalSizeCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+            
+            // Get trimmed dimensions and offset
+            const trimInfoCmd = `identify -format "%w,%h,%X,%Y" "${trimPath}"`;
+            const trimOutput = execSync(trimInfoCmd, { encoding: 'utf8' }).trim();
+            const [trimWidth, trimHeight, trimX, trimY] = trimOutput.split(',').map(Number);
+            
+            console.log(`📐 Original: ${origWidth}×${origHeight}px, Trimmed: ${trimWidth}×${trimHeight}px at offset (${trimX},${trimY})`);
+            
+            // Convert pixel bounds back to points (PDF coordinate system)
+            const scale = 72 / dpi;
+            const bounds: BoundingBox = {
+              xMin: trimX * scale,
+              yMin: (origHeight - trimY - trimHeight) * scale, // Convert to PDF coordinates (origin at bottom-left)
+              xMax: (trimX + trimWidth) * scale,
+              yMax: (origHeight - trimY) * scale,
+              width: trimWidth * scale,
+              height: trimHeight * scale,
+              units: 'pt'
+            };
 
-        // Cleanup
-        fs.unlinkSync(rasterPath);
+            // Cleanup temp files
+            fs.unlinkSync(rasterPath);
+            fs.unlinkSync(trimPath);
 
-        console.log(`✅ Raster fallback bounds: ${bounds.xMin},${bounds.yMin} to ${bounds.xMax},${bounds.yMax}`);
+            console.log(`✅ RASTER TRIM SUCCESS: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts at (${bounds.xMin.toFixed(1)},${bounds.yMin.toFixed(1)})`);
 
-        return {
-          success: true,
-          bbox: bounds,
-          method: 'raster-fallback',
-          contentFound: true
-        };
+            return {
+              success: true,
+              bbox: bounds,
+              method: 'raster-fallback',
+              contentFound: true
+            };
+          }
+        } catch (trimError) {
+          console.log(`⚠️ Trim failed, using full raster bounds`);
+          
+          // Fallback to original approach
+          const identifyCommand = `identify -format "%w,%h" "${rasterPath}"`;
+          const sizeOutput = execSync(identifyCommand, { encoding: 'utf8' }).trim();
+          const [width, height] = sizeOutput.split(',').map(Number);
+          
+          const scale = 72 / dpi;
+          const bounds: BoundingBox = {
+            xMin: 0,
+            yMin: 0,
+            xMax: width * scale,
+            yMax: height * scale,
+            width: width * scale,
+            height: height * scale,
+            units: 'pt'
+          };
+
+          // Cleanup
+          fs.unlinkSync(rasterPath);
+
+          console.log(`✅ Raster full page bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts`);
+
+          return {
+            success: true,
+            bbox: bounds,
+            method: 'raster-fallback',
+            contentFound: true
+          };
+        }
       }
 
       return {
@@ -357,60 +405,16 @@ export class PDFBoundsExtractor {
         const pageArea = pageWidth * pageHeight;
         const coverage = bboxArea / pageArea;
         
-        // Check for edge clipping by examining each edge individually
-        const isLowCoverage = coverage < 0.4;
-        const needsExpansion = isLowCoverage && (width < pageWidth * 0.9 || height < pageHeight * 0.9);
+        // Check if Ghostscript bounds seem unreliable (too small coverage)
+        const isLowCoverage = coverage < 0.35;
+        const isSignificantlySmaller = width < pageWidth * 0.8 && height < pageHeight * 0.8;
         
-        if (needsExpansion) {
-          console.log(`🚨 CONTENT CLIPPING: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
+        if (isLowCoverage && isSignificantlySmaller) {
+          console.log(`🚨 GHOSTSCRIPT BOUNDS UNRELIABLE: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage)`);
+          console.log(`🔄 FALLING BACK TO RASTER ANALYSIS: Ghostscript missed significant content`);
           
-          // Analyze each edge individually for clipping
-          const leftMargin = xMin;
-          const rightMargin = pageWidth - xMax;
-          const bottomMargin = yMin; // In PDF coordinates, yMin is distance from bottom
-          const topMargin = pageHeight - yMax;
-          
-          console.log(`🔍 EDGE MARGINS: left=${leftMargin.toFixed(1)} right=${rightMargin.toFixed(1)} bottom=${bottomMargin.toFixed(1)} top=${topMargin.toFixed(1)}`);
-          
-          let adjustedXMin = xMin;
-          let adjustedYMin = yMin;
-          let adjustedXMax = xMax;
-          let adjustedYMax = yMax;
-          
-          // Only expand edges that are suspiciously close to page boundaries
-          if (bottomMargin < pageHeight * 0.12) { // Less than 12% from bottom edge
-            console.log(`🚨 BOTTOM CLIPPING: Expanding from yMin=${yMin.toFixed(1)} to capture bottom content`);
-            adjustedYMin = Math.max(0, yMin * 0.3); // Expand significantly toward bottom
-          }
-          
-          if (topMargin < pageHeight * 0.12) { // Less than 12% from top edge
-            console.log(`🚨 TOP CLIPPING: Expanding from yMax=${yMax.toFixed(1)} to capture top content`);
-            adjustedYMax = Math.min(pageHeight, yMax + (topMargin * 0.7));
-          }
-          
-          if (leftMargin < pageWidth * 0.12) { // Less than 12% from left edge
-            console.log(`🚨 LEFT CLIPPING: Expanding from xMin=${xMin.toFixed(1)} to capture left content`);
-            adjustedXMin = Math.max(0, xMin * 0.3);
-          }
-          
-          if (rightMargin < pageWidth * 0.12) { // Less than 12% from right edge
-            console.log(`🚨 RIGHT CLIPPING: Expanding from xMax=${xMax.toFixed(1)} to capture right content`);
-            adjustedXMax = Math.min(pageWidth, xMax + (rightMargin * 0.7));
-          }
-          
-          const newWidth = adjustedXMax - adjustedXMin;
-          const newHeight = adjustedYMax - adjustedYMin;
-          console.log(`✅ SURGICAL EXPANSION: ${newWidth.toFixed(1)}×${newHeight.toFixed(1)}pts (only expanded clipped edges)`);
-          
-          return {
-            xMin: adjustedXMin,
-            yMin: adjustedYMin,
-            xMax: adjustedXMax,
-            yMax: adjustedYMax,
-            width: newWidth,
-            height: newHeight,
-            units: 'pt'
-          };
+          // Return null to trigger raster fallback method
+          return null;
         }
       }
       
