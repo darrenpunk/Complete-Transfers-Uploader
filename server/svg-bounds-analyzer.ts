@@ -83,11 +83,12 @@ export class SVGBoundsAnalyzer {
       let contentBounds;
       
       if (isAIVectorized) {
-        // For AI-vectorized content, prioritize actual path/geometry analysis over viewBox
+        // For AI-vectorized content, calculate actual content bounds excluding background paths
         console.log(`🎯 AI-VECTORIZED CONTENT DETECTED: Calculating actual content bounds`);
         
-        // First try path and geometry analysis which gives more accurate results
-        contentBounds = pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
+        // Try content-focused bounds analysis that excludes large background paths
+        const contentFocusedBounds = this.calculateContentFocusedBounds(svgElement);
+        contentBounds = contentFocusedBounds || pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
         
         if (contentBounds) {
           console.log(`📐 AI-VECTORIZED CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (actual content size)`);
@@ -542,6 +543,91 @@ export class SVGBoundsAnalyzer {
       yMax: maxY,
       width: maxX - minX,
       height: maxY - minY,
+      units: 'px'
+    };
+  }
+
+  /**
+   * Calculate content-focused bounds that exclude large background paths
+   */
+  private calculateContentFocusedBounds(svgElement: Element): SVGBounds | null {
+    const paths = svgElement.querySelectorAll('path');
+    if (paths.length === 0) return null;
+
+    let allBounds: (SVGBounds & { pathIndex: number; area: number })[] = [];
+    
+    // Analyze all paths and collect their bounds
+    paths.forEach((path, index) => {
+      const d = path.getAttribute('d');
+      if (d) {
+        const bounds = this.parsePathData(d);
+        if (bounds) {
+          const area = bounds.width * bounds.height;
+          allBounds.push({
+            ...bounds,
+            pathIndex: index,
+            area: area
+          });
+        }
+      }
+    });
+
+    if (allBounds.length === 0) return null;
+
+    // Sort by area to identify potential background paths
+    allBounds.sort((a, b) => a.area - b.area);
+    
+    // Calculate median area to identify outliers
+    const areas = allBounds.map(b => b.area);
+    const medianArea = areas[Math.floor(areas.length / 2)];
+    const totalViewBoxArea = 1762.7 * 1344.7; // From the logs
+    
+    // Filter out paths that are likely backgrounds
+    // 1. Paths that cover more than 80% of the total viewBox
+    // 2. Paths that are more than 50x larger than the median
+    const contentPaths = allBounds.filter(pathBounds => {
+      const isLikelyBackground = pathBounds.area > totalViewBoxArea * 0.8 || 
+                                pathBounds.area > medianArea * 50;
+      
+      if (isLikelyBackground) {
+        console.log(`🚫 Excluding likely background path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
+        return false;
+      }
+      return true;
+    });
+
+    if (contentPaths.length === 0) {
+      console.log('⚠️ All paths filtered out, using smallest paths instead');
+      // If all paths were filtered, use the smallest 70% of paths
+      const keepCount = Math.ceil(allBounds.length * 0.7);
+      contentPaths.push(...allBounds.slice(0, keepCount));
+    }
+
+    console.log(`🎯 Using ${contentPaths.length} content paths out of ${allBounds.length} total paths`);
+
+    // Calculate unified bounds from remaining content paths
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+
+    contentPaths.forEach(bounds => {
+      minX = Math.min(minX, bounds.xMin);
+      minY = Math.min(minY, bounds.yMin);
+      maxX = Math.max(maxX, bounds.xMax);
+      maxY = Math.max(maxY, bounds.yMax);
+    });
+
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    
+    console.log(`🎯 CONTENT-FOCUSED BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px at (${minX.toFixed(1)}, ${minY.toFixed(1)})`);
+
+    return {
+      xMin: minX,
+      yMin: minY,
+      xMax: maxX,
+      yMax: maxY,
+      width: contentWidth,
+      height: contentHeight,
       units: 'px'
     };
   }
