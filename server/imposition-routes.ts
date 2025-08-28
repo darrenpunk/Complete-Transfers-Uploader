@@ -50,17 +50,20 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
         
         if (templateSize) {
           // In center-based system: (0,0) is at template center
-          // To center the grid, the top-left corner should be at:
-          // x: -totalGridWidth/2 (negative = left of center)
-          // y: -totalGridHeight/2 (negative = above center)
-          startX = -totalGridWidth / 2;
-          startY = -totalGridHeight / 2;
+          // Each element is positioned by its center, not top-left corner
+          // So for the first element to be properly centered, we need to account for half the element size
+          // Grid top-left element center should be at:
+          // x: -totalGridWidth/2 + elementWidth/2
+          // y: -totalGridHeight/2 + elementHeight/2
+          startX = -totalGridWidth / 2 + originalElement.width / 2;
+          startY = -totalGridHeight / 2 + originalElement.height / 2;
           
-          console.log('Center-based grid centering:', {
+          console.log('Center-based grid centering (element centers):', {
             templateSize: { width: templateSize.width, height: templateSize.height },
+            elementSize: { width: originalElement.width, height: originalElement.height },
             gridSize: { width: totalGridWidth, height: totalGridHeight },
             centerBasedStart: { x: startX, y: startY },
-            description: 'Grid centered at template origin (0,0)'
+            description: 'Grid centered with element centers properly positioned'
           });
           
           // Update original element position if centering
