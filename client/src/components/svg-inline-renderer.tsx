@@ -47,10 +47,17 @@ export default function SvgInlineRenderer({
         // Ensure viewBox is preserved for proper scaling
         const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
         if (viewBoxMatch) {
-          // Always use "meet" to ensure content fits within bounds properly
-          // Since canvas element size is now based on content bounds, the SVG should scale to fit
+          // Check if this is oversized content that needs to be fitted
+          const [, , vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(Number);
+          const elementAspect = element.width / element.height;
+          const viewBoxAspect = vbWidth / vbHeight;
+          
+          // Use "slice" for oversized content to ensure it fills the container and is centered
+          // This prevents clipping at the edges when content is larger than the container
+          const aspectRatio = Math.abs(elementAspect - viewBoxAspect) > 0.1 ? 'xMidYMid slice' : 'xMidYMid meet';
+          
           if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style="display:block">');
+            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" preserveAspectRatio="${aspectRatio}" style="display:block">`);
           }
         }
         
@@ -96,11 +103,14 @@ export default function SvgInlineRenderer({
     <div 
       className="w-full h-full"
       style={{
-        display: 'block',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         padding: 0,
         margin: 0,
         lineHeight: 0,
-        fontSize: 0
+        fontSize: 0,
+        overflow: 'hidden'
       }}
       dangerouslySetInnerHTML={{ __html: svgContent }}
     />
