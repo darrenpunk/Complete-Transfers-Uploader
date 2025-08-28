@@ -2118,13 +2118,19 @@ export async function registerRoutes(app: express.Application) {
                 
                 console.log(`📐 INITIAL BOUNDS: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm`);
                 
-                // Only apply correction if bounds are truly unreasonable (larger than A3)
-                const A3_WIDTH_MM = 297;
-                const A3_HEIGHT_MM = 420;
+                // Get the actual template size for this project to check bounds reasonableness
+                const templateSizes = await storage.getTemplateSizes();
+                const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
+                const maxTemplateWidth = currentTemplate?.width || 297;
+                const maxTemplateHeight = currentTemplate?.height || 420;
                 
-                if (detectedWidthMm > A3_HEIGHT_MM * 2 || detectedHeightMm > A3_HEIGHT_MM * 2) {
-                  // This is likely a coordinate system issue, not actual content bounds
-                  console.log(`⚠️ UNREASONABLE BOUNDS DETECTED: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm (> 2×A3)`);
+                // Only consider bounds unreasonable if they exceed template by more than 20%
+                const reasonableMaxWidth = maxTemplateWidth * 1.2;
+                const reasonableMaxHeight = maxTemplateHeight * 1.2;
+                
+                if (detectedWidthMm > reasonableMaxWidth && detectedHeightMm > reasonableMaxHeight) {
+                  // Both dimensions exceed template - likely a coordinate system issue
+                  console.log(`⚠️ UNREASONABLE BOUNDS DETECTED: ${detectedWidthMm.toFixed(1)}×${detectedHeightMm.toFixed(1)}mm (exceeds ${maxTemplateWidth}×${maxTemplateHeight}mm template by >20%)`);
                   
                   // Try to detect the actual content scale based on common patterns
                   // Many PDFs use coordinates in the thousands but actual content is much smaller
@@ -2133,12 +2139,12 @@ export async function registerRoutes(app: express.Application) {
                   if (detectedWidthMm > 2000 || detectedHeightMm > 2000) {
                     // Coordinates are likely in points but misinterpreted
                     scaleFactor = 0.1; // 10% of detected size
-                  } else if (detectedWidthMm > 1000 || detectedHeightMm > 1000) {
-                    // Moderately oversized, likely coordinate offset issue
-                    scaleFactor = 0.2; // 20% of detected size
-                  } else {
-                    // Slightly oversized
+                  } else if (detectedWidthMm > maxTemplateWidth * 2 || detectedHeightMm > maxTemplateHeight * 2) {
+                    // Moderately oversized relative to template
                     scaleFactor = 0.5; // 50% of detected size
+                  } else {
+                    // Slightly oversized - keep most of the size
+                    scaleFactor = 0.8; // 80% of detected size
                   }
                   
                   const correctedWidthMm = detectedWidthMm * scaleFactor;
@@ -2158,9 +2164,9 @@ export async function registerRoutes(app: express.Application) {
                 
                 
                 // CRITICAL FIX: Only create tight content SVG for oversized or incorrectly bounded content
-                // For A3 and properly sized artwork, keep original to avoid clipping
+                // For properly sized artwork, keep original to avoid clipping
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
-                // A3_WIDTH_MM, A3_HEIGHT_MM, and pxToMm are already declared above
+                // pxToMm is already declared above
                 const contentWidthMm = boundsResult.contentBounds.width * pxToMm;
                 const contentHeightMm = boundsResult.contentBounds.height * pxToMm;
                 
