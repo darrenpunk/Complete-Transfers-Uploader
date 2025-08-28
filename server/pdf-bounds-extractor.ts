@@ -357,16 +357,36 @@ export class PDFBoundsExtractor {
         const pageArea = pageWidth * pageHeight;
         const coverage = bboxArea / pageArea;
         
-        if (coverage < 0.4 && width < pageWidth * 0.8 && height < pageHeight * 0.8) {
-          console.log(`🚨 CONSERVATIVE BOUNDS DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
-          console.log(`🔧 EXPANDING BOUNDS: Adding generous padding for complex artwork`);
+        // Check for various clipping indicators
+        const isLowCoverage = coverage < 0.4;
+        const isNearEdges = xMin < pageWidth * 0.1 || yMin < pageHeight * 0.1 || 
+                           (pageWidth - xMax) < pageWidth * 0.1 || (pageHeight - yMax) < pageHeight * 0.1;
+        const isSignificantlySmaller = width < pageWidth * 0.9 && height < pageHeight * 0.9;
+        
+        if (isLowCoverage || (isNearEdges && isSignificantlySmaller)) {
+          console.log(`🚨 CLIPPING DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage of ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts page)`);
+          console.log(`🔧 EDGE ANALYSIS: xMin=${xMin.toFixed(1)} yMin=${yMin.toFixed(1)} (${isNearEdges ? 'near edges' : 'not near edges'})`);
           
-          // Add significant padding to capture missed content
-          const paddingX = Math.min(50, (pageWidth - width) * 0.3);
-          const paddingY = Math.min(50, (pageHeight - height) * 0.3);
+          // More aggressive padding, especially for edge cases
+          let paddingX = Math.min(50, Math.max(15, (pageWidth - width) * 0.4));
+          let paddingY = Math.min(50, Math.max(15, (pageHeight - height) * 0.4));
           
-          xMin = Math.max(0, xMin - paddingX);
-          yMin = Math.max(0, yMin - paddingY);
+          // Extra aggressive padding if very close to edges (likely content cut off)
+          if (yMin < pageHeight * 0.05) { // Very close to bottom edge
+            console.log(`🚨 BOTTOM EDGE CLIPPING: yMin=${yMin.toFixed(1)} is very close to bottom, expanding aggressively`);
+            paddingY = Math.max(paddingY, yMin + 20); // Expand to nearly reach page bottom
+            yMin = Math.max(0, yMin - paddingY);
+          } else {
+            yMin = Math.max(0, yMin - paddingY);
+          }
+          
+          if (xMin < pageWidth * 0.05) { // Very close to left edge  
+            paddingX = Math.max(paddingX, xMin + 20);
+            xMin = Math.max(0, xMin - paddingX);
+          } else {
+            xMin = Math.max(0, xMin - paddingX);
+          }
+          
           xMax = Math.min(pageWidth, xMax + paddingX);
           yMax = Math.min(pageHeight, yMax + paddingY);
           
