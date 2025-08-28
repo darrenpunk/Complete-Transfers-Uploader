@@ -967,13 +967,14 @@ export async function registerRoutes(app: express.Application) {
             const templateCenterX = pageWidth / 2;
             const templateCenterY = pageHeight / 2;
             
-            // Convert center position to PDF bottom-left coordinates
+            // Convert center position to PDF coordinates
             const elementCenterX = templateCenterX + (element.x * 2.834645669);
-            const elementCenterY = templateCenterY - (element.y * 2.834645669); // Flip Y for PDF
+            const elementCenterY = templateCenterY + (element.y * 2.834645669); // Note: PDF Y axis is bottom-up
             
-            // Calculate top-left corner from center position
-            const xPosPts = elementCenterX - (element.width * 2.834645669 / 2);
-            const yPosPts = elementCenterY - (element.height * 2.834645669 / 2);
+            // Calculate bottom-left corner from center position
+            // For PDF, we position from bottom-left corner
+            const xPosPts = elementCenterX - (widthPts / 2);
+            const yPosPts = elementCenterY - (heightPts / 2);
             
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);

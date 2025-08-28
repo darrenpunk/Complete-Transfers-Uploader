@@ -557,18 +557,20 @@ export default function CanvasWorkspace({
           const newCenterX = mouseX - templateCenterX - (dragOffset.x / scaleFactor / mmToPixelRatio);
           const newCenterY = mouseY - templateCenterY - (dragOffset.y / scaleFactor / mmToPixelRatio);
           
-          // Constrain movement to keep element within canvas bounds
+          // No constraints - allow free movement in center-based coordinate system
+          // The preflight checks will warn if position is out of bounds
           const halfWidth = selectedElement.width / 2;
           const halfHeight = selectedElement.height / 2;
           
-          // Bounds in center-based coordinates
+          // Calculate reasonable bounds for warning (not enforced)
           const minX = -templateCenterX + halfWidth;
           const maxX = templateCenterX - halfWidth;
           const minY = -templateCenterY + halfHeight;
           const maxY = templateCenterY - halfHeight;
           
-          const constrainedX = Math.max(minX, Math.min(newCenterX, maxX));
-          const constrainedY = Math.max(minY, Math.min(newCenterY, maxY));
+          // Use the new position without constraints
+          const constrainedX = newCenterX;
+          const constrainedY = newCenterY;
 
           updateElementDirect(selectedElement.id, { 
             x: constrainedX, 

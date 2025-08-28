@@ -975,11 +975,17 @@ export default function ToolsSidebar({
             });
           }
           
-          // Position Check - canvas stays at 297×420mm, content rotates within it
-          // Just check that the position itself is within canvas
-          const isWithinBounds = selectedElement.x >= 0 && selectedElement.y >= 0 && 
-                                selectedElement.x <= 297 && 
-                                selectedElement.y <= 420;
+          // Position Check - center-based coordinate system
+          // (0,0) is at the center, valid range is -templateWidth/2 to +templateWidth/2
+          const templateHalfWidth = 297 / 2;
+          const templateHalfHeight = 420 / 2;
+          const elementHalfWidth = selectedElement.width / 2;
+          const elementHalfHeight = selectedElement.height / 2;
+          
+          const isWithinBounds = selectedElement.x >= -templateHalfWidth + elementHalfWidth && 
+                                selectedElement.x <= templateHalfWidth - elementHalfWidth && 
+                                selectedElement.y >= -templateHalfHeight + elementHalfHeight && 
+                                selectedElement.y <= templateHalfHeight - elementHalfHeight;
           checks.push({
             name: "Position",
             status: isWithinBounds ? "pass" : "warning",
