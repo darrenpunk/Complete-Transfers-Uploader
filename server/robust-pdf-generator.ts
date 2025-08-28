@@ -221,8 +221,10 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     const yPts = element.y * MM_TO_POINTS;
     
     // Use actual element dimensions from canvas (not hardcoded values)
-    const contentWidthMM = element.width;  // Use actual element width
-    const contentHeightMM = element.height; // Use actual element height
+    // When rotated 90° or 270°, visual dimensions are swapped but we keep original for embedding
+    const isRotated = element.rotation === 90 || element.rotation === 270;
+    const contentWidthMM = element.width;  // Keep original width for embedding
+    const contentHeightMM = element.height; // Keep original height for embedding
     const contentWidthPts = contentWidthMM * MM_TO_POINTS;
     const contentHeightPts = contentHeightMM * MM_TO_POINTS;
     
@@ -604,10 +606,17 @@ grestore`;
       }
       
       // Use the actual element dimensions (no scaling or overrides)
+      // When rotated 90° or 270°, visual dimensions are swapped on canvas
+      const isRotated = element.rotation === 90 || element.rotation === 270;
+      const visualWidthMM = isRotated ? element.height : element.width;
+      const visualHeightMM = isRotated ? element.width : element.height;
+      
+      // For PDF embedding, we use original dimensions and let the rotation handle the visual swap
       let contentWidthMM = element.width;
       let contentHeightMM = element.height;
       
-      console.log(`🔍 ELEMENT DIMENSIONS: Using actual element size for PDF: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
+      console.log(`🔍 ELEMENT DIMENSIONS: Original=${element.width.toFixed(2)}×${element.height.toFixed(2)}mm, Visual=${visualWidthMM.toFixed(2)}×${visualHeightMM.toFixed(2)}mm`);
+      console.log(`🔄 Rotation: ${element.rotation || 0}° (isRotated: ${isRotated})`);
       console.log(`✅ NO SCALING: Content embedded at exact original size`);
       
       // Verify dimensions match
@@ -617,7 +626,24 @@ grestore`;
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
       const contentHeightPts = contentHeightMM * MM_TO_POINTS;
       
-      const xPts = element.x * MM_TO_POINTS + viewBoxOffsetX;
+      // Position calculation needs to account for visual dimensions when rotated
+      let xPts = element.x * MM_TO_POINTS + viewBoxOffsetX;
+      
+      // Adjust position for rotation (rotation happens around center point)
+      if (isRotated) {
+        // When rotated, we need to adjust for the center-based rotation
+        const centerXBefore = element.x + element.width / 2;
+        const centerYBefore = element.y + element.height / 2;
+        const centerXAfter = element.x + visualWidthMM / 2;
+        const centerYAfter = element.y + visualHeightMM / 2;
+        
+        // Calculate the offset needed to maintain the same visual center
+        const xAdjustment = (centerXBefore - centerXAfter) * MM_TO_POINTS;
+        const yAdjustment = (centerYBefore - centerYAfter) * MM_TO_POINTS;
+        
+        xPts += xAdjustment;
+        console.log(`📐 Rotation adjustment: X offset=${xAdjustment.toFixed(2)}pts`);
+      }
       
       // Template-specific coordinate calculation to avoid affecting other templates
       let yPts: number;
@@ -628,9 +654,17 @@ grestore`;
         // PDF coordinate system: Y=0 is at bottom, increasing upward
         
         // For DTF: Use direct Y mapping from canvas to PDF bottom-up coordinates
+        // Use visual height for positioning when rotated
         yPts = element.y * MM_TO_POINTS + viewBoxOffsetY;
         
-        console.log(`🎯 DTF template: elementY=${element.y}mm, elementX=${element.x}mm, contentSize=${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm, pdfY=${yPts.toFixed(1)}pt`);
+        // Adjust Y for rotation since we're positioning based on visual bounds
+        if (isRotated) {
+          const yAdjustment = ((element.height - element.width) / 2) * MM_TO_POINTS;
+          yPts -= yAdjustment;
+          console.log(`📐 Rotation Y adjustment for DTF: ${yAdjustment.toFixed(2)}pts`);
+        }
+        
+        console.log(`🎯 DTF template: elementY=${element.y}mm, visualSize=${visualWidthMM.toFixed(1)}×${visualHeightMM.toFixed(1)}mm, pdfY=${yPts.toFixed(1)}pt`);
         
         // Ensure PDF Y coordinate is within valid bounds (no negative positioning)
         yPts = Math.max(0, yPts);
@@ -639,8 +673,18 @@ grestore`;
         // Canvas Y=0 is at top, PDF Y=0 is at bottom
         // For A3: height is 420mm = 1190.55pts, so we need to flip Y coordinate
         const templateHeightPts = 1190.55; // Exact A3 height in points
-        yPts = templateHeightPts - (element.y * MM_TO_POINTS) - contentHeightPts + viewBoxOffsetY;
-        console.log(`📐 Standard template positioning: A3 height=${templateHeightPts}pt, element.y=${element.y}mm, contentHeight=${contentHeightMM}mm, y=${yPts.toFixed(1)}pt`);
+        // Use visual height for positioning when rotated
+        const effectiveHeightPts = isRotated ? (element.width * MM_TO_POINTS) : contentHeightPts;
+        yPts = templateHeightPts - (element.y * MM_TO_POINTS) - effectiveHeightPts + viewBoxOffsetY;
+        
+        // Adjust Y for rotation since we're positioning based on visual bounds
+        if (isRotated) {
+          const yAdjustment = ((element.height - element.width) / 2) * MM_TO_POINTS;
+          yPts -= yAdjustment;
+          console.log(`📐 Rotation Y adjustment: ${yAdjustment.toFixed(2)}pts`);
+        }
+        
+        console.log(`📐 Standard template positioning: A3 height=${templateHeightPts}pt, element.y=${element.y}mm, visualHeight=${visualHeightMM}mm, y=${yPts.toFixed(1)}pt`);
       }
       
       console.log(`📍 Embedding logo at: (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size: ${contentWidthPts.toFixed(1)}x${contentHeightPts.toFixed(1)}pts`);

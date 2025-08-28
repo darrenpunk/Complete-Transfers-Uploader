@@ -588,14 +588,19 @@ export default function PropertiesPanel({
     });
     
     // Size Check - reasonable print size
+    // Use visual dimensions for rotated elements
+    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+    const visualWidth = isRotated ? currentElement.height : currentElement.width;
+    const visualHeight = isRotated ? currentElement.width : currentElement.height;
+    
     const maxWidth = Math.min(templateWidth * 0.95, 500); // Allow up to 95% of template width or 500mm max
     const maxHeight = Math.min(templateHeight * 0.95, 500); // Allow up to 95% of template height or 500mm max
-    const hasReasonableSize = currentElement.width >= 5 && currentElement.height >= 5 &&
-                             currentElement.width <= maxWidth && currentElement.height <= maxHeight;
+    const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
+                             visualWidth <= maxWidth && visualHeight <= maxHeight;
     checks.push({
       name: "Print Size",
       status: hasReasonableSize ? "pass" : "warning",
-      value: `${Math.round(currentElement.width)}×${Math.round(currentElement.height)}mm`
+      value: `${Math.round(visualWidth)}×${Math.round(visualHeight)}mm`
     });
 
 
@@ -999,7 +1004,12 @@ export default function PropertiesPanel({
                               {logo.originalName}
                             </span>
                             <span className="text-xs text-gray-500">
-                              {Math.round(element.width)}×{Math.round(element.height)}mm
+                              {(() => {
+                                const isRotated = element.rotation === 90 || element.rotation === 270;
+                                const visualWidth = isRotated ? element.height : element.width;
+                                const visualHeight = isRotated ? element.width : element.height;
+                                return `${Math.round(visualWidth)}×${Math.round(visualHeight)}mm`;
+                              })()} 
                             </span>
                           </div>
                         </div>
