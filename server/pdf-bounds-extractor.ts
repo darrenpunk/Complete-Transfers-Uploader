@@ -60,13 +60,8 @@ export class PDFBoundsExtractor {
       highDpiRasterFallback = true
     } = options;
 
-    // Try methods in order of precision
+    // Use pure vector analysis only
     let result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
-    
-    if (!result.success && highDpiRasterFallback) {
-      console.log('🔄 Ghostscript failed, trying raster fallback...');
-      result = await this.extractWithRasterFallback(pdfPath, pageNumber, options);
-    }
 
     // Apply padding if requested
     if (result.success && result.bbox && padding > 0) {
@@ -125,7 +120,7 @@ export class PDFBoundsExtractor {
         const bboxOutput = fs.readFileSync(bboxFile, 'utf8');
         fs.unlinkSync(bboxFile); // Cleanup
         
-        const bounds = this.parseGhostscriptBounds(bboxOutput, pageInfo.bbox);
+        const bounds = await this.parseGhostscriptBounds(bboxOutput, pageInfo.bbox, pdfPath, pageNumber);
         
         if (bounds) {
           console.log(`✅ Ghostscript bounds: ${bounds.xMin},${bounds.yMin} to ${bounds.xMax},${bounds.yMax}`);
@@ -159,7 +154,150 @@ export class PDFBoundsExtractor {
   }
 
   /**
-   * Method 2: High-DPI raster fallback with alpha cropping
+   * Method 2: PDF to SVG conversion for enhanced vector analysis
+   * More reliable than Ghostscript bbox for complex content
+   */
+  private async extractViaPdfToSvg(
+    pdfPath: string,
+    pageNumber: number,
+    pageBounds: BoundingBox
+  ): Promise<BoundsExtractionResult | null> {
+    
+    try {
+      const tempDir = path.join(process.cwd(), 'temp');
+      const timestamp = Date.now();
+      const svgPath = path.join(tempDir, `pdf2svg_${timestamp}.svg`);
+      
+      // Convert PDF page to SVG using pdf2svg
+      const pdf2svgCommand = `pdf2svg "${pdfPath}" "${svgPath}" ${pageNumber}`;
+      
+      console.log(`🔄 Converting PDF page ${pageNumber} to SVG for bounds analysis`);
+      execSync(pdf2svgCommand);
+      
+      if (fs.existsSync(svgPath)) {
+        // Read and parse SVG content
+        const svgContent = fs.readFileSync(svgPath, 'utf8');
+        
+        // Extract viewBox and analyze SVG elements
+        const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+        if (viewBoxMatch) {
+          const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(' ').map(Number);
+          
+          // Try to find actual content bounds within the SVG
+          const bounds = this.analyzeSvgContentBounds(svgContent, {
+            xMin: vbX,
+            yMin: vbY,
+            xMax: vbX + vbWidth,
+            yMax: vbY + vbHeight,
+            width: vbWidth,
+            height: vbHeight,
+            units: 'pt'
+          });
+          
+          // Cleanup
+          fs.unlinkSync(svgPath);
+          
+          if (bounds) {
+            console.log(`✅ PDF→SVG bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts`);
+            
+            return {
+              success: true,
+              bbox: bounds,
+              pdfBbox: pageBounds,
+              method: 'pdf-to-svg',
+              contentFound: true
+            };
+          }
+        }
+        
+        // Cleanup
+        fs.unlinkSync(svgPath);
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.log(`⚠️ PDF→SVG conversion failed: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Analyze SVG content to find tight bounds
+   */
+  private analyzeSvgContentBounds(
+    svgContent: string, 
+    viewBox: BoundingBox
+  ): BoundingBox | null {
+    
+    try {
+      // Look for path elements and their bounds
+      const pathMatches = svgContent.matchAll(/<path[^>]+d="([^"]+)"/g);
+      const rectMatches = svgContent.matchAll(/<rect[^>]+x="([^"]+)"[^>]+y="([^"]+)"[^>]+width="([^"]+)"[^>]+height="([^"]+)"/g);
+      
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      let hasContent = false;
+      
+      // Analyze rectangles
+      for (const rectMatch of rectMatches) {
+        const x = parseFloat(rectMatch[1]);
+        const y = parseFloat(rectMatch[2]);
+        const width = parseFloat(rectMatch[3]);
+        const height = parseFloat(rectMatch[4]);
+        
+        if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + width);
+          maxY = Math.max(maxY, y + height);
+          hasContent = true;
+        }
+      }
+      
+      // Basic path analysis (simplified)
+      for (const pathMatch of pathMatches) {
+        const pathData = pathMatch[1];
+        
+        // Extract coordinates from path data (simplified approach)
+        const coords = pathData.match(/[\d.-]+/g);
+        if (coords && coords.length >= 2) {
+          for (let i = 0; i < coords.length - 1; i += 2) {
+            const x = parseFloat(coords[i]);
+            const y = parseFloat(coords[i + 1]);
+            
+            if (!isNaN(x) && !isNaN(y)) {
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x);
+              maxY = Math.max(maxY, y);
+              hasContent = true;
+            }
+          }
+        }
+      }
+      
+      if (hasContent && isFinite(minX) && isFinite(minY) && isFinite(maxX) && isFinite(maxY)) {
+        return {
+          xMin: minX,
+          yMin: minY,
+          xMax: maxX,
+          yMax: maxY,
+          width: maxX - minX,
+          height: maxY - minY,
+          units: 'pt'
+        };
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.log(`⚠️ SVG content analysis failed: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Method 3: High-DPI raster fallback with alpha cropping
    * Used when vector extraction fails
    */
   private async extractWithRasterFallback(
@@ -371,7 +509,7 @@ export class PDFBoundsExtractor {
   /**
    * Parse Ghostscript bounding box output
    */
-  private parseGhostscriptBounds(output: string, pageBounds?: BoundingBox): BoundingBox | null {
+  private async parseGhostscriptBounds(output: string, pageBounds?: BoundingBox, pdfPath?: string, pageNumber?: number): Promise<BoundingBox | null> {
     // Look for %%HiResBoundingBox or %%BoundingBox lines
     const hiResMatch = output.match(/%%HiResBoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
     const bboxMatch = output.match(/%%BoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
@@ -405,16 +543,32 @@ export class PDFBoundsExtractor {
         const pageArea = pageWidth * pageHeight;
         const coverage = bboxArea / pageArea;
         
-        // Check if Ghostscript bounds seem unreliable (too small coverage)
+        // For very small coverage, try enhanced Ghostscript analysis
         const isLowCoverage = coverage < 0.35;
-        const isSignificantlySmaller = width < pageWidth * 0.8 && height < pageHeight * 0.8;
         
-        if (isLowCoverage && isSignificantlySmaller) {
-          console.log(`🚨 GHOSTSCRIPT BOUNDS UNRELIABLE: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage)`);
-          console.log(`🔄 FALLING BACK TO RASTER ANALYSIS: Ghostscript missed significant content`);
+        if (isLowCoverage) {
+          console.log(`⚠️ LOW COVERAGE DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage)`);
+          console.log(`🔍 TRYING ENHANCED VECTOR ANALYSIS: Using alternative Ghostscript approach`);
           
-          // Return null to trigger raster fallback method
-          return null;
+          // Try PDF to SVG conversion for better vector analysis (only if parameters are provided)
+          if (pdfPath && pageNumber && pageBounds) {
+            const svgResult = await this.extractViaPdfToSvg(pdfPath, pageNumber, pageBounds);
+            if (svgResult && svgResult.success) {
+              console.log(`✅ SVG-based analysis succeeded where Ghostscript bbox failed`);
+              return svgResult;
+            }
+          }
+          
+          console.log(`⚠️ All vector analysis methods failed, using full page bounds to avoid clipping`);
+          
+          // Use full page bounds as last resort to prevent clipping
+          return {
+            success: true,
+            bbox: pageBounds,
+            pdfBbox: pageBounds,
+            method: 'full-page-fallback',
+            contentFound: true
+          };
         }
       }
       
