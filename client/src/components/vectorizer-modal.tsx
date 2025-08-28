@@ -2,10 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette, Crop, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import CompleteTransferLogo from "./complete-transfer-logo";
@@ -57,6 +59,7 @@ export function VectorizerModal({
   } | null>(null); // Track vectorization quality issues
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
+  const [enableTightCropping, setEnableTightCropping] = useState(true); // Enable tight cropping by default
 
   
   // Removed size editor state - users will resize on canvas
@@ -220,6 +223,7 @@ export function VectorizerModal({
       formData.append('image', imageFile);
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', 'false');
+      formData.append('enableTightCropping', enableTightCropping.toString());
       
       // Mark if this PNG was extracted from a PDF (so server skips deduplication)
       // Check if filename suggests it was originally a PDF that was converted to PNG
@@ -322,6 +326,7 @@ export function VectorizerModal({
         formData.append('image', imageFile);
         formData.append('preview', 'false'); // Production mode
         formData.append('removeBackground', 'false');
+        formData.append('enableTightCropping', enableTightCropping.toString());
         
         // Mark if this PNG was extracted from a PDF (so server skips deduplication)
         const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
@@ -1125,6 +1130,36 @@ export function VectorizerModal({
               </p>
             </div>
 
+            {/* Vectorization Settings */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings className="w-4 h-4 text-gray-600" />
+                <h3 className="font-medium text-gray-800">Vectorization Settings</h3>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Crop className="w-4 h-4 text-gray-600" />
+                  <Label htmlFor="tight-cropping" className="text-sm font-medium">
+                    Tight Cropping
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="tight-cropping"
+                    checked={enableTightCropping}
+                    onCheckedChange={setEnableTightCropping}
+                    data-testid="switch-tight-cropping"
+                  />
+                  <span className="text-xs text-gray-500">
+                    {enableTightCropping ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Automatically crop the vectorized result to remove excess whitespace and focus on the actual content.
+              </p>
+            </div>
+
 
 
           {/* Processing State */}
@@ -1365,37 +1400,85 @@ export function VectorizerModal({
 
           {/* Right Sidebar - Color Management Only */}
           {vectorSvg && (
-            <div className="w-80 border-l border-gray-700 pl-4 flex flex-col overflow-hidden flex-shrink-0">
+            <div className="w-80 border-l border-gray-200 pl-4 flex flex-col overflow-hidden flex-shrink-0">
               {/* Color Management Section */}
               {detectedColors.length > 0 && (
                 <>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Palette className="w-5 h-5 text-gray-100" />
-                    <h3 className="font-semibold text-gray-100">
-                      Detected Colors ({detectedColors.length})
-                    </h3>
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Palette className="w-5 h-5 text-purple-600" />
+                      <h3 className="font-semibold text-gray-800">
+                        Color Tools ({detectedColors.length} colors)
+                      </h3>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Click colors in the preview or use these tools to modify your vector:
+                    </p>
+                    
+                    {/* Color Action Buttons */}
+                    <div className="flex gap-2 mb-3">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={isEyedropperActive ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setIsEyedropperActive(!isEyedropperActive);
+                              setEyedropperColor(null);
+                            }}
+                            className={`flex-1 ${isEyedropperActive ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                            data-testid="button-eyedropper"
+                          >
+                            <Pipette className="w-3 h-3 mr-1" />
+                            {isEyedropperActive ? 'Exit' : 'Recolor'}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{isEyedropperActive ? 'Exit recolor mode' : 'Pick and apply colors'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={undoLastDeletion}
+                            disabled={deletionHistory.length === 0}
+                            className="px-3"
+                            data-testid="button-undo"
+                          >
+                            <Wand2 className="w-3 h-3 mr-1" />
+                            Undo
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Undo last color change</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
                 </>
               )}
               
               {detectedColors.length > 0 && (
-                <div className="text-xs text-gray-400 mb-4 p-2 bg-gray-800 rounded border border-gray-700">
+                <div className="text-xs mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
                   {isEyedropperActive ? (
                     <div className="flex items-center gap-1">
-                      <Pipette className="w-3 h-3 text-blue-500" />
-                      <span className="text-blue-400">
+                      <Pipette className="w-3 h-3 text-blue-600" />
+                      <span className="text-blue-700 font-medium">
                         {eyedropperColor 
                           ? `Click any color to change it to ${eyedropperColor}`
-                          : 'Click a color to pick it'}
+                          : 'Click a color below to pick it, then click another to apply it'}
                       </span>
                     </div>
                   ) : (
                     <>
                       <div className="flex items-center gap-1 mb-1">
-                        <Lock className="w-3 h-3 text-yellow-500" />
-                        <span>Click colors in preview to lock/unlock them</span>
+                        <Lock className="w-3 h-3 text-amber-600" />
+                        <span className="text-gray-700 font-medium">Click colors in preview to lock/unlock them</span>
                       </div>
-                      <div className="text-[10px] text-gray-500">
+                      <div className="text-[10px] text-gray-600">
                         Locked colors (yellow border) are protected from deletion
                       </div>
                     </>
@@ -1404,10 +1487,16 @@ export function VectorizerModal({
               )}
               
               {highlightedColor && (
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-red-400 font-medium">
-                    Highlighting: {highlightedColor}
-                  </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-4 h-4 border border-gray-300 rounded" 
+                      style={{ backgroundColor: highlightedColor }}
+                    />
+                    <p className="text-sm text-red-700 font-medium">
+                      Highlighting: {highlightedColor}
+                    </p>
+                  </div>
                 </div>
               )}
 

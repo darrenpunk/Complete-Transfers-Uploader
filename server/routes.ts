@@ -3684,9 +3684,54 @@ export async function registerRoutes(app: express.Application) {
         fs.unlinkSync(processedImagePath);
       }
       
+      // Apply tight cropping if requested
+      let finalSvg = cmykSvg;
+      const enableTightCropping = req.body.enableTightCropping === 'true';
+      
+      if (enableTightCropping) {
+        console.log('🔍 Applying tight cropping to vectorized SVG...');
+        try {
+          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+          const analyzer = new SVGBoundsAnalyzer();
+          
+          // Analyze the SVG content bounds
+          const boundsResult = await analyzer.analyzeSVGContent(cmykSvg);
+          
+          if (boundsResult.success && boundsResult.contentBounds) {
+            const bounds = boundsResult.contentBounds;
+            console.log(`📐 Content bounds found: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px`);
+            
+            // Apply tight cropping by updating the viewBox
+            const croppedSvg = cmykSvg.replace(
+              /viewBox="[^"]*"/,
+              `viewBox="${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}"`
+            ).replace(
+              /width="[^"]*"/,
+              `width="${bounds.width}"`
+            ).replace(
+              /height="[^"]*"/,
+              `height="${bounds.height}"`
+            );
+            
+            // Add tight content marker
+            finalSvg = croppedSvg.replace(
+              '<svg',
+              '<svg data-content-extracted="true"'
+            );
+            
+            console.log('✅ Applied tight cropping to vectorized SVG');
+          } else {
+            console.log('⚠️ Could not determine content bounds, keeping original SVG');
+          }
+        } catch (error) {
+          console.error('❌ Tight cropping failed:', error);
+          // Continue with original SVG on error
+        }
+      }
+
       // Send response with quality metadata
       const responseData: any = { 
-        svg: cmykSvg,
+        svg: finalSvg,
         mode: isPreview ? 'preview' : 'production'
       };
       if (qualityWarning) {
