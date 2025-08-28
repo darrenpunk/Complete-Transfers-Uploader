@@ -594,18 +594,19 @@ export class SVGBoundsAnalyzer {
     console.log(`📊 Path statistics: median area=${medianArea.toFixed(0)}, 75th=${area75th.toFixed(0)}, 90th=${area90th.toFixed(0)}`);
     
     // BALANCED filtering for tight cropping - preserve actual content
-    // Only remove truly massive background paths that are clearly containers
-    // 1. Remove paths larger than 50x the median area (only huge containers)
-    // 2. Remove paths with width or height > 1500px (only massive backgrounds)  
-    // 3. Keep most content, only filter extreme outliers
+    // Remove both massive containers AND tiny artifacts that create extra bounds
+    // 1. Remove paths larger than 50x the median area (huge containers)
+    // 2. Remove paths with width or height > 1500px (massive backgrounds)  
+    // 3. Remove tiny artifact paths that are extremely thin (<2px width/height)
     const contentPaths = allBounds.filter(pathBounds => {
       const isHugeContainer = pathBounds.area > medianArea * 50;
       const isMassiveBackground = pathBounds.width > 1500 || pathBounds.height > 1500;
+      const isTinyArtifact = (pathBounds.width < 2 || pathBounds.height < 2) && pathBounds.area < 200;
       
-      const isLikelyBackground = isHugeContainer || isMassiveBackground;
+      const isLikelyBackground = isHugeContainer || isMassiveBackground || isTinyArtifact;
       
       if (isLikelyBackground) {
-        console.log(`🚫 Excluding background path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isHugeContainer ? 'huge container' : 'massive background'}`);
+        console.log(`🚫 Excluding path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isHugeContainer ? 'huge container' : isMassiveBackground ? 'massive background' : 'tiny artifact'}`);
         return false;
       }
       return true;
