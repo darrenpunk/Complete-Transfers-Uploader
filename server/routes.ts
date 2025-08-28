@@ -846,29 +846,7 @@ export async function registerRoutes(app: express.Application) {
             const effectiveHeight = isRotated ? scaledWidth : scaledHeight;
             console.log(`📐 Effective dimensions: ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
             
-            // Calculate position - use actual canvas position for all elements
-            let xPos: number;
-            let yPos: number;
-            
-            // Only center if positioned off-page
-            if (element.x < 0 || element.y < 0) {
-              // Center based on effective (visual) dimensions after rotation
-              const centerX = (pageWidth - (effectiveWidth * 2.834645669)) / 2;
-              const centerY = (pageHeight - (effectiveHeight * 2.834645669)) / 2;
-              xPos = centerX;
-              yPos = centerY;
-              console.log(`📍 Centering content at (${xPos.toFixed(1)}, ${yPos.toFixed(1)}) for effective size ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm`);
-            } else {
-              // Use the element's position - convert mm to points
-              // For rotated elements, use the visual position
-              xPos = element.x * 2.834645669;
-              yPos = pageHeight - (element.y * 2.834645669) - (effectiveHeight * 2.834645669);
-              
-              // Ensure it stays on page
-              xPos = Math.max(0, xPos);
-              yPos = Math.max(0, yPos);
-            }
-            
+            // Calculate dimensions in points
             const widthPts = scaledWidth * 2.834645669;
             const heightPts = scaledHeight * 2.834645669;
             
@@ -979,32 +957,41 @@ export async function registerRoutes(app: express.Application) {
             
             // CRITICAL: For original PDFs, we embed at EXACT canvas dimensions
             // This ensures the content appears at the same size as in the canvas
-            console.log(`📐 Embedding at: x=${xPos.toFixed(1)}, y=${yPos.toFixed(1)}, w=${widthPts.toFixed(1)}, h=${heightPts.toFixed(1)}`);
             
-            // Handle rotation if element has rotation property
-            // rotation already declared above
+            // CENTER-BASED POSITIONING SYSTEM
+            // All calculations use center points for accurate rotation
             console.log(`🔄 Element rotation: ${rotation}°`);
+            
+            // Calculate canvas center (origin point)
+            const canvasCenterX = pageWidth / 2;
+            const canvasCenterY = pageHeight / 2;
+            
+            // Calculate element center in canvas coordinates
+            // Element position is stored as top-left corner, so add half dimensions
+            const elementCenterXmm = element.x + (element.width / 2);
+            const elementCenterYmm = element.y + (element.height / 2);
+            
+            // Convert to PDF points
+            const elementCenterX = elementCenterXmm * 2.834645669;
+            const elementCenterY = pageHeight - (elementCenterYmm * 2.834645669); // Flip Y axis for PDF
+            
+            console.log(`🎯 Canvas center: (${canvasCenterX.toFixed(1)}, ${canvasCenterY.toFixed(1)})pts`);
+            console.log(`🎯 Element center: (${elementCenterX.toFixed(1)}, ${elementCenterY.toFixed(1)})pts`);
             
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
-              // For 90° rotation, the content rotates clockwise around its bottom-left corner
-              // After rotation: width becomes visual height, height becomes visual width
+              // For 90° rotation around center
+              // Visual dimensions are swapped
+              const visualWidth = heightPts;
+              const visualHeight = widthPts;
               
-              // Use the actual canvas position from xPos and yPos
-              // After 90° rotation, the visual dimensions are swapped
-              const visualWidth = heightPts;  // Original height becomes visual width
-              const visualHeight = widthPts;  // Original width becomes visual height
+              // Calculate position for bottom-left corner after rotation
+              // PDF rotates around bottom-left, so we need to adjust
+              const rotatedX = elementCenterX - (visualHeight / 2) + visualWidth;
+              const rotatedY = elementCenterY - (visualWidth / 2);
               
-              // For 90° rotation, we need to adjust the position
-              // The rotation pivot is at the bottom-left corner of the original content
-              // After rotation, content extends leftward and upward from the pivot
-              const rotatedX = xPos + visualWidth;  // Adjust for rotation pivot
-              const rotatedY = yPos;  // Y position stays the same for bottom-left pivot
-              
-              console.log(`📐 90° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-              console.log(`📐 Original dims: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
-              console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
+              console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for center-based rotation`);
               
               // Embed with 90° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1014,7 +1001,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 1: Artwork embedded with 90° rotation at canvas position`);
+              console.log(`✅ Page 1: Artwork embedded with 90° rotation (center-based)`);
               
               // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1024,23 +1011,19 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(90)
               });
-              console.log(`✅ Page 2: Artwork embedded with 90° rotation at canvas position`);
+              console.log(`✅ Page 2: Artwork embedded with 90° rotation (center-based)`);
             } else if (rotation === 180) {
-              // For 180° rotation, content is flipped upside down
-              // No dimension swap occurs
-              
-              // Use the actual canvas position
-              // For 180° rotation, dimensions stay the same
+              // For 180° rotation around center
+              // Dimensions stay the same
               const visualWidth = widthPts;
               const visualHeight = heightPts;
               
-              // For 180° rotation around bottom-left corner:
-              // Content extends leftward and downward from pivot
-              const rotatedX = xPos + visualWidth;  // Add width for pivot
-              const rotatedY = yPos + visualHeight; // Add height for pivot
+              // Calculate position for bottom-left corner after rotation
+              const rotatedX = elementCenterX + (widthPts / 2);
+              const rotatedY = elementCenterY + (heightPts / 2);
               
-              console.log(`📐 180° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
+              console.log(`📐 180° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for center-based rotation`);
               
               // Embed with 180° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1050,7 +1033,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 1: Artwork embedded with 180° rotation at canvas position`);
+              console.log(`✅ Page 1: Artwork embedded with 180° rotation (center-based)`);
               
               // Embed with 180° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1060,24 +1043,19 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(180)
               });
-              console.log(`✅ Page 2: Artwork embedded with 180° rotation at canvas position`);
+              console.log(`✅ Page 2: Artwork embedded with 180° rotation (center-based)`);
             } else if (rotation === 270) {
-              // For 270° rotation, content rotates counter-clockwise around bottom-left corner
-              // After rotation: width becomes visual height, height becomes visual width
+              // For 270° rotation around center
+              // Visual dimensions are swapped
+              const visualWidth = heightPts;
+              const visualHeight = widthPts;
               
-              // Use the actual canvas position
-              // After 270° rotation, the visual dimensions are swapped
-              const visualWidth = heightPts;  // Original height becomes visual width
-              const visualHeight = widthPts;  // Original width becomes visual height
+              // Calculate position for bottom-left corner after rotation
+              const rotatedX = elementCenterX - (visualHeight / 2);
+              const rotatedY = elementCenterY - (visualWidth / 2) + visualHeight;
               
-              // For 270° rotation around bottom-left corner:
-              // Content extends rightward and upward from pivot
-              const rotatedX = xPos;  // X position stays the same
-              const rotatedY = yPos + visualHeight; // Adjust Y for rotation
-              
-              console.log(`📐 270° rotation: Canvas position (${xPos.toFixed(1)}, ${yPos.toFixed(1)})`);
-              console.log(`📐 Visual dims after rotation: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
-              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) with rotation`);
+              console.log(`📐 270° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
+              console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)}) for center-based rotation`);
               
               // Embed with 270° rotation on page 1
               page1.drawPage(embeddedPage, {
@@ -1087,7 +1065,7 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 1: Artwork embedded with 270° rotation at canvas position`);
+              console.log(`✅ Page 1: Artwork embedded with 270° rotation (center-based)`);
               
               // Embed with 270° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1097,24 +1075,29 @@ export async function registerRoutes(app: express.Application) {
                 height: heightPts,
                 rotate: degrees(270)
               });
-              console.log(`✅ Page 2: Artwork embedded with 270° rotation at canvas position`);
+              console.log(`✅ Page 2: Artwork embedded with 270° rotation (center-based)`);
             } else {
-              // No rotation - embed normally
+              // No rotation - position using element center
+              const normalX = elementCenterX - (widthPts / 2);
+              const normalY = elementCenterY - (heightPts / 2);
+              
+              console.log(`📐 No rotation: Positioning at (${normalX.toFixed(1)}, ${normalY.toFixed(1)}) from center`);
+              
               page1.drawPage(embeddedPage, {
-                x: xPos,
-                y: yPos,
+                x: normalX,
+                y: normalY,
                 width: widthPts,
                 height: heightPts
               });
-              console.log(`✅ Page 1: Artwork embedded at exact canvas size`);
+              console.log(`✅ Page 1: Artwork embedded at exact canvas size (center-based)`);
               
               page2.drawPage(embeddedPage, {
-                x: xPos,
-                y: yPos,
+                x: normalX,
+                y: normalY,
                 width: widthPts,
                 height: heightPts
               });
-              console.log(`✅ Page 2: Artwork embedded at exact canvas size`);
+              console.log(`✅ Page 2: Artwork embedded at exact canvas size (center-based)`);
             }
             
             // Cleanup handled inside each branch
