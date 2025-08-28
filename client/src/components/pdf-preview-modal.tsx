@@ -121,16 +121,29 @@ export default function PDFPreviewModal({
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
                       
+                      // Convert center-based coordinates to top-left for CSS positioning
+                      const templateWidth = template?.width || 297;
+                      const templateHeight = template?.height || 420;
+                      const centerX = templateWidth / 2;
+                      const centerY = templateHeight / 2;
+                      
+                      // Convert element center position to top-left corner
+                      const elementCenterX = centerX + element.x;
+                      const elementCenterY = centerY + element.y;
+                      const leftPos = elementCenterX - element.width / 2;
+                      const topPos = elementCenterY - element.height / 2;
+                      
                       return (
                         <div
                           key={element.id}
                           className="absolute"
                           style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            left: `${(leftPos / templateWidth) * 100}%`,
+                            top: `${(topPos / templateHeight) * 100}%`,
+                            width: `${(element.width / templateWidth) * 100}%`,
+                            height: `${(element.height / templateHeight) * 100}%`,
                             transform: `rotate(${element.rotation || 0}deg)`,
+                            transformOrigin: 'center',
                             opacity: element.opacity || 1,
                           }}
                         >
@@ -187,16 +200,29 @@ export default function PDFPreviewModal({
                       // Use element's individual garment color or fall back to project color
                       const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
                       
+                      // Convert center-based coordinates to top-left for CSS positioning
+                      const templateWidth = template?.width || 297;
+                      const templateHeight = template?.height || 420;
+                      const centerX = templateWidth / 2;
+                      const centerY = templateHeight / 2;
+                      
+                      // Convert element center position to top-left corner
+                      const elementCenterX = centerX + element.x;
+                      const elementCenterY = centerY + element.y;
+                      const leftPos = elementCenterX - element.width / 2;
+                      const topPos = elementCenterY - element.height / 2;
+                      
                       return (
                         <div
                           key={element.id}
                           className="absolute"
                           style={{
-                            left: `${(element.x / (template?.width || 297)) * 100}%`,
-                            top: `${(element.y / (template?.height || 420)) * 100}%`,
-                            width: `${(element.width / (template?.width || 297)) * 100}%`,
-                            height: `${(element.height / (template?.height || 420)) * 100}%`,
+                            left: `${(leftPos / templateWidth) * 100}%`,
+                            top: `${(topPos / templateHeight) * 100}%`,
+                            width: `${(element.width / templateWidth) * 100}%`,
+                            height: `${(element.height / templateHeight) * 100}%`,
                             transform: `rotate(${element.rotation || 0}deg)`,
+                            transformOrigin: 'center',
                             opacity: element.opacity || 1,
                             backgroundColor: garmentColor,
                             border: '1px solid rgba(0,0,0,0.1)'
