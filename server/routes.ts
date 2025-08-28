@@ -987,12 +987,15 @@ export async function registerRoutes(app: express.Application) {
               const visualWidth = heightPts;
               const visualHeight = widthPts;
               
-              // For 90° rotation in pdf-lib:
-              // Rotation happens around the bottom-left corner of the content
-              // After rotation, the content that was horizontal becomes vertical
-              // We need to shift right by the visual width (original height)
-              const rotatedX = xPosPts + visualWidth;
-              const rotatedY = yPosPts;
+              // For 90° rotation with center-based positioning:
+              // We want the content to appear rotated around its center
+              // pdf-lib rotates around bottom-left, so we need to adjust
+              const centerXPts = xPosPts + widthPts / 2;  // Center X before rotation
+              const centerYPts = yPosPts + heightPts / 2;  // Center Y before rotation
+              
+              // After 90° rotation, adjust for new bottom-left position
+              const rotatedX = centerXPts + heightPts / 2;  // Shift by half the new width
+              const rotatedY = centerYPts - widthPts / 2;   // Shift by half the new height
               
               console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
@@ -1022,10 +1025,14 @@ export async function registerRoutes(app: express.Application) {
               const visualWidth = widthPts;
               const visualHeight = heightPts;
               
-              // Rotation happens around bottom-left corner
-              // After 180° rotation, content is flipped
-              const rotatedX = xPosPts + widthPts;
-              const rotatedY = yPosPts + heightPts;
+              // For 180° rotation with center-based positioning:
+              // Content should appear flipped around its center
+              const centerXPts = xPosPts + widthPts / 2;  // Center X
+              const centerYPts = yPosPts + heightPts / 2;  // Center Y
+              
+              // After 180° rotation, adjust for new bottom-left position
+              const rotatedX = centerXPts + widthPts / 2;  // Shift right by half width
+              const rotatedY = centerYPts + heightPts / 2;  // Shift up by half height
               
               console.log(`📐 180° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
@@ -1054,10 +1061,14 @@ export async function registerRoutes(app: express.Application) {
               const visualWidth = heightPts;
               const visualHeight = widthPts;
               
-              // Rotation happens around bottom-left corner
-              // After 270° rotation, content extends upward by its width
-              const rotatedX = xPosPts;
-              const rotatedY = yPosPts + widthPts;
+              // For 270° rotation with center-based positioning:
+              // Content rotates counter-clockwise around its center
+              const centerXPts = xPosPts + widthPts / 2;  // Center X
+              const centerYPts = yPosPts + heightPts / 2;  // Center Y
+              
+              // After 270° rotation, adjust for new bottom-left position
+              const rotatedX = centerXPts - heightPts / 2;  // Shift left by half the new width
+              const rotatedY = centerYPts + widthPts / 2;   // Shift up by half the new height
               
               console.log(`📐 270° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);

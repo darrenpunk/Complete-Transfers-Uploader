@@ -684,12 +684,8 @@ grestore`;
         // Use visual height for positioning when rotated
         yPts = element.y * MM_TO_POINTS + viewBoxOffsetY;
         
-        // Adjust Y for rotation since we're positioning based on visual bounds
-        if (isRotated) {
-          const yAdjustment = ((element.height - element.width) / 2) * MM_TO_POINTS;
-          yPts -= yAdjustment;
-          console.log(`📐 Rotation Y adjustment for DTF: ${yAdjustment.toFixed(2)}pts`);
-        }
+        // No adjustment needed for center-based rotation
+        // Rotation adjustments are handled in the drawOptions section
         
         console.log(`🎯 DTF template: elementY=${element.y}mm, visualSize=${visualWidthMM.toFixed(1)}×${visualHeightMM.toFixed(1)}mm, pdfY=${yPts.toFixed(1)}pt`);
         
@@ -709,12 +705,8 @@ grestore`;
         const effectiveHeightPts = isRotated ? (element.width * MM_TO_POINTS) : contentHeightPts;
         yPts = templateHeightPts - ((elementCenterYMM + contentHeightMM / 2) * MM_TO_POINTS) + viewBoxOffsetY;
         
-        // Adjust Y for rotation since we're positioning based on visual bounds
-        if (isRotated) {
-          const yAdjustment = ((element.height - element.width) / 2) * MM_TO_POINTS;
-          yPts -= yAdjustment;
-          console.log(`📐 Rotation Y adjustment: ${yAdjustment.toFixed(2)}pts`);
-        }
+        // No adjustment needed for center-based rotation
+        // Rotation adjustments are handled in the drawOptions section
         
         console.log(`📐 Standard template positioning: A3 height=${templateHeightPts}pt, element.y=${element.y}mm, visualHeight=${visualHeightMM}mm, y=${yPts.toFixed(1)}pt`);
       }
@@ -743,15 +735,40 @@ grestore`;
       console.log(`✅ EXACT ELEMENT SIZE: Using ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from element dimensions`);
       
       // Use element dimensions and position exactly as specified
+      // Adjust for rotation around center (pdf-lib rotates around bottom-left)
+      let drawX = finalX;
+      let drawY = yPts;
+      
+      if (element.rotation) {
+        // Calculate center point
+        const centerX = finalX + contentWidthPts / 2;
+        const centerY = yPts + contentHeightPts / 2;
+        
+        // Adjust position based on rotation to maintain center
+        if (element.rotation === 90) {
+          // For 90° rotation, adjust position
+          drawX = centerX + contentHeightPts / 2;
+          drawY = centerY - contentWidthPts / 2;
+        } else if (element.rotation === 180) {
+          // For 180° rotation
+          drawX = centerX + contentWidthPts / 2;
+          drawY = centerY + contentHeightPts / 2;
+        } else if (element.rotation === 270) {
+          // For 270° rotation
+          drawX = centerX - contentHeightPts / 2;
+          drawY = centerY + contentWidthPts / 2;
+        }
+      }
+      
       const drawOptions = {
-        x: finalX,
-        y: yPts,
+        x: drawX,
+        y: drawY,
         width: contentWidthPts,  // Use actual element width
         height: contentHeightPts, // Use actual element height
         rotate: element.rotation ? degrees(element.rotation) : undefined,
       };
       
-      console.log(`📐 FINAL EMBEDDING: Position=(${finalX.toFixed(1)}, ${yPts.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
+      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${element.rotation || 0}°`);
       
       page1.drawPage(logoPage, drawOptions);
       page2.drawPage(logoPage, drawOptions);
