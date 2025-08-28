@@ -26,41 +26,47 @@ export function useCleanupOrphanedElements({
   useEffect(() => {
     if (!canvasElements || !logos || canvasElements.length === 0) return;
     
-    // Find orphaned elements (elements with logoId but no matching logo)
-    const orphanedElements = canvasElements.filter(element => {
-      if (!element.logoId) return false;
-      
-      const logoExists = logos.some(logo => logo.id === element.logoId);
-      if (!logoExists) {
-        console.warn(`🧹 Found orphaned canvas element: ${element.id} references missing logo: ${element.logoId}`);
-        return true;
-      }
-      
-      return false;
-    });
-    
-    // Clean up orphaned elements if any found
-    if (orphanedElements.length > 0) {
-      console.log(`🧹 Cleaning up ${orphanedElements.length} orphaned canvas elements`);
-      
-      // Delete each orphaned element
-      Promise.all(
-        orphanedElements.map(async (element) => {
-          try {
-            await apiRequest('DELETE', `/api/canvas-elements/${element.id}`);
-            console.log(`🧹 Deleted orphaned element: ${element.id}`);
-          } catch (error) {
-            console.error(`Failed to delete orphaned element ${element.id}:`, error);
-          }
-        })
-      ).then(() => {
-        // Refresh canvas elements after cleanup
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/projects", projectId, "canvas-elements"] 
-        });
+    // Add a delay to prevent cleanup during active upload/processing
+    const cleanupTimeout = setTimeout(() => {
+      // Find orphaned elements (elements with logoId but no matching logo)
+      const orphanedElements = canvasElements.filter(element => {
+        if (!element.logoId) return false;
         
-        console.log(`✅ Orphaned element cleanup completed`);
+        const logoExists = logos.some(logo => logo.id === element.logoId);
+        if (!logoExists) {
+          console.warn(`🧹 Found orphaned canvas element: ${element.id} references missing logo: ${element.logoId}`);
+          return true;
+        }
+        
+        return false;
       });
-    }
+      
+      // Clean up orphaned elements if any found
+      if (orphanedElements.length > 0) {
+        console.log(`🧹 Cleaning up ${orphanedElements.length} orphaned canvas elements`);
+        
+        // Delete each orphaned element
+        Promise.all(
+          orphanedElements.map(async (element) => {
+            try {
+              await apiRequest('DELETE', `/api/canvas-elements/${element.id}`);
+              console.log(`🧹 Deleted orphaned element: ${element.id}`);
+            } catch (error) {
+              console.error(`Failed to delete orphaned element ${element.id}:`, error);
+            }
+          })
+        ).then(() => {
+          // Refresh canvas elements after cleanup
+          queryClient.invalidateQueries({ 
+            queryKey: ["/api/projects", projectId, "canvas-elements"] 
+          });
+          
+          console.log(`✅ Orphaned element cleanup completed`);
+        });
+      }
+    }, 2000); // Wait 2 seconds to allow upload processing to complete
+    
+    // Cleanup timeout on component unmount
+    return () => clearTimeout(cleanupTimeout);
   }, [canvasElements, logos, projectId, queryClient]);
 }

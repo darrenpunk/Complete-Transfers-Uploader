@@ -2357,10 +2357,10 @@ export async function registerRoutes(app: express.Application) {
           };
         }
 
-        console.log(`🔍 DEBUG: About to create canvas element with logoId: ${logo.id}`);
+        console.log(`🔍 DEBUG: Creating canvas element with logoId: ${updatedLogo.id}`);
         const canvasElementData = {
           projectId: projectId,
-          logoId: logo.id,
+          logoId: updatedLogo.id, // Use the updated logo ID to ensure consistency
           x: centerX,
           y: centerY,
           width: displayWidth,
@@ -2372,7 +2372,8 @@ export async function registerRoutes(app: express.Application) {
           colorOverrides: colorOverrides
         };
 
-        await storage.createCanvasElement(canvasElementData);
+        const createdElement = await storage.createCanvasElement(canvasElementData);
+        console.log(`✅ Successfully created canvas element: ${createdElement.id} for logo: ${updatedLogo.id}`);
       }
 
       console.log('🚀 Returning logos to client:', logos.map(logo => ({
