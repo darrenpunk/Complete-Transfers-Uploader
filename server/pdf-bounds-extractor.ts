@@ -263,7 +263,7 @@ export class PDFBoundsExtractor {
                 const x = parseFloat(coords[i]);
                 const y = parseFloat(coords[i + 1]);
                 
-                if (!isNaN(x) && !isNaN(y) && Math.abs(x) < 5000 && Math.abs(y) < 5000) {
+                if (!isNaN(x) && !isNaN(y) && Math.abs(x) < 1000 && Math.abs(y) < 1000) {
                   minX = Math.min(minX, x);
                   minY = Math.min(minY, y);
                   maxX = Math.max(maxX, x);
@@ -313,15 +313,28 @@ export class PDFBoundsExtractor {
         const width = maxX - minX;
         const height = maxY - minY;
         
-        console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts at (${minX.toFixed(1)},${minY.toFixed(1)})`);
+        // Apply aggressive content-focused cropping by reducing bounds by 15%
+        // This removes whitespace padding around the actual logo content
+        const cropFactor = 0.15; // Remove 15% of padding/whitespace
+        const cropX = width * cropFactor * 0.5;  // Split crop evenly between left/right
+        const cropY = height * cropFactor * 0.5; // Split crop evenly between top/bottom
+        
+        const croppedMinX = minX + cropX;
+        const croppedMinY = minY + cropY;
+        const croppedMaxX = maxX - cropX;
+        const croppedMaxY = maxY - cropY;
+        const croppedWidth = croppedMaxX - croppedMinX;
+        const croppedHeight = croppedMaxY - croppedMinY;
+        
+        console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts, cropped to: ${croppedWidth.toFixed(1)}×${croppedHeight.toFixed(1)}pts at (${croppedMinX.toFixed(1)},${croppedMinY.toFixed(1)})`);
         
         return {
-          xMin: minX,
-          yMin: minY,
-          xMax: maxX,
-          yMax: maxY,
-          width: width,
-          height: height,
+          xMin: croppedMinX,
+          yMin: croppedMinY,
+          xMax: croppedMaxX,
+          yMax: croppedMaxY,
+          width: croppedWidth,
+          height: croppedHeight,
           units: 'pt'
         };
       }
