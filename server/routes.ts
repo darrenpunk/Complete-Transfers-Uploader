@@ -2209,10 +2209,10 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // Add equal overflow on all sides to ensure proper centering
-                    // This ensures the content is truly centered within the viewBox
-                    const horizontalOverflow = 10;  // Equal padding left/right
-                    const verticalOverflow = 10;    // Equal padding top/bottom for true centering
+                    // Add minimal overflow for proper centering and glyph protection
+                    // Reduce padding to get tighter content bounds
+                    const horizontalOverflow = 4;   // Minimal padding left/right
+                    const verticalOverflow = 4;     // Minimal padding top/bottom
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
@@ -2260,10 +2260,10 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Add equal overflow on all sides for proper centering
-                // Keep bounds as accurate as possible for customer resizing
-                const horizontalOverflow = needsTightCrop ? 10 : 0; // Equal padding left/right
-                const verticalOverflow = needsTightCrop ? 10 : 0;   // Equal padding top/bottom
+                // Add minimal overflow for proper centering and glyph protection
+                // Reduce padding to get more accurate content dimensions
+                const horizontalOverflow = needsTightCrop ? 2 : 0; // Minimal padding left/right
+                const verticalOverflow = needsTightCrop ? 2 : 0;   // Minimal padding top/bottom
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
