@@ -982,16 +982,17 @@ export async function registerRoutes(app: express.Application) {
               const visualHeight = widthPts;
               
               // For 90° rotation in pdf-lib:
-              // - Rotation happens around the origin point (0,0) first
-              // - Then the result is translated by (x,y)
-              // - After 90° rotation, the original width extends upward (becomes height)
-              // - The original height extends to the right (becomes width)
+              // pdf-lib rotates around the bottom-left corner of the content
+              // After 90° clockwise rotation:
+              // - The original bottom-left stays at the same point
+              // - The content that extended right now extends upward
+              // - The content that extended up now extends left
+              // This means after rotation, the content is to the LEFT of the rotation point
               
-              // We need to account for the fact that after rotation:
-              // - The bottom-left corner of the rotated content is at (0, -originalWidth)
-              // - So we need to shift up by originalWidth to get it back to (0,0)
-              const rotatedX = xPosPts + heightPts; // Shift right by the rotated width (original height)
-              const rotatedY = yPosPts; // Y position stays the same after accounting for rotation
+              // To position correctly, we need to shift right by the visual width (original height)
+              // because the rotated content extends leftward from the rotation point
+              const rotatedX = xPosPts + visualWidth; // Shift right by visual width (original height)
+              const rotatedY = yPosPts;
               
               console.log(`📐 90° rotation: Visual dims ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts`);
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
