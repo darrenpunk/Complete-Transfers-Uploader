@@ -83,13 +83,15 @@ export class SVGBoundsAnalyzer {
       let contentBounds;
       
       if (isAIVectorized) {
-        // For AI-vectorized content, calculate the actual visible content bounds
+        // For AI-vectorized content, prioritize actual path/geometry analysis over viewBox
         console.log(`🎯 AI-VECTORIZED CONTENT DETECTED: Calculating actual content bounds`);
-        const visibleBounds = this.calculateVisibleContentBounds(svgElement);
-        contentBounds = visibleBounds || pathResult || geometryResult;
         
-        if (visibleBounds) {
-          console.log(`📐 AI-VECTORIZED CONTENT BOUNDS: ${visibleBounds.width.toFixed(1)}×${visibleBounds.height.toFixed(1)}px (actual content size)`);
+        // First try path and geometry analysis which gives more accurate results
+        contentBounds = pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
+        
+        if (contentBounds) {
+          console.log(`📐 AI-VECTORIZED CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (actual content size)`);
+          console.log(`📍 AI-VECTORIZED POSITION: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
         }
       } else {
         // For normal SVGs, prioritize path and geometry calculations over viewBox
@@ -194,7 +196,8 @@ export class SVGBoundsAnalyzer {
       
       if (bounds) {
         processedElements++;
-        console.log(`📏 Element ${processedElements}: ${tagName} bounds (${bounds.xMin.toFixed(1)},${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)},${bounds.yMax.toFixed(1)})`);
+        const elementSize = `${(bounds.xMax - bounds.xMin).toFixed(1)}×${(bounds.yMax - bounds.yMin).toFixed(1)}`;
+        console.log(`📏 Element ${processedElements}: ${tagName} ${elementSize}px at (${bounds.xMin.toFixed(1)},${bounds.yMin.toFixed(1)})`);
         
         // For AI-vectorized content, don't clip to viewBox - find the natural content bounds
         minX = Math.min(minX, bounds.xMin);
@@ -223,13 +226,15 @@ export class SVGBoundsAnalyzer {
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
     
-    console.log(`📏 VISIBLE CONTENT: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px within ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}px viewBox`);
+    console.log(`📏 ACTUAL CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}px within ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}px viewBox`);
+    console.log(`📍 Content position: (${minX.toFixed(1)}, ${minY.toFixed(1)}) to (${maxX.toFixed(1)}, ${maxY.toFixed(1)})`);
     
+    // Return content bounds relative to the SVG coordinate system
     return {
-      xMin: minX - vbX,  // Relative to viewBox origin
-      yMin: minY - vbY,  // Relative to viewBox origin
-      xMax: maxX - vbX,  // Relative to viewBox origin
-      yMax: maxY - vbY,  // Relative to viewBox origin
+      xMin: minX,
+      yMin: minY,
+      xMax: maxX,
+      yMax: maxY,
       width: contentWidth,
       height: contentHeight,
       units: 'px'
@@ -368,7 +373,7 @@ export class SVGBoundsAnalyzer {
    */
   private parsePathData(pathData: string): SVGBounds | null {
     try {
-      // Simple regex-based path parsing for coordinate extraction
+      // Enhanced path parsing for better bounds detection
       const coords = pathData.match(/([-+]?\d*\.?\d+)/g);
       if (!coords || coords.length < 2) return null;
 
@@ -376,7 +381,7 @@ export class SVGBoundsAnalyzer {
       let minX = Infinity, minY = Infinity;
       let maxX = -Infinity, maxY = -Infinity;
 
-      // Process coordinates in pairs
+      // Process coordinates in pairs to find actual content bounds
       for (let i = 0; i < numbers.length - 1; i += 2) {
         const x = numbers[i];
         const y = numbers[i + 1];
@@ -391,17 +396,24 @@ export class SVGBoundsAnalyzer {
 
       if (minX === Infinity) return null;
 
+      const width = maxX - minX;
+      const height = maxY - minY;
+      
+      // Add debug logging for path bounds
+      console.log(`🛤️  Path bounds: (${minX.toFixed(1)}, ${minY.toFixed(1)}) to (${maxX.toFixed(1)}, ${maxY.toFixed(1)}) = ${width.toFixed(1)}×${height.toFixed(1)}`);
+
       return {
         xMin: minX,
         yMin: minY,
         xMax: maxX,
         yMax: maxY,
-        width: maxX - minX,
-        height: maxY - minY,
+        width: width,
+        height: height,
         units: 'px'
       };
 
     } catch (error) {
+      console.error('Path parsing error:', error);
       return null;
     }
   }
