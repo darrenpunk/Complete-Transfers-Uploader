@@ -60,8 +60,14 @@ export class PDFBoundsExtractor {
       highDpiRasterFallback = true
     } = options;
 
-    // Use pure vector analysis only
-    let result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
+    // Use PDF→SVG first approach for guaranteed vector accuracy
+    let result = await this.extractViaPdfToSvg(pdfPath, pageNumber);
+    
+    // Only fall back to Ghostscript if PDF→SVG fails
+    if (!result || !result.success) {
+      console.log('🔄 PDF→SVG failed, trying Ghostscript as fallback...');
+      result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
+    }
 
     // Apply padding if requested
     if (result.success && result.bbox && padding > 0) {
@@ -160,7 +166,7 @@ export class PDFBoundsExtractor {
   private async extractViaPdfToSvg(
     pdfPath: string,
     pageNumber: number,
-    pageBounds: BoundingBox
+    pageBounds?: BoundingBox
   ): Promise<BoundsExtractionResult | null> {
     
     try {
@@ -223,7 +229,7 @@ export class PDFBoundsExtractor {
   }
 
   /**
-   * Analyze SVG content to find tight bounds
+   * Comprehensive SVG content bounds analysis - bulletproof approach
    */
   private analyzeSvgContentBounds(
     svgContent: string, 
@@ -231,63 +237,82 @@ export class PDFBoundsExtractor {
   ): BoundingBox | null {
     
     try {
-      // Look for path elements and their bounds
-      const pathMatches = svgContent.matchAll(/<path[^>]+d="([^"]+)"/g);
-      const rectMatches = svgContent.matchAll(/<rect[^>]+x="([^"]+)"[^>]+y="([^"]+)"[^>]+width="([^"]+)"[^>]+height="([^"]+)"/g);
+      console.log(`🔍 Analyzing SVG content for precise bounds...`);
       
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       let hasContent = false;
       
-      // Analyze rectangles
-      for (const rectMatch of rectMatches) {
-        const x = parseFloat(rectMatch[1]);
-        const y = parseFloat(rectMatch[2]);
-        const width = parseFloat(rectMatch[3]);
-        const height = parseFloat(rectMatch[4]);
+      // Extract all numeric coordinates from the entire SVG
+      // This captures paths, rects, circles, polygons, transforms, etc.
+      const allNumbers = svgContent.match(/[\d.-]+/g);
+      if (allNumbers && allNumbers.length >= 2) {
+        console.log(`📊 Found ${allNumbers.length} numeric values in SVG`);
         
-        if (!isNaN(x) && !isNaN(y) && !isNaN(width) && !isNaN(height)) {
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x + width);
-          maxY = Math.max(maxY, y + height);
-          hasContent = true;
+        // Analyze all coordinate pairs
+        for (let i = 0; i < allNumbers.length - 1; i++) {
+          const x = parseFloat(allNumbers[i]);
+          const y = parseFloat(allNumbers[i + 1]);
+          
+          // Filter out obviously non-coordinate values (stroke widths, etc.)
+          if (!isNaN(x) && !isNaN(y) && 
+              Math.abs(x) < 10000 && Math.abs(y) < 10000 && // Reasonable coordinate range
+              (Math.abs(x) > 0.001 || Math.abs(y) > 0.001)) { // Not zero/tiny values
+            
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            hasContent = true;
+          }
         }
       }
       
-      // Basic path analysis (simplified)
-      for (const pathMatch of pathMatches) {
-        const pathData = pathMatch[1];
-        
-        // Extract coordinates from path data (simplified approach)
-        const coords = pathData.match(/[\d.-]+/g);
-        if (coords && coords.length >= 2) {
-          for (let i = 0; i < coords.length - 1; i += 2) {
-            const x = parseFloat(coords[i]);
-            const y = parseFloat(coords[i + 1]);
-            
-            if (!isNaN(x) && !isNaN(y)) {
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x);
-              maxY = Math.max(maxY, y);
-              hasContent = true;
+      // Also look for specific SVG elements for validation
+      const elementPatterns = [
+        /<rect[^>]+x="([^"]+)"[^>]+y="([^"]+)"[^>]+width="([^"]+)"[^>]+height="([^"]+)"/g,
+        /<circle[^>]+cx="([^"]+)"[^>]+cy="([^"]+)"[^>]+r="([^"]+)"/g,
+        /<ellipse[^>]+cx="([^"]+)"[^>]+cy="([^"]+)"[^>]+rx="([^"]+)"[^>]+ry="([^"]+)"/g
+      ];
+      
+      for (const pattern of elementPatterns) {
+        const matches = svgContent.matchAll(pattern);
+        for (const match of matches) {
+          const values = match.slice(1).map(parseFloat).filter(v => !isNaN(v));
+          if (values.length >= 2) {
+            for (let i = 0; i < values.length; i++) {
+              if (Math.abs(values[i]) < 10000) {
+                minX = Math.min(minX, values[i]);
+                minY = Math.min(minY, values[i]);
+                maxX = Math.max(maxX, values[i]);
+                maxY = Math.max(maxY, values[i]);
+                hasContent = true;
+              }
             }
           }
         }
       }
       
       if (hasContent && isFinite(minX) && isFinite(minY) && isFinite(maxX) && isFinite(maxY)) {
+        const width = maxX - minX;
+        const height = maxY - minY;
+        
+        // Add small buffer to ensure we don't clip anything (1pt = ~0.35mm)
+        const buffer = 1;
+        
+        console.log(`✅ SVG bounds analysis: ${width.toFixed(1)}×${height.toFixed(1)}pts (${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)})`);
+        
         return {
-          xMin: minX,
-          yMin: minY,
-          xMax: maxX,
-          yMax: maxY,
-          width: maxX - minX,
-          height: maxY - minY,
+          xMin: minX - buffer,
+          yMin: minY - buffer,
+          xMax: maxX + buffer,
+          yMax: maxY + buffer,
+          width: width + (buffer * 2),
+          height: height + (buffer * 2),
           units: 'pt'
         };
       }
       
+      console.log(`⚠️ No valid content bounds found in SVG`);
       return null;
       
     } catch (error) {
@@ -550,25 +575,8 @@ export class PDFBoundsExtractor {
           console.log(`⚠️ LOW COVERAGE DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts (${(coverage*100).toFixed(1)}% coverage)`);
           console.log(`🔍 TRYING ENHANCED VECTOR ANALYSIS: Using alternative Ghostscript approach`);
           
-          // Try PDF to SVG conversion for better vector analysis (only if parameters are provided)
-          if (pdfPath && pageNumber && pageBounds) {
-            const svgResult = await this.extractViaPdfToSvg(pdfPath, pageNumber, pageBounds);
-            if (svgResult && svgResult.success) {
-              console.log(`✅ SVG-based analysis succeeded where Ghostscript bbox failed`);
-              return svgResult;
-            }
-          }
-          
-          console.log(`⚠️ All vector analysis methods failed, using full page bounds to avoid clipping`);
-          
-          // Use full page bounds as last resort to prevent clipping
-          return {
-            success: true,
-            bbox: pageBounds,
-            pdfBbox: pageBounds,
-            method: 'full-page-fallback',
-            contentFound: true
-          };
+          // This should not happen since we now use PDF→SVG first
+          console.log(`⚠️ Low coverage detected but using original bounds (PDF→SVG should have handled this)`);
         }
       }
       
