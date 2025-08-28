@@ -593,29 +593,30 @@ export class SVGBoundsAnalyzer {
     
     console.log(`📊 Path statistics: median area=${medianArea.toFixed(0)}, 75th=${area75th.toFixed(0)}, 90th=${area90th.toFixed(0)}`);
     
-    // More aggressive filtering for tight cropping
-    // 1. Remove paths larger than 10x the 75th percentile area
-    // 2. Remove paths with width or height > 500px (likely backgrounds)
-    // 3. Remove outlier paths that are much larger than the median
+    // ULTRA-aggressive filtering for tight cropping - focus on actual content
+    // 1. Remove paths larger than 3x the median (very aggressive)
+    // 2. Remove paths with width or height > 200px (much tighter threshold)
+    // 3. Focus on the smallest 60% of paths by area
     const contentPaths = allBounds.filter(pathBounds => {
-      const isTooLarge = pathBounds.area > area75th * 10;
-      const isTooWide = pathBounds.width > 500 || pathBounds.height > 500;
-      const isOutlier = pathBounds.area > medianArea * 25;
+      const isMuchTooLarge = pathBounds.area > medianArea * 3;
+      const isTooWide = pathBounds.width > 200 || pathBounds.height > 200;
+      const isInTopQuartile = pathBounds.area > area75th;
       
-      const isLikelyBackground = isTooLarge || isTooWide || isOutlier;
+      const isLikelyBackground = isMuchTooLarge || isTooWide || isInTopQuartile;
       
       if (isLikelyBackground) {
-        console.log(`🚫 Excluding background path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isTooLarge ? 'too large' : isTooWide ? 'too wide' : 'outlier'}`);
+        console.log(`🚫 Excluding path ${pathBounds.pathIndex}: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)}) - ${isMuchTooLarge ? 'too large vs median' : isTooWide ? 'too wide (>200px)' : 'top quartile'}`);
         return false;
       }
       return true;
     });
 
     if (contentPaths.length === 0) {
-      console.log('⚠️ All paths filtered out, using smallest paths instead');
-      // If all paths were filtered, use the smallest 70% of paths
-      const keepCount = Math.ceil(allBounds.length * 0.7);
+      console.log('⚠️ All paths filtered out, using smallest 40% of paths');
+      // If all paths were filtered, use only the smallest 40% of paths
+      const keepCount = Math.ceil(allBounds.length * 0.4);
       contentPaths.push(...allBounds.slice(0, keepCount));
+      console.log(`🔄 Fallback: Using smallest ${keepCount} paths out of ${allBounds.length}`);
     }
 
     console.log(`🎯 Using ${contentPaths.length} content paths out of ${allBounds.length} total paths`);
