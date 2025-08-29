@@ -3687,6 +3687,8 @@ export async function registerRoutes(app: express.Application) {
       let finalSvg = cmykSvg;
       const enableTightCropping = req.body.enableTightCropping === 'true';
       
+      console.log(`🔧 TIGHT CROPPING DEBUG: enableTightCropping = "${req.body.enableTightCropping}" -> ${enableTightCropping}`);
+      
       if (enableTightCropping) {
         console.log('🔍 Applying tight cropping to vectorized SVG (post-processing)...');
         try {

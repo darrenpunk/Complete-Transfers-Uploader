@@ -254,6 +254,7 @@ export function VectorizerModal({
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', 'false');
       formData.append('enableTightCropping', enableTightCropping.toString());
+      console.log(`🔧 CLIENT PREVIEW: Sending enableTightCropping = ${enableTightCropping}`);
       
       // Mark if this PNG was extracted from a PDF (so server skips deduplication)
       // Check if filename suggests it was originally a PDF that was converted to PNG
@@ -357,6 +358,7 @@ export function VectorizerModal({
         formData.append('preview', 'false'); // Production mode
         formData.append('removeBackground', 'false');
         formData.append('enableTightCropping', enableTightCropping.toString());
+        console.log(`🔧 CLIENT PRODUCTION: Sending enableTightCropping = ${enableTightCropping}`);
         
         // Mark if this PNG was extracted from a PDF (so server skips deduplication)
         const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
