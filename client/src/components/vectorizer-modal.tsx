@@ -12,6 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { useToast } from "@/hooks/use-toast";
+import { SimpleCropInterface } from "./simple-crop-interface";
 
 interface VectorizerModalProps {
   open: boolean;
@@ -1381,74 +1382,7 @@ export function VectorizerModal({
     }
   };
 
-  // COMPLETELY NEW Crop Interface Component - Forces React to recreate
-  const CropInterfaceV4 = ({ imageUrl, onCropChange, cropArea }: {
-    imageUrl: string;
-    onCropChange: (area: {x: number, y: number, width: number, height: number} | null) => void;
-    cropArea: {x: number, y: number, width: number, height: number} | null;
-  }) => {
-    const [isMouseDown, setIsMouseDown] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
-    const [resizeHandle, setResizeHandle] = useState<string>('');
-    // State for initial selection drawing - FORCE NULL INITIALIZATION
-    const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
-    const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
-    const [validMouseDownOccurred, setValidMouseDownOccurred] = useState(false);
-    
-    // FORCE CLEAR ALL STATE ON COMPONENT MOUNT
-    useEffect(() => {
-      console.log('🔥🔥🔥 CROP INTERFACE MOUNTED - FORCING CLEAN STATE 🔥🔥🔥');
-      
-      // FIRST: Remove any existing global listeners that might be left over
-      document.removeEventListener('mousemove', handleMouseMove, true);
-      document.removeEventListener('mouseup', handleMouseUp, true);
-      document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
-      console.log('🧹 CLEANED UP ANY LINGERING GLOBAL LISTENERS');
-      
-      setIsMouseDown(false);
-      setStartPos(null);
-      setCurrentPos(null);
-      setIsResizing(false);
-      setResizeHandle('');
-      setValidMouseDownOccurred(false);
-      listenersRef.current = false;
-      onCropChange(null); // Clear any existing crop area
-      console.log('🔥🔥🔥 STATE CLEANUP COMPLETE 🔥🔥🔥');
-      
-      // Log current state for debugging
-      console.log('🔍 INITIAL STATE:', {
-        isMouseDown: false,
-        validMouseDownOccurred: false,
-        hasListeners: listenersRef.current
-      });
-    }, []);
-    
-    // Debug state changes - Track what's setting mouse states
-    useEffect(() => {
-      if (startPos) {
-        console.log('🚨 STARTPOS SET TO:', startPos);
-        console.trace('STARTPOS SET FROM:');
-      }
-    }, [startPos]);
-    
-    useEffect(() => {
-      if (isMouseDown) {
-        console.log('🚨 ISMOUSEDOWN SET TO TRUE');
-        console.trace('ISMOUSEDOWN SET FROM:');
-      }
-    }, [isMouseDown]);
-    
-    useEffect(() => {
-      if (validMouseDownOccurred) {
-        console.log('🚨 VALIDMOUSEDOWN SET TO TRUE');
-        console.trace('VALIDMOUSEDOWN SET FROM:');
-      }
-    }, [validMouseDownOccurred]);
-    
-    // State for resize operations 
-    const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
-    const [originalCropArea, setOriginalCropArea] = useState<CropArea | null>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
+  // The crop interface is now handled by the external SimpleCropInterface component
 
     // Get mouse position relative to the actual image content (accounting for object-contain)
     const getRelativePos = (e: MouseEvent | React.MouseEvent) => {
@@ -2026,22 +1960,6 @@ export function VectorizerModal({
             </button>
           </div>
         )}
-        
-        {/* Status indicators */}
-        {isMouseDown && (
-          <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg text-xl font-bold animate-pulse" style={{ zIndex: 1000 }}>
-            🔥 SELECTING...
-          </div>
-        )}
-        
-        {isResizing && (
-          <div className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-2 rounded-lg text-xl font-bold animate-pulse" style={{ zIndex: 1000 }}>
-            🔧 RESIZING {resizeHandle.toUpperCase()}...
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <TooltipProvider>
@@ -3102,10 +3020,12 @@ export function VectorizerModal({
           
           {originalImageUrl && (
             <div className="flex-1 overflow-hidden bg-gray-100 rounded-lg relative">
-              <CropInterfaceV4
+              <SimpleCropInterface
                 imageUrl={originalImageUrl}
                 onCropChange={setCropArea}
                 cropArea={cropArea}
+                onApplyCrop={applyCropAndVectorize}
+                isProcessing={isProcessing}
               />
             </div>
           )}
