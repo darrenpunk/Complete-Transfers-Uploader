@@ -1390,9 +1390,23 @@ export function VectorizerModal({
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [resizeHandle, setResizeHandle] = useState<string>('');
-    // State for initial selection drawing
+    // State for initial selection drawing - FORCE NULL INITIALIZATION
     const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
     const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
+    const [validMouseDownOccurred, setValidMouseDownOccurred] = useState(false);
+    
+    // FORCE CLEAR ALL STATE ON COMPONENT MOUNT
+    useEffect(() => {
+      console.log('🔥🔥🔥 CROP INTERFACE MOUNTED - FORCING CLEAN STATE 🔥🔥🔥');
+      setIsMouseDown(false);
+      setStartPos(null);
+      setCurrentPos(null);
+      setIsResizing(false);
+      setResizeHandle('');
+      setValidMouseDownOccurred(false);
+      onCropChange(null); // Clear any existing crop area
+      console.log('🔥🔥🔥 STATE CLEANUP COMPLETE 🔥🔥🔥');
+    }, []);
     
     // Debug state changes
     useEffect(() => {
@@ -1480,18 +1494,14 @@ export function VectorizerModal({
       e.preventDefault();
       e.stopPropagation();
       
-      console.log('🟢 MOUSE DOWN TRIGGERED - Getting position...');
+      console.log('🟢 VALID MOUSE DOWN TRIGGERED');
       const pos = getRelativePos(e);
-      console.log('🟢 MOUSE DOWN POSITION CALCULATED:', pos);
-      
-      if (pos.x === 0 && pos.y === 0) {
-        console.log('❌ MOUSE DOWN GOT (0,0) - COORDINATE CALCULATION FAILED');
-        console.log('Raw mouse event:', { clientX: e.clientX, clientY: e.clientY });
-      }
+      console.log('🟢 MOUSE DOWN POSITION:', pos);
       
       setIsMouseDown(true);
       setStartPos(pos);
       setCurrentPos(pos);
+      setValidMouseDownOccurred(true);
       onCropChange(null);
     };
 
@@ -1573,11 +1583,13 @@ export function VectorizerModal({
     };
 
     // Global mouse move handler - use refs to avoid dependency issues
-    const currentStateRef = useRef({ isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea });
-    currentStateRef.current = { isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea };
+    const currentStateRef = useRef({ isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea, validMouseDownOccurred });
+    currentStateRef.current = { isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea, validMouseDownOccurred };
     
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
+        // ONLY PROCESS MOUSE MOVE IF VALID MOUSE DOWN OCCURRED
+        if (!validMouseDownOccurred) return;
         const pos = getRelativePos(e);
         const state = currentStateRef.current;
         
@@ -1776,11 +1788,17 @@ export function VectorizerModal({
     
     const handleMouseUp = useCallback((e: MouseEvent) => {
       const state = currentStateRef.current;
-      console.log('🚨 MOUSE UP EVENT TRIGGERED', { 
+      
+      // PREVENT PHANTOM MOUSE UP EVENTS
+      if (!validMouseDownOccurred) {
+        console.log('🚫 IGNORING PHANTOM MOUSE UP - NO VALID MOUSE DOWN');
+        return;
+      }
+      
+      console.log('🚨 VALID MOUSE UP EVENT TRIGGERED', { 
         isMouseDown: state.isMouseDown, 
         isResizing: state.isResizing, 
-        startPos: !!state.startPos, 
-        target: e.target 
+        startPos: !!state.startPos 
       });
       
       // CRITICAL: Completely prevent both modes from running together
