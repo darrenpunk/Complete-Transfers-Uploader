@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { useToast } from "@/hooks/use-toast";
@@ -1322,7 +1322,7 @@ export function VectorizerModal({
     const containerRef = useRef<HTMLDivElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
 
-    const getRelativeCoordinates = (e: React.MouseEvent) => {
+    const getRelativeCoordinates = (e: MouseEvent | React.MouseEvent) => {
       if (!imgRef.current) return { x: 0, y: 0 };
       
       const rect = imgRef.current.getBoundingClientRect();
@@ -1331,6 +1331,42 @@ export function VectorizerModal({
       
       return { x, y };
     };
+
+    // Document-level mouse handlers for better drag support
+    const handleDocumentMouseMove = useCallback((e: MouseEvent) => {
+      if (!isDrawing || !startPoint || !imgRef.current) return;
+      
+      const coords = getRelativeCoordinates(e);
+      
+      const x = Math.min(startPoint.x, coords.x);
+      const y = Math.min(startPoint.y, coords.y);
+      const width = Math.abs(coords.x - startPoint.x);
+      const height = Math.abs(coords.y - startPoint.y);
+      
+      // Update crop area during drag
+      if (width > 1 && height > 1) {
+        onCropChange({ x, y, width, height });
+      }
+    }, [isDrawing, startPoint, onCropChange]);
+
+    const handleDocumentMouseUp = useCallback(() => {
+      console.log('Document mouse up, stopping draw');
+      setIsDrawing(false);
+      setStartPoint(null);
+    }, []);
+
+    // Set up document event listeners when dragging starts
+    useEffect(() => {
+      if (isDrawing) {
+        document.addEventListener('mousemove', handleDocumentMouseMove);
+        document.addEventListener('mouseup', handleDocumentMouseUp);
+        
+        return () => {
+          document.removeEventListener('mousemove', handleDocumentMouseMove);
+          document.removeEventListener('mouseup', handleDocumentMouseUp);
+        };
+      }
+    }, [isDrawing, handleDocumentMouseMove, handleDocumentMouseUp]);
 
     const handleMouseDown = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -1342,28 +1378,6 @@ export function VectorizerModal({
       setStartPoint(coords);
       setIsDrawing(true);
       onCropChange(null); // Clear existing crop
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-      if (!isDrawing || !startPoint || !imgRef.current) return;
-      
-      const coords = getRelativeCoordinates(e);
-      
-      const x = Math.min(startPoint.x, coords.x);
-      const y = Math.min(startPoint.y, coords.y);
-      const width = Math.abs(coords.x - startPoint.x);
-      const height = Math.abs(coords.y - startPoint.y);
-      
-      // Only update if we have a meaningful area
-      if (width > 5 && height > 5) {
-        onCropChange({ x, y, width, height });
-      }
-    };
-
-    const handleMouseUp = () => {
-      console.log('Mouse up, stopping draw');
-      setIsDrawing(false);
-      setStartPoint(null);
     };
 
     const getCropOverlayStyle = () => {
@@ -1404,9 +1418,6 @@ export function VectorizerModal({
         <div 
           className="absolute inset-0"
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         />
         
         {cropArea && (
