@@ -51,6 +51,37 @@ export class SVGBoundsAnalyzer {
    */
   async analyzeSVGContent(svgContent: string): Promise<SVGBoundsResult> {
     try {
+      // CRITICAL CHECK: Respect crop dimensions if they exist
+      if (svgContent.includes('data-crop-extracted="true"')) {
+        console.log('🎯 SVG BOUNDS ANALYZER: Crop marker detected, using crop viewBox instead of content analysis');
+        
+        // Extract crop dimensions from viewBox
+        const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+        if (viewBoxMatch) {
+          const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+          if (viewBoxValues.length === 4) {
+            const [x, y, width, height] = viewBoxValues;
+            console.log(`✅ CROP BOUNDS FROM VIEWBOX: ${width.toFixed(1)}×${height.toFixed(1)}px`);
+            return {
+              success: true,
+              method: 'crop-viewbox',
+              hasContent: true,
+              contentBounds: {
+                xMin: x,
+                yMin: y,
+                xMax: x + width,
+                yMax: y + height,
+                width,
+                height,
+                units: 'px'
+              }
+            };
+          }
+        }
+        
+        console.log('⚠️ CROP MARKER FOUND but could not extract viewBox, falling back to content analysis');
+      }
+      
       // Create DOM for SVG analysis
       const dom = new JSDOM(`<!DOCTYPE html><html><body>${svgContent}</body></html>`);
       const document = dom.window.document;

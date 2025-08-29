@@ -173,6 +173,31 @@ export function extractViewBoxDimensions(svgContent: string): { width: number; h
  */
 export function calculateSVGContentBounds(svgContent: string): { width: number; height: number; minX: number; minY: number; maxX: number; maxY: number } | null {
   try {
+    // CRITICAL CHECK: Respect crop dimensions if they exist
+    if (svgContent.includes('data-crop-extracted="true"')) {
+      console.log('🎯 CROP BOUNDS DETECTED: SVG has crop marker, extracting crop dimensions instead of calculating content bounds');
+      
+      // Extract crop dimensions from viewBox
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      if (viewBoxMatch) {
+        const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+        if (viewBoxValues.length === 4) {
+          const [x, y, width, height] = viewBoxValues;
+          console.log(`✅ CROP BOUNDS EXTRACTED: ${width.toFixed(1)}×${height.toFixed(1)}px from crop viewBox`);
+          return {
+            width,
+            height,
+            minX: x,
+            minY: y,
+            maxX: x + width,
+            maxY: y + height
+          };
+        }
+      }
+      
+      console.log('⚠️ CROP MARKER FOUND but could not extract crop viewBox, falling back to content bounds');
+    }
+    
     // URGENT DEBUG: Function entry confirmation 
     console.log('🚨 FUNCTION ENTRY: calculateSVGContentBounds called');
     console.log('📐 Calculating content bounds from actual SVG elements...');
