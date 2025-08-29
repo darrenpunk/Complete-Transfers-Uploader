@@ -614,21 +614,53 @@ export class SVGBoundsAnalyzer {
     const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
-    // Step 3: Conservative distance filtering - preserve all reasonable content
-    // Only exclude paths that are EXTREMELY far from logo content (obvious padding)
-    const maxDistanceFromCenter = Math.max(600, Math.sqrt(medianArea) * 1.5); // Much more generous
-    const contentPaths = filteredPaths.filter(pathBounds => {
-      const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
-      const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;
-      const distance = Math.sqrt(Math.pow(pathCenterX - centerX, 2) + Math.pow(pathCenterY - centerY, 2));
+    // Step 3: AGGRESSIVE content density detection
+    // For 2400x1800 original with centered monster, actual content should be much smaller
+    // Look for the core cluster of content, not the spread-out vectorizer padding
+    
+    // First pass: Only keep smaller paths that are likely actual content (not canvas-spanning)
+    const coreContentPaths = filteredPaths.filter(pathBounds => {
+      const isTooLarge = pathBounds.width > 500 || pathBounds.height > 500; // Much smaller threshold
+      const isCanvasSpanning = pathBounds.area > medianArea * 2; // Much more aggressive
       
-      // Only exclude if VERY far from any reasonable logo area
-      if (distance > maxDistanceFromCenter) {
-        console.log(`🚫 Excluding very distant path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (${distance.toFixed(0)}px from center)`);
+      if (isTooLarge || isCanvasSpanning) {
+        console.log(`🚫 Excluding large path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
         return false;
       }
       return true;
     });
+    
+    console.log(`🎯 Core content paths: ${coreContentPaths.length} out of ${filteredPaths.length} filtered paths`);
+    
+    // Step 4: Find the densest cluster of these core paths  
+    let contentPaths;
+    if (coreContentPaths.length > 0) {
+      const coreCenter = {
+        x: coreContentPaths.reduce((sum, p) => sum + (p.xMin + p.xMax) / 2, 0) / coreContentPaths.length,
+        y: coreContentPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / coreContentPaths.length
+      };
+      console.log(`📍 Core content center: (${coreCenter.x.toFixed(1)}, ${coreCenter.y.toFixed(1)})`);
+      
+      // Keep only paths within tight radius of core content center
+      const maxCoreDistance = Math.min(300, Math.sqrt(medianArea) * 0.6); // Much tighter  
+      contentPaths = coreContentPaths.filter(pathBounds => {
+        const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
+        const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;
+        const distance = Math.sqrt(Math.pow(pathCenterX - coreCenter.x, 2) + Math.pow(pathCenterY - coreCenter.y, 2));
+        
+        if (distance > maxCoreDistance) {
+          console.log(`🚫 Excluding distant from core: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (${distance.toFixed(0)}px from core)`);
+          return false;
+        }
+        return true;
+      });
+      
+      console.log(`🎯 Final tight content paths: ${contentPaths.length}`);
+    } else {
+      // Fallback to original approach
+      contentPaths = filteredPaths;
+      console.log(`⚠️ No core content found, using all filtered paths: ${contentPaths.length}`);
+    }
 
     if (contentPaths.length === 0) {
       console.log('⚠️ All paths filtered out, using smallest 80% of paths');
