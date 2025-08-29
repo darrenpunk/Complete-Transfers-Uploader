@@ -1465,8 +1465,14 @@ export function VectorizerModal({
       e.preventDefault();
       e.stopPropagation();
       
+      console.log('🟢 MOUSE DOWN TRIGGERED - Getting position...');
       const pos = getRelativePos(e);
-      console.log('🟢 MOUSE DOWN:', pos);
+      console.log('🟢 MOUSE DOWN POSITION CALCULATED:', pos);
+      
+      if (pos.x === 0 && pos.y === 0) {
+        console.log('❌ MOUSE DOWN GOT (0,0) - COORDINATE CALCULATION FAILED');
+        console.log('Raw mouse event:', { clientX: e.clientX, clientY: e.clientY });
+      }
       
       setIsMouseDown(true);
       setStartPos(pos);
