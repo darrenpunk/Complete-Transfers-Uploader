@@ -618,13 +618,13 @@ export class SVGBoundsAnalyzer {
     // For 2400x1800 original with centered monster, actual content should be much smaller
     // Look for the core cluster of content, not the spread-out vectorizer padding
     
-    // First pass: Only keep smaller paths that are likely actual content (not canvas-spanning)
+    // First pass: Only exclude extremely large canvas-spanning paths, keep logo content
     const coreContentPaths = filteredPaths.filter(pathBounds => {
-      const isTooLarge = pathBounds.width > 500 || pathBounds.height > 500; // Much smaller threshold
-      const isCanvasSpanning = pathBounds.area > medianArea * 2; // Much more aggressive
+      const isExtremelyLarge = pathBounds.width > 1000 || pathBounds.height > 1000; // Much more permissive
+      const isCanvasSpanning = pathBounds.area > medianArea * 1.5; // Less aggressive
       
-      if (isTooLarge || isCanvasSpanning) {
-        console.log(`🚫 Excluding large path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
+      if (isExtremelyLarge && isCanvasSpanning) {
+        console.log(`🚫 Excluding extremely large path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
         return false;
       }
       return true;
@@ -641,8 +641,8 @@ export class SVGBoundsAnalyzer {
       };
       console.log(`📍 Core content center: (${coreCenter.x.toFixed(1)}, ${coreCenter.y.toFixed(1)})`);
       
-      // Keep only paths within tight radius of core content center
-      const maxCoreDistance = Math.min(300, Math.sqrt(medianArea) * 0.6); // Much tighter  
+      // Keep only paths within reasonable radius of core content center  
+      const maxCoreDistance = Math.max(500, Math.sqrt(medianArea) * 1.2); // Much more generous  
       contentPaths = coreContentPaths.filter(pathBounds => {
         const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
         const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;
