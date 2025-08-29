@@ -1565,9 +1565,10 @@ export function VectorizerModal({
       const handleMouseMove = (e: MouseEvent) => {
         const pos = getRelativePos(e);
         const state = currentStateRef.current;
-        setCurrentPos(pos);
         
         if (state.isMouseDown && !state.isResizing) {
+          // Only update currentPos when actually dragging
+          setCurrentPos(pos);
           // Regular selection dragging using ref state
           const rect = state.startPos ? {
             x: Math.min(state.startPos.x, pos.x),
@@ -1582,6 +1583,8 @@ export function VectorizerModal({
             }
           }
         } else if (state.isResizing && state.originalCropArea && state.resizeStartPos) {
+          // Only update currentPos when resizing
+          setCurrentPos(pos);
           // Handle resizing - get REAL current mouse position
           const currentMousePos = getRelativePos(e);
           const deltaX = currentMousePos.x - state.resizeStartPos.x;
