@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette, Crop, Settings } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette, Crop, Settings, Move, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,9 @@ export function VectorizerModal({
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
   const [enableTightCropping, setEnableTightCropping] = useState(true); // Enable tight cropping by default
+  const [showCropInterface, setShowCropInterface] = useState(false); // Show pre-crop interface
+  const [cropArea, setCropArea] = useState<{x: number, y: number, width: number, height: number} | null>(null); // Crop selection
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null); // Original image for cropping
 
   
   // Removed size editor state - users will resize on canvas
@@ -80,7 +83,22 @@ export function VectorizerModal({
   useEffect(() => {
     console.log('VectorizerModal useEffect:', { open, hasImageFile: !!imageFile, fileName });
     if (open && imageFile) {
-      processVectorization();
+      // Initialize modal state but don't auto-process (let user choose to crop first)
+      const url = URL.createObjectURL(imageFile);
+      setPreviewUrl(url);
+      setOriginalImageUrl(url);
+      setError(null);
+      setVectorSvg(null);
+      setColoredSvg(null);
+      setDetectedColors([]);
+      setQualityWarning(null);
+      setShowCropInterface(false);
+      setCropArea(null);
+      console.log('Created image preview URL for cropping:', url);
+      
+      return () => {
+        URL.revokeObjectURL(url);
+      };
     }
   }, [open, imageFile]);
 
@@ -1170,6 +1188,225 @@ export function VectorizerModal({
     processVectorization();
   };
 
+  // Function to apply crop and start vectorization
+  const applyCropAndVectorize = async () => {
+    if (!cropArea || !imageFile || !originalImageUrl) return;
+    
+    try {
+      setIsProcessing(true);
+      
+      // Create temporary image to get actual dimensions
+      const tempImg = new Image();
+      
+      await new Promise((resolve, reject) => {
+        tempImg.onload = resolve;
+        tempImg.onerror = reject;
+        tempImg.src = originalImageUrl;
+      });
+      
+      // Calculate scale factor between displayed image and actual image
+      const displayedImg = document.querySelector('.crop-interface img') as HTMLImageElement;
+      if (!displayedImg) throw new Error('Could not find displayed image');
+      
+      const scaleX = tempImg.naturalWidth / displayedImg.clientWidth;
+      const scaleY = tempImg.naturalHeight / displayedImg.clientHeight;
+      
+      // Calculate actual crop coordinates in image pixels
+      const actualCropArea = {
+        x: Math.round(cropArea.x * scaleX),
+        y: Math.round(cropArea.y * scaleY),
+        width: Math.round(cropArea.width * scaleX),
+        height: Math.round(cropArea.height * scaleY)
+      };
+      
+      // Create cropped image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+      
+      canvas.width = actualCropArea.width;
+      canvas.height = actualCropArea.height;
+      
+      // Draw cropped portion
+      ctx.drawImage(
+        tempImg,
+        actualCropArea.x, actualCropArea.y, actualCropArea.width, actualCropArea.height, // Source
+        0, 0, actualCropArea.width, actualCropArea.height // Destination
+      );
+      
+      // Convert to blob and create new file
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+        }, imageFile.type, 0.95);
+      });
+      
+      const croppedFile = new File([blob], imageFile.name, { type: imageFile.type });
+      
+      // Update the component state with cropped file
+      const newUrl = URL.createObjectURL(croppedFile);
+      setPreviewUrl(newUrl);
+      
+      // Replace the imageFile reference for vectorization
+      Object.defineProperty(window, 'croppedImageFile', {
+        value: croppedFile,
+        writable: true
+      });
+      
+      // Close crop interface and start vectorization with cropped file
+      setShowCropInterface(false);
+      
+      // Process vectorization with the cropped file
+      await processVectorizationWithFile(croppedFile);
+      
+    } catch (error) {
+      console.error('Crop failed:', error);
+      setIsProcessing(false);
+      toast({
+        title: "Crop Failed",
+        description: "Failed to apply crop. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Modified vectorization function to accept a specific file
+  const processVectorizationWithFile = async (fileToProcess: File = imageFile) => {
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', fileToProcess);
+      
+      const response = await fetch('/api/vectorize', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Vectorization failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data.svg) {
+        setVectorSvg(data.svg);
+        setColoredSvg(data.svg);
+        setDetectedColors(data.detectedColors || []);
+        setQualityWarning(data.qualityWarning || null);
+        
+        console.log('Vectorization successful:', {
+          svgLength: data.svg.length,
+          colorsDetected: data.detectedColors?.length || 0,
+          hasQualityWarning: !!data.qualityWarning
+        });
+      }
+    } catch (error) {
+      console.error('Vectorization error:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Crop Interface Component
+  const CropInterface = ({ imageUrl, onCropChange, cropArea }: {
+    imageUrl: string;
+    onCropChange: (area: {x: number, y: number, width: number, height: number} | null) => void;
+    cropArea: {x: number, y: number, width: number, height: number} | null;
+  }) => {
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [startPoint, setStartPoint] = useState<{x: number, y: number} | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+      if (!imgRef.current || !containerRef.current) return;
+      
+      const rect = imgRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      setStartPoint({ x, y });
+      setIsDrawing(true);
+      onCropChange(null); // Clear existing crop
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+      if (!isDrawing || !startPoint || !imgRef.current) return;
+      
+      const rect = imgRef.current.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+      
+      const x = Math.min(startPoint.x, currentX);
+      const y = Math.min(startPoint.y, currentY);
+      const width = Math.abs(currentX - startPoint.x);
+      const height = Math.abs(currentY - startPoint.y);
+      
+      onCropChange({ x, y, width, height });
+    };
+
+    const handleMouseUp = () => {
+      setIsDrawing(false);
+      setStartPoint(null);
+    };
+
+    return (
+      <div 
+        ref={containerRef}
+        className="relative w-full h-full flex items-center justify-center cursor-crosshair"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <img
+          ref={imgRef}
+          src={imageUrl}
+          alt="Crop preview"
+          className="max-w-full max-h-full object-contain crop-interface"
+          draggable={false}
+        />
+        
+        {cropArea && (
+          <>
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none" />
+            
+            {/* Crop selection */}
+            <div
+              className="absolute border-2 border-blue-500 bg-transparent pointer-events-none"
+              style={{
+                left: `${(cropArea.x / imgRef.current?.clientWidth! * 100)}%`,
+                top: `${(cropArea.y / imgRef.current?.clientHeight! * 100)}%`,
+                width: `${(cropArea.width / imgRef.current?.clientWidth! * 100)}%`,
+                height: `${(cropArea.height / imgRef.current?.clientHeight! * 100)}%`,
+              }}
+            >
+              <div className="absolute inset-0 bg-white bg-opacity-20" />
+            </div>
+            
+            {/* Crop info */}
+            <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs">
+              {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
+            </div>
+          </>
+        )}
+        
+        {!cropArea && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+              Click and drag to select crop area
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <TooltipProvider>
       <Dialog open={open} onOpenChange={onClose}>
@@ -1248,11 +1485,50 @@ export function VectorizerModal({
                 <Settings className="w-4 h-4 text-gray-600" />
                 <h3 className="font-medium text-gray-800">Vectorization Settings</h3>
               </div>
+              
+              {/* Processing Options */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Wand2 className="w-4 h-4 text-blue-600" />
+                    <Label className="text-sm font-medium text-blue-800">
+                      Processing Options
+                    </Label>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => setShowCropInterface(true)}
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100 flex items-center gap-2"
+                  >
+                    <Crop className="w-4 h-4" />
+                    Crop First
+                  </Button>
+                  
+                  <Button
+                    onClick={processVectorization}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Vectorize Now
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-blue-700 mt-2">
+                  Choose to crop the image first or vectorize the entire image directly.
+                </p>
+              </div>
+              
+              {/* Tight Cropping */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Crop className="w-4 h-4 text-gray-600" />
                   <Label htmlFor="tight-cropping" className="text-sm font-medium">
-                    Tight Cropping
+                    Auto Tight Cropping
                   </Label>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2169,6 +2445,69 @@ export function VectorizerModal({
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* Crop Interface Dialog */}
+    <Dialog open={showCropInterface} onOpenChange={setShowCropInterface}>
+      <DialogContent className="w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Crop className="w-5 h-5" />
+            Pre-Crop Image: {fileName}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Pre-Crop:</strong> Drag to select the area you want to vectorize. This removes background content before processing.
+            </p>
+          </div>
+          
+          {originalImageUrl && (
+            <div className="flex-1 overflow-hidden bg-gray-100 rounded-lg relative">
+              <CropInterface
+                imageUrl={originalImageUrl}
+                onCropChange={setCropArea}
+                cropArea={cropArea}
+              />
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between gap-4 mt-4 pt-4 border-t">
+            <Button 
+              onClick={() => setShowCropInterface(false)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              <Button 
+                onClick={() => {
+                  setCropArea(null);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                Reset
+              </Button>
+              
+              <Button 
+                onClick={applyCropAndVectorize}
+                disabled={!cropArea}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Check className="w-4 h-4" />
+                Apply Crop & Vectorize
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    
       {/* Help Dialog */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
