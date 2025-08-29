@@ -1861,7 +1861,14 @@ export function VectorizerModal({
       <div 
         ref={containerRef}
         className="relative w-full h-full bg-gray-100 cursor-crosshair select-none border-4 border-yellow-400"
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => {
+          console.log('🚨 CONTAINER MOUSE DOWN - EVENT FIRED!');
+          console.log('Event details:', { clientX: e.clientX, clientY: e.clientY, target: e.target });
+          handleMouseDown(e);
+        }}
+        onClick={(e) => {
+          console.log('🚨 CONTAINER CLICKED!');
+        }}
         style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
       >
         <img
