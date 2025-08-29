@@ -626,8 +626,9 @@ export function VectorizerModal({
           el.remove();
           removedCount++;
         } else {
-          // For other elements, just make fill transparent
-          el.setAttribute('fill', 'none');
+          // For other elements, remove fill attribute completely (more reliable than setting to 'none')
+          el.removeAttribute('fill');
+          console.log('Removed fill attribute from non-shape element:', el.tagName);
         }
       }
     });

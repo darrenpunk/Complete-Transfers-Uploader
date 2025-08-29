@@ -3454,6 +3454,7 @@ export async function registerRoutes(app: express.Application) {
       console.log(`🔍 DEBUG: Starting AI-vectorized SVG cleaning process...`);
       
       // Check if crop dimensions were provided (from crop interface)
+      console.log(`🔍 RAW FORM DATA RECEIVED:`, Object.keys(req.body), JSON.stringify(req.body));
       const cropWidth = req.body.cropWidth ? parseFloat(req.body.cropWidth) : null;
       const cropHeight = req.body.cropHeight ? parseFloat(req.body.cropHeight) : null;
       const hasCropDimensions = cropWidth && cropHeight && cropWidth > 0 && cropHeight > 0;
