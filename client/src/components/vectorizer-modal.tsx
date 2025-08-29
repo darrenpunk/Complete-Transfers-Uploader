@@ -108,7 +108,7 @@ export function VectorizerModal({
       console.log('🎯 CROP AREA SET - AUTO-VECTORIZING:', cropArea);
       
       const timeoutId = setTimeout(() => {
-        handleCropAndVectorize(cropArea);
+        applyCropAndVectorize();
       }, 800); // 800ms delay to allow for resize adjustments
       
       return () => clearTimeout(timeoutId);
