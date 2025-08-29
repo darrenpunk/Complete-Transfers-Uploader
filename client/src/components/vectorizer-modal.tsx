@@ -1354,26 +1354,44 @@ export function VectorizerModal({
       };
       
       console.log('DRAG UPDATE:', rect);
+      
+      // Always show visual feedback
       setDragRect(rect);
       
-      if (rect.width > 20 && rect.height > 20) {
+      // Set crop area with lower threshold
+      if (rect.width > 5 && rect.height > 5) {
         onCropChange(rect);
       }
     }, [dragging, onCropChange]);
 
-    const endDrag = useCallback(() => {
-      console.log('END DRAG');
+    const endDrag = useCallback((reason = 'unknown') => {
+      console.log('END DRAG - Reason:', reason);
       setDragging(false);
       startPosRef.current = null;
     }, []);
 
     useEffect(() => {
       if (dragging) {
-        document.addEventListener('mousemove', updateDrag);
-        document.addEventListener('mouseup', endDrag);
+        const handleMouseUp = (e: MouseEvent) => {
+          console.log('Document mouseup event:', e.button);
+          endDrag('mouseup');
+        };
+        
+        const handleMouseMove = (e: MouseEvent) => {
+          updateDrag(e);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          endDrag('contextmenu');
+        });
+        
         return () => {
-          document.removeEventListener('mousemove', updateDrag);
-          document.removeEventListener('mouseup', endDrag);
+          document.removeEventListener('mousemove', handleMouseMove);
+          document.removeEventListener('mouseup', handleMouseUp);
+          document.removeEventListener('contextmenu', endDrag);
         };
       }
     }, [dragging, updateDrag, endDrag]);
@@ -1391,10 +1409,10 @@ export function VectorizerModal({
           draggable={false}
         />
         
-        {/* Show drag rectangle during drag */}
-        {dragging && dragRect && dragRect.width > 5 && dragRect.height > 5 && (
+        {/* Show drag rectangle during drag - show immediately even for tiny drags */}
+        {dragging && dragRect && dragRect.width > 1 && dragRect.height > 1 && (
           <div
-            className="absolute bg-green-300 bg-opacity-50 border-4 border-green-600 pointer-events-none"
+            className="absolute bg-green-300 bg-opacity-50 border-4 border-green-600 pointer-events-none z-50"
             style={{
               left: dragRect.x,
               top: dragRect.y,
