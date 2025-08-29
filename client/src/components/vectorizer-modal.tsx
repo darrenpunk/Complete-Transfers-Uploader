@@ -1404,48 +1404,49 @@ export function VectorizerModal({
       
       const container = containerRef.current;
       const img = container.querySelector('img') as HTMLImageElement;
-      if (!img) return { x: 0, y: 0 };
+      if (!img) {
+        console.log('❌ NO IMG ELEMENT FOUND');
+        return { x: 0, y: 0 };
+      }
       
       // Get container and mouse position
       const containerRect = container.getBoundingClientRect();
-      const mouseX = e.clientX - containerRect.left;
-      const mouseY = e.clientY - containerRect.top;
+      const imgRect = img.getBoundingClientRect();
       
-      // Get actual rendered image dimensions within the container
-      const containerWidth = containerRect.width;
-      const containerHeight = containerRect.height;
-      const imgNaturalWidth = img.naturalWidth;
-      const imgNaturalHeight = img.naturalHeight;
-      
-      // Calculate scale for object-contain
-      const scaleX = containerWidth / imgNaturalWidth;
-      const scaleY = containerHeight / imgNaturalHeight;
-      const scale = Math.min(scaleX, scaleY);
-      
-      // Calculate actual rendered image size
-      const renderedWidth = imgNaturalWidth * scale;
-      const renderedHeight = imgNaturalHeight * scale;
-      
-      // Calculate image position (centered in container)
-      const imageX = (containerWidth - renderedWidth) / 2;
-      const imageY = (containerHeight - renderedHeight) / 2;
-      
-      // Convert mouse position to image coordinate space
-      const relativeX = mouseX - imageX;
-      const relativeY = mouseY - imageY;
-      
-      console.log('🎯 COORDINATE CALC:', {
-        mouse: { x: mouseX, y: mouseY },
-        container: { width: containerWidth, height: containerHeight },
-        rendered: { width: renderedWidth, height: renderedHeight, scale },
-        imageOffset: { x: imageX, y: imageY },
-        relative: { x: relativeX, y: relativeY }
+      console.log('🔍 DEBUG RECTS:', {
+        container: { 
+          left: containerRect.left, 
+          top: containerRect.top, 
+          width: containerRect.width, 
+          height: containerRect.height 
+        },
+        img: { 
+          left: imgRect.left, 
+          top: imgRect.top, 
+          width: imgRect.width, 
+          height: imgRect.height 
+        }
       });
       
-      return {
-        x: Math.max(0, Math.min(renderedWidth, relativeX)),
-        y: Math.max(0, Math.min(renderedHeight, relativeY))
-      };
+      // Calculate mouse position relative to the actual rendered image
+      const mouseXRelativeToImage = e.clientX - imgRect.left;
+      const mouseYRelativeToImage = e.clientY - imgRect.top;
+      
+      console.log('🎯 SIMPLIFIED COORDINATES:', {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        imgLeft: imgRect.left,
+        imgTop: imgRect.top,
+        relativeX: mouseXRelativeToImage,
+        relativeY: mouseYRelativeToImage,
+        imgSize: { width: imgRect.width, height: imgRect.height }
+      });
+      
+      // Clamp to image bounds
+      const clampedX = Math.max(0, Math.min(imgRect.width, mouseXRelativeToImage));
+      const clampedY = Math.max(0, Math.min(imgRect.height, mouseYRelativeToImage));
+      
+      return { x: clampedX, y: clampedY };
     };
 
     // Calculate current selection rectangle
