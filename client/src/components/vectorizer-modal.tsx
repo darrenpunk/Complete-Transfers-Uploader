@@ -1423,7 +1423,7 @@ export function VectorizerModal({
       });
     }, []);
     
-    // Debug state changes
+    // Debug state changes - Track what's setting mouse states
     useEffect(() => {
       if (startPos) {
         console.log('🚨 STARTPOS SET TO:', startPos);
@@ -1437,6 +1437,14 @@ export function VectorizerModal({
         console.trace('ISMOUSEDOWN SET FROM:');
       }
     }, [isMouseDown]);
+    
+    useEffect(() => {
+      if (validMouseDownOccurred) {
+        console.log('🚨 VALIDMOUSEDOWN SET TO TRUE');
+        console.trace('VALIDMOUSEDOWN SET FROM:');
+      }
+    }, [validMouseDownOccurred]);
+    
     // State for resize operations 
     const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
     const [originalCropArea, setOriginalCropArea] = useState<CropArea | null>(null);
