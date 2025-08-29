@@ -102,18 +102,12 @@ export function VectorizerModal({
     }
   }, [open, imageFile]);
 
-  // Auto-vectorize when crop area is set (with debouncing to avoid excessive API calls)
+  // Only log crop area changes, don't auto-vectorize
   useEffect(() => {
-    if (cropArea && !isProcessing && !vectorSvg && originalImageUrl) {
-      console.log('🎯 CROP AREA SET - AUTO-VECTORIZING:', cropArea);
-      
-      const timeoutId = setTimeout(() => {
-        applyCropAndVectorize();
-      }, 800); // 800ms delay to allow for resize adjustments
-      
-      return () => clearTimeout(timeoutId);
+    if (cropArea) {
+      console.log('🎯 CROP AREA SET (waiting for confirmation):', cropArea);
     }
-  }, [cropArea, isProcessing, vectorSvg, originalImageUrl]);
+  }, [cropArea]);
 
   // Direct DOM update when SVG changes with click interaction
   useEffect(() => {
@@ -1980,9 +1974,19 @@ export function VectorizerModal({
           </div>
         )}
         
-        {/* Clear crop button */}
+        {/* Crop action buttons */}
         {cropArea && !isMouseDown && !isResizing && (
-          <div className="absolute top-4 left-4" style={{ zIndex: 1000 }}>
+          <div className="absolute top-4 left-4 flex gap-2" style={{ zIndex: 1000 }}>
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg"
+              onClick={() => {
+                console.log('🚀 APPLYING CROP - User confirmed');
+                applyCropAndVectorize();
+              }}
+              disabled={isProcessing}
+            >
+              {isProcessing ? '⏳ PROCESSING...' : '✅ APPLY CROP'}
+            </button>
             <button
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg"
               onClick={() => onCropChange(null)}
