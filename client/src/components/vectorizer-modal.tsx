@@ -1359,8 +1359,9 @@ export function VectorizerModal({
       // Close crop interface and start vectorization with cropped file
       setShowCropInterface(false);
       
-      // Process vectorization with the cropped file and crop dimensions
-      await processVectorizationWithFile(croppedFile, actualCropArea);
+      // CRITICAL FIX: Send ORIGINAL full image to vectorization, not cropped image!
+      // Crop bounds will be applied as exact vector dimensions after vectorization
+      await processVectorizationWithFile(imageFile, actualCropArea);
       
     } catch (error) {
       console.error('🚨 CROP FAILED:', error);
