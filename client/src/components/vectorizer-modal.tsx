@@ -1784,22 +1784,30 @@ export function VectorizerModal({
         return; // Exit immediately to prevent any selection logic
       }
       
-      // Handle selection ONLY if not resizing AND valid mouse down occurred
-      if (state.isMouseDown && !state.isResizing && state.validMouseDownOccurred) {
-        const rect = state.startPos ? {
+      // STRICT VALIDATION: Only process if ALL conditions are met AND we have proper coordinates
+      if (state.isMouseDown && !state.isResizing && state.validMouseDownOccurred && state.startPos) {
+        const rect = {
           x: Math.min(state.startPos.x, pos.x),
           y: Math.min(state.startPos.y, pos.y),
           width: Math.abs(pos.x - state.startPos.x),
           height: Math.abs(pos.y - state.startPos.y)
-        } : null;
-        if (rect) {
-          console.log('✅ VALID USER SELECTION [V2]:', rect);
-          if (rect.width > 10 && rect.height > 10) {
-            onCropChange(rect);
-          }
+        };
+        
+        // Additional validation: Only proceed if coordinates are reasonable
+        if (rect.width > 10 && rect.height > 10 && rect.x >= 0 && rect.y >= 0) {
+          console.log('✅ LEGITIMATE USER SELECTION:', rect);
+          onCropChange(rect);
         }
-      } else if (state.isMouseDown && !state.validMouseDownOccurred) {
-        console.log('🚫 BLOCKING PHANTOM SELECTION - No valid mouse down occurred');
+      } else {
+        // Debug phantom triggers
+        if (state.isMouseDown || state.validMouseDownOccurred) {
+          console.log('🚫 BLOCKING INVALID MOUSE MOVE:', {
+            isMouseDown: state.isMouseDown,
+            validMouseDown: state.validMouseDownOccurred,
+            hasStartPos: !!state.startPos,
+            isResizing: state.isResizing
+          });
+        }
       }
     }, []);
     
