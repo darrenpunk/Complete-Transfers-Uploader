@@ -137,7 +137,7 @@ export default function ProductLauncherModal({
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"
               onClick={() => handleProductSelect(product.id)}
             >
-              <CardContent className="p-4 text-center space-y-3">
+              <CardContent className="p-4 text-center space-y-3 bg-[#020202]">
                 <div className="mx-auto w-16 h-16 flex items-center justify-center">
                   <img 
                     src={product.icon} 
