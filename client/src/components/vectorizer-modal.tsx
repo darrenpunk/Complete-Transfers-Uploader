@@ -1219,6 +1219,24 @@ export function VectorizerModal({
         height: Math.round(cropArea.height * scaleY)
       };
       
+      console.log('🎯 CROP DIMENSIONS:', {
+        original: cropArea,
+        scale: { scaleX, scaleY },
+        actual: actualCropArea,
+        imageSize: { width: tempImg.naturalWidth, height: tempImg.naturalHeight }
+      });
+      
+      // Validate crop dimensions
+      if (actualCropArea.width <= 0 || actualCropArea.height <= 0) {
+        throw new Error(`Invalid crop dimensions: ${actualCropArea.width}×${actualCropArea.height}`);
+      }
+      
+      if (actualCropArea.x < 0 || actualCropArea.y < 0 || 
+          actualCropArea.x + actualCropArea.width > tempImg.naturalWidth ||
+          actualCropArea.y + actualCropArea.height > tempImg.naturalHeight) {
+        throw new Error('Crop area extends beyond image boundaries');
+      }
+      
       // Create cropped image
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -1235,9 +1253,13 @@ export function VectorizerModal({
       );
       
       // Convert to blob and create new file
-      const blob = await new Promise<Blob>((resolve) => {
+      const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob from canvas'));
+          }
         }, imageFile.type, 0.95);
       });
       
@@ -1450,46 +1472,42 @@ export function VectorizerModal({
           
           switch (resizeHandle) {
             case 'nw': // Top-left
-              newArea.x = cropArea.x + deltaX;
-              newArea.y = cropArea.y + deltaY;
-              newArea.width = cropArea.width - deltaX;
-              newArea.height = cropArea.height - deltaY;
+              newArea.x = Math.max(0, cropArea.x + deltaX);
+              newArea.y = Math.max(0, cropArea.y + deltaY);
+              newArea.width = Math.max(30, cropArea.width - deltaX);
+              newArea.height = Math.max(30, cropArea.height - deltaY);
               break;
             case 'ne': // Top-right
-              newArea.y = cropArea.y + deltaY;
-              newArea.width = cropArea.width + deltaX;
-              newArea.height = cropArea.height - deltaY;
+              newArea.y = Math.max(0, cropArea.y + deltaY);
+              newArea.width = Math.max(30, cropArea.width + deltaX);
+              newArea.height = Math.max(30, cropArea.height - deltaY);
               break;
             case 'sw': // Bottom-left
-              newArea.x = cropArea.x + deltaX;
-              newArea.width = cropArea.width - deltaX;
-              newArea.height = cropArea.height + deltaY;
+              newArea.x = Math.max(0, cropArea.x + deltaX);
+              newArea.width = Math.max(30, cropArea.width - deltaX);
+              newArea.height = Math.max(30, cropArea.height + deltaY);
               break;
             case 'se': // Bottom-right
-              newArea.width = cropArea.width + deltaX;
-              newArea.height = cropArea.height + deltaY;
+              newArea.width = Math.max(30, cropArea.width + deltaX);
+              newArea.height = Math.max(30, cropArea.height + deltaY);
               break;
             case 'n': // Top edge
-              newArea.y = cropArea.y + deltaY;
-              newArea.height = cropArea.height - deltaY;
+              newArea.y = Math.max(0, cropArea.y + deltaY);
+              newArea.height = Math.max(30, cropArea.height - deltaY);
               break;
             case 's': // Bottom edge
-              newArea.height = cropArea.height + deltaY;
+              newArea.height = Math.max(30, cropArea.height + deltaY);
               break;
             case 'w': // Left edge
-              newArea.x = cropArea.x + deltaX;
-              newArea.width = cropArea.width - deltaX;
+              newArea.x = Math.max(0, cropArea.x + deltaX);
+              newArea.width = Math.max(30, cropArea.width - deltaX);
               break;
             case 'e': // Right edge
-              newArea.width = cropArea.width + deltaX;
+              newArea.width = Math.max(30, cropArea.width + deltaX);
               break;
           }
           
-          // Ensure minimum size
-          if (newArea.width < 30) newArea.width = 30;
-          if (newArea.height < 30) newArea.height = 30;
-          
-          console.log('🔧 RESIZING:', resizeHandle, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
+          console.log('🔧 RESIZING:', resizeHandle, 'Start:', startPos, 'Current:', pos, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
           onCropChange(newArea);
         }
       };
