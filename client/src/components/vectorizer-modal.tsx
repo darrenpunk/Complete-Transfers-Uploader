@@ -1387,11 +1387,10 @@ export function VectorizerModal({
       const formData = new FormData();
       formData.append('image', fileToProcess);
       
-      // Add crop dimensions if provided (from crop interface)
+      // CRITICAL FIX: DO NOT send crop dimensions to vectorization API!
+      // Crop should be applied as exact vector bounds AFTER vectorization, not as input image cropping BEFORE
       if (cropDimensions) {
-        formData.append('cropWidth', cropDimensions.width.toString());
-        formData.append('cropHeight', cropDimensions.height.toString());
-        console.log(`🎯 CROP DIMENSIONS: Sending ${cropDimensions.width}×${cropDimensions.height}px to vectorization API`);
+        console.log(`🎯 CROP WILL BE APPLIED AFTER VECTORIZATION: ${cropDimensions.width}×${cropDimensions.height}px as exact vector bounds (not sent to API)`);
       }
       
       const response = await fetch('/api/vectorize', {
