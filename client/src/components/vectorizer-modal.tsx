@@ -1311,18 +1311,19 @@ export function VectorizerModal({
     }
   };
 
-  // Ultra-Simple Crop Interface Component  
+  // Bulletproof Crop Interface Component  
   const CropInterface = ({ imageUrl, onCropChange, cropArea }: {
     imageUrl: string;
     onCropChange: (area: {x: number, y: number, width: number, height: number} | null) => void;
     cropArea: {x: number, y: number, width: number, height: number} | null;
   }) => {
-    const [dragRect, setDragRect] = useState<{x: number, y: number, width: number, height: number} | null>(null);
-    const [dragging, setDragging] = useState(false);
+    const [isMouseDown, setIsMouseDown] = useState(false);
+    const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
+    const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const startPosRef = useRef<{x: number, y: number} | null>(null);
 
-    const getMousePos = (e: MouseEvent | React.MouseEvent) => {
+    // Get mouse position relative to container
+    const getRelativePos = (e: MouseEvent | React.MouseEvent) => {
       if (!containerRef.current) return { x: 0, y: 0 };
       const rect = containerRef.current.getBoundingClientRect();
       return {
@@ -1331,132 +1332,138 @@ export function VectorizerModal({
       };
     };
 
-    const startDrag = (e: React.MouseEvent) => {
-      const pos = getMousePos(e);
-      console.log('START DRAG:', pos);
-      startPosRef.current = pos;
-      setDragging(true);
-      setDragRect(null);
-      onCropChange(null);
-    };
-
-    const updateDrag = useCallback((e: MouseEvent) => {
-      if (!dragging || !startPosRef.current) return;
-      
-      const currentPos = getMousePos(e);
-      const startPos = startPosRef.current;
-      
-      const rect = {
+    // Calculate current selection rectangle
+    const getSelectionRect = () => {
+      if (!startPos || !currentPos) return null;
+      return {
         x: Math.min(startPos.x, currentPos.x),
         y: Math.min(startPos.y, currentPos.y),
         width: Math.abs(currentPos.x - startPos.x),
         height: Math.abs(currentPos.y - startPos.y)
       };
-      
-      console.log('DRAG UPDATE:', rect);
-      
-      // Always show visual feedback
-      setDragRect(rect);
-      
-      // Set crop area with lower threshold
-      if (rect.width > 5 && rect.height > 5) {
-        onCropChange(rect);
-      }
-    }, [dragging, onCropChange]);
+    };
 
-    const endDrag = useCallback((reason = 'unknown') => {
-      console.log('END DRAG - Reason:', reason);
-      setDragging(false);
-      startPosRef.current = null;
-    }, []);
+    // Mouse down handler
+    const handleMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const pos = getRelativePos(e);
+      console.log('🟢 MOUSE DOWN:', pos);
+      
+      setIsMouseDown(true);
+      setStartPos(pos);
+      setCurrentPos(pos);
+      onCropChange(null);
+    };
 
+    // Global mouse move handler
     useEffect(() => {
-      if (dragging) {
-        const handleMouseUp = (e: MouseEvent) => {
-          console.log('Document mouseup event:', e.button);
-          endDrag('mouseup');
-        };
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isMouseDown || !startPos) return;
         
-        const handleMouseMove = (e: MouseEvent) => {
-          updateDrag(e);
-        };
+        const pos = getRelativePos(e);
+        setCurrentPos(pos);
+        
+        const rect = getSelectionRect();
+        if (rect) {
+          console.log('🔄 MOVING:', rect);
+          if (rect.width > 10 && rect.height > 10) {
+            onCropChange(rect);
+          }
+        }
+      };
 
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        document.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          endDrag('contextmenu');
-        });
+      const handleMouseUp = (e: MouseEvent) => {
+        if (isMouseDown) {
+          console.log('🔴 MOUSE UP - Global');
+          setIsMouseDown(false);
+        }
+      };
+
+      if (isMouseDown) {
+        // Use capture phase to ensure we get all events
+        document.addEventListener('mousemove', handleMouseMove, true);
+        document.addEventListener('mouseup', handleMouseUp, true);
+        document.addEventListener('dragstart', (e) => e.preventDefault(), true);
         
         return () => {
-          document.removeEventListener('mousemove', handleMouseMove);
-          document.removeEventListener('mouseup', handleMouseUp);
-          document.removeEventListener('contextmenu', endDrag);
+          document.removeEventListener('mousemove', handleMouseMove, true);
+          document.removeEventListener('mouseup', handleMouseUp, true);
+          document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
         };
       }
-    }, [dragging, updateDrag, endDrag]);
+    }, [isMouseDown, startPos, onCropChange]);
+
+    const selectionRect = getSelectionRect();
 
     return (
       <div 
         ref={containerRef}
-        className="relative w-full h-full bg-gray-200 cursor-crosshair select-none border-2 border-gray-300"
-        onMouseDown={startDrag}
+        className="relative w-full h-full bg-gray-100 cursor-crosshair select-none border-4 border-yellow-400"
+        onMouseDown={handleMouseDown}
+        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
       >
         <img
           src={imageUrl}
           alt="Crop preview"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
           draggable={false}
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
         />
         
-        {/* Show drag rectangle during drag - show immediately even for tiny drags */}
-        {dragging && dragRect && dragRect.width > 1 && dragRect.height > 1 && (
+        {/* Selection overlay - ALWAYS show if mouse is down */}
+        {isMouseDown && selectionRect && selectionRect.width > 0 && selectionRect.height > 0 && (
           <div
-            className="absolute bg-green-300 bg-opacity-50 border-4 border-green-600 pointer-events-none z-50"
+            className="absolute bg-red-400 bg-opacity-40 border-4 border-red-600 pointer-events-none"
             style={{
-              left: dragRect.x,
-              top: dragRect.y,
-              width: dragRect.width,
-              height: dragRect.height,
+              left: selectionRect.x,
+              top: selectionRect.y,
+              width: selectionRect.width,
+              height: selectionRect.height,
+              zIndex: 1000,
             }}
           >
-            <div className="absolute top-0 left-0 bg-green-700 text-white px-2 py-1 text-sm font-bold">
-              {Math.round(dragRect.width)} × {Math.round(dragRect.height)}
+            <div className="absolute -top-8 left-0 bg-red-600 text-white px-3 py-1 text-lg font-bold rounded">
+              SELECTING: {Math.round(selectionRect.width)} × {Math.round(selectionRect.height)}
             </div>
           </div>
         )}
         
-        {/* Show final crop area */}
-        {cropArea && !dragging && (
+        {/* Final crop area display */}
+        {cropArea && !isMouseDown && (
           <>
-            <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none" />
+            <div className="absolute inset-0 bg-black bg-opacity-60 pointer-events-none" style={{ zIndex: 900 }} />
             <div
-              className="absolute bg-white bg-opacity-20 border-2 border-blue-500 pointer-events-none"
+              className="absolute bg-transparent border-4 border-blue-400 pointer-events-none"
               style={{
                 left: cropArea.x,
                 top: cropArea.y,
                 width: cropArea.width,
                 height: cropArea.height,
+                zIndex: 950,
               }}
             >
-              <div className="absolute top-0 left-0 bg-blue-600 text-white px-2 py-1 text-sm">
-                SELECTED: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
+              <div className="absolute -top-8 left-0 bg-blue-600 text-white px-3 py-1 text-lg font-bold rounded">
+                READY: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
               </div>
             </div>
           </>
         )}
         
-        {!cropArea && !dragging && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg text-lg font-bold shadow-lg">
-              DRAG TO SELECT CROP AREA
+        {/* Instructions */}
+        {!cropArea && !isMouseDown && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 800 }}>
+            <div className="bg-yellow-600 text-white px-6 py-3 rounded-xl text-xl font-bold shadow-xl">
+              🖱️ CLICK AND DRAG TO SELECT
             </div>
           </div>
         )}
         
-        {dragging && (
-          <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-2 rounded text-lg font-bold">
-            DRAGGING...
+        {/* Status indicator */}
+        {isMouseDown && (
+          <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg text-xl font-bold animate-pulse" style={{ zIndex: 1000 }}>
+            🔥 SELECTING...
           </div>
         )}
       </div>
