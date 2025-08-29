@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette, Crop, Settings, Move, Check, X } from "lucide-react";
+import { Loader2, Download, AlertCircle, ZoomIn, ZoomOut, Maximize2, Grid, Palette, Wand2, Trash2, Eye, Columns2, Lock, Unlock, HelpCircle, Pipette, Crop, Settings, Move, Check, X, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -64,6 +64,7 @@ export function VectorizerModal({
   const [showCropInterface, setShowCropInterface] = useState(false); // Show pre-crop interface
   const [cropArea, setCropArea] = useState<{x: number, y: number, width: number, height: number} | null>(null); // Crop selection
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null); // Original image for cropping
+  const [shapeStacking, setShapeStacking] = useState<'cut_out' | 'stack'>('cut_out'); // Shape stacking mode: cut_out = transparent holes, stack = black areas
 
   
   // Removed size editor state - users will resize on canvas
@@ -254,7 +255,9 @@ export function VectorizerModal({
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', 'false');
       formData.append('enableTightCropping', 'true'); // Force enable tight cropping
+      formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
       console.log(`🔧 CLIENT PREVIEW: Forcing enableTightCropping = true`);
+      console.log(`🔄 CLIENT PREVIEW: Shape stacking = ${shapeStacking} (deleted colors will be ${shapeStacking === 'cut_out' ? 'transparent' : 'black'})`);
       
       // Mark if this PNG was extracted from a PDF (so server skips deduplication)
       // Check if filename suggests it was originally a PDF that was converted to PNG
@@ -358,7 +361,9 @@ export function VectorizerModal({
         formData.append('preview', 'false'); // Production mode
         formData.append('removeBackground', 'false');
         formData.append('enableTightCropping', 'true'); // Force enable tight cropping
+        formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
         console.log(`🔧 CLIENT PRODUCTION: Forcing enableTightCropping = true`);
+        console.log(`🔄 CLIENT PRODUCTION: Shape stacking = ${shapeStacking} (deleted colors will be ${shapeStacking === 'cut_out' ? 'transparent' : 'black'})`);
         
         // Mark if this PNG was extracted from a PDF (so server skips deduplication)
         const wasExtractedFromPdf = imageFile.name.endsWith('.png') && 
@@ -1373,6 +1378,7 @@ export function VectorizerModal({
     try {
       const formData = new FormData();
       formData.append('image', fileToProcess);
+      formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
       
       // Add crop dimensions if provided (from crop interface)
       if (cropDimensions) {
@@ -1380,6 +1386,8 @@ export function VectorizerModal({
         formData.append('cropHeight', cropDimensions.height.toString());
         console.log(`🎯 CROP DIMENSIONS: Sending ${cropDimensions.width}×${cropDimensions.height}px to vectorization API`);
       }
+      
+      console.log(`🔄 CROP+VECTORIZE: Shape stacking = ${shapeStacking} (deleted colors will be ${shapeStacking === 'cut_out' ? 'transparent' : 'black'})`);
       
       const response = await fetch('/api/vectorize', {
         method: 'POST',
@@ -1584,6 +1592,69 @@ export function VectorizerModal({
               <p className="text-xs text-gray-600 mt-2">
                 Automatically crop the vectorized result to remove excess whitespace and focus on the actual content.
               </p>
+              
+              {/* Shape Stacking Setting */}
+              <div className="space-y-3 pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-gray-600" />
+                  <Label className="text-sm font-medium flex items-center gap-1">
+                    Shape Stacking
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="w-3 h-3 text-gray-400" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Controls how deleted colors are handled:<br/>
+                          • Cut-outs = Transparent holes (recommended)<br/>
+                          • Stack = Black areas</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </Label>
+                </div>
+                
+                <div className="space-y-2 ml-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="shape-stacking-cutout"
+                      name="shape-stacking"
+                      value="cut_out"
+                      checked={shapeStacking === 'cut_out'}
+                      onChange={(e) => setShapeStacking(e.target.value as 'cut_out' | 'stack')}
+                      className="text-primary focus:ring-primary"
+                      data-testid="radio-shape-stacking-cutout"
+                    />
+                    <Label htmlFor="shape-stacking-cutout" className="text-sm text-gray-700 cursor-pointer">
+                      Place shapes in cut-outs in shapes below
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="shape-stacking-stack"
+                      name="shape-stacking"
+                      value="stack"
+                      checked={shapeStacking === 'stack'}
+                      onChange={(e) => setShapeStacking(e.target.value as 'cut_out' | 'stack')}
+                      className="text-primary focus:ring-primary"
+                      data-testid="radio-shape-stacking-stack"
+                    />
+                    <Label htmlFor="shape-stacking-stack" className="text-sm text-gray-700 cursor-pointer">
+                      Stack shapes on top of each other
+                    </Label>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-600 ml-6">
+                  {shapeStacking === 'cut_out' 
+                    ? 'Deleted colors will create transparent holes (recommended for clean results)'
+                    : 'Deleted colors will appear as black areas'
+                  }
+                </p>
+              </div>
             </div>
 
 

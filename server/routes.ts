@@ -3394,6 +3394,12 @@ export async function registerRoutes(app: express.Application) {
       // CRITICAL FIX: Always request SVG output format explicitly to avoid PNG binary data
       formData.append('output_format', 'svg');
       console.log('✅ Explicitly requesting SVG output format to avoid binary PNG data');
+      
+      // CRITICAL FIX: Shape Stacking setting to make deleted colors transparent instead of black
+      const shapeStacking = req.body.shapeStacking || 'cut_out'; // Default to cut-out mode
+      formData.append('shape_stacking', shapeStacking);
+      console.log(`🔄 Shape Stacking: ${shapeStacking} (${shapeStacking === 'cut_out' ? 'deleted colors will be transparent' : 'deleted colors will be black'})`);
+      
       console.log('🎯 Using minimal parameters to preserve original quality');
       
       // CRITICAL FIX: Vector.AI API expects specific mode values based on documentation
