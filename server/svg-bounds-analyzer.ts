@@ -614,28 +614,14 @@ export class SVGBoundsAnalyzer {
     const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
-    // Step 3: CONTENT-ONLY BOUNDS CALCULATION
-    // Remove all vectorizer.ai square canvas artifacts, keep only actual logo content
-    // Original 2400x1800 -> vectorizer creates 1281x1281 square -> we want just the content
+    // Step 3: USE ALL CONTENT PATHS - NO FILTERING
+    // Let vectorizer.ai handle the vectorization, we just calculate proper bounds
+    // The issue is bounds calculation, not path filtering
     
-    console.log(`🎯 Calculating content-only bounds (ignoring vectorizer square canvas)`);
+    console.log(`🎯 Using all ${filteredPaths.length} paths for tight bounds calculation`);
+    console.log(`🎯 Will calculate minimal bounding box around actual visible content`);
     
-    // Remove large canvas-spanning paths that are clearly vectorizer artifacts
-    const actualContentPaths = filteredPaths.filter(pathBounds => {
-      // Vectorizer creates large square paths - filter these out aggressively
-      const isLargeCanvasPath = pathBounds.width > 800 || pathBounds.height > 800;
-      const isExtremelyLarge = pathBounds.area > medianArea * 1.2;
-      
-      if (isLargeCanvasPath || isExtremelyLarge) {
-        console.log(`🚫 Removing vectorizer artifact: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)}`);
-        return false;
-      }
-      return true;
-    });
-    
-    console.log(`🎯 Actual content paths: ${actualContentPaths.length} out of ${filteredPaths.length} total`);
-    
-    const contentPaths = actualContentPaths;
+    const contentPaths = filteredPaths;
 
     if (contentPaths.length === 0) {
       console.log('⚠️ All paths filtered out, using smallest 80% of paths');
