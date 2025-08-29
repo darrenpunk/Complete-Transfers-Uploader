@@ -1347,6 +1347,10 @@ export function VectorizerModal({
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [isResizing, setIsResizing] = useState(false);
     const [resizeHandle, setResizeHandle] = useState<string>('');
+    // State for initial selection drawing
+    const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
+    const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
+    // State for resize operations 
     const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
     const [originalCropArea, setOriginalCropArea] = useState<CropArea | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -1572,7 +1576,7 @@ export function VectorizerModal({
           document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
         };
       }
-    }, [isMouseDown, isResizing, startPos, cropArea, resizeHandle, onCropChange]);
+    }, [isMouseDown, isResizing, startPos, currentPos, resizeStartPos, cropArea, resizeHandle, onCropChange]);
 
     const selectionRect = getSelectionRect();
 
