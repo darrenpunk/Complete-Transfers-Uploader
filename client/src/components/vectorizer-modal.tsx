@@ -1637,22 +1637,42 @@ export function VectorizerModal({
         }
       };
 
-      if (isMouseDown || isResizing) {
+      // This useEffect is only for cleanup on unmount
+    }, []);
+
+    // Global event listeners management
+    const listenersRef = useRef(false);
+    
+    useEffect(() => {
+      const needsListeners = isMouseDown || isResizing;
+      
+      if (needsListeners && !listenersRef.current) {
         console.log('🟡 SETTING UP GLOBAL LISTENERS', { isMouseDown, isResizing });
+        listenersRef.current = true;
         
-        // Use capture phase to ensure we get all events
         document.addEventListener('mousemove', handleMouseMove, true);
         document.addEventListener('mouseup', handleMouseUp, true);
         document.addEventListener('dragstart', (e) => e.preventDefault(), true);
-        
-        return () => {
-          console.log('🟡 CLEANING UP GLOBAL LISTENERS');
-          document.removeEventListener('mousemove', handleMouseMove, true);
-          document.removeEventListener('mouseup', handleMouseUp, true);
-          document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
-        };
       }
-    }, [isMouseDown, isResizing]);  // Keep minimal dependencies to prevent premature cleanup
+    }, [isMouseDown, isResizing]);
+    
+    // Cleanup listeners when neither mouse down nor resizing
+    useEffect(() => {
+      if (!isMouseDown && !isResizing && listenersRef.current) {
+        // Small delay to ensure state is stable
+        const timeoutId = setTimeout(() => {
+          if (!currentStateRef.current.isMouseDown && !currentStateRef.current.isResizing) {
+            console.log('🟡 CLEANING UP GLOBAL LISTENERS');
+            listenersRef.current = false;
+            document.removeEventListener('mousemove', handleMouseMove, true);
+            document.removeEventListener('mouseup', handleMouseUp, true);
+            document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
+          }
+        }, 50);
+        
+        return () => clearTimeout(timeoutId);
+      }
+    }, [isMouseDown, isResizing]);
 
     const selectionRect = getSelectionRect();
 
