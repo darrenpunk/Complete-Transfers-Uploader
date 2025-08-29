@@ -3746,8 +3746,8 @@ export async function registerRoutes(app: express.Application) {
         console.log('🔧 No tight cropping applied - using full vectorized result');
       }
 
-      // Filter SVG to only include elements with actual colors (no invisible/transparent content)
-      console.log('🎨 Filtering SVG to only include colored/white content...');
+      // Filter SVG to only include elements with actual colors AND recalculate tight bounds
+      console.log('🎨 Filtering SVG to only include colored/white content and recalculating bounds...');
       
       let colorFilteredSvg = finalSvg;
       
@@ -3784,22 +3784,71 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🎨 Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
         
         if (visibleElements.length > 0) {
-          // Get the SVG opening and closing tags
-          const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
-          const svgCloseMatch = colorFilteredSvg.match(/<\/svg>/);
+          // Create clean SVG with only colored content
+          const coloredContent = visibleElements.join('\n    ');
           
-          if (svgOpenMatch && svgCloseMatch) {
-            // Create clean SVG with only colored content
-            const svgOpen = svgOpenMatch[0];
-            const svgClose = svgCloseMatch[0];
-            const coloredContent = visibleElements.join('\n    ');
+          // Create a temporary SVG to analyze bounds
+          const tempSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+    ${coloredContent}
+</svg>`;
+          
+          // Calculate bounds of just the colored content
+          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+          const analyzer = new SVGBoundsAnalyzer();
+          
+          const boundsResult = await analyzer.analyzeSVGContent(tempSvg);
+          
+          if (boundsResult.success && boundsResult.contentBounds) {
+            const bounds = boundsResult.contentBounds;
+            const padding = 2; // 2px padding
             
-            colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
+            const tightX = bounds.xMin - padding;
+            const tightY = bounds.yMin - padding;
+            const tightWidth = bounds.width + (padding * 2);
+            const tightHeight = bounds.height + (padding * 2);
+            
+            console.log(`🎯 TIGHT BOUNDS CALCULATED: ${tightWidth.toFixed(1)}×${tightHeight.toFixed(1)}px (was oversized)`);
+            console.log(`📐 Content bounds: x=${bounds.xMin}, y=${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
+            
+            // Get original SVG attributes to preserve
+            const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
+            if (svgOpenMatch) {
+              let svgAttributes = svgOpenMatch[0];
+              
+              // Preserve important attributes but update dimensions
+              svgAttributes = svgAttributes.replace(/viewBox="[^"]*"/, `viewBox="${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/width="[^"]*"/, `width="${tightWidth.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/height="[^"]*"/, `height="${tightHeight.toFixed(2)}"`);
+              
+              // Add tight content marker
+              if (!svgAttributes.includes('data-content-extracted="true"')) {
+                svgAttributes = svgAttributes.replace('<svg', '<svg data-content-extracted="true"');
+              }
+              
+              colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
+${svgAttributes}
+    ${coloredContent}
+</svg>`;
+              
+              console.log(`✅ Created tight-bounds SVG: ${colorFilteredSvg.length} characters (was ${finalSvg.length})`);
+              console.log(`🎯 NEW VIEWBOX: "${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+            }
+          } else {
+            console.log('⚠️ Could not calculate tight bounds, using filtered content with original bounds');
+            // Fall back to just filtering without bounds recalculation
+            const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
+            const svgCloseMatch = colorFilteredSvg.match(/<\/svg>/);
+            
+            if (svgOpenMatch && svgCloseMatch) {
+              const svgOpen = svgOpenMatch[0];
+              const svgClose = svgCloseMatch[0];
+              
+              colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
 ${svgOpen}
     ${coloredContent}
 ${svgClose}`;
-            
-            console.log(`✅ Created clean SVG with only colored content: ${colorFilteredSvg.length} characters (was ${finalSvg.length})`);
+            }
           }
         } else {
           console.log('⚠️ No colored elements found, keeping original SVG');
