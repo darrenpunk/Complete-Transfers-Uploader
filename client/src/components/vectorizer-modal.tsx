@@ -1408,9 +1408,9 @@ export function VectorizerModal({
         />
         
         {/* Live selection during drag */}
-        {selection && selection.width > 5 && selection.height > 5 && (
+        {isDragging && selection && selection.width > 5 && selection.height > 5 && (
           <div
-            className="absolute border-2 border-dashed border-blue-500 bg-blue-200 bg-opacity-20 pointer-events-none"
+            className="absolute border-4 border-dashed border-red-500 bg-red-200 bg-opacity-30 pointer-events-none z-20"
             style={{
               left: `${selection.x}px`,
               top: `${selection.y}px`,
@@ -1418,8 +1418,8 @@ export function VectorizerModal({
               height: `${selection.height}px`,
             }}
           >
-            <div className="absolute top-1 left-1 bg-blue-600 text-white px-1 text-xs rounded">
-              {Math.round(selection.width)} × {Math.round(selection.height)}
+            <div className="absolute top-1 left-1 bg-red-600 text-white px-2 py-1 text-xs rounded font-bold">
+              DRAGGING: {Math.round(selection.width)} × {Math.round(selection.height)}
             </div>
           </div>
         )}
