@@ -1253,21 +1253,28 @@ export function VectorizerModal({
       const scaleX = tempImg.naturalWidth / actualDisplayedWidth;
       const scaleY = tempImg.naturalHeight / actualDisplayedHeight;
       
-      // Calculate actual crop coordinates in image pixels 
-      // (crop coordinates are now relative to displayed image bounds, no need to subtract offset)
+      // Convert container-relative crop coordinates to image pixel coordinates
+      // First, convert from container coords to displayed image coords (accounting for object-contain padding)
+      const imageRelativeX = Math.max(0, cropArea.x - offsetX);
+      const imageRelativeY = Math.max(0, cropArea.y - offsetY);
+      const imageRelativeWidth = Math.min(actualDisplayedWidth, cropArea.width);
+      const imageRelativeHeight = Math.min(actualDisplayedHeight, cropArea.height);
+      
+      // Then scale to actual image pixel coordinates
       const actualCropArea = {
-        x: Math.round(cropArea.x * scaleX),
-        y: Math.round(cropArea.y * scaleY),
-        width: Math.round(cropArea.width * scaleX),
-        height: Math.round(cropArea.height * scaleY)
+        x: Math.round(imageRelativeX * scaleX),
+        y: Math.round(imageRelativeY * scaleY),
+        width: Math.round(imageRelativeWidth * scaleX),
+        height: Math.round(imageRelativeHeight * scaleY)
       };
       
       console.log('🎯 CROP DIMENSIONS:', {
-        original: cropArea,
+        container: { width: containerWidth, height: containerHeight },
+        originalCrop: cropArea,
+        imageDisplayed: { width: actualDisplayedWidth, height: actualDisplayedHeight, offsetX, offsetY },
+        imageRelative: { x: imageRelativeX, y: imageRelativeY, width: imageRelativeWidth, height: imageRelativeHeight },
         scale: { scaleX, scaleY },
-        offset: { x: offsetX, y: offsetY },
-        actual: actualCropArea,
-        calculation: `${cropArea.x} * ${scaleX} = ${actualCropArea.x}`,
+        actualPixels: actualCropArea,
         imageSize: { width: tempImg.naturalWidth, height: tempImg.naturalHeight }
       });
       
