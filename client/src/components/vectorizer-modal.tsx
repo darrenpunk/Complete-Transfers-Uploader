@@ -626,6 +626,7 @@ export function VectorizerModal({
       
       if (shouldRemove) {
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
+        console.log('DEBUG: stackingMode =', stackingMode, typeof stackingMode);
         
         // CRITICAL FIX: Use Shape Stacking setting to control deletion behavior
         if (stackingMode === 'cut_out') {
