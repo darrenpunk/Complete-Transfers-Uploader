@@ -102,6 +102,19 @@ export function VectorizerModal({
     }
   }, [open, imageFile]);
 
+  // Auto-vectorize when crop area is set (with debouncing to avoid excessive API calls)
+  useEffect(() => {
+    if (cropArea && !isProcessing && !vectorSvg && originalImageUrl) {
+      console.log('🎯 CROP AREA SET - AUTO-VECTORIZING:', cropArea);
+      
+      const timeoutId = setTimeout(() => {
+        handleCropAndVectorize(cropArea);
+      }, 800); // 800ms delay to allow for resize adjustments
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [cropArea, isProcessing, vectorSvg, originalImageUrl]);
+
   // Direct DOM update when SVG changes with click interaction
   useEffect(() => {
     if (svgContainerRef.current) {
@@ -1575,15 +1588,15 @@ export function VectorizerModal({
       };
 
       const handleMouseUp = (e: MouseEvent) => {
+        const state = currentStateRef.current;
         console.log('🚨 MOUSE UP EVENT TRIGGERED', { 
-          isMouseDown, 
-          isResizing, 
-          startPos: !!startPos, 
-          currentPos: !!currentPos,
+          isMouseDown: state.isMouseDown, 
+          isResizing: state.isResizing, 
+          startPos: !!state.startPos, 
           target: e.target 
         });
         
-        if (isMouseDown) {
+        if (state.isMouseDown) {
           console.log('🔴 MOUSE UP - Selection');
           
           // Capture final position at mouse up
@@ -1591,17 +1604,17 @@ export function VectorizerModal({
           setCurrentPos(finalPos);
           
           // Calculate final selection with the mouse up position
-          const finalRect = startPos ? {
-            x: Math.min(startPos.x, finalPos.x),
-            y: Math.min(startPos.y, finalPos.y),
-            width: Math.abs(finalPos.x - startPos.x),
-            height: Math.abs(finalPos.y - startPos.y)
+          const finalRect = state.startPos ? {
+            x: Math.min(state.startPos.x, finalPos.x),
+            y: Math.min(state.startPos.y, finalPos.y),
+            width: Math.abs(finalPos.x - state.startPos.x),
+            height: Math.abs(finalPos.y - state.startPos.y)
           } : null;
           
           console.log('🎯 FINAL RECT:', finalRect);
           setIsMouseDown(false);
           
-          if (finalRect) {
+          if (finalRect && finalRect.width > 30 && finalRect.height > 30) {
             // Only enforce minimum if selection is too small
             const cropRect = {
               x: finalRect.x,
@@ -1611,11 +1624,16 @@ export function VectorizerModal({
             };
             console.log('📌 SETTING CROP AREA:', cropRect);
             onCropChange(cropRect);
+            
+            // Auto-vectorize after crop is confirmed
+            console.log('🎆 AUTO-VECTORIZING CROPPED AREA');
+            setTimeout(() => handleCropAndVectorize(cropRect), 500); // Small delay to let UI update
           }
-        } else if (isResizing) {
-          console.log('🔴 MOUSE UP - Resize');
+        } else if (state.isResizing) {
+          console.log('🔴 MOUSE UP - Resize - Final crop area updated');
           setIsResizing(false);
           setResizeHandle('');
+          // Don't auto-vectorize during resize, only when selection is created
         }
       };
 
