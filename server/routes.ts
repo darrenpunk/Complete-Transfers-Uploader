@@ -2235,6 +2235,7 @@ export async function registerRoutes(app: express.Application) {
                   
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
+                  try {
                   
                   // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
                   // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
@@ -2330,14 +2331,14 @@ export async function registerRoutes(app: express.Application) {
               
           } // End of needsTightCrop check
           
-          } else {
-            // Fallback: for large documents with no detectable content bounds
-            console.log(`Large format document with no detectable content bounds, using conservative sizing`);
-            displayWidth = 200;
-            displayHeight = 150;
-          }
+        }
+        
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
+          // Fallback: for large documents with no detectable content bounds
+          console.log(`Fallback: Large format document, using conservative sizing`);
+          displayWidth = 200;
+          displayHeight = 150;
         }
         
         } // End of if (!useCropDimensions) block
