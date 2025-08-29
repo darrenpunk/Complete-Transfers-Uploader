@@ -614,55 +614,28 @@ export class SVGBoundsAnalyzer {
     const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
-    // Step 3: INTELLIGENT CONTENT CLUSTER DETECTION
-    // Original is 2400x1800, vectorizer makes 1281x1281 square
-    // Need to find the actual logo content within that square, not the entire square
+    // Step 3: CONTENT-ONLY BOUNDS CALCULATION
+    // Remove all vectorizer.ai square canvas artifacts, keep only actual logo content
+    // Original 2400x1800 -> vectorizer creates 1281x1281 square -> we want just the content
     
-    console.log(`📊 Analyzing ${filteredPaths.length} paths for content clustering...`);
+    console.log(`🎯 Calculating content-only bounds (ignoring vectorizer square canvas)`);
     
-    // Find content density clusters by looking at path distribution
-    const pathCenters = filteredPaths.map(p => ({
-      x: (p.xMin + p.xMax) / 2,
-      y: (p.yMin + p.yMax) / 2,
-      path: p
-    }));
-    
-    // Group paths by proximity to find dense content areas
-    const clusters = [];
-    const used = new Set();
-    
-    for (let i = 0; i < pathCenters.length; i++) {
-      if (used.has(i)) continue;
+    // Remove large canvas-spanning paths that are clearly vectorizer artifacts
+    const actualContentPaths = filteredPaths.filter(pathBounds => {
+      // Vectorizer creates large square paths - filter these out aggressively
+      const isLargeCanvasPath = pathBounds.width > 800 || pathBounds.height > 800;
+      const isExtremelyLarge = pathBounds.area > medianArea * 1.2;
       
-      const cluster = [pathCenters[i]];
-      used.add(i);
-      
-      // Find all paths within reasonable distance of this one
-      for (let j = 0; j < pathCenters.length; j++) {
-        if (used.has(j)) continue;
-        
-        const distance = Math.sqrt(
-          Math.pow(pathCenters[i].x - pathCenters[j].x, 2) + 
-          Math.pow(pathCenters[i].y - pathCenters[j].y, 2)
-        );
-        
-        if (distance < 150) { // Much tighter clustering for actual content
-          cluster.push(pathCenters[j]);
-          used.add(j);
-        }
+      if (isLargeCanvasPath || isExtremelyLarge) {
+        console.log(`🚫 Removing vectorizer artifact: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)}`);
+        return false;
       }
-      
-      clusters.push(cluster);
-    }
+      return true;
+    });
     
-    // Find the largest/densest cluster (should be the actual logo)
-    const mainCluster = clusters.reduce((largest, current) => 
-      current.length > largest.length ? current : largest, clusters[0] || []);
+    console.log(`🎯 Actual content paths: ${actualContentPaths.length} out of ${filteredPaths.length} total`);
     
-    console.log(`🎯 Found ${clusters.length} clusters, main cluster has ${mainCluster.length} paths`);
-    
-    const contentPaths = mainCluster.map(item => item.path);
-    console.log(`🎯 Using ${contentPaths.length} clustered content paths`)
+    const contentPaths = actualContentPaths;
 
     if (contentPaths.length === 0) {
       console.log('⚠️ All paths filtered out, using smallest 80% of paths');
