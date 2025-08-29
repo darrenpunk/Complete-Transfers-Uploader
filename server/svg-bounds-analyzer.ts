@@ -646,7 +646,7 @@ export class SVGBoundsAnalyzer {
           Math.pow(pathCenters[i].y - pathCenters[j].y, 2)
         );
         
-        if (distance < 400) { // Content should be grouped together
+        if (distance < 150) { // Much tighter clustering for actual content
           cluster.push(pathCenters[j]);
           used.add(j);
         }
