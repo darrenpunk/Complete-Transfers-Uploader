@@ -1,0 +1,1434 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-1abe2d00c7a4c147.js:1
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+ Unable to preventDefault inside passive event listener invocation.
+preventDefault @ framework-1abe2d00c7a4c147.js:1
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ ✅ Found displayed image and container: Object
+ 🎯 OBJECT-CONTAIN CALCULATION: Object
+ 🎯 CROP DIMENSIONS: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎨 Server detected no colors, extracting from SVG...
+ 🎨 Extracted colors from SVG: Array(2)
+ Vectorization successful: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ Attempting to render SVG with length: 58921
+ SVG preview (first 500 chars): 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 905.00" data-ai-vectorized="true">
+<g stroke-width="2.00" fill="none" stroke-linecap="butt">
+<path  vector-effect="non-scaling-stroke" d="
+  M 808.39 128.90
+  C 797.45 105.41 776.95 89.00 751.41 83.88
+  C 727.05 79.00 702.00 85.47 683.04 101.67
+  C 666.16 116.09 658.04 134.61 647.27 156.22
+  A 0.58 0.58 0.0 0 1 646.41 156.43
+  Q 618.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 905.00
+ Direct DOM update with interactive SVG length: 58921
+ SVG appended to container successfully
+ Applying smart white background removal
+ SVG viewBox: 1032 x 905
+ Found white elements: 14
+ White path 0: d="   M 1032.00 0.00   L 1032.00 905.00   L 0.00 905.00   L 0.00 0.00   L 1032.00 0.00   Z   M 808.39 1..."
+ White path 1: d="   M 454.5651 190.3407   A 50.59 48.65 -90.3 0 1 503.4793 240.6753   A 50.59 48.65 -90.3 0 1 455.094..."
+ White path 2: d="   M 578.3339 190.3849   A 50.57 48.66 -90.8 0 1 627.6953 240.2706   A 50.57 48.66 -90.8 0 1 579.746..."
+ Content bounds: Object
+ Removing white edge path at index: 34
+ Removed 1 white background elements
+ Remove all white - Before: 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 905.00" data-ai-vectorized="true">
+
+ Remove all white - After: <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 905.00" data-ai-vectorized="true">
+<g stroke-width="2.00" fill="none" stroke-linecap="butt">
+<path vector-effect="non-s
+ Remove all white - SVG length changed from 58921 to 44308
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44308
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 905.00" data-ai-vectorized="true">
+<g stroke-width="2.00" fill="none" stroke-linecap="butt">
+<path vector-effect="non-scaling-stroke" d="   M 808.39 128.90   C 797.45 105.41 776.95 89.00 751.41 83.88   C 727.05 79.00 702.00 85.47 683.04 101.67   C 666.16 116.09 658.04 134.61 647.27 156.22   A 0.58 0.58 0.0 0 1 646.41 156.43   Q 618.74 136.31 586.47 124.51   A 0.55 0.54 26.9 0 1 586.20 123.70   C 597.03 107.43 605.53
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 905.00
+ Direct DOM update with interactive SVG length: 44308
+ SVG appended to container successfully
+ Color clicked in SVG: #333333
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Removing unlocked colors: Array(1)
+ Keeping locked colors: Array(1)
+ Removing color: #ffffff
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: ellipse
+ Removing element with fill: #ffffff tagName: circle
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: rect
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removing element with fill: #ffffff tagName: path
+ Removed 13 elements with color #ffffff
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 39774
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 905.00" data-ai-vectorized="true">
+<g stroke-width="2.00" fill="none" stroke-linecap="butt">
+<path vector-effect="non-scaling-stroke" d="   M 808.39 128.90   C 797.45 105.41 776.95 89.00 751.41 83.88   C 727.05 79.00 702.00 85.47 683.04 101.67   C 666.16 116.09 658.04 134.61 647.27 156.22   A 0.58 0.58 0.0 0 1 646.41 156.43   Q 618.74 136.31 586.47 124.51   A 0.55 0.54 26.9 0 1 586.20 123.70   C 597.03 107.43 605.53
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 905.00
+ Direct DOM update with interactive SVG length: 39774
+ SVG appended to container successfully
+ handleApproveVector called Object
+ 🔧 CLIENT PRODUCTION: Forcing enableTightCropping = true
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Production vectorization successful
+ Calling onVectorDownload with Object
+ handleVectorDownload called Object
+ Uploading vectorized SVG: monster122434.svg image/svg+xml 39774
+ handleFilesUpload called with files: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Upload completed, checking for PDFs with raster content: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🎨 Fetching SVG content from: /uploads/ffcde403c61e2f57bb64c03780dd709e
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ ✅ SVG content loaded and cleaned
+ 🎯 Mouse down on element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58, starting drag
+ 🎯 Drag offset calculated: (78.0, -21.0)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ 🎯 Mouse down on element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58, starting drag
+ 🎯 Drag offset calculated: (102.5, -9.0)
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/api/fix-vector-bounds:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🎯 Standard template fit-to-bounds: 291×414mm usable area (3mm margins)
+ 🎯 Scaling content by 74% to fit within safety margins
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/api/fix-vector-bounds:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ 🎯 Mouse down on element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58, starting drag
+ 🎯 Drag offset calculated: (79.1, 23.6)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 Canvas updateElementDirect called: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 ✅ Canvas API update successful
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Generate PDF clicked
+Console.js:61 PDF preview modal should now be shown: true
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 PDF preview approved, always showing project name modal for final confirmation
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Project data for Odoo integration: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/api/fix-vector-bounds:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Template A3: 842x1191px, Workspace: 458x900, Zoom: 50%
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 07ebbd0a-bf6c-4ca0-821f-377f1a0e9e58 dimensions: {dbWidth: 291, dbHeight: 291, pixelWidth: 412.4409448395, pixelHeight: 412.4409448395, rotation: 0}

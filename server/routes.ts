@@ -3791,33 +3791,41 @@ export async function registerRoutes(app: express.Application) {
       // Get the canvas element
       const canvasElement = await storage.getCanvasElement(elementId);
       if (!canvasElement) {
+        console.log(`❌ Canvas element not found for ID: ${elementId}`);
         return res.status(404).json({ error: 'Canvas element not found' });
       }
 
-      console.log(`🎯 Canvas element found:`, {
-        raw: canvasElement,
+      console.log(`🎯 Canvas element raw object:`, canvasElement);
+      console.log(`🎯 Canvas element properties:`, {
         id: canvasElement.id,
         logoId: canvasElement.logoId,
         width: canvasElement.width,
         height: canvasElement.height,
-        allKeys: Object.keys(canvasElement),
-        type: typeof canvasElement
+        allKeys: Object.keys(canvasElement)
       });
+
+      if (!canvasElement.logoId) {
+        return res.status(400).json({ error: 'Canvas element has no associated logo' });
+      }
 
       // Get the associated logo
       const logo = await storage.getLogo(canvasElement.logoId);
       if (!logo) {
+        console.log(`❌ Logo not found for ID: ${canvasElement.logoId}`);
         return res.status(404).json({ error: 'Associated logo not found' });
       }
 
-      console.log(`📁 Found logo:`, {
-        raw: logo,
+      console.log(`📁 Logo raw object:`, logo);
+      console.log(`📁 Logo properties:`, {
         id: logo.id,
         filename: logo.filename,
         originalName: logo.originalName,
-        allKeys: Object.keys(logo),
-        type: typeof logo
+        allKeys: Object.keys(logo)
       });
+
+      if (!logo.filename) {
+        return res.status(400).json({ error: 'Logo has no filename' });
+      }
 
       // Get SVG content from the logo file
       const logoPath = path.join('uploads', logo.filename);
