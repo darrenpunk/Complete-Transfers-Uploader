@@ -1214,13 +1214,41 @@ export function VectorizerModal({
       
       console.log('✅ Found displayed image:', displayedImg, 'Size:', displayedImg.clientWidth, 'x', displayedImg.clientHeight);
       
-      const scaleX = tempImg.naturalWidth / displayedImg.clientWidth;
-      const scaleY = tempImg.naturalHeight / displayedImg.clientHeight;
+      // For object-contain, calculate actual displayed image dimensions
+      const containerWidth = displayedImg.clientWidth;
+      const containerHeight = displayedImg.clientHeight;
+      const imageAspect = tempImg.naturalWidth / tempImg.naturalHeight;
+      const containerAspect = containerWidth / containerHeight;
       
-      // Calculate actual crop coordinates in image pixels
+      let actualDisplayedWidth, actualDisplayedHeight, offsetX = 0, offsetY = 0;
+      
+      if (imageAspect > containerAspect) {
+        // Image is wider - fits to width, height is smaller with vertical padding
+        actualDisplayedWidth = containerWidth;
+        actualDisplayedHeight = containerWidth / imageAspect;
+        offsetY = (containerHeight - actualDisplayedHeight) / 2;
+      } else {
+        // Image is taller - fits to height, width is smaller with horizontal padding  
+        actualDisplayedHeight = containerHeight;
+        actualDisplayedWidth = containerHeight * imageAspect;
+        offsetX = (containerWidth - actualDisplayedWidth) / 2;
+      }
+      
+      console.log('🎯 OBJECT-CONTAIN CALCULATION:', {
+        container: { width: containerWidth, height: containerHeight },
+        actualDisplayed: { width: actualDisplayedWidth, height: actualDisplayedHeight },
+        offset: { x: offsetX, y: offsetY },
+        imageAspect,
+        containerAspect
+      });
+      
+      const scaleX = tempImg.naturalWidth / actualDisplayedWidth;
+      const scaleY = tempImg.naturalHeight / actualDisplayedHeight;
+      
+      // Calculate actual crop coordinates in image pixels (adjust for object-contain padding)
       const actualCropArea = {
-        x: Math.round(cropArea.x * scaleX),
-        y: Math.round(cropArea.y * scaleY),
+        x: Math.round((cropArea.x - offsetX) * scaleX),
+        y: Math.round((cropArea.y - offsetY) * scaleY),
         width: Math.round(cropArea.width * scaleX),
         height: Math.round(cropArea.height * scaleY)
       };
@@ -1228,7 +1256,9 @@ export function VectorizerModal({
       console.log('🎯 CROP DIMENSIONS:', {
         original: cropArea,
         scale: { scaleX, scaleY },
+        offset: { x: offsetX, y: offsetY },
         actual: actualCropArea,
+        adjustedForPadding: `(${cropArea.x} - ${offsetX}) * ${scaleX} = ${actualCropArea.x}`,
         imageSize: { width: tempImg.naturalWidth, height: tempImg.naturalHeight }
       });
       
@@ -1652,46 +1682,78 @@ export function VectorizerModal({
               
               {/* Corner resize handles */}
               <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-800 -top-2 -left-2"
-                onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-800 -top-2 -left-2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: nw');
+                  handleResizeStart(e, 'nw');
+                }}
                 title="Resize from top-left corner"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-800 -top-2 -right-2"
-                onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-800 -top-2 -right-2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: ne');
+                  handleResizeStart(e, 'ne');
+                }}
                 title="Resize from top-right corner"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-800 -bottom-2 -left-2"
-                onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-800 -bottom-2 -left-2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: sw');
+                  handleResizeStart(e, 'sw');
+                }}
                 title="Resize from bottom-left corner"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-800 -bottom-2 -right-2"
-                onMouseDown={(e) => handleResizeStart(e, 'se')}
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-800 -bottom-2 -right-2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: se');
+                  handleResizeStart(e, 'se');
+                }}
                 title="Resize from bottom-right corner"
+                style={{ pointerEvents: 'auto' }}
               />
               
               {/* Edge resize handles */}
               <div 
-                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-n-resize hover:bg-blue-800 -top-1 left-1/2 transform -translate-x-1/2"
-                onMouseDown={(e) => handleResizeStart(e, 'n')}
+                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-n-resize hover:bg-blue-800 -top-1 left-1/2 transform -translate-x-1/2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: n');
+                  handleResizeStart(e, 'n');
+                }}
                 title="Resize from top edge"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-s-resize hover:bg-blue-800 -bottom-1 left-1/2 transform -translate-x-1/2"
-                onMouseDown={(e) => handleResizeStart(e, 's')}
+                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-s-resize hover:bg-blue-800 -bottom-1 left-1/2 transform -translate-x-1/2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: s');
+                  handleResizeStart(e, 's');
+                }}
                 title="Resize from bottom edge"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-w-resize hover:bg-blue-800 -left-1 top-1/2 transform -translate-y-1/2"
-                onMouseDown={(e) => handleResizeStart(e, 'w')}
+                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-w-resize hover:bg-blue-800 -left-1 top-1/2 transform -translate-y-1/2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: w');
+                  handleResizeStart(e, 'w');
+                }}
                 title="Resize from left edge"
+                style={{ pointerEvents: 'auto' }}
               />
               <div 
-                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-e-resize hover:bg-blue-800 -right-1 top-1/2 transform -translate-y-1/2"
-                onMouseDown={(e) => handleResizeStart(e, 'e')}
+                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-e-resize hover:bg-blue-800 -right-1 top-1/2 transform -translate-y-1/2 z-50"
+                onMouseDown={(e) => {
+                  console.log('🎯 RESIZE HANDLE CLICKED: e');
+                  handleResizeStart(e, 'e');
+                }}
                 title="Resize from right edge"
+                style={{ pointerEvents: 'auto' }}
               />
             </div>
           </>
