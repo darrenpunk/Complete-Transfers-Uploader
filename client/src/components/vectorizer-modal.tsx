@@ -1253,10 +1253,11 @@ export function VectorizerModal({
       const scaleX = tempImg.naturalWidth / actualDisplayedWidth;
       const scaleY = tempImg.naturalHeight / actualDisplayedHeight;
       
-      // Calculate actual crop coordinates in image pixels (adjust for object-contain padding)
+      // Calculate actual crop coordinates in image pixels 
+      // (crop coordinates are now relative to displayed image bounds, no need to subtract offset)
       const actualCropArea = {
-        x: Math.round((cropArea.x - offsetX) * scaleX),
-        y: Math.round((cropArea.y - offsetY) * scaleY),
+        x: Math.round(cropArea.x * scaleX),
+        y: Math.round(cropArea.y * scaleY),
         width: Math.round(cropArea.width * scaleX),
         height: Math.round(cropArea.height * scaleY)
       };
@@ -1266,7 +1267,7 @@ export function VectorizerModal({
         scale: { scaleX, scaleY },
         offset: { x: offsetX, y: offsetY },
         actual: actualCropArea,
-        adjustedForPadding: `(${cropArea.x} - ${offsetX}) * ${scaleX} = ${actualCropArea.x}`,
+        calculation: `${cropArea.x} * ${scaleX} = ${actualCropArea.x}`,
         imageSize: { width: tempImg.naturalWidth, height: tempImg.naturalHeight }
       });
       

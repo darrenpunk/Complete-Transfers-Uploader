@@ -28,18 +28,42 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
   const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get mouse position relative to image
+  // Get mouse position relative to actual displayed image (accounting for object-contain)
   const getRelativePos = (e: React.MouseEvent | MouseEvent) => {
     if (!containerRef.current) return { x: 0, y: 0 };
     
     const img = containerRef.current.querySelector('img') as HTMLImageElement;
     if (!img) return { x: 0, y: 0 };
     
-    const imgRect = img.getBoundingClientRect();
-    const x = Math.max(0, Math.min(imgRect.width, e.clientX - imgRect.left));
-    const y = Math.max(0, Math.min(imgRect.height, e.clientY - imgRect.top));
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - containerRect.left;
+    const mouseY = e.clientY - containerRect.top;
     
-    return { x, y };
+    // Calculate actual displayed image dimensions with object-contain
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+    const imageAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+    
+    let actualDisplayedWidth, actualDisplayedHeight, offsetX = 0, offsetY = 0;
+    
+    if (imageAspect > containerAspect) {
+      // Image is wider - fits to width, height is smaller with vertical padding
+      actualDisplayedWidth = containerWidth;
+      actualDisplayedHeight = containerWidth / imageAspect;
+      offsetY = (containerHeight - actualDisplayedHeight) / 2;
+    } else {
+      // Image is taller - fits to height, width is smaller with horizontal padding  
+      actualDisplayedHeight = containerHeight;
+      actualDisplayedWidth = containerHeight * imageAspect;
+      offsetX = (containerWidth - actualDisplayedWidth) / 2;
+    }
+    
+    // Convert mouse position to image-relative coordinates (relative to displayed image bounds)
+    const x = Math.max(0, Math.min(actualDisplayedWidth, mouseX - offsetX));
+    const y = Math.max(0, Math.min(actualDisplayedHeight, mouseY - offsetY));
+    
+    return { x, y }; // Return coordinates relative to the displayed image (0,0 = top-left of image)
   };
 
   // Handle mouse down for new selection
@@ -150,42 +174,67 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
       />
       
       {/* Crop overlay */}
-      {cropArea && (
-        <div>
-          {/* Selection rectangle */}
-          <div 
-            className="absolute border-2 border-blue-500 bg-blue-200 bg-opacity-20"
-            style={{
-              left: cropArea.x,
-              top: cropArea.y,
-              width: cropArea.width,
-              height: cropArea.height,
-            }}
-          />
-          
-          {/* Resize handles */}
-          <div 
-            className="absolute w-3 h-3 bg-blue-500 border border-white cursor-nw-resize"
-            style={{ left: cropArea.x - 6, top: cropArea.y - 6 }}
-            onMouseDown={(e) => handleResizeStart(e, 'nw')}
-          />
-          <div 
-            className="absolute w-3 h-3 bg-blue-500 border border-white cursor-ne-resize"
-            style={{ left: cropArea.x + cropArea.width - 6, top: cropArea.y - 6 }}
-            onMouseDown={(e) => handleResizeStart(e, 'ne')}
-          />
-          <div 
-            className="absolute w-3 h-3 bg-blue-500 border border-white cursor-sw-resize"
-            style={{ left: cropArea.x - 6, top: cropArea.y + cropArea.height - 6 }}
-            onMouseDown={(e) => handleResizeStart(e, 'sw')}
-          />
-          <div 
-            className="absolute w-3 h-3 bg-blue-500 border border-white cursor-se-resize"
-            style={{ left: cropArea.x + cropArea.width - 6, top: cropArea.y + cropArea.height - 6 }}
-            onMouseDown={(e) => handleResizeStart(e, 'se')}
-          />
-        </div>
-      )}
+      {cropArea && (() => {
+        // Calculate the offset for displaying the overlay in the container
+        if (!containerRef.current) return null;
+        
+        const img = containerRef.current.querySelector('img') as HTMLImageElement;
+        if (!img) return null;
+        
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight;
+        const imageAspect = img.naturalWidth / img.naturalHeight;
+        const containerAspect = containerWidth / containerHeight;
+        
+        let offsetX = 0, offsetY = 0;
+        
+        if (imageAspect > containerAspect) {
+          // Image is wider - fits to width, height is smaller with vertical padding
+          const actualDisplayedHeight = containerWidth / imageAspect;
+          offsetY = (containerHeight - actualDisplayedHeight) / 2;
+        } else {
+          // Image is taller - fits to height, width is smaller with horizontal padding  
+          const actualDisplayedWidth = containerHeight * imageAspect;
+          offsetX = (containerWidth - actualDisplayedWidth) / 2;
+        }
+        
+        return (
+          <div>
+            {/* Selection rectangle */}
+            <div 
+              className="absolute border-2 border-blue-500 bg-blue-200 bg-opacity-20"
+              style={{
+                left: cropArea.x + offsetX,
+                top: cropArea.y + offsetY,
+                width: cropArea.width,
+                height: cropArea.height,
+              }}
+            />
+            
+            {/* Resize handles */}
+            <div 
+              className="absolute w-3 h-3 bg-blue-500 border border-white cursor-nw-resize"
+              style={{ left: cropArea.x + offsetX - 6, top: cropArea.y + offsetY - 6 }}
+              onMouseDown={(e) => handleResizeStart(e, 'nw')}
+            />
+            <div 
+              className="absolute w-3 h-3 bg-blue-500 border border-white cursor-ne-resize"
+              style={{ left: cropArea.x + cropArea.width + offsetX - 6, top: cropArea.y + offsetY - 6 }}
+              onMouseDown={(e) => handleResizeStart(e, 'ne')}
+            />
+            <div 
+              className="absolute w-3 h-3 bg-blue-500 border border-white cursor-sw-resize"
+              style={{ left: cropArea.x + offsetX - 6, top: cropArea.y + cropArea.height + offsetY - 6 }}
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+            />
+            <div 
+              className="absolute w-3 h-3 bg-blue-500 border border-white cursor-se-resize"
+              style={{ left: cropArea.x + cropArea.width + offsetX - 6, top: cropArea.y + cropArea.height + offsetY - 6 }}
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+            />
+          </div>
+        );
+      })()}
       
       {/* Action buttons */}
       {cropArea && (
