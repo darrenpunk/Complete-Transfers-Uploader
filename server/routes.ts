@@ -3784,43 +3784,55 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`🔍 Processing element ID: ${elementId}`);
 
-      // Debug: Check storage contents
-      console.log(`🔍 Total canvas elements in storage:`, (storage as any).canvasElements.size);
-      console.log(`🔍 Total logos in storage:`, (storage as any).logos.size);
+      // Direct approach: Find element and logo across all projects
+      console.log(`🔍 Searching for element ID: ${elementId}`);
 
-      // Get the canvas element
-      const canvasElement = await storage.getCanvasElement(elementId);
-      if (!canvasElement) {
+      // Get all projects to search through
+      const allProjects = await storage.getProjects();
+      let targetElement = null;
+      let targetProject = null;
+
+      // Search through all projects for the element
+      for (const project of allProjects) {
+        const elements = await storage.getCanvasElementsByProject(project.id);
+        const found = elements.find(el => el.id === elementId);
+        if (found) {
+          targetElement = found;
+          targetProject = project;
+          break;
+        }
+      }
+
+      if (!targetElement) {
         console.log(`❌ Canvas element not found for ID: ${elementId}`);
         return res.status(404).json({ error: 'Canvas element not found' });
       }
 
-      console.log(`🎯 Canvas element raw object:`, canvasElement);
-      console.log(`🎯 Canvas element properties:`, {
-        id: canvasElement.id,
-        logoId: canvasElement.logoId,
-        width: canvasElement.width,
-        height: canvasElement.height,
-        allKeys: Object.keys(canvasElement)
+      console.log(`🎯 Found canvas element:`, {
+        id: targetElement.id,
+        logoId: targetElement.logoId,
+        width: targetElement.width,
+        height: targetElement.height,
+        projectId: targetElement.projectId
       });
 
-      if (!canvasElement.logoId) {
+      if (!targetElement.logoId) {
         return res.status(400).json({ error: 'Canvas element has no associated logo' });
       }
 
-      // Get the associated logo
-      const logo = await storage.getLogo(canvasElement.logoId);
+      // Get all logos for this project and find the target logo
+      const projectLogos = await storage.getLogosByProject(targetElement.projectId);
+      const logo = projectLogos.find(l => l.id === targetElement.logoId);
+
       if (!logo) {
-        console.log(`❌ Logo not found for ID: ${canvasElement.logoId}`);
+        console.log(`❌ Logo not found for ID: ${targetElement.logoId}`);
         return res.status(404).json({ error: 'Associated logo not found' });
       }
 
-      console.log(`📁 Logo raw object:`, logo);
-      console.log(`📁 Logo properties:`, {
+      console.log(`📁 Found logo:`, {
         id: logo.id,
         filename: logo.filename,
-        originalName: logo.originalName,
-        allKeys: Object.keys(logo)
+        originalName: logo.originalName
       });
 
       if (!logo.filename) {
@@ -3909,8 +3921,8 @@ export async function registerRoutes(app: express.Application) {
         
         return res.json({
           success: true,
-          message: `Bounds fixed! Reduced from ${Math.round(canvasElement.width)}×${Math.round(canvasElement.height)}mm to ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`,
-          originalDimensions: { width: canvasElement.width, height: canvasElement.height },
+          message: `Bounds fixed! Reduced from ${Math.round(targetElement.width)}×${Math.round(targetElement.height)}mm to ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`,
+          originalDimensions: { width: targetElement.width, height: targetElement.height },
           tightDimensions: { width: Math.round(tightWidthMm), height: Math.round(tightHeightMm) }
         });
       } else {
