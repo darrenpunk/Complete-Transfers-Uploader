@@ -1337,7 +1337,7 @@ export function VectorizerModal({
       onCropChange(null); // Clear existing crop
     };
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const handleMouseMove = useCallback((e: MouseEvent) => {
       if (!isDragging || !dragStart || !containerRef.current) return;
       
       const rect = containerRef.current.getBoundingClientRect();
@@ -1352,18 +1352,33 @@ export function VectorizerModal({
       const width = Math.abs(currentX - dragStart.x);
       const height = Math.abs(currentY - dragStart.y);
       
+      console.log('Dragging:', { width, height });
+      
       // Only set crop area if it's meaningful
-      if (width > 20 && height > 20) {
+      if (width > 10 && height > 10) {
         onCropChange({ x, y, width, height });
       }
-    };
+    }, [isDragging, dragStart, onCropChange]);
 
-    const handleMouseUp = () => {
+    const handleMouseUp = useCallback(() => {
       console.log('Crop end');
       setIsDragging(false);
       setDragStart(null);
       setCurrentDrag(null);
-    };
+    }, []);
+
+    // Add global event listeners for dragging
+    useEffect(() => {
+      if (isDragging) {
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        return () => {
+          document.removeEventListener('mousemove', handleMouseMove);
+          document.removeEventListener('mouseup', handleMouseUp);
+        };
+      }
+    }, [isDragging, handleMouseMove, handleMouseUp]);
 
     // Calculate current selection for visual feedback
     const getCurrentSelection = () => {
@@ -1384,9 +1399,6 @@ export function VectorizerModal({
         ref={containerRef}
         className="relative w-full h-full bg-gray-100 cursor-crosshair select-none"
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
       >
         <img
           src={imageUrl}
