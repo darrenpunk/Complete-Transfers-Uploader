@@ -28,15 +28,42 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
   const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Get mouse position relative to container (simple approach - store container-relative coords)
+  // Get mouse position constrained to the actual displayed image area
   const getRelativePos = (e: React.MouseEvent | MouseEvent) => {
     if (!containerRef.current) return { x: 0, y: 0 };
     
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(containerRect.width, e.clientX - containerRect.left));
-    const y = Math.max(0, Math.min(containerRect.height, e.clientY - containerRect.top));
+    const img = containerRef.current.querySelector('img') as HTMLImageElement;
+    if (!img) return { x: 0, y: 0 };
     
-    return { x, y }; // Return coordinates relative to container
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - containerRect.left;
+    const mouseY = e.clientY - containerRect.top;
+    
+    // Calculate actual displayed image dimensions and position with object-contain
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+    const imageAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+    
+    let actualDisplayedWidth, actualDisplayedHeight, offsetX = 0, offsetY = 0;
+    
+    if (imageAspect > containerAspect) {
+      // Image is wider - fits to width, height is smaller with vertical padding
+      actualDisplayedWidth = containerWidth;
+      actualDisplayedHeight = containerWidth / imageAspect;
+      offsetY = (containerHeight - actualDisplayedHeight) / 2;
+    } else {
+      // Image is taller - fits to height, width is smaller with horizontal padding  
+      actualDisplayedHeight = containerHeight;
+      actualDisplayedWidth = containerHeight * imageAspect;
+      offsetX = (containerWidth - actualDisplayedWidth) / 2;
+    }
+    
+    // Constrain coordinates to only be within the displayed image bounds
+    const x = Math.max(offsetX, Math.min(offsetX + actualDisplayedWidth, mouseX));
+    const y = Math.max(offsetY, Math.min(offsetY + actualDisplayedHeight, mouseY));
+    
+    return { x, y }; // Return container coordinates constrained to image area
   };
 
   // Handle mouse down for new selection
@@ -145,6 +172,65 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
         alt="Crop preview"
         className="crop-interface absolute inset-0 w-full h-full object-contain pointer-events-none"
       />
+
+      {/* DEBUG: Visual indicator showing actual image boundaries */}
+      <div 
+        className="absolute border-2 border-red-500 opacity-50 pointer-events-none"
+        style={{
+          left: `${containerRef.current ? (() => {
+            const img = containerRef.current.querySelector('img') as HTMLImageElement;
+            if (!img) return 0;
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const imageAspect = img.naturalWidth / img.naturalHeight;
+            const containerAspect = containerRect.width / containerRect.height;
+            if (imageAspect > containerAspect) {
+              return 0;
+            } else {
+              return (containerRect.width - (containerRect.height * imageAspect)) / 2;
+            }
+          })() : 0}px`,
+          top: `${containerRef.current ? (() => {
+            const img = containerRef.current.querySelector('img') as HTMLImageElement;
+            if (!img) return 0;
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const imageAspect = img.naturalWidth / img.naturalHeight;
+            const containerAspect = containerRect.width / containerRect.height;
+            if (imageAspect > containerAspect) {
+              return (containerRect.height - (containerRect.width / imageAspect)) / 2;
+            } else {
+              return 0;
+            }
+          })() : 0}px`,
+          width: `${containerRef.current ? (() => {
+            const img = containerRef.current.querySelector('img') as HTMLImageElement;
+            if (!img) return '100%';
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const imageAspect = img.naturalWidth / img.naturalHeight;
+            const containerAspect = containerRect.width / containerRect.height;
+            if (imageAspect > containerAspect) {
+              return containerRect.width;
+            } else {
+              return containerRect.height * imageAspect;
+            }
+          })() : '100%'}px`,
+          height: `${containerRef.current ? (() => {
+            const img = containerRef.current.querySelector('img') as HTMLImageElement;
+            if (!img) return '100%';
+            const containerRect = containerRef.current.getBoundingClientRect();
+            const imageAspect = img.naturalWidth / img.naturalHeight;
+            const containerAspect = containerRect.width / containerRect.height;
+            if (imageAspect > containerAspect) {
+              return containerRect.width / imageAspect;
+            } else {
+              return containerRect.height;
+            }
+          })() : '100%'}px`
+        }}
+      >
+        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded">
+          Image Area
+        </div>
+      </div>
       
       {/* Crop overlay */}
       {cropArea && (
