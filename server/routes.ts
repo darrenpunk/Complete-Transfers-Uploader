@@ -2292,6 +2292,7 @@ export async function registerRoutes(app: express.Application) {
                     // Re-analyzing the tight content SVG gives wrong dimensions
                     console.log(`✅ USING ORIGINAL CONTENT BOUNDS: No re-analysis needed, we already have correct dimensions`);
                   }
+                  
                 } else if (usingPdfContentBounds) {
                   // We have exact PDF content bounds, use them directly
                   console.log(`✅ USING PDF CONTENT BOUNDS: Exact content size from original PDF`);
@@ -2327,18 +2328,8 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
               }
               
-            } catch (boundsError) {
-              console.error('❌ Bounds extraction error:', boundsError);
-              // Fallback to the original robust dimension system
-              const { detectDimensionsFromSVG } = await import('./dimension-utils');
-              const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-              const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
-              displayWidth = dimensionResult.widthMm;
-              displayHeight = dimensionResult.heightMm;
-              
-              console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
-            }
-
+          } // End of needsTightCrop check
+          
           } else {
             // Fallback: for large documents with no detectable content bounds
             console.log(`Large format document with no detectable content bounds, using conservative sizing`);

@@ -775,14 +775,11 @@ export function VectorizerModal({
       console.log(`Removed ${removedCount} white background elements`);
       
     } else {
-      // Aggressive mode: Remove ALL white elements
+      // Aggressive mode: Make ALL white elements transparent
       const whiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"]');
       whiteElements.forEach(el => {
-        if (el.tagName === 'rect' || el.tagName === 'path') {
-          el.remove();
-        } else {
-          el.setAttribute('fill', 'none');
-        }
+        // Set fill to none for ALL white elements to make them transparent
+        el.setAttribute('fill', 'none');
       });
       
       // Also check for near-white colors
@@ -803,11 +800,8 @@ export function VectorizerModal({
               b = parseInt(match[3]);
             }
             if (r > 250 && g > 250 && b > 250) {
-              if (el.tagName === 'rect' || el.tagName === 'path') {
-                el.remove();
-              } else {
-                el.setAttribute('fill', 'none');
-              }
+              // Set fill to none for near-white colors to make them transparent
+              el.setAttribute('fill', 'none');
             }
           }
         }
