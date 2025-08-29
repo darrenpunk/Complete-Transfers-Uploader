@@ -1500,67 +1500,76 @@ export function VectorizerModal({
       return newArea;
     };
 
-    // Global mouse move handler
+    // Global mouse move handler - use refs to avoid dependency issues
+    const currentStateRef = useRef({ isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea });
+    currentStateRef.current = { isMouseDown, isResizing, cropArea, resizeHandle, startPos, resizeStartPos, originalCropArea };
+    
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
         const pos = getRelativePos(e);
+        const state = currentStateRef.current;
         setCurrentPos(pos);
         
-        if (isMouseDown && !isResizing) {
-          // Regular selection dragging
-          const rect = getSelectionRect();
+        if (state.isMouseDown && !state.isResizing) {
+          // Regular selection dragging using ref state
+          const rect = state.startPos ? {
+            x: Math.min(state.startPos.x, pos.x),
+            y: Math.min(state.startPos.y, pos.y),
+            width: Math.abs(pos.x - state.startPos.x),
+            height: Math.abs(pos.y - state.startPos.y)
+          } : null;
           if (rect) {
             console.log('🔄 MOVING:', rect);
             if (rect.width > 10 && rect.height > 10) {
               onCropChange(rect);
             }
           }
-        } else if (isResizing && originalCropArea && resizeStartPos) {
+        } else if (state.isResizing && state.originalCropArea && state.resizeStartPos) {
           // Handle resizing - get REAL current mouse position
           const currentMousePos = getRelativePos(e);
-          const deltaX = currentMousePos.x - resizeStartPos.x;
-          const deltaY = currentMousePos.y - resizeStartPos.y;
+          const deltaX = currentMousePos.x - state.resizeStartPos.x;
+          const deltaY = currentMousePos.y - state.resizeStartPos.y;
           
-          let newArea = { ...originalCropArea };
+          let newArea = { ...state.originalCropArea };
           
-          switch (resizeHandle) {
+          switch (state.resizeHandle) {
             case 'nw': // Top-left
-              newArea.x = Math.max(0, originalCropArea.x + deltaX);
-              newArea.y = Math.max(0, originalCropArea.y + deltaY);
-              newArea.width = Math.max(30, originalCropArea.width - deltaX);
-              newArea.height = Math.max(30, originalCropArea.height - deltaY);
+              newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+              newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+              newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
+              newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
               break;
             case 'ne': // Top-right
-              newArea.y = Math.max(0, originalCropArea.y + deltaY);
-              newArea.width = Math.max(30, originalCropArea.width + deltaX);
-              newArea.height = Math.max(30, originalCropArea.height - deltaY);
+              newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+              newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
+              newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
               break;
             case 'sw': // Bottom-left
-              newArea.x = Math.max(0, originalCropArea.x + deltaX);
-              newArea.width = Math.max(30, originalCropArea.width - deltaX);
-              newArea.height = Math.max(30, originalCropArea.height + deltaY);
+              newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+              newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
+              newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
               break;
             case 'se': // Bottom-right
-              newArea.width = Math.max(30, originalCropArea.width + deltaX);
-              newArea.height = Math.max(30, originalCropArea.height + deltaY);
+              newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
+              newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
               break;
             case 'n': // Top edge
-              newArea.y = Math.max(0, originalCropArea.y + deltaY);
-              newArea.height = Math.max(30, originalCropArea.height - deltaY);
+              newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+              newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
               break;
             case 's': // Bottom edge
-              newArea.height = Math.max(30, originalCropArea.height + deltaY);
+              newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
               break;
             case 'w': // Left edge
-              newArea.x = Math.max(0, originalCropArea.x + deltaX);
-              newArea.width = Math.max(30, originalCropArea.width - deltaX);
+              newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+              newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
               break;
             case 'e': // Right edge
-              newArea.width = Math.max(30, originalCropArea.width + deltaX);
+              newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
               break;
           }
           
-          console.log('🔧 RESIZING:', resizeHandle, 'Mouse:', currentMousePos, 'Start:', resizeStartPos, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
+          console.log('🔧 RESIZING:', state.resizeHandle, 'Mouse:', currentMousePos, 'Start:', state.resizeStartPos, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
           onCropChange(newArea);
         }
       };
@@ -1625,7 +1634,7 @@ export function VectorizerModal({
           document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
         };
       }
-    }, [isMouseDown, isResizing]);
+    }, [isMouseDown, isResizing]);  // Keep minimal dependencies to prevent premature cleanup
 
     const selectionRect = getSelectionRect();
 
