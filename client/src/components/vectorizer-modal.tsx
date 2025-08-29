@@ -626,14 +626,22 @@ export function VectorizerModal({
       
       if (shouldRemove) {
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
-        // Always remove the element completely for shape elements
-        if (['rect', 'path', 'circle', 'ellipse', 'polygon', 'g'].includes(el.tagName.toLowerCase())) {
-          el.remove();
+        
+        // CRITICAL FIX: Use Shape Stacking setting to control deletion behavior
+        if (shapeStacking === 'cut_out') {
+          // Cut-out mode: Make elements transparent instead of removing them
+          el.setAttribute('fill', 'none');
+          console.log('Set fill="none" for transparent cut-out (Shape Stacking: cut_out)');
           removedCount++;
         } else {
-          // For other elements, remove fill attribute completely (more reliable than setting to 'none')
-          el.removeAttribute('fill');
-          console.log('Removed fill attribute from non-shape element:', el.tagName);
+          // Stack mode: Remove elements completely (original behavior)
+          if (['rect', 'path', 'circle', 'ellipse', 'polygon', 'g'].includes(el.tagName.toLowerCase())) {
+            el.remove();
+            removedCount++;
+          } else {
+            el.removeAttribute('fill');
+            console.log('Removed fill attribute from non-shape element:', el.tagName);
+          }
         }
       }
     });
