@@ -2235,6 +2235,7 @@ export async function registerRoutes(app: express.Application) {
                   
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
+                    try {
                   
                   // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
                   // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
@@ -2338,6 +2339,7 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
             }
+          }
 
           } else {
             // Fallback: for large documents with no detectable content bounds
