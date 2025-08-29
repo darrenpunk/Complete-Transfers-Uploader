@@ -173,64 +173,6 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
         className="crop-interface absolute inset-0 w-full h-full object-contain pointer-events-none"
       />
 
-      {/* DEBUG: Visual indicator showing actual image boundaries */}
-      <div 
-        className="absolute border-2 border-red-500 opacity-50 pointer-events-none"
-        style={{
-          left: `${containerRef.current ? (() => {
-            const img = containerRef.current.querySelector('img') as HTMLImageElement;
-            if (!img) return 0;
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const imageAspect = img.naturalWidth / img.naturalHeight;
-            const containerAspect = containerRect.width / containerRect.height;
-            if (imageAspect > containerAspect) {
-              return 0;
-            } else {
-              return (containerRect.width - (containerRect.height * imageAspect)) / 2;
-            }
-          })() : 0}px`,
-          top: `${containerRef.current ? (() => {
-            const img = containerRef.current.querySelector('img') as HTMLImageElement;
-            if (!img) return 0;
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const imageAspect = img.naturalWidth / img.naturalHeight;
-            const containerAspect = containerRect.width / containerRect.height;
-            if (imageAspect > containerAspect) {
-              return (containerRect.height - (containerRect.width / imageAspect)) / 2;
-            } else {
-              return 0;
-            }
-          })() : 0}px`,
-          width: `${containerRef.current ? (() => {
-            const img = containerRef.current.querySelector('img') as HTMLImageElement;
-            if (!img) return '100%';
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const imageAspect = img.naturalWidth / img.naturalHeight;
-            const containerAspect = containerRect.width / containerRect.height;
-            if (imageAspect > containerAspect) {
-              return containerRect.width;
-            } else {
-              return containerRect.height * imageAspect;
-            }
-          })() : '100%'}px`,
-          height: `${containerRef.current ? (() => {
-            const img = containerRef.current.querySelector('img') as HTMLImageElement;
-            if (!img) return '100%';
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const imageAspect = img.naturalWidth / img.naturalHeight;
-            const containerAspect = containerRect.width / containerRect.height;
-            if (imageAspect > containerAspect) {
-              return containerRect.width / imageAspect;
-            } else {
-              return containerRect.height;
-            }
-          })() : '100%'}px`
-        }}
-      >
-        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded">
-          Image Area
-        </div>
-      </div>
       
       {/* Crop overlay */}
       {cropArea && (

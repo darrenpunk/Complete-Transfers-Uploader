@@ -1224,11 +1224,20 @@ export function VectorizerModal({
         throw new Error('Could not find displayed image');
       }
       
-      console.log('✅ Found displayed image:', displayedImg, 'Size:', displayedImg.clientWidth, 'x', displayedImg.clientHeight);
+      // Get the container that the image is inside (where crop coordinates are relative to)
+      const cropContainer = displayedImg.parentElement as HTMLElement;
+      if (!cropContainer) {
+        throw new Error('Could not find crop container');
+      }
       
-      // For object-contain, calculate actual displayed image dimensions
-      const containerWidth = displayedImg.clientWidth;
-      const containerHeight = displayedImg.clientHeight;
+      console.log('✅ Found displayed image and container:', {
+        image: { width: displayedImg.clientWidth, height: displayedImg.clientHeight },
+        container: { width: cropContainer.clientWidth, height: cropContainer.clientHeight }
+      });
+      
+      // For object-contain, calculate actual displayed image dimensions within the container
+      const containerWidth = cropContainer.clientWidth;
+      const containerHeight = cropContainer.clientHeight;
       const imageAspect = tempImg.naturalWidth / tempImg.naturalHeight;
       const containerAspect = containerWidth / containerHeight;
       
@@ -1377,12 +1386,21 @@ export function VectorizerModal({
       if (data.svg) {
         setVectorSvg(data.svg);
         setColoredSvg(data.svg);
-        setDetectedColors(data.detectedColors || []);
+        
+        // Extract colors directly from SVG if server didn't detect any
+        let colors = data.detectedColors || [];
+        if (colors.length === 0) {
+          console.log('🎨 Server detected no colors, extracting from SVG...');
+          colors = extractColorsFromSVG(data.svg);
+          console.log('🎨 Extracted colors from SVG:', colors);
+        }
+        
+        setDetectedColors(colors);
         setQualityWarning(data.qualityWarning || null);
         
         console.log('Vectorization successful:', {
           svgLength: data.svg.length,
-          colorsDetected: data.detectedColors?.length || 0,
+          colorsDetected: colors.length,
           hasQualityWarning: !!data.qualityWarning
         });
       }
