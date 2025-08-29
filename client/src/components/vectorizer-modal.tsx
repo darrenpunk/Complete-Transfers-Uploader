@@ -606,23 +606,34 @@ export function VectorizerModal({
     
     // Remove elements with matching fill
     const elementsWithFill = doc.querySelectorAll('*[fill]');
-    elementsWithFill.forEach(el => {
+    console.log(`🔍 TOTAL ELEMENTS WITH FILL: ${elementsWithFill.length}`);
+    
+    elementsWithFill.forEach((el, index) => {
       const fill = el.getAttribute('fill')?.toLowerCase().trim();
-      if (!fill || fill === 'none') return;
+      console.log(`🔍 Element ${index}: ${el.tagName}, fill="${fill}"`);
+      
+      if (!fill || fill === 'none') {
+        console.log(`⏭️ Skipping element ${index}: no fill or fill=none`);
+        return;
+      }
       
       let shouldRemove = false;
       
       // Direct hex match
       if (fill === normalizedColorToRemove) {
         shouldRemove = true;
+        console.log(`✅ Element ${index}: DIRECT MATCH`);
       }
       // RGB format match
       else if (fill.startsWith('rgb')) {
         const normalizedRgb = normalizeRgbToHex(fill);
         if (normalizedRgb === normalizedColorToRemove) {
           shouldRemove = true;
+          console.log(`✅ Element ${index}: RGB MATCH`);
         }
       }
+      
+      console.log(`🎯 Element ${index}: shouldRemove = ${shouldRemove}`);
       
       if (shouldRemove) {
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
