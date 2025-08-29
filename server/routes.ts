@@ -3700,21 +3700,25 @@ export async function registerRoutes(app: express.Application) {
             const bounds = boundsResult.contentBounds;
             console.log(`📀 Content bounds found: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px`);
             
-            // Apply tight cropping by updating viewBox to show only content
-            const contentWidth = bounds.width;
-            const contentHeight = bounds.height;
+            // Apply tight cropping with proper centering and padding
+            const padding = Math.max(bounds.width, bounds.height) * 0.05; // 5% padding
+            const paddedXMin = bounds.xMin - padding;
+            const paddedYMin = bounds.yMin - padding;
+            const paddedWidth = bounds.width + (padding * 2);
+            const paddedHeight = bounds.height + (padding * 2);
+            
             console.log(`🎯 CROPPING VECTORIZER PADDING: from (${bounds.xMin}, ${bounds.yMin}) size ${bounds.width}×${bounds.height}`);
-            console.log(`🎯 VIEWBOX CROP: "${bounds.xMin} ${bounds.yMin} ${contentWidth} ${contentHeight}" (shows content only)`);
+            console.log(`🎯 VIEWBOX CROP WITH PADDING: "${paddedXMin.toFixed(1)} ${paddedYMin.toFixed(1)} ${paddedWidth.toFixed(1)} ${paddedHeight.toFixed(1)}" (content + 5% padding)`);
             
             const croppedSvg = cmykSvg.replace(
               /viewBox="[^"]*"/,
-              `viewBox="${bounds.xMin} ${bounds.yMin} ${contentWidth} ${contentHeight}"`
+              `viewBox="${paddedXMin.toFixed(2)} ${paddedYMin.toFixed(2)} ${paddedWidth.toFixed(2)} ${paddedHeight.toFixed(2)}"`
             ).replace(
               /width="[^"]*"/,
-              `width="${contentWidth}"`
+              `width="${paddedWidth.toFixed(2)}"`
             ).replace(
               /height="[^"]*"/,
-              `height="${contentHeight}"`
+              `height="${paddedHeight.toFixed(2)}"`
             );
             
             // Add tight content marker
