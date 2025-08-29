@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import os from 'os';
 import fs from 'fs';
 import crypto from 'crypto';
 import { promisify } from 'util';
@@ -3792,39 +3793,60 @@ export async function registerRoutes(app: express.Application) {
       fs.writeFileSync(tempSvgPath, svgContent);
       
       // Get precise bounds with minimal padding
-      const boundsResult = await analyzer.extractBounds(tempSvgPath, {
-        method: 'tight',
-        padding: 2, // 2px minimal padding instead of 5%
-        tolerance: 0.1
-      });
+      const boundsResult = await analyzer.extractSVGBounds(tempSvgPath);
       
-      if (boundsResult && boundsResult.bounds) {
-        // Create tight content SVG
-        const tightSvg = analyzer.createTightContentSvg(
-          svgContent,
-          boundsResult.bounds.left,
-          boundsResult.bounds.top,
-          boundsResult.bounds.width,
-          boundsResult.bounds.height
-        );
+      if (boundsResult && boundsResult.success && boundsResult.contentBounds) {
+        // Create tight content SVG using the bounds
+        const bounds = boundsResult.contentBounds;
         
-        const finalSvg = tightSvg.replace(
-          '<svg',
-          '<svg data-content-extracted="true"'
-        );
+        // Simple SVG cropping by adjusting viewBox using string replacement
+        const padding = 2; // 2px padding
         
-        console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
-        console.log(`🔧 Tight bounds: ${boundsResult.bounds.width}x${boundsResult.bounds.height}`);
+        // Create new viewBox string
+        const newViewBox = `${bounds.xMin - padding} ${bounds.yMin - padding} ${bounds.width + 2*padding} ${bounds.height + 2*padding}`;
+        const newWidth = `${bounds.width + 2*padding}`;
+        const newHeight = `${bounds.height + 2*padding}`;
         
-        // Clean up temp file
-        fs.unlinkSync(tempSvgPath);
+        // Replace SVG attributes using regex
+        let finalSvg = svgContent;
         
-        return res.json({
-          success: true,
-          svg: finalSvg,
-          originalDimensions: { width: boundsResult.originalWidth, height: boundsResult.originalHeight },
-          tightDimensions: { width: boundsResult.bounds.width, height: boundsResult.bounds.height }
-        });
+        // Add or update viewBox
+        if (finalSvg.includes('viewBox=')) {
+          finalSvg = finalSvg.replace(/viewBox="[^"]*"/g, `viewBox="${newViewBox}"`);
+        } else {
+          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 viewBox="${newViewBox}">`);
+        }
+        
+        // Add or update width
+        if (finalSvg.includes('width=')) {
+          finalSvg = finalSvg.replace(/width="[^"]*"/g, `width="${newWidth}"`);
+        } else {
+          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 width="${newWidth}">`);
+        }
+        
+        // Add or update height  
+        if (finalSvg.includes('height=')) {
+          finalSvg = finalSvg.replace(/height="[^"]*"/g, `height="${newHeight}"`);
+        } else {
+          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 height="${newHeight}">`);
+        }
+        
+        // Add data attribute to mark as processed
+        finalSvg = finalSvg.replace(/<svg/, '<svg data-content-extracted="true"');
+          
+          console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
+          console.log(`🔧 Tight bounds: ${bounds.width}x${bounds.height}`);
+          
+          // Clean up temp file
+          fs.unlinkSync(tempSvgPath);
+          
+          return res.json({
+            success: true,
+            svg: finalSvg,
+            originalDimensions: { width: bounds.width + 2*padding, height: bounds.height + 2*padding },
+            tightDimensions: { width: bounds.width, height: bounds.height }
+          });
+        }
       } else {
         console.log('⚠️ Could not determine bounds for vector, keeping original');
         // Clean up temp file
