@@ -1479,23 +1479,23 @@ export function VectorizerModal({
       e.preventDefault();
       e.stopPropagation();
       
-      const pos = getRelativePos(e);
-      console.log('🎯 RESIZE HANDLE CLICKED:', handle);
+      console.log('🚨 RESIZE HANDLE CLICKED - FORCING STATE RESET:', handle);
       
-      // Clear any existing selection state first to prevent conflicts
+      // CRITICAL: Force complete state reset to prevent any conflicts
       setIsMouseDown(false);
-      setStartPos(null);
+      setStartPos(null);  
       setCurrentPos(null);
       
-      // Store original crop area and start position for resize
-      setOriginalCropArea(cropArea);
-      setResizeStartPos(pos);
+      // Small delay to ensure state is cleared before setting resize mode
+      setTimeout(() => {
+        const pos = getRelativePos(e);
+        setOriginalCropArea(cropArea);
+        setResizeStartPos(pos);
+        setIsResizing(true);
+        setResizeHandle(handle);
+        console.log('🔧 RESIZE MODE ACTIVATED for handle:', handle, 'at position:', pos);
+      }, 10);
       
-      // Set resize state
-      setIsResizing(true);
-      setResizeHandle(handle);
-      
-      console.log('🔧 RESIZE MODE ACTIVATED for handle:', handle);
     }, [cropArea]);
 
     // Calculate resized crop area
@@ -1759,43 +1759,58 @@ export function VectorizerModal({
         target: e.target 
       });
       
-      // Handle resize mode first (takes priority)
+      // CRITICAL: Completely prevent both modes from running together
       if (state.isResizing) {
-        console.log('🔴 MOUSE UP - Resize completed');
+        console.log('🔴 MOUSE UP - Resize mode only');
         setIsResizing(false);
         setResizeHandle('');
-        return; // Exit early to prevent conflicts
+        // Clear any selection state to prevent conflicts
+        setIsMouseDown(false);
+        setStartPos(null);
+        setCurrentPos(null);
+        return;
       }
       
-      // Handle selection mode
-      if (state.isMouseDown) {
-        console.log('🔴 MOUSE UP - Selection');
+      if (state.isMouseDown && !state.isResizing) {
+        console.log('🔴 MOUSE UP - Selection mode only');
         
-        // Capture final position at mouse up
+        // Get current mouse position for final calculation
         const finalPos = getRelativePos(e);
-        setCurrentPos(finalPos);
         
-        // Calculate final selection with the mouse up position
-        const finalRect = state.startPos ? {
-          x: Math.min(state.startPos.x, finalPos.x),
-          y: Math.min(state.startPos.y, finalPos.y),
-          width: Math.abs(finalPos.x - state.startPos.x),
-          height: Math.abs(finalPos.y - state.startPos.y)
-        } : null;
+        console.log('🎯 SELECTION CALCULATION:', {
+          startPos: state.startPos,
+          finalPos: finalPos,
+          mouseEvent: { clientX: e.clientX, clientY: e.clientY }
+        });
         
-        console.log('🎯 FINAL RECT:', finalRect);
-        setIsMouseDown(false);
-        
-        if (finalRect && finalRect.width > 30 && finalRect.height > 30) {
-          // Only enforce minimum if selection is too small
-          const cropRect = {
-            x: finalRect.x,
-            y: finalRect.y,
-            width: Math.max(finalRect.width, 30),
-            height: Math.max(finalRect.height, 30)
+        // Calculate final rectangle
+        if (state.startPos) {
+          const finalRect = {
+            x: Math.min(state.startPos.x, finalPos.x),
+            y: Math.min(state.startPos.y, finalPos.y),
+            width: Math.abs(finalPos.x - state.startPos.x),
+            height: Math.abs(finalPos.y - state.startPos.y)
           };
-          console.log('📌 SETTING CROP AREA:', cropRect);
-          onCropChange(cropRect);
+          
+          console.log('🎯 FINAL RECT CALCULATED:', finalRect);
+          
+          // Clean up state first
+          setIsMouseDown(false);
+          setStartPos(null);
+          setCurrentPos(null);
+          
+          // Apply crop if large enough
+          if (finalRect.width > 30 && finalRect.height > 30) {
+            console.log('✅ APPLYING CROP AREA:', finalRect);
+            onCropChange(finalRect);
+          } else {
+            console.log('❌ CROP TOO SMALL, IGNORING');
+          }
+        } else {
+          // No start position, just clear state
+          setIsMouseDown(false);
+          setStartPos(null);
+          setCurrentPos(null);
         }
       }
     }, []);
@@ -1869,7 +1884,7 @@ export function VectorizerModal({
           </div>
         )}
         
-        {/* Final crop area display with resize handles */}
+        {/* Final crop area display - RESIZE DISABLED FOR DEBUGGING */}
         {cropArea && !isMouseDown && (
           <>
             <div className="absolute inset-0 bg-black bg-opacity-60 pointer-events-none" style={{ zIndex: 900 }} />
@@ -1887,81 +1902,12 @@ export function VectorizerModal({
                 READY: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
               </div>
               
-              {/* Corner resize handles */}
-              <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-800 -top-2 -left-2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: nw');
-                  handleResizeStart(e, 'nw');
-                }}
-                title="Resize from top-left corner"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-800 -top-2 -right-2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: ne');
-                  handleResizeStart(e, 'ne');
-                }}
-                title="Resize from top-right corner"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-800 -bottom-2 -left-2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: sw');
-                  handleResizeStart(e, 'sw');
-                }}
-                title="Resize from bottom-left corner"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-800 -bottom-2 -right-2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: se');
-                  handleResizeStart(e, 'se');
-                }}
-                title="Resize from bottom-right corner"
-                style={{ pointerEvents: 'auto' }}
-              />
+              {/* ALL RESIZE HANDLES DISABLED FOR DEBUGGING - SELECTION ONLY */}
+              {false && (
+                <div>Resize handles disabled</div>
+              )}
               
-              {/* Edge resize handles */}
-              <div 
-                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-n-resize hover:bg-blue-800 -top-1 left-1/2 transform -translate-x-1/2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: n');
-                  handleResizeStart(e, 'n');
-                }}
-                title="Resize from top edge"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-s-resize hover:bg-blue-800 -bottom-1 left-1/2 transform -translate-x-1/2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: s');
-                  handleResizeStart(e, 's');
-                }}
-                title="Resize from bottom edge"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-w-resize hover:bg-blue-800 -left-1 top-1/2 transform -translate-y-1/2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: w');
-                  handleResizeStart(e, 'w');
-                }}
-                title="Resize from left edge"
-                style={{ pointerEvents: 'auto' }}
-              />
-              <div 
-                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-e-resize hover:bg-blue-800 -right-1 top-1/2 transform -translate-y-1/2 z-50"
-                onMouseDown={(e) => {
-                  console.log('🎯 RESIZE HANDLE CLICKED: e');
-                  handleResizeStart(e, 'e');
-                }}
-                title="Resize from right edge"
-                style={{ pointerEvents: 'auto' }}
-              />
+              {/* EDGE RESIZE HANDLES ALSO DISABLED */}
             </div>
           </>
         )}
