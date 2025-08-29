@@ -497,6 +497,12 @@ export function cleanAIVectorizedSVG(svgContent: string): string {
     console.log(`🔍 DEBUG: Found ${allPaths.length} paths in SVG`);
     
     allPaths.forEach((path, index) => {
+      // CRITICAL FIX: Preserve transparent elements - don't remove paths with fill="none"!
+      if (path.includes('fill="none"') || path.includes('fill="transparent"')) {
+        console.log(`🚫 PRESERVING TRANSPARENT PATH: Path with fill="none" - intentional transparency`);
+        return; // Skip processing this transparent path
+      }
+      
       const dMatch = path.match(/d="([^"]*)"/);
       if (dMatch) {
         const pathData = dMatch[1];
