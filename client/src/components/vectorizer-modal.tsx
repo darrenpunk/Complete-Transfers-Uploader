@@ -1404,13 +1404,53 @@ export function VectorizerModal({
     const [originalCropArea, setOriginalCropArea] = useState<CropArea | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Get mouse position relative to container
+    // Get mouse position relative to the actual image content (accounting for object-contain)
     const getRelativePos = (e: MouseEvent | React.MouseEvent) => {
       if (!containerRef.current) return { x: 0, y: 0 };
-      const rect = containerRef.current.getBoundingClientRect();
+      
+      const container = containerRef.current;
+      const img = container.querySelector('img') as HTMLImageElement;
+      if (!img) return { x: 0, y: 0 };
+      
+      // Get container and mouse position
+      const containerRect = container.getBoundingClientRect();
+      const mouseX = e.clientX - containerRect.left;
+      const mouseY = e.clientY - containerRect.top;
+      
+      // Get actual rendered image dimensions within the container
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+      const imgNaturalWidth = img.naturalWidth;
+      const imgNaturalHeight = img.naturalHeight;
+      
+      // Calculate scale for object-contain
+      const scaleX = containerWidth / imgNaturalWidth;
+      const scaleY = containerHeight / imgNaturalHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      // Calculate actual rendered image size
+      const renderedWidth = imgNaturalWidth * scale;
+      const renderedHeight = imgNaturalHeight * scale;
+      
+      // Calculate image position (centered in container)
+      const imageX = (containerWidth - renderedWidth) / 2;
+      const imageY = (containerHeight - renderedHeight) / 2;
+      
+      // Convert mouse position to image coordinate space
+      const relativeX = mouseX - imageX;
+      const relativeY = mouseY - imageY;
+      
+      console.log('🎯 COORDINATE CALC:', {
+        mouse: { x: mouseX, y: mouseY },
+        container: { width: containerWidth, height: containerHeight },
+        rendered: { width: renderedWidth, height: renderedHeight, scale },
+        imageOffset: { x: imageX, y: imageY },
+        relative: { x: relativeX, y: relativeY }
+      });
+      
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: Math.max(0, Math.min(renderedWidth, relativeX)),
+        y: Math.max(0, Math.min(renderedHeight, relativeY))
       };
     };
 
