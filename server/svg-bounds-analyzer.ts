@@ -615,7 +615,8 @@ export class SVGBoundsAnalyzer {
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
     // Step 3: Keep only paths that are close to the center (actual logo content)
-    const maxDistanceFromCenter = Math.min(400, Math.sqrt(medianArea) * 2); // Reasonable logo spread
+    // Much more aggressive distance filtering to remove vectorizer.ai's square padding
+    const maxDistanceFromCenter = Math.min(200, Math.sqrt(medianArea) * 0.8); // Tighter logo spread
     const contentPaths = filteredPaths.filter(pathBounds => {
       const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
       const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;

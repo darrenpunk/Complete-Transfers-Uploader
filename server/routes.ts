@@ -3352,12 +3352,7 @@ export async function registerRoutes(app: express.Application) {
       // CRITICAL FIX: Always request SVG output format explicitly to avoid PNG binary data
       formData.append('output_format', 'svg');
       console.log('✅ Explicitly requesting SVG output format to avoid binary PNG data');
-      
-      // ASPECT RATIO PRESERVATION: Add parameters to prevent square padding
-      formData.append('processing.max_colors', '256'); // Reasonable color limit
-      formData.append('output.group_by', 'layer'); // Preserve structure
-      formData.append('output.curves_mode', 'spline'); // Better curve handling
-      console.log('🎯 Added aspect ratio preservation parameters');
+      console.log('🎯 Using minimal parameters to preserve original quality');
       
       // CRITICAL FIX: Vector.AI API expects specific mode values based on documentation
       if (!isPreview) {
