@@ -650,8 +650,8 @@ export class SVGBoundsAnalyzer {
     // FIXED: Calculate bounds from MAIN CONTENT CLUSTER instead of ALL scattered paths
     
     // Step 1: Find center of mass for main content clustering
-    const centerX = contentPaths.reduce((sum, p) => sum + (p.xMin + p.xMax) / 2, 0) / contentPaths.length;
-    const centerY = contentPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / contentPaths.length;
+    const clusterCenterX = contentPaths.reduce((sum, p) => sum + (p.xMin + p.xMax) / 2, 0) / contentPaths.length;
+    const clusterCenterY = contentPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / contentPaths.length;
     
     // Step 2: Filter paths to only include those near the center (main content cluster)  
     const centerDistanceThreshold = 200; // Only include paths within 200px of center
@@ -659,12 +659,12 @@ export class SVGBoundsAnalyzer {
       const pathCenterX = (bounds.xMin + bounds.xMax) / 2;
       const pathCenterY = (bounds.yMin + bounds.yMax) / 2;
       const distanceFromCenter = Math.sqrt(
-        Math.pow(pathCenterX - centerX, 2) + Math.pow(pathCenterY - centerY, 2)
+        Math.pow(pathCenterX - clusterCenterX, 2) + Math.pow(pathCenterY - clusterCenterY, 2)
       );
       return distanceFromCenter <= centerDistanceThreshold;
     });
     
-    console.log(`🎯 CLUSTERED CONTENT: Using ${mainContentPaths.length} paths near center (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) out of ${contentPaths.length} total`);
+    console.log(`🎯 CLUSTERED CONTENT: Using ${mainContentPaths.length} paths near center (${clusterCenterX.toFixed(1)}, ${clusterCenterY.toFixed(1)}) out of ${contentPaths.length} total`);
     
     // Step 3: Calculate bounds from MAIN CLUSTER only (not scattered outliers)
     let minX = Infinity, minY = Infinity;
