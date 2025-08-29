@@ -1381,8 +1381,8 @@ export function VectorizerModal({
     }
   };
 
-  // Bulletproof Crop Interface Component [FORCE REFRESH V3]
-  const CropInterface = ({ imageUrl, onCropChange, cropArea }: {
+  // COMPLETELY NEW Crop Interface Component - Forces React to recreate
+  const CropInterfaceV4 = ({ imageUrl, onCropChange, cropArea }: {
     imageUrl: string;
     onCropChange: (area: {x: number, y: number, width: number, height: number} | null) => void;
     cropArea: {x: number, y: number, width: number, height: number} | null;
@@ -3086,7 +3086,7 @@ export function VectorizerModal({
           
           {originalImageUrl && (
             <div className="flex-1 overflow-hidden bg-gray-100 rounded-lg relative">
-              <CropInterface
+              <CropInterfaceV4
                 imageUrl={originalImageUrl}
                 onCropChange={setCropArea}
                 cropArea={cropArea}
