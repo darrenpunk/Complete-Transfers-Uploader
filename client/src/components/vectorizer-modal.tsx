@@ -1647,22 +1647,9 @@ export function VectorizerModal({
       const state = currentStateRef.current;
       setCurrentPos(pos);
       
-      if (state.isMouseDown && !state.isResizing) {
-        // Regular selection dragging using ref state
-        const rect = state.startPos ? {
-          x: Math.min(state.startPos.x, pos.x),
-          y: Math.min(state.startPos.y, pos.y),
-          width: Math.abs(pos.x - state.startPos.x),
-          height: Math.abs(pos.y - state.startPos.y)
-        } : null;
-        if (rect) {
-          console.log('🔄 MOVING:', rect);
-          if (rect.width > 10 && rect.height > 10) {
-            onCropChange(rect);
-          }
-        }
-      } else if (state.isResizing && state.originalCropArea && state.resizeStartPos) {
-        // Handle resizing - get REAL current mouse position
+      // CRITICAL: Only handle resize OR selection, never both
+      if (state.isResizing && state.originalCropArea && state.resizeStartPos) {
+        // Handle resizing ONLY - completely skip selection logic
         const currentMousePos = getRelativePos(e);
         const deltaX = currentMousePos.x - state.resizeStartPos.x;
         const deltaY = currentMousePos.y - state.resizeStartPos.y;
@@ -1708,6 +1695,23 @@ export function VectorizerModal({
         
         console.log('🔧 RESIZING:', state.resizeHandle, 'Delta:', {deltaX, deltaY}, 'New Area:', newArea);
         onCropChange(newArea);
+        return; // Exit immediately to prevent any selection logic
+      }
+      
+      // Handle selection ONLY if not resizing
+      if (state.isMouseDown && !state.isResizing) {
+        const rect = state.startPos ? {
+          x: Math.min(state.startPos.x, pos.x),
+          y: Math.min(state.startPos.y, pos.y),
+          width: Math.abs(pos.x - state.startPos.x),
+          height: Math.abs(pos.y - state.startPos.y)
+        } : null;
+        if (rect) {
+          console.log('🔄 SELECTING:', rect);
+          if (rect.width > 10 && rect.height > 10) {
+            onCropChange(rect);
+          }
+        }
       }
     }, []);
     
