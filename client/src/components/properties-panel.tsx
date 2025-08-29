@@ -954,6 +954,59 @@ export default function PropertiesPanel({
                     <p>Create multiple copies of this logo in a grid layout</p>
                   </TooltipContent>
                 </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const logo = logos.find(l => l.id === currentElement.logoId);
+                          if (!logo) return;
+
+                          const svgResponse = await fetch(`/api/logos/${logo.id}/file`);
+                          const svgBlob = await svgResponse.blob();
+                          
+                          const formData = new FormData();
+                          formData.append('svg', svgBlob, 'vector.svg');
+                          
+                          const response = await fetch('/api/fix-vector-bounds', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          
+                          const result = await response.json();
+                          if (result.success) {
+                            toast({
+                              title: "Success",
+                              description: `Bounds fixed! ${Math.round(result.tightDimensions.width)}×${Math.round(result.tightDimensions.height)}mm`,
+                            });
+                          } else {
+                            toast({
+                              title: "Warning", 
+                              description: "Could not improve bounds",
+                              variant: "destructive"
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to fix bounds",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      <Maximize2 className="w-4 h-4 mr-2" />
+                      Fix Bounds
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Fix oversized vector bounds (crop: 461×402 → canvas: 525×530)</p>
+                  </TooltipContent>
+                </Tooltip>
                 
                 <p className="text-xs text-gray-500 mt-1">
                   Duplicate or replicate logos for multi-placement designs

@@ -3770,6 +3770,83 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Apply tight cropping to existing vectors
+  app.post('/api/fix-vector-bounds', upload.single('svg'), async (req, res) => {
+    console.log('🔧 Fixing vector bounds with tight cropping...');
+    
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No SVG file provided' });
+      }
+
+      // Read the SVG content
+      const svgContent = req.file.buffer.toString('utf8');
+      console.log(`🔧 Input SVG length: ${svgContent.length} characters`);
+
+      // Apply tight cropping
+      const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+      const analyzer = new SVGBoundsAnalyzer();
+      
+      // Write SVG to temp file for processing
+      const tempSvgPath = path.join(os.tmpdir(), `temp_vector_${Date.now()}.svg`);
+      fs.writeFileSync(tempSvgPath, svgContent);
+      
+      // Get precise bounds with minimal padding
+      const boundsResult = await analyzer.extractBounds(tempSvgPath, {
+        method: 'tight',
+        padding: 2, // 2px minimal padding instead of 5%
+        tolerance: 0.1
+      });
+      
+      if (boundsResult && boundsResult.bounds) {
+        // Create tight content SVG
+        const tightSvg = analyzer.createTightContentSvg(
+          svgContent,
+          boundsResult.bounds.left,
+          boundsResult.bounds.top,
+          boundsResult.bounds.width,
+          boundsResult.bounds.height
+        );
+        
+        const finalSvg = tightSvg.replace(
+          '<svg',
+          '<svg data-content-extracted="true"'
+        );
+        
+        console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
+        console.log(`🔧 Tight bounds: ${boundsResult.bounds.width}x${boundsResult.bounds.height}`);
+        
+        // Clean up temp file
+        fs.unlinkSync(tempSvgPath);
+        
+        return res.json({
+          success: true,
+          svg: finalSvg,
+          originalDimensions: { width: boundsResult.originalWidth, height: boundsResult.originalHeight },
+          tightDimensions: { width: boundsResult.bounds.width, height: boundsResult.bounds.height }
+        });
+      } else {
+        console.log('⚠️ Could not determine bounds for vector, keeping original');
+        // Clean up temp file
+        if (fs.existsSync(tempSvgPath)) {
+          fs.unlinkSync(tempSvgPath);
+        }
+        
+        return res.json({
+          success: false,
+          svg: svgContent,
+          error: 'Could not determine content bounds'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error fixing vector bounds:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fix vector bounds' 
+      });
+    }
+  });
+
   // Vectorization Service Routes
   app.post('/api/vectorization-requests', upload.single('file'), async (req, res) => {
     try {
