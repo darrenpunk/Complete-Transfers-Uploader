@@ -3632,14 +3632,19 @@ ${svgClose}`;
       // result = cleanAIVectorizedSVG(result);
       console.log('✅ Skipped aggressive AI-vectorized cleaning to preserve all colors and elements');
       
-      // Re-calculate dimension after cleaning and applying vector effects
-      const cleanedBounds = calculateSVGContentBounds(result);
-      if (cleanedBounds) {
-        console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
-        
-        // DISABLED: Content bounds cropping was cutting off parts of the logo
-        // Keep Vector.AI's original viewBox to preserve the complete logo
-        console.log(`✅ Preserving Vector.AI original viewBox to keep complete logo intact`);
+      // FIXED: Only recalculate bounds if crop dimensions weren't provided
+      if (!hasCropDimensions) {
+        // Re-calculate dimension after cleaning and applying vector effects
+        const cleanedBounds = calculateSVGContentBounds(result);
+        if (cleanedBounds) {
+          console.log(`✅ Cleaned vectorized bounds: ${cleanedBounds.width}×${cleanedBounds.height}`);
+          
+          // DISABLED: Content bounds cropping was cutting off parts of the logo
+          // Keep Vector.AI's original viewBox to preserve the complete logo
+          console.log(`✅ Preserving Vector.AI original viewBox to keep complete logo intact`);
+        }
+      } else {
+        console.log(`🎯 CROP DIMENSIONS FORCED: Skipping bounds recalculation to preserve user's crop selection ${cropWidth}×${cropHeight}px`);
       }
       
       // Log the raw SVG to check if dot exists
