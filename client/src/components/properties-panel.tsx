@@ -962,34 +962,34 @@ export default function PropertiesPanel({
                       size="sm"
                       onClick={async () => {
                         try {
-                          const logo = logos.find(l => l.id === currentElement.logoId);
-                          if (!logo) return;
-
-                          const svgResponse = await fetch(`/api/logos/${logo.id}/file`);
-                          const svgBlob = await svgResponse.blob();
-                          
-                          const formData = new FormData();
-                          formData.append('svg', svgBlob, 'vector.svg');
-                          
                           const response = await fetch('/api/fix-vector-bounds', {
                             method: 'POST',
-                            body: formData
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              elementId: currentElement.id
+                            })
                           });
                           
                           const result = await response.json();
                           if (result.success) {
+                            // Refresh canvas elements to show updated dimensions
+                            window.location.reload();
+                            
                             toast({
                               title: "Success",
-                              description: `Bounds fixed! ${Math.round(result.tightDimensions.width)}×${Math.round(result.tightDimensions.height)}mm`,
+                              description: result.message || `Bounds fixed! ${Math.round(result.tightDimensions.width)}×${Math.round(result.tightDimensions.height)}mm`,
                             });
                           } else {
                             toast({
                               title: "Warning", 
-                              description: "Could not improve bounds",
+                              description: result.error || "Could not improve bounds",
                               variant: "destructive"
                             });
                           }
                         } catch (error) {
+                          console.error('Fix bounds error:', error);
                           toast({
                             title: "Error",
                             description: "Failed to fix bounds",
