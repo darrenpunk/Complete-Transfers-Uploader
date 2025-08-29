@@ -620,14 +620,14 @@ export class SVGBoundsAnalyzer {
     
     console.log(`🎯 Filtering out vectorizer square canvas artifacts (original was 2400×1800 = 4:3 ratio)`);
     
-    // Remove paths that are too close to square (vectorizer artifacts)
+    // Remove only the largest canvas-spanning paths (vectorizer artifacts)
     const actualContentPaths = filteredPaths.filter(pathBounds => {
       const aspectRatio = pathBounds.width / pathBounds.height;
-      const isNearSquare = aspectRatio > 0.8 && aspectRatio < 1.25; // Nearly 1:1 ratio
-      const isLargePath = pathBounds.width > 400 || pathBounds.height > 400; // Large paths
+      const isVeryLarge = pathBounds.width > 900 || pathBounds.height > 900; // Very large paths only
+      const isVerySquare = aspectRatio > 0.95 && aspectRatio < 1.05; // Very close to 1:1 ratio
       
-      if (isNearSquare && isLargePath) {
-        console.log(`🚫 Removing square vectorizer path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (ratio: ${aspectRatio.toFixed(2)})`);
+      if (isVeryLarge && isVerySquare) {
+        console.log(`🚫 Removing large square vectorizer artifact: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (ratio: ${aspectRatio.toFixed(2)})`);
         return false;
       }
       return true;
