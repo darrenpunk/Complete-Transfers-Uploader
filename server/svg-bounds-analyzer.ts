@@ -654,7 +654,7 @@ export class SVGBoundsAnalyzer {
     const clusterCenterY = contentPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / contentPaths.length;
     
     // Step 2: Filter paths to only include those near the center (main content cluster)  
-    const centerDistanceThreshold = 200; // Only include paths within 200px of center
+    const centerDistanceThreshold = 80; // TIGHT clustering - only include paths within 80px of center
     const mainContentPaths = contentPaths.filter(bounds => {
       const pathCenterX = (bounds.xMin + bounds.xMax) / 2;
       const pathCenterY = (bounds.yMin + bounds.yMax) / 2;
@@ -664,7 +664,7 @@ export class SVGBoundsAnalyzer {
       return distanceFromCenter <= centerDistanceThreshold;
     });
     
-    console.log(`🎯 CLUSTERED CONTENT: Using ${mainContentPaths.length} paths near center (${clusterCenterX.toFixed(1)}, ${clusterCenterY.toFixed(1)}) out of ${contentPaths.length} total`);
+    console.log(`🎯 CLUSTERED CONTENT: Using ${mainContentPaths.length} paths within 80px of center (${clusterCenterX.toFixed(1)}, ${clusterCenterY.toFixed(1)}) out of ${contentPaths.length} total`);
     
     // Step 3: Calculate bounds from MAIN CLUSTER only (not scattered outliers)
     let minX = Infinity, minY = Infinity;
