@@ -2327,6 +2327,8 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
               }
               
+            } // End of if (!useCropDimensions) block
+              
             } catch (boundsError) {
               console.error('❌ Bounds extraction error:', boundsError);
               // Fallback to the original robust dimension system
@@ -2348,8 +2350,6 @@ export async function registerRoutes(app: express.Application) {
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
         }
-        
-        } // End of if (!useCropDimensions) block
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
