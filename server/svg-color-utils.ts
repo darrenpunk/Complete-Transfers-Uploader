@@ -1289,26 +1289,64 @@ export function applySVGColorChanges(svgPath: string, colorOverrides: Record<str
       
       let replacementCount = 0;
       
-      // Replace fill attributes (exact match)
+      // Replace fill attributes (exact match) - BUT preserve transparency
       const fillRegex = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
       const beforeReplace = svgContent;
-      svgContent = svgContent.replace(fillRegex, `fill="${newColor}"`);
-      if (svgContent !== beforeReplace) {
-        replacementCount++;
-        console.log('Replaced fill attribute');
+      
+      // CRITICAL FIX: Don't replace fill="none" or fill="transparent" - preserve transparency!
+      if (originalColor.toLowerCase() === 'none' || originalColor.toLowerCase() === 'transparent') {
+        console.log(`🚫 Preserving transparency: Not replacing fill="${originalColor}" (transparency must be maintained)`);
+      } else {
+        svgContent = svgContent.replace(fillRegex, (match) => {
+          // Double-check we're not accidentally replacing transparent elements
+          if (match.includes('fill="none"') || match.includes('fill="transparent"')) {
+            console.log(`🚫 Preserving transparency in matched element: ${match}`);
+            return match; // Keep original transparent fill
+          }
+          return `fill="${newColor}"`;
+        });
+        if (svgContent !== beforeReplace) {
+          replacementCount++;
+          console.log('Replaced fill attribute');
+        }
       }
       
-      // Replace stroke attributes (exact match)
-      const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-      svgContent = svgContent.replace(strokeRegex, `stroke="${newColor}"`);
+      // Replace stroke attributes (exact match) - BUT preserve transparency
+      if (originalColor.toLowerCase() !== 'none' && originalColor.toLowerCase() !== 'transparent') {
+        const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+        svgContent = svgContent.replace(strokeRegex, (match) => {
+          // Preserve transparent strokes
+          if (match.includes('stroke="none"') || match.includes('stroke="transparent"')) {
+            console.log(`🚫 Preserving transparent stroke: ${match}`);
+            return match;
+          }
+          return `stroke="${newColor}"`;
+        });
+      }
       
-      // Replace style-based fills (more careful regex)
-      const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleFillRegex, `$1${newColor}$2`);
-      
-      // Replace style-based strokes (more careful regex)
-      const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-      svgContent = svgContent.replace(styleStrokeRegex, `$1${newColor}$2`);
+      // Replace style-based fills (more careful regex) - BUT preserve transparency
+      if (originalColor.toLowerCase() !== 'none' && originalColor.toLowerCase() !== 'transparent') {
+        const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+        svgContent = svgContent.replace(styleFillRegex, (match, prefix, suffix) => {
+          // Preserve transparent fills in styles
+          if (match.includes('fill:none') || match.includes('fill:transparent')) {
+            console.log(`🚫 Preserving transparent fill in style: ${match}`);
+            return match;
+          }
+          return `${prefix}${newColor}${suffix}`;
+        });
+        
+        // Replace style-based strokes (more careful regex) - BUT preserve transparency
+        const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+        svgContent = svgContent.replace(styleStrokeRegex, (match, prefix, suffix) => {
+          // Preserve transparent strokes in styles
+          if (match.includes('stroke:none') || match.includes('stroke:transparent')) {
+            console.log(`🚫 Preserving transparent stroke in style: ${match}`);
+            return match;
+          }
+          return `${prefix}${newColor}${suffix}`;
+        });
+      }
       
       // Also try to replace any CSS color definitions
       const cssRegex = new RegExp(`(color\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
