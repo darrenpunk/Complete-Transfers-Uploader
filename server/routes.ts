@@ -2197,6 +2197,45 @@ export async function registerRoutes(app: express.Application) {
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
                   
+                  // CRITICAL CHECK: If SVG has crop marker, use crop dimensions instead of calculated bounds
+                  let useCropDimensions = false;
+                  if (svgContent.includes('data-crop-extracted="true"')) {
+                    console.log('🎯 CROP MARKER DETECTED: Using crop viewBox instead of bounds calculation');
+                    
+                    // Extract crop dimensions from viewBox
+                    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+                    if (viewBoxMatch) {
+                      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+                      if (viewBoxValues.length === 4) {
+                        const [x, y, width, height] = viewBoxValues;
+                        
+                        console.log(`✅ CROP BOUNDS EXTRACTED: ${width.toFixed(1)}×${height.toFixed(1)}px from viewBox`);
+                        console.log(`📐 FORCING CROP DIMENSIONS: Canvas will use exact crop rectangle, not calculated bounds`);
+                        
+                        // Convert crop dimensions to mm for canvas display
+                        const cropWidthMm = width * pxToMm;
+                        const cropHeightMm = height * pxToMm;
+                        
+                        // Set displayWidth/displayHeight directly to crop dimensions
+                        displayWidth = cropWidthMm;
+                        displayHeight = cropHeightMm;
+                        
+                        console.log(`🎯 CROP CANVAS DISPLAY: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (forced from crop viewBox)`);
+                        
+                        // Skip all bounds extraction and tight content creation since we have exact crop dimensions
+                        console.log(`✅ CROP DETECTED: Using exact crop dimensions, skipping bounds calculation`);
+                        useCropDimensions = true;
+                      } else {
+                        console.log('⚠️ CROP MARKER FOUND but invalid viewBox format, falling back to bounds calculation');
+                      }
+                    } else {
+                      console.log('⚠️ CROP MARKER FOUND but could not extract viewBox, falling back to bounds calculation');
+                    }
+                  }
+                  
+                  // Only do bounds calculation if crop dimensions weren't used
+                  if (!useCropDimensions) {
+                  
                   // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
                   // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
                   const { calculateSVGContentBounds } = await import('./dimension-utils');
@@ -2309,6 +2348,8 @@ export async function registerRoutes(app: express.Application) {
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
         }
+        
+        } // End of if (!useCropDimensions) block
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
