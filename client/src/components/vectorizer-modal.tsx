@@ -1441,33 +1441,87 @@ export function VectorizerModal({
               onCropChange(rect);
             }
           }
-        } else if (isResizing && cropArea) {
-          // Handle resizing
-          const resizedArea = getResizedCropArea();
-          console.log('🔧 RESIZING:', resizeHandle, resizedArea);
-          if (resizedArea) {
-            onCropChange(resizedArea);
+        } else if (isResizing && cropArea && startPos) {
+          // Handle resizing - calculate directly here for better debugging
+          const deltaX = pos.x - startPos.x;
+          const deltaY = pos.y - startPos.y;
+          
+          let newArea = { ...cropArea };
+          
+          switch (resizeHandle) {
+            case 'nw': // Top-left
+              newArea.x = cropArea.x + deltaX;
+              newArea.y = cropArea.y + deltaY;
+              newArea.width = cropArea.width - deltaX;
+              newArea.height = cropArea.height - deltaY;
+              break;
+            case 'ne': // Top-right
+              newArea.y = cropArea.y + deltaY;
+              newArea.width = cropArea.width + deltaX;
+              newArea.height = cropArea.height - deltaY;
+              break;
+            case 'sw': // Bottom-left
+              newArea.x = cropArea.x + deltaX;
+              newArea.width = cropArea.width - deltaX;
+              newArea.height = cropArea.height + deltaY;
+              break;
+            case 'se': // Bottom-right
+              newArea.width = cropArea.width + deltaX;
+              newArea.height = cropArea.height + deltaY;
+              break;
+            case 'n': // Top edge
+              newArea.y = cropArea.y + deltaY;
+              newArea.height = cropArea.height - deltaY;
+              break;
+            case 's': // Bottom edge
+              newArea.height = cropArea.height + deltaY;
+              break;
+            case 'w': // Left edge
+              newArea.x = cropArea.x + deltaX;
+              newArea.width = cropArea.width - deltaX;
+              break;
+            case 'e': // Right edge
+              newArea.width = cropArea.width + deltaX;
+              break;
           }
+          
+          // Ensure minimum size
+          if (newArea.width < 30) newArea.width = 30;
+          if (newArea.height < 30) newArea.height = 30;
+          
+          console.log('🔧 RESIZING:', resizeHandle, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
+          onCropChange(newArea);
         }
       };
 
       const handleMouseUp = (e: MouseEvent) => {
         if (isMouseDown) {
           console.log('🔴 MOUSE UP - Selection');
+          
+          // Capture final position at mouse up
+          const finalPos = getRelativePos(e);
+          setCurrentPos(finalPos);
+          
+          // Calculate final selection with the mouse up position
+          const finalRect = startPos ? {
+            x: Math.min(startPos.x, finalPos.x),
+            y: Math.min(startPos.y, finalPos.y),
+            width: Math.abs(finalPos.x - startPos.x),
+            height: Math.abs(finalPos.y - startPos.y)
+          } : null;
+          
           setIsMouseDown(false);
           
-          // Finalize the crop area - much lower threshold and minimum size enforcement
-          const rect = getSelectionRect();
-          if (rect) {
-            // Enforce minimum size of 50x50 for visibility
-            const finalRect = {
-              x: rect.x,
-              y: rect.y,
-              width: Math.max(rect.width, 50),
-              height: Math.max(rect.height, 50)
+          if (finalRect) {
+            // Only enforce minimum if selection is too small
+            const cropRect = {
+              x: finalRect.x,
+              y: finalRect.y,
+              width: Math.max(finalRect.width, 30),
+              height: Math.max(finalRect.height, 30)
             };
-            console.log('📌 SETTING CROP AREA:', finalRect);
-            onCropChange(finalRect);
+            console.log('📌 SETTING CROP AREA:', cropRect);
+            onCropChange(cropRect);
           }
         } else if (isResizing) {
           console.log('🔴 MOUSE UP - Resize');
