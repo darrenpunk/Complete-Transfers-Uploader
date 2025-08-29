@@ -1381,7 +1381,7 @@ export function VectorizerModal({
     }
   };
 
-  // Bulletproof Crop Interface Component  
+  // Bulletproof Crop Interface Component [FORCE REFRESH V3]
   const CropInterface = ({ imageUrl, onCropChange, cropArea }: {
     imageUrl: string;
     onCropChange: (area: {x: number, y: number, width: number, height: number} | null) => void;
@@ -1398,14 +1398,29 @@ export function VectorizerModal({
     // FORCE CLEAR ALL STATE ON COMPONENT MOUNT
     useEffect(() => {
       console.log('🔥🔥🔥 CROP INTERFACE MOUNTED - FORCING CLEAN STATE 🔥🔥🔥');
+      
+      // FIRST: Remove any existing global listeners that might be left over
+      document.removeEventListener('mousemove', handleMouseMove, true);
+      document.removeEventListener('mouseup', handleMouseUp, true);
+      document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
+      console.log('🧹 CLEANED UP ANY LINGERING GLOBAL LISTENERS');
+      
       setIsMouseDown(false);
       setStartPos(null);
       setCurrentPos(null);
       setIsResizing(false);
       setResizeHandle('');
       setValidMouseDownOccurred(false);
+      listenersRef.current = false;
       onCropChange(null); // Clear any existing crop area
       console.log('🔥🔥🔥 STATE CLEANUP COMPLETE 🔥🔥🔥');
+      
+      // Log current state for debugging
+      console.log('🔍 INITIAL STATE:', {
+        isMouseDown: false,
+        validMouseDownOccurred: false,
+        hasListeners: listenersRef.current
+      });
     }, []);
     
     // Debug state changes
@@ -1778,7 +1793,7 @@ export function VectorizerModal({
           height: Math.abs(pos.y - state.startPos.y)
         } : null;
         if (rect) {
-          console.log('✅ VALID USER SELECTION:', rect);
+          console.log('✅ VALID USER SELECTION [V2]:', rect);
           if (rect.width > 10 && rect.height > 10) {
             onCropChange(rect);
           }
