@@ -1902,64 +1902,6 @@ export function VectorizerModal({
           </div>
         )}
         
-        {/* Final crop area display - RESIZE DISABLED FOR DEBUGGING */}
-        {cropArea && !isMouseDown && (
-          <>
-            <div className="absolute inset-0 bg-black bg-opacity-60 pointer-events-none" style={{ zIndex: 900 }} />
-            <div
-              className="absolute bg-transparent border-4 border-blue-400"
-              style={{
-                left: cropArea.x,
-                top: cropArea.y,
-                width: cropArea.width,
-                height: cropArea.height,
-                zIndex: 950,
-              }}
-            >
-              <div className="absolute -top-8 left-0 bg-blue-600 text-white px-3 py-1 text-lg font-bold rounded">
-                READY: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
-              </div>
-              
-              {/* ALL RESIZE HANDLES DISABLED FOR DEBUGGING - SELECTION ONLY */}
-              {false && (
-                <div>Resize handles disabled</div>
-              )}
-              
-              {/* EDGE RESIZE HANDLES ALSO DISABLED */}
-            </div>
-          </>
-        )}
-        
-        {/* Instructions and Clear button */}
-        {!cropArea && !isMouseDown && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 800 }}>
-            <div className="bg-yellow-600 text-white px-6 py-3 rounded-xl text-xl font-bold shadow-xl">
-              🖱️ CLICK ANYWHERE TO CREATE CROP AREA
-            </div>
-          </div>
-        )}
-        
-        {/* Crop action buttons */}
-        {cropArea && !isMouseDown && !isResizing && (
-          <div className="absolute top-4 left-4 flex gap-2" style={{ zIndex: 1000 }}>
-            <button
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg"
-              onClick={() => {
-                console.log('🚀 APPLYING CROP - User confirmed');
-                applyCropAndVectorize();
-              }}
-              disabled={isProcessing}
-            >
-              {isProcessing ? '⏳ PROCESSING...' : '✅ APPLY CROP'}
-            </button>
-            <button
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg"
-              onClick={() => onCropChange(null)}
-            >
-              ❌ CLEAR CROP
-            </button>
-          </div>
-        )}
 
   return (
     <TooltipProvider>
