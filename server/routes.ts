@@ -3816,21 +3816,44 @@ export async function registerRoutes(app: express.Application) {
 
       const svgContent = fs.readFileSync(logoPath, 'utf8');
 
-      // Simple approach: Extract only visible elements and create tight bounds
-      // Remove any invisible elements or large padding rectangles
-      let cleanSvg = svgContent;
+      // Extract only elements with actual color/fill (visible content)
+      const visibleElements = [];
 
-      // Extract actual visible paths and shapes only
-      const pathMatches = cleanSvg.match(/<path[^>]*d="[^"]*"[^>]*>/g) || [];
-      const shapeMatches = cleanSvg.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
-      const textMatches = cleanSvg.match(/<text[^>]*>.*?<\/text>/gs) || [];
-
-      if (pathMatches.length === 0 && shapeMatches.length === 0 && textMatches.length === 0) {
-        return res.status(400).json({ error: 'No visible content found in SVG' });
+      // Extract paths with actual fill/stroke colors (not transparent or none)
+      const pathMatches = svgContent.match(/<path[^>]*>/g) || [];
+      for (const path of pathMatches) {
+        // Check if path has visible fill or stroke
+        const hasVisibleFill = path.includes('fill=') && !path.includes('fill="none"') && !path.includes('fill="transparent"');
+        const hasVisibleStroke = path.includes('stroke=') && !path.includes('stroke="none"') && !path.includes('stroke="transparent"');
+        
+        if (hasVisibleFill || hasVisibleStroke) {
+          visibleElements.push(path);
+        }
       }
 
-      // Create a minimal SVG with just the content
-      const allContent = [...pathMatches, ...shapeMatches, ...textMatches].join('\n    ');
+      // Extract other shapes with visible colors
+      const shapeMatches = svgContent.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
+      for (const shape of shapeMatches) {
+        const hasVisibleFill = shape.includes('fill=') && !shape.includes('fill="none"') && !shape.includes('fill="transparent"');
+        const hasVisibleStroke = shape.includes('stroke=') && !shape.includes('stroke="none"') && !shape.includes('stroke="transparent"');
+        
+        if (hasVisibleFill || hasVisibleStroke) {
+          visibleElements.push(shape);
+        }
+      }
+
+      // Extract text elements (usually visible by default)
+      const textMatches = svgContent.match(/<text[^>]*>.*?<\/text>/gs) || [];
+      visibleElements.push(...textMatches);
+
+      if (visibleElements.length === 0) {
+        return res.status(400).json({ error: 'No colored/visible content found in SVG' });
+      }
+
+      console.log(`🎨 Found ${visibleElements.length} visible colored elements`);
+      
+      // Create a minimal SVG with just the colored content
+      const allContent = visibleElements.join('\n    ');
       
       // Create clean SVG with minimal viewBox
       const minimalSvg = `<?xml version="1.0" encoding="UTF-8"?>
