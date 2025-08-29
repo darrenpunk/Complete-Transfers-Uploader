@@ -1282,11 +1282,16 @@ export function VectorizerModal({
       await processVectorizationWithFile(croppedFile);
       
     } catch (error) {
-      console.error('Crop failed:', error);
+      console.error('🚨 CROP FAILED:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('Crop area that failed:', cropArea);
+      console.error('Image file that failed:', imageFile);
+      
       setIsProcessing(false);
       toast({
         title: "Crop Failed",
-        description: "Failed to apply crop. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to apply crop. Please try again.",
         variant: "destructive"
       });
     }
@@ -1389,6 +1394,10 @@ export function VectorizerModal({
       const pos = getRelativePos(e);
       console.log('🔧 RESIZE START:', handle, pos);
       
+      // Clear any existing mouse state first
+      setIsMouseDown(false);
+      
+      // Set resize state
       setIsResizing(true);
       setResizeHandle(handle);
       setStartPos(pos);
@@ -1464,50 +1473,54 @@ export function VectorizerModal({
             }
           }
         } else if (isResizing && cropArea && startPos) {
-          // Handle resizing - calculate directly here for better debugging
-          const deltaX = pos.x - startPos.x;
-          const deltaY = pos.y - startPos.y;
+          // Handle resizing - get REAL current mouse position
+          const currentMousePos = getRelativePos(e);
+          const deltaX = currentMousePos.x - startPos.x;
+          const deltaY = currentMousePos.y - startPos.y;
           
-          let newArea = { ...cropArea };
+          // Store original crop area as reference
+          const originalArea = cropArea;
+          
+          let newArea = { ...originalArea };
           
           switch (resizeHandle) {
             case 'nw': // Top-left
-              newArea.x = Math.max(0, cropArea.x + deltaX);
-              newArea.y = Math.max(0, cropArea.y + deltaY);
-              newArea.width = Math.max(30, cropArea.width - deltaX);
-              newArea.height = Math.max(30, cropArea.height - deltaY);
+              newArea.x = Math.max(0, originalArea.x + deltaX);
+              newArea.y = Math.max(0, originalArea.y + deltaY);
+              newArea.width = Math.max(30, originalArea.width - deltaX);
+              newArea.height = Math.max(30, originalArea.height - deltaY);
               break;
             case 'ne': // Top-right
-              newArea.y = Math.max(0, cropArea.y + deltaY);
-              newArea.width = Math.max(30, cropArea.width + deltaX);
-              newArea.height = Math.max(30, cropArea.height - deltaY);
+              newArea.y = Math.max(0, originalArea.y + deltaY);
+              newArea.width = Math.max(30, originalArea.width + deltaX);
+              newArea.height = Math.max(30, originalArea.height - deltaY);
               break;
             case 'sw': // Bottom-left
-              newArea.x = Math.max(0, cropArea.x + deltaX);
-              newArea.width = Math.max(30, cropArea.width - deltaX);
-              newArea.height = Math.max(30, cropArea.height + deltaY);
+              newArea.x = Math.max(0, originalArea.x + deltaX);
+              newArea.width = Math.max(30, originalArea.width - deltaX);
+              newArea.height = Math.max(30, originalArea.height + deltaY);
               break;
             case 'se': // Bottom-right
-              newArea.width = Math.max(30, cropArea.width + deltaX);
-              newArea.height = Math.max(30, cropArea.height + deltaY);
+              newArea.width = Math.max(30, originalArea.width + deltaX);
+              newArea.height = Math.max(30, originalArea.height + deltaY);
               break;
             case 'n': // Top edge
-              newArea.y = Math.max(0, cropArea.y + deltaY);
-              newArea.height = Math.max(30, cropArea.height - deltaY);
+              newArea.y = Math.max(0, originalArea.y + deltaY);
+              newArea.height = Math.max(30, originalArea.height - deltaY);
               break;
             case 's': // Bottom edge
-              newArea.height = Math.max(30, cropArea.height + deltaY);
+              newArea.height = Math.max(30, originalArea.height + deltaY);
               break;
             case 'w': // Left edge
-              newArea.x = Math.max(0, cropArea.x + deltaX);
-              newArea.width = Math.max(30, cropArea.width - deltaX);
+              newArea.x = Math.max(0, originalArea.x + deltaX);
+              newArea.width = Math.max(30, originalArea.width - deltaX);
               break;
             case 'e': // Right edge
-              newArea.width = Math.max(30, cropArea.width + deltaX);
+              newArea.width = Math.max(30, originalArea.width + deltaX);
               break;
           }
           
-          console.log('🔧 RESIZING:', resizeHandle, 'Start:', startPos, 'Current:', pos, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
+          console.log('🔧 RESIZING:', resizeHandle, 'Mouse:', currentMousePos, 'Start:', startPos, 'Delta:', {deltaX, deltaY}, 'New:', newArea);
           onCropChange(newArea);
         }
       };
