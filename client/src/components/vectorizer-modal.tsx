@@ -1391,7 +1391,24 @@ export function VectorizerModal({
         let colors = data.detectedColors || [];
         if (colors.length === 0) {
           console.log('🎨 Server detected no colors, extracting from SVG...');
-          colors = extractColorsFromSVG(data.svg);
+          // Use the existing color extraction logic that's already in the component
+          const colorMap = new Map<string, number>();
+          const extractColorsFromText = (text: string) => {
+            const hexMatches = text.match(/#[0-9a-f]{6}/gi);
+            if (hexMatches) {
+              hexMatches.forEach(color => {
+                const normalizedColor = color.toLowerCase();
+                colorMap.set(normalizedColor, (colorMap.get(normalizedColor) || 0) + 1);
+              });
+            }
+          };
+          extractColorsFromText(data.svg);
+          
+          colors = Array.from(colorMap.entries()).map(([color, count]) => ({
+            color,
+            count,
+            isCMYK: false
+          }));
           console.log('🎨 Extracted colors from SVG:', colors);
         }
         
