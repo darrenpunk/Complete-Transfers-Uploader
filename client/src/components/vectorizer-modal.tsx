@@ -1322,129 +1322,127 @@ export function VectorizerModal({
     const containerRef = useRef<HTMLDivElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
 
-    const getRelativeCoordinates = (e: MouseEvent | React.MouseEvent) => {
+    const getImageCoordinates = (clientX: number, clientY: number) => {
       if (!imgRef.current) return { x: 0, y: 0 };
       
       const rect = imgRef.current.getBoundingClientRect();
-      const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const y = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+      const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const y = Math.max(0, Math.min(clientY - rect.top, rect.height));
       
       return { x, y };
     };
 
-    // Document-level mouse handlers for better drag support
-    const handleDocumentMouseMove = useCallback((e: MouseEvent) => {
-      if (!isDrawing || !startPoint || !imgRef.current) return;
+    const updateCropArea = useCallback((currentX: number, currentY: number) => {
+      if (!startPoint) return;
       
-      const coords = getRelativeCoordinates(e);
+      const x = Math.min(startPoint.x, currentX);
+      const y = Math.min(startPoint.y, currentY);
+      const width = Math.abs(currentX - startPoint.x);
+      const height = Math.abs(currentY - startPoint.y);
       
-      const x = Math.min(startPoint.x, coords.x);
-      const y = Math.min(startPoint.y, coords.y);
-      const width = Math.abs(coords.x - startPoint.x);
-      const height = Math.abs(coords.y - startPoint.y);
-      
-      // Update crop area during drag
-      if (width > 1 && height > 1) {
+      if (width > 10 && height > 10) {
         onCropChange({ x, y, width, height });
       }
-    }, [isDrawing, startPoint, onCropChange]);
+    }, [startPoint, onCropChange]);
 
-    const handleDocumentMouseUp = useCallback(() => {
-      console.log('Document mouse up, stopping draw');
-      setIsDrawing(false);
-      setStartPoint(null);
-    }, []);
-
-    // Set up document event listeners when dragging starts
-    useEffect(() => {
-      if (isDrawing) {
-        document.addEventListener('mousemove', handleDocumentMouseMove);
-        document.addEventListener('mouseup', handleDocumentMouseUp);
-        
-        return () => {
-          document.removeEventListener('mousemove', handleDocumentMouseMove);
-          document.removeEventListener('mouseup', handleDocumentMouseUp);
-        };
-      }
-    }, [isDrawing, handleDocumentMouseMove, handleDocumentMouseUp]);
-
+    // Mouse event handlers
     const handleMouseDown = (e: React.MouseEvent) => {
       e.preventDefault();
-      if (!imgRef.current) return;
+      e.stopPropagation();
       
-      const coords = getRelativeCoordinates(e);
-      console.log('Mouse down at:', coords);
+      const coords = getImageCoordinates(e.clientX, e.clientY);
+      console.log('Starting crop at:', coords);
       
       setStartPoint(coords);
       setIsDrawing(true);
-      onCropChange(null); // Clear existing crop
+      onCropChange(null);
     };
 
-    const getCropOverlayStyle = () => {
-      if (!cropArea || !imgRef.current) return {};
+    const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
+      if (!isDrawing || !startPoint) return;
       
-      const imgRect = imgRef.current.getBoundingClientRect();
-      const containerRect = containerRef.current?.getBoundingClientRect();
+      const coords = getImageCoordinates(e.clientX, e.clientY);
+      updateCropArea(coords.x, coords.y);
+    }, [isDrawing, startPoint, updateCropArea]);
+
+    const handleGlobalMouseUp = useCallback((e: MouseEvent) => {
+      if (!isDrawing) return;
       
-      if (!containerRect) return {};
-      
-      // Calculate the image's actual position within the container
-      const imgLeft = imgRect.left - containerRect.left;
-      const imgTop = imgRect.top - containerRect.top;
-      
-      return {
-        left: imgLeft + cropArea.x,
-        top: imgTop + cropArea.y,
-        width: cropArea.width,
-        height: cropArea.height,
-      };
-    };
+      console.log('Finishing crop');
+      setIsDrawing(false);
+      setStartPoint(null);
+    }, [isDrawing]);
+
+    // Global event listeners for better drag handling
+    useEffect(() => {
+      if (isDrawing) {
+        document.addEventListener('mousemove', handleGlobalMouseMove, { capture: true });
+        document.addEventListener('mouseup', handleGlobalMouseUp, { capture: true });
+        
+        return () => {
+          document.removeEventListener('mousemove', handleGlobalMouseMove, { capture: true });
+          document.removeEventListener('mouseup', handleGlobalMouseUp, { capture: true });
+        };
+      }
+    }, [isDrawing, handleGlobalMouseMove, handleGlobalMouseUp]);
 
     return (
       <div 
         ref={containerRef}
         className="relative w-full h-full flex items-center justify-center select-none"
-        style={{ cursor: isDrawing ? 'crosshair' : 'crosshair' }}
+        style={{ cursor: 'crosshair' }}
       >
         <img
           ref={imgRef}
           src={imageUrl}
           alt="Crop preview"
-          className="max-w-full max-h-full object-contain crop-interface pointer-events-none"
+          className="max-w-full max-h-full object-contain crop-interface"
           draggable={false}
-        />
-        
-        {/* Invisible overlay for mouse events */}
-        <div 
-          className="absolute inset-0"
           onMouseDown={handleMouseDown}
         />
         
-        {cropArea && (
+        {cropArea && imgRef.current && (
           <>
-            {/* Dark overlay covering entire container */}
-            <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none" />
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-40 pointer-events-none" />
             
-            {/* Crop selection */}
+            {/* Crop selection - positioned relative to the image */}
             <div
-              className="absolute border-2 border-blue-500 bg-transparent pointer-events-none"
-              style={getCropOverlayStyle()}
+              className="absolute border-2 border-blue-400 bg-transparent pointer-events-none"
+              style={{
+                left: `${imgRef.current.offsetLeft + cropArea.x}px`,
+                top: `${imgRef.current.offsetTop + cropArea.y}px`,
+                width: `${cropArea.width}px`,
+                height: `${cropArea.height}px`,
+              }}
             >
-              <div className="absolute inset-0 bg-white bg-opacity-10" />
+              <div className="absolute inset-0 bg-blue-200 bg-opacity-20" />
+              
+              {/* Corner indicators */}
+              <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 border border-white" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 border border-white" />
+              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 border border-white" />
+              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 border border-white" />
             </div>
             
-            {/* Crop info */}
-            <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs pointer-events-none z-10">
+            {/* Crop dimensions */}
+            <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-mono z-10">
               {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
             </div>
           </>
         )}
         
-        {!cropArea && !isDrawing && (
+        {!cropArea && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
               Click and drag to select crop area
             </div>
+          </div>
+        )}
+        
+        {isDrawing && (
+          <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded text-xs z-10">
+            Selecting...
           </div>
         )}
       </div>
