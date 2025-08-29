@@ -3747,7 +3747,9 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Filter SVG to only include elements with actual colors AND recalculate tight bounds
-      console.log('🎨 Filtering SVG to only include colored/white content and recalculating bounds...');
+      console.log('🎨 VECTORIZATION FILTERING: Starting colored content filtering and bounds recalculation...');
+      console.log(`📊 INPUT SVG length: ${finalSvg.length} characters`);
+      console.log(`📊 INPUT SVG preview (first 300 chars): ${finalSvg.substring(0, 300)}`);
       
       let colorFilteredSvg = finalSvg;
       
@@ -3778,10 +3780,12 @@ export async function registerRoutes(app: express.Application) {
         }
         
         // Extract text elements (usually visible by default)
-        const textMatches = colorFilteredSvg.match(/<text[^>]*>.*?<\/text>/gs) || [];
+        const textMatches = colorFilteredSvg.match(/<text[^>]*>.*?<\/text>/g) || [];
         visibleElements.push(...textMatches);
         
-        console.log(`🎨 Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
+        console.log(`🎨 ELEMENT ANALYSIS: Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
+        console.log(`🔍 Breakdown: ${pathMatches.length} paths, ${shapeMatches.length} shapes, ${textMatches.length} text elements`);
+        console.log(`📋 First 3 visible elements: ${visibleElements.slice(0, 3).map(el => el.substring(0, 100))}`);
         
         if (visibleElements.length > 0) {
           // Create clean SVG with only colored content
@@ -3797,7 +3801,9 @@ export async function registerRoutes(app: express.Application) {
           const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
           const analyzer = new SVGBoundsAnalyzer();
           
+          console.log(`🧮 BOUNDS CALCULATION: Analyzing temp SVG (${tempSvg.length} chars)`);
           const boundsResult = await analyzer.analyzeSVGContent(tempSvg);
+          console.log(`📐 BOUNDS RESULT: ${JSON.stringify(boundsResult)}`);
           
           if (boundsResult.success && boundsResult.contentBounds) {
             const bounds = boundsResult.contentBounds;
@@ -3833,6 +3839,7 @@ ${svgAttributes}
               
               console.log(`✅ Created tight-bounds SVG: ${colorFilteredSvg.length} characters (was ${finalSvg.length})`);
               console.log(`🎯 NEW VIEWBOX: "${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+              console.log(`📋 FINAL SVG preview (first 400 chars): ${colorFilteredSvg.substring(0, 400)}`);
             }
           } else {
             console.log('⚠️ Could not calculate tight bounds, using filtered content with original bounds');
