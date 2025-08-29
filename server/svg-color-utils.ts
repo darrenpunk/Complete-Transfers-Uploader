@@ -1433,7 +1433,13 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
     // Check if element has stroke but no fill (or fill="none")
     const hasStroke = match.includes('stroke=') || (match.includes('style=') && match.includes('stroke:'));
-    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    
+    // CRITICAL FIX: Distinguish between "no fill" and "intentionally transparent" 
+    const hasVisibleFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    const hasTransparentFill = match.includes('fill="none"') || match.includes('fill="transparent"');
+    
+    // An element has SOME form of fill if it has visible fill OR intentional transparency
+    const hasFill = hasVisibleFill || hasTransparentFill;
     
     // Additional check for elements with no fill attribute at all
     if (!match.includes('fill=')) {
@@ -1451,7 +1457,14 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     
     // Log element details for debugging narrow elements
     if ((tag === 'rect' || tag === 'path') && !hasFill) {
-      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 200)}`);
+      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, hasTransparentFill=${hasTransparentFill}, attrs=${attrs.substring(0, 200)}`);
+    }
+    
+    // PRESERVE transparent elements - they are intentional transparency, not background elements to remove
+    if (hasTransparentFill) {
+      console.log(`🚫 PRESERVING TRANSPARENT ELEMENT: ${tag} with fill="none" - intentional transparency`);
+      preservedCount++;
+      return match; // Keep the transparent element exactly as is
     }
     
     // Try to detect if this is a small element (like a dot)
@@ -1561,8 +1574,16 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   // Step 4: Check for any very small filled elements that might have been missed
   // Sometimes dots (like in the letter i) are created as tiny filled paths
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse)([^>]*)>/gi, (match, tag, attrs) => {
-    // Check if this has a fill
-    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    // Check if this has a fill - PRESERVE transparent elements
+    const hasVisibleFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
+    const hasTransparentFill = match.includes('fill="none"') || match.includes('fill="transparent"');
+    const hasFill = hasVisibleFill || hasTransparentFill;
+    
+    // PRESERVE transparent elements - they are intentional transparency  
+    if (hasTransparentFill) {
+      console.log(`🚫 PRESERVING TRANSPARENT ELEMENT (step 4): ${tag} with fill="none"`);
+      return match; // Keep transparent element as is
+    }
     
     if (hasFill && tag === 'path') {
       // Check if this is a tiny path (potential dot)
