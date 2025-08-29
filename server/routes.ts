@@ -3852,16 +3852,53 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`🎨 Found ${visibleElements.length} visible colored elements`);
       
-      // Create a minimal SVG with just the colored content
+      // Simple approach: extract path coordinates to find content bounds
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      // Parse coordinates from path data
+      for (const element of visibleElements) {
+        // Extract numbers from path d attribute and other coordinate attributes
+        const coords = element.match(/[-+]?(?:\d+\.?\d*|\.\d+)/g);
+        if (coords) {
+          for (let i = 0; i < coords.length; i += 2) {
+            const x = parseFloat(coords[i]);
+            const y = parseFloat(coords[i + 1]);
+            if (!isNaN(x) && !isNaN(y)) {
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x);
+              maxY = Math.max(maxY, y);
+            }
+          }
+        }
+      }
+      
+      // If we couldn't find bounds, use a default small size
+      if (minX === Infinity) {
+        minX = 0; minY = 0; maxX = 100; maxY = 100;
+      }
+      
+      // Add small padding around content
+      const padding = 5;
+      minX -= padding;
+      minY -= padding;
+      maxX += padding;
+      maxY += padding;
+      
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+      
+      console.log(`📐 Tight content bounds: ${minX.toFixed(1)},${minY.toFixed(1)} to ${maxX.toFixed(1)},${maxY.toFixed(1)} (${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)})`);
+      
+      // Create a clean SVG with tight bounds around just the colored content
       const allContent = visibleElements.join('\n    ');
       
-      // Create clean SVG with minimal viewBox
       const minimalSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" 
      xmlns:xlink="http://www.w3.org/1999/xlink"
-     viewBox="0 0 200 200" 
-     width="200" 
-     height="200">
+     viewBox="${minX} ${minY} ${contentWidth} ${contentHeight}" 
+     width="${contentWidth}" 
+     height="${contentHeight}">
     ${allContent}
 </svg>`;
 
