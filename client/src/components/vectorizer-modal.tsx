@@ -1625,9 +1625,7 @@ export function VectorizerModal({
             console.log('📌 SETTING CROP AREA:', cropRect);
             onCropChange(cropRect);
             
-            // Auto-vectorize after crop is confirmed
-            console.log('🎆 AUTO-VECTORIZING CROPPED AREA');
-            setTimeout(() => handleCropAndVectorize(cropRect), 500); // Small delay to let UI update
+            // Auto-vectorization will be triggered by useEffect watching cropArea changes
           }
         } else if (state.isResizing) {
           console.log('🔴 MOUSE UP - Resize - Final crop area updated');
@@ -1638,6 +1636,121 @@ export function VectorizerModal({
       };
 
       // This useEffect is only for cleanup on unmount
+    }, []);
+
+    // Define stable event handlers with useCallback
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+      const pos = getRelativePos(e);
+      const state = currentStateRef.current;
+      setCurrentPos(pos);
+      
+      if (state.isMouseDown && !state.isResizing) {
+        // Regular selection dragging using ref state
+        const rect = state.startPos ? {
+          x: Math.min(state.startPos.x, pos.x),
+          y: Math.min(state.startPos.y, pos.y),
+          width: Math.abs(pos.x - state.startPos.x),
+          height: Math.abs(pos.y - state.startPos.y)
+        } : null;
+        if (rect) {
+          console.log('🔄 MOVING:', rect);
+          if (rect.width > 10 && rect.height > 10) {
+            onCropChange(rect);
+          }
+        }
+      } else if (state.isResizing && state.originalCropArea && state.resizeStartPos) {
+        // Handle resizing - get REAL current mouse position
+        const currentMousePos = getRelativePos(e);
+        const deltaX = currentMousePos.x - state.resizeStartPos.x;
+        const deltaY = currentMousePos.y - state.resizeStartPos.y;
+        
+        let newArea = { ...state.originalCropArea };
+        
+        switch (state.resizeHandle) {
+          case 'nw': // Top-left
+            newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+            newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+            newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
+            newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
+            break;
+          case 'ne': // Top-right
+            newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+            newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
+            newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
+            break;
+          case 'sw': // Bottom-left
+            newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+            newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
+            newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
+            break;
+          case 'se': // Bottom-right
+            newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
+            newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
+            break;
+          case 'n': // Top edge
+            newArea.y = Math.max(0, state.originalCropArea.y + deltaY);
+            newArea.height = Math.max(30, state.originalCropArea.height - deltaY);
+            break;
+          case 's': // Bottom edge
+            newArea.height = Math.max(30, state.originalCropArea.height + deltaY);
+            break;
+          case 'w': // Left edge
+            newArea.x = Math.max(0, state.originalCropArea.x + deltaX);
+            newArea.width = Math.max(30, state.originalCropArea.width - deltaX);
+            break;
+          case 'e': // Right edge
+            newArea.width = Math.max(30, state.originalCropArea.width + deltaX);
+            break;
+        }
+        
+        console.log('🔧 RESIZING:', state.resizeHandle, 'Delta:', {deltaX, deltaY}, 'New Area:', newArea);
+        onCropChange(newArea);
+      }
+    }, []);
+    
+    const handleMouseUp = useCallback((e: MouseEvent) => {
+      const state = currentStateRef.current;
+      console.log('🚨 MOUSE UP EVENT TRIGGERED', { 
+        isMouseDown: state.isMouseDown, 
+        isResizing: state.isResizing, 
+        startPos: !!state.startPos, 
+        target: e.target 
+      });
+      
+      if (state.isMouseDown) {
+        console.log('🔴 MOUSE UP - Selection');
+        
+        // Capture final position at mouse up
+        const finalPos = getRelativePos(e);
+        setCurrentPos(finalPos);
+        
+        // Calculate final selection with the mouse up position
+        const finalRect = state.startPos ? {
+          x: Math.min(state.startPos.x, finalPos.x),
+          y: Math.min(state.startPos.y, finalPos.y),
+          width: Math.abs(finalPos.x - state.startPos.x),
+          height: Math.abs(finalPos.y - state.startPos.y)
+        } : null;
+        
+        console.log('🎯 FINAL RECT:', finalRect);
+        setIsMouseDown(false);
+        
+        if (finalRect && finalRect.width > 30 && finalRect.height > 30) {
+          // Only enforce minimum if selection is too small
+          const cropRect = {
+            x: finalRect.x,
+            y: finalRect.y,
+            width: Math.max(finalRect.width, 30),
+            height: Math.max(finalRect.height, 30)
+          };
+          console.log('📌 SETTING CROP AREA:', cropRect);
+          onCropChange(cropRect);
+        }
+      } else if (state.isResizing) {
+        console.log('🔴 MOUSE UP - Resize completed');
+        setIsResizing(false);
+        setResizeHandle('');
+      }
     }, []);
 
     // Global event listeners management
