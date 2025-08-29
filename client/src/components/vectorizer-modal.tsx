@@ -1393,6 +1393,21 @@ export function VectorizerModal({
     // State for initial selection drawing
     const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
     const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
+    
+    // Debug state changes
+    useEffect(() => {
+      if (startPos) {
+        console.log('🚨 STARTPOS SET TO:', startPos);
+        console.trace('STARTPOS SET FROM:');
+      }
+    }, [startPos]);
+    
+    useEffect(() => {
+      if (isMouseDown) {
+        console.log('🚨 ISMOUSEDOWN SET TO TRUE');
+        console.trace('ISMOUSEDOWN SET FROM:');
+      }
+    }, [isMouseDown]);
     // State for resize operations 
     const [resizeStartPos, setResizeStartPos] = useState<{x: number, y: number} | null>(null);
     const [originalCropArea, setOriginalCropArea] = useState<CropArea | null>(null);
