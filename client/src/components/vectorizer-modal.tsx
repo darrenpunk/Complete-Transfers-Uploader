@@ -593,7 +593,7 @@ export function VectorizerModal({
   };
 
   // Function to remove specific color from SVG
-  const removeColorFromSvg = (svg: string, colorToRemove: string): string => {
+  const removeColorFromSvg = (svg: string, colorToRemove: string, stackingMode: 'cut_out' | 'stack' = 'cut_out'): string => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     
@@ -628,7 +628,7 @@ export function VectorizerModal({
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
         
         // CRITICAL FIX: Use Shape Stacking setting to control deletion behavior
-        if (shapeStacking === 'cut_out') {
+        if (stackingMode === 'cut_out') {
           // Cut-out mode: Make elements transparent instead of removing them
           el.setAttribute('fill', 'none');
           console.log('Set fill="none" for transparent cut-out (Shape Stacking: cut_out)');
@@ -987,7 +987,7 @@ export function VectorizerModal({
     
     // Remove each unwanted color from the SVG
     colorsToRemove.forEach(colorToRemove => {
-      modifiedSvg = removeColorFromSvg(modifiedSvg, colorToRemove);
+      modifiedSvg = removeColorFromSvg(modifiedSvg, colorToRemove, shapeStacking);
     });
     
     // Update the SVG and detected colors
@@ -2128,7 +2128,7 @@ export function VectorizerModal({
                                 updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
                               } else {
                                 // Use normal color removal for non-white colors
-                                updatedSvg = removeColorFromSvg(currentSvg, colorItem.color);
+                                updatedSvg = removeColorFromSvg(currentSvg, colorItem.color, shapeStacking);
                               }
                               setColoredSvg(updatedSvg);
                               
@@ -2495,7 +2495,7 @@ export function VectorizerModal({
                             
                             // Remove each unlocked color
                             unlockedColors.forEach(color => {
-                              updatedSvg = removeColorFromSvg(updatedSvg, color);
+                              updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
                               setDeletedColors(prev => new Set([...prev, color.toLowerCase()]));
                               totalRemoved++;
                             });
