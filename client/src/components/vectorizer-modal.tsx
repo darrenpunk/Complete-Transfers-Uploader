@@ -1206,7 +1206,13 @@ export function VectorizerModal({
       
       // Calculate scale factor between displayed image and actual image  
       const displayedImg = document.querySelector('img.crop-interface') as HTMLImageElement;
-      if (!displayedImg) throw new Error('Could not find displayed image');
+      if (!displayedImg) {
+        console.error('🚨 Could not find img.crop-interface, available images:', document.querySelectorAll('img'));
+        console.error('Available images with src containing blob:', Array.from(document.querySelectorAll('img')).filter(img => img.src.includes('blob')));
+        throw new Error('Could not find displayed image');
+      }
+      
+      console.log('✅ Found displayed image:', displayedImg, 'Size:', displayedImg.clientWidth, 'x', displayedImg.clientHeight);
       
       const scaleX = tempImg.naturalWidth / displayedImg.clientWidth;
       const scaleY = tempImg.naturalHeight / displayedImg.clientHeight;
@@ -1391,12 +1397,13 @@ export function VectorizerModal({
     };
 
     // Handle resize start
-    const handleResizeStart = (e: React.MouseEvent, handle: string) => {
+    const handleResizeStart = useCallback((e: React.MouseEvent, handle: string) => {
       e.preventDefault();
       e.stopPropagation();
       
       const pos = getRelativePos(e);
       console.log('🔧 RESIZE START:', handle, pos);
+      console.log('🚀 SETTING isResizing to TRUE for handle:', handle);
       
       // Clear any existing mouse state first
       setIsMouseDown(false);
@@ -1408,7 +1415,7 @@ export function VectorizerModal({
       // Set resize state
       setIsResizing(true);
       setResizeHandle(handle);
-    };
+    }, [cropArea]);
 
     // Calculate resized crop area
     const getResizedCropArea = () => {
@@ -1602,7 +1609,7 @@ export function VectorizerModal({
         <img
           src={imageUrl}
           alt="Crop preview"
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+          className="crop-interface absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
           draggable={false}
           style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
         />
