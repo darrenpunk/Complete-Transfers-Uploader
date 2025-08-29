@@ -614,53 +614,55 @@ export class SVGBoundsAnalyzer {
     const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
-    // Step 3: AGGRESSIVE content density detection
-    // For 2400x1800 original with centered monster, actual content should be much smaller
-    // Look for the core cluster of content, not the spread-out vectorizer padding
+    // Step 3: INTELLIGENT CONTENT CLUSTER DETECTION
+    // Original is 2400x1800, vectorizer makes 1281x1281 square
+    // Need to find the actual logo content within that square, not the entire square
     
-    // First pass: Only exclude extremely large canvas-spanning paths, keep logo content
-    const coreContentPaths = filteredPaths.filter(pathBounds => {
-      const isExtremelyLarge = pathBounds.width > 1000 || pathBounds.height > 1000; // Much more permissive
-      const isCanvasSpanning = pathBounds.area > medianArea * 1.5; // Less aggressive
+    console.log(`📊 Analyzing ${filteredPaths.length} paths for content clustering...`);
+    
+    // Find content density clusters by looking at path distribution
+    const pathCenters = filteredPaths.map(p => ({
+      x: (p.xMin + p.xMax) / 2,
+      y: (p.yMin + p.yMax) / 2,
+      path: p
+    }));
+    
+    // Group paths by proximity to find dense content areas
+    const clusters = [];
+    const used = new Set();
+    
+    for (let i = 0; i < pathCenters.length; i++) {
+      if (used.has(i)) continue;
       
-      if (isExtremelyLarge && isCanvasSpanning) {
-        console.log(`🚫 Excluding extremely large path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (area: ${pathBounds.area.toFixed(0)})`);
-        return false;
-      }
-      return true;
-    });
-    
-    console.log(`🎯 Core content paths: ${coreContentPaths.length} out of ${filteredPaths.length} filtered paths`);
-    
-    // Step 4: Find the densest cluster of these core paths  
-    let contentPaths;
-    if (coreContentPaths.length > 0) {
-      const coreCenter = {
-        x: coreContentPaths.reduce((sum, p) => sum + (p.xMin + p.xMax) / 2, 0) / coreContentPaths.length,
-        y: coreContentPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / coreContentPaths.length
-      };
-      console.log(`📍 Core content center: (${coreCenter.x.toFixed(1)}, ${coreCenter.y.toFixed(1)})`);
+      const cluster = [pathCenters[i]];
+      used.add(i);
       
-      // Keep only paths within reasonable radius of core content center  
-      const maxCoreDistance = Math.max(500, Math.sqrt(medianArea) * 1.2); // Much more generous  
-      contentPaths = coreContentPaths.filter(pathBounds => {
-        const pathCenterX = (pathBounds.xMin + pathBounds.xMax) / 2;
-        const pathCenterY = (pathBounds.yMin + pathBounds.yMax) / 2;
-        const distance = Math.sqrt(Math.pow(pathCenterX - coreCenter.x, 2) + Math.pow(pathCenterY - coreCenter.y, 2));
+      // Find all paths within reasonable distance of this one
+      for (let j = 0; j < pathCenters.length; j++) {
+        if (used.has(j)) continue;
         
-        if (distance > maxCoreDistance) {
-          console.log(`🚫 Excluding distant from core: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (${distance.toFixed(0)}px from core)`);
-          return false;
+        const distance = Math.sqrt(
+          Math.pow(pathCenters[i].x - pathCenters[j].x, 2) + 
+          Math.pow(pathCenters[i].y - pathCenters[j].y, 2)
+        );
+        
+        if (distance < 400) { // Content should be grouped together
+          cluster.push(pathCenters[j]);
+          used.add(j);
         }
-        return true;
-      });
+      }
       
-      console.log(`🎯 Final tight content paths: ${contentPaths.length}`);
-    } else {
-      // Fallback to original approach
-      contentPaths = filteredPaths;
-      console.log(`⚠️ No core content found, using all filtered paths: ${contentPaths.length}`);
+      clusters.push(cluster);
     }
+    
+    // Find the largest/densest cluster (should be the actual logo)
+    const mainCluster = clusters.reduce((largest, current) => 
+      current.length > largest.length ? current : largest, clusters[0] || []);
+    
+    console.log(`🎯 Found ${clusters.length} clusters, main cluster has ${mainCluster.length} paths`);
+    
+    const contentPaths = mainCluster.map(item => item.path);
+    console.log(`🎯 Using ${contentPaths.length} clustered content paths`)
 
     if (contentPaths.length === 0) {
       console.log('⚠️ All paths filtered out, using smallest 80% of paths');
