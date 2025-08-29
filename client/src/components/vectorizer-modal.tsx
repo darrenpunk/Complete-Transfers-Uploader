@@ -1318,6 +1318,8 @@ export function VectorizerModal({
     cropArea: {x: number, y: number, width: number, height: number} | null;
   }) => {
     const [isMouseDown, setIsMouseDown] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
+    const [resizeHandle, setResizeHandle] = useState<string>('');
     const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
     const [currentPos, setCurrentPos] = useState<{x: number, y: number} | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -1357,31 +1359,116 @@ export function VectorizerModal({
       onCropChange(null);
     };
 
+    // Handle resize start
+    const handleResizeStart = (e: React.MouseEvent, handle: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const pos = getRelativePos(e);
+      console.log('🔧 RESIZE START:', handle, pos);
+      
+      setIsResizing(true);
+      setResizeHandle(handle);
+      setStartPos(pos);
+      setCurrentPos(pos);
+    };
+
+    // Calculate resized crop area
+    const getResizedCropArea = () => {
+      if (!cropArea || !startPos || !currentPos || !isResizing) return cropArea;
+      
+      const deltaX = currentPos.x - startPos.x;
+      const deltaY = currentPos.y - startPos.y;
+      
+      let newArea = { ...cropArea };
+      
+      switch (resizeHandle) {
+        case 'nw': // Top-left
+          newArea.x = cropArea.x + deltaX;
+          newArea.y = cropArea.y + deltaY;
+          newArea.width = cropArea.width - deltaX;
+          newArea.height = cropArea.height - deltaY;
+          break;
+        case 'ne': // Top-right
+          newArea.y = cropArea.y + deltaY;
+          newArea.width = cropArea.width + deltaX;
+          newArea.height = cropArea.height - deltaY;
+          break;
+        case 'sw': // Bottom-left
+          newArea.x = cropArea.x + deltaX;
+          newArea.width = cropArea.width - deltaX;
+          newArea.height = cropArea.height + deltaY;
+          break;
+        case 'se': // Bottom-right
+          newArea.width = cropArea.width + deltaX;
+          newArea.height = cropArea.height + deltaY;
+          break;
+        case 'n': // Top edge
+          newArea.y = cropArea.y + deltaY;
+          newArea.height = cropArea.height - deltaY;
+          break;
+        case 's': // Bottom edge
+          newArea.height = cropArea.height + deltaY;
+          break;
+        case 'w': // Left edge
+          newArea.x = cropArea.x + deltaX;
+          newArea.width = cropArea.width - deltaX;
+          break;
+        case 'e': // Right edge
+          newArea.width = cropArea.width + deltaX;
+          break;
+      }
+      
+      // Ensure minimum size
+      if (newArea.width < 20) newArea.width = 20;
+      if (newArea.height < 20) newArea.height = 20;
+      
+      return newArea;
+    };
+
     // Global mouse move handler
     useEffect(() => {
       const handleMouseMove = (e: MouseEvent) => {
-        if (!isMouseDown || !startPos) return;
-        
         const pos = getRelativePos(e);
         setCurrentPos(pos);
         
-        const rect = getSelectionRect();
-        if (rect) {
-          console.log('🔄 MOVING:', rect);
-          if (rect.width > 10 && rect.height > 10) {
-            onCropChange(rect);
+        if (isMouseDown && !isResizing) {
+          // Regular selection dragging
+          const rect = getSelectionRect();
+          if (rect) {
+            console.log('🔄 MOVING:', rect);
+            if (rect.width > 10 && rect.height > 10) {
+              onCropChange(rect);
+            }
+          }
+        } else if (isResizing && cropArea) {
+          // Handle resizing
+          const resizedArea = getResizedCropArea();
+          console.log('🔧 RESIZING:', resizeHandle, resizedArea);
+          if (resizedArea) {
+            onCropChange(resizedArea);
           }
         }
       };
 
       const handleMouseUp = (e: MouseEvent) => {
         if (isMouseDown) {
-          console.log('🔴 MOUSE UP - Global');
+          console.log('🔴 MOUSE UP - Selection');
           setIsMouseDown(false);
+          
+          // Finalize the crop area
+          const rect = getSelectionRect();
+          if (rect && rect.width > 10 && rect.height > 10) {
+            onCropChange(rect);
+          }
+        } else if (isResizing) {
+          console.log('🔴 MOUSE UP - Resize');
+          setIsResizing(false);
+          setResizeHandle('');
         }
       };
 
-      if (isMouseDown) {
+      if (isMouseDown || isResizing) {
         // Use capture phase to ensure we get all events
         document.addEventListener('mousemove', handleMouseMove, true);
         document.addEventListener('mouseup', handleMouseUp, true);
@@ -1393,7 +1480,7 @@ export function VectorizerModal({
           document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
         };
       }
-    }, [isMouseDown, startPos, onCropChange]);
+    }, [isMouseDown, isResizing, startPos, cropArea, resizeHandle, onCropChange]);
 
     const selectionRect = getSelectionRect();
 
@@ -1430,12 +1517,12 @@ export function VectorizerModal({
           </div>
         )}
         
-        {/* Final crop area display */}
+        {/* Final crop area display with resize handles */}
         {cropArea && !isMouseDown && (
           <>
             <div className="absolute inset-0 bg-black bg-opacity-60 pointer-events-none" style={{ zIndex: 900 }} />
             <div
-              className="absolute bg-transparent border-4 border-blue-400 pointer-events-none"
+              className="absolute bg-transparent border-4 border-blue-400"
               style={{
                 left: cropArea.x,
                 top: cropArea.y,
@@ -1447,6 +1534,50 @@ export function VectorizerModal({
               <div className="absolute -top-8 left-0 bg-blue-600 text-white px-3 py-1 text-lg font-bold rounded">
                 READY: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}
               </div>
+              
+              {/* Corner resize handles */}
+              <div 
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-nw-resize hover:bg-blue-800 -top-2 -left-2"
+                onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                title="Resize from top-left corner"
+              />
+              <div 
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-ne-resize hover:bg-blue-800 -top-2 -right-2"
+                onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                title="Resize from top-right corner"
+              />
+              <div 
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-sw-resize hover:bg-blue-800 -bottom-2 -left-2"
+                onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                title="Resize from bottom-left corner"
+              />
+              <div 
+                className="absolute w-4 h-4 bg-blue-600 border-2 border-white cursor-se-resize hover:bg-blue-800 -bottom-2 -right-2"
+                onMouseDown={(e) => handleResizeStart(e, 'se')}
+                title="Resize from bottom-right corner"
+              />
+              
+              {/* Edge resize handles */}
+              <div 
+                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-n-resize hover:bg-blue-800 -top-1 left-1/2 transform -translate-x-1/2"
+                onMouseDown={(e) => handleResizeStart(e, 'n')}
+                title="Resize from top edge"
+              />
+              <div 
+                className="absolute w-6 h-2 bg-blue-600 border border-white cursor-s-resize hover:bg-blue-800 -bottom-1 left-1/2 transform -translate-x-1/2"
+                onMouseDown={(e) => handleResizeStart(e, 's')}
+                title="Resize from bottom edge"
+              />
+              <div 
+                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-w-resize hover:bg-blue-800 -left-1 top-1/2 transform -translate-y-1/2"
+                onMouseDown={(e) => handleResizeStart(e, 'w')}
+                title="Resize from left edge"
+              />
+              <div 
+                className="absolute w-2 h-6 bg-blue-600 border border-white cursor-e-resize hover:bg-blue-800 -right-1 top-1/2 transform -translate-y-1/2"
+                onMouseDown={(e) => handleResizeStart(e, 'e')}
+                title="Resize from right edge"
+              />
             </div>
           </>
         )}
@@ -1460,10 +1591,16 @@ export function VectorizerModal({
           </div>
         )}
         
-        {/* Status indicator */}
+        {/* Status indicators */}
         {isMouseDown && (
           <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg text-xl font-bold animate-pulse" style={{ zIndex: 1000 }}>
             🔥 SELECTING...
+          </div>
+        )}
+        
+        {isResizing && (
+          <div className="absolute top-4 right-4 bg-purple-600 text-white px-4 py-2 rounded-lg text-xl font-bold animate-pulse" style={{ zIndex: 1000 }}>
+            🔧 RESIZING {resizeHandle.toUpperCase()}...
           </div>
         )}
       </div>
