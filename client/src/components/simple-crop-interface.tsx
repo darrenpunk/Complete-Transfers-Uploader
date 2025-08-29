@@ -146,7 +146,7 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
       <img
         src={imageUrl}
         alt="Crop preview"
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        className="crop-interface absolute inset-0 w-full h-full object-contain pointer-events-none"
       />
       
       {/* Crop overlay */}
