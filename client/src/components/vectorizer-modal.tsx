@@ -221,32 +221,36 @@ export function VectorizerModal({
     setError(null);
     
     try {
-      // Show preview of original image
+      // Check if there's a cropped file to use instead of the original
+      const fileToUse = (window as any).croppedImageFile || imageFile;
+      
+      // Show preview of the file we're using
       console.log('Creating preview for image:', {
-        name: imageFile.name,
-        type: imageFile.type,
-        size: imageFile.size
+        name: fileToUse.name,
+        type: fileToUse.type,
+        size: fileToUse.size,
+        isCropped: !!(window as any).croppedImageFile
       });
       
-      // Validate that imageFile is a valid File/Blob
-      if (!imageFile || !(imageFile instanceof File || imageFile instanceof Blob)) {
-        console.error('Invalid image file:', imageFile);
+      // Validate that the file is a valid File/Blob
+      if (!fileToUse || !(fileToUse instanceof File || fileToUse instanceof Blob)) {
+        console.error('Invalid image file:', fileToUse);
         throw new Error('Invalid image file provided');
       }
       
       // Check if file has content
-      if (imageFile.size === 0) {
+      if (fileToUse.size === 0) {
         console.error('Image file is empty');
         throw new Error('Image file is empty');
       }
       
-      const imageUrl = URL.createObjectURL(imageFile);
+      const imageUrl = URL.createObjectURL(fileToUse);
       console.log('Created preview URL:', imageUrl);
       setPreviewUrl(imageUrl);
       
       // Call our backend API in preview mode (no credits consumed)
       const formData = new FormData();
-      formData.append('image', imageFile);
+      formData.append('image', fileToUse);
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', 'false');
       formData.append('enableTightCropping', enableTightCropping.toString());
