@@ -3688,6 +3688,8 @@ export async function registerRoutes(app: express.Application) {
       const enableTightCropping = req.body.enableTightCropping === 'true';
       
       console.log(`🔧 TIGHT CROPPING DEBUG: enableTightCropping = "${req.body.enableTightCropping}" -> ${enableTightCropping}`);
+      console.log(`🔧 CMYK SVG LENGTH: ${cmykSvg.length} characters`);
+      console.log(`🔧 PREVIEW MODE: ${isPreview}`);
       
       if (enableTightCropping) {
         console.log('🔍 Applying tight cropping to vectorized SVG (post-processing)...');
@@ -3730,8 +3732,10 @@ export async function registerRoutes(app: express.Application) {
             );
             
             console.log('✅ Applied tight cropping to vectorized SVG');
+            console.log(`🔧 CROPPED SVG LENGTH: ${finalSvg.length} vs ORIGINAL: ${cmykSvg.length}`);
           } else {
             console.log('⚠️ Could not determine content bounds, keeping original SVG');
+            console.log(`🔧 BOUNDS RESULT: ${JSON.stringify(boundsResult)}`);
           }
         } catch (error) {
           console.error('❌ Tight cropping failed:', error);
