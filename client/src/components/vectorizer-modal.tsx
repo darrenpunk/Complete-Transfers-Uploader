@@ -1445,19 +1445,22 @@ export function VectorizerModal({
       e.stopPropagation();
       
       const pos = getRelativePos(e);
-      console.log('🔧 RESIZE START:', handle, pos);
-      console.log('🚀 SETTING isResizing to TRUE for handle:', handle);
+      console.log('🎯 RESIZE HANDLE CLICKED:', handle);
       
-      // Clear any existing mouse state first
+      // Clear any existing selection state first to prevent conflicts
       setIsMouseDown(false);
+      setStartPos(null);
+      setCurrentPos(null);
       
-      // Store original crop area and start position
+      // Store original crop area and start position for resize
       setOriginalCropArea(cropArea);
       setResizeStartPos(pos);
       
       // Set resize state
       setIsResizing(true);
       setResizeHandle(handle);
+      
+      console.log('🔧 RESIZE MODE ACTIVATED for handle:', handle);
     }, [cropArea]);
 
     // Calculate resized crop area
@@ -1717,6 +1720,15 @@ export function VectorizerModal({
         target: e.target 
       });
       
+      // Handle resize mode first (takes priority)
+      if (state.isResizing) {
+        console.log('🔴 MOUSE UP - Resize completed');
+        setIsResizing(false);
+        setResizeHandle('');
+        return; // Exit early to prevent conflicts
+      }
+      
+      // Handle selection mode
       if (state.isMouseDown) {
         console.log('🔴 MOUSE UP - Selection');
         
@@ -1746,10 +1758,6 @@ export function VectorizerModal({
           console.log('📌 SETTING CROP AREA:', cropRect);
           onCropChange(cropRect);
         }
-      } else if (state.isResizing) {
-        console.log('🔴 MOUSE UP - Resize completed');
-        setIsResizing(false);
-        setResizeHandle('');
       }
     }, []);
 
