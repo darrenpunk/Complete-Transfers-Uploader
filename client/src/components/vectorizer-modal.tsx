@@ -385,6 +385,31 @@ export function VectorizerModal({
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
         
+        // CRITICAL FIX: Add crop marker with exact dimensions if crop was applied
+        if (cropArea && finalSvg) {
+          console.log('🎯 FORCING EXACT CROP BOUNDS: Adding data-crop-extracted marker with exact crop dimensions');
+          
+          // Calculate the exact crop dimensions that should be used as vector bounds
+          const cropWidthPx = cropArea.width;
+          const cropHeightPx = cropArea.height;
+          
+          // Add the crop marker to force server to use exact crop dimensions as vector bounds
+          finalSvg = finalSvg.replace(
+            '<svg',
+            `<svg data-crop-extracted="true" data-exact-crop-width="${cropWidthPx}" data-exact-crop-height="${cropHeightPx}"`
+          );
+          
+          // Also update the viewBox to reflect the exact crop bounds (this is what the server will read)
+          const viewBoxMatch = finalSvg.match(/viewBox="[^"]*"/);
+          if (viewBoxMatch) {
+            const newViewBox = `viewBox="0 0 ${cropWidthPx} ${cropHeightPx}"`;
+            finalSvg = finalSvg.replace(viewBoxMatch[0], newViewBox);
+            console.log(`✅ EXACT CROP BOUNDS SET: viewBox="0 0 ${cropWidthPx} ${cropHeightPx}" - server will use these as exact vector bounds`);
+          }
+          
+          console.log(`🎯 CROP BOUNDS FORCED: ${cropWidthPx}×${cropHeightPx}px will be used as exact vector dimensions`);
+        }
+        
         // No custom sizing - users will resize on canvas
         
         console.log('Calling onVectorDownload with', { 
