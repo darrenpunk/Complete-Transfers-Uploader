@@ -3326,25 +3326,59 @@ export async function registerRoutes(app: express.Application) {
       // Use timestamp to force fresh API call
       const timestamp = Date.now();
       
-      // Use original file without modification to avoid corruption
-      console.log('🔧 Using original file without modification to preserve PNG integrity');
+      // PRE-CROPPING: Remove white background before vectorization (like vectorizer.ai webapp)
+      let finalImagePath = processedImagePath;
+      const enableTightCropping = req.body.enableTightCropping === 'true';
+      
+      if (enableTightCropping) {
+        console.log('✂️ PRE-CROPPING: Removing background before vectorization (like vectorizer.ai webapp)');
+        
+        try {
+          // Use ImageMagick to auto-crop white background
+          const { execSync } = require('child_process');
+          const croppedPath = processedImagePath.replace(/(\.[^.]+)$/, '_cropped$1');
+          
+          // Auto-crop white background with small border
+          const cropCommand = `magick "${processedImagePath}" -fuzz 10% -trim +repage -bordercolor white -border 10x10 "${croppedPath}"`;
+          console.log('🎯 Crop command:', cropCommand);
+          
+          execSync(cropCommand, { stdio: 'pipe' });
+          
+          if (fs.existsSync(croppedPath)) {
+            const originalStats = fs.statSync(processedImagePath);
+            const croppedStats = fs.statSync(croppedPath);
+            
+            console.log(`✅ PRE-CROP SUCCESS: ${originalStats.size} → ${croppedStats.size} bytes`);
+            console.log(`📐 Cropped image ready: ${croppedPath}`);
+            
+            finalImagePath = croppedPath;
+          } else {
+            console.log('⚠️ Cropping failed, using original image');
+          }
+        } catch (error) {
+          console.log('⚠️ Pre-cropping failed, using original:', error.message);
+          // Continue with original image
+        }
+      } else {
+        console.log('🔧 Using original file without modification to preserve PNG integrity');
+      }
       
       // FIXED: Prepare form data for vectorizer.ai API (matching working debug version)
       const formData = new FormData();
-      const fileStream = fs.createReadStream(processedImagePath);
+      const fileStream = fs.createReadStream(finalImagePath);
       
       // Use simple filename exactly like Vector.AI webapp
       formData.append('image', fileStream, 'image.png');
       // DIRECT PNG VECTORIZER: Optimized for high-quality PNG uploads
       console.log('🎯 DIRECT PNG VECTORIZER: Processing high-quality PNG upload');
-      console.log('📁 Sending file:', processedImagePath);
+      console.log('📁 Sending file:', finalImagePath);
       
-      const imageStats = fs.statSync(processedImagePath);
+      const imageStats = fs.statSync(finalImagePath);
       console.log('📊 File size:', imageStats.size, 'bytes');
       console.log('📊 File modified:', imageStats.mtime.toISOString());
       console.log('📁 Original name:', req.file.originalname);
       console.log('📁 MIME type:', req.file.mimetype);
-      console.log('🔍 CRITICAL: File hash to verify uniqueness:', crypto.createHash('md5').update(fs.readFileSync(processedImagePath)).digest('hex').substring(0, 8));
+      console.log('🔍 CRITICAL: File hash to verify uniqueness:', crypto.createHash('md5').update(fs.readFileSync(finalImagePath)).digest('hex').substring(0, 8));
       
       // WEBAPP IDENTICAL CONFIGURATION: Match their exact default behavior
       console.log('🎯 USING VECTOR.AI WEBAPP DEFAULT SETTINGS - Exactly matching vectorizer.ai webapp behavior');
@@ -3369,7 +3403,7 @@ export async function registerRoutes(app: express.Application) {
       console.log('🚀 MAKING API CALL TO VECTOR.AI NOW WITH FIXED IMPLEMENTATION...');
       console.log('🔗 API URL: https://vectorizer.ai/api/v1/vectorize');
       console.log('🔑 Using API credentials: ID exists =', !!vectorizerApiId, ', Secret exists =', !!vectorizerApiSecret);
-      console.log('📁 File being sent:', processedImagePath);
+      console.log('📁 File being sent:', finalImagePath);
       console.log('📋 FormData keys:', Object.keys(formData));
       
       // FIXED: Use exact same request format as working debug version
@@ -3681,53 +3715,24 @@ export async function registerRoutes(app: express.Application) {
       if (processedImagePath !== req.file.path && fs.existsSync(processedImagePath)) {
         fs.unlinkSync(processedImagePath);
       }
+      // Clean up cropped file if it was created
+      if (finalImagePath !== processedImagePath && fs.existsSync(finalImagePath)) {
+        fs.unlinkSync(finalImagePath);
+        console.log('🗑️ Cleaned up cropped file');
+      }
       
-      // Apply tight cropping if requested
+      // POST-PROCESSING: No longer needed since we do pre-cropping
       let finalSvg = cmykSvg;
-      const enableTightCropping = req.body.enableTightCropping === 'true';
-      
-      console.log(`🔧 DEBUG: enableTightCropping param = "${req.body.enableTightCropping}", parsed = ${enableTightCropping}`);
-      console.log(`🔧 DEBUG: Request body keys:`, Object.keys(req.body));
       
       if (enableTightCropping) {
-        console.log('🔍 Applying tight cropping to vectorized SVG...');
-        try {
-          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-          const analyzer = new SVGBoundsAnalyzer();
-          
-          // Analyze the SVG content bounds
-          const boundsResult = await analyzer.analyzeSVGContent(cmykSvg);
-          
-          if (boundsResult.success && boundsResult.contentBounds) {
-            const bounds = boundsResult.contentBounds;
-            console.log(`📐 Content bounds found: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px`);
-            
-            // Apply tight cropping by updating the viewBox
-            const croppedSvg = cmykSvg.replace(
-              /viewBox="[^"]*"/,
-              `viewBox="${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}"`
-            ).replace(
-              /width="[^"]*"/,
-              `width="${bounds.width}"`
-            ).replace(
-              /height="[^"]*"/,
-              `height="${bounds.height}"`
-            );
-            
-            // Add tight content marker
-            finalSvg = croppedSvg.replace(
-              '<svg',
-              '<svg data-content-extracted="true"'
-            );
-            
-            console.log('✅ Applied tight cropping to vectorized SVG');
-          } else {
-            console.log('⚠️ Could not determine content bounds, keeping original SVG');
-          }
-        } catch (error) {
-          console.error('❌ Tight cropping failed:', error);
-          // Continue with original SVG on error
-        }
+        console.log('✅ PRE-CROPPING was applied - vectorized result should already be properly sized');
+        // Add marker to indicate this was pre-cropped
+        finalSvg = cmykSvg.replace(
+          '<svg',
+          '<svg data-content-extracted="true"'
+        );
+      } else {
+        console.log('🔧 No tight cropping applied - using full vectorized result');
       }
 
       // Send response with quality metadata

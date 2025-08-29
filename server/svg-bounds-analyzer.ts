@@ -614,14 +614,28 @@ export class SVGBoundsAnalyzer {
     const centerY = filteredPaths.reduce((sum, p) => sum + (p.yMin + p.yMax) / 2, 0) / filteredPaths.length;
     console.log(`📍 Logo center of mass detected at: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
     
-    // Step 3: USE ALL CONTENT PATHS - NO FILTERING
-    // Let vectorizer.ai handle the vectorization, we just calculate proper bounds
-    // The issue is bounds calculation, not path filtering
+    // Step 3: AGGRESSIVE SQUARE CANVAS FILTERING
+    // Vectorizer.ai creates 1281×1281 square from 2400×1800 original
+    // Need to filter out large square paths and keep only actual logo content
     
-    console.log(`🎯 Using all ${filteredPaths.length} paths for tight bounds calculation`);
-    console.log(`🎯 Will calculate minimal bounding box around actual visible content`);
+    console.log(`🎯 Filtering out vectorizer square canvas artifacts (original was 2400×1800 = 4:3 ratio)`);
     
-    const contentPaths = filteredPaths;
+    // Remove paths that are too close to square (vectorizer artifacts)
+    const actualContentPaths = filteredPaths.filter(pathBounds => {
+      const aspectRatio = pathBounds.width / pathBounds.height;
+      const isNearSquare = aspectRatio > 0.8 && aspectRatio < 1.25; // Nearly 1:1 ratio
+      const isLargePath = pathBounds.width > 400 || pathBounds.height > 400; // Large paths
+      
+      if (isNearSquare && isLargePath) {
+        console.log(`🚫 Removing square vectorizer path: ${pathBounds.width.toFixed(1)}×${pathBounds.height.toFixed(1)} (ratio: ${aspectRatio.toFixed(2)})`);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`🎯 Actual content paths: ${actualContentPaths.length} out of ${filteredPaths.length} (filtered square artifacts)`);
+    
+    const contentPaths = actualContentPaths;
 
     if (contentPaths.length === 0) {
       console.log('⚠️ All paths filtered out, using smallest 80% of paths');
