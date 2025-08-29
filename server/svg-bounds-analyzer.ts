@@ -552,7 +552,11 @@ export class SVGBoundsAnalyzer {
    */
   private calculateContentFocusedBounds(svgElement: Element): SVGBounds | null {
     const paths = svgElement.querySelectorAll('path');
-    if (paths.length === 0) return null;
+    console.log(`🎯 CLUSTERING ANALYSIS: Found ${paths.length} paths to analyze`);
+    if (paths.length === 0) {
+      console.log(`❌ CLUSTERING FAILED: No paths found`);
+      return null;
+    }
 
     let allBounds: (SVGBounds & { pathIndex: number; area: number })[] = [];
     
@@ -568,11 +572,18 @@ export class SVGBoundsAnalyzer {
             pathIndex: index,
             area: area
           });
+          console.log(`🛤️ Parsed path ${index}: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}px`);
+        } else {
+          console.log(`❌ Failed to parse path ${index}`);
         }
       }
     });
 
-    if (allBounds.length === 0) return null;
+    console.log(`🎯 CLUSTERING: Collected ${allBounds.length} valid path bounds out of ${paths.length} paths`);
+    if (allBounds.length === 0) {
+      console.log(`❌ CLUSTERING FAILED: No valid path bounds found`);
+      return null;
+    }
 
     // Sort by area to identify potential background paths
     allBounds.sort((a, b) => a.area - b.area);
