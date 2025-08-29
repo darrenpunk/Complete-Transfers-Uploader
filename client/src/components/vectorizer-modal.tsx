@@ -60,6 +60,7 @@ export function VectorizerModal({
   } | null>(null); // Track vectorization quality issues
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
+  const [enableTightCropping, setEnableTightCropping] = useState(true); // Enable tight cropping by default
   const [showCropInterface, setShowCropInterface] = useState(false); // Show pre-crop interface
   const [cropArea, setCropArea] = useState<{x: number, y: number, width: number, height: number} | null>(null); // Crop selection
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null); // Original image for cropping
@@ -385,31 +386,6 @@ export function VectorizerModal({
         // If user made color changes, we need to apply them to the production SVG
         let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
         
-        // CRITICAL FIX: Add crop marker with exact dimensions if crop was applied
-        if (cropArea && finalSvg) {
-          console.log('🎯 FORCING EXACT CROP BOUNDS: Adding data-crop-extracted marker with exact crop dimensions');
-          
-          // Calculate the exact crop dimensions that should be used as vector bounds
-          const cropWidthPx = cropArea.width;
-          const cropHeightPx = cropArea.height;
-          
-          // Add the crop marker to force server to use exact crop dimensions as vector bounds
-          finalSvg = finalSvg.replace(
-            '<svg',
-            `<svg data-crop-extracted="true" data-exact-crop-width="${cropWidthPx}" data-exact-crop-height="${cropHeightPx}"`
-          );
-          
-          // Also update the viewBox to reflect the exact crop bounds (this is what the server will read)
-          const viewBoxMatch = finalSvg.match(/viewBox="[^"]*"/);
-          if (viewBoxMatch) {
-            const newViewBox = `viewBox="0 0 ${cropWidthPx} ${cropHeightPx}"`;
-            finalSvg = finalSvg.replace(viewBoxMatch[0], newViewBox);
-            console.log(`✅ EXACT CROP BOUNDS SET: viewBox="0 0 ${cropWidthPx} ${cropHeightPx}" - server will use these as exact vector bounds`);
-          }
-          
-          console.log(`🎯 CROP BOUNDS FORCED: ${cropWidthPx}×${cropHeightPx}px will be used as exact vector dimensions`);
-        }
-        
         // No custom sizing - users will resize on canvas
         
         console.log('Calling onVectorDownload with', { 
@@ -644,11 +620,11 @@ export function VectorizerModal({
       }
       
       if (shouldRemove) {
-        console.log('Making element transparent with fill:', fill, 'tagName:', el.tagName);
-        // Set fill to "none" to make element truly transparent (not black)
-        el.setAttribute('fill', 'none');
+        console.log('Removing color from element with fill:', fill, 'tagName:', el.tagName);
+        // Remove fill attribute to make element transparent (not remove the entire element)
+        el.removeAttribute('fill');
         removedCount++;
-        console.log('Set fill=none for element:', el.tagName);
+        console.log('Removed fill attribute from element:', el.tagName);
       }
     });
     
@@ -799,11 +775,14 @@ export function VectorizerModal({
       console.log(`Removed ${removedCount} white background elements`);
       
     } else {
-      // Aggressive mode: Make ALL white elements transparent
+      // Aggressive mode: Remove ALL white elements
       const whiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"]');
       whiteElements.forEach(el => {
-        // Set fill to none for ALL white elements to make them transparent
-        el.setAttribute('fill', 'none');
+        if (el.tagName === 'rect' || el.tagName === 'path') {
+          el.remove();
+        } else {
+          el.setAttribute('fill', 'none');
+        }
       });
       
       // Also check for near-white colors
@@ -824,8 +803,11 @@ export function VectorizerModal({
               b = parseInt(match[3]);
             }
             if (r > 250 && g > 250 && b > 250) {
-              // Set fill to none for near-white colors to make them transparent
-              el.setAttribute('fill', 'none');
+              if (el.tagName === 'rect' || el.tagName === 'path') {
+                el.remove();
+              } else {
+                el.setAttribute('fill', 'none');
+              }
             }
           }
         }
@@ -1155,13 +1137,13 @@ export function VectorizerModal({
         deletedColors.forEach(deletedColor => {
           const normalizedColor = deletedColor.toLowerCase();
           
-          // Set fill to "none" to make elements truly transparent
+          // Remove fill attributes to make elements transparent
           const elementsWithFill = doc.querySelectorAll(`*[fill="${normalizedColor}"]`);
-          elementsWithFill.forEach(el => el.setAttribute('fill', 'none'));
+          elementsWithFill.forEach(el => el.removeAttribute('fill'));
           
-          // Set stroke to "none" to make strokes transparent  
+          // Remove stroke attributes to make strokes transparent  
           const elementsWithStroke = doc.querySelectorAll(`*[stroke="${normalizedColor}"]`);
-          elementsWithStroke.forEach(el => el.setAttribute('stroke', 'none'));
+          elementsWithStroke.forEach(el => el.removeAttribute('stroke'));
         });
         
         finalSvg = new XMLSerializer().serializeToString(doc.documentElement);
@@ -1359,7 +1341,7 @@ export function VectorizerModal({
       // Close crop interface and start vectorization with cropped file
       setShowCropInterface(false);
       
-      // Send the CROPPED image to vectorization as the user expects
+      // Process vectorization with the cropped file and crop dimensions
       await processVectorizationWithFile(croppedFile, actualCropArea);
       
     } catch (error) {
@@ -1387,10 +1369,11 @@ export function VectorizerModal({
       const formData = new FormData();
       formData.append('image', fileToProcess);
       
-      // CRITICAL FIX: DO NOT send crop dimensions to vectorization API!
-      // Crop should be applied as exact vector bounds AFTER vectorization, not as input image cropping BEFORE
+      // Add crop dimensions if provided (from crop interface)
       if (cropDimensions) {
-        console.log(`🎯 CROP WILL BE APPLIED AFTER VECTORIZATION: ${cropDimensions.width}×${cropDimensions.height}px as exact vector bounds (not sent to API)`);
+        formData.append('cropWidth', cropDimensions.width.toString());
+        formData.append('cropHeight', cropDimensions.height.toString());
+        console.log(`🎯 CROP DIMENSIONS: Sending ${cropDimensions.width}×${cropDimensions.height}px to vectorization API`);
       }
       
       const response = await fetch('/api/vectorize', {
@@ -1536,7 +1519,66 @@ export function VectorizerModal({
                 <h3 className="font-medium text-gray-800">Vectorization Settings</h3>
               </div>
               
+              {/* Processing Options */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Wand2 className="w-4 h-4 text-blue-600" />
+                    <Label className="text-sm font-medium text-blue-800">
+                      Processing Options
+                    </Label>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={() => setShowCropInterface(true)}
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100 flex items-center gap-2"
+                  >
+                    <Crop className="w-4 h-4" />
+                    Crop First
+                  </Button>
+                  
+                  <Button
+                    onClick={processVectorization}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Vectorize Now
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-blue-700 mt-2">
+                  Choose to crop the image first or vectorize the entire image directly.
+                </p>
+              </div>
               
+              {/* Tight Cropping */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Crop className="w-4 h-4 text-gray-600" />
+                  <Label htmlFor="tight-cropping" className="text-sm font-medium">
+                    Auto Tight Cropping
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="tight-cropping"
+                    checked={enableTightCropping}
+                    onCheckedChange={setEnableTightCropping}
+                    data-testid="switch-tight-cropping"
+                  />
+                  <span className="text-xs text-gray-500">
+                    {enableTightCropping ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Automatically crop the vectorized result to remove excess whitespace and focus on the actual content.
+              </p>
             </div>
 
 
@@ -1761,31 +1803,6 @@ export function VectorizerModal({
               </Button>
               
               <div className="flex gap-3">
-                {/* Initial Processing Options - shown before vectorization */}
-                {!vectorSvg && !isProcessing && !error && (
-                  <>
-                    <Button
-                      onClick={() => setShowCropInterface(true)}
-                      size="sm"
-                      variant="outline"
-                      className="border-blue-300 text-blue-700 hover:bg-blue-100 flex items-center gap-2"
-                    >
-                      <Crop className="w-4 h-4" />
-                      Crop First
-                    </Button>
-                    
-                    <Button
-                      onClick={processVectorization}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                    >
-                      <Wand2 className="w-4 h-4" />
-                      Vectorize Now
-                    </Button>
-                  </>
-                )}
-                
-                {/* Approve button - shown after vectorization */}
                 {vectorSvg && (
                   <Tooltip>
                     <TooltipTrigger asChild>

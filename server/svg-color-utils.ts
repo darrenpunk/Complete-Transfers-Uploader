@@ -1289,64 +1289,26 @@ export function applySVGColorChanges(svgPath: string, colorOverrides: Record<str
       
       let replacementCount = 0;
       
-      // Replace fill attributes (exact match) - BUT preserve transparency
+      // Replace fill attributes (exact match)
       const fillRegex = new RegExp(`fill\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
       const beforeReplace = svgContent;
-      
-      // CRITICAL FIX: Don't replace fill="none" or fill="transparent" - preserve transparency!
-      if (originalColor.toLowerCase() === 'none' || originalColor.toLowerCase() === 'transparent') {
-        console.log(`🚫 Preserving transparency: Not replacing fill="${originalColor}" (transparency must be maintained)`);
-      } else {
-        svgContent = svgContent.replace(fillRegex, (match) => {
-          // Double-check we're not accidentally replacing transparent elements
-          if (match.includes('fill="none"') || match.includes('fill="transparent"')) {
-            console.log(`🚫 Preserving transparency in matched element: ${match}`);
-            return match; // Keep original transparent fill
-          }
-          return `fill="${newColor}"`;
-        });
-        if (svgContent !== beforeReplace) {
-          replacementCount++;
-          console.log('Replaced fill attribute');
-        }
+      svgContent = svgContent.replace(fillRegex, `fill="${newColor}"`);
+      if (svgContent !== beforeReplace) {
+        replacementCount++;
+        console.log('Replaced fill attribute');
       }
       
-      // Replace stroke attributes (exact match) - BUT preserve transparency
-      if (originalColor.toLowerCase() !== 'none' && originalColor.toLowerCase() !== 'transparent') {
-        const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
-        svgContent = svgContent.replace(strokeRegex, (match) => {
-          // Preserve transparent strokes
-          if (match.includes('stroke="none"') || match.includes('stroke="transparent"')) {
-            console.log(`🚫 Preserving transparent stroke: ${match}`);
-            return match;
-          }
-          return `stroke="${newColor}"`;
-        });
-      }
+      // Replace stroke attributes (exact match)
+      const strokeRegex = new RegExp(`stroke\\s*=\\s*["']${escapedOriginal}["']`, 'gi');
+      svgContent = svgContent.replace(strokeRegex, `stroke="${newColor}"`);
       
-      // Replace style-based fills (more careful regex) - BUT preserve transparency
-      if (originalColor.toLowerCase() !== 'none' && originalColor.toLowerCase() !== 'transparent') {
-        const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-        svgContent = svgContent.replace(styleFillRegex, (match, prefix, suffix) => {
-          // Preserve transparent fills in styles
-          if (match.includes('fill:none') || match.includes('fill:transparent')) {
-            console.log(`🚫 Preserving transparent fill in style: ${match}`);
-            return match;
-          }
-          return `${prefix}${newColor}${suffix}`;
-        });
-        
-        // Replace style-based strokes (more careful regex) - BUT preserve transparency
-        const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
-        svgContent = svgContent.replace(styleStrokeRegex, (match, prefix, suffix) => {
-          // Preserve transparent strokes in styles
-          if (match.includes('stroke:none') || match.includes('stroke:transparent')) {
-            console.log(`🚫 Preserving transparent stroke in style: ${match}`);
-            return match;
-          }
-          return `${prefix}${newColor}${suffix}`;
-        });
-      }
+      // Replace style-based fills (more careful regex)
+      const styleFillRegex = new RegExp(`(style\\s*=\\s*["'][^"']*fill\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleFillRegex, `$1${newColor}$2`);
+      
+      // Replace style-based strokes (more careful regex)
+      const styleStrokeRegex = new RegExp(`(style\\s*=\\s*["'][^"']*stroke\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
+      svgContent = svgContent.replace(styleStrokeRegex, `$1${newColor}$2`);
       
       // Also try to replace any CSS color definitions
       const cssRegex = new RegExp(`(color\\s*:\\s*)${escapedOriginal}([\\s;]|["'])`, 'gi');
@@ -1433,13 +1395,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse|polygon|polyline|line)([^>]*)>/gi, (match, tag, attrs) => {
     // Check if element has stroke but no fill (or fill="none")
     const hasStroke = match.includes('stroke=') || (match.includes('style=') && match.includes('stroke:'));
-    
-    // CRITICAL FIX: Distinguish between "no fill" and "intentionally transparent" 
-    const hasVisibleFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
-    const hasTransparentFill = match.includes('fill="none"') || match.includes('fill="transparent"');
-    
-    // An element has SOME form of fill if it has visible fill OR intentional transparency
-    const hasFill = hasVisibleFill || hasTransparentFill;
+    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
     
     // Additional check for elements with no fill attribute at all
     if (!match.includes('fill=')) {
@@ -1457,14 +1413,7 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
     
     // Log element details for debugging narrow elements
     if ((tag === 'rect' || tag === 'path') && !hasFill) {
-      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, hasTransparentFill=${hasTransparentFill}, attrs=${attrs.substring(0, 200)}`);
-    }
-    
-    // PRESERVE transparent elements - they are intentional transparency, not background elements to remove
-    if (hasTransparentFill) {
-      console.log(`🚫 PRESERVING TRANSPARENT ELEMENT: ${tag} with fill="none" - intentional transparency`);
-      preservedCount++;
-      return match; // Keep the transparent element exactly as is
+      console.log(`🔍 Found ${tag} without fill: hasStroke=${hasStroke}, hasFill=${hasFill}, attrs=${attrs.substring(0, 200)}`);
     }
     
     // Try to detect if this is a small element (like a dot)
@@ -1574,16 +1523,8 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
   // Step 4: Check for any very small filled elements that might have been missed
   // Sometimes dots (like in the letter i) are created as tiny filled paths
   modifiedSvg = modifiedSvg.replace(/<(path|circle|rect|ellipse)([^>]*)>/gi, (match, tag, attrs) => {
-    // Check if this has a fill - PRESERVE transparent elements
-    const hasVisibleFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
-    const hasTransparentFill = match.includes('fill="none"') || match.includes('fill="transparent"');
-    const hasFill = hasVisibleFill || hasTransparentFill;
-    
-    // PRESERVE transparent elements - they are intentional transparency  
-    if (hasTransparentFill) {
-      console.log(`🚫 PRESERVING TRANSPARENT ELEMENT (step 4): ${tag} with fill="none"`);
-      return match; // Keep transparent element as is
-    }
+    // Check if this has a fill
+    const hasFill = match.includes('fill=') && !match.includes('fill="none"') && !match.includes('fill="transparent"');
     
     if (hasFill && tag === 'path') {
       // Check if this is a tiny path (potential dot)

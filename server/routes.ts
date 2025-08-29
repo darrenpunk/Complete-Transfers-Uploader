@@ -2292,13 +2292,13 @@ export async function registerRoutes(app: express.Application) {
                     // Re-analyzing the tight content SVG gives wrong dimensions
                     console.log(`✅ USING ORIGINAL CONTENT BOUNDS: No re-analysis needed, we already have correct dimensions`);
                   }
-                  } else if (usingPdfContentBounds) {
-                    // We have exact PDF content bounds, use them directly
-                    console.log(`✅ USING PDF CONTENT BOUNDS: Exact content size from original PDF`);
-                  } else {
-                    // Content is already reasonable size, use as-is
-                    console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
-                  }
+                } else if (usingPdfContentBounds) {
+                  // We have exact PDF content bounds, use them directly
+                  console.log(`✅ USING PDF CONTENT BOUNDS: Exact content size from original PDF`);
+                } else {
+                  // Content is already reasonable size, use as-is
+                  console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
+                }
                 
                 // Add minimal overflow for proper centering and glyph protection
                 // Reduce padding to get more accurate content dimensions
@@ -2314,20 +2314,42 @@ export async function registerRoutes(app: express.Application) {
                 displayWidth = contentWidth;
                 displayHeight = contentHeight;
                 console.log(`🎯 CANVAS DISPLAY: Using content bounds with overflow ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+              } else {
+                console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
+                
+                // Fallback to the original robust dimension system
+                const { detectDimensionsFromSVG } = await import('./dimension-utils');
+                const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+                const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+                displayWidth = dimensionResult.widthMm;
+                displayHeight = dimensionResult.heightMm;
+                
+                console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
+              }
               
-          } // End of needsTightCrop check
-          
-          } // End of if (!useCropDimensions) block
-
             } catch (boundsError) {
-              console.error('❌ BOUNDS EXTRACTION FAILED:', boundsError);
-              // Fallback to viewBox dimensions
+              console.error('❌ Bounds extraction error:', boundsError);
+              // Fallback to the original robust dimension system
               const { detectDimensionsFromSVG } = await import('./dimension-utils');
-              const dimensionResult = await detectDimensionsFromSVG(svgContent, null, svgPath);
+              const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+              const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
               displayWidth = dimensionResult.widthMm;
               displayHeight = dimensionResult.heightMm;
-              console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
+              
+              console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
             }
+
+          } else {
+            // Fallback: for large documents with no detectable content bounds
+            console.log(`Large format document with no detectable content bounds, using conservative sizing`);
+            displayWidth = 200;
+            displayHeight = 150;
+          }
+        } catch (error) {
+          console.error('Failed to calculate content bounds:', error);
+        }
+        
+        } // End of if (!useCropDimensions) block
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
@@ -2395,14 +2417,6 @@ export async function registerRoutes(app: express.Application) {
         const createdElement = await storage.createCanvasElement(canvasElementData);
         console.log(`✅ Successfully created canvas element: ${createdElement.id} for logo: ${updatedLogo.id}`);
       }
-
-        } catch (processingError) {
-          console.error(`❌ File processing failed for ${file.originalname}:`, processingError);
-          // Continue with next file instead of failing entire upload
-          continue;
-        }
-
-      } // End of for loop
 
       console.log('🚀 Returning logos to client:', logos.map(logo => ({
         id: logo.id,
