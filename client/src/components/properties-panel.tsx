@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package, RotateCw, Palette, Maximize2 } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package, RotateCw, Palette } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -955,58 +955,6 @@ export default function PropertiesPanel({
                   </TooltipContent>
                 </Tooltip>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/fix-vector-bounds', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              elementId: currentElement.id
-                            })
-                          });
-                          
-                          const result = await response.json();
-                          if (result.success) {
-                            // Refresh canvas elements to show updated dimensions
-                            window.location.reload();
-                            
-                            toast({
-                              title: "Success",
-                              description: result.message || `Bounds fixed! ${Math.round(result.tightDimensions.width)}×${Math.round(result.tightDimensions.height)}mm`,
-                            });
-                          } else {
-                            toast({
-                              title: "Warning", 
-                              description: result.error || "Could not improve bounds",
-                              variant: "destructive"
-                            });
-                          }
-                        } catch (error) {
-                          console.error('Fix bounds error:', error);
-                          toast({
-                            title: "Error",
-                            description: "Failed to fix bounds",
-                            variant: "destructive"
-                          });
-                        }
-                      }}
-                      className="w-full"
-                    >
-                      <Maximize2 className="w-4 h-4 mr-2" />
-                      Fix Bounds
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Fix oversized vector bounds (crop: 461×402 → canvas: 525×530)</p>
-                  </TooltipContent>
-                </Tooltip>
                 
                 <p className="text-xs text-gray-500 mt-1">
                   Duplicate or replicate logos for multi-placement designs

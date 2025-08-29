@@ -3746,9 +3746,72 @@ export async function registerRoutes(app: express.Application) {
         console.log('🔧 No tight cropping applied - using full vectorized result');
       }
 
+      // Filter SVG to only include elements with actual colors (no invisible/transparent content)
+      console.log('🎨 Filtering SVG to only include colored/white content...');
+      
+      let colorFilteredSvg = finalSvg;
+      
+      try {
+        // Extract only elements with visible colors
+        const visibleElements = [];
+        
+        // Extract paths with actual fill/stroke colors (not transparent or none)
+        const pathMatches = colorFilteredSvg.match(/<path[^>]*>/g) || [];
+        for (const path of pathMatches) {
+          const hasVisibleFill = path.includes('fill=') && !path.includes('fill="none"') && !path.includes('fill="transparent"');
+          const hasVisibleStroke = path.includes('stroke=') && !path.includes('stroke="none"') && !path.includes('stroke="transparent"');
+          
+          if (hasVisibleFill || hasVisibleStroke) {
+            visibleElements.push(path);
+          }
+        }
+        
+        // Extract other shapes with visible colors
+        const shapeMatches = colorFilteredSvg.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
+        for (const shape of shapeMatches) {
+          const hasVisibleFill = shape.includes('fill=') && !shape.includes('fill="none"') && !shape.includes('fill="transparent"');
+          const hasVisibleStroke = shape.includes('stroke=') && !shape.includes('stroke="none"') && !shape.includes('stroke="transparent"');
+          
+          if (hasVisibleFill || hasVisibleStroke) {
+            visibleElements.push(shape);
+          }
+        }
+        
+        // Extract text elements (usually visible by default)
+        const textMatches = colorFilteredSvg.match(/<text[^>]*>.*?<\/text>/gs) || [];
+        visibleElements.push(...textMatches);
+        
+        console.log(`🎨 Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
+        
+        if (visibleElements.length > 0) {
+          // Get the SVG opening and closing tags
+          const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
+          const svgCloseMatch = colorFilteredSvg.match(/<\/svg>/);
+          
+          if (svgOpenMatch && svgCloseMatch) {
+            // Create clean SVG with only colored content
+            const svgOpen = svgOpenMatch[0];
+            const svgClose = svgCloseMatch[0];
+            const coloredContent = visibleElements.join('\n    ');
+            
+            colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
+${svgOpen}
+    ${coloredContent}
+${svgClose}`;
+            
+            console.log(`✅ Created clean SVG with only colored content: ${colorFilteredSvg.length} characters (was ${finalSvg.length})`);
+          }
+        } else {
+          console.log('⚠️ No colored elements found, keeping original SVG');
+        }
+      } catch (error) {
+        console.error('❌ Error filtering colored content:', error);
+        // Keep original SVG on error
+      }
+
       // Send response with quality metadata
       const responseData: any = { 
-        svg: finalSvg,
+        svg: colorFilteredSvg,
         mode: isPreview ? 'preview' : 'production'
       };
       if (qualityWarning) {
@@ -3772,181 +3835,6 @@ export async function registerRoutes(app: express.Application) {
   });
 
 
-  // Apply tight cropping to existing vectors
-  app.post('/api/fix-vector-bounds', async (req, res) => {
-    console.log('🔧 Fixing vector bounds with tight cropping...');
-    
-    try {
-      const { elementId } = req.body;
-      
-      if (!elementId) {
-        return res.status(400).json({ error: 'No elementId provided' });
-      }
-
-      console.log(`🔍 Processing element ID: ${elementId}`);
-
-      // Direct approach: Find element and logo across all projects
-      console.log(`🔍 Searching for element ID: ${elementId}`);
-
-      // Get all projects to search through
-      const allProjects = await storage.getProjects();
-      let targetElement = null;
-      let targetProject = null;
-
-      // Search through all projects for the element
-      for (const project of allProjects) {
-        const elements = await storage.getCanvasElementsByProject(project.id);
-        const found = elements.find(el => el.id === elementId);
-        if (found) {
-          targetElement = found;
-          targetProject = project;
-          break;
-        }
-      }
-
-      if (!targetElement) {
-        console.log(`❌ Canvas element not found for ID: ${elementId}`);
-        return res.status(404).json({ error: 'Canvas element not found' });
-      }
-
-      console.log(`🎯 Found canvas element:`, {
-        id: targetElement.id,
-        logoId: targetElement.logoId,
-        width: targetElement.width,
-        height: targetElement.height,
-        projectId: targetElement.projectId
-      });
-
-      if (!targetElement.logoId) {
-        return res.status(400).json({ error: 'Canvas element has no associated logo' });
-      }
-
-      // Get all logos for this project and find the target logo
-      const projectLogos = await storage.getLogosByProject(targetElement.projectId);
-      const logo = projectLogos.find(l => l.id === targetElement.logoId);
-
-      if (!logo) {
-        console.log(`❌ Logo not found for ID: ${targetElement.logoId}`);
-        return res.status(404).json({ error: 'Associated logo not found' });
-      }
-
-      console.log(`📁 Found logo:`, {
-        id: logo.id,
-        filename: logo.filename,
-        originalName: logo.originalName
-      });
-
-      if (!logo.filename) {
-        return res.status(400).json({ error: 'Logo has no filename' });
-      }
-
-      // Get SVG content from the logo file
-      const logoPath = path.join('uploads', logo.filename);
-      if (!fs.existsSync(logoPath)) {
-        return res.status(404).json({ error: 'Logo file not found on disk' });
-      }
-
-      const svgContent = fs.readFileSync(logoPath, 'utf8');
-      console.log(`🔧 Input SVG length: ${svgContent.length} characters`);
-
-      // Apply tight cropping
-      const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-      const analyzer = new SVGBoundsAnalyzer();
-      
-      // Write SVG to temp file for processing
-      const tempSvgPath = path.join(os.tmpdir(), `temp_vector_${Date.now()}.svg`);
-      fs.writeFileSync(tempSvgPath, svgContent);
-      
-      // Get precise bounds with minimal padding
-      const boundsResult = await analyzer.extractSVGBounds(tempSvgPath);
-      
-      if (boundsResult && boundsResult.success && boundsResult.contentBounds) {
-        // Create tight content SVG using the bounds
-        const bounds = boundsResult.contentBounds;
-        
-        // Simple SVG cropping by adjusting viewBox using string replacement
-        const padding = 2; // 2px padding
-        
-        // Create new viewBox string
-        const newViewBox = `${bounds.xMin - padding} ${bounds.yMin - padding} ${bounds.width + 2*padding} ${bounds.height + 2*padding}`;
-        const newWidth = `${bounds.width + 2*padding}`;
-        const newHeight = `${bounds.height + 2*padding}`;
-        
-        // Replace SVG attributes using regex
-        let finalSvg = svgContent;
-        
-        // Add or update viewBox
-        if (finalSvg.includes('viewBox=')) {
-          finalSvg = finalSvg.replace(/viewBox="[^"]*"/g, `viewBox="${newViewBox}"`);
-        } else {
-          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 viewBox="${newViewBox}">`);
-        }
-        
-        // Add or update width
-        if (finalSvg.includes('width=')) {
-          finalSvg = finalSvg.replace(/width="[^"]*"/g, `width="${newWidth}"`);
-        } else {
-          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 width="${newWidth}">`);
-        }
-        
-        // Add or update height  
-        if (finalSvg.includes('height=')) {
-          finalSvg = finalSvg.replace(/height="[^"]*"/g, `height="${newHeight}"`);
-        } else {
-          finalSvg = finalSvg.replace(/<svg([^>]*)>/, `<svg$1 height="${newHeight}">`);
-        }
-        
-        // Add data attribute to mark as processed
-        finalSvg = finalSvg.replace(/<svg/, '<svg data-content-extracted="true"');
-          
-        console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
-        console.log(`🔧 Tight bounds: ${bounds.width}x${bounds.height}`);
-        
-        // Save the updated SVG content back to the logo file
-        fs.writeFileSync(logoPath, finalSvg, 'utf8');
-        console.log(`💾 Updated logo file: ${logoPath}`);
-        
-        // Update canvas element dimensions to match the new tight bounds
-        const tightWidthMm = (bounds.width + 2*padding) / 2.834645669; // Convert px to mm at 72 DPI
-        const tightHeightMm = (bounds.height + 2*padding) / 2.834645669;
-        
-        storage.updateCanvasElement(elementId, {
-          width: Math.round(tightWidthMm),
-          height: Math.round(tightHeightMm)
-        });
-        
-        console.log(`📐 Updated canvas element dimensions: ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`);
-        
-        // Clean up temp file
-        fs.unlinkSync(tempSvgPath);
-        
-        return res.json({
-          success: true,
-          message: `Bounds fixed! Reduced from ${Math.round(targetElement.width)}×${Math.round(targetElement.height)}mm to ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`,
-          originalDimensions: { width: targetElement.width, height: targetElement.height },
-          tightDimensions: { width: Math.round(tightWidthMm), height: Math.round(tightHeightMm) }
-        });
-      } else {
-        console.log('⚠️ Could not determine bounds for vector, keeping original');
-        // Clean up temp file
-        if (fs.existsSync(tempSvgPath)) {
-          fs.unlinkSync(tempSvgPath);
-        }
-        
-        return res.json({
-          success: false,
-          svg: svgContent,
-          error: 'Could not determine content bounds'
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error fixing vector bounds:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Failed to fix vector bounds' 
-      });
-    }
-  });
 
   // Vectorization Service Routes
   app.post('/api/vectorization-requests', upload.single('file'), async (req, res) => {
