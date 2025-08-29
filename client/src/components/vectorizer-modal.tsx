@@ -1529,6 +1529,14 @@ export function VectorizerModal({
       };
 
       const handleMouseUp = (e: MouseEvent) => {
+        console.log('🚨 MOUSE UP EVENT TRIGGERED', { 
+          isMouseDown, 
+          isResizing, 
+          startPos: !!startPos, 
+          currentPos: !!currentPos,
+          target: e.target 
+        });
+        
         if (isMouseDown) {
           console.log('🔴 MOUSE UP - Selection');
           
@@ -1544,6 +1552,7 @@ export function VectorizerModal({
             height: Math.abs(finalPos.y - startPos.y)
           } : null;
           
+          console.log('🎯 FINAL RECT:', finalRect);
           setIsMouseDown(false);
           
           if (finalRect) {
@@ -1565,18 +1574,21 @@ export function VectorizerModal({
       };
 
       if (isMouseDown || isResizing) {
+        console.log('🟡 SETTING UP GLOBAL LISTENERS', { isMouseDown, isResizing });
+        
         // Use capture phase to ensure we get all events
         document.addEventListener('mousemove', handleMouseMove, true);
         document.addEventListener('mouseup', handleMouseUp, true);
         document.addEventListener('dragstart', (e) => e.preventDefault(), true);
         
         return () => {
+          console.log('🟡 CLEANING UP GLOBAL LISTENERS');
           document.removeEventListener('mousemove', handleMouseMove, true);
           document.removeEventListener('mouseup', handleMouseUp, true);
           document.removeEventListener('dragstart', (e) => e.preventDefault(), true);
         };
       }
-    }, [isMouseDown, isResizing, startPos, currentPos, resizeStartPos, cropArea, resizeHandle, onCropChange]);
+    }, [isMouseDown, isResizing]);
 
     const selectionRect = getSelectionRect();
 
