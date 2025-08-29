@@ -620,11 +620,11 @@ export function VectorizerModal({
       }
       
       if (shouldRemove) {
-        console.log('Removing color from element with fill:', fill, 'tagName:', el.tagName);
-        // Remove fill attribute to make element transparent (not remove the entire element)
-        el.removeAttribute('fill');
+        console.log('Making element transparent with fill:', fill, 'tagName:', el.tagName);
+        // Set fill to "none" to make element truly transparent (not black)
+        el.setAttribute('fill', 'none');
         removedCount++;
-        console.log('Removed fill attribute from element:', el.tagName);
+        console.log('Set fill=none for element:', el.tagName);
       }
     });
     
@@ -1137,13 +1137,13 @@ export function VectorizerModal({
         deletedColors.forEach(deletedColor => {
           const normalizedColor = deletedColor.toLowerCase();
           
-          // Remove fill attributes to make elements transparent
+          // Set fill to "none" to make elements truly transparent
           const elementsWithFill = doc.querySelectorAll(`*[fill="${normalizedColor}"]`);
-          elementsWithFill.forEach(el => el.removeAttribute('fill'));
+          elementsWithFill.forEach(el => el.setAttribute('fill', 'none'));
           
-          // Remove stroke attributes to make strokes transparent  
+          // Set stroke to "none" to make strokes transparent  
           const elementsWithStroke = doc.querySelectorAll(`*[stroke="${normalizedColor}"]`);
-          elementsWithStroke.forEach(el => el.removeAttribute('stroke'));
+          elementsWithStroke.forEach(el => el.setAttribute('stroke', 'none'));
         });
         
         finalSvg = new XMLSerializer().serializeToString(doc.documentElement);
