@@ -3453,6 +3453,124 @@ export async function registerRoutes(app: express.Application) {
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       console.log(`🔍 DEBUG: Starting AI-vectorized SVG cleaning process...`);
       
+      // CRITICAL: Filter SVG to only include elements with actual colors IMMEDIATELY after vectorization
+      console.log('🎨 VECTORIZATION FILTERING: Starting colored content filtering and bounds recalculation...');
+      console.log(`📊 RAW API SVG length: ${result.length} characters`);
+      console.log(`📊 RAW API SVG preview (first 300 chars): ${result.substring(0, 300)}`);
+      
+      try {
+        // Extract only elements with visible colors
+        const visibleElements = [];
+        
+        // Extract paths with actual fill/stroke colors (not transparent or none)
+        const pathMatches = result.match(/<path[^>]*>/g) || [];
+        for (const path of pathMatches) {
+          const hasVisibleFill = path.includes('fill=') && !path.includes('fill="none"') && !path.includes('fill="transparent"');
+          const hasVisibleStroke = path.includes('stroke=') && !path.includes('stroke="none"') && !path.includes('stroke="transparent"');
+          
+          if (hasVisibleFill || hasVisibleStroke) {
+            visibleElements.push(path);
+          }
+        }
+        
+        // Extract other shapes with visible colors
+        const shapeMatches = result.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
+        for (const shape of shapeMatches) {
+          const hasVisibleFill = shape.includes('fill=') && !shape.includes('fill="none"') && !shape.includes('fill="transparent"');
+          const hasVisibleStroke = shape.includes('stroke=') && !shape.includes('stroke="none"') && !shape.includes('stroke="transparent"');
+          
+          if (hasVisibleFill || hasVisibleStroke) {
+            visibleElements.push(shape);
+          }
+        }
+        
+        // Extract text elements (usually visible by default)
+        const textMatches = result.match(/<text[^>]*>.*?<\/text>/g) || [];
+        visibleElements.push(...textMatches);
+        
+        console.log(`🎨 IMMEDIATE FILTERING: Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
+        console.log(`🔍 Breakdown: ${pathMatches.length} paths, ${shapeMatches.length} shapes, ${textMatches.length} text elements`);
+        
+        if (visibleElements.length > 0) {
+          // Create clean SVG with only colored content
+          const coloredContent = visibleElements.join('\n    ');
+          
+          // Create a temporary SVG to analyze bounds
+          const tempSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+    ${coloredContent}
+</svg>`;
+          
+          // Calculate bounds of just the colored content
+          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+          const analyzer = new SVGBoundsAnalyzer();
+          
+          console.log(`🧮 IMMEDIATE BOUNDS CALCULATION: Analyzing filtered content (${tempSvg.length} chars)`);
+          const boundsResult = await analyzer.analyzeSVGContent(tempSvg);
+          console.log(`📐 IMMEDIATE BOUNDS RESULT: ${JSON.stringify(boundsResult)}`);
+          
+          if (boundsResult.success && boundsResult.contentBounds) {
+            const bounds = boundsResult.contentBounds;
+            const padding = 2; // 2px padding
+            
+            const tightX = bounds.xMin - padding;
+            const tightY = bounds.yMin - padding;
+            const tightWidth = bounds.width + (padding * 2);
+            const tightHeight = bounds.height + (padding * 2);
+            
+            console.log(`🎯 IMMEDIATE TIGHT BOUNDS CALCULATED: ${tightWidth.toFixed(1)}×${tightHeight.toFixed(1)}px (instead of oversized square)`);
+            console.log(`📐 Content bounds: x=${bounds.xMin}, y=${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
+            
+            // Get original SVG attributes to preserve
+            const svgOpenMatch = result.match(/<svg[^>]*>/);
+            if (svgOpenMatch) {
+              let svgAttributes = svgOpenMatch[0];
+              
+              // Preserve important attributes but update dimensions
+              svgAttributes = svgAttributes.replace(/viewBox="[^"]*"/, `viewBox="${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/width="[^"]*"/, `width="${tightWidth.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/height="[^"]*"/, `height="${tightHeight.toFixed(2)}"`);
+              
+              // Add tight content marker
+              if (!svgAttributes.includes('data-content-extracted="true"')) {
+                svgAttributes = svgAttributes.replace('<svg', '<svg data-content-extracted="true"');
+              }
+              
+              result = `<?xml version="1.0" encoding="UTF-8"?>
+${svgAttributes}
+    ${coloredContent}
+</svg>`;
+              
+              console.log(`✅ IMMEDIATE FILTERING SUCCESS: Created tight-bounds SVG with only colored content`);
+              console.log(`🎯 NEW TIGHT VIEWBOX: "${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+              console.log(`📋 FILTERED SVG length: ${result.length} characters`);
+            }
+          } else {
+            console.log('⚠️ Could not calculate immediate tight bounds, using filtered content with original bounds');
+            // Fall back to just filtering without bounds recalculation
+            const svgOpenMatch = result.match(/<svg[^>]*>/);
+            const svgCloseMatch = result.match(/<\/svg>/);
+            
+            if (svgOpenMatch && svgCloseMatch) {
+              const svgOpen = svgOpenMatch[0];
+              const svgClose = svgCloseMatch[0];
+              
+              result = `<?xml version="1.0" encoding="UTF-8"?>
+${svgOpen}
+    ${coloredContent}
+${svgClose}`;
+              
+              console.log(`✅ IMMEDIATE CONTENT FILTERING: Applied filtering without bounds recalculation`);
+            }
+          }
+        } else {
+          console.log('⚠️ No colored elements found in immediate filtering, keeping original SVG');
+        }
+      } catch (error) {
+        console.error('❌ Error in immediate vectorization filtering:', error);
+        // Keep original SVG on error
+      }
+      
       // CRITICAL FIX: Clean up corrupted path elements immediately after receiving from AI service
       if (result.includes('pathnon-scaling-')) {
         console.log('🔧 Detected corrupted pathnon-scaling- elements, cleaning up...');
@@ -3746,128 +3864,9 @@ export async function registerRoutes(app: express.Application) {
         console.log('🔧 No tight cropping applied - using full vectorized result');
       }
 
-      // Filter SVG to only include elements with actual colors AND recalculate tight bounds
-      console.log('🎨 VECTORIZATION FILTERING: Starting colored content filtering and bounds recalculation...');
-      console.log(`📊 INPUT SVG length: ${finalSvg.length} characters`);
-      console.log(`📊 INPUT SVG preview (first 300 chars): ${finalSvg.substring(0, 300)}`);
-      
-      let colorFilteredSvg = finalSvg;
-      
-      try {
-        // Extract only elements with visible colors
-        const visibleElements = [];
-        
-        // Extract paths with actual fill/stroke colors (not transparent or none)
-        const pathMatches = colorFilteredSvg.match(/<path[^>]*>/g) || [];
-        for (const path of pathMatches) {
-          const hasVisibleFill = path.includes('fill=') && !path.includes('fill="none"') && !path.includes('fill="transparent"');
-          const hasVisibleStroke = path.includes('stroke=') && !path.includes('stroke="none"') && !path.includes('stroke="transparent"');
-          
-          if (hasVisibleFill || hasVisibleStroke) {
-            visibleElements.push(path);
-          }
-        }
-        
-        // Extract other shapes with visible colors
-        const shapeMatches = colorFilteredSvg.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
-        for (const shape of shapeMatches) {
-          const hasVisibleFill = shape.includes('fill=') && !shape.includes('fill="none"') && !shape.includes('fill="transparent"');
-          const hasVisibleStroke = shape.includes('stroke=') && !shape.includes('stroke="none"') && !shape.includes('stroke="transparent"');
-          
-          if (hasVisibleFill || hasVisibleStroke) {
-            visibleElements.push(shape);
-          }
-        }
-        
-        // Extract text elements (usually visible by default)
-        const textMatches = colorFilteredSvg.match(/<text[^>]*>.*?<\/text>/g) || [];
-        visibleElements.push(...textMatches);
-        
-        console.log(`🎨 ELEMENT ANALYSIS: Found ${visibleElements.length} colored elements out of ${pathMatches.length + shapeMatches.length + textMatches.length} total elements`);
-        console.log(`🔍 Breakdown: ${pathMatches.length} paths, ${shapeMatches.length} shapes, ${textMatches.length} text elements`);
-        console.log(`📋 First 3 visible elements: ${visibleElements.slice(0, 3).map(el => el.substring(0, 100))}`);
-        
-        if (visibleElements.length > 0) {
-          // Create clean SVG with only colored content
-          const coloredContent = visibleElements.join('\n    ');
-          
-          // Create a temporary SVG to analyze bounds
-          const tempSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
-    ${coloredContent}
-</svg>`;
-          
-          // Calculate bounds of just the colored content
-          const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-          const analyzer = new SVGBoundsAnalyzer();
-          
-          console.log(`🧮 BOUNDS CALCULATION: Analyzing temp SVG (${tempSvg.length} chars)`);
-          const boundsResult = await analyzer.analyzeSVGContent(tempSvg);
-          console.log(`📐 BOUNDS RESULT: ${JSON.stringify(boundsResult)}`);
-          
-          if (boundsResult.success && boundsResult.contentBounds) {
-            const bounds = boundsResult.contentBounds;
-            const padding = 2; // 2px padding
-            
-            const tightX = bounds.xMin - padding;
-            const tightY = bounds.yMin - padding;
-            const tightWidth = bounds.width + (padding * 2);
-            const tightHeight = bounds.height + (padding * 2);
-            
-            console.log(`🎯 TIGHT BOUNDS CALCULATED: ${tightWidth.toFixed(1)}×${tightHeight.toFixed(1)}px (was oversized)`);
-            console.log(`📐 Content bounds: x=${bounds.xMin}, y=${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
-            
-            // Get original SVG attributes to preserve
-            const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
-            if (svgOpenMatch) {
-              let svgAttributes = svgOpenMatch[0];
-              
-              // Preserve important attributes but update dimensions
-              svgAttributes = svgAttributes.replace(/viewBox="[^"]*"/, `viewBox="${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
-              svgAttributes = svgAttributes.replace(/width="[^"]*"/, `width="${tightWidth.toFixed(2)}"`);
-              svgAttributes = svgAttributes.replace(/height="[^"]*"/, `height="${tightHeight.toFixed(2)}"`);
-              
-              // Add tight content marker
-              if (!svgAttributes.includes('data-content-extracted="true"')) {
-                svgAttributes = svgAttributes.replace('<svg', '<svg data-content-extracted="true"');
-              }
-              
-              colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
-${svgAttributes}
-    ${coloredContent}
-</svg>`;
-              
-              console.log(`✅ Created tight-bounds SVG: ${colorFilteredSvg.length} characters (was ${finalSvg.length})`);
-              console.log(`🎯 NEW VIEWBOX: "${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
-              console.log(`📋 FINAL SVG preview (first 400 chars): ${colorFilteredSvg.substring(0, 400)}`);
-            }
-          } else {
-            console.log('⚠️ Could not calculate tight bounds, using filtered content with original bounds');
-            // Fall back to just filtering without bounds recalculation
-            const svgOpenMatch = colorFilteredSvg.match(/<svg[^>]*>/);
-            const svgCloseMatch = colorFilteredSvg.match(/<\/svg>/);
-            
-            if (svgOpenMatch && svgCloseMatch) {
-              const svgOpen = svgOpenMatch[0];
-              const svgClose = svgCloseMatch[0];
-              
-              colorFilteredSvg = `<?xml version="1.0" encoding="UTF-8"?>
-${svgOpen}
-    ${coloredContent}
-${svgClose}`;
-            }
-          }
-        } else {
-          console.log('⚠️ No colored elements found, keeping original SVG');
-        }
-      } catch (error) {
-        console.error('❌ Error filtering colored content:', error);
-        // Keep original SVG on error
-      }
-
       // Send response with quality metadata
       const responseData: any = { 
-        svg: colorFilteredSvg,
+        svg: finalSvg,
         mode: isPreview ? 'preview' : 'production'
       };
       if (qualityWarning) {
