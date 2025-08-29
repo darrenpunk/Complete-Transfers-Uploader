@@ -1456,10 +1456,18 @@ export function VectorizerModal({
           console.log('🔴 MOUSE UP - Selection');
           setIsMouseDown(false);
           
-          // Finalize the crop area
+          // Finalize the crop area - much lower threshold and minimum size enforcement
           const rect = getSelectionRect();
-          if (rect && rect.width > 10 && rect.height > 10) {
-            onCropChange(rect);
+          if (rect) {
+            // Enforce minimum size of 50x50 for visibility
+            const finalRect = {
+              x: rect.x,
+              y: rect.y,
+              width: Math.max(rect.width, 50),
+              height: Math.max(rect.height, 50)
+            };
+            console.log('📌 SETTING CROP AREA:', finalRect);
+            onCropChange(finalRect);
           }
         } else if (isResizing) {
           console.log('🔴 MOUSE UP - Resize');
@@ -1582,12 +1590,24 @@ export function VectorizerModal({
           </>
         )}
         
-        {/* Instructions */}
+        {/* Instructions and Clear button */}
         {!cropArea && !isMouseDown && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 800 }}>
             <div className="bg-yellow-600 text-white px-6 py-3 rounded-xl text-xl font-bold shadow-xl">
-              🖱️ CLICK AND DRAG TO SELECT
+              🖱️ CLICK ANYWHERE TO CREATE CROP AREA
             </div>
+          </div>
+        )}
+        
+        {/* Clear crop button */}
+        {cropArea && !isMouseDown && !isResizing && (
+          <div className="absolute top-4 left-4" style={{ zIndex: 1000 }}>
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold shadow-lg"
+              onClick={() => onCropChange(null)}
+            >
+              ❌ CLEAR CROP
+            </button>
           </div>
         )}
         
