@@ -3772,16 +3772,39 @@ export async function registerRoutes(app: express.Application) {
   });
 
   // Apply tight cropping to existing vectors
-  app.post('/api/fix-vector-bounds', upload.single('svg'), async (req, res) => {
+  app.post('/api/fix-vector-bounds', async (req, res) => {
     console.log('🔧 Fixing vector bounds with tight cropping...');
     
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No SVG file provided' });
+      const { elementId } = req.body;
+      
+      if (!elementId) {
+        return res.status(400).json({ error: 'No elementId provided' });
       }
 
-      // Read the SVG content
-      const svgContent = req.file.buffer.toString('utf8');
+      console.log(`🔍 Processing element ID: ${elementId}`);
+
+      // Get the canvas element
+      const canvasElement = storage.getCanvasElement(elementId);
+      if (!canvasElement) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+
+      // Get the associated logo
+      const logo = storage.getLogo(canvasElement.logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Associated logo not found' });
+      }
+
+      console.log(`📁 Found logo: ${logo.filename}, type: ${logo.fileType}`);
+
+      // Get SVG content from the logo file
+      const logoPath = path.join('uploads', logo.filename);
+      if (!fs.existsSync(logoPath)) {
+        return res.status(404).json({ error: 'Logo file not found on disk' });
+      }
+
+      const svgContent = fs.readFileSync(logoPath, 'utf8');
       console.log(`🔧 Input SVG length: ${svgContent.length} characters`);
 
       // Apply tight cropping
@@ -3834,19 +3857,33 @@ export async function registerRoutes(app: express.Application) {
         // Add data attribute to mark as processed
         finalSvg = finalSvg.replace(/<svg/, '<svg data-content-extracted="true"');
           
-          console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
-          console.log(`🔧 Tight bounds: ${bounds.width}x${bounds.height}`);
-          
-          // Clean up temp file
-          fs.unlinkSync(tempSvgPath);
-          
-          return res.json({
-            success: true,
-            svg: finalSvg,
-            originalDimensions: { width: bounds.width + 2*padding, height: bounds.height + 2*padding },
-            tightDimensions: { width: bounds.width, height: bounds.height }
-          });
-        }
+        console.log(`✅ Applied tight cropping: ${finalSvg.length} vs original: ${svgContent.length}`);
+        console.log(`🔧 Tight bounds: ${bounds.width}x${bounds.height}`);
+        
+        // Save the updated SVG content back to the logo file
+        fs.writeFileSync(logoPath, finalSvg, 'utf8');
+        console.log(`💾 Updated logo file: ${logoPath}`);
+        
+        // Update canvas element dimensions to match the new tight bounds
+        const tightWidthMm = (bounds.width + 2*padding) / 2.834645669; // Convert px to mm at 72 DPI
+        const tightHeightMm = (bounds.height + 2*padding) / 2.834645669;
+        
+        storage.updateCanvasElement(elementId, {
+          width: Math.round(tightWidthMm),
+          height: Math.round(tightHeightMm)
+        });
+        
+        console.log(`📐 Updated canvas element dimensions: ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`);
+        
+        // Clean up temp file
+        fs.unlinkSync(tempSvgPath);
+        
+        return res.json({
+          success: true,
+          message: `Bounds fixed! Reduced from ${Math.round(canvasElement.width)}×${Math.round(canvasElement.height)}mm to ${Math.round(tightWidthMm)}×${Math.round(tightHeightMm)}mm`,
+          originalDimensions: { width: canvasElement.width, height: canvasElement.height },
+          tightDimensions: { width: Math.round(tightWidthMm), height: Math.round(tightHeightMm) }
+        });
       } else {
         console.log('⚠️ Could not determine bounds for vector, keeping original');
         // Clean up temp file
