@@ -3771,6 +3771,94 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Download clean SVG with tight content bounds
+  app.post('/api/download-clean-svg', async (req, res) => {
+    console.log('📥 Generating clean SVG download...');
+    
+    try {
+      const { elementId } = req.body;
+      
+      if (!elementId) {
+        return res.status(400).json({ error: 'No elementId provided' });
+      }
+
+      // Get all projects to search through
+      const allProjects = await storage.getProjects();
+      let targetElement = null;
+
+      // Search through all projects for the element
+      for (const project of allProjects) {
+        const elements = await storage.getCanvasElementsByProject(project.id);
+        const found = elements.find(el => el.id === elementId);
+        if (found) {
+          targetElement = found;
+          break;
+        }
+      }
+
+      if (!targetElement) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+
+      // Get all logos for this project and find the target logo
+      const projectLogos = await storage.getLogosByProject(targetElement.projectId);
+      const logo = projectLogos.find(l => l.id === targetElement.logoId);
+
+      if (!logo || !logo.filename) {
+        return res.status(404).json({ error: 'Logo file not found' });
+      }
+
+      // Read the SVG content
+      const logoPath = path.join('uploads', logo.filename);
+      if (!fs.existsSync(logoPath)) {
+        return res.status(404).json({ error: 'SVG file not found on disk' });
+      }
+
+      const svgContent = fs.readFileSync(logoPath, 'utf8');
+
+      // Simple approach: Extract only visible elements and create tight bounds
+      // Remove any invisible elements or large padding rectangles
+      let cleanSvg = svgContent;
+
+      // Extract actual visible paths and shapes only
+      const pathMatches = cleanSvg.match(/<path[^>]*d="[^"]*"[^>]*>/g) || [];
+      const shapeMatches = cleanSvg.match(/<(circle|rect|ellipse|polygon|polyline)[^>]*>/g) || [];
+      const textMatches = cleanSvg.match(/<text[^>]*>.*?<\/text>/gs) || [];
+
+      if (pathMatches.length === 0 && shapeMatches.length === 0 && textMatches.length === 0) {
+        return res.status(400).json({ error: 'No visible content found in SVG' });
+      }
+
+      // Create a minimal SVG with just the content
+      const allContent = [...pathMatches, ...shapeMatches, ...textMatches].join('\n    ');
+      
+      // Create clean SVG with minimal viewBox
+      const minimalSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     viewBox="0 0 200 200" 
+     width="200" 
+     height="200">
+    ${allContent}
+</svg>`;
+
+      // Set headers for download
+      const filename = `${logo.originalName || 'vectorized'}_clean.svg`;
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      
+      console.log(`✅ Generated clean SVG download: ${filename}`);
+      res.send(minimalSvg);
+
+    } catch (error) {
+      console.error('❌ Error generating clean SVG:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to generate clean SVG' 
+      });
+    }
+  });
+
   // Apply tight cropping to existing vectors
   app.post('/api/fix-vector-bounds', async (req, res) => {
     console.log('🔧 Fixing vector bounds with tight cropping...');

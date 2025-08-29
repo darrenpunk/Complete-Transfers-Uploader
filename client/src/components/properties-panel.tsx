@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package, RotateCw, Palette, Maximize2 } from "lucide-react";
+import { Image, Eye, EyeOff, Lock, Unlock, CheckCircle, AlertTriangle, Copy, Grid, ChevronDown, ChevronRight, Settings, Layers, Move, Package, RotateCw, Palette, Maximize2, Download } from "lucide-react";
 import {
   AlignLeft,
   AlignCenter,
@@ -1007,9 +1007,73 @@ export default function PropertiesPanel({
                     <p>Fix oversized vector bounds (crop: 461×402 → canvas: 525×530)</p>
                   </TooltipContent>
                 </Tooltip>
+
+                {/* Download Clean SVG Button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline" 
+                      size="sm"
+                      onClick={async () => {
+                        if (!currentElement) return;
+                        
+                        try {
+                          const response = await fetch('/api/download-clean-svg', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              elementId: currentElement.id
+                            })
+                          });
+                          
+                          if (response.ok) {
+                            // Create download link
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `vectorized_clean.svg`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            
+                            toast({
+                              title: "Success",
+                              description: "Clean SVG downloaded! Only actual content included.",
+                            });
+                          } else {
+                            const result = await response.json();
+                            toast({
+                              title: "Error", 
+                              description: result.error || "Failed to generate clean SVG",
+                              variant: "destructive"
+                            });
+                          }
+                        } catch (error) {
+                          console.error('Download clean SVG error:', error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to download clean SVG",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      className="w-full mt-2"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Clean SVG
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Download SVG with only visible content (no padding/bounds)</p>
+                  </TooltipContent>
+                </Tooltip>
                 
                 <p className="text-xs text-gray-500 mt-1">
-                  Duplicate or replicate logos for multi-placement designs
+                  Get clean SVG with just the actual content
                 </p>
               </div>
             </div>
