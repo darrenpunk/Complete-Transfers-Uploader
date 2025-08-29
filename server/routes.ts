@@ -3784,32 +3784,39 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`🔍 Processing element ID: ${elementId}`);
 
+      // Debug: Check storage contents
+      console.log(`🔍 Total canvas elements in storage:`, (storage as any).canvasElements.size);
+      console.log(`🔍 Total logos in storage:`, (storage as any).logos.size);
+
       // Get the canvas element
-      const canvasElement = storage.getCanvasElement(elementId);
+      const canvasElement = await storage.getCanvasElement(elementId);
       if (!canvasElement) {
         return res.status(404).json({ error: 'Canvas element not found' });
       }
 
       console.log(`🎯 Canvas element found:`, {
+        raw: canvasElement,
         id: canvasElement.id,
         logoId: canvasElement.logoId,
         width: canvasElement.width,
-        height: canvasElement.height
+        height: canvasElement.height,
+        allKeys: Object.keys(canvasElement),
+        type: typeof canvasElement
       });
 
       // Get the associated logo
-      const logo = storage.getLogo(canvasElement.logoId);
+      const logo = await storage.getLogo(canvasElement.logoId);
       if (!logo) {
         return res.status(404).json({ error: 'Associated logo not found' });
       }
 
       console.log(`📁 Found logo:`, {
+        raw: logo,
         id: logo.id,
         filename: logo.filename,
-        fileName: logo.fileName, // Check both possible property names
-        fileType: logo.fileType,
         originalName: logo.originalName,
-        allKeys: Object.keys(logo)
+        allKeys: Object.keys(logo),
+        type: typeof logo
       });
 
       // Get SVG content from the logo file
