@@ -1769,8 +1769,8 @@ export function VectorizerModal({
         return; // Exit immediately to prevent any selection logic
       }
       
-      // Handle selection ONLY if not resizing
-      if (state.isMouseDown && !state.isResizing) {
+      // Handle selection ONLY if not resizing AND valid mouse down occurred
+      if (state.isMouseDown && !state.isResizing && state.validMouseDownOccurred) {
         const rect = state.startPos ? {
           x: Math.min(state.startPos.x, pos.x),
           y: Math.min(state.startPos.y, pos.y),
@@ -1778,11 +1778,13 @@ export function VectorizerModal({
           height: Math.abs(pos.y - state.startPos.y)
         } : null;
         if (rect) {
-          console.log('🔄 SELECTING:', rect);
+          console.log('✅ VALID USER SELECTION:', rect);
           if (rect.width > 10 && rect.height > 10) {
             onCropChange(rect);
           }
         }
+      } else if (state.isMouseDown && !state.validMouseDownOccurred) {
+        console.log('🚫 BLOCKING PHANTOM SELECTION - No valid mouse down occurred');
       }
     }, []);
     
@@ -1810,6 +1812,7 @@ export function VectorizerModal({
         setIsMouseDown(false);
         setStartPos(null);
         setCurrentPos(null);
+        setValidMouseDownOccurred(false);
         return;
       }
       
@@ -1861,17 +1864,18 @@ export function VectorizerModal({
     const listenersRef = useRef(false);
     
     useEffect(() => {
-      const needsListeners = isMouseDown || isResizing;
+      // ONLY SET UP LISTENERS IF VALID MOUSE DOWN OCCURRED
+      const needsListeners = (isMouseDown || isResizing) && validMouseDownOccurred;
       
       if (needsListeners && !listenersRef.current) {
-        console.log('🟡 SETTING UP GLOBAL LISTENERS', { isMouseDown, isResizing });
+        console.log('🟡 SETTING UP GLOBAL LISTENERS', { isMouseDown, isResizing, validMouseDownOccurred });
         listenersRef.current = true;
         
         document.addEventListener('mousemove', handleMouseMove, true);
         document.addEventListener('mouseup', handleMouseUp, true);
         document.addEventListener('dragstart', (e) => e.preventDefault(), true);
       }
-    }, [isMouseDown, isResizing]);
+    }, [isMouseDown, isResizing, validMouseDownOccurred]);
     
     // Cleanup listeners when neither mouse down nor resizing
     useEffect(() => {
