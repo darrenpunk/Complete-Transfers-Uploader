@@ -1345,8 +1345,8 @@ export function VectorizerModal({
       // Close crop interface and start vectorization with cropped file
       setShowCropInterface(false);
       
-      // Process vectorization with the cropped file
-      await processVectorizationWithFile(croppedFile);
+      // Process vectorization with the cropped file and crop dimensions
+      await processVectorizationWithFile(croppedFile, actualCropArea);
       
     } catch (error) {
       console.error('🚨 CROP FAILED:', error);
@@ -1364,14 +1364,21 @@ export function VectorizerModal({
     }
   };
   
-  // Modified vectorization function to accept a specific file
-  const processVectorizationWithFile = async (fileToProcess: File = imageFile) => {
+  // Modified vectorization function to accept a specific file and optional crop dimensions
+  const processVectorizationWithFile = async (fileToProcess: File = imageFile, cropDimensions?: { x: number; y: number; width: number; height: number }) => {
     setIsProcessing(true);
     setError(null);
     
     try {
       const formData = new FormData();
       formData.append('image', fileToProcess);
+      
+      // Add crop dimensions if provided (from crop interface)
+      if (cropDimensions) {
+        formData.append('cropWidth', cropDimensions.width.toString());
+        formData.append('cropHeight', cropDimensions.height.toString());
+        console.log(`🎯 CROP DIMENSIONS: Sending ${cropDimensions.width}×${cropDimensions.height}px to vectorization API`);
+      }
       
       const response = await fetch('/api/vectorize', {
         method: 'POST',

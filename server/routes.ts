@@ -3453,6 +3453,13 @@ export async function registerRoutes(app: express.Application) {
       console.log(`✅ Vectorization successful: ${result.length} bytes SVG`);
       console.log(`🔍 DEBUG: Starting AI-vectorized SVG cleaning process...`);
       
+      // Check if crop dimensions were provided (from crop interface)
+      const cropWidth = req.body.cropWidth ? parseFloat(req.body.cropWidth) : null;
+      const cropHeight = req.body.cropHeight ? parseFloat(req.body.cropHeight) : null;
+      const hasCropDimensions = cropWidth && cropHeight && cropWidth > 0 && cropHeight > 0;
+      
+      console.log(`🎯 CROP BOUNDS CHECK: cropWidth=${cropWidth}, cropHeight=${cropHeight}, hasCropDimensions=${hasCropDimensions}`);
+      
       // CRITICAL: Filter SVG to only include elements with actual colors IMMEDIATELY after vectorization
       console.log('🎨 VECTORIZATION FILTERING: Starting colored content filtering and bounds recalculation...');
       console.log(`📊 RAW API SVG length: ${result.length} characters`);
@@ -3511,29 +3518,44 @@ export async function registerRoutes(app: express.Application) {
           
           if (boundsResult.success && boundsResult.contentBounds) {
             const bounds = boundsResult.contentBounds;
-            const padding = 2; // 2px padding
             
-            const tightX = bounds.xMin - padding;
-            const tightY = bounds.yMin - padding;
-            const tightWidth = bounds.width + (padding * 2);
-            const tightHeight = bounds.height + (padding * 2);
+            let finalX, finalY, finalWidth, finalHeight;
             
-            console.log(`🎯 IMMEDIATE TIGHT BOUNDS CALCULATED: ${tightWidth.toFixed(1)}×${tightHeight.toFixed(1)}px (instead of oversized square)`);
-            console.log(`📐 Content bounds: x=${bounds.xMin}, y=${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
+            if (hasCropDimensions) {
+              // USE CROP DIMENSIONS: Set SVG bounds to match user's selected crop rectangle
+              finalX = 0;
+              finalY = 0;
+              finalWidth = cropWidth!;
+              finalHeight = cropHeight!;
+              
+              console.log(`🎯 USING CROP BOUNDS: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}px (from user crop selection)`);
+              console.log(`📐 Content will be positioned within crop bounds: ${bounds.xMin}, ${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
+            } else {
+              // FALLBACK: Use automatic tight content bounds  
+              const padding = 2; // 2px padding
+              finalX = bounds.xMin - padding;
+              finalY = bounds.yMin - padding;
+              finalWidth = bounds.width + (padding * 2);
+              finalHeight = bounds.height + (padding * 2);
+              
+              console.log(`🎯 AUTOMATIC TIGHT BOUNDS: ${finalWidth.toFixed(1)}×${finalHeight.toFixed(1)}px (content + padding)`);
+              console.log(`📐 Content bounds: x=${bounds.xMin}, y=${bounds.yMin}, w=${bounds.width}, h=${bounds.height}`);
+            }
             
             // Get original SVG attributes to preserve
             const svgOpenMatch = result.match(/<svg[^>]*>/);
             if (svgOpenMatch) {
               let svgAttributes = svgOpenMatch[0];
               
-              // Preserve important attributes but update dimensions
-              svgAttributes = svgAttributes.replace(/viewBox="[^"]*"/, `viewBox="${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
-              svgAttributes = svgAttributes.replace(/width="[^"]*"/, `width="${tightWidth.toFixed(2)}"`);
-              svgAttributes = svgAttributes.replace(/height="[^"]*"/, `height="${tightHeight.toFixed(2)}"`);
+              // Preserve important attributes but update dimensions to crop or tight bounds
+              svgAttributes = svgAttributes.replace(/viewBox="[^"]*"/, `viewBox="${finalX.toFixed(2)} ${finalY.toFixed(2)} ${finalWidth.toFixed(2)} ${finalHeight.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/width="[^"]*"/, `width="${finalWidth.toFixed(2)}"`);
+              svgAttributes = svgAttributes.replace(/height="[^"]*"/, `height="${finalHeight.toFixed(2)}"`);
               
-              // Add tight content marker
-              if (!svgAttributes.includes('data-content-extracted="true"')) {
-                svgAttributes = svgAttributes.replace('<svg', '<svg data-content-extracted="true"');
+              // Add appropriate marker
+              const marker = hasCropDimensions ? 'data-crop-extracted="true"' : 'data-content-extracted="true"';
+              if (!svgAttributes.includes(marker)) {
+                svgAttributes = svgAttributes.replace('<svg', `<svg ${marker}`);
               }
               
               result = `<?xml version="1.0" encoding="UTF-8"?>
@@ -3541,8 +3563,9 @@ ${svgAttributes}
     ${coloredContent}
 </svg>`;
               
-              console.log(`✅ IMMEDIATE FILTERING SUCCESS: Created tight-bounds SVG with only colored content`);
-              console.log(`🎯 NEW TIGHT VIEWBOX: "${tightX.toFixed(2)} ${tightY.toFixed(2)} ${tightWidth.toFixed(2)} ${tightHeight.toFixed(2)}"`);
+              const boundsType = hasCropDimensions ? 'CROP' : 'CONTENT';
+              console.log(`✅ IMMEDIATE FILTERING SUCCESS: Created ${boundsType}-bounds SVG with only colored content`);
+              console.log(`🎯 NEW ${boundsType} VIEWBOX: "${finalX.toFixed(2)} ${finalY.toFixed(2)} ${finalWidth.toFixed(2)} ${finalHeight.toFixed(2)}"`);
               console.log(`📋 FILTERED SVG length: ${result.length} characters`);
             }
           } else {
