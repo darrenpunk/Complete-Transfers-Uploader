@@ -615,14 +615,31 @@ export function VectorizerModal({
       console.log('🔧 FORCED SVG ROOT TO TRANSPARENT');
     }
     
-    // Remove ALL black background elements that might be revealed
-    const allElements = doc.querySelectorAll('*[fill]');
-    allElements.forEach(el => {
-      const fill = el.getAttribute('fill')?.toLowerCase();
-      if (fill === '#000000' || fill === 'black' || fill === '#000') {
-        console.log('REMOVING BLACK ELEMENT:', el.tagName, 'with fill:', fill);
+    // CRITICAL FIX: Handle elements with no fill (they default to black!) AND black strokes
+    const allShapeElements = doc.querySelectorAll('path, rect, circle, ellipse, polygon');
+    allShapeElements.forEach(el => {
+      const fill = el.getAttribute('fill');
+      const stroke = el.getAttribute('stroke');
+      
+      // If element has no fill attribute, it defaults to BLACK in SVG!
+      if (!fill || fill === '' || fill === 'none') {
+        console.log('🔧 FORCING UNFILLED ELEMENT TO TRANSPARENT:', el.tagName);
+        el.setAttribute('fill', 'transparent');
+        el.setAttribute('fill-opacity', '0');
+      }
+      // Remove explicit black fills
+      else if (fill && (fill.toLowerCase() === '#000000' || fill.toLowerCase() === 'black' || fill.toLowerCase() === '#000')) {
+        console.log('🗑️ REMOVING BLACK FILL ELEMENT:', el.tagName, 'with fill:', fill);
         el.remove();
         removedCount++;
+        return; // Skip stroke check since element is removed
+      }
+      
+      // ALSO handle black strokes that are revealed when fills are removed
+      if (stroke && (stroke.toLowerCase() === '#000000' || stroke.toLowerCase() === 'black' || stroke.toLowerCase() === '#000')) {
+        console.log('🔧 FORCING BLACK STROKE TO TRANSPARENT:', el.tagName, 'stroke:', stroke);
+        el.setAttribute('stroke', 'transparent');
+        el.setAttribute('stroke-opacity', '0');
       }
     });
     
