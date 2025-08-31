@@ -1,0 +1,1236 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-3ad632cd1bd0ce09.js:1
+(anonymous) @ framework-3ad632cd1bd0ce09.js:1
+uD @ framework-3ad632cd1bd0ce09.js:1
+uI @ framework-3ad632cd1bd0ce09.js:1
+uM @ framework-3ad632cd1bd0ce09.js:1
+uS @ framework-3ad632cd1bd0ce09.js:1
+C @ framework-3ad632cd1bd0ce09.js:1
+z @ framework-3ad632cd1bd0ce09.js:1
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ ✅ Found displayed image and container: Object
+ 🎯 OBJECT-CONTAIN CALCULATION: Object
+ 🎯 CROP DIMENSIONS: Object
+ 🎯 CROP DIMENSIONS: Sending 1028×914px to vectorization API
+ 🔄 CROP+VECTORIZE: Shape stacking = cut_out (deleted colors will be transparent)
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎨 Server detected no colors, extracting from SVG...
+ 🎨 Extracted colors from SVG: Array(2)
+ Vectorization successful: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ Attempting to render SVG with length: 59514
+ SVG preview (first 500 chars): 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg data-crop-extracted="true" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1028.00 914.00" data-ai-vectorized="true">
+    <path  vector-effect="non-scaling-stroke" d="
+  M 265.04 509.83
+  Q 260.61 518.56 263.36 527.39
+  Q 264.16 529.95 265.77 531.14
+  A 1.95 1.94 -50.1 0 0 268.35 530.90
+  C 271.38 527.67 271.35 520.61 271.16 516.51
+  A 0.32 0.32 0.0 0 1 271.72 516.29
+  Q 274.71 519.81 277
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1028.00 914.00
+ Direct DOM update with interactive SVG length: 59514
+ SVG appended to container successfully
+ Applying smart white background removal
+ SVG viewBox: 1028 x 914
+ Found white elements: 14
+ White path 0: d="   M 1028.00 0.00   L 1028.00 914.00   L 0.00 914.00   L 0.00 0.00   L 1028.00 0.00   Z   M 265.04 5..."
+ White path 1: d="   M 451.6534 198.3403   A 50.59 48.65 -90.2 0 1 500.4797 248.7602   A 50.59 48.65 -90.2 0 1 452.006..."
+ White path 2: d="   M 575.4222 198.3838   A 50.57 48.66 -90.7 0 1 624.6964 248.3555   A 50.57 48.66 -90.7 0 1 576.657..."
+ White path 3: d="   M 627.50 328.30   A 0.23 0.22 81.5 0 1 627.86 328.57   Q 619.68 342.85 606.44 353.25   A 0.79 0.7..."
+ White path 4: d="   M 520.14 856.03   C 524.33 857.44 524.74 862.69 522.82 865.88   Q 520.05 870.45 514.44 873.31   Q..."
+ Content bounds: Object
+ Removing white edge path at index: 34
+ Removed 1 white background elements
+ Remove all white - Before: 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg data-crop-extracted="true" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1028.00 914.00" 
+ Remove all white - After: <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1028.00 914.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 265.
+ Remove all white - SVG length changed from 59514 to 44733
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44733
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1028.00 914.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 265.04 509.83   Q 260.61 518.56 263.36 527.39   Q 264.16 529.95 265.77 531.14   A 1.95 1.94 -50.1 0 0 268.35 530.90   C 271.38 527.67 271.35 520.61 271.16 516.51   A 0.32 0.32 0.0 0 1 271.72 516.29   Q 274.71 519.81 277.69 522.27   C 279.22 523.54 280.52 525.90 281.93 527.31   Q 282.77 528.15 283.10 528
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1028.00 914.00
+ Direct DOM update with interactive SVG length: 44733
+ SVG appended to container successfully
+ Color clicked in SVG: #333333
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Removing unlocked colors: Array(1)
+ Keeping locked colors: Array(1)
+ 🚨 REMOVECOLORFORMSVG FUNCTION CALLED! Object
+ Removing color: #ffffff
+ 🔍 TOTAL ELEMENTS WITH FILL: 34
+ 🔍 Element 0: path, fill="#333333"
+ 🎯 Element 0: shouldRemove = false
+ 🔍 Element 1: path, fill="#ffffff"
+ ✅ Element 1: DIRECT MATCH
+ 🎯 Element 1: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 2: path, fill="#ffffff"
+ ✅ Element 2: DIRECT MATCH
+ 🎯 Element 2: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 3: path, fill="#333333"
+ 🎯 Element 3: shouldRemove = false
+ 🔍 Element 4: path, fill="#333333"
+ 🎯 Element 4: shouldRemove = false
+ 🔍 Element 5: path, fill="#ffffff"
+ ✅ Element 5: DIRECT MATCH
+ 🎯 Element 5: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 6: path, fill="#333333"
+ 🎯 Element 6: shouldRemove = false
+ 🔍 Element 7: path, fill="#333333"
+ 🎯 Element 7: shouldRemove = false
+ 🔍 Element 8: path, fill="#333333"
+ 🎯 Element 8: shouldRemove = false
+ 🔍 Element 9: path, fill="#333333"
+ 🎯 Element 9: shouldRemove = false
+ 🔍 Element 10: path, fill="#333333"
+ 🎯 Element 10: shouldRemove = false
+ 🔍 Element 11: path, fill="#333333"
+ 🎯 Element 11: shouldRemove = false
+ 🔍 Element 12: path, fill="#333333"
+ 🎯 Element 12: shouldRemove = false
+ 🔍 Element 13: path, fill="#333333"
+ 🎯 Element 13: shouldRemove = false
+ 🔍 Element 14: path, fill="#333333"
+ 🎯 Element 14: shouldRemove = false
+ 🔍 Element 15: path, fill="#333333"
+ 🎯 Element 15: shouldRemove = false
+ 🔍 Element 16: path, fill="#333333"
+ 🎯 Element 16: shouldRemove = false
+ 🔍 Element 17: path, fill="#333333"
+ 🎯 Element 17: shouldRemove = false
+ 🔍 Element 18: path, fill="#333333"
+ 🎯 Element 18: shouldRemove = false
+ 🔍 Element 19: path, fill="#333333"
+ 🎯 Element 19: shouldRemove = false
+ 🔍 Element 20: path, fill="#333333"
+ 🎯 Element 20: shouldRemove = false
+ 🔍 Element 21: path, fill="#333333"
+ 🎯 Element 21: shouldRemove = false
+ 🔍 Element 22: path, fill="#ffffff"
+ ✅ Element 22: DIRECT MATCH
+ 🎯 Element 22: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 23: path, fill="#ffffff"
+ ✅ Element 23: DIRECT MATCH
+ 🎯 Element 23: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 24: path, fill="#ffffff"
+ ✅ Element 24: DIRECT MATCH
+ 🎯 Element 24: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 25: path, fill="#ffffff"
+ ✅ Element 25: DIRECT MATCH
+ 🎯 Element 25: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 26: path, fill="#ffffff"
+ ✅ Element 26: DIRECT MATCH
+ 🎯 Element 26: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 27: path, fill="#ffffff"
+ ✅ Element 27: DIRECT MATCH
+ 🎯 Element 27: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 28: path, fill="#ffffff"
+ ✅ Element 28: DIRECT MATCH
+ 🎯 Element 28: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 29: ellipse, fill="#ffffff"
+ ✅ Element 29: DIRECT MATCH
+ 🎯 Element 29: shouldRemove = true
+ Removing element with fill: #ffffff tagName: ellipse
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 30: circle, fill="#ffffff"
+ ✅ Element 30: DIRECT MATCH
+ 🎯 Element 30: shouldRemove = true
+ Removing element with fill: #ffffff tagName: circle
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 31: rect, fill="#ffffff"
+ ✅ Element 31: DIRECT MATCH
+ 🎯 Element 31: shouldRemove = true
+ Removing element with fill: #ffffff tagName: rect
+ 🎯 BEFORE STACKING CHECK - stackingMode = cut_out string
+ 🎯 INSIDE CUT_OUT BRANCH
+ 🎯 AFTER SETTING FILL=NONE
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🎯 INCREMENTED REMOVED COUNT
+ 🔍 Element 32: rect, fill="#333333"
+ 🎯 Element 32: shouldRemove = false
+ 🔍 Element 33: rect, fill="#333333"
+ 🎯 Element 33: shouldRemove = false
+ Removed 13 elements with color #ffffff
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44694
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1028.00 914.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 265.04 509.83   Q 260.61 518.56 263.36 527.39   Q 264.16 529.95 265.77 531.14   A 1.95 1.94 -50.1 0 0 268.35 530.90   C 271.38 527.67 271.35 520.61 271.16 516.51   A 0.32 0.32 0.0 0 1 271.72 516.29   Q 274.71 519.81 277.69 522.27   C 279.22 523.54 280.52 525.90 281.93 527.31   Q 282.77 528.15 283.10 528
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1028.00 914.00
+ Direct DOM update with interactive SVG length: 44694
+ SVG appended to container successfully
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ VectorizerModal useEffect: Object
+ Created image preview URL for cropping: blob:https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/5810c77e-c154-494e-91fc-d82ded5eac74
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ Attempting to render SVG with length: 44694
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1028.00 914.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 265.04 509.83   Q 260.61 518.56 263.36 527.39   Q 264.16 529.95 265.77 531.14   A 1.95 1.94 -50.1 0 0 268.35 530.90   C 271.38 527.67 271.35 520.61 271.16 516.51   A 0.32 0.32 0.0 0 1 271.72 516.29   Q 274.71 519.81 277.69 522.27   C 279.22 523.54 280.52 525.90 281.93 527.31   Q 282.77 528.15 283.10 528
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1028.00 914.00
+ Direct DOM update with interactive SVG length: 44694
+ SVG appended to container successfully
+ VectorizerModal render: Object
+ Preview state check: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ VectorizerModal useEffect: Object
+ Created image preview URL for cropping: blob:https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/51b488da-9570-44ec-a8bb-b0c305ab56c0
+ VectorizerModal render: Object
+ Preview state check: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+Mt.forEach.n.<computed> @ eruda.js:2
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎯 CROP AREA SET (waiting for confirmation): Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 ✅ Found displayed image and container: Object
+Console.js:61 🎯 OBJECT-CONTAIN CALCULATION: Object
+Console.js:61 🎯 CROP DIMENSIONS: Object
+Console.js:61 🎯 CROP DIMENSIONS: Sending 1028×903px to vectorization API
+Console.js:61 🔄 CROP+VECTORIZE: Shape stacking = cut_out (deleted colors will be transparent)
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 🎨 Server detected no colors, extracting from SVG...
+Console.js:61 🎨 Extracted colors from SVG: Array(2)
+Console.js:61 Vectorization successful: Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 Attempting to render SVG with length: 60132
+Console.js:61 SVG preview (first 500 chars): 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg data-crop-extracted="true" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1028.00 903.00" data-ai-vectorized="true">
+    <path  vector-effect="non-scaling-stroke" d="
+  M 265.00 497.82
+  C 261.84 504.41 261.22 511.26 264.41 517.56
+  Q 265.51 519.73 266.95 519.44
+  C 271.24 518.57 271.25 509.78 271.19 504.65
+  A 0.35 0.35 0.0 0 1 271.80 504.41
+  Q 274.81 507.84 277.65 510.23
+  C 279.21 51
+Console.js:61 SVG container ref exists, creating element
+Console.js:61 SVG element found: true
+Console.js:61 Current viewBox: 0.00 0.00 1028.00 903.00
+Console.js:61 Direct DOM update with interactive SVG length: 60132
+Console.js:61 SVG appended to container successfully
+Console.js:61 Color clicked in SVG: #333333
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Color clicked in SVG: #333333
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Removing unlocked colors: Array(1)
+Console.js:61 Keeping locked colors: Array(1)
+Console.js:61 Removing color: #ffffff
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: ellipse
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: circle
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removing element with fill: #ffffff tagName: rect
+Console.js:61 Removed element completely for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 Removed 14 elements with color #ffffff
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Attempting to render SVG with length: 40663
+Console.js:61 SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1028.00 903.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 265.00 497.82   C 261.84 504.41 261.22 511.26 264.41 517.56   Q 265.51 519.73 266.95 519.44   C 271.24 518.57 271.25 509.78 271.19 504.65   A 0.35 0.35 0.0 0 1 271.80 504.41   Q 274.81 507.84 277.65 510.23   C 279.21 511.55 280.58 514.01 281.84 515.24   Q 282.59 515.96 282.87 516.06   A 2.15 1.91 -70.4 
+Console.js:61 SVG container ref exists, creating element
+Console.js:61 SVG element found: true
+Console.js:61 Current viewBox: 0.00 0.00 1028.00 903.00
+Console.js:61 Direct DOM update with interactive SVG length: 40663
+Console.js:61 SVG appended to container successfully
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Template A3: 842x1191px, Workspace: 400x900, Zoom: 50%
+Console.js:61 VectorizerModal render: {open: true, fileName: 'monster12243423.jpg', hasImageFile: true, fileSize: 80949, fileType: 'image/jpeg', …}
+Console.js:61 Preview state check: {previewUrl: true, isProcessing: false, error: null, vectorSvg: true}

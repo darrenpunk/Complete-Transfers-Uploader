@@ -2127,11 +2127,15 @@ export function VectorizerModal({
                                                   colorItem.color.toLowerCase() === 'rgb(255,255,255)' ||
                                                   colorItem.color.toLowerCase() === 'rgb(100%,100%,100%)';
                               
+                              console.log('🎨 Color deletion:', { color: colorItem.color, isWhiteColor });
+                              
                               if (isWhiteColor) {
                                 // Use smart background removal for white colors
+                                console.log('🎨 Using removeWhiteFromSvg for white color');
                                 updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
                               } else {
                                 // Use normal color removal for non-white colors
+                                console.log('🎨 Using removeColorFromSvg for non-white color');
                                 updatedSvg = removeColorFromSvg(currentSvg, colorItem.color, shapeStacking);
                               }
                               setColoredSvg(updatedSvg);
