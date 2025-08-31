@@ -447,28 +447,59 @@ export function VectorizerModal({
     // Replace in various attribute formats
     let updatedSvg = svg;
     
-    // Replace fill attributes
-    updatedSvg = updatedSvg.replace(
-      new RegExp(`fill\\s*=\\s*["']${escapeRegExp(oldColor)}["']`, 'gi'),
-      `fill="${newColor}"`
-    );
+    // Replace both original and normalized color formats to ensure compatibility
+    const colorsToReplace = [oldColor, normalizedOldColor];
+    console.log(`🎨 RECOLOR: Replacing ${oldColor} → ${normalizedNewColor}`, { normalizedOldColor, normalizedNewColor });
     
-    // Replace stroke attributes
-    updatedSvg = updatedSvg.replace(
-      new RegExp(`stroke\\s*=\\s*["']${escapeRegExp(oldColor)}["']`, 'gi'),
-      `stroke="${newColor}"`
-    );
+    let replacementCount = 0;
+    colorsToReplace.forEach(colorToReplace => {
+      if (colorToReplace) {
+        // Replace fill attributes
+        const beforeFill = updatedSvg;
+        updatedSvg = updatedSvg.replace(
+          new RegExp(`fill\\s*=\\s*["']${escapeRegExp(colorToReplace)}["']`, 'gi'),
+          `fill="${normalizedNewColor}"`
+        );
+        if (updatedSvg !== beforeFill) {
+          replacementCount++;
+          console.log(`🎨 FILL REPLACED: ${colorToReplace} → ${normalizedNewColor}`);
+        }
+        
+        // Replace stroke attributes
+        const beforeStroke = updatedSvg;
+        updatedSvg = updatedSvg.replace(
+          new RegExp(`stroke\\s*=\\s*["']${escapeRegExp(colorToReplace)}["']`, 'gi'),
+          `stroke="${normalizedNewColor}"`
+        );
+        if (updatedSvg !== beforeStroke) {
+          replacementCount++;
+          console.log(`🎨 STROKE REPLACED: ${colorToReplace} → ${normalizedNewColor}`);
+        }
+        
+        // Replace style attributes
+        const beforeStyleFill = updatedSvg;
+        updatedSvg = updatedSvg.replace(
+          new RegExp(`fill\\s*:\\s*${escapeRegExp(colorToReplace)}`, 'gi'),
+          `fill:${normalizedNewColor}`
+        );
+        if (updatedSvg !== beforeStyleFill) {
+          replacementCount++;
+          console.log(`🎨 STYLE FILL REPLACED: ${colorToReplace} → ${normalizedNewColor}`);
+        }
+        
+        const beforeStyleStroke = updatedSvg;
+        updatedSvg = updatedSvg.replace(
+          new RegExp(`stroke\\s*:\\s*${escapeRegExp(colorToReplace)}`, 'gi'),
+          `stroke:${normalizedNewColor}`
+        );
+        if (updatedSvg !== beforeStyleStroke) {
+          replacementCount++;
+          console.log(`🎨 STYLE STROKE REPLACED: ${colorToReplace} → ${normalizedNewColor}`);
+        }
+      }
+    });
     
-    // Replace style attributes
-    updatedSvg = updatedSvg.replace(
-      new RegExp(`fill\\s*:\\s*${escapeRegExp(oldColor)}`, 'gi'),
-      `fill:${newColor}`
-    );
-    
-    updatedSvg = updatedSvg.replace(
-      new RegExp(`stroke\\s*:\\s*${escapeRegExp(oldColor)}`, 'gi'),
-      `stroke:${newColor}`
-    );
+    console.log(`🎨 RECOLOR COMPLETE: Made ${replacementCount} replacements`);
     
     return updatedSvg;
   };
