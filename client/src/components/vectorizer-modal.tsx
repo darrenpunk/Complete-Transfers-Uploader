@@ -703,7 +703,6 @@ export function VectorizerModal({
     cleanSvg = cleanSvg.replace(/data-crop-extracted="true"\s+data-crop-extracted="true"/g, 'data-crop-extracted="true"');
     cleanSvg = cleanSvg.replace(/data-ai-vectorized="true"\s+data-ai-vectorized="true"/g, 'data-ai-vectorized="true"');
     
-    console.log('Remove all white - Before:', svg.substring(0, 200));
     
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleanSvg, 'image/svg+xml');
@@ -722,52 +721,28 @@ export function VectorizerModal({
     const svgHeight = viewBox[3];
     
     if (mode === 'background') {
-      // Smart mode: Remove ALL white background elements at once
+      // Conservative mode: Only remove obvious background elements
       console.log('SVG viewBox:', svgWidth, 'x', svgHeight);
       
       // Find all white elements
       const allWhiteElements = doc.querySelectorAll('*[fill="#ffffff"], *[fill="#FFFFFF"], *[fill="white"], *[fill="rgb(255,255,255)"], *[fill="rgb(100%,100%,100%)"], *[fill="rgb(255, 255, 255)"]');
       console.log('Found white elements:', allWhiteElements.length);
       
-      // Debug: Log details about white paths
-      allWhiteElements.forEach((el, idx) => {
-        if (el.tagName === 'path' && idx < 5) {
-          const d = el.getAttribute('d') || '';
-          console.log(`White path ${idx}: d="${d.substring(0, 100)}..."`);
-        }
-      });
-      
-      // Analyze the SVG structure to find the actual content bounds
+      // Check if there are any non-white elements (content)
       const nonWhiteElements = doc.querySelectorAll('*[fill]:not([fill="#ffffff"]):not([fill="#FFFFFF"]):not([fill="white"]):not([fill="rgb(255,255,255)"]):not([fill="rgb(100%,100%,100%)"]):not([fill="rgb(255, 255, 255)"]):not([fill="none"])');
+      console.log('Found non-white content elements:', nonWhiteElements.length);
       
-      let contentMinX = Infinity, contentMinY = Infinity;
-      let contentMaxX = -Infinity, contentMaxY = -Infinity;
-      let hasContent = false;
-      
-      // Calculate the bounding box of non-white content
-      // For vectorizer.ai SVGs, most elements are paths, not rects
-      if (nonWhiteElements.length > 0) {
-        hasContent = true;
-        // Use a simpler approach - assume content is in the center 80% of the canvas
-        const margin = svgWidth * 0.1;
-        contentMinX = margin;
-        contentMinY = margin;
-        contentMaxX = svgWidth - margin;
-        contentMaxY = svgHeight - margin;
+      // If there are no non-white elements, don't remove anything (preserve content)
+      if (nonWhiteElements.length === 0) {
+        console.log('No non-white content found, preserving all white elements as content');
+        const serialized = new XMLSerializer().serializeToString(doc.documentElement);
+        console.log('Remove all white - After:', serialized.substring(0, 200));
+        console.log('Remove all white - SVG length unchanged:', svg.length, 'to', serialized.length);
+        return serialized;
       }
       
-      // Add some padding around content
-      const padding = Math.min(svgWidth, svgHeight) * 0.05;
-      contentMinX -= padding;
-      contentMinY -= padding;
-      contentMaxX += padding;
-      contentMaxY += padding;
-      
-      console.log('Content bounds:', {contentMinX, contentMinY, contentMaxX, contentMaxY});
-      
-      // Remove white elements - for vectorizer.ai, white backgrounds are usually early paths
+      // Conservative removal: Only remove rectangles that cover the entire canvas
       let removedCount = 0;
-      const allPaths = Array.from(doc.querySelectorAll('path'));
       
       allWhiteElements.forEach(el => {
         let shouldRemove = false;
@@ -778,27 +753,23 @@ export function VectorizerModal({
           const width = parseFloat(el.getAttribute('width') || '0');
           const height = parseFloat(el.getAttribute('height') || '0');
           
-          // Remove if it's a full-canvas rectangle
-          if (width >= svgWidth * 0.9 && height >= svgHeight * 0.9) {
+          // Only remove if it's a full-canvas rectangle (exact match)
+          if (x <= 1 && y <= 1 && width >= svgWidth * 0.95 && height >= svgHeight * 0.95) {
             shouldRemove = true;
+            console.log('Removing full-canvas white rectangle:', {x, y, width, height});
           }
         } else if (el.tagName === 'path') {
-          // Get the path data to check if it's a background
           const d = el.getAttribute('d') || '';
-          const index = allPaths.indexOf(el as SVGPathElement);
           
-          // Check if path is at canvas edge (background paths usually start at edges)
-          const touchesTopEdge = d.match(/[ML]\s*\d+\.?\d*\s+0\.0+/) || d.match(/^M\s*\d+\.?\d*\s+0[\s,]/);
-          const touchesLeftEdge = d.match(/[ML]\s*0\.0+\s+\d+/) || d.match(/^M\s*0[\s,]+\d+/);
-          const touchesRightEdge = d.match(new RegExp(`[ML]\\s*${svgWidth}\\.?0*\\s+\\d+`));
-          const touchesBottomEdge = d.match(new RegExp(`[ML]\\s*\\d+\\.?\\d*\\s+${svgHeight}\\.?0*`));
+          // Only remove paths that clearly define the outer boundary
+          const isOuterBoundary = d.includes(`M ${svgWidth}`) || 
+                                 d.includes(`L ${svgWidth}`) ||
+                                 d.includes('M 0.00 0.00') ||
+                                 (d.includes('L 0.00 0.00') && d.includes(`L ${svgWidth}`) && d.includes(`L 0.00 ${svgHeight}`));
           
-          const touchesEdge = touchesTopEdge || touchesLeftEdge || touchesRightEdge || touchesBottomEdge;
-          
-          // Remove if it's white and clearly at the edge
-          if (touchesEdge) {
+          if (isOuterBoundary) {
             shouldRemove = true;
-            console.log('Removing white edge path at index:', index);
+            console.log('Removing outer boundary white path');
           }
         }
         
@@ -808,7 +779,7 @@ export function VectorizerModal({
         }
       });
       
-      console.log(`Removed ${removedCount} white background elements`);
+      console.log(`Removed ${removedCount} obvious background elements (preserved ${allWhiteElements.length - removedCount} potential content elements)`);
       
     } else {
       // Aggressive mode: Remove ALL white elements
@@ -2141,15 +2112,12 @@ export function VectorizerModal({
                                                   colorItem.color.toLowerCase() === 'rgb(255,255,255)' ||
                                                   colorItem.color.toLowerCase() === 'rgb(100%,100%,100%)';
                               
-                              console.log('🎨 Color deletion:', { color: colorItem.color, isWhiteColor });
                               
                               if (isWhiteColor) {
                                 // Use smart background removal for white colors
-                                console.log('🎨 Using removeWhiteFromSvg for white color');
                                 updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
                               } else {
                                 // Use normal color removal for non-white colors
-                                console.log('🎨 Using removeColorFromSvg for non-white color');
                                 updatedSvg = removeColorFromSvg(currentSvg, colorItem.color, shapeStacking);
                               }
                               setColoredSvg(updatedSvg);
@@ -2527,15 +2495,12 @@ export function VectorizerModal({
                                                   color.toLowerCase() === 'rgb(255,255,255)' ||
                                                   color.toLowerCase() === 'rgb(100%,100%,100%)';
                               
-                              console.log('🎨 Bulk color deletion:', { color, isWhiteColor });
                               
                               if (isWhiteColor) {
                                 // Use smart background removal for white colors
-                                console.log('🎨 Using removeWhiteFromSvg for white color in bulk operation');
                                 updatedSvg = removeWhiteFromSvg(updatedSvg, 'background');
                               } else {
                                 // Use normal color removal for non-white colors
-                                console.log('🎨 Using removeColorFromSvg for non-white color in bulk operation');
                                 updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
                               }
                               
