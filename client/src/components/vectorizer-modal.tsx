@@ -626,6 +626,30 @@ export function VectorizerModal({
       }
     });
     
+    // CRITICAL FIX: Remove full-canvas boundary paths (the actual cause of black background)
+    const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
+    const svgWidth = viewBox[2];
+    const svgHeight = viewBox[3];
+    
+    const allPaths = doc.querySelectorAll('path');
+    allPaths.forEach(path => {
+      const d = path.getAttribute('d') || '';
+      
+      // Check if this path defines the exact canvas boundary (regardless of fill)
+      const isCanvasBoundary = d.includes(`M ${svgWidth}.00 0.00`) &&
+                               d.includes(`L ${svgWidth}.00 ${svgHeight}.00`) &&
+                               d.includes(`L 0.00 ${svgHeight}.00`) &&
+                               d.includes(`L 0.00 0.00`) &&
+                               d.includes('Z');
+      
+      if (isCanvasBoundary) {
+        console.log('🗑️ REMOVING FULL-CANVAS BOUNDARY PATH (the black background culprit)');
+        console.log('Path coordinates:', d.substring(0, 100));
+        path.remove();
+        removedCount++;
+      }
+    });
+    
     // Remove any rect elements that might be black backgrounds
     const allRects = doc.querySelectorAll('rect');
     allRects.forEach(rect => {
@@ -634,10 +658,6 @@ export function VectorizerModal({
       const height = parseFloat(rect.getAttribute('height') || '0');
       const x = parseFloat(rect.getAttribute('x') || '0');
       const y = parseFloat(rect.getAttribute('y') || '0');
-      
-      const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
-      const svgWidth = viewBox[2];
-      const svgHeight = viewBox[3];
       
       // Remove large rectangles that could be backgrounds
       if ((width > svgWidth * 0.8 || height > svgHeight * 0.8) && (x <= 10 && y <= 10)) {
