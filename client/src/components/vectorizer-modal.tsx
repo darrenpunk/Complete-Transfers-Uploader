@@ -603,6 +603,7 @@ export function VectorizerModal({
     console.log('Removing color:', normalizedColorToRemove);
     
     let removedCount = 0;
+    const isRemovingWhite = normalizedColorToRemove === '#ffffff' || normalizedColorToRemove === '#fefefe';
     
     // Remove elements with matching fill
     const elementsWithFill = doc.querySelectorAll('*[fill]');
@@ -625,6 +626,15 @@ export function VectorizerModal({
         const normalizedRgb = normalizeRgbToHex(fill);
         if (normalizedRgb === normalizedColorToRemove) {
           shouldRemove = true;
+        }
+      }
+      // SPECIAL FIX: When removing white, also remove very dark colors that would show through
+      else if (isRemovingWhite && stackingMode === 'cut_out') {
+        const isDarkColor = fill === '#333333' || fill === '#000000' || fill === 'black' || 
+                           fill === '#222222' || fill === '#111111' || fill === '#444444';
+        if (isDarkColor) {
+          shouldRemove = true;
+          console.log('Also removing dark color to prevent showing through white holes:', fill);
         }
       }
       
