@@ -605,6 +605,37 @@ export function VectorizerModal({
     let removedCount = 0;
     const isRemovingWhite = normalizedColorToRemove === '#ffffff' || normalizedColorToRemove === '#fefefe';
     
+    // CRITICAL FIX: Remove full-canvas boundary paths that create black backgrounds
+    const allPaths = doc.querySelectorAll('path');
+    const svgElement = doc.querySelector('svg');
+    const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
+    const svgWidth = viewBox[2];
+    const svgHeight = viewBox[3];
+    
+    allPaths.forEach(path => {
+      const d = path.getAttribute('d') || '';
+      const fill = path.getAttribute('fill')?.toLowerCase();
+      
+      // Check if this path covers the entire canvas (very aggressive detection)
+      const coversCanvas = (d.includes('0.00 0.00') && d.includes('Z') && d.includes('L') && 
+                           (d.includes(`${svgWidth}`) || d.includes(`${svgHeight}`))) ||
+                          // Alternative: Path starts at canvas edge and goes around
+                          (d.includes('M 1062.00') || d.includes('M 0.00')) && d.includes('Z');
+      
+      // Remove paths that look like canvas boundaries, regardless of fill
+      if (coversCanvas) {
+        console.log('REMOVING BOUNDARY PATH:', d.substring(0, 50) + '... (fill:', fill, ')');
+        path.remove();
+        removedCount++;
+      }
+      // Also remove any path with black/dark fill that might be causing issues
+      else if (fill === '#000000' || fill === 'black' || fill === '#000') {
+        console.log('REMOVING BLACK PATH:', d.substring(0, 50) + '...');
+        path.remove();
+        removedCount++;
+      }
+    });
+    
     // Remove elements with matching fill
     const elementsWithFill = doc.querySelectorAll('*[fill]');
     
@@ -626,15 +657,6 @@ export function VectorizerModal({
         const normalizedRgb = normalizeRgbToHex(fill);
         if (normalizedRgb === normalizedColorToRemove) {
           shouldRemove = true;
-        }
-      }
-      // SPECIAL FIX: When removing white, also remove very dark colors that would show through
-      else if (isRemovingWhite && stackingMode === 'cut_out') {
-        const isDarkColor = fill === '#333333' || fill === '#000000' || fill === 'black' || 
-                           fill === '#222222' || fill === '#111111' || fill === '#444444';
-        if (isDarkColor) {
-          shouldRemove = true;
-          console.log('Also removing dark color to prevent showing through white holes:', fill);
         }
       }
       
