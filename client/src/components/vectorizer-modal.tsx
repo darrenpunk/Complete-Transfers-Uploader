@@ -732,7 +732,7 @@ export function VectorizerModal({
       const nonWhiteElements = doc.querySelectorAll('*[fill]:not([fill="#ffffff"]):not([fill="#FFFFFF"]):not([fill="white"]):not([fill="rgb(255,255,255)"]):not([fill="rgb(100%,100%,100%)"]):not([fill="rgb(255, 255, 255)"]):not([fill="none"])');
       console.log('Found non-white content elements:', nonWhiteElements.length);
       
-      // Balanced removal: Remove white elements but preserve important content structure
+      // Effective removal: Remove white elements while preserving small details
       let removedCount = 0;
       
       // If there are very few non-white elements, be more careful
@@ -742,43 +742,35 @@ export function VectorizerModal({
         let shouldRemove = false;
         
         if (el.tagName === 'rect') {
-          const x = parseFloat(el.getAttribute('x') || '0');
-          const y = parseFloat(el.getAttribute('y') || '0');
           const width = parseFloat(el.getAttribute('width') || '0');
           const height = parseFloat(el.getAttribute('height') || '0');
           
-          // Remove large rectangles that look like backgrounds
-          if (width >= svgWidth * 0.8 && height >= svgHeight * 0.8) {
+          // Remove rectangles that are medium-large (50%+ of canvas)
+          if (width >= svgWidth * 0.5 || height >= svgHeight * 0.5) {
             shouldRemove = true;
-            console.log('Removing large white rectangle (likely background):', {width, height});
+            console.log('Removing large white rectangle:', {width, height});
           }
         } else if (el.tagName === 'path') {
           const d = el.getAttribute('d') || '';
           
-          // For path elements, be more selective in mainly-white images
-          if (isMainlyWhite) {
-            // Only remove very obvious boundary paths in mainly-white images
-            const isObviousBoundary = d.includes('M 0.00 0.00') && d.includes('Z') && d.length < 200;
-            if (isObviousBoundary) {
-              shouldRemove = true;
-              console.log('Removing obvious boundary path in mainly-white image');
-            }
+          // Remove most white paths, but preserve very small ones (likely details)
+          if (d.length > 100) {
+            shouldRemove = true;
+            console.log('Removing white path (length:', d.length, ')');
           } else {
-            // More aggressive removal when there's plenty of non-white content
-            const looksLikeBoundary = d.includes(`M ${svgWidth}`) || 
-                                     d.includes(`L ${svgWidth}`) ||
-                                     d.includes('M 0.00 0.00') ||
-                                     d.includes('L 0.00 0.00');
-            if (looksLikeBoundary) {
-              shouldRemove = true;
-              console.log('Removing boundary-like white path');
-            }
+            console.log('Preserving small white path (likely content detail)');
           }
         } else {
-          // For other elements (circle, ellipse), be more permissive
-          if (!isMainlyWhite) {
+          // For other elements (circle, ellipse), remove unless very small
+          const r = parseFloat(el.getAttribute('r') || '0');
+          const rx = parseFloat(el.getAttribute('rx') || '0');
+          const ry = parseFloat(el.getAttribute('ry') || '0');
+          
+          if (r > 10 || rx > 10 || ry > 10) {
             shouldRemove = true;
-            console.log('Removing white', el.tagName, '(plenty of other content exists)');
+            console.log('Removing white', el.tagName, '(size:', r || Math.max(rx, ry), ')');
+          } else {
+            console.log('Preserving small white', el.tagName, '(likely content detail)');
           }
         }
         
