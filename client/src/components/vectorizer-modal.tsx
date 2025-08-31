@@ -732,17 +732,11 @@ export function VectorizerModal({
       const nonWhiteElements = doc.querySelectorAll('*[fill]:not([fill="#ffffff"]):not([fill="#FFFFFF"]):not([fill="white"]):not([fill="rgb(255,255,255)"]):not([fill="rgb(100%,100%,100%)"]):not([fill="rgb(255, 255, 255)"]):not([fill="none"])');
       console.log('Found non-white content elements:', nonWhiteElements.length);
       
-      // If there are no non-white elements, don't remove anything (preserve content)
-      if (nonWhiteElements.length === 0) {
-        console.log('No non-white content found, preserving all white elements as content');
-        const serialized = new XMLSerializer().serializeToString(doc.documentElement);
-        console.log('Remove all white - After:', serialized.substring(0, 200));
-        console.log('Remove all white - SVG length unchanged:', svg.length, 'to', serialized.length);
-        return serialized;
-      }
-      
-      // Conservative removal: Only remove rectangles that cover the entire canvas
+      // Balanced removal: Remove white elements but preserve important content structure
       let removedCount = 0;
+      
+      // If there are very few non-white elements, be more careful
+      const isMainlyWhite = nonWhiteElements.length < 5;
       
       allWhiteElements.forEach(el => {
         let shouldRemove = false;
@@ -753,23 +747,38 @@ export function VectorizerModal({
           const width = parseFloat(el.getAttribute('width') || '0');
           const height = parseFloat(el.getAttribute('height') || '0');
           
-          // Only remove if it's a full-canvas rectangle (exact match)
-          if (x <= 1 && y <= 1 && width >= svgWidth * 0.95 && height >= svgHeight * 0.95) {
+          // Remove large rectangles that look like backgrounds
+          if (width >= svgWidth * 0.8 && height >= svgHeight * 0.8) {
             shouldRemove = true;
-            console.log('Removing full-canvas white rectangle:', {x, y, width, height});
+            console.log('Removing large white rectangle (likely background):', {width, height});
           }
         } else if (el.tagName === 'path') {
           const d = el.getAttribute('d') || '';
           
-          // Only remove paths that clearly define the outer boundary
-          const isOuterBoundary = d.includes(`M ${svgWidth}`) || 
-                                 d.includes(`L ${svgWidth}`) ||
-                                 d.includes('M 0.00 0.00') ||
-                                 (d.includes('L 0.00 0.00') && d.includes(`L ${svgWidth}`) && d.includes(`L 0.00 ${svgHeight}`));
-          
-          if (isOuterBoundary) {
+          // For path elements, be more selective in mainly-white images
+          if (isMainlyWhite) {
+            // Only remove very obvious boundary paths in mainly-white images
+            const isObviousBoundary = d.includes('M 0.00 0.00') && d.includes('Z') && d.length < 200;
+            if (isObviousBoundary) {
+              shouldRemove = true;
+              console.log('Removing obvious boundary path in mainly-white image');
+            }
+          } else {
+            // More aggressive removal when there's plenty of non-white content
+            const looksLikeBoundary = d.includes(`M ${svgWidth}`) || 
+                                     d.includes(`L ${svgWidth}`) ||
+                                     d.includes('M 0.00 0.00') ||
+                                     d.includes('L 0.00 0.00');
+            if (looksLikeBoundary) {
+              shouldRemove = true;
+              console.log('Removing boundary-like white path');
+            }
+          }
+        } else {
+          // For other elements (circle, ellipse), be more permissive
+          if (!isMainlyWhite) {
             shouldRemove = true;
-            console.log('Removing outer boundary white path');
+            console.log('Removing white', el.tagName, '(plenty of other content exists)');
           }
         }
         
@@ -779,7 +788,7 @@ export function VectorizerModal({
         }
       });
       
-      console.log(`Removed ${removedCount} obvious background elements (preserved ${allWhiteElements.length - removedCount} potential content elements)`);
+      console.log(`Removed ${removedCount} white elements (${isMainlyWhite ? 'careful mode' : 'normal mode'})`);
       
     } else {
       // Aggressive mode: Remove ALL white elements
