@@ -698,8 +698,22 @@ export function VectorizerModal({
 
   // Function to remove white backgrounds intelligently
   const removeWhiteFromSvg = (svg: string, mode: 'background' | 'all' = 'background') => {
+    // Fix duplicate attributes that break XML parsing
+    let cleanSvg = svg.replace(/data-content-extracted="true"\s+data-content-extracted="true"/g, 'data-content-extracted="true"');
+    cleanSvg = cleanSvg.replace(/data-crop-extracted="true"\s+data-crop-extracted="true"/g, 'data-crop-extracted="true"');
+    cleanSvg = cleanSvg.replace(/data-ai-vectorized="true"\s+data-ai-vectorized="true"/g, 'data-ai-vectorized="true"');
+    
+    console.log('Remove all white - Before:', svg.substring(0, 200));
+    
     const parser = new DOMParser();
-    const doc = parser.parseFromString(svg, 'image/svg+xml');
+    const doc = parser.parseFromString(cleanSvg, 'image/svg+xml');
+    
+    // Check for parsing errors
+    const parserError = doc.querySelector('parsererror');
+    if (parserError) {
+      console.error('SVG parsing error:', parserError.textContent);
+      return svg; // Return original if parsing fails
+    }
     
     // Get the SVG's viewBox dimensions
     const svgElement = doc.querySelector('svg');
@@ -2503,7 +2517,28 @@ export function VectorizerModal({
                             
                             // Remove each unlocked color
                             unlockedColors.forEach(color => {
-                              updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
+                              // Special handling for white colors - use smart background removal
+                              const isWhiteColor = color.toLowerCase() === '#ffffff' || 
+                                                  color.toLowerCase() === '#fefefe' || 
+                                                  color.toLowerCase() === '#fdfdfd' || 
+                                                  color.toLowerCase() === '#fcfcfc' || 
+                                                  color.toLowerCase() === '#fbfbfb' ||
+                                                  color.toLowerCase() === 'white' ||
+                                                  color.toLowerCase() === 'rgb(255,255,255)' ||
+                                                  color.toLowerCase() === 'rgb(100%,100%,100%)';
+                              
+                              console.log('🎨 Bulk color deletion:', { color, isWhiteColor });
+                              
+                              if (isWhiteColor) {
+                                // Use smart background removal for white colors
+                                console.log('🎨 Using removeWhiteFromSvg for white color in bulk operation');
+                                updatedSvg = removeWhiteFromSvg(updatedSvg, 'background');
+                              } else {
+                                // Use normal color removal for non-white colors
+                                console.log('🎨 Using removeColorFromSvg for non-white color in bulk operation');
+                                updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
+                              }
+                              
                               setDeletedColors(prev => new Set([...prev, color.toLowerCase()]));
                               totalRemoved++;
                             });
