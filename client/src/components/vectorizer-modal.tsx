@@ -605,33 +605,44 @@ export function VectorizerModal({
     let removedCount = 0;
     const isRemovingWhite = normalizedColorToRemove === '#ffffff' || normalizedColorToRemove === '#fefefe';
     
-    // CRITICAL FIX: Remove full-canvas boundary paths that create black backgrounds
-    const allPaths = doc.querySelectorAll('path');
+    // CRITICAL FIX: Force SVG root to be transparent and remove black backgrounds
     const svgElement = doc.querySelector('svg');
-    const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
-    const svgWidth = viewBox[2];
-    const svgHeight = viewBox[3];
+    if (svgElement) {
+      // Force SVG root to be transparent
+      svgElement.style.background = 'transparent';
+      svgElement.style.backgroundColor = 'transparent';
+      svgElement.setAttribute('style', 'background: transparent !important; background-color: transparent !important;');
+      console.log('🔧 FORCED SVG ROOT TO TRANSPARENT');
+    }
     
-    allPaths.forEach(path => {
-      const d = path.getAttribute('d') || '';
-      const fill = path.getAttribute('fill')?.toLowerCase();
-      
-      // Check if this path covers the entire canvas (very aggressive detection)
-      const coversCanvas = (d.includes('0.00 0.00') && d.includes('Z') && d.includes('L') && 
-                           (d.includes(`${svgWidth}`) || d.includes(`${svgHeight}`))) ||
-                          // Alternative: Path starts at canvas edge and goes around
-                          (d.includes('M 1062.00') || d.includes('M 0.00')) && d.includes('Z');
-      
-      // Remove paths that look like canvas boundaries, regardless of fill
-      if (coversCanvas) {
-        console.log('REMOVING BOUNDARY PATH:', d.substring(0, 50) + '... (fill:', fill, ')');
-        path.remove();
+    // Remove ALL black background elements that might be revealed
+    const allElements = doc.querySelectorAll('*[fill]');
+    allElements.forEach(el => {
+      const fill = el.getAttribute('fill')?.toLowerCase();
+      if (fill === '#000000' || fill === 'black' || fill === '#000') {
+        console.log('REMOVING BLACK ELEMENT:', el.tagName, 'with fill:', fill);
+        el.remove();
         removedCount++;
       }
-      // Also remove any path with black/dark fill that might be causing issues
-      else if (fill === '#000000' || fill === 'black' || fill === '#000') {
-        console.log('REMOVING BLACK PATH:', d.substring(0, 50) + '...');
-        path.remove();
+    });
+    
+    // Remove any rect elements that might be black backgrounds
+    const allRects = doc.querySelectorAll('rect');
+    allRects.forEach(rect => {
+      const fill = rect.getAttribute('fill')?.toLowerCase();
+      const width = parseFloat(rect.getAttribute('width') || '0');
+      const height = parseFloat(rect.getAttribute('height') || '0');
+      const x = parseFloat(rect.getAttribute('x') || '0');
+      const y = parseFloat(rect.getAttribute('y') || '0');
+      
+      const viewBox = svgElement?.getAttribute('viewBox')?.split(' ').map(parseFloat) || [0, 0, 100, 100];
+      const svgWidth = viewBox[2];
+      const svgHeight = viewBox[3];
+      
+      // Remove large rectangles that could be backgrounds
+      if ((width > svgWidth * 0.8 || height > svgHeight * 0.8) && (x <= 10 && y <= 10)) {
+        console.log('REMOVING LARGE BACKGROUND RECT:', { width, height, x, y, fill });
+        rect.remove();
         removedCount++;
       }
     });
