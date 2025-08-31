@@ -1493,16 +1493,16 @@ function removeVectorizedBackgroundsRegex(svgContent: string): string {
       console.log(`🔍 Found small element without fill, converting to filled element: ${tag}`);
       preservedCount++;
       
-      // Check if element already has fill="none" or fill="transparent"
+      // CRITICAL FIX: PRESERVE TRANSPARENCY - do not convert to black!
       if (match.includes('fill="none"') || match.includes('fill="transparent"')) {
-        // Replace the fill attribute with black
-        let newMatch = match.replace(/fill\s*=\s*["'](none|transparent)["']/gi, 'fill="#000000"');
-        // Remove stroke attributes since we're converting to fill
-        newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
-        return newMatch;
+        // KEEP TRANSPARENT - do not convert to black!
+        console.log(`🔍 Preserving transparent small element: ${tag}`);
+        return match; // Keep original transparent fill
       } else {
-        // Add a black fill to preserve the element
-        let newMatch = match.replace(/>$/, ' fill="#000000">');
+        // Add stroke color as fill to preserve the element
+        const strokeMatch = match.match(/stroke\s*=\s*["']([^"']+)["']/i);
+        const strokeColor = strokeMatch ? strokeMatch[1] : '#333333';
+        let newMatch = match.replace(/>$/, ` fill="${strokeColor}">`);
         // Remove stroke attributes since we're converting to fill
         newMatch = newMatch.replace(/\s*stroke[^=]*=\s*["'][^"']+["']/gi, '');
         return newMatch;
