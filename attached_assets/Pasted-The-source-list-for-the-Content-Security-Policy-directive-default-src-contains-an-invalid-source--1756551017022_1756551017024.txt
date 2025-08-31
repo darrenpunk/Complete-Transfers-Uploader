@@ -1,0 +1,1633 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+_app-598b61ec46a0b3de.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+_app-598b61ec46a0b3de.js:38 [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-1abe2d00c7a4c147.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-1abe2d00c7a4c147.js:1
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_TIMED_OUT
+ Unable to preventDefault inside passive event listener invocation.
+preventDefault @ framework-1abe2d00c7a4c147.js:1
+ProofDesigner:1 Access to fetch at 'https://sp.replit.com/v1/t' from origin 'https://replit.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+sp.replit.com/v1/t:1  Failed to load resource: net::ERR_FAILED
+ WebSocket connection to 'wss://eval.spock.platform.replit.com/wsv2/v2.public.Q2dZSWtkakZ4UVlTQmdpdzlNWEZCaUlGYzNCdlkyc3dBRHI0QVFva09XVTJOVFl3TldNdE1tRTRPUzAwWkRreUxUZzNaVGN0WWpBME56TTJNRGswTXpKakVnTnVhWGdhRjNKbGNHeHBkQzF5WlhCc0xXWnBiR1Z6TFhOd2IyTnJJZzFRY205dlprUmxjMmxuYm1WeUtnbGtZWEp5Wlc0eE9UQkNVUW9ZY21Wd2JHbDBMWEpsY0d3dFlteHZZMnR6TFhOd2IyTnJFaFp5WlhCc2FYUXRjbVZ3YkMxdFpYUmhMWE53YjJOckdoMXlaWEJzYVhRdGJXRnlaMkZ5YVc1bExXSnNiMk5yY3kxemNHOWphMG9IQ05pMjJoVVFBVkFBV2c5cGJuUmxiblJmWW5WemFXNWxjM05hRVc5dVltOWhjbVJwYm1kZmFtOWlYM0J0V2hSdmJtSnZZWEprYVc1blgzSnZiR1ZmWlhobFkzZ0FVaU1JQVJDQWdJQ0FJQmtBQUFBQUFBQVFRQ0VBQUFBQUFBQVFRQ2lBZ0lDQXlBRXdBbUFBYWhBSTJMYmFGUklKWkdGeWNtVnVNVGt3Z2dFQ0tnQ2FBUW9LQ0RBdU1DNHhOamczb0FFQiG7IpR-FexhV90JeTfEM5TKH8hxEeOvLCvcRIwjZv9sgTyfYM9PZJSB3rtLA3_GBfZhvWaiMjE3YKt9pABYLwU.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: 
+connect @ 6504-1dbef430845a6f01.js:1
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+_app-598b61ec46a0b3de.js:38 An aria-label or aria-labelledby prop is required for accessibility.
+(anonymous) @ _app-598b61ec46a0b3de.js:38
+region1.analytics.google.com/g/collect?v=2&tid=G-MPJY3F1YEL&gtm=45je58r1h1v9135634466za200&_p=1756457163616&gcd=13l3lPl2l2l1&npa=0&dma_cps=syphamo&dma=1&tag_exp=101509157~103116026~103200004~103233427~104527907~104528501~104684208~104684211~104948813~105427542~105427544&ul=en-us&sr=2560x1440&cid=795155766.1753916089&ecid=502382804&ir=1&uaa=x86&uab=64&uafvl=Not)A%253BBrand%3B8.0.0.0%7CChromium%3B138.0.7204.183%7CGoogle%2520Chrome%3B138.0.7204.183&uamb=0&uam=&uap=macOS&uapv=14.7.3&uaw=0&are=1&frm=0&pscdl=noapi&_eu=EBAIAAQ&_s=480&dl=https%3A%2F%2Freplit.com%2F%40darren190%2FProofDesigner&dp=%2F%40darren190%2FProofDesigner&dt=replEnvironmentDesktop&sid=1756506190&sct=91&seg=1&_tu=wAQ&en=Packager%20Packages%20Installed&_ee=1&ep.event_category=All&ep.value=0&tfd=50232536:1  Failed to load resource: net::ERR_INTERNET_DISCONNECTED
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎯 CROP AREA SET (waiting for confirmation): Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ ✅ Found displayed image and container: Object
+ 🎯 OBJECT-CONTAIN CALCULATION: Object
+ 🎯 CROP DIMENSIONS: Object
+ 🎯 CROP DIMENSIONS: Sending 1032×924px to vectorization API
+ 🔄 CROP+VECTORIZE: Shape stacking = cut_out (deleted colors will be transparent)
+ VectorizerModal render: Object
+ Preview state check: Object
+ 🎨 Server detected no colors, extracting from SVG...
+ 🎨 Extracted colors from SVG: Array(2)
+ Vectorization successful: Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ Attempting to render SVG with length: 59424
+ SVG preview (first 500 chars): 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg data-crop-extracted="true" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path  vector-effect="non-scaling-stroke" d="
+  M 757.25 499.17
+  C 746.75 496.47 734.31 501.17 730.24 511.72
+  C 729.44 513.80 729.84 517.51 733.02 516.95
+  Q 735.39 516.54 735.92 516.17
+  Q 742.59 511.46 750.34 511.76
+  A 0.35 0.35 0.0 0 1 750.61 512.33
+  C 748.02 51
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 59424
+ SVG appended to container successfully
+ Applying smart white background removal
+ SVG viewBox: 1032 x 924
+ Found white elements: 14
+ White path 0: d="   M 1032.00 0.00   L 1032.00 924.00   L 0.00 924.00   L 0.00 0.00   L 1032.00 0.00   Z   M 757.25 4..."
+ White path 1: d="   M 453.6534 201.3403   A 50.59 48.65 -90.2 0 1 502.4797 251.7602   A 50.59 48.65 -90.2 0 1 454.006..."
+ White path 2: d="   M 577.3339 201.3849   A 50.57 48.66 -90.8 0 1 626.6953 251.2706   A 50.57 48.66 -90.8 0 1 578.746..."
+ White path 3: d="   M 629.49 331.43   A 0.21 0.21 0.0 0 1 629.81 331.69   Q 621.47 346.10 608.31 356.34   A 0.65 0.64..."
+ White path 4: d="   M 522.13 859.04   C 525.96 860.31 526.66 864.90 525.22 868.07   Q 523.14 872.63 516.57 876.29   A..."
+ Content bounds: Object
+ Removing white edge path at index: 34
+ Removed 1 white background elements
+ Remove all white - Before: 
+<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->
+<svg data-crop-extracted="true" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0.00 0.00 1032.00 924.00" 
+ Remove all white - After: <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.
+ Remove all white - SVG length changed from 59424 to 44751
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44751
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 44751
+ SVG appended to container successfully
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Color clicked in SVG: #ffffff
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Color clicked in SVG: #333333
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Color clicked in SVG: #ffffff
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Removing unlocked colors: Array(1)
+ Keeping locked colors: Array(1)
+ Removing color: #ffffff
+ 🔍 TOTAL ELEMENTS WITH FILL: 34
+ 🔍 Element 0: path, fill="#333333"
+ 🎯 Element 0: shouldRemove = false
+ 🔍 Element 1: path, fill="#ffffff"
+ ✅ Element 1: DIRECT MATCH
+ 🎯 Element 1: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 2: path, fill="#ffffff"
+ ✅ Element 2: DIRECT MATCH
+ 🎯 Element 2: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 3: path, fill="#333333"
+ 🎯 Element 3: shouldRemove = false
+ 🔍 Element 4: path, fill="#333333"
+ 🎯 Element 4: shouldRemove = false
+ 🔍 Element 5: path, fill="#ffffff"
+ ✅ Element 5: DIRECT MATCH
+ 🎯 Element 5: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 6: path, fill="#333333"
+ 🎯 Element 6: shouldRemove = false
+ 🔍 Element 7: path, fill="#333333"
+ 🎯 Element 7: shouldRemove = false
+ 🔍 Element 8: path, fill="#333333"
+ 🎯 Element 8: shouldRemove = false
+ 🔍 Element 9: path, fill="#333333"
+ 🎯 Element 9: shouldRemove = false
+ 🔍 Element 10: path, fill="#333333"
+ 🎯 Element 10: shouldRemove = false
+ 🔍 Element 11: path, fill="#333333"
+ 🎯 Element 11: shouldRemove = false
+ 🔍 Element 12: path, fill="#333333"
+ 🎯 Element 12: shouldRemove = false
+ 🔍 Element 13: path, fill="#333333"
+ 🎯 Element 13: shouldRemove = false
+ 🔍 Element 14: path, fill="#333333"
+ 🎯 Element 14: shouldRemove = false
+ 🔍 Element 15: path, fill="#333333"
+ 🎯 Element 15: shouldRemove = false
+ 🔍 Element 16: path, fill="#333333"
+ 🎯 Element 16: shouldRemove = false
+ 🔍 Element 17: path, fill="#333333"
+ 🎯 Element 17: shouldRemove = false
+ 🔍 Element 18: path, fill="#333333"
+ 🎯 Element 18: shouldRemove = false
+ 🔍 Element 19: path, fill="#333333"
+ 🎯 Element 19: shouldRemove = false
+ 🔍 Element 20: path, fill="#333333"
+ 🎯 Element 20: shouldRemove = false
+ 🔍 Element 21: path, fill="#333333"
+ 🎯 Element 21: shouldRemove = false
+ 🔍 Element 22: path, fill="#ffffff"
+ ✅ Element 22: DIRECT MATCH
+ 🎯 Element 22: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 23: path, fill="#ffffff"
+ ✅ Element 23: DIRECT MATCH
+ 🎯 Element 23: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 24: path, fill="#ffffff"
+ ✅ Element 24: DIRECT MATCH
+ 🎯 Element 24: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 25: path, fill="#ffffff"
+ ✅ Element 25: DIRECT MATCH
+ 🎯 Element 25: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 26: path, fill="#ffffff"
+ ✅ Element 26: DIRECT MATCH
+ 🎯 Element 26: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 27: path, fill="#ffffff"
+ ✅ Element 27: DIRECT MATCH
+ 🎯 Element 27: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 28: path, fill="#ffffff"
+ ✅ Element 28: DIRECT MATCH
+ 🎯 Element 28: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 29: ellipse, fill="#ffffff"
+ ✅ Element 29: DIRECT MATCH
+ 🎯 Element 29: shouldRemove = true
+ Removing element with fill: #ffffff tagName: ellipse
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 30: circle, fill="#ffffff"
+ ✅ Element 30: DIRECT MATCH
+ 🎯 Element 30: shouldRemove = true
+ Removing element with fill: #ffffff tagName: circle
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 31: rect, fill="#ffffff"
+ ✅ Element 31: DIRECT MATCH
+ 🎯 Element 31: shouldRemove = true
+ Removing element with fill: #ffffff tagName: rect
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 32: rect, fill="#333333"
+ 🎯 Element 32: shouldRemove = false
+ 🔍 Element 33: rect, fill="#333333"
+ 🎯 Element 33: shouldRemove = false
+ Removed 13 elements with color #ffffff
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44712
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 44712
+ SVG appended to container successfully
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44751
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 44751
+ SVG appended to container successfully
+ Color clicked in SVG: #ffffff
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Color clicked in SVG: #333333
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Removing unlocked colors: Array(1)
+ Keeping locked colors: Array(1)
+ Removing color: #333333
+ 🔍 TOTAL ELEMENTS WITH FILL: 34
+ 🔍 Element 0: path, fill="#333333"
+ ✅ Element 0: DIRECT MATCH
+ 🎯 Element 0: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 1: path, fill="#ffffff"
+ 🎯 Element 1: shouldRemove = false
+ 🔍 Element 2: path, fill="#ffffff"
+ 🎯 Element 2: shouldRemove = false
+ 🔍 Element 3: path, fill="#333333"
+ ✅ Element 3: DIRECT MATCH
+ 🎯 Element 3: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 4: path, fill="#333333"
+ ✅ Element 4: DIRECT MATCH
+ 🎯 Element 4: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 5: path, fill="#ffffff"
+ 🎯 Element 5: shouldRemove = false
+ 🔍 Element 6: path, fill="#333333"
+ ✅ Element 6: DIRECT MATCH
+ 🎯 Element 6: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 7: path, fill="#333333"
+ ✅ Element 7: DIRECT MATCH
+ 🎯 Element 7: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 8: path, fill="#333333"
+ ✅ Element 8: DIRECT MATCH
+ 🎯 Element 8: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 9: path, fill="#333333"
+ ✅ Element 9: DIRECT MATCH
+ 🎯 Element 9: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 10: path, fill="#333333"
+ ✅ Element 10: DIRECT MATCH
+ 🎯 Element 10: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 11: path, fill="#333333"
+ ✅ Element 11: DIRECT MATCH
+ 🎯 Element 11: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 12: path, fill="#333333"
+ ✅ Element 12: DIRECT MATCH
+ 🎯 Element 12: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 13: path, fill="#333333"
+ ✅ Element 13: DIRECT MATCH
+ 🎯 Element 13: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 14: path, fill="#333333"
+ ✅ Element 14: DIRECT MATCH
+ 🎯 Element 14: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 15: path, fill="#333333"
+ ✅ Element 15: DIRECT MATCH
+ 🎯 Element 15: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 16: path, fill="#333333"
+ ✅ Element 16: DIRECT MATCH
+ 🎯 Element 16: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 17: path, fill="#333333"
+ ✅ Element 17: DIRECT MATCH
+ 🎯 Element 17: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 18: path, fill="#333333"
+ ✅ Element 18: DIRECT MATCH
+ 🎯 Element 18: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 19: path, fill="#333333"
+ ✅ Element 19: DIRECT MATCH
+ 🎯 Element 19: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 20: path, fill="#333333"
+ ✅ Element 20: DIRECT MATCH
+ 🎯 Element 20: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 21: path, fill="#333333"
+ ✅ Element 21: DIRECT MATCH
+ 🎯 Element 21: shouldRemove = true
+ Removing element with fill: #333333 tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 22: path, fill="#ffffff"
+ 🎯 Element 22: shouldRemove = false
+ 🔍 Element 23: path, fill="#ffffff"
+ 🎯 Element 23: shouldRemove = false
+ 🔍 Element 24: path, fill="#ffffff"
+ 🎯 Element 24: shouldRemove = false
+ 🔍 Element 25: path, fill="#ffffff"
+ 🎯 Element 25: shouldRemove = false
+ 🔍 Element 26: path, fill="#ffffff"
+ 🎯 Element 26: shouldRemove = false
+ 🔍 Element 27: path, fill="#ffffff"
+ 🎯 Element 27: shouldRemove = false
+ 🔍 Element 28: path, fill="#ffffff"
+ 🎯 Element 28: shouldRemove = false
+ 🔍 Element 29: ellipse, fill="#ffffff"
+ 🎯 Element 29: shouldRemove = false
+ 🔍 Element 30: circle, fill="#ffffff"
+ 🎯 Element 30: shouldRemove = false
+ 🔍 Element 31: rect, fill="#ffffff"
+ 🎯 Element 31: shouldRemove = false
+ 🔍 Element 32: rect, fill="#333333"
+ ✅ Element 32: DIRECT MATCH
+ 🎯 Element 32: shouldRemove = true
+ Removing element with fill: #333333 tagName: rect
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 33: rect, fill="#333333"
+ ✅ Element 33: DIRECT MATCH
+ 🎯 Element 33: shouldRemove = true
+ Removing element with fill: #333333 tagName: rect
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ Removed 21 elements with color #333333
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44688
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 44688
+ SVG appended to container successfully
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Attempting to render SVG with length: 44751
+ SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+ SVG container ref exists, creating element
+ SVG element found: true
+ Current viewBox: 0.00 0.00 1032.00 924.00
+ Direct DOM update with interactive SVG length: 44751
+ SVG appended to container successfully
+ Color clicked in SVG: #ffffff
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Color clicked in SVG: #333333
+ VectorizerModal render: Object
+ Preview state check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ VectorizerModal render: Object
+ Preview state check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Removing unlocked colors: Array(1)
+ Keeping locked colors: Array(1)
+ Removing color: #ffffff
+ 🔍 TOTAL ELEMENTS WITH FILL: 34
+ 🔍 Element 0: path, fill="#333333"
+ 🎯 Element 0: shouldRemove = false
+ 🔍 Element 1: path, fill="#ffffff"
+ ✅ Element 1: DIRECT MATCH
+ 🎯 Element 1: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 2: path, fill="#ffffff"
+ ✅ Element 2: DIRECT MATCH
+ 🎯 Element 2: shouldRemove = true
+ Removing element with fill: #ffffff tagName: path
+ DEBUG: stackingMode = cut_out string
+ Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+ 🔍 Element 3: path, fill="#333333"
+ 🎯 Element 3: shouldRemove = false
+ 🔍 Element 4: path, fill="#333333"
+ 🎯 Element 4: shouldRemove = false
+ 🔍 Element 5: path, fill="#ffffff"
+ ✅ Element 5: DIRECT MATCH
+Console.js:61 🎯 Element 5: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 6: path, fill="#333333"
+Console.js:61 🎯 Element 6: shouldRemove = false
+Console.js:61 🔍 Element 7: path, fill="#333333"
+Console.js:61 🎯 Element 7: shouldRemove = false
+Console.js:61 🔍 Element 8: path, fill="#333333"
+Console.js:61 🎯 Element 8: shouldRemove = false
+Console.js:61 🔍 Element 9: path, fill="#333333"
+Console.js:61 🎯 Element 9: shouldRemove = false
+Console.js:61 🔍 Element 10: path, fill="#333333"
+Console.js:61 🎯 Element 10: shouldRemove = false
+Console.js:61 🔍 Element 11: path, fill="#333333"
+Console.js:61 🎯 Element 11: shouldRemove = false
+Console.js:61 🔍 Element 12: path, fill="#333333"
+Console.js:61 🎯 Element 12: shouldRemove = false
+Console.js:61 🔍 Element 13: path, fill="#333333"
+Console.js:61 🎯 Element 13: shouldRemove = false
+Console.js:61 🔍 Element 14: path, fill="#333333"
+Console.js:61 🎯 Element 14: shouldRemove = false
+Console.js:61 🔍 Element 15: path, fill="#333333"
+Console.js:61 🎯 Element 15: shouldRemove = false
+Console.js:61 🔍 Element 16: path, fill="#333333"
+Console.js:61 🎯 Element 16: shouldRemove = false
+Console.js:61 🔍 Element 17: path, fill="#333333"
+Console.js:61 🎯 Element 17: shouldRemove = false
+Console.js:61 🔍 Element 18: path, fill="#333333"
+Console.js:61 🎯 Element 18: shouldRemove = false
+Console.js:61 🔍 Element 19: path, fill="#333333"
+Console.js:61 🎯 Element 19: shouldRemove = false
+Console.js:61 🔍 Element 20: path, fill="#333333"
+Console.js:61 🎯 Element 20: shouldRemove = false
+Console.js:61 🔍 Element 21: path, fill="#333333"
+Console.js:61 🎯 Element 21: shouldRemove = false
+Console.js:61 🔍 Element 22: path, fill="#ffffff"
+Console.js:61 ✅ Element 22: DIRECT MATCH
+Console.js:61 🎯 Element 22: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 23: path, fill="#ffffff"
+Console.js:61 ✅ Element 23: DIRECT MATCH
+Console.js:61 🎯 Element 23: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 24: path, fill="#ffffff"
+Console.js:61 ✅ Element 24: DIRECT MATCH
+Console.js:61 🎯 Element 24: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 25: path, fill="#ffffff"
+Console.js:61 ✅ Element 25: DIRECT MATCH
+Console.js:61 🎯 Element 25: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 26: path, fill="#ffffff"
+Console.js:61 ✅ Element 26: DIRECT MATCH
+Console.js:61 🎯 Element 26: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 27: path, fill="#ffffff"
+Console.js:61 ✅ Element 27: DIRECT MATCH
+Console.js:61 🎯 Element 27: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 28: path, fill="#ffffff"
+Console.js:61 ✅ Element 28: DIRECT MATCH
+Console.js:61 🎯 Element 28: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: path
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 29: ellipse, fill="#ffffff"
+Console.js:61 ✅ Element 29: DIRECT MATCH
+Console.js:61 🎯 Element 29: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: ellipse
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 30: circle, fill="#ffffff"
+Console.js:61 ✅ Element 30: DIRECT MATCH
+Console.js:61 🎯 Element 30: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: circle
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 31: rect, fill="#ffffff"
+Console.js:61 ✅ Element 31: DIRECT MATCH
+Console.js:61 🎯 Element 31: shouldRemove = true
+Console.js:61 Removing element with fill: #ffffff tagName: rect
+Console.js:61 DEBUG: stackingMode = cut_out string
+Console.js:61 Set fill="none" for transparent cut-out (Shape Stacking: cut_out)
+Console.js:61 🔍 Element 32: rect, fill="#333333"
+Console.js:61 🎯 Element 32: shouldRemove = false
+Console.js:61 🔍 Element 33: rect, fill="#333333"
+Console.js:61 🎯 Element 33: shouldRemove = false
+Console.js:61 Removed 13 elements with color #ffffff
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Attempting to render SVG with length: 44712
+Console.js:61 SVG preview (first 500 chars): <svg xmlns="http://www.w3.org/2000/svg" data-crop-extracted="true" version="1.1" viewBox="0.00 0.00 1032.00 924.00" data-ai-vectorized="true">
+    <path vector-effect="non-scaling-stroke" d="   M 757.25 499.17   C 746.75 496.47 734.31 501.17 730.24 511.72   C 729.44 513.80 729.84 517.51 733.02 516.95   Q 735.39 516.54 735.92 516.17   Q 742.59 511.46 750.34 511.76   A 0.35 0.35 0.0 0 1 750.61 512.33   C 748.02 515.76 741.57 526.27 745.36 530.16   A 1.87 1.64 47.7 0 0 747.74 530.43   C 749.39 529.
+Console.js:61 SVG container ref exists, creating element
+Console.js:61 SVG element found: true
+Console.js:61 Current viewBox: 0.00 0.00 1032.00 924.00
+Console.js:61 Direct DOM update with interactive SVG length: 44712
+Console.js:61 SVG appended to container successfully
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 VectorizerModal render: Object
+Console.js:61 Preview state check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Template A3: 842x1191px, Workspace: 400x900, Zoom: 50%
+Console.js:61 VectorizerModal render: {open: true, fileName: 'monster12243423.jpg', hasImageFile: true, fileSize: 80949, fileType: 'image/jpeg', …}
+Console.js:61 Preview state check: {previewUrl: true, isProcessing: false, error: null, vectorSvg: true}

@@ -594,6 +594,8 @@ export function VectorizerModal({
 
   // Function to remove specific color from SVG
   const removeColorFromSvg = (svg: string, colorToRemove: string, stackingMode: 'cut_out' | 'stack' = 'cut_out'): string => {
+    console.log('🚨 REMOVECOLORFORMSVG FUNCTION CALLED!', { colorToRemove, stackingMode });
+    
     const parser = new DOMParser();
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     
@@ -637,14 +639,17 @@ export function VectorizerModal({
       
       if (shouldRemove) {
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
-        console.log('DEBUG: stackingMode =', stackingMode, typeof stackingMode);
+        console.log('🎯 BEFORE STACKING CHECK - stackingMode =', stackingMode, typeof stackingMode);
         
         // CRITICAL FIX: Use Shape Stacking setting to control deletion behavior
         if (stackingMode === 'cut_out') {
+          console.log('🎯 INSIDE CUT_OUT BRANCH');
           // Cut-out mode: Make elements transparent instead of removing them
           el.setAttribute('fill', 'none');
+          console.log('🎯 AFTER SETTING FILL=NONE');
           console.log('Set fill="none" for transparent cut-out (Shape Stacking: cut_out)');
           removedCount++;
+          console.log('🎯 INCREMENTED REMOVED COUNT');
         } else {
           // Stack mode: Remove elements completely (original behavior)
           if (['rect', 'path', 'circle', 'ellipse', 'polygon', 'g'].includes(el.tagName.toLowerCase())) {
