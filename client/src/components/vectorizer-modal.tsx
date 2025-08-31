@@ -60,7 +60,7 @@ export function VectorizerModal({
   } | null>(null); // Track vectorization quality issues
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
-  const [enableTightCropping, setEnableTightCropping] = useState(true); // Enable tight cropping by default
+  const [enableTightCropping, setEnableTightCropping] = useState(false); // Disable tight cropping to prevent content loss
   const [showCropInterface, setShowCropInterface] = useState(false); // Show pre-crop interface
   const [cropArea, setCropArea] = useState<{x: number, y: number, width: number, height: number} | null>(null); // Crop selection
   const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null); // Original image for cropping
@@ -254,9 +254,9 @@ export function VectorizerModal({
       formData.append('image', fileToUse);
       formData.append('preview', 'true'); // This ensures no credits are consumed
       formData.append('removeBackground', 'false');
-      formData.append('enableTightCropping', 'true'); // Force enable tight cropping
+      formData.append('enableTightCropping', 'false'); // Disable tight cropping to prevent content loss
       formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
-      console.log(`🔧 CLIENT PREVIEW: Forcing enableTightCropping = true`);
+      console.log(`🔧 CLIENT PREVIEW: Disabling tight cropping to preserve full content`);
       console.log(`🔄 CLIENT PREVIEW: Shape stacking = ${shapeStacking} (deleted colors will be ${shapeStacking === 'cut_out' ? 'transparent' : 'black'})`);
       
       // Mark if this PNG was extracted from a PDF (so server skips deduplication)
@@ -360,9 +360,9 @@ export function VectorizerModal({
         formData.append('image', imageFile);
         formData.append('preview', 'false'); // Production mode
         formData.append('removeBackground', 'false');
-        formData.append('enableTightCropping', 'true'); // Force enable tight cropping
+        formData.append('enableTightCropping', 'false'); // Disable tight cropping to prevent content loss
         formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
-        console.log(`🔧 CLIENT PRODUCTION: Forcing enableTightCropping = true`);
+        console.log(`🔧 CLIENT PRODUCTION: Disabling tight cropping to preserve full content`);
         console.log(`🔄 CLIENT PRODUCTION: Shape stacking = ${shapeStacking} (deleted colors will be ${shapeStacking === 'cut_out' ? 'transparent' : 'black'})`);
         
         // Mark if this PNG was extracted from a PDF (so server skips deduplication)
