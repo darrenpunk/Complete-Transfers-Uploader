@@ -2114,13 +2114,9 @@ export function VectorizerModal({
                                                   colorItem.color.toLowerCase() === 'rgb(100%,100%,100%)';
                               
                               
-                              if (isWhiteColor) {
-                                // Use smart background removal for white colors
-                                updatedSvg = removeWhiteFromSvg(currentSvg, 'background');
-                              } else {
-                                // Use normal color removal for non-white colors
-                                updatedSvg = removeColorFromSvg(currentSvg, colorItem.color, shapeStacking);
-                              }
+                              // Always use proper color removal for individual color clicks
+                              // This ensures Shape Stacking setting controls transparency vs black
+                              updatedSvg = removeColorFromSvg(currentSvg, colorItem.color, shapeStacking);
                               setColoredSvg(updatedSvg);
                               
                               // Track deleted color
@@ -2497,13 +2493,9 @@ export function VectorizerModal({
                                                   color.toLowerCase() === 'rgb(100%,100%,100%)';
                               
                               
-                              if (isWhiteColor) {
-                                // Use smart background removal for white colors
-                                updatedSvg = removeWhiteFromSvg(updatedSvg, 'background');
-                              } else {
-                                // Use normal color removal for non-white colors
-                                updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
-                              }
+                              // Always use proper color removal for individual color clicks
+                              // This ensures Shape Stacking setting controls transparency vs black
+                              updatedSvg = removeColorFromSvg(updatedSvg, color, shapeStacking);
                               
                               setDeletedColors(prev => new Set([...prev, color.toLowerCase()]));
                               totalRemoved++;
