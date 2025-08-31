@@ -594,8 +594,6 @@ export function VectorizerModal({
 
   // Function to remove specific color from SVG
   const removeColorFromSvg = (svg: string, colorToRemove: string, stackingMode: 'cut_out' | 'stack' = 'cut_out'): string => {
-    console.log('🚨 REMOVECOLORFORMSVG FUNCTION CALLED!', { colorToRemove, stackingMode });
-    
     const parser = new DOMParser();
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     
@@ -608,14 +606,11 @@ export function VectorizerModal({
     
     // Remove elements with matching fill
     const elementsWithFill = doc.querySelectorAll('*[fill]');
-    console.log(`🔍 TOTAL ELEMENTS WITH FILL: ${elementsWithFill.length}`);
     
-    elementsWithFill.forEach((el, index) => {
+    elementsWithFill.forEach((el) => {
       const fill = el.getAttribute('fill')?.toLowerCase().trim();
-      console.log(`🔍 Element ${index}: ${el.tagName}, fill="${fill}"`);
       
       if (!fill || fill === 'none') {
-        console.log(`⏭️ Skipping element ${index}: no fill or fill=none`);
         return;
       }
       
@@ -624,32 +619,24 @@ export function VectorizerModal({
       // Direct hex match
       if (fill === normalizedColorToRemove) {
         shouldRemove = true;
-        console.log(`✅ Element ${index}: DIRECT MATCH`);
       }
       // RGB format match
       else if (fill.startsWith('rgb')) {
         const normalizedRgb = normalizeRgbToHex(fill);
         if (normalizedRgb === normalizedColorToRemove) {
           shouldRemove = true;
-          console.log(`✅ Element ${index}: RGB MATCH`);
         }
       }
       
-      console.log(`🎯 Element ${index}: shouldRemove = ${shouldRemove}`);
-      
       if (shouldRemove) {
         console.log('Removing element with fill:', fill, 'tagName:', el.tagName);
-        console.log('🎯 BEFORE STACKING CHECK - stackingMode =', stackingMode, typeof stackingMode);
         
         // CRITICAL FIX: Use Shape Stacking setting to control deletion behavior
         if (stackingMode === 'cut_out') {
-          console.log('🎯 INSIDE CUT_OUT BRANCH');
-          // Cut-out mode: Make elements transparent instead of removing them
-          el.setAttribute('fill', 'none');
-          console.log('🎯 AFTER SETTING FILL=NONE');
-          console.log('Set fill="none" for transparent cut-out (Shape Stacking: cut_out)');
+          // Cut-out mode: Remove elements completely (like removeWhiteFromSvg)
+          el.remove();
+          console.log('Removed element completely for transparent cut-out (Shape Stacking: cut_out)');
           removedCount++;
-          console.log('🎯 INCREMENTED REMOVED COUNT');
         } else {
           // Stack mode: Remove elements completely (original behavior)
           if (['rect', 'path', 'circle', 'ellipse', 'polygon', 'g'].includes(el.tagName.toLowerCase())) {
