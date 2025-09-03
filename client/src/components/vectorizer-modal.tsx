@@ -13,7 +13,6 @@ import { createPortal } from "react-dom";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { useToast } from "@/hooks/use-toast";
 import { SimpleCropInterface } from "./simple-crop-interface";
-import CMYKColorModal from "./cmyk-color-modal";
 
 interface VectorizerModalProps {
   open: boolean;
@@ -61,9 +60,6 @@ export function VectorizerModal({
   } | null>(null); // Track vectorization quality issues
   const [isEyedropperActive, setIsEyedropperActive] = useState(false); // Eyedropper mode
   const [eyedropperColor, setEyedropperColor] = useState<string | null>(null); // Selected color to apply
-  const [showCMYKModal, setShowCMYKModal] = useState(false); // Show CMYK color picker
-  const [targetColorToReplace, setTargetColorToReplace] = useState<string | null>(null); // Color to replace with CMYK
-  const cmykModalRef = useRef<HTMLButtonElement>(null); // Ref to trigger CMYK modal
   const [enableTightCropping, setEnableTightCropping] = useState(false); // Disable tight cropping to prevent content loss
   const [showCropInterface, setShowCropInterface] = useState(false); // Show pre-crop interface
   const [cropArea, setCropArea] = useState<{x: number, y: number, width: number, height: number} | null>(null); // Crop selection
@@ -513,49 +509,6 @@ export function VectorizerModal({
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  // Handle CMYK color change from modal
-  const handleCMYKColorChange = (newColor: string) => {
-    if (!targetColorToReplace) return;
-    
-    const currentSvg = coloredSvg || vectorSvg;
-    if (currentSvg) {
-      // Save state for undo
-      setDeletionHistory(prev => [...prev, {
-        svg: currentSvg,
-        colors: [...detectedColors]
-      }]);
-      
-      // Replace the target color with the new CMYK color
-      console.log(`🎨 CMYK RECOLOR: Replacing ${targetColorToReplace} → ${newColor}`);
-      const updatedSvg = replaceColorInSvg(currentSvg, targetColorToReplace, newColor);
-      
-      console.log(`🎨 CMYK SVG length before: ${currentSvg.length}, after: ${updatedSvg.length}`);
-      console.log(`🎨 CMYK Replacement successful: ${currentSvg !== updatedSvg}`);
-      
-      setColoredSvg(updatedSvg);
-      const newColors = detectColorsInSvg(updatedSvg);
-      setDetectedColors(newColors);
-      setSvgRevision(prev => prev + 1);
-      
-      toast({
-        title: "CMYK Color Applied",
-        description: `Changed ${targetColorToReplace} to ${newColor}`,
-      });
-      
-      // Reset states
-      setShowCMYKModal(false);
-      setTargetColorToReplace(null);
-      setIsEyedropperActive(false);
-    }
-  };
-
-  // Effect to open CMYK modal when triggered
-  useEffect(() => {
-    if (showCMYKModal && targetColorToReplace && cmykModalRef.current) {
-      console.log('🎨 Triggering CMYK modal click for color:', targetColorToReplace);
-      cmykModalRef.current.click();
-    }
-  }, [showCMYKModal, targetColorToReplace]);
 
   // Function to detect all colors in SVG
   const detectColorsInSvg = (svg: string): {color: string, count: number}[] => {
@@ -2122,7 +2075,7 @@ export function VectorizerModal({
                     <div className="flex items-center gap-1">
                       <Pipette className="w-3 h-3 text-blue-600" />
                       <span className="text-blue-700 font-medium">
-                        Click any color below to open the CMYK color picker
+                        Click any color below to see CMYK sliders appear in the sidebar
                       </span>
                     </div>
                   ) : (
@@ -2176,10 +2129,14 @@ export function VectorizerModal({
                         }
                         onClick={() => {
                           if (isEyedropperActive) {
-                            // Open CMYK modal for this color
-                            setTargetColorToReplace(colorItem.color);
-                            setShowCMYKModal(true);
-                            console.log(`🎨 Opening CMYK modal for color: ${colorItem.color}`);
+                            // Highlight this color to show CMYK sliders in sidebar
+                            setHighlightedColor(colorItem.color);
+                            const currentSvg = coloredSvg || vectorSvg;
+                            if (currentSvg) {
+                              const highlighted = highlightColorInSvg(currentSvg, colorItem.color);
+                              setHighlightedSvg(highlighted);
+                            }
+                            console.log(`🎨 Highlighting color for CMYK editing: ${colorItem.color}`);
                           } else {
                             // Normal highlight functionality
                             if (highlightedColor === colorItem.color) {
@@ -2874,22 +2831,6 @@ export function VectorizerModal({
         </DialogContent>
       </Dialog>
 
-      {/* CMYK Color Modal for Recoloring */}
-      <CMYKColorModal
-        initialColor={targetColorToReplace || "#333333"}
-        currentColor={targetColorToReplace || "#333333"}
-        onChange={handleCMYKColorChange}
-        label={`Recolor ${targetColorToReplace || "Color"}`}
-        trigger={
-          <button
-            ref={cmykModalRef}
-            style={{ display: 'none' }}
-            aria-hidden="true"
-          >
-            Hidden CMYK Trigger
-          </button>
-        }
-      />
     </TooltipProvider>
   );
 }
