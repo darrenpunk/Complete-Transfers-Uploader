@@ -33,7 +33,7 @@ function getColorName(hex: string): string {
   for (const group of gildanColors) {
     const gildanColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
     if (gildanColor) {
-      return `${gildanColor.name} (${gildanColor.code})`;
+      return gildanColor.name; // Show just the name without code
     }
   }
 
@@ -41,7 +41,7 @@ function getColorName(hex: string): string {
   for (const group of fruitOfTheLoomColors) {
     const fotlColor = group.colors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
     if (fotlColor) {
-      return `${fotlColor.name} (${fotlColor.code})`;
+      return fotlColor.name; // Show just the name without code
     }
   }
 
