@@ -34,7 +34,7 @@ export function VectorizerModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [vectorSvg, setVectorSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cost, setCost] = useState<number>(2.50); // Base vectorization cost
+  const [cost, setCost] = useState<number>(3.00); // Base vectorization cost
   const [zoom, setZoom] = useState<number>(125); // Zoom percentage
   const [showGrid, setShowGrid] = useState<boolean>(true); // Show transparency grid
 
@@ -1643,7 +1643,7 @@ export function VectorizerModal({
             {/* Cost Information */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex-shrink-0">
               <p className="text-sm text-blue-800">
-                <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. $2.50 ex VAT will only be charged when you approve and download the final result.
+                <strong>Free Preview:</strong> This preview uses test mode and consumes no credits. €3.00 ex VAT will only be charged when you approve and download the final result.
               </p>
             </div>
 
@@ -1904,11 +1904,11 @@ export function VectorizerModal({
                     <TooltipTrigger asChild>
                       <Button onClick={handleApproveVector} className="bg-green-600 hover:bg-green-700">
                         <Download className="h-4 w-4 mr-2" />
-                        Approve & Download (${cost.toFixed(2)})
+                        Approve & Download (€{cost.toFixed(2)})
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Generate production-quality vector and add to canvas - charges ${cost.toFixed(2)} to your order</p>
+                      <p>Generate production-quality vector and add to canvas - charges €{cost.toFixed(2)} to your order</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
@@ -2715,7 +2715,7 @@ export function VectorizerModal({
                 <li>Use "Delete Unlocked Colors" to remove all unwanted colors at once</li>
                 <li>Fine-tune remaining colors with CMYK sliders if needed</li>
                 <li>Check the result at high zoom to ensure quality</li>
-                <li>Click "Approve & Upload" to finalize ($2.50 charge)</li>
+                <li>Click "Approve & Upload" to finalize (€3.00 charge)</li>
               </ol>
             </div>
 
@@ -2724,7 +2724,7 @@ export function VectorizerModal({
               <h3 className="font-semibold text-lg mb-2">Important Notes</h3>
               <ul className="list-disc list-inside space-y-1 text-blue-800">
                 <li>Preview mode is completely free - no credits are used</li>
-                <li>$2.50 is only charged when you approve and download the final result</li>
+                <li>€3.00 is only charged when you approve and download the final result</li>
                 <li>All color edits and adjustments are applied to the final download</li>
                 <li>The vectorized file will be automatically sized on the canvas after upload</li>
                 <li>Use the "Undo" button to reverse the last color deletion</li>
