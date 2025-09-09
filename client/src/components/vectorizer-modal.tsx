@@ -388,14 +388,26 @@ export function VectorizerModal({
         console.log('Production vectorization successful');
         
         // Use the production-quality SVG from the API response
-        // If user made color changes, we need to apply them to the production SVG
-        let finalSvg = svgToDownload !== vectorSvg ? svgToDownload : result.svg;
+        // CRITICAL FIX: If user made ANY color changes, always use the recolored version
+        let finalSvg;
+        if (coloredSvg) {
+          // User made color changes - use the recolored SVG, NOT the fresh production version
+          finalSvg = coloredSvg;
+          console.log('🎨 USING RECOLORED SVG: User made color changes, preserving them');
+        } else {
+          // No color changes - use the fresh production SVG
+          finalSvg = result.svg;
+          console.log('🎨 USING PRODUCTION SVG: No color changes made');
+        }
         
         // No custom sizing - users will resize on canvas
         
-        console.log('Calling onVectorDownload with', { 
-          usedModifiedVersion: svgToDownload !== vectorSvg,
-          finalSvgLength: finalSvg?.length
+        console.log('🎨 FINAL SVG SELECTION:', { 
+          hasColoredSvg: !!coloredSvg,
+          usedColoredSvg: !!coloredSvg,
+          finalSvgLength: finalSvg?.length,
+          svgToDownloadLength: svgToDownload?.length,
+          productionSvgLength: result.svg?.length
         });
         onVectorDownload(finalSvg);
         onClose();
@@ -1175,12 +1187,6 @@ export function VectorizerModal({
 
   // Function to apply all color adjustments to the provided SVG
   const applyAllColorAdjustments = (baseSvg: string, adjustments: {[color: string]: any}): string => {
-    console.log('🎨 APPLY COLOR ADJUSTMENTS DEBUG:', { 
-      adjustments, 
-      svgLength: baseSvg.length,
-      adjustmentKeys: Object.keys(adjustments)
-    });
-    
     const parser = new DOMParser();
     const doc = parser.parseFromString(baseSvg, 'image/svg+xml');
     
@@ -1188,9 +1194,7 @@ export function VectorizerModal({
     
     // Apply adjustments for each original color
     Object.entries(adjustments).forEach(([originalColor, colorAdjustment]) => {
-      console.log('🎨 PROCESSING COLOR:', { originalColor, colorAdjustment });
       const adjustedColor = applyColorAdjustment(originalColor, colorAdjustment);
-      console.log('🎨 ADJUSTED COLOR RESULT:', { originalColor, adjustedColor });
       const normalizedOriginalColor = originalColor.toLowerCase().trim();
       
       // Replace fill colors
@@ -1214,7 +1218,6 @@ export function VectorizerModal({
         }
         
         if (shouldReplace) {
-          console.log('🎨 REPLACING FILL:', { original: fill, new: adjustedColor, element: el.tagName });
           el.setAttribute('fill', adjustedColor);
           totalReplacements++;
         }
