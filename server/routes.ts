@@ -1189,6 +1189,34 @@ export async function registerRoutes(app: express.Application) {
         const pdfBytes = await pdfDoc.save();
         console.log(`✅ Initial PDF: ${pdfBytes.length} bytes`);
         
+        // Check if this is an applique badges project and process accordingly
+        const isAppliqueBadges = project.templateSize?.includes('applique') || project.appliqueBadgesForm;
+        
+        if (isAppliqueBadges && project.appliqueBadgesForm) {
+          console.log('📋 Applique Badges project detected with form data - adding specification page');
+          try {
+            const { AppliqueBadgesPDFGenerator } = await import('./applique-badges-pdf-generator');
+            const appliqueGenerator = new AppliqueBadgesPDFGenerator();
+            
+            const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
+              originalPdfBuffer: Buffer.from(pdfBytes),
+              appliqueBadgesForm: project.appliqueBadgesForm,
+              projectName: project.name
+            });
+            
+            console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_applique.pdf"`);
+            res.send(appliquePdfBytes);
+            return;
+          } catch (error) {
+            console.error('❌ Applique Badges PDF generation failed:', error);
+            // Fall back to original PDF if applique generation fails
+            console.log('🔄 Falling back to original PDF without applique form page');
+          }
+        }
+        
         // SKIP ALL COLOR CONVERSION - RETURN ORIGINAL PDF DIRECTLY
         console.log(`🎯 BYPASSING ALL COLOR CONVERSION - RETURNING ORIGINAL PDF WITH EXACT COLORS`);
         
