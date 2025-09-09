@@ -18,6 +18,7 @@ import singleColourIconPath from "@assets/single_1757431750112.png";
 import reflectiveIconPath from "@assets/reflect_1757431997071.png";
 import fullColourHDIconPath from "@assets/hd_1757431808013.png";
 import metallicIconPath from "@assets/metal_1757431877375.png";
+import zeroIconPath from "@assets/zero_1757431932809.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -88,7 +89,7 @@ const productCategories = [
     id: "zero-single-colour",
     name: "ZERO Single Colour Transfers",
     description: "Zero inks are super stretchy and do not bleed!",
-    icon: fullColourIconPath,
+    icon: zeroIconPath,
     group: "Screen Printed Transfers"
   },
   {
@@ -102,7 +103,7 @@ const productCategories = [
     id: "zero-silicone-transfers",
     name: "Zero Silicone Transfers",
     description: "Silicone-free transfers",
-    icon: fullColourIconPath,
+    icon: zeroIconPath,
     group: "Screen Printed Transfers"
   }
 ];
