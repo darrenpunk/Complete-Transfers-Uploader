@@ -18,15 +18,41 @@ import SvgInlineRenderer from "./svg-inline-renderer";
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
 
 function getColorName(hex: string): string {
-  // Check quick Hi-Viz colors first (from garment color selector)
-  const hiVizColors = [
+  // Professional Colors (same as in garment color modal)
+  const quickColors = [
+    { name: "White", hex: "#FFFFFF" },
+    { name: "Black", hex: "#25282A" },
+    { name: "Natural", hex: "#F3F0E4" },
+    { name: "Pastel Yellow", hex: "#F3F590" },
+    { name: "Yellow", hex: "#F0F42A" },
     { name: "Hi Viz", hex: "#D2E31D" },
-    { name: "Hi Viz Orange", hex: "#D98F17" }
+    { name: "Hi Viz Orange", hex: "#D98F17" },
+    { name: "HiViz Green", hex: "#388032" },
+    { name: "HIViz Pink", hex: "#BF0072" },
+    { name: "Sports Grey", hex: "#767878" },
+    { name: "Light Grey Marl", hex: "#919393" },
+    { name: "Ash Grey", hex: "#A6A9A2" },
+    { name: "Light Grey", hex: "#BCBFBB" },
+    { name: "Charcoal Grey", hex: "#353330" },
+    { name: "Pastel Blue", hex: "#B9DBEA" },
+    { name: "Sky Blue", hex: "#5998D4" },
+    { name: "Navy", hex: "#201C3A" },
+    { name: "Royal Blue", hex: "#221866" },
+    { name: "Pastel Green", hex: "#B5D55E" },
+    { name: "Lime Green", hex: "#90BF33" },
+    { name: "Kelly Green", hex: "#3C8A35" },
+    { name: "Pastel Pink", hex: "#E7BBD0" },
+    { name: "Light Pink", hex: "#D287A2" },
+    { name: "Fuchsia Pink", hex: "#C42469" },
+    { name: "Red", hex: "#C02300" },
+    { name: "Burgundy", hex: "#762009" },
+    { name: "Purple", hex: "#4C0A6A" }
   ];
   
-  const hiVizColor = hiVizColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
-  if (hiVizColor) {
-    return hiVizColor.name;
+  // Check quick colors first
+  const quickColor = quickColors.find(color => color.hex.toLowerCase() === hex.toLowerCase());
+  if (quickColor) {
+    return quickColor.name;
   }
 
   // Check Gildan colors
