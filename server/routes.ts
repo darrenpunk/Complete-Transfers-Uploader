@@ -3310,7 +3310,7 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'No image file provided' });
       }
 
-      let isPreview = req.body.preview === 'true';
+      let isPreview = req.body.preview === 'true' || req.query.preview === 'true';
       const removeBackground = false; // DISABLED: User wants more colors detected, manual cleanup preferred
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
       
