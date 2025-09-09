@@ -104,7 +104,14 @@ export class MemStorage implements IStorage {
       { id: "single-small", name: "single_small", label: "60×60mm Single Colour", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
       
       // Screen Printed Transfers - Zero
-      { id: "zero-silicone-A3", name: "zero_silicone_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-A3", name: "zero_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-A4", name: "zero_A4", label: "A4 Zero", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-A5", name: "zero_A5", label: "A5 Zero", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-A6", name: "zero_A6", label: "A6 Zero", width: 105, height: 148, pixelWidth: 298, pixelHeight: 420, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-transfer-size", name: "zero_transfer_size", label: "295×100mm Zero", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-square", name: "zero_square", label: "95×95mm Zero", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-badge", name: "zero_badge", label: "100×70mm Zero", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
+      { id: "zero-small", name: "zero_small", label: "60×60mm Zero", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
       
       // Digital Transfers - DTF
       { id: "dtf-SRA3", name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "Digital Transfers", description: "Small order digital heat transfers" },
@@ -216,7 +223,7 @@ export class MemStorage implements IStorage {
 
   async createLogo(insertLogo: InsertLogo): Promise<Logo> {
     // Use provided ID if available, otherwise generate new one
-    const id = insertLogo.id || randomUUID();
+    const id = (insertLogo as any).id || randomUUID();
     const logo: Logo = { 
       ...insertLogo, 
       id,
