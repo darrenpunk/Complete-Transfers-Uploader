@@ -927,6 +927,56 @@ export async function registerRoutes(app: express.Application) {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');
               
+              // CRITICAL: Check if this is a vectorized file that needs color preservation
+              const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
+                                    svgContent.includes('AI_VECTORIZED_FILE');
+              
+              if (isAIVectorized) {
+                console.log(`🤖 AI-VECTORIZED FILE DETECTED: Preserving exact canvas colors for PDF`);
+                
+                // For vectorized files, we need to LIGHTEN colors to compensate for PDF darkening
+                // Apply inverse color correction to counteract rsvg-convert darkening
+                svgContent = svgContent.replace(/fill="rgb\(([^)]+)\)"/g, (match, rgbValues) => {
+                  try {
+                    const [r, g, b] = rgbValues.split(',').map((v: string) => parseInt(v.trim()));
+                    
+                    // Apply lightening to compensate for PDF conversion darkening
+                    // This reverses the darkening effect that rsvg-convert applies
+                    const lighterR = Math.min(255, Math.round(r * 1.15)); // 15% lighter
+                    const lighterG = Math.min(255, Math.round(g * 1.15));
+                    const lighterB = Math.min(255, Math.round(b * 1.15));
+                    
+                    return `fill="rgb(${lighterR}, ${lighterG}, ${lighterB})"`;
+                  } catch {
+                    return match; // Keep original if parsing fails
+                  }
+                });
+                
+                // Also handle hex colors
+                svgContent = svgContent.replace(/fill="#([a-fA-F0-9]{6})"/g, (match, hex) => {
+                  try {
+                    const r = parseInt(hex.substring(0, 2), 16);
+                    const g = parseInt(hex.substring(2, 4), 16);
+                    const b = parseInt(hex.substring(4, 6), 16);
+                    
+                    // Apply lightening
+                    const lighterR = Math.min(255, Math.round(r * 1.15));
+                    const lighterG = Math.min(255, Math.round(g * 1.15));
+                    const lighterB = Math.min(255, Math.round(b * 1.15));
+                    
+                    const newHex = [lighterR, lighterG, lighterB]
+                      .map(v => v.toString(16).padStart(2, '0'))
+                      .join('');
+                    
+                    return `fill="#${newHex}"`;
+                  } catch {
+                    return match;
+                  }
+                });
+                
+                console.log(`✅ Applied color lightening compensation for PDF conversion`);
+              }
+              
               // Remove any background rectangles or fills that create boundaries
               svgContent = svgContent.replace(/<rect[^>]*fill="white"[^>]*>/g, '');
               svgContent = svgContent.replace(/<rect[^>]*fill="#ffffff"[^>]*>/g, '');
