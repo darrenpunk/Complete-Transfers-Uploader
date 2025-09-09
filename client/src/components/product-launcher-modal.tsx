@@ -13,6 +13,7 @@ import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.pn
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 import sublimationIconPath from "@assets/sublimate_1757431653278.png";
+import appliqueBadgeIconPath from "@assets/corrib embroid_1757431675232.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -69,7 +70,7 @@ const productCategories = [
     id: "applique-badges",
     name: "Applique Badges",
     description: "Fabric applique badges",
-    icon: wovenBadgeIconPath,
+    icon: appliqueBadgeIconPath,
     group: "Digital Transfers"
   },
   {
