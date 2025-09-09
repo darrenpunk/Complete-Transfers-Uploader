@@ -15,6 +15,7 @@ import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 import sublimationIconPath from "@assets/sublimate_1757431653278.png";
 import appliqueBadgeIconPath from "@assets/corrib embroid_1757431675232.png";
 import singleColourIconPath from "@assets/single_1757431750112.png";
+import reflectiveIconPath from "@assets/reflect_1757431997071.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -78,7 +79,7 @@ const productCategories = [
     id: "reflective-transfers",
     name: "Reflective Transfers",
     description: "Our silver reflective helps enhance the visibility of the wearer at night",
-    icon: fullColourIconPath,
+    icon: reflectiveIconPath,
     group: "Screen Printed Transfers"
   },
   {
