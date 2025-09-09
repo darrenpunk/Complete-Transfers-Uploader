@@ -1654,129 +1654,6 @@ export function VectorizerModal({
                 <h3 className="font-medium text-gray-800">Vectorization Settings</h3>
               </div>
               
-              {/* Processing Options */}
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Wand2 className="w-4 h-4 text-blue-600" />
-                    <Label className="text-sm font-medium text-blue-800">
-                      Processing Options
-                    </Label>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    onClick={() => setShowCropInterface(true)}
-                    size="sm"
-                    variant="outline"
-                    className="border-blue-300 text-blue-700 hover:bg-blue-100 flex items-center gap-2"
-                  >
-                    <Crop className="w-4 h-4" />
-                    Crop First
-                  </Button>
-                  
-                  <Button
-                    onClick={processVectorization}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                  >
-                    <Wand2 className="w-4 h-4" />
-                    Vectorize Now
-                  </Button>
-                </div>
-                
-                <p className="text-xs text-blue-700 mt-2">
-                  Choose to crop the image first or vectorize the entire image directly.
-                </p>
-              </div>
-              
-              {/* Tight Cropping */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Crop className="w-4 h-4 text-gray-600" />
-                  <Label htmlFor="tight-cropping" className="text-sm font-medium">
-                    Auto Tight Cropping
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="tight-cropping"
-                    checked={enableTightCropping}
-                    onCheckedChange={setEnableTightCropping}
-                    data-testid="switch-tight-cropping"
-                  />
-                  <span className="text-xs text-gray-500">
-                    {enableTightCropping ? 'ON' : 'OFF'}
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-gray-600 mt-2">
-                Automatically crop the vectorized result to remove excess whitespace and focus on the actual content.
-              </p>
-              
-              {/* Shape Stacking Setting */}
-              <div className="space-y-3 pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-gray-600" />
-                  <Label className="text-sm font-medium flex items-center gap-1">
-                    Shape Stacking
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="w-3 h-3 text-gray-400" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Controls how deleted colors are handled:<br/>
-                          • Cut-outs = Transparent holes (recommended)<br/>
-                          • Stack = Black areas</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                </div>
-                
-                <div className="space-y-2 ml-6">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="shape-stacking-cutout"
-                      name="shape-stacking"
-                      value="cut_out"
-                      checked={shapeStacking === 'cut_out'}
-                      onChange={(e) => setShapeStacking(e.target.value as 'cut_out' | 'stack')}
-                      className="text-primary focus:ring-primary"
-                      data-testid="radio-shape-stacking-cutout"
-                    />
-                    <Label htmlFor="shape-stacking-cutout" className="text-sm text-gray-700 cursor-pointer">
-                      Place shapes in cut-outs in shapes below
-                    </Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="shape-stacking-stack"
-                      name="shape-stacking"
-                      value="stack"
-                      checked={shapeStacking === 'stack'}
-                      onChange={(e) => setShapeStacking(e.target.value as 'cut_out' | 'stack')}
-                      className="text-primary focus:ring-primary"
-                      data-testid="radio-shape-stacking-stack"
-                    />
-                    <Label htmlFor="shape-stacking-stack" className="text-sm text-gray-700 cursor-pointer">
-                      Stack shapes on top of each other
-                    </Label>
-                  </div>
-                </div>
-                
-                <p className="text-xs text-gray-600 ml-6">
-                  {shapeStacking === 'cut_out' 
-                    ? 'Deleted colors will create transparent holes (recommended for clean results)'
-                    : 'Deleted colors will appear as black areas'
-                  }
-                </p>
-              </div>
             </div>
 
 
@@ -1996,9 +1873,30 @@ export function VectorizerModal({
 
             {/* Action Buttons */}
             <div className="flex justify-between items-center pt-4 mt-4 border-t flex-shrink-0">
-              <Button variant="ghost" onClick={onClose}>
-                Cancel
-              </Button>
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={onClose}>
+                  Cancel
+                </Button>
+                
+                <Button
+                  onClick={() => setShowCropInterface(true)}
+                  size="default"
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100 flex items-center gap-2"
+                >
+                  <Crop className="w-4 h-4" />
+                  Crop
+                </Button>
+                
+                <Button
+                  onClick={processVectorization}
+                  size="default"
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  Vectorise
+                </Button>
+              </div>
               
               <div className="flex gap-3">
                 {vectorSvg && (
