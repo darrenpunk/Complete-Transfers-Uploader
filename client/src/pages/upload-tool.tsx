@@ -896,7 +896,7 @@ export default function UploadTool() {
               "Applique Badges": ["applique-A6", "applique-square", "applique-badge", "applique-small"],
               "Reflective Transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
               "ZERO Single Colour Transfers": ["zero-A3", "zero-A4", "zero-A5", "zero-A6", "zero-transfer-size", "zero-square", "zero-badge", "zero-small"],
-              "Sublimation Transfers": ["sublimation-A3", "sublimation-A4", "sublimation-mug"]
+              "Sublimation Transfers": ["sublimation-A2-fabric", "sublimation-A3-fabric", "sublimation-A4-fabric", "sublimation-A3", "sublimation-A4", "sublimation-mug"]
             };
             
             const allowedTemplates = productTemplates[selectedProductGroup] || [];
@@ -1099,7 +1099,7 @@ export default function UploadTool() {
             "Applique Badges": ["applique-A6", "applique-square", "applique-badge", "applique-small"],
             "Reflective Transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
             "ZERO Single Colour Transfers": ["zero-A3", "zero-A4", "zero-A5", "zero-A6", "zero-transfer-size", "zero-square", "zero-badge", "zero-small"],
-            "Sublimation Transfers": ["sublimation-A3", "sublimation-A4", "sublimation-mug"]
+            "Sublimation Transfers": ["sublimation-A2-fabric", "sublimation-A3-fabric", "sublimation-A4-fabric", "sublimation-A3", "sublimation-A4", "sublimation-mug"]
           };
           
           const allowedTemplates = productTemplates[selectedProductGroup] || [];
