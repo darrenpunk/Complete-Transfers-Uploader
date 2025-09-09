@@ -3855,41 +3855,48 @@ ${svgClose}`;
         console.log(`🤖 Added AI-vectorized marker to prevent re-processing`);
       }
       
-      // Apply RGB-to-CMYK conversion for production downloads
-      console.log(`🎨 Converting RGB colors to CMYK for professional printing`);
-      
-      try {
-        // Import Adobe CMYK conversion function
-        const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
+      // Only apply CMYK conversion for final download, not preview (device-cmyk colors don't display well in browsers)
+      if (!isPreview) {
+        console.log(`🎨 Converting RGB colors to CMYK for professional printing (production download)`);
         
-        // Convert RGB colors to CMYK in the SVG
-        cmykSvg = cmykSvg.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
-          const rgb = { r: parseInt(r), g: parseInt(g), b: parseInt(b) };
-          const cmyk = adobeRgbToCmyk(rgb);
-          console.log(`🎨 Converting RGB(${r},${g},${b}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
-          return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
-        });
-        
-        // Convert hex colors to CMYK
-        cmykSvg = cmykSvg.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
-          const r = parseInt(hex.substr(0, 2), 16);
-          const g = parseInt(hex.substr(2, 2), 16);
-          const b = parseInt(hex.substr(4, 2), 16);
-          const rgb = { r, g, b };
-          const cmyk = adobeRgbToCmyk(rgb);
-          console.log(`🎨 Converting HEX(${hex}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
-          return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
-        });
-        
-        // Add metadata indicating CMYK conversion
-        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Professional CMYK colors for printing -->\n';
-        cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
-        
-        console.log(`✅ RGB-to-CMYK conversion complete for vectorized content`);
-      } catch (error) {
-        console.error('Failed to convert to CMYK:', error);
-        // Fallback to basic metadata
-        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result -->\n';
+        try {
+          // Import Adobe CMYK conversion function
+          const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
+          
+          // Convert RGB colors to CMYK in the SVG
+          cmykSvg = cmykSvg.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
+            const rgb = { r: parseInt(r), g: parseInt(g), b: parseInt(b) };
+            const cmyk = adobeRgbToCmyk(rgb);
+            console.log(`🎨 Converting RGB(${r},${g},${b}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
+            return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
+          });
+          
+          // Convert hex colors to CMYK
+          cmykSvg = cmykSvg.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            const rgb = { r, g, b };
+            const cmyk = adobeRgbToCmyk(rgb);
+            console.log(`🎨 Converting HEX(${hex}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
+            return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
+          });
+          
+          // Add metadata indicating CMYK conversion
+          const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Professional CMYK colors for printing -->\n';
+          cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
+          
+          console.log(`✅ RGB-to-CMYK conversion complete for vectorized content`);
+        } catch (error) {
+          console.error('Failed to convert to CMYK:', error);
+          // Fallback to basic metadata
+          const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result -->\n';
+          cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
+        }
+      } else {
+        console.log(`🎨 Keeping RGB colors for preview display (CMYK conversion happens on final download)`);
+        // Add basic metadata for preview
+        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Preview with RGB colors, CMYK conversion on download -->\n';
         cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
       }
       
