@@ -3314,12 +3314,8 @@ export async function registerRoutes(app: express.Application) {
       const removeBackground = false; // DISABLED: User wants more colors detected, manual cleanup preferred
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
       
-      // Force production mode for high-quality PNG uploads
-      if (req.file.size > 20000 || req.file.originalname.toLowerCase().includes('text') || 
-          req.file.originalname.toLowerCase().includes('cmyk')) {
-        isPreview = false;
-        console.log('🎯 FORCING PRODUCTION MODE for high-quality PNG (overriding preview request)');
-      }
+      // Note: Removed automatic production mode forcing to allow proper RGB preview display
+      // Production mode will be used only when user explicitly clicks "Approve & Download"
       
       console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground}, fromPdfExtraction: ${fromPdfExtraction})`);
       console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
