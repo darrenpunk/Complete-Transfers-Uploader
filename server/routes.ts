@@ -3310,10 +3310,7 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'No image file provided' });
       }
 
-      console.log(`🔍 PREVIEW DEBUG: req.body.preview = "${req.body.preview}", req.query.preview = "${req.query.preview}"`);
       let isPreview = req.body.preview === 'true' || req.query.preview === 'true';
-      console.log(`🔍 PREVIEW RESULT: isPreview = ${isPreview}`);
-      
       const removeBackground = false; // DISABLED: User wants more colors detected, manual cleanup preferred
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
       
@@ -3406,8 +3403,8 @@ export async function registerRoutes(app: express.Application) {
         // Production mode should NOT include mode parameter (uses default)
         console.log('✅ Production mode - using Vector.AI default settings (no mode parameter)');
       } else {
-        formData.append('mode', 'preview');
-        console.log('⚡ Preview mode for testing');
+        // Don't use 'preview' mode as it only returns PNG, not SVG
+        console.log('🎯 Skipping preview mode - using production to get SVG output');
       }
       
       console.log('✅ WEBAPP DEFAULT CONFIGURATION - Using Vector.AI native defaults that work perfectly on their website');
