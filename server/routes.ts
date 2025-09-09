@@ -3310,12 +3310,16 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'No image file provided' });
       }
 
-      let isPreview = req.body.preview === 'true' || req.query.preview === 'true';
+      let isPreview = req.body.preview === 'true';
       const removeBackground = false; // DISABLED: User wants more colors detected, manual cleanup preferred
       const fromPdfExtraction = req.body.fromPdfExtraction === 'true';
       
-      // Note: Removed automatic production mode forcing to allow proper RGB preview display
-      // Production mode will be used only when user explicitly clicks "Approve & Download"
+      // Force production mode for high-quality PNG uploads
+      if (req.file.size > 20000 || req.file.originalname.toLowerCase().includes('text') || 
+          req.file.originalname.toLowerCase().includes('cmyk')) {
+        isPreview = false;
+        console.log('🎯 FORCING PRODUCTION MODE for high-quality PNG (overriding preview request)');
+      }
       
       console.log(`🎨 Vectorization request: ${req.file.originalname} (preview: ${isPreview}, removeBackground: ${removeBackground}, fromPdfExtraction: ${fromPdfExtraction})`);
       console.log(`📁 File details: type=${req.file.mimetype}, size=${req.file.size} bytes`);
@@ -3403,8 +3407,8 @@ export async function registerRoutes(app: express.Application) {
         // Production mode should NOT include mode parameter (uses default)
         console.log('✅ Production mode - using Vector.AI default settings (no mode parameter)');
       } else {
-        // Don't use 'preview' mode as it only returns PNG, not SVG
-        console.log('🎯 Skipping preview mode - using production to get SVG output');
+        formData.append('mode', 'preview');
+        console.log('⚡ Preview mode for testing');
       }
       
       console.log('✅ WEBAPP DEFAULT CONFIGURATION - Using Vector.AI native defaults that work perfectly on their website');
@@ -3851,49 +3855,15 @@ ${svgClose}`;
         console.log(`🤖 Added AI-vectorized marker to prevent re-processing`);
       }
       
-      // Only apply CMYK conversion for final download, not preview (device-cmyk colors don't display well in browsers)
-      if (!isPreview) {
-        console.log(`🎨 Converting RGB colors to CMYK for professional printing (production download)`);
-        
-        try {
-          // Import Adobe CMYK conversion function
-          const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
-          
-          // Convert RGB colors to CMYK in the SVG
-          cmykSvg = cmykSvg.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
-            const rgb = { r: parseInt(r), g: parseInt(g), b: parseInt(b) };
-            const cmyk = adobeRgbToCmyk(rgb);
-            console.log(`🎨 Converting RGB(${r},${g},${b}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
-            return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
-          });
-          
-          // Convert hex colors to CMYK
-          cmykSvg = cmykSvg.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
-            const r = parseInt(hex.substr(0, 2), 16);
-            const g = parseInt(hex.substr(2, 2), 16);
-            const b = parseInt(hex.substr(4, 2), 16);
-            const rgb = { r, g, b };
-            const cmyk = adobeRgbToCmyk(rgb);
-            console.log(`🎨 Converting HEX(${hex}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
-            return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
-          });
-          
-          // Add metadata indicating CMYK conversion
-          const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Professional CMYK colors for printing -->\n';
-          cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
-          
-          console.log(`✅ RGB-to-CMYK conversion complete for vectorized content`);
-        } catch (error) {
-          console.error('Failed to convert to CMYK:', error);
-          // Fallback to basic metadata
-          const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result -->\n';
-          cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
-        }
-      } else {
-        console.log(`🎨 Keeping RGB colors for preview display (CMYK conversion happens on final download)`);
-        // Add basic metadata for preview
-        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Preview with RGB colors, CMYK conversion on download -->\n';
+      // Skip CMYK conversion that removes backgrounds - we want to preserve the clean vectorized result
+      console.log(`🎨 Skipping CMYK conversion to preserve clean vectorized content`);
+      
+      // Just add basic metadata without aggressive processing
+      try {
+        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->\n';
         cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
+      } catch (error) {
+        console.error('Failed to add metadata to vectorized SVG:', error);
       }
       
       console.log(`📤 Sending response: svg length = ${cmykSvg.length}, mode = ${isPreview ? 'preview' : 'production'}`);

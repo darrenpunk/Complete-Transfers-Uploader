@@ -1497,7 +1497,6 @@ export function VectorizerModal({
     try {
       const formData = new FormData();
       formData.append('image', fileToProcess);
-      formData.append('preview', 'true'); // Always use preview mode for display (RGB colors)
       formData.append('shapeStacking', shapeStacking); // Shape stacking mode for deleted colors
       
       // Add crop dimensions if provided (from crop interface)
