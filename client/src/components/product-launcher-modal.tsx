@@ -12,6 +12,7 @@ import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.pn
 // Import additional product icons
 import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
+import sublimationIconPath from "@assets/sublimate_1757431653278.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -89,7 +90,7 @@ const productCategories = [
     id: "sublimation-transfers",
     name: "Sublimation Transfers",
     description: "Sublimation heat transfers are designed for full colour decoration of white, 100% polyester",
-    icon: fullColourIconPath,
+    icon: sublimationIconPath,
     group: "Digital Transfers"
   },
   {
