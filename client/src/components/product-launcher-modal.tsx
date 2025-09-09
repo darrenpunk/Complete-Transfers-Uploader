@@ -16,6 +16,8 @@ import sublimationIconPath from "@assets/sublimate_1757431653278.png";
 import appliqueBadgeIconPath from "@assets/corrib embroid_1757431675232.png";
 import singleColourIconPath from "@assets/single_1757431750112.png";
 import reflectiveIconPath from "@assets/reflect_1757431997071.png";
+import fullColourHDIconPath from "@assets/hd_1757431808013.png";
+import metallicIconPath from "@assets/metal_1757431877375.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -30,14 +32,14 @@ const productCategories = [
     id: "full-colour-metallic",
     name: "Full Colour Metallic", 
     description: "Full-Colour screen printed with metallic finish",
-    icon: fullColourIconPath,
+    icon: metallicIconPath,
     group: "Screen Printed Transfers"
   },
   {
     id: "full-colour-hd",
     name: "Full Colour HD",
     description: "High-definition full-colour screen printed transfers",
-    icon: fullColourIconPath,
+    icon: fullColourHDIconPath,
     group: "Screen Printed Transfers"
   },
   {
