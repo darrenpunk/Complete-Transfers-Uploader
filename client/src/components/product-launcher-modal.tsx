@@ -98,13 +98,6 @@ const productCategories = [
     description: "Sublimation heat transfers are designed for full colour decoration of white, 100% polyester",
     icon: sublimationIconPath,
     group: "Digital Transfers"
-  },
-  {
-    id: "zero-silicone-transfers",
-    name: "Zero Silicone Transfers",
-    description: "Silicone-free transfers",
-    icon: zeroIconPath,
-    group: "Screen Printed Transfers"
   }
 ];
 
