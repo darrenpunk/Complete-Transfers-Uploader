@@ -1175,6 +1175,12 @@ export function VectorizerModal({
 
   // Function to apply all color adjustments to the provided SVG
   const applyAllColorAdjustments = (baseSvg: string, adjustments: {[color: string]: any}): string => {
+    console.log('🎨 APPLY COLOR ADJUSTMENTS DEBUG:', { 
+      adjustments, 
+      svgLength: baseSvg.length,
+      adjustmentKeys: Object.keys(adjustments)
+    });
+    
     const parser = new DOMParser();
     const doc = parser.parseFromString(baseSvg, 'image/svg+xml');
     
@@ -1182,7 +1188,9 @@ export function VectorizerModal({
     
     // Apply adjustments for each original color
     Object.entries(adjustments).forEach(([originalColor, colorAdjustment]) => {
+      console.log('🎨 PROCESSING COLOR:', { originalColor, colorAdjustment });
       const adjustedColor = applyColorAdjustment(originalColor, colorAdjustment);
+      console.log('🎨 ADJUSTED COLOR RESULT:', { originalColor, adjustedColor });
       const normalizedOriginalColor = originalColor.toLowerCase().trim();
       
       // Replace fill colors
@@ -1206,6 +1214,7 @@ export function VectorizerModal({
         }
         
         if (shouldReplace) {
+          console.log('🎨 REPLACING FILL:', { original: fill, new: adjustedColor, element: el.tagName });
           el.setAttribute('fill', adjustedColor);
           totalReplacements++;
         }
