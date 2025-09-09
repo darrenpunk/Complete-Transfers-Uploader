@@ -3855,15 +3855,42 @@ ${svgClose}`;
         console.log(`🤖 Added AI-vectorized marker to prevent re-processing`);
       }
       
-      // Skip CMYK conversion that removes backgrounds - we want to preserve the clean vectorized result
-      console.log(`🎨 Skipping CMYK conversion to preserve clean vectorized content`);
+      // Apply RGB-to-CMYK conversion for production downloads
+      console.log(`🎨 Converting RGB colors to CMYK for professional printing`);
       
-      // Just add basic metadata without aggressive processing
       try {
-        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result, no background removal needed -->\n';
+        // Import Adobe CMYK conversion function
+        const { adobeRgbToCmyk } = await import('./adobe-cmyk-profile');
+        
+        // Convert RGB colors to CMYK in the SVG
+        cmykSvg = cmykSvg.replace(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/g, (match, r, g, b) => {
+          const rgb = { r: parseInt(r), g: parseInt(g), b: parseInt(b) };
+          const cmyk = adobeRgbToCmyk(rgb);
+          console.log(`🎨 Converting RGB(${r},${g},${b}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
+          return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
+        });
+        
+        // Convert hex colors to CMYK
+        cmykSvg = cmykSvg.replace(/#([0-9a-fA-F]{6})/g, (match, hex) => {
+          const r = parseInt(hex.substr(0, 2), 16);
+          const g = parseInt(hex.substr(2, 2), 16);
+          const b = parseInt(hex.substr(4, 2), 16);
+          const rgb = { r, g, b };
+          const cmyk = adobeRgbToCmyk(rgb);
+          console.log(`🎨 Converting HEX(${hex}) -> CMYK(${cmyk.c},${cmyk.m},${cmyk.y},${cmyk.k})`);
+          return `device-cmyk(${cmyk.c/100}, ${cmyk.m/100}, ${cmyk.y/100}, ${cmyk.k/100})`;
+        });
+        
+        // Add metadata indicating CMYK conversion
+        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Professional CMYK colors for printing -->\n';
         cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
+        
+        console.log(`✅ RGB-to-CMYK conversion complete for vectorized content`);
       } catch (error) {
-        console.error('Failed to add metadata to vectorized SVG:', error);
+        console.error('Failed to convert to CMYK:', error);
+        // Fallback to basic metadata
+        const cmykMetadata = '\n<!-- AI_VECTORIZED_FILE: Clean vectorized result -->\n';
+        cmykSvg = cmykSvg.replace('<svg', cmykMetadata + '<svg');
       }
       
       console.log(`📤 Sending response: svg length = ${cmykSvg.length}, mode = ${isPreview ? 'preview' : 'production'}`);
