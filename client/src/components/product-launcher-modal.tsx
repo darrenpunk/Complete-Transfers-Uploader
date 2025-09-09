@@ -14,6 +14,7 @@ import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
 import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
 import sublimationIconPath from "@assets/sublimate_1757431653278.png";
 import appliqueBadgeIconPath from "@assets/corrib embroid_1757431675232.png";
+import singleColourIconPath from "@assets/single_1757431750112.png";
 
 // All individual product types as shown in the deployed version
 const productCategories = [
@@ -42,7 +43,7 @@ const productCategories = [
     id: "single-colour-transfers",
     name: "Single Colour Transfers",
     description: "Screen printed using our off-the-shelf colour range",
-    icon: fullColourIconPath,
+    icon: singleColourIconPath,
     group: "Screen Printed Transfers"
   },
   {
