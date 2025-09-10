@@ -281,11 +281,13 @@ export class SimplifiedPDFGenerator {
     // If no hex color provided, return null
     if (!hexColor) return null;
     
-    // First check common colors not in manufacturer lists
+    // First check common colors not in manufacturer lists  
     const quickColors = [
       { name: "White", hex: "#FFFFFF" },
       { name: "Black", hex: "#171816" },
       { name: "Red", hex: "#C02300" },
+      { name: "Hi Viz", hex: "#D2E31D" },
+      { name: "Hi Viz Orange", hex: "#D98F17" },
       { name: "Lime Green", hex: "#90BF33" },
     ];
     
@@ -323,8 +325,10 @@ export class SimplifiedPDFGenerator {
     const quickColors = [
       { name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 } },
       { name: "Black", hex: "#171816", cmyk: { c: 0, m: 0, y: 0, k: 100 } },
-      { name: "Red", hex: "#C02300", cmyk: { c: 0, m: 95, y: 95, k: 0 } },
-      { name: "Lime Green", hex: "#90BF33", cmyk: { c: 25, m: 0, y: 95, k: 0 } },
+      { name: "Red", hex: "#C02300", cmyk: { c: 0, m: 99, y: 97, k: 0 } },
+      { name: "Hi Viz", hex: "#D2E31D", cmyk: { c: 20, m: 0, y: 100, k: 0 } },
+      { name: "Hi Viz Orange", hex: "#D98F17", cmyk: { c: 0, m: 51, y: 93, k: 0 } },
+      { name: "Lime Green", hex: "#90BF33", cmyk: { c: 50, m: 0, y: 99, k: 0 } },
     ];
     
     for (const color of quickColors) {
