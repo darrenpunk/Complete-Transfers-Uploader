@@ -136,6 +136,9 @@ export class SimplifiedPDFGenerator {
       console.log(`🎨 Applied garment background color: ${data.garmentColor} (${bgColor})`);
     }
     
+    // Draw individual element backgrounds with rotation
+    await this.drawElementBackgrounds(page2, data.canvasElements, data.templateSize, data.garmentColor);
+    
     // Embed logos on page 2
     await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
 
@@ -288,6 +291,7 @@ export class SimplifiedPDFGenerator {
       { name: "Red", hex: "#C02300" },
       { name: "Hi Viz", hex: "#D2E31D" },
       { name: "Hi Viz Orange", hex: "#D98F17" },
+      { name: "HiViz Green", hex: "#388032" },
       { name: "Lime Green", hex: "#90BF33" },
     ];
     
@@ -328,6 +332,7 @@ export class SimplifiedPDFGenerator {
       { name: "Red", hex: "#C02300", cmyk: { c: 0, m: 99, y: 97, k: 0 } },
       { name: "Hi Viz", hex: "#D2E31D", cmyk: { c: 20, m: 0, y: 100, k: 0 } },
       { name: "Hi Viz Orange", hex: "#D98F17", cmyk: { c: 0, m: 51, y: 93, k: 0 } },
+      { name: "HiViz Green", hex: "#388032", cmyk: { c: 86, m: 16, y: 100, k: 3 } },
       { name: "Lime Green", hex: "#90BF33", cmyk: { c: 50, m: 0, y: 99, k: 0 } },
     ];
     
