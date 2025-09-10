@@ -3,14 +3,13 @@ import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-const manufacturerColors = [
-  { name: 'white', hex: '#FFFFFF' },
-  { name: 'black', hex: '#000000' },
-  { name: 'red', hex: '#FF0000' },
-  { name: 'blue', hex: '#0000FF' },
-  { name: 'green', hex: '#00FF00' },
-  { name: 'yellow', hex: '#FFFF00' },
-];
+import { gildanColors, fruitOfTheLoomColors } from '@shared/garment-colors';
+
+// Combine manufacturer colors into a single structure
+const manufacturerColors = {
+  gildan: gildanColors,
+  fruitOfTheLoom: fruitOfTheLoomColors,
+};
 
 // SVG corruption fix function
 function fixSVGCorruption(svgContent: string): string {
@@ -104,9 +103,20 @@ export class SimplifiedPDFGenerator {
     const page2 = pdfDoc.addPage([templateWidthPoints, templateHeightPoints]);
     
     // Add colored background
-    const garmentColorInfo = data.garmentColor && data.garmentColor !== 'none' 
-      ? manufacturerColors.find((c: any) => c.name === data.garmentColor)
-      : null;
+    let garmentColorInfo = null;
+    if (data.garmentColor && data.garmentColor !== 'none') {
+      // Search through all manufacturer colors to find the garment color
+      for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
+        for (const group of colorGroups) {
+          const foundColor = group.colors.find(color => color.hex.toLowerCase() === data.garmentColor?.toLowerCase());
+          if (foundColor) {
+            garmentColorInfo = foundColor;
+            break;
+          }
+        }
+        if (garmentColorInfo) break;
+      }
+    }
     
     if (garmentColorInfo) {
       const bgColor = garmentColorInfo.hex;
@@ -271,6 +281,21 @@ export class SimplifiedPDFGenerator {
     // If no hex color provided, return null
     if (!hexColor) return null;
     
+    // First check common colors not in manufacturer lists
+    const quickColors = [
+      { name: "White", hex: "#FFFFFF" },
+      { name: "Black", hex: "#171816" },
+      { name: "Red", hex: "#C02300" },
+      { name: "Lime Green", hex: "#90BF33" },
+    ];
+    
+    for (const color of quickColors) {
+      if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+        console.log(`✅ Found quick color: ${color.name}`);
+        return color.name;
+      }
+    }
+    
     // Search through all manufacturer colors to find the name
     for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
       for (const group of colorGroups) {
@@ -294,7 +319,23 @@ export class SimplifiedPDFGenerator {
     // If no hex color provided, return hex
     if (!hexColor) return { name: hexColor, cmyk: "" };
     
-    // Only look for exact matches in manufacturer colors
+    // First check common colors not in manufacturer lists
+    const quickColors = [
+      { name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 } },
+      { name: "Black", hex: "#171816", cmyk: { c: 0, m: 0, y: 0, k: 100 } },
+      { name: "Red", hex: "#C02300", cmyk: { c: 0, m: 95, y: 95, k: 0 } },
+      { name: "Lime Green", hex: "#90BF33", cmyk: { c: 25, m: 0, y: 95, k: 0 } },
+    ];
+    
+    for (const color of quickColors) {
+      if (color.hex.toLowerCase() === hexColor.toLowerCase()) {
+        console.log(`✅ Found quick color: ${color.name}`);
+        const cmyk = `(${color.cmyk.c}, ${color.cmyk.m}, ${color.cmyk.y}, ${color.cmyk.k})`;
+        return { name: color.name, cmyk };
+      }
+    }
+    
+    // Then look for exact matches in manufacturer colors
     for (const [manufacturer, colorGroups] of Object.entries(manufacturerColors)) {
       for (const group of colorGroups) {
         for (const color of group.colors) {
