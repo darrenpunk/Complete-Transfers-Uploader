@@ -727,28 +727,39 @@ export async function registerRoutes(app: express.Application) {
         // CANVAS REPLICA: Match canvas preview exactly with garment colors
         console.log(`🚀 CANVAS REPLICA: Exact canvas preview with garment colors and Adobe CMYK`);
         
-        // Get garment color and convert FIRST
-        const garmentColor = project.garmentColor || canvasElements.find(el => el.garmentColor)?.garmentColor || '#D98F17'; // Default to orange
-        const garmentColorName = garmentColor === '#FFFFFF' ? 'White' : 
-                                 garmentColor === '#D98F17' ? 'Orange' : 
-                                 garmentColor === '#171816' ? 'Black' : 
-                                 garmentColor === '#1a1a1a' ? 'Black' :
-                                 garmentColor === '#FFD700' ? 'Gold' : 
-                                 garmentColor === '#D9D2AB' ? 'Natural' :
-                                 garmentColor === '#8B4513' ? 'Brown' :
-                                 garmentColor === '#4169E1' ? 'Royal Blue' :
-                                 garmentColor === '#DC143C' ? 'Red' :
-                                 garmentColor === '#228B22' ? 'Green' : `Custom (${garmentColor})`;
+        // Collect all unique garment colors from elements
+        const uniqueGarmentColors = new Set();
+        canvasElements.forEach(element => {
+          const elementColor = element.garmentColor || project.garmentColor || '#171816';
+          uniqueGarmentColors.add(elementColor);
+        });
         
-        console.log(`🎨 DEBUG: Project garmentColor: ${project.garmentColor}, Element garmentColor: ${canvasElements.find(el => el.garmentColor)?.garmentColor}, Final: ${garmentColor}`);
+        const allGarmentColors = Array.from(uniqueGarmentColors);
+        console.log(`🎨 DEBUG: Found ${allGarmentColors.length} unique garment colors:`, allGarmentColors);
         
-        // Convert hex to RGB for garment background
-        let garmentBg = rgb(1, 1, 1); // Default white
-        if (garmentColor.startsWith('#') && garmentColor.length === 7) {
-          const r = parseInt(garmentColor.slice(1, 3), 16) / 255;
-          const g = parseInt(garmentColor.slice(3, 5), 16) / 255;
-          const b = parseInt(garmentColor.slice(5, 7), 16) / 255;
-          garmentBg = rgb(r, g, b);
+        // Function to get color name
+        const getColorName = (color: string) => {
+          return color === '#FFFFFF' ? 'White' : 
+                 color === '#D98F17' ? 'Hi Viz Orange' : 
+                 color === '#171816' ? 'Black' : 
+                 color === '#1a1a1a' ? 'Black' :
+                 color === '#FFD700' ? 'Gold' : 
+                 color === '#D9D2AB' ? 'Natural' :
+                 color === '#8B4513' ? 'Brown' :
+                 color === '#4169E1' ? 'Royal Blue' :
+                 color === '#DC143C' ? 'Red' :
+                 color === '#D2E31D' ? 'Hi Viz' :
+                 color === '#228B22' ? 'Green' : `Custom (${color})`;
+        };
+        
+        // Use project garment color as default background, but elements will have individual backgrounds
+        const defaultGarmentColor = project.garmentColor || '#171816';
+        let defaultGarmentBg = rgb(1, 1, 1); // Default white
+        if (defaultGarmentColor.startsWith('#') && defaultGarmentColor.length === 7) {
+          const r = parseInt(defaultGarmentColor.slice(1, 3), 16) / 255;
+          const g = parseInt(defaultGarmentColor.slice(3, 5), 16) / 255;
+          const b = parseInt(defaultGarmentColor.slice(5, 7), 16) / 255;
+          defaultGarmentBg = rgb(r, g, b);
         }
         
         // Create pages with no backgrounds
@@ -759,13 +770,13 @@ export async function registerRoutes(app: express.Application) {
         // NO background rectangle, NO white, NO viewboxes - pure transparency
         console.log(`✅ Page 1: TRANSPARENT - clean vectors only`);
         
-        // Page 2: Garment color background (preview with garment)
+        // Page 2: Default garment color background (will be overridden by individual element backgrounds)
         page2.drawRectangle({
           x: 0, y: 0, 
           width: pageWidth, height: pageHeight,
-          color: garmentBg
+          color: defaultGarmentBg
         });
-        console.log(`✅ Page 2: ${garmentColorName} background for preview (${garmentColor})`);
+        console.log(`✅ Page 2: ${getColorName(defaultGarmentColor)} background for preview (${defaultGarmentColor})`);
         
         // Process canvas elements
         for (let element of canvasElements) {
@@ -1062,6 +1073,25 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded with 90° rotation`);
               
+              // Draw individual garment color background for this element on page 2
+              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
+              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
+                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
+                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
+                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
+                const elementBg = rgb(r, g, b);
+                
+                // Draw garment background rectangle for this element
+                page2.drawRectangle({
+                  x: xPosPts,
+                  y: yPosPts,
+                  width: widthPts,
+                  height: heightPts,
+                  color: elementBg
+                });
+                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
+              }
+              
               // Embed with 90° rotation on page 2
               page2.drawPage(embeddedPage, {
                 x: rotatedX,
@@ -1097,6 +1127,25 @@ export async function registerRoutes(app: express.Application) {
                 rotate: degrees(180)
               });
               console.log(`✅ Page 1: Artwork embedded with 180° rotation`);
+              
+              // Draw individual garment color background for this element on page 2
+              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
+              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
+                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
+                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
+                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
+                const elementBg = rgb(r, g, b);
+                
+                // Draw garment background rectangle for this element
+                page2.drawRectangle({
+                  x: xPosPts,
+                  y: yPosPts,
+                  width: widthPts,
+                  height: heightPts,
+                  color: elementBg
+                });
+                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
+              }
               
               // Embed with 180° rotation on page 2
               page2.drawPage(embeddedPage, {
@@ -1134,6 +1183,25 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded with 270° rotation`);
               
+              // Draw individual garment color background for this element on page 2
+              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
+              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
+                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
+                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
+                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
+                const elementBg = rgb(r, g, b);
+                
+                // Draw garment background rectangle for this element
+                page2.drawRectangle({
+                  x: xPosPts,
+                  y: yPosPts,
+                  width: widthPts,
+                  height: heightPts,
+                  color: elementBg
+                });
+                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
+              }
+              
               // Embed with 270° rotation on page 2
               page2.drawPage(embeddedPage, {
                 x: rotatedX,
@@ -1155,6 +1223,25 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded at exact canvas position`);
               
+              // Draw individual garment color background for this element on page 2
+              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
+              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
+                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
+                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
+                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
+                const elementBg = rgb(r, g, b);
+                
+                // Draw garment background rectangle for this element
+                page2.drawRectangle({
+                  x: xPosPts,
+                  y: yPosPts,
+                  width: widthPts,
+                  height: heightPts,
+                  color: elementBg
+                });
+                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
+              }
+              
               page2.drawPage(embeddedPage, {
                 x: xPosPts,
                 y: yPosPts,
@@ -1171,8 +1258,8 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // Add project info and garment color to page 2 (same as canvas)
-        const textColor = garmentColor === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1);
+        // Add project info and garment colors to page 2 (same as canvas)
+        const textColor = defaultGarmentColor === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1);
         
         page2.drawText(`Project: ${project.name || 'Untitled'}`, { 
           x: 20, y: pageHeight - 40, size: 12, color: textColor 
@@ -1180,10 +1267,18 @@ export async function registerRoutes(app: express.Application) {
         page2.drawText(`Quantity: ${project.quantity || 1}`, { 
           x: 20, y: pageHeight - 60, size: 12, color: textColor 
         });
-        page2.drawText(`Garment Color: ${garmentColorName}`, {
+        
+        // Show all unique garment colors
+        const garmentColorNames = allGarmentColors.map(color => getColorName(color)).join(', ');
+        const garmentColorHexes = allGarmentColors.join(', ');
+        
+        page2.drawText(`Garment Colors: ${garmentColorNames}`, {
           x: 20, y: 60, size: 12, color: textColor
         });
-        console.log(`✅ Page 2 info added with garment color: ${garmentColorName}`);
+        page2.drawText(`${garmentColorHexes}`, {
+          x: 20, y: 40, size: 10, color: textColor
+        });
+        console.log(`✅ Page 2 info added with garment colors: ${garmentColorNames}`);
         
         // Generate initial PDF
         const pdfBytes = await pdfDoc.save();
