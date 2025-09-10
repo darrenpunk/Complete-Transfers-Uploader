@@ -21,7 +21,7 @@ function getColorName(hex: string): string {
   // Professional Colors (same as in garment color modal)
   const quickColors = [
     { name: "White", hex: "#FFFFFF" },
-    { name: "Black", hex: "#25282A" },
+    { name: "Black", hex: "#171816" },
     { name: "Natural", hex: "#F3F0E4" },
     { name: "Pastel Yellow", hex: "#F3F590" },
     { name: "Yellow", hex: "#F0F42A" },
