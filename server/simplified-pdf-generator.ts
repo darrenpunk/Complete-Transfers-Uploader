@@ -249,8 +249,8 @@ export class SimplifiedPDFGenerator {
         });
       }
       
-      // Draw label text with color name and CMYK values
-      const labelText = colorInfo.cmyk ? `${colorInfo.name} ${colorInfo.cmyk}` : colorInfo.name;
+      // Draw label text with color name, hex code and CMYK values  
+      const labelText = colorInfo.cmyk ? `${colorInfo.name} ${colorHex} ${colorInfo.cmyk}` : `${colorInfo.name} ${colorHex}`;
       page.drawText(labelText, {
         x: xOffset + squareSize + 5,
         y: yOffset + 3,
