@@ -743,12 +743,15 @@ export async function registerRoutes(app: express.Application) {
                  color === '#D98F17' ? 'Hi Viz Orange' : 
                  color === '#171816' ? 'Black' : 
                  color === '#1a1a1a' ? 'Black' :
+                 color === '#C02300' ? 'Red' :
+                 color === '#388032' ? 'HiViz Green' :
                  color === '#FFD700' ? 'Gold' : 
                  color === '#D9D2AB' ? 'Natural' :
                  color === '#8B4513' ? 'Brown' :
                  color === '#4169E1' ? 'Royal Blue' :
                  color === '#DC143C' ? 'Red' :
                  color === '#D2E31D' ? 'Hi Viz' :
+                 color === '#90BF33' ? 'Lime Green' :
                  color === '#228B22' ? 'Green' : `Custom (${color})`;
         };
         
