@@ -561,7 +561,8 @@ export default function CanvasWorkspace({
       // Clear previous timeout
       clearTimeout(updateTimeout);
 
-      updateTimeout = setTimeout(() => {
+      // Use requestAnimationFrame for smoother updates instead of setTimeout
+      requestAnimationFrame(() => {
         if (isDragging && selectedElement && template) {
           // Convert pixels back to mm for storage
           let mmToPixelRatio = template.pixelWidth / template.width;
@@ -598,9 +599,10 @@ export default function CanvasWorkspace({
           const constrainedX = newCenterX;
           const constrainedY = newCenterY;
 
+          // Use more precise rounding for smoother dragging
           updateElementDirect(selectedElement.id, { 
-            x: constrainedX, 
-            y: constrainedY 
+            x: Math.round(constrainedX * 10) / 10, 
+            y: Math.round(constrainedY * 10) / 10
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -728,14 +730,15 @@ export default function CanvasWorkspace({
               break;
           }
 
+          // Use more precise rounding to reduce jumpiness
           updateElementDirect(selectedElement.id, { 
-            width: Math.round(newWidth), 
-            height: Math.round(newHeight),
-            x: Math.round(newX),
-            y: Math.round(newY)
+            width: Math.round(newWidth * 10) / 10, 
+            height: Math.round(newHeight * 10) / 10,
+            x: Math.round(newX * 10) / 10,
+            y: Math.round(newY * 10) / 10
           });
         }
-      }, 16); // Throttle to ~60fps for smoother interaction
+      }); // Use requestAnimationFrame for smooth 60fps updates
     };
 
     const handleMouseUp = () => {
