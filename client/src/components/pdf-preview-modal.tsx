@@ -240,39 +240,6 @@ export default function PDFPreviewModal({
                       );
                     })}
                   </div>
-                  
-                  {/* Individual garment color labels */}
-                  <div className="absolute bottom-2 left-2 text-xs bg-white/90 px-2 py-1 rounded text-[#292828] max-w-[200px]">
-                    Garment Colors: {(() => {
-                      const colorData: { [key: string]: { name: string; cmyk: string } } = {
-                        '#D2E31D': { name: 'Lime Green', cmyk: '(25, 0, 95, 0)' },
-                        '#FFFFFF': { name: 'White', cmyk: '(0, 0, 0, 0)' },
-                        '#000000': { name: 'Black', cmyk: '(0, 0, 0, 100)' },
-                        '#FF0000': { name: 'Red', cmyk: '(0, 100, 100, 0)' },
-                        '#0000FF': { name: 'Blue', cmyk: '(100, 100, 0, 0)' },
-                        '#00FF00': { name: 'Green', cmyk: '(100, 0, 100, 0)' },
-                        '#FFFF00': { name: 'Yellow', cmyk: '(0, 0, 100, 0)' },
-                        '#FFA500': { name: 'Orange', cmyk: '(0, 35, 100, 0)' },
-                        '#800080': { name: 'Purple', cmyk: '(50, 100, 0, 20)' },
-                        '#FFC0CB': { name: 'Pink', cmyk: '(0, 25, 5, 0)' },
-                        '#808080': { name: 'Gray', cmyk: '(0, 0, 0, 50)' },
-                        '#A52A2A': { name: 'Brown', cmyk: '(0, 75, 75, 35)' },
-                        '#762009': { name: 'Brown', cmyk: '(0, 75, 85, 54)' },
-                        '#00FFFF': { name: 'Cyan', cmyk: '(100, 0, 0, 0)' },
-                        '#FF00FF': { name: 'Magenta', cmyk: '(0, 100, 0, 0)' },
-                        '#800000': { name: 'Maroon', cmyk: '(0, 100, 100, 50)' },
-                        '#008000': { name: 'Dark Green', cmyk: '(100, 0, 100, 50)' },
-                        '#000080': { name: 'Navy Blue', cmyk: '(100, 100, 0, 50)' }
-                      };
-                      
-                      // Get unique garment colors from canvas elements
-                      const uniqueColors = [...Array.from(new Set(canvasElements.map(el => el.garmentColor || project?.garmentColor || '#D2E31D')))];
-                      return uniqueColors.map(color => {
-                        const colorInfo = colorData[color];
-                        return colorInfo ? `${colorInfo.name} ${colorInfo.cmyk}` : color;
-                      }).join(', ');
-                    })()}
-                  </div>
                 </div>
               </div>
             </div>
