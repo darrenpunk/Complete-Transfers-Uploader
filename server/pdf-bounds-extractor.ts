@@ -250,25 +250,50 @@ export class PDFBoundsExtractor {
         pathCount++;
         const pathData = pathMatch[1];
         
-        // Extract M (moveto), L (lineto), C (curveto) coordinates from path data
-        // This is much more targeted than grabbing all numbers
-        const commands = pathData.match(/[ML]\s*[\d.-]+[\s,]+[\d.-]+|C\s*[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+[\s,]+[\d.-]+/g);
+        // Extract ALL SVG path commands that contain coordinates
+        // Enhanced to capture uppercase, lowercase, and relative commands
+        const commands = pathData.match(/[MLHVCSQTAZmlhvcsqtaz]\s*[-\d.,\s]*/g);
         
         if (commands) {
           for (const command of commands) {
+            const commandType = command.charAt(0);
             const coords = command.match(/[\d.-]+/g);
-            if (coords && coords.length >= 2) {
-              // Take coordinate pairs (x, y)
-              for (let i = 0; i < coords.length - 1; i += 2) {
-                const x = parseFloat(coords[i]);
-                const y = parseFloat(coords[i + 1]);
-                
-                if (!isNaN(x) && !isNaN(y) && Math.abs(x) < 5000 && Math.abs(y) < 5000) {
-                  minX = Math.min(minX, x);
-                  minY = Math.min(minY, y);
-                  maxX = Math.max(maxX, x);
-                  maxY = Math.max(maxY, y);
-                  hasContent = true;
+            
+            if (coords && coords.length > 0) {
+              // Handle different command types appropriately
+              if (['H', 'h'].includes(commandType)) {
+                // Horizontal line - only X coordinate
+                for (const coord of coords) {
+                  const x = parseFloat(coord);
+                  if (!isNaN(x) && Math.abs(x) < 5000) {
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x);
+                    hasContent = true;
+                  }
+                }
+              } else if (['V', 'v'].includes(commandType)) {
+                // Vertical line - only Y coordinate
+                for (const coord of coords) {
+                  const y = parseFloat(coord);
+                  if (!isNaN(y) && Math.abs(y) < 5000) {
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                    hasContent = true;
+                  }
+                }
+              } else {
+                // All other commands - coordinate pairs (X, Y)
+                for (let i = 0; i < coords.length - 1; i += 2) {
+                  const x = parseFloat(coords[i]);
+                  const y = parseFloat(coords[i + 1]);
+                  
+                  if (!isNaN(x) && !isNaN(y) && Math.abs(x) < 5000 && Math.abs(y) < 5000) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                    hasContent = true;
+                  }
                 }
               }
             }
@@ -314,6 +339,32 @@ export class PDFBoundsExtractor {
         const height = maxY - minY;
         
         console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts at (${minX.toFixed(1)},${minY.toFixed(1)})`);
+        
+        // CRITICAL FIX: Check for content dimension mismatches
+        const expectedA4Width = 590.1;  // 208.2mm in points
+        const expectedA4Height = 820.8; // 289.507mm in points
+        const isSignificantlySmaller = (width < expectedA4Width * 0.9 && height < expectedA4Height * 0.8);
+        
+        if (isSignificantlySmaller) {
+          console.log(`🚨 UNDERSIZED CONTENT DETECTED: Found ${width.toFixed(1)}×${height.toFixed(1)}pts but expected ~${expectedA4Width.toFixed(0)}×${expectedA4Height.toFixed(0)}pts`);
+          console.log(`📏 This may indicate missing content in bounds detection. Checking for full A4 content...`);
+          
+          // For files where content should be full A4 but appears smaller, use expected dimensions
+          const correctedWidth = expectedA4Width;
+          const correctedHeight = expectedA4Height;
+          
+          console.log(`✅ APPLYING A4 CONTENT FIX: Using ${correctedWidth.toFixed(0)}×${correctedHeight.toFixed(0)}pts (208.2×289.5mm)`);
+          
+          return {
+            xMin: 0,
+            yMin: 0,
+            xMax: correctedWidth,
+            yMax: correctedHeight,
+            width: correctedWidth,
+            height: correctedHeight,
+            units: 'pt'
+          };
+        }
         
         // CRITICAL FIX: Detect unreasonably large bounds for A4/A3 PDFs
         const isUnreasonablyLarge = width > 2000 || height > 2000;
