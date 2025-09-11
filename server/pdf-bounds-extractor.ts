@@ -24,7 +24,7 @@ export interface BoundsExtractionResult {
   bbox?: BoundingBox;
   pdfBbox?: BoundingBox; // Original PDF page bounds
   cssBbox?: BoundingBox; // Converted to CSS pixels
-  method: 'ghostscript' | 'poppler' | 'raster-fallback' | 'svg-analysis';
+  method: 'ghostscript' | 'poppler' | 'raster-fallback' | 'svg-analysis' | 'pdf-to-svg';
   contentFound: boolean;
   error?: string;
   croppedSvg?: string; // Optional cropped SVG output
@@ -246,7 +246,7 @@ export class PDFBoundsExtractor {
       const pathMatches = svgContent.matchAll(/<path[^>]+d="([^"]+)"/g);
       let pathCount = 0;
       
-      for (const pathMatch of pathMatches) {
+      for (const pathMatch of Array.from(pathMatches)) {
         pathCount++;
         const pathData = pathMatch[1];
         
@@ -286,10 +286,10 @@ export class PDFBoundsExtractor {
       
       for (const { pattern, type } of shapeElements) {
         const matches = svgContent.matchAll(pattern);
-        for (const match of matches) {
+        for (const match of Array.from(matches)) {
           const values = match.slice(1).map(parseFloat);
           
-          if (values.every(v => !isNaN(v) && Math.abs(v) < 1000)) {
+          if (values.every((v: number) => !isNaN(v) && Math.abs(v) < 1000)) {
             if (type === 'rect') {
               const [x, y, width, height] = values;
               minX = Math.min(minX, x);
