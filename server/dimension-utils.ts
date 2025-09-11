@@ -21,6 +21,10 @@ export interface DimensionResult {
 // Known exact dimensions for validation
 const KNOWN_DIMENSIONS = {
   '600x595': { widthMm: 210, heightMm: 208.249 }, // User's specific logo
+  '595x842': { widthMm: 210, heightMm: 297 }, // A4 size at 72 DPI
+  '594x841': { widthMm: 210, heightMm: 297 }, // A4 size (rounded)
+  '595x841': { widthMm: 210, heightMm: 297 }, // A4 size (variant)
+  '594x842': { widthMm: 210, heightMm: 297 }, // A4 size (variant)
   '842x1191': { widthMm: 297, heightMm: 420 }, // A3 size at 72 DPI
   '841x1190': { widthMm: 297, heightMm: 420 }, // A3 size (rounded)
   '841x1191': { widthMm: 297, heightMm: 420 }, // A3 size (variant)
@@ -30,6 +34,7 @@ const KNOWN_DIMENSIONS = {
 
 // Exact conversion factor based on user's requirements and DPI standards
 const PIXEL_TO_MM_FACTOR = 0.35; // For 600x595 case
+const A4_PIXEL_TO_MM_FACTOR = 210 / 595; // A4: 210mm / 595px = 0.3529mm per pixel
 const A3_PIXEL_TO_MM_FACTOR = 297 / 842; // A3: 297mm / 842px = 0.3527mm per pixel
 
 /**
@@ -70,6 +75,13 @@ export function calculatePreciseDimensions(
     accuracy = 'high';
     resultSource = 'exact_match';
     console.log(`🎯 Close to known dimensions, using exact: ${finalWidthPx}×${finalHeightPx}px`);
+  } else if (Math.abs(roundedWidthPx - 595) <= 2 && Math.abs(roundedHeightPx - 842) <= 2) {
+    // Close to A4 dimensions - use exact values
+    finalWidthPx = 595;
+    finalHeightPx = 842;
+    accuracy = 'high';
+    resultSource = 'exact_match';
+    console.log(`🎯 A4 document detected, using exact: ${finalWidthPx}×${finalHeightPx}px (210×297mm)`);
   } else if (Math.abs(roundedWidthPx - 842) <= 2 && Math.abs(roundedHeightPx - 1191) <= 2) {
     // Close to A3 dimensions - use exact values
     finalWidthPx = 842;
@@ -82,8 +94,13 @@ export function calculatePreciseDimensions(
   // Calculate mm dimensions using exact conversion factor
   let conversionFactor = PIXEL_TO_MM_FACTOR;
   
-  // Use A3-specific conversion for A3 documents
-  if (knownDimension && (knownDimension.widthMm === 297 || knownDimension.heightMm === 420)) {
+  // Use A4-specific conversion for A4 documents
+  if (knownDimension && (knownDimension.widthMm === 210 && knownDimension.heightMm === 297)) {
+    conversionFactor = A4_PIXEL_TO_MM_FACTOR;
+    console.log(`📏 Using A4 conversion factor: ${conversionFactor} mm/px`);
+  }
+  // Use A3-specific conversion for A3 documents  
+  else if (knownDimension && (knownDimension.widthMm === 297 || knownDimension.heightMm === 420)) {
     conversionFactor = A3_PIXEL_TO_MM_FACTOR;
     console.log(`📏 Using A3 conversion factor: ${conversionFactor} mm/px`);
   }
@@ -577,7 +594,7 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
         widthMm: targetWidthMm,
         heightMm: targetHeightMm,
         conversionFactor: pxToMm,
-        source: 'svg_viewbox_100',
+        source: 'viewbox',
         accuracy: 'perfect'
       };
     }
@@ -595,8 +612,8 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
     widthMm: targetWidthMm,
     heightMm: targetHeightMm,
     conversionFactor: 2.834645669,
-    source: 'fallback_default',
-    accuracy: 'estimated'
+    source: 'fallback',
+    accuracy: 'low'
   };
   
   // Fallback to SVG width/height attributes if no viewBox
@@ -604,8 +621,8 @@ export async function detectDimensionsFromSVG(svgContent: string, contentBounds?
   const heightMatch = svgContent.match(/height="([^"]+)"/);
   
   if (widthMatch && heightMatch) {
-    const widthValue = parseFloat(widthMatch[1]);
-    const heightValue = parseFloat(heightMatch[1]);
+    const widthValue = parseFloat(widthMatch?.[1] || '0');
+    const heightValue = parseFloat(heightMatch?.[1] || '0');
     
     if (!isNaN(widthValue) && !isNaN(heightValue) && widthValue > 0 && heightValue > 0) {
       const attributeResult = calculatePreciseDimensions(widthValue, heightValue, 'svg_attributes');
