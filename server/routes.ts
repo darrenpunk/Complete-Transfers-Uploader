@@ -752,7 +752,8 @@ export async function registerRoutes(app: express.Application) {
                  color === '#DC143C' ? 'Red' :
                  color === '#D2E31D' ? 'Hi Viz' :
                  color === '#90BF33' ? 'Lime Green' :
-                 color === '#228B22' ? 'Green' : `Custom (${color})`;
+                 color === '#228B22' ? 'Green' :
+                 color === '#C42469' ? 'Heliconia Pink' : `Custom (${color})`;
         };
         
         // Use project garment color as default background, but elements will have individual backgrounds
@@ -1271,14 +1272,32 @@ export async function registerRoutes(app: express.Application) {
           x: 20, y: pageHeight - 60, size: 12, color: textColor 
         });
         
-        // Show all unique garment colors
+        // Show all unique garment colors with CMYK values
+        const getColorCMYK = (color: string) => {
+          return color === '#FFFFFF' ? '(0, 0, 0, 0)' : 
+                 color === '#D98F17' ? '(0, 51, 93, 0)' : 
+                 color === '#171816' ? '(0, 0, 0, 100)' : 
+                 color === '#1a1a1a' ? '(0, 0, 0, 100)' :
+                 color === '#C02300' ? '(0, 99, 97, 0)' :
+                 color === '#388032' ? '(86, 16, 100, 3)' :
+                 color === '#D2E31D' ? '(20, 0, 100, 0)' :
+                 color === '#90BF33' ? '(50, 0, 99, 0)' :
+                 color === '#C42469' ? '(20, 90, 0, 0)' :
+                 color === '#FFD700' ? '(0, 13, 100, 0)' : 
+                 color === '#D9D2AB' ? '(8, 9, 30, 0)' :
+                 color === '#8B4513' ? '(20, 60, 100, 20)' :
+                 color === '#4169E1' ? '(70, 50, 0, 0)' :
+                 color === '#DC143C' ? '(0, 90, 75, 0)' :
+                 color === '#228B22' ? '(75, 0, 100, 5)' : `Custom ${color}`;
+        };
+        
         const garmentColorNames = allGarmentColors.map(color => getColorName(color)).join(', ');
-        const garmentColorHexes = allGarmentColors.join(', ');
+        const garmentColorCMYK = allGarmentColors.map(color => `${getColorName(color)} ${getColorCMYK(color)}`).join(', ');
         
         page2.drawText(`Garment Colors: ${garmentColorNames}`, {
           x: 20, y: 60, size: 12, color: textColor
         });
-        page2.drawText(`${garmentColorHexes}`, {
+        page2.drawText(`${garmentColorCMYK}`, {
           x: 20, y: 40, size: 10, color: textColor
         });
         console.log(`✅ Page 2 info added with garment colors: ${garmentColorNames}`);
