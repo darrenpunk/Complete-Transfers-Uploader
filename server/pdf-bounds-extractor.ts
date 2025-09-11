@@ -315,6 +315,53 @@ export class PDFBoundsExtractor {
         
         console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts at (${minX.toFixed(1)},${minY.toFixed(1)})`);
         
+        // CRITICAL FIX: Detect unreasonably large bounds for A4/A3 PDFs
+        const isUnreasonablyLarge = width > 2000 || height > 2000;
+        const aspectRatio = width / height;
+        
+        if (isUnreasonablyLarge) {
+          console.log(`⚠️ OVERSIZED BOUNDS DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts - applying page-size correction`);
+          
+          // Determine target page size based on aspect ratio
+          let targetWidth: number, targetHeight: number;
+          
+          if (Math.abs(aspectRatio - (210/297)) < 0.1) {
+            // A4 aspect ratio (0.707)
+            targetWidth = 595;  // A4 width in points
+            targetHeight = 842; // A4 height in points
+            console.log(`🎯 A4 ASPECT RATIO DETECTED: Correcting to A4 size (595×842pts)`);
+          } else if (Math.abs(aspectRatio - (297/420)) < 0.1) {
+            // A3 aspect ratio (0.707) 
+            targetWidth = 842;  // A3 width in points
+            targetHeight = 1191; // A3 height in points
+            console.log(`🎯 A3 ASPECT RATIO DETECTED: Correcting to A3 size (842×1191pts)`);
+          } else {
+            // Default: scale down proportionally to reasonable size
+            const scaleFactor = Math.min(595 / width, 842 / height);
+            targetWidth = width * scaleFactor;
+            targetHeight = height * scaleFactor;
+            console.log(`🎯 CUSTOM ASPECT RATIO: Scaling down by ${(scaleFactor * 100).toFixed(0)}% to ${targetWidth.toFixed(0)}×${targetHeight.toFixed(0)}pts`);
+          }
+          
+          // Apply correction with proper centering
+          const correctedMinX = 0;
+          const correctedMinY = 0;
+          const correctedMaxX = targetWidth;
+          const correctedMaxY = targetHeight;
+          
+          console.log(`✅ BOUNDS CORRECTED: ${targetWidth.toFixed(0)}×${targetHeight.toFixed(0)}pts (was ${width.toFixed(0)}×${height.toFixed(0)}pts)`);
+          
+          return {
+            xMin: correctedMinX,
+            yMin: correctedMinY,
+            xMax: correctedMaxX,
+            yMax: correctedMaxY,
+            width: targetWidth,
+            height: targetHeight,
+            units: 'pt'
+          };
+        }
+        
         return {
           xMin: minX,
           yMin: minY,
