@@ -2336,11 +2336,26 @@ export async function registerRoutes(app: express.Application) {
                   
                   console.log(`✅ APPLYING A4 PATTERN FIX: ${correctedWidthMm.toFixed(1)}×${correctedHeightMm.toFixed(1)}mm (A4 standard)`);
                   
-                  // Update bounds to use correct A4 dimensions
+                  // Calculate corrected pixel dimensions
+                  const correctedWidthPx = correctedWidthMm / pxToMm;
+                  const correctedHeightPx = correctedHeightMm / pxToMm;
+                  
+                  // Calculate centered bounds - content should be centered within the corrected dimensions
+                  const centerX = 0; // Center of corrected bounds
+                  const centerY = 0; // Center of corrected bounds
+                  const halfWidth = correctedWidthPx / 2;
+                  const halfHeight = correctedHeightPx / 2;
+                  
+                  console.log(`🎯 CENTERING CONTENT: ${correctedWidthPx.toFixed(1)}×${correctedHeightPx.toFixed(1)}px around center (${centerX}, ${centerY})`);
+                  
+                  // Update bounds to use correct A4 dimensions AND proper centering
                   boundsResult.contentBounds = {
-                    ...boundsResult.contentBounds,
-                    width: correctedWidthMm / pxToMm,  // Convert back to pixels for consistency
-                    height: correctedHeightMm / pxToMm
+                    xMin: centerX - halfWidth,
+                    yMin: centerY - halfHeight,
+                    xMax: centerX + halfWidth,
+                    yMax: centerY + halfHeight,
+                    width: correctedWidthPx,
+                    height: correctedHeightPx
                   };
                   
                   // Update calculated mm values
