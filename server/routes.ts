@@ -2716,6 +2716,7 @@ export async function registerRoutes(app: express.Application) {
   app.delete('/api/logos/:logoId', async (req, res) => {
     try {
       const logoId = req.params.logoId;
+      const { force } = req.query; // Allow force deletion with ?force=true
       
       // Get the logo first to check if it exists
       const logo = await storage.getLogo(logoId);
@@ -2723,7 +2724,19 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Logo not found' });
       }
       
-      // Delete all canvas elements that use this logo
+      // Check if logo is in use by canvas elements (protection against accidental deletion)
+      const canvasElements = await storage.getCanvasElementsByProject(logo.projectId || '');
+      const elementsUsingLogo = canvasElements.filter(element => element.logoId === logoId);
+      
+      if (elementsUsingLogo.length > 0 && !force) {
+        console.log(`🛡️ PROTECTION: Logo ${logoId} is used by ${elementsUsingLogo.length} canvas elements, refusing deletion`);
+        return res.status(409).json({ 
+          error: `Logo is currently in use by ${elementsUsingLogo.length} canvas element(s). Delete the elements first or pass ?force=true to override.`,
+          elementsInUse: elementsUsingLogo.length
+        });
+      }
+      
+      // Delete all canvas elements that use this logo (only if force=true or no elements)
       await storage.deleteCanvasElementsByLogo(logoId);
       console.log(`🗑️ Cleaned up canvas elements for deleted logo: ${logoId}`);
       
