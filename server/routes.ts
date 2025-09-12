@@ -2507,6 +2507,23 @@ export async function registerRoutes(app: express.Application) {
                     const xOffset = horizontalOverflow / 2;
                     const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
+                    // CRITICAL FIX: Handle centered bounds properly
+                    // If bounds are centered around (0,0), we need different transform calculation
+                    const isContentCentered = Math.abs(contentBounds.xMin + contentBounds.xMax) < 1 && Math.abs(contentBounds.yMin + contentBounds.yMax) < 1;
+                    
+                    let transformX, transformY;
+                    if (isContentCentered) {
+                      // Content is centered around (0,0), move it to center of new viewBox
+                      transformX = expandedWidth / 2;
+                      transformY = expandedHeight / 2;
+                      console.log(`🎯 CENTERED BOUNDS DETECTED: Using centered transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
+                    } else {
+                      // Standard transform for non-centered bounds
+                      transformX = -contentBounds.xMin + xOffset;
+                      transformY = -contentBounds.yMin + yOffset;
+                      console.log(`📐 STANDARD BOUNDS: Using standard transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
+                    }
+                    
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
                       width="${expandedWidth}" 
@@ -2515,7 +2532,7 @@ export async function registerRoutes(app: express.Application) {
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${-contentBounds.xMin + xOffset}, ${-contentBounds.yMin + yOffset})">
+                        <g transform="translate(${transformX}, ${transformY})">
                           ${innerContent}
                         </g>
                     </svg>`;
