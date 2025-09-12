@@ -343,6 +343,12 @@ export class PDFBoundsExtractor {
         // CRITICAL FIX: Check for oversized content that should be A4
         const expectedA4Width = 590.1;  // 208.2mm in points
         const expectedA4Height = 820.8; // 289.507mm in points
+        
+        // DEBUG: Log actual values for problematic file
+        console.log(`🔍 BOUNDS DEBUG: width=${width.toFixed(1)}, height=${height.toFixed(1)} vs expectedA4=${expectedA4Width.toFixed(1)}×${expectedA4Height.toFixed(1)}`);
+        console.log(`🔍 RATIO DEBUG: widthRatio=${(width/expectedA4Width).toFixed(2)}, heightRatio=${(height/expectedA4Height).toFixed(2)}`);
+        console.log(`🔍 OVERSIZED CHECK: isOversized=${(width > expectedA4Width * 1.3 && height > expectedA4Height * 1.5)}`);
+        
         const isSignificantlyOversized = (width > expectedA4Width * 1.3 && height > expectedA4Height * 1.5);
         const isSignificantlySmaller = (width < expectedA4Width * 0.9 && height < expectedA4Height * 0.8);
         
