@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { Logo, CanvasElement, Project } from '@shared/schema';
+import type { Logo, CanvasElement, Project, ContentBounds } from '@shared/schema';
 
 interface SvgInlineRendererProps {
   element: CanvasElement;
@@ -37,37 +37,26 @@ export default function SvgInlineRenderer({
         const response = await fetch(url);
         const text = await response.text();
         
-        // Clean the SVG content to ensure proper rendering
+        // Clean and normalize SVG for content-based centering
         let cleanedSvg = text;
         
         // Remove XML declaration if present
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // Ensure viewBox is preserved for proper scaling
-        const viewBoxMatch = cleanedSvg.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-        if (viewBoxMatch) {
-          // Always use "xMidYMid meet" to ensure content is fully visible and centered
-          // This ensures the entire SVG fits within the bounds and is centered both horizontally and vertically
-          const preserveAspectRatio = 'xMidYMid meet';
-          
-          // Replace existing preserveAspectRatio if present, or add it
-          if (cleanedSvg.includes('preserveAspectRatio')) {
-            cleanedSvg = cleanedSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, `preserveAspectRatio="${preserveAspectRatio}"`);
-          }
-          
-          // Ensure width and height are 100% and preserveAspectRatio is set
-          if (!cleanedSvg.includes('width="100%"')) {
-            cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 width="100%" height="100%" preserveAspectRatio="${preserveAspectRatio}" style="display:block;">`);
-          } else {
-            // Make sure preserveAspectRatio is set even if width/height already exist
-            if (!cleanedSvg.includes('preserveAspectRatio')) {
-              cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, `<svg$1 preserveAspectRatio="${preserveAspectRatio}">`);
-            }
-          }
+        // ARCHITECT SOLUTION: Remove explicit width/height, set proper preserveAspectRatio
+        // Remove existing width/height attributes to let viewBox control sizing
+        cleanedSvg = cleanedSvg.replace(/\s*width\s*=\s*["'][^"']*["']/gi, '');
+        cleanedSvg = cleanedSvg.replace(/\s*height\s*=\s*["'][^"']*["']/gi, '');
+        
+        // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
+        if (cleanedSvg.includes('preserveAspectRatio')) {
+          cleanedSvg = cleanedSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, 'preserveAspectRatio="xMidYMid meet"');
+        } else {
+          cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 preserveAspectRatio="xMidYMid meet">');
         }
         
-        // Remove any existing style attributes that might have background
+        // Remove any existing style attributes that might interfere
         cleanedSvg = cleanedSvg.replace(
           /style\s*=\s*["'][^"']*background[^"']*["']/gi,
           ''
@@ -105,20 +94,112 @@ export default function SvgInlineRenderer({
     );
   }
 
-  return (
-    <div 
-      className="w-full h-full"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 0,
-        margin: 0,
-        lineHeight: 0,
-        fontSize: 0,
-        overflow: 'hidden'
-      }}
-      dangerouslySetInnerHTML={{ __html: svgContent }}
-    />
-  );
+  // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
+  const renderWithContentBounds = () => {
+    // Check if we have valid content bounds for precise positioning
+    const hasContentBounds = logo.contentBounds && 
+                            typeof logo.contentBounds === 'object' &&
+                            'minX' in logo.contentBounds &&
+                            'minY' in logo.contentBounds &&
+                            'maxX' in logo.contentBounds &&
+                            'maxY' in logo.contentBounds;
+    
+    if (!hasContentBounds) {
+      console.log('🔍 No contentBounds available, using default centering');
+      // Fallback to default centering
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      );
+    }
+    
+    const bounds = logo.contentBounds as ContentBounds;
+    
+    // Detect Y-inversion by checking for scaleY(-1) in the SVG
+    const hasYFlip = svgContent.includes('matrix(') && 
+                     (svgContent.includes('matrix(1, 0, 0, -1') || 
+                      svgContent.includes('matrix(1,0,0,-1'));
+    
+    console.log('🎯 Content-bounds centering:', {
+      bounds,
+      hasYFlip,
+      logoFile: logo.filename
+    });
+    
+    // Calculate content center and dimensions
+    const contentCenterX = (bounds.minX + bounds.maxX) / 2;
+    const contentCenterY = (bounds.minY + bounds.maxY) / 2;
+    const contentWidth = bounds.maxX - bounds.minX;
+    const contentHeight = bounds.maxY - bounds.minY;
+    
+    // Handle Y-inversion for PDF-derived content
+    let adjustedCenterY = contentCenterY;
+    if (hasYFlip) {
+      // For Y-flipped content, invert the Y coordinate
+      // This assumes the SVG viewBox height as reference
+      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+      if (viewBoxMatch) {
+        const [, , , svgHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+        adjustedCenterY = svgHeight - contentCenterY;
+        console.log('🔄 Y-flip detected, adjusted centerY:', adjustedCenterY);
+      }
+    }
+    
+    // Calculate scale to fit content in container (preserving aspect ratio)
+    // Assume container is 100% of allocated space
+    const containerAspect = 1; // Will be determined by CSS
+    const contentAspect = contentWidth / contentHeight;
+    
+    // Calculate transform to center the content
+    // Move content center to container center (50%, 50%)
+    const translateX = `calc(50% - ${contentCenterX}px)`;
+    const translateY = `calc(50% - ${adjustedCenterY}px)`;
+    
+    console.log('📐 Calculated transforms:', {
+      translateX,
+      translateY,
+      contentCenter: [contentCenterX, adjustedCenterY],
+      contentSize: [contentWidth, contentHeight]
+    });
+    
+    return (
+      <div className="w-full h-full relative overflow-hidden">
+        {/* Debug overlay for development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div 
+            className="absolute border-2 border-red-500 opacity-50 pointer-events-none"
+            style={{
+              left: '25%',
+              top: '25%', 
+              width: '50%',
+              height: '50%'
+            }}
+            title="Content bounds visualization"
+          />
+        )}
+        
+        <div
+          className="w-full h-full"
+          style={{
+            transform: `translate(${translateX}, ${translateY})`,
+            transformOrigin: 'top left',
+            overflow: 'visible'
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      </div>
+    );
+  };
+  
+  return renderWithContentBounds();
 }

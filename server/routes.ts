@@ -2507,44 +2507,18 @@ export async function registerRoutes(app: express.Application) {
                     const xOffset = horizontalOverflow / 2;
                     const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
-                    // CRITICAL FIX: Handle centered bounds properly
-                    // If bounds are centered around (0,0), we need different viewBox calculation
-                    const isContentCentered = Math.abs(contentBounds.xMin + contentBounds.xMax) < 1 && Math.abs(contentBounds.yMin + contentBounds.yMax) < 1;
+                    // ARCHITECT SOLUTION: Let frontend handle centering, just normalize SVG output
+                    console.log(`🎯 BACKEND NORMALIZATION: Content bounds detected, letting frontend handle centering`);
                     
-                    let viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight, transformX, transformY;
-                    
-                    if (isContentCentered) {
-                      // Content is centered - translate it to positive coordinates for better frontend compatibility
-                      viewBoxX = 0;
-                      viewBoxY = 0;
-                      viewBoxWidth = expandedWidth;
-                      viewBoxHeight = expandedHeight;
-                      // Move content from centered position to positive coordinates
-                      transformX = -contentBounds.xMin + xOffset;
-                      transformY = -contentBounds.yMin + yOffset;
-                      console.log(`🎯 CENTERED BOUNDS DETECTED: Moving content to positive coords with transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
-                    } else {
-                      // Standard approach for non-centered bounds
-                      viewBoxX = 0;
-                      viewBoxY = 0;
-                      viewBoxWidth = expandedWidth;
-                      viewBoxHeight = expandedHeight;
-                      transformX = -contentBounds.xMin + xOffset;
-                      transformY = -contentBounds.yMin + yOffset;
-                      console.log(`📐 STANDARD BOUNDS: Using standard viewBox and transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
-                    }
-                    
+                    // Create minimal SVG wrapper with proper viewBox and no transforms
+                    // The frontend will use contentBounds for precise positioning
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}" 
-                      width="${expandedWidth}" 
-                      height="${expandedHeight}"
-                      preserveAspectRatio="none"
+                      viewBox="${contentBounds.xMin - xOffset} ${contentBounds.yMin - yOffset} ${expandedWidth} ${expandedHeight}"
+                      preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${transformX}, ${transformY})">
-                          ${innerContent}
-                        </g>
+                        ${innerContent}
                     </svg>`;
                     
                     // Save the tight-content SVG
@@ -2630,8 +2604,19 @@ export async function registerRoutes(app: express.Application) {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
-          ...(analysisData && { svgColors: analysisData })
+          ...(analysisData && { svgColors: analysisData }),
+          // CRITICAL FIX: Save contentBounds to database for frontend centering
+          ...(boundsResult?.success && boundsResult.contentBounds && { 
+            contentBounds: boundsResult.contentBounds 
+          })
         });
+        
+        // Debug: Log if contentBounds were saved
+        if (boundsResult?.success && boundsResult.contentBounds) {
+          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(boundsResult.contentBounds)} to logo ${logo.id}`);
+        } else {
+          console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
+        }
         
         if (!updatedLogo) {
           throw new Error(`Failed to update logo ${logo.id}`);
