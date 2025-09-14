@@ -2508,24 +2508,33 @@ export async function registerRoutes(app: express.Application) {
                     const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
                     // CRITICAL FIX: Handle centered bounds properly
-                    // If bounds are centered around (0,0), we need different transform calculation
+                    // If bounds are centered around (0,0), we need different viewBox calculation
                     const isContentCentered = Math.abs(contentBounds.xMin + contentBounds.xMax) < 1 && Math.abs(contentBounds.yMin + contentBounds.yMax) < 1;
                     
-                    let transformX, transformY;
+                    let viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight, transformX, transformY;
+                    
                     if (isContentCentered) {
-                      // Content is centered around (0,0), move it to center of new viewBox
-                      transformX = expandedWidth / 2;
-                      transformY = expandedHeight / 2;
-                      console.log(`🎯 CENTERED BOUNDS DETECTED: Using centered transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
+                      // Content is already centered - create viewBox around the centered content
+                      viewBoxX = contentBounds.xMin - xOffset;
+                      viewBoxY = contentBounds.yMin - yOffset;
+                      viewBoxWidth = expandedWidth;
+                      viewBoxHeight = expandedHeight;
+                      transformX = 0;  // No translation needed
+                      transformY = 0;
+                      console.log(`🎯 CENTERED BOUNDS DETECTED: Using centered viewBox (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}, ${viewBoxWidth.toFixed(1)}, ${viewBoxHeight.toFixed(1)})`);
                     } else {
-                      // Standard transform for non-centered bounds
+                      // Standard approach for non-centered bounds
+                      viewBoxX = 0;
+                      viewBoxY = 0;
+                      viewBoxWidth = expandedWidth;
+                      viewBoxHeight = expandedHeight;
                       transformX = -contentBounds.xMin + xOffset;
                       transformY = -contentBounds.yMin + yOffset;
-                      console.log(`📐 STANDARD BOUNDS: Using standard transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
+                      console.log(`📐 STANDARD BOUNDS: Using standard viewBox and transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
                     }
                     
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${expandedWidth} ${expandedHeight}" 
+                      viewBox="${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}" 
                       width="${expandedWidth}" 
                       height="${expandedHeight}"
                       preserveAspectRatio="none"
