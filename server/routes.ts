@@ -2514,14 +2514,15 @@ export async function registerRoutes(app: express.Application) {
                     let viewBoxX, viewBoxY, viewBoxWidth, viewBoxHeight, transformX, transformY;
                     
                     if (isContentCentered) {
-                      // Content is already centered - create viewBox around the centered content
-                      viewBoxX = contentBounds.xMin - xOffset;
-                      viewBoxY = contentBounds.yMin - yOffset;
+                      // Content is centered - translate it to positive coordinates for better frontend compatibility
+                      viewBoxX = 0;
+                      viewBoxY = 0;
                       viewBoxWidth = expandedWidth;
                       viewBoxHeight = expandedHeight;
-                      transformX = 0;  // No translation needed
-                      transformY = 0;
-                      console.log(`🎯 CENTERED BOUNDS DETECTED: Using centered viewBox (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}, ${viewBoxWidth.toFixed(1)}, ${viewBoxHeight.toFixed(1)})`);
+                      // Move content from centered position to positive coordinates
+                      transformX = -contentBounds.xMin + xOffset;
+                      transformY = -contentBounds.yMin + yOffset;
+                      console.log(`🎯 CENTERED BOUNDS DETECTED: Moving content to positive coords with transform (${transformX.toFixed(1)}, ${transformY.toFixed(1)})`);
                     } else {
                       // Standard approach for non-centered bounds
                       viewBoxX = 0;
