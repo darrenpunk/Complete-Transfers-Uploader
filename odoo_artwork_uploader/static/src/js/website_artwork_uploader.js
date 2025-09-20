@@ -29,9 +29,17 @@ class WebsiteArtworkUploader extends Component {
         // Implement basic project creation
         alert(`Would create project with template: ${templateType}`);
     }
+    
+    getScreenPrintedTransfers() {
+        return this.templates.filter(t => t.group === 'Screen Printed Transfers');
+    }
+    
+    getDigitalTransfers() {
+        return this.templates.filter(t => t.group === 'Digital Transfers');
+    }
 }
 
-// Use simple template for now
+// Organized template display matching standalone app
 WebsiteArtworkUploader.template = `
     <div class="artwork-uploader-website">
         <div class="row mb-4">
@@ -41,19 +49,46 @@ WebsiteArtworkUploader.template = `
             </div>
         </div>
         
-        <!-- Template Selection -->
-        <div class="row mb-4">
+        <!-- Screen Printed Transfers -->
+        <div class="row mb-4" t-if="getScreenPrintedTransfers().length > 0">
             <div class="col-12">
-                <h4>Choose Your Template</h4>
+                <h4 class="mb-3">
+                    <i class="fa fa-print text-primary me-2"></i>
+                    Screen Printed Transfers
+                </h4>
                 <div class="template-grid row">
-                    <t t-foreach="templates" t-as="template">
+                    <t t-foreach="getScreenPrintedTransfers()" t-as="template">
                         <div class="col-md-4 col-sm-6 mb-3">
-                            <div class="card template-card h-100 hover-shadow" style="cursor: pointer;" 
-                                 t-on-click="() => this.createProject(template.name)">
+                            <div class="card template-card h-100 shadow-sm" style="cursor: pointer;" 
+                                 t-on-click="() => this.createProject(template.type)">
                                 <div class="card-body text-center">
-                                    <i class="fa fa-file-image-o fa-2x text-primary mb-2"></i>
+                                    <i class="fa fa-print fa-2x text-primary mb-2"></i>
                                     <h6 class="card-title" t-esc="template.name"/>
-                                    <p class="card-text text-muted small">Click to select</p>
+                                    <p class="card-text text-muted small" t-esc="template.description"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Digital Transfers -->
+        <div class="row mb-4" t-if="getDigitalTransfers().length > 0">
+            <div class="col-12">
+                <h4 class="mb-3">
+                    <i class="fa fa-desktop text-success me-2"></i>
+                    Digital Transfers
+                </h4>
+                <div class="template-grid row">
+                    <t t-foreach="getDigitalTransfers()" t-as="template">
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="card template-card h-100 shadow-sm" style="cursor: pointer;" 
+                                 t-on-click="() => this.createProject(template.type)">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-desktop fa-2x text-success mb-2"></i>
+                                    <h6 class="card-title" t-esc="template.name"/>
+                                    <p class="card-text text-muted small" t-esc="template.description"/>
                                 </div>
                             </div>
                         </div>

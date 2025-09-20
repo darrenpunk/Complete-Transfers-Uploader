@@ -11,10 +11,86 @@ class ArtworkUploaderController(http.Controller):
     @http.route('/artwork/upload', type='http', auth='public', website=True, csrf=False)
     def artwork_upload_page(self, **kwargs):
         """Main artwork uploader page"""
-        # Get template configurations
-        templates = request.env['product.template'].sudo().search([
-            ('is_artwork_product', '=', True)
-        ])
+        # Use exact templates from standalone app (same as API endpoint)
+        templates = [
+            {
+                'id': 'full-colour-transfers',
+                'name': 'Full Colour Transfers',
+                'type': 'full-colour-transfers',
+                'description': 'Full-Colour screen printed heat applied transfers',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'full-colour-metallic',
+                'name': 'Full Colour Metallic',
+                'type': 'full-colour-metallic',
+                'description': 'Full-Colour screen printed with metallic finish',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'full-colour-hd',
+                'name': 'Full Colour HD',
+                'type': 'full-colour-hd',
+                'description': 'High-definition full-colour screen printed transfers',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'single-colour-transfers',
+                'name': 'Single Colour Transfers',
+                'type': 'single-colour-transfers',
+                'description': 'Screen printed using our off-the-shelf colour range',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'dtf-transfers',
+                'name': 'DTF - Digital Film Transfers',
+                'type': 'dtf-transfers',
+                'description': 'Small order digital heat transfers',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'uv-dtf',
+                'name': 'UV DTF',
+                'type': 'uv-dtf',
+                'description': 'Hard Surface Transfers',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'custom-badges',
+                'name': 'Custom Badges',
+                'type': 'custom-badges',
+                'description': 'Polyester textile woven badges',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'applique-badges',
+                'name': 'Applique Badges',
+                'type': 'applique-badges',
+                'description': 'Fabric applique badges',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'reflective-transfers',
+                'name': 'Reflective Transfers',
+                'type': 'reflective-transfers',
+                'description': 'Our silver reflective helps enhance the visibility of the wearer at night',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'zero-single-colour',
+                'name': 'ZERO Single Colour Transfers',
+                'type': 'zero-single-colour',
+                'description': 'Zero inks are super stretchy and do not bleed!',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'sublimation-transfers',
+                'name': 'Sublimation Transfers',
+                'type': 'sublimation-transfers',
+                'description': 'Sublimation heat transfers are designed for full colour decoration of white, 100% polyester',
+                'group': 'Digital Transfers'
+            }
+        ]
         
         values = {
             'templates': templates,
@@ -26,22 +102,87 @@ class ArtworkUploaderController(http.Controller):
     
     @http.route('/artwork/api/templates', type='json', auth='public', methods=['GET'], csrf=False)
     def get_templates(self, **kwargs):
-        """Get available artwork templates"""
-        templates = request.env['product.template'].sudo().search([
-            ('is_artwork_product', '=', True)
-        ])
-        
-        template_list = []
-        for template in templates:
-            template_list.append({
-                'id': template.id,
-                'name': template.name,
-                'type': template.name,  # Using name as type for now
-                'description': template.description or '',
-                'category': getattr(template, 'artwork_template_type', 'general'),
-            })
-        
-        return template_list
+        """Get available artwork templates - exact match with standalone app"""
+        # Return exact templates from standalone app
+        return [
+            {
+                'id': 'full-colour-transfers',
+                'name': 'Full Colour Transfers',
+                'type': 'full-colour-transfers',
+                'description': 'Full-Colour screen printed heat applied transfers',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'full-colour-metallic',
+                'name': 'Full Colour Metallic',
+                'type': 'full-colour-metallic',
+                'description': 'Full-Colour screen printed with metallic finish',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'full-colour-hd',
+                'name': 'Full Colour HD',
+                'type': 'full-colour-hd',
+                'description': 'High-definition full-colour screen printed transfers',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'single-colour-transfers',
+                'name': 'Single Colour Transfers',
+                'type': 'single-colour-transfers',
+                'description': 'Screen printed using our off-the-shelf colour range',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'dtf-transfers',
+                'name': 'DTF - Digital Film Transfers',
+                'type': 'dtf-transfers',
+                'description': 'Small order digital heat transfers',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'uv-dtf',
+                'name': 'UV DTF',
+                'type': 'uv-dtf',
+                'description': 'Hard Surface Transfers',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'custom-badges',
+                'name': 'Custom Badges',
+                'type': 'custom-badges',
+                'description': 'Polyester textile woven badges',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'applique-badges',
+                'name': 'Applique Badges',
+                'type': 'applique-badges',
+                'description': 'Fabric applique badges',
+                'group': 'Digital Transfers'
+            },
+            {
+                'id': 'reflective-transfers',
+                'name': 'Reflective Transfers',
+                'type': 'reflective-transfers',
+                'description': 'Our silver reflective helps enhance the visibility of the wearer at night',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'zero-single-colour',
+                'name': 'ZERO Single Colour Transfers',
+                'type': 'zero-single-colour',
+                'description': 'Zero inks are super stretchy and do not bleed!',
+                'group': 'Screen Printed Transfers'
+            },
+            {
+                'id': 'sublimation-transfers',
+                'name': 'Sublimation Transfers',
+                'type': 'sublimation-transfers',
+                'description': 'Sublimation heat transfers are designed for full colour decoration of white, 100% polyester',
+                'group': 'Digital Transfers'
+            }
+        ]
     
     @http.route('/artwork/api/projects', type='json', auth='public', methods=['POST'], csrf=False)
     def create_project(self, **kwargs):
