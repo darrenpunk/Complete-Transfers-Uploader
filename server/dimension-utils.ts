@@ -32,10 +32,24 @@ const KNOWN_DIMENSIONS = {
   // Add more known dimensions here as needed
 };
 
-// Exact conversion factor based on user's requirements and DPI standards
-const PIXEL_TO_MM_FACTOR = 0.35; // For 600x595 case
+// Template-derived conversion factors (removed global 0.35 mm/px heuristic)
 const A4_PIXEL_TO_MM_FACTOR = 210 / 595; // A4: 210mm / 595px = 0.3529mm per pixel
 const A3_PIXEL_TO_MM_FACTOR = 297 / 842; // A3: 297mm / 842px = 0.3527mm per pixel
+
+/**
+ * Calculate px/mm conversion factor from template dimensions
+ * This is the authoritative method to get conversion factors
+ */
+export function calculateTemplateConversionFactor(templateWidthMm: number, templateHeightMm: number, templateWidthPx: number, templateHeightPx: number): number {
+  // Use average of width and height ratios for consistency
+  const widthRatio = templateWidthPx / templateWidthMm; // px/mm
+  const heightRatio = templateHeightPx / templateHeightMm; // px/mm
+  const avgRatio = (widthRatio + heightRatio) / 2;
+  
+  console.log(`📏 Template conversion: ${templateWidthPx}×${templateHeightPx}px ÷ ${templateWidthMm}×${templateHeightMm}mm = ${avgRatio.toFixed(3)} px/mm`);
+  
+  return 1 / avgRatio; // Convert to mm/px
+}
 
 /**
  * Calculate dimensions with maximum accuracy and validation
@@ -91,18 +105,22 @@ export function calculatePreciseDimensions(
     console.log(`🎯 A3 document detected, using exact: ${finalWidthPx}×${finalHeightPx}px (297×420mm)`);
   }
   
-  // Calculate mm dimensions using exact conversion factor
-  let conversionFactor = PIXEL_TO_MM_FACTOR;
+  // Calculate mm dimensions using template-specific conversion factors
+  let conversionFactor: number;
   
-  // Use A4-specific conversion for A4 documents
+  // Use template-specific conversion for known dimensions
   if (knownDimension && (knownDimension.widthMm === 210 && knownDimension.heightMm === 297)) {
     conversionFactor = A4_PIXEL_TO_MM_FACTOR;
-    console.log(`📏 Using A4 conversion factor: ${conversionFactor} mm/px`);
+    console.log(`📏 Using A4 conversion factor: ${conversionFactor.toFixed(4)} mm/px`);
   }
-  // Use A3-specific conversion for A3 documents  
   else if (knownDimension && (knownDimension.widthMm === 297 || knownDimension.heightMm === 420)) {
     conversionFactor = A3_PIXEL_TO_MM_FACTOR;
-    console.log(`📏 Using A3 conversion factor: ${conversionFactor} mm/px`);
+    console.log(`📏 Using A3 conversion factor: ${conversionFactor.toFixed(4)} mm/px`);
+  }
+  else {
+    // Fallback: derive conversion factor from pixel dimensions (assume standard 72 DPI: 72pt/inch = 96px/inch = 2.834645669 px/mm)
+    conversionFactor = A4_PIXEL_TO_MM_FACTOR; // Use A4 as reasonable default
+    console.log(`📏 Using A4 fallback conversion factor: ${conversionFactor.toFixed(4)} mm/px`);
   }
   
   const widthMm = knownDimension ? knownDimension.widthMm : finalWidthPx * conversionFactor;
