@@ -24,6 +24,25 @@ class ArtworkUploaderController(http.Controller):
         
         return request.render('artwork_uploader.upload_page', values)
     
+    @http.route('/artwork/api/templates', type='json', auth='public', methods=['GET'], csrf=False)
+    def get_templates(self, **kwargs):
+        """Get available artwork templates"""
+        templates = request.env['product.template'].sudo().search([
+            ('is_artwork_product', '=', True)
+        ])
+        
+        template_list = []
+        for template in templates:
+            template_list.append({
+                'id': template.id,
+                'name': template.name,
+                'type': template.name,  # Using name as type for now
+                'description': template.description or '',
+                'category': getattr(template, 'artwork_template_type', 'general'),
+            })
+        
+        return template_list
+    
     @http.route('/artwork/api/projects', type='json', auth='public', methods=['POST'], csrf=False)
     def create_project(self, **kwargs):
         """Create a new artwork project"""

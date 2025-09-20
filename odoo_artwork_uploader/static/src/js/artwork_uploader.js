@@ -9,6 +9,11 @@ export class ArtworkUploader extends Component {
         this.rpc = useService("rpc");
         this.notification = useService("notification");
         
+        // Get templates and colors from props (passed from website template)
+        this.templates = this.props.templates || [];
+        this.garmentColors = this.props.garmentColors || [];
+        this.inkColors = this.props.inkColors || [];
+        
         this.state = useState({
             currentProject: null,
             logos: [],
@@ -20,7 +25,9 @@ export class ArtworkUploader extends Component {
         
         onWillStart(async () => {
             // Initialize component
-            await this.loadTemplates();
+            if (this.templates.length === 0) {
+                await this.loadTemplates();
+            }
         });
     }
     
@@ -87,8 +94,24 @@ export class ArtworkUploader extends Component {
             this.notification.add("Error adding to cart", { type: "danger" });
         }
     }
+    
+    uploadLogoTrigger() {
+        // Trigger the hidden file input
+        document.getElementById('logo-upload').click();
+    }
+    
+    handleFileUpload(event) {
+        const files = event.target.files;
+        for (let i = 0; i < files.length; i++) {
+            this.uploadLogo(files[i]);
+        }
+        // Clear the input so the same file can be uploaded again
+        event.target.value = '';
+    }
 }
 
-ArtworkUploader.template = "artwork_uploader.ArtworkUploader";
+// Reference the template we created
+ArtworkUploader.template = "artwork_uploader.artwork_uploader_template";
 
+// Register component for both public and backend use
 registry.category("public_components").add("artwork_uploader", ArtworkUploader);

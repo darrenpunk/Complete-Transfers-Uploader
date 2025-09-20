@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- OWL Component Template -->
+        <template id="artwork_uploader_template" name="Artwork Uploader Component">
+            <div class="artwork-uploader-app">
+                <!-- Header -->
+                <div class="row mb-4">
+                    <div class="col-12 text-center">
+                        <h2>Create Your Design</h2>
+                        <p class="text-muted">Upload your logo and position it on your chosen template</p>
+                    </div>
+                </div>
+
+                <!-- Template Selection -->
+                <div class="row mb-4" t-if="!state.currentProject">
+                    <div class="col-12">
+                        <h4>1. Choose Template</h4>
+                        <div class="template-grid row">
+                            <div class="col-md-4 col-sm-6 mb-3" t-foreach="templates" t-as="template">
+                                <div class="card template-card h-100" style="cursor: pointer;" 
+                                     t-on-click="() => this.createProject(template.type)">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title" t-esc="template.name"/>
+                                        <p class="card-text text-muted small" t-esc="template.type"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Workspace -->
+                <div class="row" t-if="state.currentProject">
+                    <!-- Sidebar -->
+                    <div class="col-md-3">
+                        <div class="artwork-sidebar">
+                            <h5>Project Details</h5>
+                            <div class="mb-3">
+                                <label class="form-label">Project Name</label>
+                                <input type="text" class="form-control" t-model="state.currentProject.name"/>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Garment Color</label>
+                                <input type="color" class="form-control form-control-color" t-model="state.garmentColor"/>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Actions</h6>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary btn-sm" t-on-click="uploadLogoTrigger">
+                                        <i class="fa fa-upload"/> Upload Logo
+                                    </button>
+                                    <button class="btn btn-success btn-sm" t-on-click="generatePDF" t-if="state.logos.length > 0">
+                                        <i class="fa fa-download"/> Download PDF
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" t-on-click="addToCart" t-if="state.logos.length > 0">
+                                        <i class="fa fa-shopping-cart"/> Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Hidden file input -->
+                            <input type="file" id="logo-upload" style="display: none;" 
+                                   accept="image/*,.svg,.pdf,.ai,.eps" multiple="true"
+                                   t-on-change="handleFileUpload"/>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Area -->
+                    <div class="col-md-9">
+                        <div class="canvas-container border rounded p-3" style="min-height: 500px; background: white;">
+                            <h6>Canvas Area</h6>
+                            <p class="text-muted">Your design workspace will appear here</p>
+                            
+                            <!-- Logo List -->
+                            <div class="uploaded-logos" t-if="state.logos.length > 0">
+                                <h6>Uploaded Logos</h6>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2" t-foreach="state.logos" t-as="logo">
+                                        <div class="card">
+                                            <img class="card-img-top" t-att-src="logo.url" style="height: 100px; object-fit: contain;"/>
+                                            <div class="card-body p-2">
+                                                <small t-esc="logo.filename"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" t-if="state.loading" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="text-center text-white">
+                            <i class="fa fa-spinner fa-spin fa-3x mb-3"></i>
+                            <p>Processing...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </data>
+</odoo>

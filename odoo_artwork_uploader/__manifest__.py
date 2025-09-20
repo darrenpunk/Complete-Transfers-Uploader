@@ -39,11 +39,13 @@
         'views/artwork_template_mapping_views.xml',
         'views/artwork_template_mapping_wizard_views.xml',
         'views/website_templates.xml',
+        'views/artwork_uploader_templates.xml',
     ],
     'assets': {
         'web.assets_frontend': [
             'artwork_uploader/static/src/scss/artwork_uploader.scss',
             'artwork_uploader/static/src/js/artwork_uploader.js',
+            'artwork_uploader/static/src/js/website_artwork_uploader.js',
             'artwork_uploader/static/src/js/canvas_editor.js',
             'artwork_uploader/static/src/js/color_picker.js',
             'artwork_uploader/static/src/js/pdf_preview.js',
