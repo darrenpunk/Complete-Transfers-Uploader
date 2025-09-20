@@ -2246,6 +2246,9 @@ export async function registerRoutes(app: express.Application) {
           console.log('⚠️ DEBUG: No extracted PNG dimensions found, using defaults:', displayWidth + 'x' + displayHeight);
         }
 
+        // Declare boundsResult in high scope so it's available for database update later
+        let boundsResult = null;
+
         try {
           if (finalMimeType === 'image/png' && (file as any).extractedPngWidth && (file as any).extractedPngHeight) {
             // For extracted PNG files, use the detected dimensions
@@ -2259,9 +2262,6 @@ export async function registerRoutes(app: express.Application) {
             
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
-            
-            // Declare boundsResult in outer scope so it's available for database update later
-            let boundsResult = null;
             
             try {
               // For PDF-converted SVGs, try to use the original PDF bounds first
