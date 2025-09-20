@@ -2260,9 +2260,11 @@ export async function registerRoutes(app: express.Application) {
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
+            // Declare boundsResult in outer scope so it's available for database update later
+            let boundsResult = null;
+            
             try {
               // For PDF-converted SVGs, try to use the original PDF bounds first
-              let boundsResult = null;
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
                 // Try to extract bounds from the original PDF for accuracy
