@@ -11,86 +11,8 @@ class ArtworkUploaderController(http.Controller):
     @http.route('/artwork/upload', type='http', auth='public', website=True, csrf=False)
     def artwork_upload_page(self, **kwargs):
         """Main artwork uploader page"""
-        # Use exact templates from standalone app (same as API endpoint)
-        templates = [
-            {
-                'id': 'full-colour-transfers',
-                'name': 'Full Colour Transfers',
-                'type': 'full-colour-transfers',
-                'description': 'Full-Colour screen printed heat applied transfers',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'full-colour-metallic',
-                'name': 'Full Colour Metallic',
-                'type': 'full-colour-metallic',
-                'description': 'Full-Colour screen printed with metallic finish',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'full-colour-hd',
-                'name': 'Full Colour HD',
-                'type': 'full-colour-hd',
-                'description': 'High-definition full-colour screen printed transfers',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'single-colour-transfers',
-                'name': 'Single Colour Transfers',
-                'type': 'single-colour-transfers',
-                'description': 'Screen printed using our off-the-shelf colour range',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'dtf-transfers',
-                'name': 'DTF - Digital Film Transfers',
-                'type': 'dtf-transfers',
-                'description': 'Small order digital heat transfers',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'uv-dtf',
-                'name': 'UV DTF',
-                'type': 'uv-dtf',
-                'description': 'Hard Surface Transfers',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'custom-badges',
-                'name': 'Custom Badges',
-                'type': 'custom-badges',
-                'description': 'Polyester textile woven badges',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'applique-badges',
-                'name': 'Applique Badges',
-                'type': 'applique-badges',
-                'description': 'Fabric applique badges',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'reflective-transfers',
-                'name': 'Reflective Transfers',
-                'type': 'reflective-transfers',
-                'description': 'Our silver reflective helps enhance the visibility of the wearer at night',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'zero-single-colour',
-                'name': 'ZERO Single Colour Transfers',
-                'type': 'zero-single-colour',
-                'description': 'Zero inks are super stretchy and do not bleed!',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'sublimation-transfers',
-                'name': 'Sublimation Transfers',
-                'type': 'sublimation-transfers',
-                'description': 'Sublimation heat transfers are designed for full colour decoration of white, 100% polyester',
-                'group': 'Digital Transfers'
-            }
-        ]
+        # Get templates from API endpoint method to stay consistent
+        templates = self.get_templates()
         
         values = {
             'templates': templates,
@@ -102,86 +24,95 @@ class ArtworkUploaderController(http.Controller):
     
     @http.route('/artwork/api/templates', type='json', auth='public', methods=['GET'], csrf=False)
     def get_templates(self, **kwargs):
-        """Get available artwork templates - exact match with standalone app"""
-        # Return exact templates from standalone app
+        """Get all individual template sizes - exact match with standalone app"""
+        # Return all 65 individual templates from standalone app with exact structure
         return [
-            {
-                'id': 'full-colour-transfers',
-                'name': 'Full Colour Transfers',
-                'type': 'full-colour-transfers',
-                'description': 'Full-Colour screen printed heat applied transfers',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'full-colour-metallic',
-                'name': 'Full Colour Metallic',
-                'type': 'full-colour-metallic',
-                'description': 'Full-Colour screen printed with metallic finish',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'full-colour-hd',
-                'name': 'Full Colour HD',
-                'type': 'full-colour-hd',
-                'description': 'High-definition full-colour screen printed transfers',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'single-colour-transfers',
-                'name': 'Single Colour Transfers',
-                'type': 'single-colour-transfers',
-                'description': 'Screen printed using our off-the-shelf colour range',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'dtf-transfers',
-                'name': 'DTF - Digital Film Transfers',
-                'type': 'dtf-transfers',
-                'description': 'Small order digital heat transfers',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'uv-dtf',
-                'name': 'UV DTF',
-                'type': 'uv-dtf',
-                'description': 'Hard Surface Transfers',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'custom-badges',
-                'name': 'Custom Badges',
-                'type': 'custom-badges',
-                'description': 'Polyester textile woven badges',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'applique-badges',
-                'name': 'Applique Badges',
-                'type': 'applique-badges',
-                'description': 'Fabric applique badges',
-                'group': 'Digital Transfers'
-            },
-            {
-                'id': 'reflective-transfers',
-                'name': 'Reflective Transfers',
-                'type': 'reflective-transfers',
-                'description': 'Our silver reflective helps enhance the visibility of the wearer at night',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'zero-single-colour',
-                'name': 'ZERO Single Colour Transfers',
-                'type': 'zero-single-colour',
-                'description': 'Zero inks are super stretchy and do not bleed!',
-                'group': 'Screen Printed Transfers'
-            },
-            {
-                'id': 'sublimation-transfers',
-                'name': 'Sublimation Transfers',
-                'type': 'sublimation-transfers',
-                'description': 'Sublimation heat transfers are designed for full colour decoration of white, 100% polyester',
-                'group': 'Digital Transfers'
-            }
+            # Screen Printed Transfers - Full Colour (8 templates)
+            {"id": "template-A3", "name": "A3", "label": "A3", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-A4", "name": "A4", "label": "A4", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-A5", "name": "A5", "label": "A5", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-A6", "name": "A6", "label": "A6", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-transfer-size", "name": "transfer_size", "label": "295×100mm", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-square", "name": "square", "label": "95×95mm", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-badge", "name": "badge", "label": "100×70mm", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            {"id": "template-small", "name": "small", "label": "60×60mm", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed heat applied transfers"},
+            
+            # Screen Printed Transfers - Full Colour Metallic (8 templates)
+            {"id": "metallic-A3", "name": "metallic_A3", "label": "A3 Metallic", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-A4", "name": "metallic_A4", "label": "A4 Metallic", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-A5", "name": "metallic_A5", "label": "A5 Metallic", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-A6", "name": "metallic_A6", "label": "A6 Metallic", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-transfer-size", "name": "metallic_transfer_size", "label": "295×100mm Metallic", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-square", "name": "metallic_square", "label": "95×95mm Metallic", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-badge", "name": "metallic_badge", "label": "100×70mm Metallic", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            {"id": "metallic-small", "name": "metallic_small", "label": "60×60mm Metallic", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Screen Printed Transfers", "description": "Full-Colour screen printed with metallic finish"},
+            
+            # Screen Printed Transfers - Full Colour HD (2 templates)
+            {"id": "hd-A3", "name": "hd_A3", "label": "A3 HD", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "High-definition full-colour screen printed transfers"},
+            {"id": "hd-A4", "name": "hd_A4", "label": "A4 HD", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "High-definition full-colour screen printed transfers"},
+            
+            # Screen Printed Transfers - Single Colour (8 templates)
+            {"id": "single-A3", "name": "single_A3", "label": "A3 Single Colour", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-A4", "name": "single_A4", "label": "A4 Single Colour", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-A5", "name": "single_A5", "label": "A5 Single Colour", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-A6", "name": "single_A6", "label": "A6 Single Colour", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-transfer-size", "name": "single_transfer_size", "label": "295×100mm Single Colour", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-square", "name": "single_square", "label": "95×95mm Single Colour", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-badge", "name": "single_badge", "label": "100×70mm Single Colour", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            {"id": "single-small", "name": "single_small", "label": "60×60mm Single Colour", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Screen Printed Transfers", "description": "Screen printed using our off-the-shelf colour range"},
+            
+            # Screen Printed Transfers - Zero (8 templates)
+            {"id": "zero-A3", "name": "zero_A3", "label": "A3 Zero", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-A4", "name": "zero_A4", "label": "A4 Zero", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-A5", "name": "zero_A5", "label": "A5 Zero", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-A6", "name": "zero_A6", "label": "A6 Zero", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-transfer-size", "name": "zero_transfer_size", "label": "295×100mm Zero", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-square", "name": "zero_square", "label": "95×95mm Zero", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-badge", "name": "zero_badge", "label": "100×70mm Zero", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            {"id": "zero-small", "name": "zero_small", "label": "60×60mm Zero", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Screen Printed Transfers", "description": "Zero inks are super stretchy and do not bleed!"},
+            
+            # Digital Transfers - DTF (2 templates)
+            {"id": "dtf-SRA3", "name": "SRA3", "label": "SRA3", "width": 320, "height": 450, "pixelWidth": 907, "pixelHeight": 1276, "group": "Digital Transfers", "description": "Small order digital heat transfers"},
+            {"id": "dtf-large", "name": "large_dtf", "label": "1000×550mm DTF", "width": 1000, "height": 550, "pixelWidth": 2834, "pixelHeight": 1559, "group": "Digital Transfers", "description": "Small order digital heat transfers"},
+            
+            # Digital Transfers - UV DTF (1 template)
+            {"id": "uvdtf-A3", "name": "uv_dtf_A3", "label": "A3 UV DTF", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Digital Transfers", "description": "Hard Surface Transfers"},
+            
+            # Digital Transfers - Custom Badges (4 templates)
+            {"id": "woven-A6", "name": "woven_A6", "label": "A6 Woven", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
+            {"id": "woven-square", "name": "woven_square", "label": "95×95mm Woven", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
+            {"id": "woven-badge", "name": "woven_badge", "label": "100×70mm Woven", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
+            {"id": "woven-small", "name": "woven_small", "label": "60×60mm Woven", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
+            
+            # Digital Transfers - Applique Badges (4 templates)
+            {"id": "applique-A6", "name": "applique_A6", "label": "A6 Applique", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Digital Transfers", "description": "Fabric applique badges"},
+            {"id": "applique-square", "name": "applique_square", "label": "95×95mm Applique", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Digital Transfers", "description": "Fabric applique badges"},
+            {"id": "applique-badge", "name": "applique_badge", "label": "100×70mm Applique", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Digital Transfers", "description": "Fabric applique badges"},
+            {"id": "applique-small", "name": "applique_small", "label": "60×60mm Applique", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Digital Transfers", "description": "Fabric applique badges"},
+            
+            # Screen Printed Transfers - Reflective (8 templates)
+            {"id": "reflective-A3", "name": "reflective_A3", "label": "A3", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-A4", "name": "reflective_A4", "label": "A4", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-A5", "name": "reflective_A5", "label": "A5", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-A6", "name": "reflective_A6", "label": "A6", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-transfer-size", "name": "reflective_transfer_size", "label": "295×100mm", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-square", "name": "reflective_square", "label": "95×95mm", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-badge", "name": "reflective_badge", "label": "100×70mm", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            {"id": "reflective-small", "name": "reflective_small", "label": "60×60mm", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Screen Printed Transfers", "description": "Our silver reflective helps enhance the visibility of the wearer at night"},
+            
+            # Digital Transfers - Sublimation (12 templates)
+            {"id": "sublimation-A2-fabric", "name": "sublimation_A2_fabric", "label": "A2 Fabric", "width": 420, "height": 594, "pixelWidth": 1191, "pixelHeight": 1684, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A3-fabric", "name": "sublimation_A3_fabric", "label": "A3 Fabric", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A4-fabric", "name": "sublimation_A4_fabric", "label": "A4 Fabric", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A3", "name": "sublimation_A3", "label": "A3 Hard Surface", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A4", "name": "sublimation_A4", "label": "A4 Hard Surface", "width": 210, "height": 297, "pixelWidth": 595, "pixelHeight": 842, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-mug", "name": "sublimation_mug", "label": "Mug Size", "width": 240, "height": 100, "pixelWidth": 680, "pixelHeight": 283, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A5", "name": "sublimation_A5", "label": "A5 Sublimation", "width": 148, "height": 210, "pixelWidth": 420, "pixelHeight": 595, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-A6", "name": "sublimation_A6", "label": "A6 Sublimation", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-transfer-size", "name": "sublimation_transfer_size", "label": "295×100mm Sublimation", "width": 295, "height": 100, "pixelWidth": 836, "pixelHeight": 283, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-square", "name": "sublimation_square", "label": "95×95mm Sublimation", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-badge", "name": "sublimation_badge", "label": "100×70mm Sublimation", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"},
+            {"id": "sublimation-small", "name": "sublimation_small", "label": "60×60mm Sublimation", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"}
         ]
     
     @http.route('/artwork/api/projects', type='json', auth='public', methods=['POST'], csrf=False)
