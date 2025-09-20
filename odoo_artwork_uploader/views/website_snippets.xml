@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Website Snippet: Order Transfers Button -->
+        <template id="s_order_transfers_button" name="Order Transfers Button">
+            <section class="s_order_transfers_button pt32 pb32">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-12 text-center">
+                            <a href="/artwork/upload" class="btn btn-primary btn-lg order-transfers-btn" 
+                               data-testid="button-order-transfers">
+                                <i class="fa fa-paint-brush me-2"></i>
+                                Order Transfers
+                            </a>
+                            <p class="text-muted mt-3">
+                                Upload your artwork and create custom transfers
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </template>
+
+        <!-- Snippet Options in Website Editor -->
+        <template id="snippet_order_transfers_options" inherit_id="website.snippet_options">
+            <xpath expr="//div[@data-js='background']" position="after">
+                <div data-selector=".s_order_transfers_button">
+                    
+                    <!-- Button Style Options -->
+                    <we-select string="Button Style" data-variable="btn-style" data-select-style="">
+                        <we-button data-select-class="btn-primary" title="Primary (Blue)">Primary</we-button>
+                        <we-button data-select-class="btn-success" title="Success (Green)">Success</we-button>
+                        <we-button data-select-class="btn-warning" title="Warning (Yellow)">Warning</we-button>
+                        <we-button data-select-class="btn-danger" title="Danger (Red)">Danger</we-button>
+                        <we-button data-select-class="btn-dark" title="Dark">Dark</we-button>
+                        <we-button data-select-class="btn-light" title="Light">Light</we-button>
+                    </we-select>
+
+                    <!-- Button Size Options -->
+                    <we-select string="Button Size" data-variable="btn-size">
+                        <we-button data-select-class="btn-sm" title="Small">Small</we-button>
+                        <we-button data-select-class="btn-lg" title="Large">Large</we-button>
+                        <we-button data-select-class="" title="Normal">Normal</we-button>
+                    </we-select>
+
+                    <!-- Text Alignment -->
+                    <we-select string="Alignment" data-variable="text-align">
+                        <we-button data-select-class="text-start" title="Left">Left</we-button>
+                        <we-button data-select-class="text-center" title="Center">Center</we-button>
+                        <we-button data-select-class="text-end" title="Right">Right</we-button>
+                    </we-select>
+
+                    <!-- Show/Hide Description -->
+                    <we-checkbox string="Show Description" data-toggle-class="d-none" data-selector="p.text-muted"/>
+
+                </div>
+            </xpath>
+        </template>
+
+        <!-- Add to Website Building Blocks -->
+        <template id="snippet_order_transfers" inherit_id="website.snippets">
+            <xpath expr="//div[@id='snippet_feature']" position="inside">
+                <t t-snippet="artwork_uploader.s_order_transfers_button" 
+                   t-thumbnail="/artwork_uploader/static/src/img/snippets/order_transfers_thumb.svg"/>
+            </xpath>
+        </template>
+
+    </data>
+</odoo>

@@ -1,0 +1,67 @@
+/* Order Transfers Button Snippet Styles */
+
+.s_order_transfers_button {
+    .order-transfers-btn {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 8px;
+        padding: 15px 30px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        i {
+            font-size: 1.1em;
+        }
+    }
+    
+    // Style variations
+    &.btn-gradient {
+        .order-transfers-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            
+            &:hover {
+                background: linear-gradient(45deg, #0056b3, #003d82);
+            }
+        }
+    }
+    
+    // Animation options
+    &.btn-pulse {
+        .order-transfers-btn {
+            animation: pulse 2s infinite;
+        }
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+/* Website Editor Preview Styles */
+.oe_snippet_thumbnail[data-snippet-id="s_order_transfers_button"] {
+    background-color: #f8f9fa;
+    
+    &::before {
+        content: "Order Transfers";
+        display: block;
+        padding: 20px;
+        text-align: center;
+        font-weight: bold;
+        color: #007bff;
+    }
+}
