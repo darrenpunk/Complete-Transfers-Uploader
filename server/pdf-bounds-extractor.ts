@@ -68,6 +68,12 @@ export class PDFBoundsExtractor {
       console.log('🔄 PDF→SVG failed, trying Ghostscript as fallback...');
       result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
     }
+    
+    // Final fallback: raster-based bounds extraction when vector methods fail
+    if ((!result || !result.success) && highDpiRasterFallback) {
+      console.log('🔄 Vector methods failed, trying raster fallback...');
+      result = await this.extractWithRasterFallback(pdfPath, pageNumber, options);
+    }
 
     // Apply padding if requested
     if (result.success && result.bbox && padding > 0) {
@@ -77,6 +83,13 @@ export class PDFBoundsExtractor {
     // Convert to CSS pixels
     if (result.success && result.bbox && result.bbox.units === 'pt') {
       result.cssBbox = this.convertToCSS(result.bbox);
+    }
+
+    // Ensure we always return contentBounds data - log method used
+    if (result.success && result.bbox) {
+      console.log(`✅ Bounds extracted via ${result.method}: ${result.bbox.width.toFixed(1)}×${result.bbox.height.toFixed(1)}${result.bbox.units}`);
+    } else {
+      console.error(`❌ All bounds extraction methods failed for: ${pdfPath}`);
     }
 
     return result;
