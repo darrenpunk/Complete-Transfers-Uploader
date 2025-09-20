@@ -2970,10 +2970,13 @@ export async function registerRoutes(app: express.Application) {
       const elementId = req.params.elementId;
       const deleted = await storage.deleteCanvasElement(elementId);
       
+      // Make deletion idempotent - return success even if element doesn't exist
       if (!deleted) {
-        return res.status(404).json({ error: 'Canvas element not found' });
+        console.log(`🗑️ Canvas element ${elementId} not found (already deleted or never existed)`);
+        return res.json({ success: true, message: 'Canvas element deleted successfully (was already removed)' });
       }
       
+      console.log(`🗑️ Successfully deleted canvas element: ${elementId}`);
       res.json({ success: true, message: 'Canvas element deleted successfully' });
     } catch (error) {
       console.error('Delete canvas element error:', error);

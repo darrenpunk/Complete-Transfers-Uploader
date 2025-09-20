@@ -463,13 +463,18 @@ export default function ToolsSidebar({
     },
   });
 
-  // Delete logo mutation
+  // Delete logo mutation with better error handling
   const deleteLogoMutation = useMutation({
     mutationFn: async (logoId: string) => {
       const response = await apiRequest('DELETE', `/api/logos/${logoId}`);
       
       if (!response.ok) {
-        throw new Error('Delete failed');
+        const errorData = await response.json();
+        // Pass error details for better handling
+        const error = new Error(errorData.error || 'Delete failed');
+        (error as any).status = response.status;
+        (error as any).elementsInUse = errorData.elementsInUse;
+        throw error;
       }
       
       return logoId;
@@ -489,12 +494,23 @@ export default function ToolsSidebar({
         description: "Logo deleted successfully!",
       });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete logo. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      // Handle specific error cases
+      if (error.status === 409) {
+        // Logo is in use by canvas elements
+        const elementsCount = error.elementsInUse || 'some';
+        toast({
+          title: "Cannot Delete Logo",
+          description: `This logo is currently placed on the canvas (${elementsCount} element${elementsCount !== 1 ? 's' : ''}). Remove it from the canvas first, then try deleting again.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete logo. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
