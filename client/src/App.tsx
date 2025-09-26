@@ -15,6 +15,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={UploadTool} />
+      <Route path="/artwork/upload" component={UploadTool} />
       <Route path="/project/:id" component={UploadTool} />
       <Route path="/bounds-testing" component={BoundsTestingPage} />
       <Route path="/bounds-demo" component={() => <div className="container mx-auto py-8"><BoundsDemoStandalone /></div>} />
