@@ -10,19 +10,20 @@ class OdooSyncManager {
     constructor() {
         this.isWatching = false;
         this.lastSyncTime = new Date();
+        this.config = null;
         
-        // Paths configuration
+        // Default paths (will be overridden by config)
         this.paths = {
             // Source paths (standalone app)
             clientSrc: './client/src',
             serverSrc: './server',
             
-            // Target paths (Odoo module) 
-            odooModule: './odoo_artwork_uploader',
-            odooStatic: './odoo_artwork_uploader/static/src',
-            odooControllers: './odoo_artwork_uploader/controllers',
-            odooModels: './odoo_artwork_uploader/models',
-            odooViews: './odoo_artwork_uploader/views'
+            // Target paths (Odoo module) - will be configured
+            odooModule: null,
+            odooStatic: null,
+            odooControllers: null,
+            odooModels: null,
+            odooViews: null
         };
 
         // File patterns to watch
@@ -48,6 +49,12 @@ class OdooSyncManager {
     async init() {
         this.log.info('Initializing Odoo Sync Manager...');
         
+        // Load configuration
+        await this.loadConfiguration();
+        
+        // Setup paths based on configuration
+        this.setupPaths();
+        
         // Ensure target directories exist
         await this.ensureDirectories();
         
@@ -55,7 +62,44 @@ class OdooSyncManager {
         this.startWatching();
         
         this.log.success('Odoo Sync Manager initialized successfully!');
+        this.log.info(`Syncing to: ${this.paths.odooModule}`);
         this.log.info('Watching for changes in standalone app...');
+    }
+
+    async loadConfiguration() {
+        const configFile = './odoo-sync.config.json';
+        
+        if (await fs.pathExists(configFile)) {
+            this.config = await fs.readJSON(configFile);
+            this.log.success('Configuration loaded');
+        } else {
+            this.log.warning('No configuration found! Run: node odoo-sync-config.js');
+            // Fall back to local development setup
+            this.config = {
+                odoo: {
+                    addonsPath: './',
+                    moduleName: 'artwork_uploader',
+                },
+                sync: {
+                    method: 'local'
+                }
+            };
+        }
+    }
+
+    setupPaths() {
+        const moduleName = this.config.odoo.moduleName || 'artwork_uploader';
+        const addonsPath = this.config.odoo.addonsPath || './';
+        
+        // Configure target paths based on config
+        this.paths.odooModule = path.join(addonsPath, moduleName);
+        this.paths.odooStatic = path.join(this.paths.odooModule, 'static/src');
+        this.paths.odooControllers = path.join(this.paths.odooModule, 'controllers');
+        this.paths.odooModels = path.join(this.paths.odooModule, 'models');
+        this.paths.odooViews = path.join(this.paths.odooModule, 'views');
+        
+        this.log.info(`Module path: ${this.paths.odooModule}`);
+        this.log.info(`Sync method: ${this.config.sync?.method || 'local'}`);
     }
 
     async ensureDirectories() {
