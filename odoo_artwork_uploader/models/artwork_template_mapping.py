@@ -6,49 +6,92 @@ class ArtworkTemplateMapping(models.Model):
     _rec_name = 'template_id'
     
     template_id = fields.Selection([
+        # Screen Printed Transfers - Full Colour (8 templates)
         ('template-A3', 'A3'),
         ('template-A4', 'A4'),
         ('template-A5', 'A5'),
-        ('template-dtf-a3', 'DTF A3'),
-        ('template-dtf-a4', 'DTF A4'),
-        ('template-uv-dtf-a3', 'UV DTF A3'),
-        ('template-uv-dtf-a4', 'UV DTF A4'),
-        ('template-FOTLA3', 'FOTL A3'),
-        ('template-FOTLA4', 'FOTL A4'),
-        ('template-sublimation-a3', 'Sublimation A3'),
-        ('template-sublimation-a4', 'Sublimation A4'),
-        ('template-vinyl-a3', 'Vinyl A3'),
-        ('template-vinyl-a4', 'Vinyl A4'),
-        ('template-vinyl-flock-a3', 'Vinyl Flock A3'),
-        ('template-vinyl-flock-a4', 'Vinyl Flock A4'),
-        ('template-soft-shell-a3', 'Soft Shell A3'),
-        ('template-soft-shell-a4', 'Soft Shell A4'),
-        ('template-reflective-a3', 'Reflective A3'),
-        ('template-reflective-a4', 'Reflective A4'),
-        ('template-hi-viz-a3', 'Hi Viz A3'),
-        ('template-hi-viz-a4', 'Hi Viz A4'),
-        ('template-glitter-a3', 'Glitter A3'),
-        ('template-glitter-a4', 'Glitter A4'),
-        ('template-metallic-a3', 'Metallic A3'),
-        ('template-metallic-a4', 'Metallic A4'),
-        ('template-holographic-a3', 'Holographic A3'),
-        ('template-holographic-a4', 'Holographic A4'),
-        ('template-glow-in-dark-a3', 'Glow in Dark A3'),
-        ('template-glow-in-dark-a4', 'Glow in Dark A4'),
-        ('template-puff-a3', 'Puff A3'),
-        ('template-puff-a4', 'Puff A4'),
-        ('template-foil-a3', 'Foil A3'),
-        ('template-foil-a4', 'Foil A4'),
-        ('template-photographic-a3', 'Photographic A3'),
-        ('template-photographic-a4', 'Photographic A4'),
-        ('template-embroidery-badges-a3', 'Embroidery Badges A3'),
-        ('template-embroidery-badges-a4', 'Embroidery Badges A4'),
-        ('template-applique-badges-a3', 'Applique Badges A3'),
-        ('template-applique-badges-a4', 'Applique Badges A4'),
-        ('template-laser-cut-badges-a3', 'Laser Cut Badges A3'),
-        ('template-laser-cut-badges-a4', 'Laser Cut Badges A4'),
-        ('template-woven-badges-a3', 'Woven Badges A3'),
-        ('template-woven-badges-a4', 'Woven Badges A4'),
+        ('template-A6', 'A6'),
+        ('template-transfer-size', '295×100mm'),
+        ('template-square', '95×95mm'),
+        ('template-badge', '100×70mm'),
+        ('template-small', '60×60mm'),
+        
+        # Screen Printed Transfers - Full Colour Metallic (8 templates)
+        ('metallic-A3', 'A3 Metallic'),
+        ('metallic-A4', 'A4 Metallic'),
+        ('metallic-A5', 'A5 Metallic'),
+        ('metallic-A6', 'A6 Metallic'),
+        ('metallic-transfer-size', '295×100mm Metallic'),
+        ('metallic-square', '95×95mm Metallic'),
+        ('metallic-badge', '100×70mm Metallic'),
+        ('metallic-small', '60×60mm Metallic'),
+        
+        # Screen Printed Transfers - Full Colour HD (2 templates)
+        ('hd-A3', 'A3 HD'),
+        ('hd-A4', 'A4 HD'),
+        
+        # Screen Printed Transfers - Single Colour (8 templates)
+        ('single-A3', 'A3 Single Colour'),
+        ('single-A4', 'A4 Single Colour'),
+        ('single-A5', 'A5 Single Colour'),
+        ('single-A6', 'A6 Single Colour'),
+        ('single-transfer-size', '295×100mm Single Colour'),
+        ('single-square', '95×95mm Single Colour'),
+        ('single-badge', '100×70mm Single Colour'),
+        ('single-small', '60×60mm Single Colour'),
+        
+        # Screen Printed Transfers - Zero (8 templates)
+        ('zero-A3', 'A3 Zero'),
+        ('zero-A4', 'A4 Zero'),
+        ('zero-A5', 'A5 Zero'),
+        ('zero-A6', 'A6 Zero'),
+        ('zero-transfer-size', '295×100mm Zero'),
+        ('zero-square', '95×95mm Zero'),
+        ('zero-badge', '100×70mm Zero'),
+        ('zero-small', '60×60mm Zero'),
+        
+        # Digital Transfers - DTF (2 templates)
+        ('dtf-SRA3', 'SRA3'),
+        ('dtf-large', '1000×550mm DTF'),
+        
+        # Digital Transfers - UV DTF (1 template)
+        ('uvdtf-A3', 'A3 UV DTF'),
+        
+        # Digital Transfers - Custom Badges (4 templates)
+        ('woven-A6', 'A6 Woven'),
+        ('woven-square', '95×95mm Woven'),
+        ('woven-badge', '100×70mm Woven'),
+        ('woven-small', '60×60mm Woven'),
+        
+        # Digital Transfers - Applique Badges (4 templates)
+        ('applique-A6', 'A6 Applique'),
+        ('applique-square', '95×95mm Applique'),
+        ('applique-badge', '100×70mm Applique'),
+        ('applique-small', '60×60mm Applique'),
+        
+        # Screen Printed Transfers - Reflective (8 templates)
+        ('reflective-A3', 'A3 Reflective'),
+        ('reflective-A4', 'A4 Reflective'),
+        ('reflective-A5', 'A5 Reflective'),
+        ('reflective-A6', 'A6 Reflective'),
+        ('reflective-transfer-size', '295×100mm Reflective'),
+        ('reflective-square', '95×95mm Reflective'),
+        ('reflective-badge', '100×70mm Reflective'),
+        ('reflective-small', '60×60mm Reflective'),
+        
+        # Digital Transfers - Sublimation (12 templates)
+        ('sublimation-A2-fabric', 'A2 Fabric'),
+        ('sublimation-A3-fabric', 'A3 Fabric'),
+        ('sublimation-A4-fabric', 'A4 Fabric'),
+        ('sublimation-A3', 'A3 Hard Surface'),
+        ('sublimation-A4', 'A4 Hard Surface'),
+        ('sublimation-mug', 'Mug Size'),
+        ('sublimation-A5', 'A5 Sublimation'),
+        ('sublimation-A6', 'A6 Sublimation'),
+        ('sublimation-transfer-size', '295×100mm Sublimation'),
+        ('sublimation-square', '95×95mm Sublimation'),
+        ('sublimation-badge', '100×70mm Sublimation'),
+        ('sublimation-small', '60×60mm Sublimation'),
     ], string='Template ID', required=True)
     
     product_id = fields.Many2one('product.product', string='Product', required=True, 
