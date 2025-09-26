@@ -62,7 +62,8 @@
         <template id="snippet_order_transfers" inherit_id="website.snippets">
             <xpath expr="//div[@id='snippet_feature']" position="inside">
                 <t t-snippet="artwork_uploader.s_order_transfers_button" 
-                   t-thumbnail="/artwork_uploader/static/src/img/snippets/order_transfers_thumb.svg"/>
+                   t-thumbnail="/artwork_uploader/static/src/img/snippets/order_transfers_thumb.svg"
+                   t-snippet-options="artwork_uploader.snippet_order_transfers_options"/>
             </xpath>
         </template>
 

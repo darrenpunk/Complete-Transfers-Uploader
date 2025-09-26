@@ -1,149 +1,182 @@
-/** @odoo-module **/
 /**
- * Website Frontend Artwork Uploader Initializer
- * Mounts the OWL component to the DOM when page loads
+ * Website Frontend Artwork Uploader - Traditional JavaScript Version
+ * Compatible with Odoo 16 website frontend (no OWL dependency)
  */
 
-import { mount, App, Component } from "@odoo/owl";
-import { ArtworkUploader } from "./artwork_uploader";
-import { templates } from "@web/core/assets";
+odoo.define('artwork_uploader.website_frontend', function (require) {
+    'use strict';
 
-// Simple website-compatible version that doesn't rely on Odoo services
-class WebsiteArtworkUploader extends Component {
-    setup() {
-        // Extract data from DOM dataset
-        const rootElement = document.getElementById('artwork-uploader-root');
-        this.templates = JSON.parse(rootElement.dataset.templates || '[]');
-        this.garmentColors = JSON.parse(rootElement.dataset.garmentColors || '[]');
-        this.inkColors = JSON.parse(rootElement.dataset.inkColors || '[]');
-        
-        console.log('🎨 Website Artwork Uploader setup complete', {
-            templatesCount: this.templates.length,
-            garmentColorsCount: this.garmentColors.length,
-            inkColorsCount: this.inkColors.length
-        });
-    }
-    
-    async createProject(templateType) {
-        console.log('Creating project with template:', templateType);
-        // Implement basic project creation
-        alert(`Would create project with template: ${templateType}`);
-    }
-    
-    getScreenPrintedTransfers() {
-        return this.templates.filter(t => t.group === 'Screen Printed Transfers');
-    }
-    
-    getDigitalTransfers() {
-        return this.templates.filter(t => t.group === 'Digital Transfers');
-    }
-}
+    var publicWidget = require('web.public.widget');
+    var core = require('web.core');
+    var ajax = require('web.ajax');
 
-// Organized template display matching standalone app
-WebsiteArtworkUploader.template = `
-    <div class="artwork-uploader-website">
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <h2>Create Your Design</h2>
-                <p class="text-muted">Upload your logo and position it on your chosen template</p>
-            </div>
-        </div>
+    var ArtworkUploaderWebsite = publicWidget.Widget.extend({
+        selector: '#artwork-uploader-root',
         
-        <!-- Screen Printed Transfers -->
-        <div class="row mb-4" t-if="getScreenPrintedTransfers().length > 0">
-            <div class="col-12">
-                <h4 class="mb-3">
-                    <i class="fa fa-print text-primary me-2"></i>
-                    Screen Printed Transfers
-                </h4>
-                <div class="template-grid row">
-                    <t t-foreach="getScreenPrintedTransfers()" t-as="template">
+        events: {
+            'click .template-card': '_onTemplateClick',
+            'click .btn-upload': '_onUploadClick',
+            'change input[type="file"]': '_onFileChange',
+        },
+
+        init: function() {
+            this._super.apply(this, arguments);
+            this.templates = [];
+            this.garmentColors = [];
+            this.inkColors = [];
+            this.currentProject = null;
+            this.logos = [];
+        },
+
+        start: function() {
+            var self = this;
+            return this._super.apply(this, arguments).then(function() {
+                self._loadDataFromDOM();
+                self._renderTemplateSelector();
+                console.log('🎨 Artwork Uploader initialized', {
+                    templatesCount: self.templates.length,
+                    garmentColorsCount: self.garmentColors.length,
+                    inkColorsCount: self.inkColors.length
+                });
+            });
+        },
+
+        _loadDataFromDOM: function() {
+            var $root = this.$el;
+            try {
+                this.templates = JSON.parse($root.data('templates') || '[]');
+                this.garmentColors = JSON.parse($root.data('garment-colors') || '[]');
+                this.inkColors = JSON.parse($root.data('ink-colors') || '[]');
+            } catch (e) {
+                console.error('Error parsing uploader data:', e);
+                this.templates = [];
+                this.garmentColors = [];
+                this.inkColors = [];
+            }
+        },
+
+        _renderTemplateSelector: function() {
+            var self = this;
+            var screenPrintedTemplates = this.templates.filter(function(t) { 
+                return t.group === 'Screen Printed Transfers'; 
+            });
+            var digitalTemplates = this.templates.filter(function(t) { 
+                return t.group === 'Digital Transfers'; 
+            });
+
+            var html = `
+                <div class="artwork-uploader-website">
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h2>Create Your Design</h2>
+                            <p class="text-muted">Upload your logo and position it on your chosen template</p>
+                        </div>
+                    </div>`;
+
+            // Screen Printed Transfers Section
+            if (screenPrintedTemplates.length > 0) {
+                html += `
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4 class="mb-3">
+                                <i class="fa fa-print text-primary me-2"></i>
+                                Screen Printed Transfers
+                            </h4>
+                            <div class="template-grid row">`;
+                
+                screenPrintedTemplates.slice(0, 6).forEach(function(template) {
+                    html += `
                         <div class="col-md-4 col-sm-6 mb-3">
                             <div class="card template-card h-100 shadow-sm" style="cursor: pointer;" 
-                                 t-on-click="() => this.createProject(template.type)">
+                                 data-template-id="${template.id}" data-template-name="${template.name}">
                                 <div class="card-body text-center">
                                     <i class="fa fa-print fa-2x text-primary mb-2"></i>
-                                    <h6 class="card-title" t-esc="template.name"/>
-                                    <p class="card-text text-muted small" t-esc="template.description"/>
+                                    <h6 class="card-title">${template.label || template.name}</h6>
+                                    <p class="card-text text-muted small">${template.description || ''}</p>
                                 </div>
                             </div>
-                        </div>
-                    </t>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Digital Transfers -->
-        <div class="row mb-4" t-if="getDigitalTransfers().length > 0">
-            <div class="col-12">
-                <h4 class="mb-3">
-                    <i class="fa fa-desktop text-success me-2"></i>
-                    Digital Transfers
-                </h4>
-                <div class="template-grid row">
-                    <t t-foreach="getDigitalTransfers()" t-as="template">
-                        <div class="col-md-4 col-sm-6 mb-3">
-                            <div class="card template-card h-100 shadow-sm" style="cursor: pointer;" 
-                                 t-on-click="() => this.createProject(template.type)">
-                                <div class="card-body text-center">
-                                    <i class="fa fa-desktop fa-2x text-success mb-2"></i>
-                                    <h6 class="card-title" t-esc="template.name"/>
-                                    <p class="card-text text-muted small" t-esc="template.description"/>
-                                </div>
+                        </div>`;
+                });
+                
+                html += `
                             </div>
                         </div>
-                    </t>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Fallback if no templates -->
-        <div class="row" t-if="templates.length === 0">
-            <div class="col-12 text-center">
-                <div class="alert alert-info">
-                    <h5>No templates available</h5>
-                    <p>Please contact support to set up templates for this system.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-`;
+                    </div>`;
+            }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    const rootElement = document.getElementById('artwork-uploader-root');
-    
-    if (rootElement) {
-        console.log('🎨 Initializing Website Artwork Uploader...');
-        
-        try {
-            // Create app instance
-            const app = new App(WebsiteArtworkUploader, {
-                templates,
-                dev: window.location.hostname === 'localhost'
-            });
+            // Digital Transfers Section  
+            if (digitalTemplates.length > 0) {
+                html += `
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4 class="mb-3">
+                                <i class="fa fa-laptop text-success me-2"></i>
+                                Digital Transfers
+                            </h4>
+                            <div class="template-grid row">`;
+
+                digitalTemplates.slice(0, 6).forEach(function(template) {
+                    html += `
+                        <div class="col-md-4 col-sm-6 mb-3">
+                            <div class="card template-card h-100 shadow-sm" style="cursor: pointer;"
+                                 data-template-id="${template.id}" data-template-name="${template.name}">
+                                <div class="card-body text-center">
+                                    <i class="fa fa-laptop fa-2x text-success mb-2"></i>
+                                    <h6 class="card-title">${template.label || template.name}</h6>
+                                    <p class="card-text text-muted small">${template.description || ''}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+
+                html += `
+                            </div>
+                        </div>
+                    </div>`;
+            }
+
+            html += `</div>`;
             
-            // Mount to DOM
-            app.mount(rootElement);
+            this.$el.html(html);
+        },
+
+        _onTemplateClick: function(ev) {
+            ev.preventDefault();
+            var $target = $(ev.currentTarget);
+            var templateId = $target.data('template-id');
+            var templateName = $target.data('template-name');
             
-            console.log('✅ Website Artwork Uploader initialized successfully');
+            console.log('Template selected:', templateId, templateName);
             
-        } catch (error) {
-            console.error('❌ Failed to initialize Website Artwork Uploader:', error);
-            
-            // Show error message instead of spinner
-            rootElement.innerHTML = `
-                <div class="alert alert-danger text-center">
-                    <h4>Failed to load Design Tool</h4>
-                    <p class="mb-3">The application could not start. This might be a temporary issue.</p>
-                    <button class="btn btn-primary me-2" onclick="location.reload()">
-                        <i class="fa fa-refresh"></i> Refresh Page
-                    </button>
-                    <small class="text-muted d-block mt-2">Error: ${error.message}</small>
-                </div>
-            `;
+            // Redirect to complete standalone app
+            window.location.href = '/?template=' + templateId + '&project=' + encodeURIComponent(templateName);
+        },
+
+        _onUploadClick: function(ev) {
+            ev.preventDefault();
+            this.$('input[type="file"]').click();
+        },
+
+        _onFileChange: function(ev) {
+            var files = ev.target.files;
+            if (files.length > 0) {
+                this._uploadFiles(files);
+            }
+        },
+
+        _uploadFiles: function(files) {
+            console.log('Uploading files:', files.length);
+            // For now, just log the files
+            // TODO: Implement actual upload functionality
+            for (var i = 0; i < files.length; i++) {
+                console.log('File:', files[i].name, files[i].type);
+            }
         }
-    } else {
-        console.warn('⚠️ Artwork uploader root element not found');
-    }
+    });
+
+    publicWidget.registry.ArtworkUploaderWebsite = ArtworkUploaderWebsite;
+    
+    return {
+        ArtworkUploaderWebsite: ArtworkUploaderWebsite
+    };
 });
