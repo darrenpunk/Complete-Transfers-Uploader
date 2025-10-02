@@ -10,7 +10,7 @@
                             <div class="col-12">
                                 <h1 class="text-center my-4">Artwork Uploader &amp; Design Tool</h1>
                                 <div id="artwork-uploader-root" 
-                                     data-templates='<t t-esc="json.dumps(templates.mapped(lambda t: {&quot;id&quot;: t.id, &quot;name&quot;: t.name, &quot;type&quot;: t.artwork_template_type}))" />'
+                                     data-templates='<t t-esc="json.dumps(templates)" />'
                                      data-garment-colors='<t t-esc="json.dumps(garment_colors)" />'
                                      data-ink-colors='<t t-esc="json.dumps(ink_colors)" />'>
                                     <!-- React app will mount here -->

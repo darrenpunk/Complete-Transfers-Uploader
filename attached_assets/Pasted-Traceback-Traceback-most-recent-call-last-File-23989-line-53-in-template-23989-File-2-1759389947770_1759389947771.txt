@@ -1,0 +1,42 @@
+Traceback
+Traceback (most recent call last):
+  File "<23989>", line 53, in template_23989
+  File "<23989>", line 35, in template_23989_content
+  File "<23989>", line 14, in template_23989_t_call_0
+AttributeError: 'list' object has no attribute 'mapped'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/odoo/src/odoo/odoo/http.py", line 1848, in _serve_db
+    return service_model.retrying(self._serve_ir_http, self.env)
+  File "/home/odoo/src/odoo/odoo/service/model.py", line 152, in retrying
+    result = func()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1876, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+  File "/home/odoo/src/odoo/odoo/http.py", line 1990, in dispatch
+    return self.request.registry['ir.http']._dispatch(endpoint)
+  File "/home/odoo/src/odoo/addons/website/models/ir_http.py", line 237, in _dispatch
+    response = super()._dispatch(endpoint)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_http.py", line 156, in _dispatch
+    result.flatten()
+  File "/home/odoo/src/odoo/odoo/tools/facade.py", line 83, in wrap_func
+    func(self._wrapped__, *args, **kwargs)
+  File "/home/odoo/src/odoo/odoo/http.py", line 1213, in flatten
+    self.response.append(self.render())
+  File "/home/odoo/src/odoo/odoo/http.py", line 1205, in render
+    return request.env["ir.ui.view"]._render_template(self.template, self.qcontext)
+  File "/home/odoo/src/odoo/addons/website/models/ir_ui_view.py", line 419, in _render_template
+    return super()._render_template(template, values=values)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_ui_view.py", line 2135, in _render_template
+    return self.env['ir.qweb']._render(template, values)
+  File "/home/odoo/src/odoo/odoo/tools/profiler.py", line 301, in _tracked_method_render
+    return method_render(self, template, values, **options)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_qweb.py", line 593, in _render
+    result = ''.join(rendering)
+  File "<23989>", line 59, in template_23989
+odoo.addons.base.models.ir_qweb.QWebException: Error while render the template
+AttributeError: 'list' object has no attribute 'mapped'
+Template: artwork_uploader.upload_page
+Path: /t/t/div/div/div/div/div
+Node: <div id="artwork-uploader-root" t-att-data-templates="json.dumps(templates.mapped(lambda t: {\'id\': t.id, \'name\': t.name, \'type\': t.artwork_template_type}))" t-att-data-garment-colors="json.dumps(garment_colors)" t-att-data-ink-colors="json.dumps(ink_colors)" data-oe-model="ir.ui.view" data-oe-id="23989" data-oe-field="arch" data-oe-xpath="/t[1]/t[1]/div[1]/div[1]/div[1]/div[1]/div[1]"/>
