@@ -2484,12 +2484,17 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
-                  // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
+                  // CRITICAL FIX: Calculate actual SVG content bounds for translate
+                  // PDF bounds are in PDF coordinate system, but SVG paths use SVG coordinate system
+                  // We need SVG bounds to correctly translate the content
                   const { calculateSVGContentBounds } = await import('./dimension-utils');
-                  // Always use PDF content bounds - they are the authoritative source
+                  const svgContentBounds = calculateSVGContentBounds(svgContent);
+                  console.log(`📐 SVG CONTENT BOUNDS: ${svgContentBounds.xMin.toFixed(1)},${svgContentBounds.yMin.toFixed(1)} → ${svgContentBounds.xMax.toFixed(1)},${svgContentBounds.yMax.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
+                  
+                  // Use PDF bounds for display dimensions (accurate mm sizing)
+                  // But use SVG bounds for translate transform (correct coordinate system)
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  console.log(`📐 PDF CONTENT BOUNDS (for dimensions): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
@@ -2510,17 +2515,18 @@ export async function registerRoutes(app: express.Application) {
                     // Reduce padding to get tighter content bounds
                     const horizontalOverflow = 4;   // Minimal padding left/right
                     const verticalOverflow = 4;     // Minimal padding top/bottom
-                    const expandedWidth = contentBounds.width + horizontalOverflow;
-                    const expandedHeight = contentBounds.height + verticalOverflow;
+                    // Use SVG content bounds for viewBox sizing (actual path coordinates)
+                    const expandedWidth = svgContentBounds.width + horizontalOverflow;
+                    const expandedHeight = svgContentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Normalize viewBox to (0,0) and translate content to origin
-                    // Browsers compute SVG intrinsic size from viewBox width/height, ignoring minX/minY
-                    // So we must normalize to (0,0) and transform content coordinates
-                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
-                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
+                    // CRITICAL FIX: Use SVG content bounds for translate (not PDF bounds!)
+                    // PDF bounds are in PDF coordinate system, SVG paths are in SVG coordinate system
+                    // We must translate using the actual SVG path coordinates
+                    const translateX = -(svgContentBounds.xMin - (horizontalOverflow / 2));
+                    const translateY = -(svgContentBounds.yMin - (verticalOverflow / 2));
                     
                     console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
-                    console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
+                    console.log(`📐 SVG content bounds: (${svgContentBounds.xMin}, ${svgContentBounds.yMin}) to (${svgContentBounds.xMax}, ${svgContentBounds.yMax})`);
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
                     // Apply transform to translate content from original position to normalized origin
@@ -2531,7 +2537,7 @@ export async function registerRoutes(app: express.Application) {
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
-                      data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                      data-original-bounds="${svgContentBounds.xMin},${svgContentBounds.yMin},${svgContentBounds.xMax},${svgContentBounds.yMax}">
                         <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
                         </g>
