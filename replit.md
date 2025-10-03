@@ -6,7 +6,9 @@ This full-stack web application streamlines logo uploads and layout creation on 
 ## Known Limitations
 - **Pantone Swatch Preservation**: Original Pantone color swatches from imported PDFs are not fully preserved in output PDFs due to complex color management requirements. CMYK approximations are generated instead.
 
-## Recent Changes (August 2025)
+## Recent Changes (October 2025)
+- **ViewBox Normalization Fix**: Resolved critical positioning bug where imported files appeared offset left/top on canvas. Root cause: tight content SVG viewBox was using original coordinate offsets (e.g., `viewBox="100 50 500 300"`) instead of normalized origin. Fixed by normalizing all viewBoxes to start at `(0, 0)` and applying proper content translation, ensuring consistent positioning for all imported files regardless of their original coordinate system (October 3, 2025).
+- **Odoo Module Template Sync**: Updated Odoo 16 module to match standalone app with all 65 individual templates across Screen Printed Transfers (42) and Digital Transfers (23) categories. Fixed template loading error caused by `.mapped()` being called on Python list instead of Odoo recordset - template data now properly serialized with `json.dumps()` for frontend consumption (October 3, 2025).
 - **Vector Bounds Extraction System**: Implemented comprehensive PDF and SVG vector content bounding box detection with multiple extraction methods (Ghostscript, DOM analysis, raster fallback) for precise artwork positioning and scaling.
 - **Bounds Extraction API**: Added REST endpoints `/api/extract-bounds/pdf`, `/api/extract-bounds/svg`, and `/api/logos/:id/bounds` with configurable options for stroke extents, padding, and tolerance.
 - **Testing Infrastructure**: Created interactive bounds extraction demo components and testing pages accessible at `/bounds-demo` and `/bounds-testing` routes.

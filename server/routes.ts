@@ -2509,18 +2509,27 @@ export async function registerRoutes(app: express.Application) {
                     const xOffset = horizontalOverflow / 2;
                     const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
-                    // ARCHITECT SOLUTION: Let frontend handle centering, just normalize SVG output
-                    console.log(`🎯 BACKEND NORMALIZATION: Content bounds detected, letting frontend handle centering`);
+                    // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
+                    console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
+                    console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
                     
-                    // Create minimal SVG wrapper with proper viewBox and no transforms
-                    // The frontend will use contentBounds for precise positioning
+                    // Calculate the translation needed to move content to (0, 0) origin
+                    const translateX = -(contentBounds.xMin - xOffset);
+                    const translateY = -(contentBounds.yMin - yOffset);
+                    
+                    console.log(`🔄 Translation: (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to normalize content position`);
+                    
+                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
+                    // Apply transform to translate the content into the normalized coordinate system
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${contentBounds.xMin - xOffset} ${contentBounds.yMin - yOffset} ${expandedWidth} ${expandedHeight}"
+                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        ${innerContent}
+                        <g transform="translate(${translateX}, ${translateY})">
+                          ${innerContent}
+                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
