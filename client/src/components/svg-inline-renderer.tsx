@@ -119,11 +119,11 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // Don't add explicit width/height - let viewBox determine intrinsic size
-      // Flexbox container will center the SVG based on its intrinsic dimensions
+      // Set concrete dimensions to avoid circular flex layout
+      // width:100% gives deterministic sizing, height:auto preserves aspect ratio
       styledSvg = svgContent.replace(
         /<svg/,
-        '<svg style="max-width: 100%; max-height: 100%; display: block;"'
+        '<svg style="width: 100%; height: auto; max-height: 100%; display: block;"'
       );
       return (
         <div 
