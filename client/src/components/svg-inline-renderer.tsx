@@ -117,12 +117,13 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // SIMPLEST APPROACH: SVG has width/height attributes - let browser handle it naturally
-      console.log('🎯 PURE SVG: No CSS interference, using embedded dimensions');
+      // ARCHITECT FIX: Constrain SVG to fit within container to prevent clipping
+      // Use descendant selectors to force the injected <svg> to scale properly
+      console.log('🎯 PURE SVG: Constraining dimensions to prevent clipping');
       
       return (
         <div 
-          className="w-full h-full flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:h-auto [&>svg]:w-auto"
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
       );
