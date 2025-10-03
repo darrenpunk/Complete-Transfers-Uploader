@@ -1607,7 +1607,7 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="absolute inset-0 overflow-hidden" 
+                    className="absolute inset-0" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent',
                       padding: 0,
