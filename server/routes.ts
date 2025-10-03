@@ -2614,24 +2614,73 @@ export async function registerRoutes(app: express.Application) {
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
-          // CRITICAL FIX: Don't save contentBounds for tight-content SVGs
-          // Tight-content SVGs are self-contained with properly positioned viewBox
-          // Content bounds centering would interfere with the SVG's internal positioning
-          ...(boundsResult?.success && boundsResult.contentBounds && !finalFilename.includes('_tight-content.svg') && { 
-            contentBounds: {
-              // Original bounds for non-tight-content SVGs
-              minX: boundsResult.contentBounds.xMin,
-              minY: boundsResult.contentBounds.yMin,
-              maxX: boundsResult.contentBounds.xMax,
-              maxY: boundsResult.contentBounds.yMax
-            }
+          // CRITICAL FIX: For tight-content SVGs, extract overflow from data attributes and save NORMALIZED contentBounds
+          // Content is translated to start at (overflow/2, overflow/2) inside viewBox (0,0,width,height)
+          // Frontend needs these bounds to calculate proper centering transforms
+          ...(boundsResult?.success && boundsResult.contentBounds && { 
+            contentBounds: (() => {
+              if (finalFilename.includes('_tight-content.svg')) {
+                // Extract overflow from the tight-content SVG's data attribute
+                const tightSvgPath = path.join(uploadDir, finalFilename);
+                try {
+                  const tightSvgContent = fs.readFileSync(tightSvgPath, 'utf-8');
+                  const overflowMatch = tightSvgContent.match(/data-overflow="horizontal:(\d+),vertical:(\d+)"/);
+                  if (overflowMatch) {
+                    const hOverflow = parseInt(overflowMatch[1], 10);
+                    const vOverflow = parseInt(overflowMatch[2], 10);
+                    // Content positioned at (overflow/2, overflow/2) after transform
+                    return {
+                      minX: hOverflow / 2,
+                      minY: vOverflow / 2,
+                      maxX: hOverflow / 2 + boundsResult.contentBounds.width,
+                      maxY: vOverflow / 2 + boundsResult.contentBounds.height
+                    };
+                  }
+                } catch (e) {
+                  console.error('Failed to read tight-content SVG for overflow extraction:', e);
+                }
+                // Fallback if extraction fails - use default padding of 4px
+                return {
+                  minX: 2,
+                  minY: 2,
+                  maxX: 2 + boundsResult.contentBounds.width,
+                  maxY: 2 + boundsResult.contentBounds.height
+                };
+              } else {
+                // Original bounds for non-tight-content SVGs
+                return {
+                  minX: boundsResult.contentBounds.xMin,
+                  minY: boundsResult.contentBounds.yMin,
+                  maxX: boundsResult.contentBounds.xMax,
+                  maxY: boundsResult.contentBounds.yMax
+                };
+              }
+            })()
           })
         });
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
           if (finalFilename.includes('_tight-content.svg')) {
-            console.log(`✅ TIGHT-CONTENT SVG: No contentBounds saved (SVG has properly positioned viewBox)`);
+            // Extract overflow for logging
+            const tightSvgPath = path.join(uploadDir, finalFilename);
+            try {
+              const tightSvgContent = fs.readFileSync(tightSvgPath, 'utf-8');
+              const overflowMatch = tightSvgContent.match(/data-overflow="horizontal:(\d+),vertical:(\d+)"/);
+              if (overflowMatch) {
+                const hOverflow = parseInt(overflowMatch[1], 10);
+                const vOverflow = parseInt(overflowMatch[2], 10);
+                const mappedBounds = {
+                  minX: hOverflow / 2,
+                  minY: vOverflow / 2,
+                  maxX: hOverflow / 2 + boundsResult.contentBounds.width,
+                  maxY: vOverflow / 2 + boundsResult.contentBounds.height
+                };
+                console.log(`✅ SAVED CONTENTBOUNDS (NORMALIZED TIGHT-CONTENT): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+              }
+            } catch (e) {
+              console.log(`✅ SAVED CONTENTBOUNDS (NORMALIZED TIGHT-CONTENT with fallback) to logo ${logo.id}`);
+            }
           } else {
             const mappedBounds = {
               minX: boundsResult.contentBounds.xMin,
@@ -2639,7 +2688,7 @@ export async function registerRoutes(app: express.Application) {
               maxX: boundsResult.contentBounds.xMax,
               maxY: boundsResult.contentBounds.yMax
             };
-            console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+            console.log(`✅ SAVED CONTENTBOUNDS (ORIGINAL): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
           }
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
