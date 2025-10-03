@@ -2510,25 +2510,24 @@ export async function registerRoutes(app: express.Application) {
                     const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
                     // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
-                    console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
+                    // ViewBox must start at (0,0) with content translated into position
+                    const translateX = -(contentBounds.xMin - xOffset);
+                    const translateY = -(contentBounds.yMin - yOffset);
+                    
+                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0,0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
                     console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
                     
-                    // Create viewBox that starts at the content's original position minus padding
-                    // This ensures content appears at the correct position without needing transforms
-                    const viewBoxX = contentBounds.xMin - xOffset;
-                    const viewBoxY = contentBounds.yMin - yOffset;
-                    
-                    console.log(`🎯 ViewBox position: (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}), size: ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
-                    
-                    // Create minimal SVG wrapper with viewBox positioned at content location
-                    // No transform needed - viewBox handles positioning directly
+                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
+                    // Apply transform to translate the content into the normalized coordinate system
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${viewBoxX} ${viewBoxY} ${expandedWidth} ${expandedHeight}"
+                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                        <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
+                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
