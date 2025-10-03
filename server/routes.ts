@@ -2513,23 +2513,22 @@ export async function registerRoutes(app: express.Application) {
                     console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
                     console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
                     
-                    // Calculate the translation needed to move content to (0, 0) origin
-                    const translateX = -(contentBounds.xMin - xOffset);
-                    const translateY = -(contentBounds.yMin - yOffset);
+                    // Create viewBox that starts at the content's original position minus padding
+                    // This ensures content appears at the correct position without needing transforms
+                    const viewBoxX = contentBounds.xMin - xOffset;
+                    const viewBoxY = contentBounds.yMin - yOffset;
                     
-                    console.log(`🔄 Translation: (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to normalize content position`);
+                    console.log(`🎯 ViewBox position: (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}), size: ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
                     
-                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
-                    // Apply transform to translate the content into the normalized coordinate system
+                    // Create minimal SVG wrapper with viewBox positioned at content location
+                    // No transform needed - viewBox handles positioning directly
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
+                      viewBox="${viewBoxX} ${viewBoxY} ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
-                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
@@ -2616,18 +2615,11 @@ export async function registerRoutes(app: express.Application) {
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
-          // CRITICAL FIX: Save contentBounds to database for frontend centering
-          // Map property names from BoundingBox (xMin/yMin/xMax/yMax) to ContentBounds (minX/minY/maxX/maxY)
-          // IMPORTANT: If we created a tight-content SVG with normalized viewBox, use normalized bounds (0,0,width,height)
-          // Otherwise use the original PDF bounds for proper centering
-          ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: finalFilename.includes('_tight-content.svg') ? {
-              // Normalized bounds for tight-content SVGs (viewBox starts at 0,0)
-              minX: 0,
-              minY: 0,
-              maxX: boundsResult.contentBounds.width,
-              maxY: boundsResult.contentBounds.height
-            } : {
+          // CRITICAL FIX: Don't save contentBounds for tight-content SVGs
+          // Tight-content SVGs are self-contained with properly positioned viewBox
+          // Content bounds centering would interfere with the SVG's internal positioning
+          ...(boundsResult?.success && boundsResult.contentBounds && !finalFilename.includes('_tight-content.svg') && { 
+            contentBounds: {
               // Original bounds for non-tight-content SVGs
               minX: boundsResult.contentBounds.xMin,
               minY: boundsResult.contentBounds.yMin,
@@ -2639,18 +2631,17 @@ export async function registerRoutes(app: express.Application) {
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
-          const mappedBounds = finalFilename.includes('_tight-content.svg') ? {
-            minX: 0,
-            minY: 0,
-            maxX: boundsResult.contentBounds.width,
-            maxY: boundsResult.contentBounds.height
-          } : {
-            minX: boundsResult.contentBounds.xMin,
-            minY: boundsResult.contentBounds.yMin,
-            maxX: boundsResult.contentBounds.xMax,
-            maxY: boundsResult.contentBounds.yMax
-          };
-          console.log(`✅ SAVED CONTENTBOUNDS (${finalFilename.includes('_tight-content.svg') ? 'NORMALIZED' : 'ORIGINAL'}): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+          if (finalFilename.includes('_tight-content.svg')) {
+            console.log(`✅ TIGHT-CONTENT SVG: No contentBounds saved (SVG has properly positioned viewBox)`);
+          } else {
+            const mappedBounds = {
+              minX: boundsResult.contentBounds.xMin,
+              minY: boundsResult.contentBounds.yMin,
+              maxX: boundsResult.contentBounds.xMax,
+              maxY: boundsResult.contentBounds.yMax
+            };
+            console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+          }
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
         }
