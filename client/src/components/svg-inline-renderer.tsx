@@ -104,13 +104,22 @@ export default function SvgInlineRenderer({
                             'maxX' in logo.contentBounds &&
                             'maxY' in logo.contentBounds;
     
-    // CRITICAL FIX: Tight-content SVGs now have normalized contentBounds (content at overflow/2, overflow/2)
-    // We MUST use content-bounds centering for proper positioning
+    // CRITICAL FIX: Tight-content SVGs have normalized viewBox starting at (0,0) with internal transform
+    // Flexbox centering is the correct approach since the SVG itself is self-contained
     const isTightContent = logo.filename.includes('_tight-content.svg');
     
-    if (!hasContentBounds) {
-      console.log('🔍 No contentBounds available, using default centering');
-      // Fallback to default centering only if no bounds
+    if (!hasContentBounds || isTightContent) {
+      if (isTightContent) {
+        console.log('🎯 Tight-content SVG detected, using flexbox centering (normalized viewBox with internal transform)');
+      } else {
+        console.log('🔍 No contentBounds available, using default centering');
+      }
+      // Use flexbox centering for tight-content SVGs and fallback
+      // Set max dimensions to allow SVG to scale while preserving aspect ratio
+      const styledSvg = svgContent.replace(
+        /<svg/,
+        '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"'
+      );
       return (
         <div 
           className="w-full h-full"
@@ -122,13 +131,9 @@ export default function SvgInlineRenderer({
             margin: 0,
             overflow: 'hidden'
           }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
+          dangerouslySetInnerHTML={{ __html: styledSvg }}
         />
       );
-    }
-    
-    if (isTightContent) {
-      console.log('🎯 Tight-content SVG detected, using content-bounds centering with normalized coordinates');
     }
     
     const bounds = logo.contentBounds as ContentBounds;
