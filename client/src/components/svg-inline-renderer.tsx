@@ -105,6 +105,10 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
   const renderWithContentBounds = () => {
+    // CRITICAL FIX: Tight-content SVGs have normalized viewBox starting at (0,0) with internal transform
+    // They must bypass the content-bounds path to avoid incorrect transforms and overflow clipping
+    const isTightContent = logo.filename.includes('_tight-content.svg');
+    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
@@ -112,10 +116,6 @@ export default function SvgInlineRenderer({
                             'minY' in logo.contentBounds &&
                             'maxX' in logo.contentBounds &&
                             'maxY' in logo.contentBounds;
-    
-    // CRITICAL FIX: Tight-content SVGs have normalized viewBox starting at (0,0) with internal transform
-    // Flexbox centering is the correct approach since the SVG itself is self-contained
-    const isTightContent = logo.filename.includes('_tight-content.svg');
     
     if (!hasContentBounds || isTightContent) {
       if (isTightContent) {
