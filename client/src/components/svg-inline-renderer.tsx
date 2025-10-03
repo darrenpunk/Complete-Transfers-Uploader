@@ -60,7 +60,7 @@ export default function SvgInlineRenderer({
           ''
         );
         
-        // CRITICAL FIX: Remove fixed width/height to allow responsive scaling
+        // CRITICAL FIX: Remove fixed width/height AND add inline styles to force 100% sizing
         // The viewBox provides aspect ratio, width/height prevent proper scaling
         cleanedSvg = cleanedSvg.replace(
           /<svg([^>]*)\s+width\s*=\s*["'][^"']*["']/gi,
@@ -69,6 +69,12 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(
           /<svg([^>]*)\s+height\s*=\s*["'][^"']*["']/gi,
           '<svg$1'
+        );
+        
+        // Add inline styles to force SVG to fill container completely
+        cleanedSvg = cleanedSvg.replace(
+          /<svg/,
+          '<svg style="width: 100%; height: 100%; display: block;"'
         );
         
         setSvgContent(cleanedSvg);
