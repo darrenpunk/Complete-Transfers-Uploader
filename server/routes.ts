@@ -2618,8 +2618,17 @@ export async function registerRoutes(app: express.Application) {
           ...(analysisData && { svgColors: analysisData }),
           // CRITICAL FIX: Save contentBounds to database for frontend centering
           // Map property names from BoundingBox (xMin/yMin/xMax/yMax) to ContentBounds (minX/minY/maxX/maxY)
+          // IMPORTANT: If we created a tight-content SVG with normalized viewBox, use normalized bounds (0,0,width,height)
+          // Otherwise use the original PDF bounds for proper centering
           ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: {
+            contentBounds: finalFilename.includes('_tight-content.svg') ? {
+              // Normalized bounds for tight-content SVGs (viewBox starts at 0,0)
+              minX: 0,
+              minY: 0,
+              maxX: boundsResult.contentBounds.width,
+              maxY: boundsResult.contentBounds.height
+            } : {
+              // Original bounds for non-tight-content SVGs
               minX: boundsResult.contentBounds.xMin,
               minY: boundsResult.contentBounds.yMin,
               maxX: boundsResult.contentBounds.xMax,
@@ -2630,13 +2639,18 @@ export async function registerRoutes(app: express.Application) {
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
-          const mappedBounds = {
+          const mappedBounds = finalFilename.includes('_tight-content.svg') ? {
+            minX: 0,
+            minY: 0,
+            maxX: boundsResult.contentBounds.width,
+            maxY: boundsResult.contentBounds.height
+          } : {
             minX: boundsResult.contentBounds.xMin,
             minY: boundsResult.contentBounds.yMin,
             maxX: boundsResult.contentBounds.xMax,
             maxY: boundsResult.contentBounds.yMax
           };
-          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+          console.log(`✅ SAVED CONTENTBOUNDS (${finalFilename.includes('_tight-content.svg') ? 'NORMALIZED' : 'ORIGINAL'}): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
         }
