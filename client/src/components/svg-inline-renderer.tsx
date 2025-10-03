@@ -117,33 +117,14 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // CRITICAL FIX: SVG has explicit width/height attributes - don't override with inline styles!
-      // Just use a wrapper div with CSS to scale the SVG proportionally
-      console.log('🎯 NATIVE SIZING: Using SVG width/height attributes directly');
+      // SIMPLEST APPROACH: SVG has width/height attributes - let browser handle it naturally
+      console.log('🎯 PURE SVG: No CSS interference, using embedded dimensions');
       
       return (
         <div 
-          className="w-full h-full"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
-            overflow: 'hidden',
-            position: 'relative'
-          }}
-        >
-          <div
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              width: 'auto',
-              height: 'auto'
-            }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
-        </div>
+          className="w-full h-full flex items-center justify-center"
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
       );
     }
     
