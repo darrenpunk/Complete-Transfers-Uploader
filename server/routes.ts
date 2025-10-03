@@ -2515,10 +2515,9 @@ export async function registerRoutes(app: express.Application) {
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
                     // Apply transform to translate content from original position to normalized origin
-                    // CRITICAL: Add explicit width/height for proper intrinsic sizing
+                    // CRITICAL: NO width/height attributes - let viewBox control sizing
+                    // Adding explicit dimensions causes scaling issues with CSS containers
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      width="${expandedWidth}"
-                      height="${expandedHeight}"
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
