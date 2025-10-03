@@ -2489,12 +2489,16 @@ export async function registerRoutes(app: express.Application) {
                   // We need SVG bounds to correctly translate the content
                   const { calculateSVGContentBounds } = await import('./dimension-utils');
                   const svgContentBounds = calculateSVGContentBounds(svgContent);
-                  console.log(`📐 SVG CONTENT BOUNDS: ${svgContentBounds.xMin.toFixed(1)},${svgContentBounds.yMin.toFixed(1)} → ${svgContentBounds.xMax.toFixed(1)},${svgContentBounds.yMax.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
                   
-                  // Use PDF bounds for display dimensions (accurate mm sizing)
-                  // But use SVG bounds for translate transform (correct coordinate system)
+                  // Use PDF bounds as the authoritative source for dimensions
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`📐 PDF CONTENT BOUNDS (for dimensions): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  console.log(`📐 PDF CONTENT BOUNDS (authoritative): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  
+                  if (svgContentBounds) {
+                    console.log(`📐 SVG CONTENT BOUNDS (for translate): ${svgContentBounds.xMin.toFixed(1)},${svgContentBounds.yMin.toFixed(1)} → ${svgContentBounds.xMax.toFixed(1)},${svgContentBounds.yMax.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
+                  } else {
+                    console.log(`⚠️ SVG content bounds could not be calculated, using PDF bounds for translate`);
+                  }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
@@ -2519,14 +2523,15 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Use SVG content bounds for translate (not PDF bounds!)
+                    // CRITICAL FIX: Use SVG content bounds for translate if available, otherwise use PDF bounds
                     // PDF bounds are in PDF coordinate system, SVG paths are in SVG coordinate system
-                    // We must translate using the actual SVG path coordinates
-                    const translateX = -(svgContentBounds.xMin - (horizontalOverflow / 2));
-                    const translateY = -(svgContentBounds.yMin - (verticalOverflow / 2));
+                    // We prefer SVG bounds for translate to match the actual path coordinates
+                    const boundsForTranslate = svgContentBounds || contentBounds;
+                    const translateX = -(boundsForTranslate.xMin - (horizontalOverflow / 2));
+                    const translateY = -(boundsForTranslate.yMin - (verticalOverflow / 2));
                     
                     console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
-                    console.log(`📐 SVG content bounds: (${svgContentBounds.xMin}, ${svgContentBounds.yMin}) to (${svgContentBounds.xMax}, ${svgContentBounds.yMax})`);
+                    console.log(`📐 Translate bounds: (${boundsForTranslate.xMin}, ${boundsForTranslate.yMin}) to (${boundsForTranslate.xMax}, ${boundsForTranslate.yMax})`);
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
                     // Apply transform to translate content from original position to normalized origin
