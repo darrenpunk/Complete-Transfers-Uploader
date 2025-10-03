@@ -2484,21 +2484,10 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Calculate actual SVG content bounds for translate
-                  // PDF bounds are in PDF coordinate system, but SVG paths use SVG coordinate system
-                  // We need SVG bounds to correctly translate the content
-                  const { calculateSVGContentBounds } = await import('./dimension-utils');
-                  const svgContentBounds = calculateSVGContentBounds(svgContent);
-                  
-                  // Use PDF bounds as the authoritative source for dimensions
+                  // Use PDF bounds as the authoritative source (from Ghostscript bbox device)
+                  // PDF bounds are precise and work for both dimensions and translate
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`📐 PDF CONTENT BOUNDS (authoritative): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
-                  
-                  if (svgContentBounds) {
-                    console.log(`📐 SVG CONTENT BOUNDS (for translate): ${svgContentBounds.xMin.toFixed(1)},${svgContentBounds.yMin.toFixed(1)} → ${svgContentBounds.xMax.toFixed(1)},${svgContentBounds.yMax.toFixed(1)} = ${svgContentBounds.width.toFixed(1)}×${svgContentBounds.height.toFixed(1)}px`);
-                  } else {
-                    console.log(`⚠️ SVG content bounds could not be calculated, using PDF bounds for translate`);
-                  }
+                  console.log(`📐 PDF CONTENT BOUNDS (authoritative - Ghostscript bbox): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
@@ -2516,22 +2505,20 @@ export async function registerRoutes(app: express.Application) {
                     console.log(`🔧 STRIPPED CLIPPATHS/MASKS: Removed PDF coordinate-system clipping elements`);
                     
                     // Add minimal overflow for proper centering and glyph protection
-                    // Reduce padding to get tighter content bounds
                     const horizontalOverflow = 4;   // Minimal padding left/right
                     const verticalOverflow = 4;     // Minimal padding top/bottom
-                    // Use PDF content bounds for viewBox sizing (accurate mm dimensions)
+                    
+                    // Use PDF content bounds for both viewBox dimensions AND translate
+                    // Ghostscript bbox device provides accurate bounds for both purposes
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Use SVG content bounds for translate if available, otherwise use PDF bounds
-                    // PDF bounds are in PDF coordinate system, SVG paths are in SVG coordinate system
-                    // We prefer SVG bounds for translate to match the actual path coordinates
-                    const boundsForTranslate = svgContentBounds || contentBounds;
-                    const translateX = -(boundsForTranslate.xMin - (horizontalOverflow / 2));
-                    const translateY = -(boundsForTranslate.yMin - (verticalOverflow / 2));
+                    // Normalize viewBox to (0,0) and translate content to center it
+                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
+                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
                     
-                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
-                    console.log(`📐 Translate bounds: (${boundsForTranslate.xMin}, ${boundsForTranslate.yMin}) to (${boundsForTranslate.xMax}, ${boundsForTranslate.yMax})`);
+                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0) sized ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
+                    console.log(`🎯 CONTENT TRANSLATE: Moving content by (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to center in viewBox`);
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
                     // Apply transform to translate content from original position to normalized origin
