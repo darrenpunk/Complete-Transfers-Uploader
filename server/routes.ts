@@ -2504,30 +2504,24 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // Center both horizontally and vertically
-                    // Equal offset on all sides ensures proper centering
-                    const xOffset = horizontalOverflow / 2;
-                    const yOffset = verticalOverflow / 2;  // Center vertically as well
+                    // CRITICAL FIX: Use viewBox minX/minY to crop content WITHOUT transforms
+                    // This allows content to stay at original coordinates while viewBox crops it
+                    // Add padding around content for proper rendering
+                    const viewBoxX = contentBounds.xMin - (horizontalOverflow / 2);
+                    const viewBoxY = contentBounds.yMin - (verticalOverflow / 2);
                     
-                    // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
-                    // ViewBox must start at (0,0) with content translated into position
-                    const translateX = -(contentBounds.xMin - xOffset);
-                    const translateY = -(contentBounds.yMin - yOffset);
-                    
-                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0,0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
+                    console.log(`🎯 VIEWBOX CROPPING: viewBox at (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}), size ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}`);
                     console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
                     
-                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
-                    // Apply transform to translate the content into the normalized coordinate system
+                    // Create minimal SVG wrapper with viewBox positioned at content bounds
+                    // NO transform needed - content stays at original coordinates, viewBox crops it
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
+                      viewBox="${viewBoxX} ${viewBoxY} ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
-                        <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
-                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
@@ -2614,82 +2608,28 @@ export async function registerRoutes(app: express.Application) {
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
-          // CRITICAL FIX: For tight-content SVGs, extract overflow from data attributes and save NORMALIZED contentBounds
-          // Content is translated to start at (overflow/2, overflow/2) inside viewBox (0,0,width,height)
-          // Frontend needs these bounds to calculate proper centering transforms
+          // Save contentBounds for all SVGs (tight-content and regular)
+          // Tight-content SVGs now use positioned viewBox (not normalized), so bounds stay at original coordinates
           ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: (() => {
-              if (finalFilename.includes('_tight-content.svg')) {
-                // Extract overflow from the tight-content SVG's data attribute
-                const tightSvgPath = path.join(uploadDir, finalFilename);
-                try {
-                  const tightSvgContent = fs.readFileSync(tightSvgPath, 'utf-8');
-                  const overflowMatch = tightSvgContent.match(/data-overflow="horizontal:(\d+),vertical:(\d+)"/);
-                  if (overflowMatch) {
-                    const hOverflow = parseInt(overflowMatch[1], 10);
-                    const vOverflow = parseInt(overflowMatch[2], 10);
-                    // Content positioned at (overflow/2, overflow/2) after transform
-                    return {
-                      minX: hOverflow / 2,
-                      minY: vOverflow / 2,
-                      maxX: hOverflow / 2 + boundsResult.contentBounds.width,
-                      maxY: vOverflow / 2 + boundsResult.contentBounds.height
-                    };
-                  }
-                } catch (e) {
-                  console.error('Failed to read tight-content SVG for overflow extraction:', e);
-                }
-                // Fallback if extraction fails - use default padding of 4px
-                return {
-                  minX: 2,
-                  minY: 2,
-                  maxX: 2 + boundsResult.contentBounds.width,
-                  maxY: 2 + boundsResult.contentBounds.height
-                };
-              } else {
-                // Original bounds for non-tight-content SVGs
-                return {
-                  minX: boundsResult.contentBounds.xMin,
-                  minY: boundsResult.contentBounds.yMin,
-                  maxX: boundsResult.contentBounds.xMax,
-                  maxY: boundsResult.contentBounds.yMax
-                };
-              }
-            })()
+            contentBounds: {
+              minX: boundsResult.contentBounds.xMin,
+              minY: boundsResult.contentBounds.yMin,
+              maxX: boundsResult.contentBounds.xMax,
+              maxY: boundsResult.contentBounds.yMax
+            }
           })
         });
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
-          if (finalFilename.includes('_tight-content.svg')) {
-            // Extract overflow for logging
-            const tightSvgPath = path.join(uploadDir, finalFilename);
-            try {
-              const tightSvgContent = fs.readFileSync(tightSvgPath, 'utf-8');
-              const overflowMatch = tightSvgContent.match(/data-overflow="horizontal:(\d+),vertical:(\d+)"/);
-              if (overflowMatch) {
-                const hOverflow = parseInt(overflowMatch[1], 10);
-                const vOverflow = parseInt(overflowMatch[2], 10);
-                const mappedBounds = {
-                  minX: hOverflow / 2,
-                  minY: vOverflow / 2,
-                  maxX: hOverflow / 2 + boundsResult.contentBounds.width,
-                  maxY: vOverflow / 2 + boundsResult.contentBounds.height
-                };
-                console.log(`✅ SAVED CONTENTBOUNDS (NORMALIZED TIGHT-CONTENT): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
-              }
-            } catch (e) {
-              console.log(`✅ SAVED CONTENTBOUNDS (NORMALIZED TIGHT-CONTENT with fallback) to logo ${logo.id}`);
-            }
-          } else {
-            const mappedBounds = {
-              minX: boundsResult.contentBounds.xMin,
-              minY: boundsResult.contentBounds.yMin,
-              maxX: boundsResult.contentBounds.xMax,
-              maxY: boundsResult.contentBounds.yMax
-            };
-            console.log(`✅ SAVED CONTENTBOUNDS (ORIGINAL): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
-          }
+          const mappedBounds = {
+            minX: boundsResult.contentBounds.xMin,
+            minY: boundsResult.contentBounds.yMin,
+            maxX: boundsResult.contentBounds.xMax,
+            maxY: boundsResult.contentBounds.yMax
+          };
+          const boundsType = finalFilename.includes('_tight-content.svg') ? 'TIGHT-CONTENT' : 'ORIGINAL';
+          console.log(`✅ SAVED CONTENTBOUNDS (${boundsType}): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
         }
