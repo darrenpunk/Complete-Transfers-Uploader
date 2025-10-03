@@ -60,21 +60,15 @@ export default function SvgInlineRenderer({
           ''
         );
         
-        // CRITICAL FIX: Remove fixed width/height AND add inline styles to force 100% sizing
-        // The viewBox provides aspect ratio, width/height prevent proper scaling
+        // Keep SVG responsive - viewBox handles aspect ratio
+        // Remove any width/height attributes that might constrain it
         cleanedSvg = cleanedSvg.replace(
-          /<svg([^>]*)\s+width\s*=\s*["'][^"']*["']/gi,
-          '<svg$1'
+          /\s+width\s*=\s*["'][^"']*["']/gi,
+          ''
         );
         cleanedSvg = cleanedSvg.replace(
-          /<svg([^>]*)\s+height\s*=\s*["'][^"']*["']/gi,
-          '<svg$1'
-        );
-        
-        // Add inline styles to force SVG to fill container completely
-        cleanedSvg = cleanedSvg.replace(
-          /<svg/,
-          '<svg style="width: 100%; height: 100%; display: block;"'
+          /\s+height\s*=\s*["'][^"']*["']/gi,
+          ''
         );
         
         setSvgContent(cleanedSvg);
@@ -140,8 +134,13 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="absolute inset-0"
-          style={{ overflow: 'visible' }}
+          className="w-full h-full"
+          style={{ 
+            overflow: 'visible',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
       );
