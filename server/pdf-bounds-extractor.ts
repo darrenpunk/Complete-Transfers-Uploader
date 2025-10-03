@@ -60,13 +60,18 @@ export class PDFBoundsExtractor {
       highDpiRasterFallback = true
     } = options;
 
-    // Use PDF→SVG first approach for guaranteed vector accuracy
-    let result = await this.extractViaPdfToSvg(pdfPath, pageNumber);
+    // CRITICAL FIX: Use Ghostscript FIRST for accurate bbox detection
+    // Ghostscript's -sDEVICE=bbox provides precise page-space bounds
+    let result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
     
-    // Only fall back to Ghostscript if PDF→SVG fails
+    // Only fall back to PDF→SVG if Ghostscript fails
+    // Note: PDF→SVG analyzer has known issues with transform matrices and bezier control points
     if (!result || !result.success) {
-      console.log('🔄 PDF→SVG failed, trying Ghostscript as fallback...');
-      result = await this.extractWithGhostscript(pdfPath, pageNumber, options);
+      console.log('🔄 Ghostscript failed, trying PDF→SVG as fallback...');
+      const pdfToSvgResult = await this.extractViaPdfToSvg(pdfPath, pageNumber);
+      if (pdfToSvgResult) {
+        result = pdfToSvgResult;
+      }
     }
     
     // Final fallback: raster-based bounds extraction when vector methods fail
