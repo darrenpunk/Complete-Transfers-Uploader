@@ -2513,11 +2513,11 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Use EXACT bounds for translate (no offset)
-                    // The viewBox provides the padding, so content should start at (0,0) in viewBox space
-                    // Any offset in translate causes misalignment and clipping
-                    const translateX = -contentBounds.xMin;
-                    const translateY = -contentBounds.yMin;
+                    // CRITICAL FIX: Translate to leave symmetric padding in viewBox
+                    // ViewBox has overflow/2 padding on each side (top, bottom, left, right)
+                    // Content should start at (overflow/2, overflow/2) to center properly
+                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
+                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
                     
                     console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0) sized ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
                     console.log(`🎯 CONTENT TRANSLATE: Moving content by EXACT bounds (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) - no offset!`);
