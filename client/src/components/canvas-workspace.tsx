@@ -1614,7 +1614,8 @@ export default function CanvasWorkspace({
                       margin: 0,
                       display: 'block',
                       lineHeight: 0,
-                      fontSize: 0
+                      fontSize: 0,
+                      overflow: 'visible'
                     }}
                   >
                     {/* Logo Elements */}

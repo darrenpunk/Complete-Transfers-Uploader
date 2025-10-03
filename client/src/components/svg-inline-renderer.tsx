@@ -123,9 +123,21 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:h-auto [&>svg]:w-auto"
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
+          className="w-full h-full flex items-center justify-center overflow-visible"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%'
+          }}
+        >
+          <div 
+            className="max-w-full max-h-full"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        </div>
       );
     }
     
