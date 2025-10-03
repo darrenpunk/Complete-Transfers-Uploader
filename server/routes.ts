@@ -2504,24 +2504,26 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Use viewBox minX/minY to crop content WITHOUT transforms
-                    // This allows content to stay at original coordinates while viewBox crops it
-                    // Add padding around content for proper rendering
-                    const viewBoxX = contentBounds.xMin - (horizontalOverflow / 2);
-                    const viewBoxY = contentBounds.yMin - (verticalOverflow / 2);
+                    // CRITICAL FIX: Normalize viewBox to (0,0) and translate content to origin
+                    // Browsers compute SVG intrinsic size from viewBox width/height, ignoring minX/minY
+                    // So we must normalize to (0,0) and transform content coordinates
+                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
+                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
                     
-                    console.log(`🎯 VIEWBOX CROPPING: viewBox at (${viewBoxX.toFixed(1)}, ${viewBoxY.toFixed(1)}), size ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}`);
+                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0), content translated by (${translateX.toFixed(1)}, ${translateY.toFixed(1)})`);
                     console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
                     
-                    // Create minimal SVG wrapper with viewBox positioned at content bounds
-                    // NO transform needed - content stays at original coordinates, viewBox crops it
+                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
+                    // Apply transform to translate content from original position to normalized origin
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="${viewBoxX} ${viewBoxY} ${expandedWidth} ${expandedHeight}"
+                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
                       data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                        <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
+                        </g>
                     </svg>`;
                     
                     // Save the tight-content SVG
