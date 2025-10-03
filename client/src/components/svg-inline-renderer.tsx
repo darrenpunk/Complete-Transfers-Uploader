@@ -119,21 +119,12 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      if (viewBoxMatch) {
-        const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-        // Add explicit width/height that respects aspect ratio
-        // Use width:auto, height:auto with max constraints so SVG scales to fit container
-        styledSvg = svgContent.replace(
-          /<svg/,
-          `<svg width="${vbWidth}" height="${vbHeight}" style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"`
-        );
-      } else {
-        // Fallback without viewBox
-        styledSvg = svgContent.replace(
-          /<svg/,
-          '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"'
-        );
-      }
+      // Don't add explicit width/height attributes - let viewBox determine aspect ratio
+      // Use object-fit approach: SVG fills container while preserving aspect ratio
+      styledSvg = svgContent.replace(
+        /<svg/,
+        '<svg style="width: 100%; height: 100%; display: block;"'
+      );
       return (
         <div 
           className="w-full h-full"
