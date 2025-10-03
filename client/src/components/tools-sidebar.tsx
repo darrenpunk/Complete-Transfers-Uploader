@@ -463,10 +463,11 @@ export default function ToolsSidebar({
     },
   });
 
-  // Delete logo mutation with better error handling
+  // Delete logo mutation - force delete to remove canvas elements automatically
   const deleteLogoMutation = useMutation({
     mutationFn: async (logoId: string) => {
-      const response = await apiRequest('DELETE', `/api/logos/${logoId}`);
+      // Add ?force=true to automatically delete canvas elements using this logo
+      const response = await apiRequest('DELETE', `/api/logos/${logoId}?force=true`);
       
       if (!response.ok) {
         const errorData = await response.json();
