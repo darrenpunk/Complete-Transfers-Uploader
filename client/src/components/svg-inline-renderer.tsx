@@ -104,8 +104,16 @@ export default function SvgInlineRenderer({
                             'maxX' in logo.contentBounds &&
                             'maxY' in logo.contentBounds;
     
-    if (!hasContentBounds) {
-      console.log('🔍 No contentBounds available, using default centering');
+    // CRITICAL FIX: For tight-content SVGs, content is already centered via internal transform
+    // Don't apply additional content-bounds centering (would cause double-centering)
+    const isTightContent = logo.filename.includes('_tight-content.svg');
+    
+    if (!hasContentBounds || isTightContent) {
+      if (isTightContent) {
+        console.log('🎯 Tight-content SVG detected, using default centering (content already centered internally)');
+      } else {
+        console.log('🔍 No contentBounds available, using default centering');
+      }
       // Fallback to default centering
       return (
         <div 
