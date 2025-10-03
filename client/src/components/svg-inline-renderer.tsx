@@ -140,21 +140,10 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="w-full h-full flex items-center justify-center overflow-visible"
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%'
-          }}
-        >
-          <div 
-            className="max-w-full max-h-full"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%'
-            }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
-        </div>
+          className="absolute inset-0"
+          style={{ overflow: 'visible' }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
       );
     }
     
