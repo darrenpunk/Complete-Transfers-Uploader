@@ -2617,14 +2617,26 @@ export async function registerRoutes(app: express.Application) {
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
           // CRITICAL FIX: Save contentBounds to database for frontend centering
+          // Map property names from BoundingBox (xMin/yMin/xMax/yMax) to ContentBounds (minX/minY/maxX/maxY)
           ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: boundsResult.contentBounds 
+            contentBounds: {
+              minX: boundsResult.contentBounds.xMin,
+              minY: boundsResult.contentBounds.yMin,
+              maxX: boundsResult.contentBounds.xMax,
+              maxY: boundsResult.contentBounds.yMax
+            }
           })
         });
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
-          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(boundsResult.contentBounds)} to logo ${logo.id}`);
+          const mappedBounds = {
+            minX: boundsResult.contentBounds.xMin,
+            minY: boundsResult.contentBounds.yMin,
+            maxX: boundsResult.contentBounds.xMax,
+            maxY: boundsResult.contentBounds.yMax
+          };
+          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
         }
