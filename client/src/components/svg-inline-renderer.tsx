@@ -60,6 +60,17 @@ export default function SvgInlineRenderer({
           ''
         );
         
+        // CRITICAL FIX: Remove fixed width/height to allow responsive scaling
+        // The viewBox provides aspect ratio, width/height prevent proper scaling
+        cleanedSvg = cleanedSvg.replace(
+          /<svg([^>]*)\s+width\s*=\s*["'][^"']*["']/gi,
+          '<svg$1'
+        );
+        cleanedSvg = cleanedSvg.replace(
+          /<svg([^>]*)\s+height\s*=\s*["'][^"']*["']/gi,
+          '<svg$1'
+        );
+        
         setSvgContent(cleanedSvg);
         console.log('✅ SVG content loaded and cleaned');
       } catch (error) {
