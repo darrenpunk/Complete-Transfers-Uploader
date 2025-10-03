@@ -119,14 +119,14 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // CRITICAL FIX: Set explicit dimensions on wrapper to break flex circular dependency
-      // SVG itself has no explicit width/height, relies on viewBox for intrinsic sizing
+      // CRITICAL FIX: SVG has explicit width/height attributes
+      // Scale to fit container while preserving aspect ratio
       styledSvg = svgContent.replace(
         /<svg/,
-        '<svg style="display: block; max-width: 100%; max-height: 100%; margin: auto;"'
+        '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto;"'
       );
       
-      console.log('🎯 NEW CENTERING: Using margin:auto with max constraints');
+      console.log('🎯 NATIVE SIZING: Scaling SVG to fit with aspect ratio preserved');
       
       return (
         <div 
