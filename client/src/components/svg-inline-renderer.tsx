@@ -44,10 +44,8 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // ARCHITECT SOLUTION: Remove explicit width/height, set proper preserveAspectRatio
-        // Remove existing width/height attributes to let viewBox control sizing
-        cleanedSvg = cleanedSvg.replace(/\s*width\s*=\s*["'][^"']*["']/gi, '');
-        cleanedSvg = cleanedSvg.replace(/\s*height\s*=\s*["'][^"']*["']/gi, '');
+        // CRITICAL FIX: Keep explicit width/height attributes for proper intrinsic sizing
+        // The backend now adds these attributes for normalized SVGs - don't remove them!
         
         // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
         if (cleanedSvg.includes('preserveAspectRatio')) {
