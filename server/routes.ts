@@ -2495,7 +2495,16 @@ export async function registerRoutes(app: express.Application) {
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
                   console.log(`🔍 DEBUG: Content extraction - contentMatch found: ${!!contentMatch}`);
                   if (contentMatch) {
-                    const innerContent = contentMatch[1];
+                    let innerContent = contentMatch[1];
+                    
+                    // CRITICAL FIX: Strip clipPath/mask elements that reference old coordinate system
+                    // These cause clipping issues when viewBox is normalized to (0,0)
+                    innerContent = innerContent.replace(/<clipPath[^>]*>.*?<\/clipPath>/gs, '');
+                    innerContent = innerContent.replace(/<mask[^>]*>.*?<\/mask>/gs, '');
+                    // Remove clip-path and mask attributes from elements
+                    innerContent = innerContent.replace(/\s+clip-path="[^"]*"/g, '');
+                    innerContent = innerContent.replace(/\s+mask="[^"]*"/g, '');
+                    console.log(`🔧 STRIPPED CLIPPATHS/MASKS: Removed PDF coordinate-system clipping elements`);
                     
                     // Add minimal overflow for proper centering and glyph protection
                     // Reduce padding to get tighter content bounds
