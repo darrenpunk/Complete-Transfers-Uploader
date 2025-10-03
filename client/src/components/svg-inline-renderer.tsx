@@ -110,7 +110,7 @@ export default function SvgInlineRenderer({
     
     if (!hasContentBounds || isTightContent) {
       if (isTightContent) {
-        console.log('🎯 Tight-content SVG detected, using flexbox centering (normalized viewBox with internal transform)');
+        console.log('🎯 Tight-content SVG detected, using flexbox centering (positioned viewBox without transform)');
       } else {
         console.log('🔍 No contentBounds available, using default centering');
       }
@@ -122,15 +122,16 @@ export default function SvgInlineRenderer({
       if (viewBoxMatch) {
         const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
         // Add explicit width/height that respects aspect ratio
+        // Use width:auto, height:auto with max constraints so SVG scales to fit container
         styledSvg = svgContent.replace(
           /<svg/,
-          `<svg width="${vbWidth}" height="${vbHeight}" style="max-width: 100%; max-height: 100%; width: 100%; height: auto; display: block;"`
+          `<svg width="${vbWidth}" height="${vbHeight}" style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"`
         );
       } else {
         // Fallback without viewBox
         styledSvg = svgContent.replace(
           /<svg/,
-          '<svg style="max-width: 100%; max-height: 100%; width: 100%; height: auto; display: block;"'
+          '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"'
         );
       }
       return (
