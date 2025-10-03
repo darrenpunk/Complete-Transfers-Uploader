@@ -2513,12 +2513,14 @@ export async function registerRoutes(app: express.Application) {
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // Normalize viewBox to (0,0) and translate content to center it
-                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
-                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
+                    // CRITICAL FIX: Use EXACT bounds for translate (no offset)
+                    // The viewBox provides the padding, so content should start at (0,0) in viewBox space
+                    // Any offset in translate causes misalignment and clipping
+                    const translateX = -contentBounds.xMin;
+                    const translateY = -contentBounds.yMin;
                     
                     console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0) sized ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
-                    console.log(`🎯 CONTENT TRANSLATE: Moving content by (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to center in viewBox`);
+                    console.log(`🎯 CONTENT TRANSLATE: Moving content by EXACT bounds (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) - no offset!`);
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
                     // Apply transform to translate content from original position to normalized origin
