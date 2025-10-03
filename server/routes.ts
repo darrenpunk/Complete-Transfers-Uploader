@@ -2515,9 +2515,9 @@ export async function registerRoutes(app: express.Application) {
                     // Reduce padding to get tighter content bounds
                     const horizontalOverflow = 4;   // Minimal padding left/right
                     const verticalOverflow = 4;     // Minimal padding top/bottom
-                    // Use SVG content bounds for viewBox sizing (actual path coordinates)
-                    const expandedWidth = svgContentBounds.width + horizontalOverflow;
-                    const expandedHeight = svgContentBounds.height + verticalOverflow;
+                    // Use PDF content bounds for viewBox sizing (accurate mm dimensions)
+                    const expandedWidth = contentBounds.width + horizontalOverflow;
+                    const expandedHeight = contentBounds.height + verticalOverflow;
                     
                     // CRITICAL FIX: Use SVG content bounds for translate (not PDF bounds!)
                     // PDF bounds are in PDF coordinate system, SVG paths are in SVG coordinate system
@@ -2537,7 +2537,7 @@ export async function registerRoutes(app: express.Application) {
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
-                      data-original-bounds="${svgContentBounds.xMin},${svgContentBounds.yMin},${svgContentBounds.xMax},${svgContentBounds.yMax}">
+                      data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
                         <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
                         </g>
