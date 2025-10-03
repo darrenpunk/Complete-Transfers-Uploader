@@ -117,14 +117,9 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // CRITICAL FIX: SVG has explicit width/height attributes
-      // Scale to fit container while preserving aspect ratio
-      styledSvg = svgContent.replace(
-        /<svg/,
-        '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto;"'
-      );
-      
-      console.log('🎯 NATIVE SIZING: Scaling SVG to fit with aspect ratio preserved');
+      // CRITICAL FIX: SVG has explicit width/height attributes - don't override with inline styles!
+      // Just use a wrapper div with CSS to scale the SVG proportionally
+      console.log('🎯 NATIVE SIZING: Using SVG width/height attributes directly');
       
       return (
         <div 
@@ -138,8 +133,17 @@ export default function SvgInlineRenderer({
             overflow: 'hidden',
             position: 'relative'
           }}
-          dangerouslySetInnerHTML={{ __html: styledSvg }}
-        />
+        >
+          <div
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              width: 'auto',
+              height: 'auto'
+            }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        </div>
       );
     }
     
