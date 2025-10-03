@@ -115,11 +115,24 @@ export default function SvgInlineRenderer({
         console.log('🔍 No contentBounds available, using default centering');
       }
       // Use flexbox centering for tight-content SVGs and fallback
-      // Set max dimensions to allow SVG to scale while preserving aspect ratio
-      const styledSvg = svgContent.replace(
-        /<svg/,
-        '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block;"'
-      );
+      // Extract viewBox to calculate aspect ratio and add explicit sizing
+      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+      let styledSvg = svgContent;
+      
+      if (viewBoxMatch) {
+        const [, , , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+        // Add explicit width/height that respects aspect ratio
+        styledSvg = svgContent.replace(
+          /<svg/,
+          `<svg width="${vbWidth}" height="${vbHeight}" style="max-width: 100%; max-height: 100%; width: 100%; height: auto; display: block;"`
+        );
+      } else {
+        // Fallback without viewBox
+        styledSvg = svgContent.replace(
+          /<svg/,
+          '<svg style="max-width: 100%; max-height: 100%; width: 100%; height: auto; display: block;"'
+        );
+      }
       return (
         <div 
           className="w-full h-full"
