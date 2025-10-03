@@ -119,12 +119,15 @@ export default function SvgInlineRenderer({
       const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
       let styledSvg = svgContent;
       
-      // Set concrete dimensions to avoid circular flex layout
-      // width:100% gives deterministic sizing, height:auto preserves aspect ratio
+      // CRITICAL FIX: Set explicit dimensions on wrapper to break flex circular dependency
+      // SVG itself has no explicit width/height, relies on viewBox for intrinsic sizing
       styledSvg = svgContent.replace(
         /<svg/,
-        '<svg style="width: 100%; height: auto; max-height: 100%; display: block;"'
+        '<svg style="display: block; max-width: 100%; max-height: 100%; margin: auto;"'
       );
+      
+      console.log('🎯 NEW CENTERING: Using margin:auto with max constraints');
+      
       return (
         <div 
           className="w-full h-full"
@@ -134,7 +137,8 @@ export default function SvgInlineRenderer({
             justifyContent: 'center',
             padding: 0,
             margin: 0,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative'
           }}
           dangerouslySetInnerHTML={{ __html: styledSvg }}
         />
