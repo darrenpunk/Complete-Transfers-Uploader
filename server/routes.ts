@@ -2555,9 +2555,9 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 // Add minimal overflow for proper centering and glyph protection
-                // Reduce padding to get more accurate content dimensions
-                const horizontalOverflow = needsTightCrop ? 2 : 0; // Minimal padding left/right
-                const verticalOverflow = needsTightCrop ? 2 : 0;   // Minimal padding top/bottom
+                // CRITICAL: Use same 4px overflow as tight-content SVG viewBox
+                const horizontalOverflow = needsTightCrop ? 4 : 0; // Must match SVG viewBox overflow
+                const verticalOverflow = needsTightCrop ? 4 : 0;   // Must match SVG viewBox overflow
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
