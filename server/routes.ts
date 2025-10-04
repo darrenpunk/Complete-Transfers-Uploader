@@ -2539,48 +2539,55 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ GHOSTSCRIPT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
                   // Render ORIGINAL PDF (not converted SVG) to measure actual visual content
+                  const originalPdfFilename = (file as any).originalPdfFilename || file.filename;
+                  const pdfPath = path.join(uploadDir, originalPdfFilename);
                   const pdfBitmapPath = svgPath.replace('.svg', '_bounds_check.png');
-                  try {
-                    // Render original PDF at 150 DPI for bounds detection
-                    await execAsync(`convert -density 150 "${pdfPath}" -background white -flatten -alpha remove -trim +repage "${pdfBitmapPath}"`);
-                    
-                    if (fs.existsSync(pdfBitmapPath)) {
-                      // Get dimensions of trimmed bitmap
-                      const identifyOutput = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
-                      const [bitmapWidth, bitmapHeight] = identifyOutput.trim().split(' ').map(Number);
+                  
+                  if (fs.existsSync(pdfPath)) {
+                    try {
+                      // Render original PDF at 150 DPI for bounds detection
+                      await execAsync(`convert -density 150 "${pdfPath}" -background white -flatten -alpha remove -trim +repage "${pdfBitmapPath}"`);
                       
-                      if (bitmapWidth && bitmapHeight) {
-                        // Convert pixels to points (150 DPI)
-                        const pxToPt = 72 / 150;
-                        const visualWidth = bitmapWidth * pxToPt;
-                        const visualHeight = bitmapHeight * pxToPt;
+                      if (fs.existsSync(pdfBitmapPath)) {
+                        // Get dimensions of trimmed bitmap
+                        const identifyOutput = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
+                        const [bitmapWidth, bitmapHeight] = identifyOutput.trim().split(' ').map(Number);
                         
-                        console.log(`📐 PDF BITMAP BOUNDS: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts (from ${bitmapWidth}×${bitmapHeight}px @150dpi)`);
-                        
-                        const heightDiff = visualHeight - contentBounds.height;
-                        const widthDiff = visualWidth - contentBounds.width;
-                        
-                        if (heightDiff > 5 || widthDiff > 5) {
-                          // Bitmap found MORE content (clipping masks!)
-                          console.log(`🎯 BITMAP EXPANDED BOUNDS: Found ${widthDiff.toFixed(1)}pts more width, ${heightDiff.toFixed(1)}pts more height`);
-                          contentBounds = {
-                            ...contentBounds,
-                            width: visualWidth,
-                            height: visualHeight,
-                            xMax: contentBounds.xMin + visualWidth,
-                            yMax: contentBounds.yMin + visualHeight
-                          };
-                          boundsResult.contentBounds = contentBounds;
-                        } else {
-                          console.log(`✅ GHOSTSCRIPT BOUNDS SUFFICIENT: Bitmap agrees within tolerance`);
+                        if (bitmapWidth && bitmapHeight) {
+                          // Convert pixels to points (150 DPI)
+                          const pxToPt = 72 / 150;
+                          const visualWidth = bitmapWidth * pxToPt;
+                          const visualHeight = bitmapHeight * pxToPt;
+                          
+                          console.log(`📐 PDF BITMAP BOUNDS: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts (from ${bitmapWidth}×${bitmapHeight}px @150dpi)`);
+                          
+                          const heightDiff = visualHeight - contentBounds.height;
+                          const widthDiff = visualWidth - contentBounds.width;
+                          
+                          if (heightDiff > 5 || widthDiff > 5) {
+                            // Bitmap found MORE content (clipping masks!)
+                            console.log(`🎯 BITMAP EXPANDED BOUNDS: Found ${widthDiff.toFixed(1)}pts more width, ${heightDiff.toFixed(1)}pts more height`);
+                            contentBounds = {
+                              ...contentBounds,
+                              width: visualWidth,
+                              height: visualHeight,
+                              xMax: contentBounds.xMin + visualWidth,
+                              yMax: contentBounds.yMin + visualHeight
+                            };
+                            boundsResult.contentBounds = contentBounds;
+                          } else {
+                            console.log(`✅ GHOSTSCRIPT BOUNDS SUFFICIENT: Bitmap agrees within tolerance`);
+                          }
                         }
+                        
+                        // Clean up temp bitmap
+                        fs.unlinkSync(pdfBitmapPath);
                       }
-                      
-                      // Clean up temp bitmap
-                      fs.unlinkSync(pdfBitmapPath);
+                    } catch (error) {
+                      console.log(`⚠️ PDF bitmap verification failed:`, error);
                     }
-                  } catch (error) {
-                    console.log(`⚠️ PDF bitmap verification failed:`, error);
+                  } else {
+                    console.log(`⚠️ Original PDF not found: ${pdfPath}`);
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
