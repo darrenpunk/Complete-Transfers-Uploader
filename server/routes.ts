@@ -999,9 +999,9 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
               
-              // CRITICAL: Illustrator masked gradients should NEVER use Inkscape
-              // Inkscape rasterizes gradients - use rsvg-convert to preserve smooth vector gradients
-              const hasEmbeddedImages = false; // Force vector-only processing for pasted artwork
+              // CRITICAL: Check if SVG contains embedded images (base64 data URIs in <image> tags)
+              // rsvg-convert strips these out, but Inkscape preserves them
+              const hasEmbeddedImages = svgContent.includes('<image') && svgContent.includes('data:image/');
               
               if (hasEmbeddedImages) {
                 console.log(`🖼️ EMBEDDED IMAGES DETECTED: Preprocessing for Inkscape compatibility`);
@@ -1059,12 +1059,17 @@ export async function registerRoutes(app: express.Application) {
               fs.writeFileSync(tempSvg, svgContent);
               
               if (hasEmbeddedImages) {
-                console.log(`🖼️ EMBEDDED IMAGES: Using Inkscape with 300 DPI for Illustrator`);
-                // Inkscape preserves embedded images better than rsvg-convert
-                // Use 300 DPI export for print-quality output
-                const inkscapeCmd = `inkscape "${tempSvg}" --export-type=pdf --export-filename="${tempPdf}" --export-area-page --export-dpi=300`;
-                execSync(inkscapeCmd);
-                console.log(`✅ Inkscape SVG → PDF (300 DPI): ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+                console.log(`🖼️ EMBEDDED IMAGES: Using high-DPI conversion for Illustrator`);
+                // CRITICAL: Use 300 DPI for print-quality embedded images
+                // Calculate pixel dimensions at 300 DPI instead of 72 DPI
+                const dpi = 300;
+                const widthPx = Math.round(widthPts * dpi / 72);
+                const heightPx = Math.round(heightPts * dpi / 72);
+                
+                // rsvg-convert with high DPI for embedded images
+                const rsvgCmd = `rsvg-convert -f pdf -d ${dpi} -p ${dpi} -w ${widthPx} -h ${heightPx} -o "${tempPdf}" "${tempSvg}"`;
+                execSync(rsvgCmd);
+                console.log(`✅ High-DPI SVG → PDF (${dpi} DPI): ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts @ ${widthPx}×${heightPx}px`);
               } else {
                 // Convert SVG → PDF with transparency preserved (no background)
                 const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
