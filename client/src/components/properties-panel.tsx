@@ -589,18 +589,96 @@ export default function PropertiesPanel({
       });
     }
     
-    // Position Check - ensure logo is within template bounds
+    // Position Check - ensure content is within safety margins (3mm)
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
-    const templateWidth = currentTemplate?.width || 297; // Default to A4 if template not found
+    const templateWidth = currentTemplate?.width || 297;
     const templateHeight = currentTemplate?.height || 210;
+    const marginInMm = 3; // 3mm safety margin
     
-    const isWithinBounds = currentElement.x >= 0 && currentElement.y >= 0 && 
-                          currentElement.x + currentElement.width <= templateWidth && 
-                          currentElement.y + currentElement.height <= templateHeight;
+    // Center-based coordinate system - (0,0) is at the center of the template
+    const templateHalfWidth = templateWidth / 2;
+    const templateHalfHeight = templateHeight / 2;
+    
+    // Use content bounds if available, otherwise use full element bounds
+    let contentWidth = currentElement.width;
+    let contentHeight = currentElement.height;
+    let contentOffsetX = 0;
+    let contentOffsetY = 0;
+    
+    if (logo?.contentBounds) {
+      const cb = logo.contentBounds as any;
+      if (cb.xMin !== undefined && cb.yMin !== undefined && cb.xMax !== undefined && cb.yMax !== undefined) {
+        // Content bounds are in pixels, convert to mm
+        const isPdfDerived = currentElement.width > 200 || currentElement.height > 200;
+        const mmToPixelRatio = isPdfDerived ? 2.834645669 : ((currentTemplate?.pixelWidth || 842) / templateWidth);
+        
+        const contentWidthMm = cb.width / mmToPixelRatio;
+        const contentHeightMm = cb.height / mmToPixelRatio;
+        const contentXMinMm = cb.xMin / mmToPixelRatio;
+        const contentYMinMm = cb.yMin / mmToPixelRatio;
+        const contentXMaxMm = cb.xMax / mmToPixelRatio;
+        const contentYMaxMm = cb.yMax / mmToPixelRatio;
+        
+        const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+        if (isRotated) {
+          contentWidth = contentHeightMm;
+          contentHeight = contentWidthMm;
+        } else {
+          contentWidth = contentWidthMm;
+          contentHeight = contentHeightMm;
+        }
+        
+        // Calculate offset from element center to content center
+        const viewBoxWidth = isRotated ? currentElement.height : currentElement.width;
+        const viewBoxHeight = isRotated ? currentElement.width : currentElement.height;
+        const contentCenterX = (contentXMinMm + contentXMaxMm) / 2;
+        const contentCenterY = (contentYMinMm + contentYMaxMm) / 2;
+        const viewBoxCenterX = viewBoxWidth / 2;
+        const viewBoxCenterY = viewBoxHeight / 2;
+        
+        if (isRotated) {
+          contentOffsetX = contentCenterY - viewBoxCenterY;
+          contentOffsetY = -(contentCenterX - viewBoxCenterX);
+        } else {
+          contentOffsetX = contentCenterX - viewBoxCenterX;
+          contentOffsetY = contentCenterY - viewBoxCenterY;
+        }
+      }
+    } else {
+      // Fall back to full element bounds
+      const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+      contentWidth = isRotated ? currentElement.height : currentElement.width;
+      contentHeight = isRotated ? currentElement.width : currentElement.height;
+    }
+    
+    // Calculate content bounds from center position
+    const contentHalfWidth = contentWidth / 2;
+    const contentHalfHeight = contentHeight / 2;
+    const contentCenterX = currentElement.x + contentOffsetX;
+    const contentCenterY = currentElement.y + contentOffsetY;
+    
+    // Content edges in center-based coordinates
+    const contentLeft = contentCenterX - contentHalfWidth;
+    const contentRight = contentCenterX + contentHalfWidth;
+    const contentTop = contentCenterY - contentHalfHeight;
+    const contentBottom = contentCenterY + contentHalfHeight;
+    
+    // Safety margins in center-based coordinates
+    const marginLeft = -templateHalfWidth + marginInMm;
+    const marginRight = templateHalfWidth - marginInMm;
+    const marginTop = -templateHalfHeight + marginInMm;
+    const marginBottom = templateHalfHeight - marginInMm;
+    
+    // Check if content is within safety margins
+    const isWithinMargins = contentLeft >= marginLeft && 
+                           contentRight <= marginRight && 
+                           contentTop >= marginTop && 
+                           contentBottom <= marginBottom;
+    
     checks.push({
       name: "Position",
-      status: isWithinBounds ? "pass" : "warning",
-      value: isWithinBounds ? "In Bounds" : "Check Position"
+      status: isWithinMargins ? "pass" : "warning",
+      value: isWithinMargins ? "Within Safety Zone" : "Outside Safety Margin"
     });
     
     // Size Check - reasonable print size
