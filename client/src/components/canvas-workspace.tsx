@@ -495,14 +495,20 @@ export default function CanvasWorkspace({
       const types = clipboardData.types;
       console.log('📋 Clipboard types:', types);
 
-      // Try image/svg+xml first (most specific)
-      if (types.includes('image/svg+xml')) {
-        svgContent = clipboardData.getData('image/svg+xml');
-        console.log('✅ Found SVG in image/svg+xml');
+      // Try text/plain FIRST (Illustrator puts SVG here)
+      if (types.includes('text/plain')) {
+        const text = clipboardData.getData('text/plain');
+        console.log('📋 text/plain content length:', text.length);
+        console.log('📋 text/plain starts with:', text.substring(0, 100));
+        if (text.trim().startsWith('<svg')) {
+          svgContent = text;
+          console.log('✅ Found SVG in text/plain');
+        }
       }
-      // Try text/html (Illustrator often puts SVG here)
-      else if (types.includes('text/html')) {
+      // Try text/html (fallback)
+      if (!svgContent && types.includes('text/html')) {
         const html = clipboardData.getData('text/html');
+        console.log('📋 text/html content length:', html.length);
         // Extract SVG from HTML if present
         const svgMatch = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
         if (svgMatch) {
@@ -510,12 +516,13 @@ export default function CanvasWorkspace({
           console.log('✅ Extracted SVG from text/html');
         }
       }
-      // Try text/plain as fallback
-      else if (types.includes('text/plain')) {
-        const text = clipboardData.getData('text/plain');
-        if (text.trim().startsWith('<svg')) {
-          svgContent = text;
-          console.log('✅ Found SVG in text/plain');
+      // Try image/svg+xml (least reliable)
+      if (!svgContent && types.includes('image/svg+xml')) {
+        const svg = clipboardData.getData('image/svg+xml');
+        console.log('📋 image/svg+xml content length:', svg.length);
+        if (svg) {
+          svgContent = svg;
+          console.log('✅ Found SVG in image/svg+xml');
         }
       }
 
