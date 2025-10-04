@@ -2479,10 +2479,10 @@ export async function registerRoutes(app: express.Application) {
                 const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
                 const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
-                // ALWAYS create tight content if there's ANY significant padding
-                // This ensures canvas displays at exact content size
-                // Remove the !usingPdfContentBounds check - we want tight crop even with PDF bounds
-                const needsTightCrop = widthDiff > 2 || heightDiff > 2;
+                // DISABLED: Tight content creation causes clipping mask content loss
+                // PDFs with clipping masks lose content during tight crop
+                // Use original SVG dimensions to preserve all content including clipped elements
+                const needsTightCrop = false; // widthDiff > 2 || heightDiff > 2;
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
