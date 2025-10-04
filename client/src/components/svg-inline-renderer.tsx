@@ -96,6 +96,15 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
   const renderWithContentBounds = () => {
+    // DEBUG: Log the logo object to see if contentBounds is present
+    console.log('🔍 DEBUG Logo object:', {
+      id: logo.id,
+      filename: logo.filename,
+      hasContentBounds: !!logo.contentBounds,
+      contentBounds: logo.contentBounds,
+      allKeys: Object.keys(logo)
+    });
+    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
