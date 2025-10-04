@@ -155,8 +155,10 @@ export type InsertUser = z.infer<typeof insertProjectSchema>;
 
 // Content bounds type definition
 export type ContentBounds = {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
+  width: number;
+  height: number;
 };

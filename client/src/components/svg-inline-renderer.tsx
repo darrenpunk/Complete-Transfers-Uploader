@@ -96,22 +96,13 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
   const renderWithContentBounds = () => {
-    // DEBUG: Log the logo object to see if contentBounds is present
-    console.log('🔍 DEBUG Logo object:', {
-      id: logo.id,
-      filename: logo.filename,
-      hasContentBounds: !!logo.contentBounds,
-      contentBounds: logo.contentBounds,
-      allKeys: Object.keys(logo)
-    });
-    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
-                            'minX' in logo.contentBounds &&
-                            'minY' in logo.contentBounds &&
-                            'maxX' in logo.contentBounds &&
-                            'maxY' in logo.contentBounds;
+                            'xMin' in logo.contentBounds &&
+                            'yMin' in logo.contentBounds &&
+                            'xMax' in logo.contentBounds &&
+                            'yMax' in logo.contentBounds;
     
     if (!hasContentBounds) {
       console.log('🔍 No contentBounds available, using default centering');
@@ -146,10 +137,10 @@ export default function SvgInlineRenderer({
     });
     
     // Calculate content center and dimensions
-    const contentCenterX = (bounds.minX + bounds.maxX) / 2;
-    const contentCenterY = (bounds.minY + bounds.maxY) / 2;
-    const contentWidth = bounds.maxX - bounds.minX;
-    const contentHeight = bounds.maxY - bounds.minY;
+    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
+    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
+    const contentWidth = bounds.xMax - bounds.xMin;
+    const contentHeight = bounds.yMax - bounds.yMin;
     
     // Handle Y-inversion for PDF-derived content
     let adjustedCenterY = contentCenterY;
