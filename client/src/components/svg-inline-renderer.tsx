@@ -71,10 +71,10 @@ export default function SvgInlineRenderer({
           ''
         );
         
-        // Add inline style to ensure proper scaling with containment
+        // Add inline style to ensure SVG scales proportionally within bounds
         cleanedSvg = cleanedSvg.replace(
           /<svg/,
-          '<svg style="max-width: 100%; max-height: 100%; width: 100%; height: 100%; display: block;"'
+          '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"'
         );
         
         setSvgContent(cleanedSvg);
