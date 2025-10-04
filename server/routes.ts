@@ -2534,46 +2534,93 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL: Use original SVG viewBox for clipped content detection
-                  // Ghostscript only sees painted content, but viewBox shows artboard dimensions
+                  // CRITICAL: Extract ALL clipping mask vector boundaries (not painted content)
+                  // Clipping masks are made of vector lines - detect their geometric extent
                   let contentBounds = boundsResult.contentBounds;
                   console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
-                  // Extract original SVG viewBox to detect artboard dimensions
-                  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-                  if (viewBoxMatch) {
-                    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
-                    if (viewBoxValues.length === 4) {
-                      const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
+                  // Extract ALL clipping path geometries from SVG
+                  const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
+                  const clipPathMatches = svgContent.match(clipPathRegex);
+                  
+                  if (clipPathMatches && clipPathMatches.length > 0) {
+                    console.log(`🔍 ANALYZING ${clipPathMatches.length} CLIPPING PATH VECTORS`);
+                    
+                    let globalMinX = Infinity, globalMinY = Infinity;
+                    let globalMaxX = -Infinity, globalMaxY = -Infinity;
+                    let foundClipGeometry = false;
+                    
+                    for (const clipPath of clipPathMatches) {
+                      // Extract rect elements from clipping paths
+                      const rectRegex = /<rect[^>]*x="([^"]+)"[^>]*y="([^"]+)"[^>]*width="([^"]+)"[^>]*height="([^"]+)"/g;
+                      let rectMatch;
+                      while ((rectMatch = rectRegex.exec(clipPath)) !== null) {
+                        const x = parseFloat(rectMatch[1]);
+                        const y = parseFloat(rectMatch[2]);
+                        const w = parseFloat(rectMatch[3]);
+                        const h = parseFloat(rectMatch[4]);
+                        
+                        globalMinX = Math.min(globalMinX, x);
+                        globalMinY = Math.min(globalMinY, y);
+                        globalMaxX = Math.max(globalMaxX, x + w);
+                        globalMaxY = Math.max(globalMaxY, y + h);
+                        foundClipGeometry = true;
+                      }
                       
-                      console.log(`📐 SVG VIEWBOX (artboard): ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}pts at (${vbX.toFixed(1)}, ${vbY.toFixed(1)})`);
+                      // Extract path elements from clipping paths
+                      const pathRegex = /<path[^>]*d="([^"]+)"/g;
+                      let pathMatch;
+                      while ((pathMatch = pathRegex.exec(clipPath)) !== null) {
+                        const pathData = pathMatch[1];
+                        // Extract coordinates from path commands (M, L, C, etc.)
+                        const coordsRegex = /[-]?[\d.]+/g;
+                        const coords = pathData.match(coordsRegex);
+                        if (coords) {
+                          for (let i = 0; i < coords.length - 1; i += 2) {
+                            const x = parseFloat(coords[i]);
+                            const y = parseFloat(coords[i + 1]);
+                            if (!isNaN(x) && !isNaN(y)) {
+                              globalMinX = Math.min(globalMinX, x);
+                              globalMinY = Math.min(globalMinY, y);
+                              globalMaxX = Math.max(globalMaxX, x);
+                              globalMaxY = Math.max(globalMaxY, y);
+                              foundClipGeometry = true;
+                            }
+                          }
+                        }
+                      }
+                    }
+                    
+                    if (foundClipGeometry && globalMaxX > globalMinX && globalMaxY > globalMinY) {
+                      const clipWidth = globalMaxX - globalMinX;
+                      const clipHeight = globalMaxY - globalMinY;
                       
-                      // Calculate actual content extent from viewBox
-                      const viewBoxContentWidth = vbWidth;
-                      const viewBoxContentHeight = vbHeight;
+                      console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
                       
-                      // If viewBox is larger than Ghostscript bounds, content may be clipped
-                      // Use viewBox dimensions which represent the full artboard/document size
-                      if (viewBoxContentWidth > contentBounds.width + 5 || viewBoxContentHeight > contentBounds.height + 5) {
-                        const widthDiff = viewBoxContentWidth - contentBounds.width;
-                        const heightDiff = viewBoxContentHeight - contentBounds.height;
-                        console.log(`✅ VIEWBOX SHOWS CLIPPED CONTENT: Using viewBox dimensions (+${widthDiff.toFixed(1)}pts width, +${heightDiff.toFixed(1)}pts height)`);
+                      // If clipping path vectors extend beyond painted content, use clip bounds
+                      // This detects the true content extent including masked areas
+                      if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
+                        const widthExpansion = clipWidth - contentBounds.width;
+                        const heightExpansion = clipHeight - contentBounds.height;
+                        console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
                         
                         contentBounds = {
-                          xMin: contentBounds.xMin,
-                          yMin: contentBounds.yMin,
-                          xMax: contentBounds.xMin + viewBoxContentWidth,
-                          yMax: contentBounds.yMin + viewBoxContentHeight,
-                          width: viewBoxContentWidth,
-                          height: viewBoxContentHeight
+                          xMin: globalMinX,
+                          yMin: globalMinY,
+                          xMax: globalMaxX,
+                          yMax: globalMaxY,
+                          width: clipWidth,
+                          height: clipHeight
                         };
                         boundsResult.contentBounds = contentBounds;
                       } else {
-                        console.log(`✅ GHOSTSCRIPT BOUNDS MATCH VIEWBOX: No clipping detected`);
+                        console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
                       }
+                    } else {
+                      console.log(`⚠️ Could not extract clipping path geometry`);
                     }
                   } else {
-                    console.log(`⚠️ No viewBox found in SVG, using Ghostscript bounds`);
+                    console.log(`ℹ️ No clipping paths found in SVG`);
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
