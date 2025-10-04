@@ -1416,14 +1416,21 @@ export async function registerRoutes(app: express.Application) {
               
               // Now convert PDF to SVG
               if (fs.existsSync(tempPdfPath)) {
-                const pdf2svgCommand = `pdf2svg "${tempPdfPath}" "${svgPath}"`;
                 try {
-                  await execAsync('which pdf2svg');
-                  await execAsync(pdf2svgCommand);
+                  // Use pdftocairo for better content preservation
+                  await execAsync('which pdftocairo');
+                  console.log(`🎯 USING PDFTOCAIRO FOR AI/EPS CONVERSION`);
+                  await execAsync(`pdftocairo -svg -origpagesizes "${tempPdfPath}" "${svgPath}"`);
                 } catch {
-                  // Fallback to Inkscape
-                  const inkscapeCommand = `inkscape "${tempPdfPath}" --export-type=svg --export-filename="${svgPath}"`;
-                  await execAsync(inkscapeCommand);
+                  try {
+                    // Fallback to pdf2svg
+                    await execAsync('which pdf2svg');
+                    await execAsync(`pdf2svg "${tempPdfPath}" "${svgPath}"`);
+                  } catch {
+                    // Final fallback to Inkscape
+                    const inkscapeCommand = `inkscape "${tempPdfPath}" --export-type=svg --export-filename="${svgPath}"`;
+                    await execAsync(inkscapeCommand);
+                  }
                 }
                 
                 // Clean up temp PDF
@@ -1566,17 +1573,20 @@ export async function registerRoutes(app: express.Application) {
                 // Apply FOGRA 51 color correction during PDF→SVG conversion
                 let svgCommand;
                 try {
-                  await execAsync('which pdf2svg');
-                  
-                  // FOGRA 51 COLOR-CORRECTED PDF→SVG CONVERSION
-                  const fogra51SvgPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
-                  const hasFogra51Svg = fs.existsSync(fogra51SvgPath);
-                  
-                  console.log(`🎯 BASIC PDF→SVG CONVERSION - WORKING IMPORT`);
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  // Use pdftocairo for better content preservation (doesn't clip as aggressively as pdf2svg)
+                  await execAsync('which pdftocairo');
+                  console.log(`🎯 USING PDFTOCAIRO FOR BETTER CONTENT PRESERVATION`);
+                  svgCommand = `pdftocairo -svg -origpagesizes "${pdfPath}" "${svgPath}"`;
                 } catch {
-                  // Fallback to Inkscape if pdf2svg not available
-                  svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+                  try {
+                    // Fallback to pdf2svg
+                    await execAsync('which pdf2svg');
+                    console.log(`🎯 BASIC PDF→SVG CONVERSION - WORKING IMPORT`);
+                    svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                  } catch {
+                    // Final fallback to Inkscape
+                    svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+                  }
                 }
                 
                 await execAsync(svgCommand);
@@ -1628,13 +1638,20 @@ export async function registerRoutes(app: express.Application) {
               const svgFilename = `${file.filename}.svg`;
               const svgPath = path.join(uploadDir, svgFilename);
               
-              // Use pdf2svg for conversion
+              // Use pdftocairo for better content preservation
               let svgCommand;
               try {
-                await execAsync('which pdf2svg');
-                svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                await execAsync('which pdftocairo');
+                console.log(`🎯 USING PDFTOCAIRO FOR BETTER CONTENT PRESERVATION (RGB path)`);
+                svgCommand = `pdftocairo -svg -origpagesizes "${pdfPath}" "${svgPath}"`;
               } catch {
-                svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+                try {
+                  // Fallback to pdf2svg
+                  await execAsync('which pdf2svg');
+                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
+                } catch {
+                  svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
+                }
               }
               
               await execAsync(svgCommand);
