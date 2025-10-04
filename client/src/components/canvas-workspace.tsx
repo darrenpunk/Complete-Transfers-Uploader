@@ -1583,20 +1583,63 @@ export default function CanvasWorkspace({
                           const templateHalfWidth = template.width / 2;
                           const templateHalfHeight = template.height / 2;
                           
-                          // Account for rotation when checking bounds
-                          const isRotated = element.rotation === 90 || element.rotation === 270;
-                          const visualWidth = isRotated ? element.height : element.width;
-                          const visualHeight = isRotated ? element.width : element.height;
+                          // Get the logo if it exists
+                          const logo = element.logoId ? logos.find(l => l.id === element.logoId) : null;
                           
-                          // Calculate element bounds from center position
+                          // Use content bounds if available, otherwise use full element bounds
+                          let visualWidth: number;
+                          let visualHeight: number;
+                          let contentOffsetX = 0;
+                          let contentOffsetY = 0;
+                          
+                          if (logo && hasValidContentBounds(logo)) {
+                            // Use actual content bounds (not viewBox)
+                            const contentBounds = logo.contentBounds;
+                            const isRotated = element.rotation === 90 || element.rotation === 270;
+                            
+                            if (isRotated) {
+                              visualWidth = contentBounds.height;
+                              visualHeight = contentBounds.width;
+                            } else {
+                              visualWidth = contentBounds.width;
+                              visualHeight = contentBounds.height;
+                            }
+                            
+                            // Calculate offset from element center to content center
+                            // Content bounds are relative to viewBox, we need to account for the offset
+                            const viewBoxWidth = isRotated ? element.height : element.width;
+                            const viewBoxHeight = isRotated ? element.width : element.height;
+                            const contentCenterX = (contentBounds.xMin + contentBounds.xMax) / 2;
+                            const contentCenterY = (contentBounds.yMin + contentBounds.yMax) / 2;
+                            const viewBoxCenterX = viewBoxWidth / 2;
+                            const viewBoxCenterY = viewBoxHeight / 2;
+                            
+                            if (isRotated) {
+                              // When rotated, swap and adjust offsets
+                              contentOffsetX = contentCenterY - viewBoxCenterY;
+                              contentOffsetY = -(contentCenterX - viewBoxCenterX);
+                            } else {
+                              contentOffsetX = contentCenterX - viewBoxCenterX;
+                              contentOffsetY = contentCenterY - viewBoxCenterY;
+                            }
+                          } else {
+                            // Fall back to full element bounds
+                            const isRotated = element.rotation === 90 || element.rotation === 270;
+                            visualWidth = isRotated ? element.height : element.width;
+                            visualHeight = isRotated ? element.width : element.height;
+                          }
+                          
+                          // Calculate content bounds from center position (accounting for content offset)
                           const elementHalfWidth = visualWidth / 2;
                           const elementHalfHeight = visualHeight / 2;
+                          const contentCenterX = element.x + contentOffsetX;
+                          const contentCenterY = element.y + contentOffsetY;
                           
-                          // Element edges in center-based coordinates
-                          const elementLeft = element.x - elementHalfWidth;
-                          const elementRight = element.x + elementHalfWidth;
-                          const elementTop = element.y - elementHalfHeight;
-                          const elementBottom = element.y + elementHalfHeight;
+                          // Content edges in center-based coordinates
+                          const elementLeft = contentCenterX - elementHalfWidth;
+                          const elementRight = contentCenterX + elementHalfWidth;
+                          const elementTop = contentCenterY - elementHalfHeight;
+                          const elementBottom = contentCenterY + elementHalfHeight;
                           
                           // Safety margins in center-based coordinates
                           const marginLeft = -templateHalfWidth + marginInMm;
@@ -1604,7 +1647,7 @@ export default function CanvasWorkspace({
                           const marginTop = -templateHalfHeight + marginInMm;
                           const marginBottom = templateHalfHeight - marginInMm;
                           
-                          // Check if element is outside safety margins
+                          // Check if content is outside safety margins
                           const outsideLeft = elementLeft < marginLeft;
                           const outsideTop = elementTop < marginTop;
                           const outsideRight = elementRight > marginRight;
