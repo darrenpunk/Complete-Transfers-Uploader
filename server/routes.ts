@@ -2572,6 +2572,17 @@ export async function registerRoutes(app: express.Application) {
                 const viewBoxWidthPx = originalWidthMm / pxToMm;
                 const viewBoxHeightPx = originalHeightMm / pxToMm;
                 
+                // DEBUG: Log all values for overflow detection
+                console.log(`🔍 OVERFLOW CHECK VALUES:
+  contentBounds.xMin: ${contentBounds.xMin}
+  contentBounds.yMin: ${contentBounds.yMin}
+  contentBounds.xMax: ${contentBounds.xMax}
+  contentBounds.yMax: ${contentBounds.yMax}
+  viewBoxWidthPx: ${viewBoxWidthPx}
+  viewBoxHeightPx: ${viewBoxHeightPx}
+  widthDiff: ${widthDiff}mm
+  heightDiff: ${heightDiff}mm`);
+                
                 // CRITICAL: Enable tight content when content extends beyond viewBox OR has negative coordinates
                 // This handles pasted SVG from Illustrator where content extends beyond artboard
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
