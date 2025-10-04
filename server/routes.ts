@@ -2479,10 +2479,9 @@ export async function registerRoutes(app: express.Application) {
                 const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
                 const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
-                // CRITICAL: Disable tight content for PDFs with potential clipping masks
-                // Clipping masks hide content from both Ghostscript and ImageMagick bitmap rendering
-                // causing content to be incorrectly cropped - use full page size instead
-                const needsTightCrop = false; // widthDiff > 2 || heightDiff > 2;
+                // Create tight content if there's significant padding
+                // Now detects clipping path bounds from SVG to catch masked content
+                const needsTightCrop = widthDiff > 2 || heightDiff > 2;
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
@@ -2534,62 +2533,99 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Ghostscript bbox misses clipping masks
-                  // Render ORIGINAL PDF to bitmap to measure true visual bounds
+                  // CRITICAL FIX: Extract clipping path bounds from SVG
+                  // Ghostscript bbox only sees painted content, not clipping path boundaries
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`✅ GHOSTSCRIPT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                  console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
-                  // Render ORIGINAL PDF (not converted SVG) to measure actual visual content
-                  const originalPdfFilename = (file as any).originalPdfFilename || file.filename;
-                  const pdfPath = path.join(uploadDir, originalPdfFilename);
-                  const pdfBitmapPath = svgPath.replace('.svg', '_bounds_check.png');
+                  // Extract clip path geometry from SVG to find clipping boundaries
+                  const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
+                  const clipPathMatches = svgContent.match(clipPathRegex);
                   
-                  if (fs.existsSync(pdfPath)) {
-                    try {
-                      // Render original PDF at 150 DPI for bounds detection
-                      await execAsync(`convert -density 150 "${pdfPath}" -background white -flatten -alpha remove -trim +repage "${pdfBitmapPath}"`);
-                      
-                      if (fs.existsSync(pdfBitmapPath)) {
-                        // Get dimensions of trimmed bitmap
-                        const identifyResult = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
-                        const identifyOutput = typeof identifyResult === 'string' ? identifyResult : identifyResult.stdout;
-                        const [bitmapWidth, bitmapHeight] = identifyOutput.trim().split(' ').map(Number);
-                        
-                        if (bitmapWidth && bitmapHeight) {
-                          // Convert pixels to points (150 DPI)
-                          const pxToPt = 72 / 150;
-                          const visualWidth = bitmapWidth * pxToPt;
-                          const visualHeight = bitmapHeight * pxToPt;
+                  if (clipPathMatches && clipPathMatches.length > 0) {
+                    console.log(`🔍 FOUND ${clipPathMatches.length} CLIPPING PATHS - analyzing bounds`);
+                    
+                    let maxClipWidth = 0;
+                    let maxClipHeight = 0;
+                    let minClipX = Infinity;
+                    let minClipY = Infinity;
+                    let maxClipX = -Infinity;
+                    let maxClipY = -Infinity;
+                    
+                    for (const clipPath of clipPathMatches) {
+                      // Extract rect elements from clip path (most common for bounding clips)
+                      const rectMatch = clipPath.match(/<rect[^>]*>/g);
+                      if (rectMatch) {
+                        for (const rect of rectMatch) {
+                          const xMatch = rect.match(/x="([^"]+)"/);
+                          const yMatch = rect.match(/y="([^"]+)"/);
+                          const widthMatch = rect.match(/width="([^"]+)"/);
+                          const heightMatch = rect.match(/height="([^"]+)"/);
                           
-                          console.log(`📐 PDF BITMAP BOUNDS: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts (from ${bitmapWidth}×${bitmapHeight}px @150dpi)`);
-                          
-                          const heightDiff = visualHeight - contentBounds.height;
-                          const widthDiff = visualWidth - contentBounds.width;
-                          
-                          if (heightDiff > 5 || widthDiff > 5) {
-                            // Bitmap found MORE content (clipping masks!)
-                            console.log(`🎯 BITMAP EXPANDED BOUNDS: Found ${widthDiff.toFixed(1)}pts more width, ${heightDiff.toFixed(1)}pts more height`);
-                            contentBounds = {
-                              ...contentBounds,
-                              width: visualWidth,
-                              height: visualHeight,
-                              xMax: contentBounds.xMin + visualWidth,
-                              yMax: contentBounds.yMin + visualHeight
-                            };
-                            boundsResult.contentBounds = contentBounds;
-                          } else {
-                            console.log(`✅ GHOSTSCRIPT BOUNDS SUFFICIENT: Bitmap agrees within tolerance`);
+                          if (xMatch && yMatch && widthMatch && heightMatch) {
+                            const x = parseFloat(xMatch[1]);
+                            const y = parseFloat(yMatch[1]);
+                            const w = parseFloat(widthMatch[1]);
+                            const h = parseFloat(heightMatch[1]);
+                            
+                            minClipX = Math.min(minClipX, x);
+                            minClipY = Math.min(minClipY, y);
+                            maxClipX = Math.max(maxClipX, x + w);
+                            maxClipY = Math.max(maxClipY, y + h);
+                            
+                            console.log(`  📏 Clip rect: ${x.toFixed(1)}, ${y.toFixed(1)}, ${w.toFixed(1)}×${h.toFixed(1)}pts`);
                           }
                         }
-                        
-                        // Clean up temp bitmap
-                        fs.unlinkSync(pdfBitmapPath);
                       }
-                    } catch (error) {
-                      console.log(`⚠️ PDF bitmap verification failed:`, error);
+                      
+                      // Also check for path elements in clip paths
+                      const pathMatch = clipPath.match(/<path[^>]*d="([^"]+)"/);
+                      if (pathMatch) {
+                        const pathData = pathMatch[1];
+                        // Simple bounds extraction from path data (M and L commands)
+                        const coords = pathData.match(/[\d.]+/g);
+                        if (coords) {
+                          for (let i = 0; i < coords.length; i += 2) {
+                            const x = parseFloat(coords[i]);
+                            const y = parseFloat(coords[i + 1]);
+                            if (!isNaN(x) && !isNaN(y)) {
+                              minClipX = Math.min(minClipX, x);
+                              minClipY = Math.min(minClipY, y);
+                              maxClipX = Math.max(maxClipX, x);
+                              maxClipY = Math.max(maxClipY, y);
+                            }
+                          }
+                        }
+                      }
+                    }
+                    
+                    if (maxClipX > minClipX && maxClipY > minClipY) {
+                      const clipWidth = maxClipX - minClipX;
+                      const clipHeight = maxClipY - minClipY;
+                      console.log(`🎯 CLIPPING PATH BOUNDS: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                      
+                      // If clipping path is LARGER than content bounds, use clip path bounds
+                      // This catches cases where content (87mm) is clipped by a larger boundary (95mm)
+                      if (clipWidth > contentBounds.width || clipHeight > contentBounds.height) {
+                        const heightExpansion = clipHeight - contentBounds.height;
+                        const widthExpansion = clipWidth - contentBounds.width;
+                        console.log(`✅ CLIP PATH LARGER: Using clip bounds instead of content bounds (+${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height)`);
+                        
+                        contentBounds = {
+                          xMin: minClipX,
+                          yMin: minClipY,
+                          xMax: maxClipX,
+                          yMax: maxClipY,
+                          width: clipWidth,
+                          height: clipHeight
+                        };
+                        boundsResult.contentBounds = contentBounds;
+                      } else {
+                        console.log(`✅ CONTENT BOUNDS LARGER: Content extends beyond clip path, using content bounds`);
+                      }
                     }
                   } else {
-                    console.log(`⚠️ Original PDF not found: ${pdfPath}`);
+                    console.log(`ℹ️ No clipping paths found in SVG`);
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
