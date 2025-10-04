@@ -2568,10 +2568,22 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`ℹ️ No clipping paths found in SVG`);
                 }
                 
-                // CRITICAL: Disable tight content - cannot reliably detect clipping mask boundaries
-                // Ghostscript misses masked content, viewBox includes page margins
-                // User files vary too much for reliable auto-detection
-                const needsTightCrop = false; // widthDiff > 2 || heightDiff > 2;
+                // Extract viewBox dimensions in pixels for overflow detection
+                const viewBoxWidthPx = originalWidthMm / pxToMm;
+                const viewBoxHeightPx = originalHeightMm / pxToMm;
+                
+                // CRITICAL: Enable tight content when content extends beyond viewBox OR has negative coordinates
+                // This handles pasted SVG from Illustrator where content extends beyond artboard
+                const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
+                const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
+                const needsTightCrop = hasNegativeCoords || extendsBeyondViewBox || widthDiff > 2 || heightDiff > 2;
+                
+                if (hasNegativeCoords) {
+                  console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
+                }
+                if (extendsBeyondViewBox) {
+                  console.log(`🚨 CONTENT EXTENDS BEYOND VIEWBOX: Content (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)}) > viewBox (${viewBoxWidthPx.toFixed(1)}, ${viewBoxHeightPx.toFixed(1)})`);
+                }
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
