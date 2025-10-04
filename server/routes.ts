@@ -2546,6 +2546,31 @@ export async function registerRoutes(app: express.Application) {
                   let contentBounds = boundsResult.contentBounds;
                   console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
                   
+                  // CRITICAL FIX: Verify bounds by rendering ORIGINAL SVG to catch content Ghostscript missed
+                  // This must happen BEFORE creating tight content SVG to avoid verifying already-clipped content
+                  const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
+                  const boundsExtractor = new PDFBoundsExtractor();
+                  
+                  // Convert SVGBounds to BoundingBox format for verification
+                  const bboxForVerification = {
+                    xMin: contentBounds.xMin,
+                    yMin: contentBounds.yMin,
+                    xMax: contentBounds.xMax,
+                    yMax: contentBounds.yMax,
+                    width: contentBounds.width,
+                    height: contentBounds.height,
+                    units: 'pt' as const
+                  };
+                  
+                  const verifiedBounds = await boundsExtractor.verifySVGBounds(svgPath, bboxForVerification);
+                  
+                  if (verifiedBounds) {
+                    // SVG verification found more content than Ghostscript detected!
+                    console.log(`🎯 BOUNDS CORRECTED: Using verified SVG bounds instead of Ghostscript`);
+                    contentBounds = verifiedBounds;
+                    boundsResult.contentBounds = verifiedBounds;
+                  }
+                  
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
                   console.log(`🔍 DEBUG: Content extraction - contentMatch found: ${!!contentMatch}`);
@@ -2594,29 +2619,6 @@ export async function registerRoutes(app: express.Application) {
                     
                     // Fix SVG namespace issues immediately after creation
                     fixSVGNamespaces(tightSvgPath);
-                    
-                    // CRITICAL FIX: Verify bounds by rendering SVG to catch content Ghostscript missed
-                    const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
-                    const boundsExtractor = new PDFBoundsExtractor();
-                    
-                    // Convert SVGBounds to BoundingBox format for verification
-                    const bboxForVerification = {
-                      xMin: contentBounds.xMin,
-                      yMin: contentBounds.yMin,
-                      xMax: contentBounds.xMax,
-                      yMax: contentBounds.yMax,
-                      width: contentBounds.width,
-                      height: contentBounds.height,
-                      units: 'pt' as const
-                    };
-                    
-                    const verifiedBounds = await boundsExtractor.verifySVGBounds(tightSvgPath, bboxForVerification);
-                    
-                    if (verifiedBounds) {
-                      // SVG verification found more content than Ghostscript detected!
-                      console.log(`🎯 BOUNDS CORRECTED: Using verified SVG bounds instead of Ghostscript`);
-                      boundsResult.contentBounds = verifiedBounds;
-                    }
                     
                     // Update the file to use the tight content version
                     finalFilename = path.basename(tightSvgPath);
