@@ -2644,12 +2644,12 @@ export async function registerRoutes(app: express.Application) {
   widthDiff: ${widthDiff}mm
   heightDiff: ${heightDiff}mm`);
                 
-                // CRITICAL: Do NOT create tight content for SVGs with overflow
-                // SVG viewport will naturally render all content, even outside viewBox bounds
-                // Creating tight content changes the coordinate system and breaks positioning
+                // CRITICAL: Normalize viewBox for SVGs with overflow from Illustrator clipboard
+                // When content extends beyond viewBox or has negative coords, the viewBox must be corrected
+                // Otherwise the browser will clip the content and render it incorrectly (appears black)
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
                 const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
-                const needsTightCrop = false; // DISABLED: Let browser render all content naturally
+                const needsTightCrop = hasNegativeCoords || extendsBeyondViewBox; // FIX: Normalize viewBox when overflow detected
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
