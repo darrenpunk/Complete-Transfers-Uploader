@@ -766,6 +766,86 @@ export class PDFBoundsExtractor {
   }
 
   /**
+   * Verify SVG bounds by rendering and detecting actual visual content
+   * This catches content that Ghostscript's bbox might miss (clipped paths, filters, etc.)
+   */
+  async verifySVGBounds(svgPath: string, ghostscriptBounds: BoundingBox): Promise<BoundingBox | null> {
+    try {
+      const tempDir = path.join(process.cwd(), 'temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const timestamp = Date.now();
+      const rasterPath = path.join(tempDir, `svg_verify_${timestamp}.png`);
+      
+      // Render SVG at high DPI for precise bounds detection
+      const dpi = 300;
+      const rsvgCommand = `rsvg-convert --dpi-x=${dpi} --dpi-y=${dpi} --format=png --output="${rasterPath}" "${svgPath}"`;
+      
+      console.log(`🔍 Verifying SVG bounds by rendering at ${dpi}DPI...`);
+      execSync(rsvgCommand, { stdio: 'pipe' });
+      
+      if (fs.existsSync(rasterPath)) {
+        // Use ImageMagick to detect actual content bounds
+        const trimPath = path.join(tempDir, `svg_trimmed_${timestamp}.png`);
+        const trimCommand = `convert "${rasterPath}" -trim +repage "${trimPath}"`;
+        
+        execSync(trimCommand, { stdio: 'pipe' });
+        
+        if (fs.existsSync(trimPath)) {
+          // Get original and trimmed dimensions
+          const originalSizeCmd = `identify -format "%w,%h" "${rasterPath}"`;
+          const [origWidth, origHeight] = execSync(originalSizeCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+          
+          const trimInfoCmd = `identify -format "%w,%h,%X,%Y" "${trimPath}"`;
+          const [trimWidth, trimHeight, trimX, trimY] = execSync(trimInfoCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+          
+          // Convert pixel coordinates back to points (DPI aware)
+          const pxToPt = 72 / dpi;
+          const xMin = trimX * pxToPt;
+          const yMin = trimY * pxToPt;
+          const width = trimWidth * pxToPt;
+          const height = trimHeight * pxToPt;
+          const xMax = xMin + width;
+          const yMax = yMin + height;
+          
+          // Cleanup temp files
+          fs.unlinkSync(rasterPath);
+          fs.unlinkSync(trimPath);
+          
+          // Check if raster bounds are significantly different from Ghostscript bounds
+          const heightDiff = Math.abs(height - ghostscriptBounds.height);
+          const widthDiff = Math.abs(width - ghostscriptBounds.width);
+          
+          if (heightDiff > 5 || widthDiff > 5) {
+            console.log(`⚠️ SVG VERIFICATION: Ghostscript bounds ${ghostscriptBounds.width.toFixed(1)}×${ghostscriptBounds.height.toFixed(1)}pts`);
+            console.log(`✅ SVG VERIFICATION: Actual visual bounds ${width.toFixed(1)}×${height.toFixed(1)}pts (${heightDiff.toFixed(1)}pts height diff, ${widthDiff.toFixed(1)}pts width diff)`);
+            
+            return {
+              xMin,
+              yMin,
+              xMax,
+              yMax,
+              width,
+              height,
+              units: 'pt'
+            };
+          } else {
+            console.log(`✅ SVG VERIFICATION: Ghostscript bounds confirmed accurate`);
+            return null; // Ghostscript was correct
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('⚠️ SVG bounds verification failed:', error);
+      return null;
+    }
+  }
+
+  /**
    * Apply padding to bounding box
    */
   private applyPadding(bbox: BoundingBox, padding: number): BoundingBox {
