@@ -999,9 +999,14 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
               
-              // CRITICAL: Check if SVG contains embedded images (base64 data URIs in <image> tags)
-              // rsvg-convert strips these out, but Inkscape preserves them
-              const hasEmbeddedImages = svgContent.includes('<image') && svgContent.includes('data:image/');
+              // CRITICAL: Check if SVG contains ACTUAL embedded raster images (not gradients)
+              // Illustrator gradients with masks may appear as <image> tags but should be treated as vectors
+              // Only treat as embedded image if it's a JPEG/PNG with substantial data (>10KB base64)
+              const imageMatches = svgContent.match(/<image[^>]*data:image\/(png|jpeg|jpg);base64,([^"']*)['"]/gi);
+              const hasEmbeddedImages = imageMatches && imageMatches.some(match => {
+                const base64Data = match.split(',')[1]?.split(/["']/) [0] || '';
+                return base64Data.length > 13000; // >10KB indicates real raster image, not small gradient cache
+              });
               
               if (hasEmbeddedImages) {
                 console.log(`🖼️ EMBEDDED IMAGES DETECTED: Preprocessing for Inkscape compatibility`);
