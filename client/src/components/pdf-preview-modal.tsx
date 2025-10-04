@@ -133,6 +133,12 @@ export default function PDFPreviewModal({
                       const leftPos = elementCenterX - element.width / 2;
                       const topPos = elementCenterY - element.height / 2;
                       
+                      // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
+                      const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
+                      const imageUrl = hasComplexVectorFallback 
+                        ? `/uploads/${(logo as any).canvasFallbackFilename}`
+                        : `/uploads/${logo.filename}`;
+                      
                       return (
                         <div
                           key={element.id}
@@ -148,19 +154,19 @@ export default function PDFPreviewModal({
                           }}
                         >
                           <img
-                            src={`/uploads/${logo.filename}`}
+                            src={imageUrl}
                             alt="Logo"
                             className="w-full h-full object-contain"
                             key={`${logo.filename}-${Date.now()}`}
                             onLoad={() => {
-                              console.log('✅ SVG content loaded and cleaned');
+                              console.log('✅ Image loaded for preview');
                             }}
                             onError={(e) => {
-                              console.error('Image failed to load:', `/uploads/${logo.filename}`);
+                              console.error('Image failed to load:', imageUrl);
                               // Retry with timestamp
                               const currentSrc = e.currentTarget.src;
                               if (!currentSrc.includes('?retry=')) {
-                                e.currentTarget.src = `/uploads/${logo.filename}?retry=${Date.now()}`;
+                                e.currentTarget.src = `${imageUrl}?retry=${Date.now()}`;
                               }
                             }}
                             style={{ 
@@ -212,6 +218,12 @@ export default function PDFPreviewModal({
                       const leftPos = elementCenterX - element.width / 2;
                       const topPos = elementCenterY - element.height / 2;
                       
+                      // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
+                      const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
+                      const imageUrl = hasComplexVectorFallback 
+                        ? `/uploads/${(logo as any).canvasFallbackFilename}`
+                        : `/uploads/${logo.filename}`;
+                      
                       return (
                         <div
                           key={element.id}
@@ -229,7 +241,7 @@ export default function PDFPreviewModal({
                           }}
                         >
                           <img
-                            src={`/uploads/${logo.filename}`}
+                            src={imageUrl}
                             alt={logo.originalName}
                             className="w-full h-full object-contain relative z-10"
                             style={{ 
