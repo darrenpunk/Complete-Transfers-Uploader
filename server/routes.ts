@@ -2533,95 +2533,44 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Extract clipping path bounds from SVG
-                  // Ghostscript bbox only sees painted content, not clipping path boundaries
+                  // CRITICAL: Clipping paths detected are for INDIVIDUAL elements (logos), not full content boundary
+                  // Use original SVG viewBox for full content dimensions when content appears clipped
                   let contentBounds = boundsResult.contentBounds;
                   console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
-                  // Extract clip path geometry from SVG to find clipping boundaries
-                  const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
-                  const clipPathMatches = svgContent.match(clipPathRegex);
+                  // Check if there are clipping paths (indicates potential clipping mask usage)
+                  const clipPathRegex = /<clipPath[^>]*>/g;
+                  const hasClippingPaths = clipPathRegex.test(svgContent);
                   
-                  if (clipPathMatches && clipPathMatches.length > 0) {
-                    console.log(`🔍 FOUND ${clipPathMatches.length} CLIPPING PATHS - analyzing bounds`);
+                  if (hasClippingPaths) {
+                    console.log(`🔍 CLIPPING PATHS DETECTED - Content may be clipped, checking viewBox for true dimensions`);
                     
-                    let maxClipWidth = 0;
-                    let maxClipHeight = 0;
-                    let minClipX = Infinity;
-                    let minClipY = Infinity;
-                    let maxClipX = -Infinity;
-                    let maxClipY = -Infinity;
-                    
-                    for (const clipPath of clipPathMatches) {
-                      // Extract rect elements from clip path (most common for bounding clips)
-                      const rectMatch = clipPath.match(/<rect[^>]*>/g);
-                      if (rectMatch) {
-                        for (const rect of rectMatch) {
-                          const xMatch = rect.match(/x="([^"]+)"/);
-                          const yMatch = rect.match(/y="([^"]+)"/);
-                          const widthMatch = rect.match(/width="([^"]+)"/);
-                          const heightMatch = rect.match(/height="([^"]+)"/);
-                          
-                          if (xMatch && yMatch && widthMatch && heightMatch) {
-                            const x = parseFloat(xMatch[1]);
-                            const y = parseFloat(yMatch[1]);
-                            const w = parseFloat(widthMatch[1]);
-                            const h = parseFloat(heightMatch[1]);
-                            
-                            minClipX = Math.min(minClipX, x);
-                            minClipY = Math.min(minClipY, y);
-                            maxClipX = Math.max(maxClipX, x + w);
-                            maxClipY = Math.max(maxClipY, y + h);
-                            
-                            console.log(`  📏 Clip rect: ${x.toFixed(1)}, ${y.toFixed(1)}, ${w.toFixed(1)}×${h.toFixed(1)}pts`);
-                          }
-                        }
-                      }
-                      
-                      // Also check for path elements in clip paths
-                      const pathMatch = clipPath.match(/<path[^>]*d="([^"]+)"/);
-                      if (pathMatch) {
-                        const pathData = pathMatch[1];
-                        // Simple bounds extraction from path data (M and L commands)
-                        const coords = pathData.match(/[\d.]+/g);
-                        if (coords) {
-                          for (let i = 0; i < coords.length; i += 2) {
-                            const x = parseFloat(coords[i]);
-                            const y = parseFloat(coords[i + 1]);
-                            if (!isNaN(x) && !isNaN(y)) {
-                              minClipX = Math.min(minClipX, x);
-                              minClipY = Math.min(minClipY, y);
-                              maxClipX = Math.max(maxClipX, x);
-                              maxClipY = Math.max(maxClipY, y);
-                            }
-                          }
-                        }
-                      }
-                    }
-                    
-                    if (maxClipX > minClipX && maxClipY > minClipY) {
-                      const clipWidth = maxClipX - minClipX;
-                      const clipHeight = maxClipY - minClipY;
-                      console.log(`🎯 CLIPPING PATH BOUNDS: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                      
-                      // If clipping path is LARGER than content bounds, use clip path bounds
-                      // This catches cases where content (87mm) is clipped by a larger boundary (95mm)
-                      if (clipWidth > contentBounds.width || clipHeight > contentBounds.height) {
-                        const heightExpansion = clipHeight - contentBounds.height;
-                        const widthExpansion = clipWidth - contentBounds.width;
-                        console.log(`✅ CLIP PATH LARGER: Using clip bounds instead of content bounds (+${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height)`);
+                    // Extract original SVG viewBox which shows full artboard dimensions
+                    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+                    if (viewBoxMatch) {
+                      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+                      if (viewBoxValues.length === 4) {
+                        const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
                         
-                        contentBounds = {
-                          xMin: minClipX,
-                          yMin: minClipY,
-                          xMax: maxClipX,
-                          yMax: maxClipY,
-                          width: clipWidth,
-                          height: clipHeight
-                        };
-                        boundsResult.contentBounds = contentBounds;
-                      } else {
-                        console.log(`✅ CONTENT BOUNDS LARGER: Content extends beyond clip path, using content bounds`);
+                        console.log(`📐 ORIGINAL VIEWBOX: ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}pts`);
+                        
+                        // If viewBox is significantly larger than content bounds, use viewBox
+                        // This means content is clipped and we need the full dimensions
+                        if (vbWidth > contentBounds.width + 10 || vbHeight > contentBounds.height + 10) {
+                          console.log(`✅ VIEWBOX LARGER: Using viewBox dimensions for clipped content (+${(vbWidth - contentBounds.width).toFixed(1)}pts width, +${(vbHeight - contentBounds.height).toFixed(1)}pts height)`);
+                          
+                          contentBounds = {
+                            xMin: vbX,
+                            yMin: vbY,
+                            xMax: vbX + vbWidth,
+                            yMax: vbY + vbHeight,
+                            width: vbWidth,
+                            height: vbHeight
+                          };
+                          boundsResult.contentBounds = contentBounds;
+                        } else {
+                          console.log(`✅ CONTENT BOUNDS SUFFICIENT: Clipping paths are for individual elements, not full content`);
+                        }
                       }
                     }
                   } else {
