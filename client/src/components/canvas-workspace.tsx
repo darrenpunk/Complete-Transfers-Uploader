@@ -1600,8 +1600,7 @@ export default function CanvasWorkspace({
                       ? `2px solid #961E75` 
                       : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
-                    boxSizing: 'border-box',
-                    overflow: 'visible'
+                    boxSizing: 'border-box'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
@@ -1619,8 +1618,7 @@ export default function CanvasWorkspace({
                       margin: 0,
                       display: 'block',
                       lineHeight: 0,
-                      fontSize: 0,
-                      overflow: 'visible'
+                      fontSize: 0
                     }}
                   >
                     {/* Logo Elements */}

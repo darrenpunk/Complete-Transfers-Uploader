@@ -71,10 +71,10 @@ export default function SvgInlineRenderer({
           ''
         );
         
-        // Add inline style to ensure proper scaling
+        // Add inline style to ensure proper scaling with containment
         cleanedSvg = cleanedSvg.replace(
           /<svg/,
-          '<svg style="width: 100%; height: 100%; overflow: visible;"'
+          '<svg style="max-width: 100%; max-height: 100%; width: 100%; height: 100%; display: block;"'
         );
         
         setSvgContent(cleanedSvg);
@@ -143,8 +143,7 @@ export default function SvgInlineRenderer({
           style={{ 
             position: 'relative',
             width: '100%',
-            height: '100%',
-            overflow: 'visible'
+            height: '100%'
           }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
