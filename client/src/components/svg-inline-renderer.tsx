@@ -71,6 +71,12 @@ export default function SvgInlineRenderer({
           ''
         );
         
+        // Add inline style to ensure proper scaling
+        cleanedSvg = cleanedSvg.replace(
+          /<svg/,
+          '<svg style="width: 100%; height: 100%; overflow: visible;"'
+        );
+        
         setSvgContent(cleanedSvg);
         console.log('✅ SVG content loaded and cleaned');
       } catch (error) {
@@ -134,8 +140,12 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="absolute inset-0"
-          style={{ overflow: 'visible' }}
+          style={{ 
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            overflow: 'visible'
+          }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
       );
