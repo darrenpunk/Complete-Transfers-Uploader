@@ -999,6 +999,58 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`🎯 Removed background fills but kept viewBox for proper sizing`);
               
+              // CRITICAL: Check if SVG contains embedded images (base64 data URIs in <image> tags)
+              // rsvg-convert strips these out, but Inkscape preserves them
+              const hasEmbeddedImages = svgContent.includes('<image') && svgContent.includes('data:image/');
+              
+              if (hasEmbeddedImages) {
+                console.log(`🖼️ EMBEDDED IMAGES DETECTED: Preprocessing for Inkscape compatibility`);
+                
+                // INKSCAPE FIX: Convert CSS-based clip-path and mask to XML attributes
+                // Illustrator uses CSS syntax which Inkscape doesn't support
+                // Parse and extract CSS rules from <style> tags
+                const styleMatches = svgContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+                if (styleMatches) {
+                  const clipPathMap = new Map();
+                  const maskMap = new Map();
+                  
+                  styleMatches.forEach(styleBlock => {
+                    const styleContent = styleBlock.replace(/<\/?style[^>]*>/g, '');
+                    // Extract clip-path and mask declarations
+                    const classRules = styleContent.match(/\.([a-zA-Z0-9-_]+)\s*{[^}]*}/g) || [];
+                    
+                    classRules.forEach(rule => {
+                      const classMatch = rule.match(/\.([a-zA-Z0-9-_]+)/);
+                      if (!classMatch) return;
+                      const className = classMatch[1];
+                      
+                      const clipMatch = rule.match(/clip-path\s*:\s*url\(#([^)]+)\)/);
+                      if (clipMatch) clipPathMap.set(className, clipMatch[1]);
+                      
+                      const maskMatch = rule.match(/mask\s*:\s*url\(#([^)]+)\)/);
+                      if (maskMatch) maskMap.set(className, maskMatch[1]);
+                    });
+                  });
+                  
+                  // Apply clip-path and mask as XML attributes
+                  clipPathMap.forEach((id, className) => {
+                    svgContent = svgContent.replace(
+                      new RegExp(`class="([^"]*\\b${className}\\b[^"]*)"`, 'g'),
+                      `class="$1" clip-path="url(#${id})"`
+                    );
+                  });
+                  
+                  maskMap.forEach((id, className) => {
+                    svgContent = svgContent.replace(
+                      new RegExp(`class="([^"]*\\b${className}\\b[^"]*)"`, 'g'),
+                      `class="$1" mask="url(#${id})"`
+                    );
+                  });
+                  
+                  console.log(`✅ Converted CSS clip-path/mask to XML attributes for Inkscape`);
+                }
+              }
+              
               // Create temp files
               const ts = Date.now() + Math.random();
               const tempSvg = path.join(process.cwd(), 'uploads', `temp_${ts}.svg`);
@@ -1006,12 +1058,8 @@ export async function registerRoutes(app: express.Application) {
               
               fs.writeFileSync(tempSvg, svgContent);
               
-              // CRITICAL: Check if SVG contains embedded images (base64 data URIs in <image> tags)
-              // rsvg-convert strips these out, but Inkscape preserves them
-              const hasEmbeddedImages = svgContent.includes('<image') && svgContent.includes('data:image/');
-              
               if (hasEmbeddedImages) {
-                console.log(`🖼️ EMBEDDED IMAGES DETECTED: Using Inkscape for better image preservation`);
+                console.log(`🖼️ Using Inkscape for embedded image preservation`);
                 // Inkscape command for SVG → PDF conversion with embedded image support
                 const inkscapeCmd = `inkscape "${tempSvg}" --export-type=pdf --export-filename="${tempPdf}" --export-area-page --export-dpi=72`;
                 execSync(inkscapeCmd);
