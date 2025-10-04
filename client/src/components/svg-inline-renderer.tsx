@@ -181,7 +181,7 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
+  // ARCHITECT SOLUTION: Content-bounds-based centering with viewBox expansion for negative coordinates
   const renderWithContentBounds = () => {
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
@@ -211,22 +211,71 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
+    // CRITICAL FIX: SVG viewBox clipping happens at SVG level, not CSS level
+    // For content with negative coordinates, we need to wrap in a new SVG with expanded viewBox
+    const hasNegativeCoords = bounds.xMin < 0 || bounds.yMin < 0;
+    
+    if (hasNegativeCoords || bounds.xMax > element.width || bounds.yMax > element.height) {
+      console.log('🎯 EXPANDING VIEWBOX: Content extends beyond artboard, wrapping SVG');
+      console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
+      console.log(`   Artboard size: ${element.width} × ${element.height}px`);
+      
+      // Extract the original viewBox from the SVG to get artboard dimensions
+      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+      let artboardWidth = element.width;
+      let artboardHeight = element.height;
+      
+      if (viewBoxMatch) {
+        const [, , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+        artboardWidth = vbWidth;
+        artboardHeight = vbHeight;
+        console.log(`   Original artboard viewBox: ${artboardWidth} × ${artboardHeight}px`);
+      }
+      
+      // Calculate content dimensions
+      const contentWidth = bounds.xMax - bounds.xMin;
+      const contentHeight = bounds.yMax - bounds.yMin;
+      
+      // Create wrapper SVG with expanded viewBox starting from content minimum
+      // This allows all content to be visible, including negative coordinates
+      const wrapperViewBox = `${bounds.xMin} ${bounds.yMin} ${artboardWidth} ${artboardHeight}`;
+      
+      console.log(`   Wrapper viewBox: ${wrapperViewBox} (starts at content min, artboard size)`);
+      
+      // Remove the original SVG opening tag to extract inner content
+      let innerContent = svgContent.replace(/<svg[^>]*>/i, '').replace(/<\/svg>\s*$/i, '');
+      
+      // Create wrapper SVG that shows the artboard window starting from where content begins
+      const wrappedSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${wrapperViewBox}" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">${innerContent}</svg>`;
+      
+      return (
+        <div className="w-full h-full relative overflow-visible">
+          <div
+            className="w-full h-full"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'visible'
+            }}
+            dangerouslySetInnerHTML={{ __html: wrappedSvg }}
+          />
+        </div>
+      );
+    }
+    
+    // No negative coordinates - use standard centering
+    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
+    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
+    
     // Detect Y-inversion by checking for scaleY(-1) in the SVG
     const hasYFlip = svgContent.includes('matrix(') && 
                      (svgContent.includes('matrix(1, 0, 0, -1') || 
                       svgContent.includes('matrix(1,0,0,-1'));
     
-    // Calculate content center and dimensions
-    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
-    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
-    const contentWidth = bounds.xMax - bounds.xMin;
-    const contentHeight = bounds.yMax - bounds.yMin;
-    
     // Handle Y-inversion for PDF-derived content
     let adjustedCenterY = contentCenterY;
     if (hasYFlip) {
-      // For Y-flipped content, invert the Y coordinate
-      // This assumes the SVG viewBox height as reference
       const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
       if (viewBoxMatch) {
         const [, , , svgHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
@@ -235,7 +284,6 @@ export default function SvgInlineRenderer({
     }
     
     // Calculate transform to center the content
-    // Move content center to container center (50%, 50%)
     const translateX = `calc(50% - ${contentCenterX}px)`;
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
     
