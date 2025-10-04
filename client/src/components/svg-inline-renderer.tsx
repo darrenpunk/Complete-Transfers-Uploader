@@ -86,10 +86,17 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // ARCHITECT SOLUTION: Remove explicit width/height, set proper preserveAspectRatio
-        // Remove existing width/height attributes to let viewBox control sizing
-        cleanedSvg = cleanedSvg.replace(/\s*width\s*=\s*["'][^"']*["']/gi, '');
-        cleanedSvg = cleanedSvg.replace(/\s*height\s*=\s*["'][^"']*["']/gi, '');
+        // CRITICAL FIX: Only remove width/height from root <svg> tag, NOT from child elements like <image>
+        // Removing width/height from <image> elements collapses embedded images to 0×0
+        // Use targeted replacement that only affects the opening <svg> tag
+        cleanedSvg = cleanedSvg.replace(
+          /(<svg[^>]*?)(\s+width\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+          '$1$3' // Remove width from svg tag
+        );
+        cleanedSvg = cleanedSvg.replace(
+          /(<svg[^>]*?)(\s+height\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+          '$1$3' // Remove height from svg tag
+        );
         
         // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
         if (cleanedSvg.includes('preserveAspectRatio')) {
@@ -221,6 +228,15 @@ export default function SvgInlineRenderer({
       console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
       console.log(`   Element size: ${element.width} × ${element.height}px`);
       
+      // Ensure SVG has proper namespace declarations for xlink (required for embedded images)
+      let processedSvg = svgContent;
+      if (!svgContent.includes('xmlns:xlink')) {
+        processedSvg = svgContent.replace(
+          /<svg([^>]*)>/i,
+          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
+        );
+      }
+      
       // Use simplified rendering - just render the SVG as-is
       // The browser handles SVG overflow naturally when not wrapped
       return (
@@ -234,7 +250,7 @@ export default function SvgInlineRenderer({
             margin: 0,
             overflow: 'visible'
           }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
+          dangerouslySetInnerHTML={{ __html: processedSvg }}
         />
       );
     }
