@@ -26,6 +26,7 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [resizeHandle, setResizeHandle] = useState('');
   const [startPos, setStartPos] = useState<{x: number, y: number} | null>(null);
+  const [initialCropArea, setInitialCropArea] = useState<CropArea | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Get mouse position constrained to the actual displayed image area
@@ -84,6 +85,7 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
     setIsResizing(true);
     setResizeHandle(handle);
     setStartPos(getRelativePos(e));
+    setInitialCropArea(cropArea);
   };
 
   // Global mouse move handler
@@ -104,11 +106,11 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
         if (rect.width > 5 && rect.height > 5) {
           onCropChange(rect);
         }
-      } else if (isResizing && cropArea) {
+      } else if (isResizing && initialCropArea) {
         // Resize existing selection
         const deltaX = pos.x - startPos.x;
         const deltaY = pos.y - startPos.y;
-        let newArea = { ...cropArea };
+        let newArea = { ...initialCropArea };
 
         switch (resizeHandle) {
           case 'nw':
@@ -140,7 +142,6 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
         newArea.y = Math.max(0, newArea.y);
 
         onCropChange(newArea);
-        setStartPos(pos); // Update for next delta calculation
       }
     };
 
@@ -149,6 +150,7 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
       setIsResizing(false);
       setResizeHandle('');
       setStartPos(null);
+      setInitialCropArea(null);
     };
 
     if (isDrawing || isResizing) {
@@ -159,7 +161,7 @@ export const SimpleCropInterface: React.FC<SimpleCropInterfaceProps> = ({
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDrawing, isResizing, startPos, cropArea, resizeHandle, onCropChange]);
+  }, [isDrawing, isResizing, startPos, cropArea, initialCropArea, resizeHandle, onCropChange]);
 
   return (
     <div 
