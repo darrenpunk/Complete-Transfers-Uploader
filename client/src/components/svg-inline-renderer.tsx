@@ -218,10 +218,6 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
-    // DISABLED: Overflow detection was buggy - compared pixels to millimeters incorrectly
-    // SVG viewBox handles overflow naturally, no special rendering needed
-    const hasOverflow = false;
-    
     // No negative coordinates - use standard centering
     const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
     const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
