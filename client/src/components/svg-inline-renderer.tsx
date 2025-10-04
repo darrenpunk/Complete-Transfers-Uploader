@@ -218,42 +218,9 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
-    // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
-    // This lets the browser's native SVG overflow handling work correctly
-    const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        bounds.xMax > element.width || bounds.xMax > element.height;
-    
-    if (hasOverflow) {
-      console.log('🎯 OVERFLOW DETECTED: Using simplified rendering for content with negative coords or overflow');
-      console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
-      console.log(`   Element size: ${element.width} × ${element.height}px`);
-      
-      // Ensure SVG has proper namespace declarations for xlink (required for embedded images)
-      let processedSvg = svgContent;
-      if (!svgContent.includes('xmlns:xlink')) {
-        processedSvg = svgContent.replace(
-          /<svg([^>]*)>/i,
-          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
-        );
-      }
-      
-      // Use simplified rendering - just render the SVG as-is
-      // The browser handles SVG overflow naturally when not wrapped
-      return (
-        <div 
-          className="w-full h-full"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
-            overflow: 'visible'
-          }}
-          dangerouslySetInnerHTML={{ __html: processedSvg }}
-        />
-      );
-    }
+    // DISABLED: Overflow detection was buggy - compared pixels to millimeters incorrectly
+    // SVG viewBox handles overflow naturally, no special rendering needed
+    const hasOverflow = false;
     
     // No negative coordinates - use standard centering
     const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
