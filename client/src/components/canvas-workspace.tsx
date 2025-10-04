@@ -128,14 +128,14 @@ interface CanvasWorkspaceProps {
 function hasValidContentBounds(logo: Logo): logo is Logo & { contentBounds: ContentBounds } {
   return logo.contentBounds != null && 
          typeof logo.contentBounds === 'object' &&
-         'minX' in logo.contentBounds &&
-         'minY' in logo.contentBounds &&
-         'maxX' in logo.contentBounds &&
-         'maxY' in logo.contentBounds &&
-         typeof logo.contentBounds.minX === 'number' &&
-         typeof logo.contentBounds.minY === 'number' &&
-         typeof logo.contentBounds.maxX === 'number' &&
-         typeof logo.contentBounds.maxY === 'number';
+         'xMin' in logo.contentBounds &&
+         'yMin' in logo.contentBounds &&
+         'xMax' in logo.contentBounds &&
+         'yMax' in logo.contentBounds &&
+         typeof logo.contentBounds.xMin === 'number' &&
+         typeof logo.contentBounds.yMin === 'number' &&
+         typeof logo.contentBounds.xMax === 'number' &&
+         typeof logo.contentBounds.yMax === 'number';
 }
 
 export default function CanvasWorkspace({
@@ -1597,20 +1597,33 @@ export default function CanvasWorkspace({
                             const contentBounds = logo.contentBounds;
                             const isRotated = element.rotation === 90 || element.rotation === 270;
                             
+                            // Content bounds are in pixels, need to convert to mm
+                            // Use PDF DPI conversion for PDF-derived content
+                            const isPdfDerived = element.width > 200 || element.height > 200;
+                            const mmToPixelRatio = isPdfDerived ? 2.834645669 : (template.pixelWidth / template.width);
+                            
+                            // Convert content bounds from pixels to mm
+                            const contentWidthMm = contentBounds.width / mmToPixelRatio;
+                            const contentHeightMm = contentBounds.height / mmToPixelRatio;
+                            const contentXMinMm = contentBounds.xMin / mmToPixelRatio;
+                            const contentYMinMm = contentBounds.yMin / mmToPixelRatio;
+                            const contentXMaxMm = contentBounds.xMax / mmToPixelRatio;
+                            const contentYMaxMm = contentBounds.yMax / mmToPixelRatio;
+                            
                             if (isRotated) {
-                              visualWidth = contentBounds.height;
-                              visualHeight = contentBounds.width;
+                              visualWidth = contentHeightMm;
+                              visualHeight = contentWidthMm;
                             } else {
-                              visualWidth = contentBounds.width;
-                              visualHeight = contentBounds.height;
+                              visualWidth = contentWidthMm;
+                              visualHeight = contentHeightMm;
                             }
                             
-                            // Calculate offset from element center to content center
-                            // Content bounds are relative to viewBox, we need to account for the offset
+                            // Calculate offset from element center to content center (in mm)
+                            // Content bounds are relative to viewBox
                             const viewBoxWidth = isRotated ? element.height : element.width;
                             const viewBoxHeight = isRotated ? element.width : element.height;
-                            const contentCenterX = (contentBounds.xMin + contentBounds.xMax) / 2;
-                            const contentCenterY = (contentBounds.yMin + contentBounds.yMax) / 2;
+                            const contentCenterX = (contentXMinMm + contentXMaxMm) / 2;
+                            const contentCenterY = (contentYMinMm + contentYMaxMm) / 2;
                             const viewBoxCenterX = viewBoxWidth / 2;
                             const viewBoxCenterY = viewBoxHeight / 2;
                             
