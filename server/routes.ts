@@ -2534,34 +2534,10 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Use FULL PAGE bounds instead of trimmed content bounds
-                  // Many PDFs have edge content (text, borders) that shouldn't be trimmed
-                  // Use the full SVG viewBox dimensions as the authoritative bounds
-                  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+                  // CRITICAL FIX: Ghostscript bbox misses clipping masks and some edge content
+                  // Always use Ghostscript as primary, but verify with bitmap rendering
                   let contentBounds = boundsResult.contentBounds;
-                  
-                  if (viewBoxMatch) {
-                    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
-                    if (viewBoxValues.length === 4) {
-                      const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
-                      
-                      // Use full page dimensions instead of trimmed content
-                      contentBounds = {
-                        xMin: vbX,
-                        yMin: vbY,
-                        xMax: vbX + vbWidth,
-                        yMax: vbY + vbHeight,
-                        width: vbWidth,
-                        height: vbHeight,
-                        units: 'pt' as const
-                      };
-                      
-                      console.log(`✅ USING FULL PAGE BOUNDS FROM VIEWBOX: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
-                      boundsResult.contentBounds = contentBounds;
-                    }
-                  } else {
-                    console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
-                  }
+                  console.log(`✅ GHOSTSCRIPT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
                   // CRITICAL FIX: Verify bounds by rendering ORIGINAL SVG to catch content Ghostscript missed
                   // This must happen BEFORE creating tight content SVG to avoid verifying already-clipped content
@@ -2579,9 +2555,27 @@ export async function registerRoutes(app: express.Application) {
                     units: 'pt' as const
                   };
                   
-                  // DISABLED: Skip verification to preserve full page bounds
-                  // Verification often trims edge content like text, borders, etc.
-                  console.log(`✅ SKIPPING VERIFICATION: Using full page bounds to preserve all edge content`);
+                  // CRITICAL: Use bitmap rendering to detect clipped content Ghostscript misses
+                  const visualBounds = await boundsExtractor.verifySVGBounds(svgPath, bboxForVerification);
+                  
+                  if (visualBounds) {
+                    // Check if bitmap found LARGER bounds (more visible content)
+                    const widthExpansion = visualBounds.width - contentBounds.width;
+                    const heightExpansion = visualBounds.height - contentBounds.height;
+                    
+                    if (widthExpansion > 5 || heightExpansion > 5) {
+                      // Bitmap rendering found significantly more content (clipping masks, etc.)
+                      console.log(`🎯 VISUAL BOUNDS EXPANDED: Ghostscript ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts → Visual ${visualBounds.width.toFixed(1)}×${visualBounds.height.toFixed(1)}pts`);
+                      console.log(`📐 Found ${widthExpansion.toFixed(1)}pts more width, ${heightExpansion.toFixed(1)}pts more height`);
+                      contentBounds = visualBounds;
+                      boundsResult.contentBounds = visualBounds;
+                    } else if (widthExpansion < -10 || heightExpansion < -10) {
+                      // Bitmap trimmed content significantly - keep Ghostscript bounds
+                      console.log(`⚠️ VISUAL BOUNDS SMALLER: Keeping Ghostscript bounds (bitmap trimmed ${Math.abs(heightExpansion).toFixed(1)}pts)`);
+                    } else {
+                      console.log(`✅ BOUNDS MATCH: Ghostscript and visual rendering agree within tolerance`);
+                    }
+                  }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
