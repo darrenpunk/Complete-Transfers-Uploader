@@ -88,57 +88,25 @@ export default function SvgInlineRenderer({
 
   // PERFORMANCE FIX: Render large SVGs using <img> tag with content-bounds positioning
   const renderWithContentBoundsImg = () => {
-    const hasContentBounds = logo.contentBounds && 
-                            typeof logo.contentBounds === 'object' &&
-                            'xMin' in logo.contentBounds &&
-                            'yMin' in logo.contentBounds &&
-                            'xMax' in logo.contentBounds &&
-                            'yMax' in logo.contentBounds;
-    
     const url = `/uploads/${logo.filename}`;
     
-    if (!hasContentBounds) {
-      return (
-        <div 
-          className="w-full h-full flex items-center justify-center"
-          style={{
-            padding: 0,
-            margin: 0,
-            overflow: 'hidden'
-          }}
-        >
-          <img 
-            src={url} 
-            alt={logo.originalName}
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
-      );
-    }
-    
-    const bounds = logo.contentBounds as ContentBounds;
-    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
-    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
-    
+    // For <img> tags, simply center the image - browser handles scaling with object-fit
     return (
       <div 
-        className="w-full h-full"
+        className="w-full h-full flex items-center justify-center"
         style={{
-          position: 'relative',
+          padding: 0,
+          margin: 0,
           overflow: 'hidden'
         }}
       >
         <img 
-          src={url}
+          src={url} 
           alt={logo.originalName}
           style={{
-            position: 'absolute',
             width: '100%',
             height: '100%',
-            objectFit: 'contain',
-            transform: `translate(calc(-50% + ${contentCenterX}px), calc(-50% + ${contentCenterY}px))`,
-            left: '50%',
-            top: '50%'
+            objectFit: 'contain'
           }}
         />
       </div>
