@@ -2479,9 +2479,10 @@ export async function registerRoutes(app: express.Application) {
                 const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
                 const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
-                // Create tight content if there's significant padding
-                // Now detects clipping path bounds from SVG to catch masked content
-                const needsTightCrop = widthDiff > 2 || heightDiff > 2;
+                // CRITICAL: Disable tight content - cannot reliably detect clipping mask boundaries
+                // Ghostscript misses masked content, viewBox includes page margins
+                // User files vary too much for reliable auto-detection
+                const needsTightCrop = false; // widthDiff > 2 || heightDiff > 2;
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
