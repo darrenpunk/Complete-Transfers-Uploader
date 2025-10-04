@@ -1416,21 +1416,14 @@ export async function registerRoutes(app: express.Application) {
               
               // Now convert PDF to SVG
               if (fs.existsSync(tempPdfPath)) {
+                const pdf2svgCommand = `pdf2svg "${tempPdfPath}" "${svgPath}"`;
                 try {
-                  // Use pdftocairo for better content preservation
-                  await execAsync('which pdftocairo');
-                  console.log(`🎯 USING PDFTOCAIRO FOR AI/EPS CONVERSION`);
-                  await execAsync(`pdftocairo -svg -origpagesizes "${tempPdfPath}" "${svgPath}"`);
+                  await execAsync('which pdf2svg');
+                  await execAsync(pdf2svgCommand);
                 } catch {
-                  try {
-                    // Fallback to pdf2svg
-                    await execAsync('which pdf2svg');
-                    await execAsync(`pdf2svg "${tempPdfPath}" "${svgPath}"`);
-                  } catch {
-                    // Final fallback to Inkscape
-                    const inkscapeCommand = `inkscape "${tempPdfPath}" --export-type=svg --export-filename="${svgPath}"`;
-                    await execAsync(inkscapeCommand);
-                  }
+                  // Fallback to Inkscape
+                  const inkscapeCommand = `inkscape "${tempPdfPath}" --export-type=svg --export-filename="${svgPath}"`;
+                  await execAsync(inkscapeCommand);
                 }
                 
                 // Clean up temp PDF
@@ -1573,20 +1566,12 @@ export async function registerRoutes(app: express.Application) {
                 // Apply FOGRA 51 color correction during PDF→SVG conversion
                 let svgCommand;
                 try {
-                  // Use pdftocairo for better content preservation (doesn't clip as aggressively as pdf2svg)
-                  await execAsync('which pdftocairo');
-                  console.log(`🎯 USING PDFTOCAIRO FOR BETTER CONTENT PRESERVATION`);
-                  svgCommand = `pdftocairo -svg -origpagesizes "${pdfPath}" "${svgPath}"`;
+                  await execAsync('which pdf2svg');
+                  console.log(`🎯 USING PDF2SVG FOR CONVERSION`);
+                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
                 } catch {
-                  try {
-                    // Fallback to pdf2svg
-                    await execAsync('which pdf2svg');
-                    console.log(`🎯 BASIC PDF→SVG CONVERSION - WORKING IMPORT`);
-                    svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
-                  } catch {
-                    // Final fallback to Inkscape
-                    svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
-                  }
+                  // Fallback to Inkscape if pdf2svg not available
+                  svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
                 }
                 
                 await execAsync(svgCommand);
@@ -1638,20 +1623,13 @@ export async function registerRoutes(app: express.Application) {
               const svgFilename = `${file.filename}.svg`;
               const svgPath = path.join(uploadDir, svgFilename);
               
-              // Use pdftocairo for better content preservation
+              // Use pdf2svg for conversion
               let svgCommand;
               try {
-                await execAsync('which pdftocairo');
-                console.log(`🎯 USING PDFTOCAIRO FOR BETTER CONTENT PRESERVATION (RGB path)`);
-                svgCommand = `pdftocairo -svg -origpagesizes "${pdfPath}" "${svgPath}"`;
+                await execAsync('which pdf2svg');
+                svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
               } catch {
-                try {
-                  // Fallback to pdf2svg
-                  await execAsync('which pdf2svg');
-                  svgCommand = `pdf2svg "${pdfPath}" "${svgPath}"`;
-                } catch {
-                  svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
-                }
+                svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
               }
               
               await execAsync(svgCommand);
@@ -2582,10 +2560,27 @@ export async function registerRoutes(app: express.Application) {
                   const verifiedBounds = await boundsExtractor.verifySVGBounds(svgPath, bboxForVerification);
                   
                   if (verifiedBounds) {
-                    // SVG verification found more content than Ghostscript detected!
-                    console.log(`🎯 BOUNDS CORRECTED: Using verified SVG bounds instead of Ghostscript`);
-                    contentBounds = verifiedBounds;
-                    boundsResult.contentBounds = verifiedBounds;
+                    // Check if verification found LARGER bounds (more content than Ghostscript)
+                    // OR if verification shrunk bounds by <25% (minor trim is OK)
+                    const widthChange = (verifiedBounds.width - contentBounds.width) / contentBounds.width;
+                    const heightChange = (verifiedBounds.height - contentBounds.height) / contentBounds.height;
+                    const widthShrinkage = Math.abs(Math.min(0, widthChange));
+                    const heightShrinkage = Math.abs(Math.min(0, heightChange));
+                    const maxShrinkage = Math.max(widthShrinkage, heightShrinkage);
+                    
+                    if (maxShrinkage > 0.25) {
+                      console.log(`⚠️ SVG VERIFICATION SHRUNK BOUNDS BY ${(maxShrinkage * 100).toFixed(0)}% - Ignoring to preserve full content`);
+                      console.log(`📐 Keeping Ghostscript bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                    } else if (widthChange > 0 || heightChange > 0) {
+                      // Verification found MORE content than Ghostscript detected!
+                      console.log(`🎯 BOUNDS EXPANDED: Using verified SVG bounds (found more content)`);
+                      contentBounds = verifiedBounds;
+                      boundsResult.contentBounds = verifiedBounds;
+                    } else {
+                      console.log(`✅ BOUNDS VERIFIED: Minor trim accepted, using verified bounds`);
+                      contentBounds = verifiedBounds;
+                      boundsResult.contentBounds = verifiedBounds;
+                    }
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
