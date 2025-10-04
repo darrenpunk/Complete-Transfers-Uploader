@@ -2479,6 +2479,95 @@ export async function registerRoutes(app: express.Application) {
                 const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
                 const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
+                // CRITICAL: Extract ALL clipping mask vector boundaries FIRST (before tight crop decision)
+                // Clipping masks are made of vector lines - detect their geometric extent
+                let contentBounds = boundsResult.contentBounds;
+                console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                
+                // Extract ALL clipping path geometries from SVG
+                const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
+                const clipPathMatches = svgContent.match(clipPathRegex);
+                
+                if (clipPathMatches && clipPathMatches.length > 0) {
+                  console.log(`🔍 ANALYZING ${clipPathMatches.length} CLIPPING PATH VECTORS`);
+                  
+                  let globalMinX = Infinity, globalMinY = Infinity;
+                  let globalMaxX = -Infinity, globalMaxY = -Infinity;
+                  let foundClipGeometry = false;
+                  
+                  for (const clipPath of clipPathMatches) {
+                    // Extract rect elements from clipping paths
+                    const rectRegex = /<rect[^>]*x="([^"]+)"[^>]*y="([^"]+)"[^>]*width="([^"]+)"[^>]*height="([^"]+)"/g;
+                    let rectMatch;
+                    while ((rectMatch = rectRegex.exec(clipPath)) !== null) {
+                      const x = parseFloat(rectMatch[1]);
+                      const y = parseFloat(rectMatch[2]);
+                      const w = parseFloat(rectMatch[3]);
+                      const h = parseFloat(rectMatch[4]);
+                      
+                      globalMinX = Math.min(globalMinX, x);
+                      globalMinY = Math.min(globalMinY, y);
+                      globalMaxX = Math.max(globalMaxX, x + w);
+                      globalMaxY = Math.max(globalMaxY, y + h);
+                      foundClipGeometry = true;
+                    }
+                    
+                    // Extract path elements from clipping paths
+                    const pathRegex = /<path[^>]*d="([^"]+)"/g;
+                    let pathMatch;
+                    while ((pathMatch = pathRegex.exec(clipPath)) !== null) {
+                      const pathData = pathMatch[1];
+                      // Extract coordinates from path commands (M, L, C, etc.)
+                      const coordsRegex = /[-]?[\d.]+/g;
+                      const coords = pathData.match(coordsRegex);
+                      if (coords) {
+                        for (let i = 0; i < coords.length - 1; i += 2) {
+                          const x = parseFloat(coords[i]);
+                          const y = parseFloat(coords[i + 1]);
+                          if (!isNaN(x) && !isNaN(y)) {
+                            globalMinX = Math.min(globalMinX, x);
+                            globalMinY = Math.min(globalMinY, y);
+                            globalMaxX = Math.max(globalMaxX, x);
+                            globalMaxY = Math.max(globalMaxY, y);
+                            foundClipGeometry = true;
+                          }
+                        }
+                      }
+                    }
+                  }
+                  
+                  if (foundClipGeometry && globalMaxX > globalMinX && globalMaxY > globalMinY) {
+                    const clipWidth = globalMaxX - globalMinX;
+                    const clipHeight = globalMaxY - globalMinY;
+                    
+                    console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                    
+                    // If clipping path vectors extend beyond painted content, use clip bounds
+                    // This detects the true content extent including masked areas
+                    if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
+                      const widthExpansion = clipWidth - contentBounds.width;
+                      const heightExpansion = clipHeight - contentBounds.height;
+                      console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
+                      
+                      contentBounds = {
+                        xMin: globalMinX,
+                        yMin: globalMinY,
+                        xMax: globalMaxX,
+                        yMax: globalMaxY,
+                        width: clipWidth,
+                        height: clipHeight
+                      };
+                      boundsResult.contentBounds = contentBounds;
+                    } else {
+                      console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
+                    }
+                  } else {
+                    console.log(`⚠️ Could not extract clipping path geometry`);
+                  }
+                } else {
+                  console.log(`ℹ️ No clipping paths found in SVG`);
+                }
+                
                 // CRITICAL: Disable tight content - cannot reliably detect clipping mask boundaries
                 // Ghostscript misses masked content, viewBox includes page margins
                 // User files vary too much for reliable auto-detection
@@ -2533,95 +2622,6 @@ export async function registerRoutes(app: express.Application) {
                   
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
-                  
-                  // CRITICAL: Extract ALL clipping mask vector boundaries (not painted content)
-                  // Clipping masks are made of vector lines - detect their geometric extent
-                  let contentBounds = boundsResult.contentBounds;
-                  console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
-                  
-                  // Extract ALL clipping path geometries from SVG
-                  const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
-                  const clipPathMatches = svgContent.match(clipPathRegex);
-                  
-                  if (clipPathMatches && clipPathMatches.length > 0) {
-                    console.log(`🔍 ANALYZING ${clipPathMatches.length} CLIPPING PATH VECTORS`);
-                    
-                    let globalMinX = Infinity, globalMinY = Infinity;
-                    let globalMaxX = -Infinity, globalMaxY = -Infinity;
-                    let foundClipGeometry = false;
-                    
-                    for (const clipPath of clipPathMatches) {
-                      // Extract rect elements from clipping paths
-                      const rectRegex = /<rect[^>]*x="([^"]+)"[^>]*y="([^"]+)"[^>]*width="([^"]+)"[^>]*height="([^"]+)"/g;
-                      let rectMatch;
-                      while ((rectMatch = rectRegex.exec(clipPath)) !== null) {
-                        const x = parseFloat(rectMatch[1]);
-                        const y = parseFloat(rectMatch[2]);
-                        const w = parseFloat(rectMatch[3]);
-                        const h = parseFloat(rectMatch[4]);
-                        
-                        globalMinX = Math.min(globalMinX, x);
-                        globalMinY = Math.min(globalMinY, y);
-                        globalMaxX = Math.max(globalMaxX, x + w);
-                        globalMaxY = Math.max(globalMaxY, y + h);
-                        foundClipGeometry = true;
-                      }
-                      
-                      // Extract path elements from clipping paths
-                      const pathRegex = /<path[^>]*d="([^"]+)"/g;
-                      let pathMatch;
-                      while ((pathMatch = pathRegex.exec(clipPath)) !== null) {
-                        const pathData = pathMatch[1];
-                        // Extract coordinates from path commands (M, L, C, etc.)
-                        const coordsRegex = /[-]?[\d.]+/g;
-                        const coords = pathData.match(coordsRegex);
-                        if (coords) {
-                          for (let i = 0; i < coords.length - 1; i += 2) {
-                            const x = parseFloat(coords[i]);
-                            const y = parseFloat(coords[i + 1]);
-                            if (!isNaN(x) && !isNaN(y)) {
-                              globalMinX = Math.min(globalMinX, x);
-                              globalMinY = Math.min(globalMinY, y);
-                              globalMaxX = Math.max(globalMaxX, x);
-                              globalMaxY = Math.max(globalMaxY, y);
-                              foundClipGeometry = true;
-                            }
-                          }
-                        }
-                      }
-                    }
-                    
-                    if (foundClipGeometry && globalMaxX > globalMinX && globalMaxY > globalMinY) {
-                      const clipWidth = globalMaxX - globalMinX;
-                      const clipHeight = globalMaxY - globalMinY;
-                      
-                      console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                      
-                      // If clipping path vectors extend beyond painted content, use clip bounds
-                      // This detects the true content extent including masked areas
-                      if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
-                        const widthExpansion = clipWidth - contentBounds.width;
-                        const heightExpansion = clipHeight - contentBounds.height;
-                        console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
-                        
-                        contentBounds = {
-                          xMin: globalMinX,
-                          yMin: globalMinY,
-                          xMax: globalMaxX,
-                          yMax: globalMaxY,
-                          width: clipWidth,
-                          height: clipHeight
-                        };
-                        boundsResult.contentBounds = contentBounds;
-                      } else {
-                        console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
-                      }
-                    } else {
-                      console.log(`⚠️ Could not extract clipping path geometry`);
-                    }
-                  } else {
-                    console.log(`ℹ️ No clipping paths found in SVG`);
-                  }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
@@ -2694,8 +2694,9 @@ export async function registerRoutes(app: express.Application) {
                 // Reduce padding to get more accurate content dimensions
                 const horizontalOverflow = needsTightCrop ? 2 : 0; // Minimal padding left/right
                 const verticalOverflow = needsTightCrop ? 2 : 0;   // Minimal padding top/bottom
-                let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
-                let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
+                // Use the potentially updated contentBounds (which may include clipping path expansion)
+                let contentWidth = (contentBounds.width + horizontalOverflow) * pxToMm;
+                let contentHeight = (contentBounds.height + verticalOverflow) * pxToMm;
                 
                 console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (PDF bounds + minimal overflow)`);
                 
