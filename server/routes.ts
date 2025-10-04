@@ -1006,10 +1006,22 @@ export async function registerRoutes(app: express.Application) {
               
               fs.writeFileSync(tempSvg, svgContent);
               
-              // Convert SVG → PDF with transparency preserved (no background)
-              const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
-              execSync(rsvgCmd);
-              console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+              // CRITICAL: Check if SVG contains embedded images (base64 data URIs in <image> tags)
+              // rsvg-convert strips these out, but Inkscape preserves them
+              const hasEmbeddedImages = svgContent.includes('<image') && svgContent.includes('data:image/');
+              
+              if (hasEmbeddedImages) {
+                console.log(`🖼️ EMBEDDED IMAGES DETECTED: Using Inkscape for better image preservation`);
+                // Inkscape command for SVG → PDF conversion with embedded image support
+                const inkscapeCmd = `inkscape "${tempSvg}" --export-type=pdf --export-filename="${tempPdf}" --export-area-page --export-dpi=72`;
+                execSync(inkscapeCmd);
+                console.log(`✅ Inkscape SVG → PDF with embedded images: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+              } else {
+                // Convert SVG → PDF with transparency preserved (no background)
+                const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
+                execSync(rsvgCmd);
+                console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+              }
               
               vectorBytes = fs.readFileSync(tempPdf);
               
