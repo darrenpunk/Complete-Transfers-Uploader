@@ -16,8 +16,22 @@ export default function SvgInlineRenderer({
 }: SvgInlineRendererProps) {
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [useFallbackImg, setUseFallbackImg] = useState(false);
+
+  // PERFORMANCE FIX: Large SVG files (>1MB) can crash the browser when rendered inline
+  // Use <img> tag instead for better performance
+  const LARGE_SVG_THRESHOLD = 1024 * 1024; // 1MB
+  const isLargeSvg = logo.size && logo.size > LARGE_SVG_THRESHOLD;
 
   useEffect(() => {
+    // For very large SVGs, skip inline rendering and use <img> tag
+    if (isLargeSvg && !element.colorOverrides && !shouldRecolorForInk) {
+      console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using <img> tag for performance`);
+      setUseFallbackImg(true);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSvg = async () => {
       try {
         setIsLoading(true);
@@ -31,8 +45,6 @@ export default function SvgInlineRenderer({
         } else {
           url = `/uploads/${logo.filename}`;
         }
-        
-        console.log('🎨 Fetching SVG content from:', url);
         
         const response = await fetch(url);
         const text = await response.text();
@@ -63,7 +75,6 @@ export default function SvgInlineRenderer({
         );
         
         setSvgContent(cleanedSvg);
-        console.log('✅ SVG content loaded and cleaned');
       } catch (error) {
         console.error('Failed to load SVG content:', error);
         setSvgContent('');
@@ -73,26 +84,66 @@ export default function SvgInlineRenderer({
     };
 
     fetchSvg();
-  }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor]);
+  }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor, isLargeSvg, logo.size]);
 
-  if (isLoading) {
+  // PERFORMANCE FIX: Render large SVGs using <img> tag with content-bounds positioning
+  const renderWithContentBoundsImg = () => {
+    const hasContentBounds = logo.contentBounds && 
+                            typeof logo.contentBounds === 'object' &&
+                            'xMin' in logo.contentBounds &&
+                            'yMin' in logo.contentBounds &&
+                            'xMax' in logo.contentBounds &&
+                            'yMax' in logo.contentBounds;
+    
+    const url = `/uploads/${logo.filename}`;
+    
+    if (!hasContentBounds) {
+      return (
+        <div 
+          className="w-full h-full flex items-center justify-center"
+          style={{
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
+          }}
+        >
+          <img 
+            src={url} 
+            alt={logo.originalName}
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
+      );
+    }
+    
+    const bounds = logo.contentBounds as ContentBounds;
+    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
+    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
+    
     return (
-      <div className="w-full h-full flex items-center justify-center text-gray-500">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+      <div 
+        className="w-full h-full"
+        style={{
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <img 
+          src={url}
+          alt={logo.originalName}
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            transform: `translate(calc(-50% + ${contentCenterX}px), calc(-50% + ${contentCenterY}px))`,
+            left: '50%',
+            top: '50%'
+          }}
+        />
       </div>
     );
-  }
-
-  if (!svgContent) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-2">
-        <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-        </svg>
-        <span className="text-xs">{logo.originalName}</span>
-      </div>
-    );
-  }
+  };
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
   const renderWithContentBounds = () => {
@@ -105,7 +156,6 @@ export default function SvgInlineRenderer({
                             'yMax' in logo.contentBounds;
     
     if (!hasContentBounds) {
-      console.log('🔍 No contentBounds available, using default centering');
       // Fallback to default centering
       return (
         <div 
@@ -130,12 +180,6 @@ export default function SvgInlineRenderer({
                      (svgContent.includes('matrix(1, 0, 0, -1') || 
                       svgContent.includes('matrix(1,0,0,-1'));
     
-    console.log('🎯 Content-bounds centering:', {
-      bounds,
-      hasYFlip,
-      logoFile: logo.filename
-    });
-    
     // Calculate content center and dimensions
     const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
     const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
@@ -151,26 +195,13 @@ export default function SvgInlineRenderer({
       if (viewBoxMatch) {
         const [, , , svgHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
         adjustedCenterY = svgHeight - contentCenterY;
-        console.log('🔄 Y-flip detected, adjusted centerY:', adjustedCenterY);
       }
     }
-    
-    // Calculate scale to fit content in container (preserving aspect ratio)
-    // Assume container is 100% of allocated space
-    const containerAspect = 1; // Will be determined by CSS
-    const contentAspect = contentWidth / contentHeight;
     
     // Calculate transform to center the content
     // Move content center to container center (50%, 50%)
     const translateX = `calc(50% - ${contentCenterX}px)`;
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
-    
-    console.log('📐 Calculated transforms:', {
-      translateX,
-      translateY,
-      contentCenter: [contentCenterX, adjustedCenterY],
-      contentSize: [contentWidth, contentHeight]
-    });
     
     return (
       <div className="w-full h-full relative overflow-hidden">
@@ -186,6 +217,31 @@ export default function SvgInlineRenderer({
       </div>
     );
   };
+
+  // Early returns for loading and error states
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center text-gray-500">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+      </div>
+    );
+  }
+
+  // PERFORMANCE FIX: Render large SVGs as <img> tag for better performance
+  if (useFallbackImg) {
+    return renderWithContentBoundsImg();
+  }
+
+  if (!svgContent) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-2">
+        <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        </svg>
+        <span className="text-xs">{logo.originalName}</span>
+      </div>
+    );
+  }
   
   return renderWithContentBounds();
 }
