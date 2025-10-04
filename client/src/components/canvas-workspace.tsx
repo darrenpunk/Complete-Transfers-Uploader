@@ -536,6 +536,10 @@ export default function CanvasWorkspace({
       console.log('🎯 Processing pasted SVG content');
 
       try {
+        // CRITICAL FIX: Trim leading/trailing whitespace (Illustrator adds tab before <?xml)
+        // XML declaration MUST be the absolute first thing in the file
+        svgContent = svgContent.trim();
+        
         // Create a File object from the SVG string
         const blob = new Blob([svgContent], { type: 'image/svg+xml' });
         const filename = `pasted-artwork-${Date.now()}.svg`;
