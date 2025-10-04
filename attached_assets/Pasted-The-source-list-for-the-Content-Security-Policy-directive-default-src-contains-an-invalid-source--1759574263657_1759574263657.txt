@@ -1,0 +1,313 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+ProofDesigner:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-d61132b6249dbd82.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-d61132b6249dbd82.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-d61132b6249dbd82.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-d61132b6249dbd82.js:1
+workspace_iframe.html:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ AppliqueBadgesModal open state changed: false
+ showAppliqueBadgesModal state changed to: false
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ Template A3: 842x1191px, Workspace: 1186x942, Zoom: 67%
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 handleFilesUpload called with files: Array(1)
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 Upload completed, checking for PDFs with raster content: Array(1)
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🎨 Fetching SVG content from: /uploads/d31ef28485629fd4de1ada7b33386b6b_tight-content.svg
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 ✅ SVG content loaded and cleaned
+Console.js:61 🎯 Content-bounds centering: Object
+Console.js:61 🔄 Y-flip detected, adjusted centerY: 517.4409835
+Console.js:61 📐 Calculated transforms: Object
+Console.js:61 🎯 Mouse down on element 5662716b-2b21-4549-828d-0099c3e23bd2, starting drag
+Console.js:61 🎯 Drag offset calculated: (-174.0, -220.8)
+Console.js:61 Preflight CMYK Check: Object
+Console.js:61 RasterWarningModal render check: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 5662716b-2b21-4549-828d-0099c3e23bd2 dimensions: Object
+Console.js:61 🎯 Content-bounds centering: Object
+Console.js:61 🔄 Y-flip detected, adjusted centerY: 517.4409835
+Console.js:61 📐 Calculated transforms: Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 TemplateSelectorModal render Object
+Console.js:61 PDFPreviewModal render: Object
+Console.js:61 VectorizationServiceForm render: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 5662716b-2b21-4549-828d-0099c3e23bd2 dimensions: Object
+Console.js:61 🎯 Content-bounds centering: Object
+Console.js:61 🔄 Y-flip detected, adjusted centerY: 517.4409835
+Console.js:61 📐 Calculated transforms: Object
+Console.js:61 🎯 Mouse down on element 5662716b-2b21-4549-828d-0099c3e23bd2, starting drag
+Console.js:61 🎯 Drag offset calculated: (-166.5, -220.8)
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 5662716b-2b21-4549-828d-0099c3e23bd2 dimensions: Object
+Console.js:61 🎯 Content-bounds centering: Object
+Console.js:61 🔄 Y-flip detected, adjusted centerY: 517.4409835
+Console.js:61 📐 Calculated transforms: Object
+Console.js:61 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+Console.js:61 Canvas element 5662716b-2b21-4549-828d-0099c3e23bd2 dimensions: Object
+Console.js:61 🎯 Content-bounds centering: Object
+Console.js:61 🔄 Y-flip detected, adjusted centerY: 517.4409835
+Console.js:61 📐 Calculated transforms: Object
+Console.js:61 TemplateSelectorModal render Object
