@@ -2550,7 +2550,8 @@ export async function registerRoutes(app: express.Application) {
                       
                       if (fs.existsSync(pdfBitmapPath)) {
                         // Get dimensions of trimmed bitmap
-                        const identifyOutput = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
+                        const identifyResult = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
+                        const identifyOutput = typeof identifyResult === 'string' ? identifyResult : identifyResult.stdout;
                         const [bitmapWidth, bitmapHeight] = identifyOutput.trim().split(' ').map(Number);
                         
                         if (bitmapWidth && bitmapHeight) {
