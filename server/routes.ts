@@ -2767,7 +2767,11 @@ export async function registerRoutes(app: express.Application) {
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
-        const updatedLogo = await storage.updateLogo(logo.id, {
+        
+        // CRITICAL FIX: When tight content SVG is created, update logo dimensions to match
+        // This ensures the frontend displays the full content, not just the original artboard
+        const pxToMm = 1 / 2.834645669; // 72 DPI standard
+        const logoUpdateData: any = {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
@@ -2776,7 +2780,16 @@ export async function registerRoutes(app: express.Application) {
           ...(boundsResult?.success && boundsResult.contentBounds && { 
             contentBounds: boundsResult.contentBounds 
           })
-        });
+        };
+        
+        // Update width/height to match tight content dimensions (in pixels)
+        if (displayWidth && displayHeight) {
+          logoUpdateData.width = Math.round(displayWidth / pxToMm);
+          logoUpdateData.height = Math.round(displayHeight / pxToMm);
+          console.log(`✅ UPDATING LOGO DIMENSIONS: ${logoUpdateData.width}×${logoUpdateData.height}px (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
+        }
+        
+        const updatedLogo = await storage.updateLogo(logo.id, logoUpdateData);
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
