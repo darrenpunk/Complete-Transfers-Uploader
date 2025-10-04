@@ -44,8 +44,10 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // CRITICAL FIX: Keep explicit width/height attributes for proper intrinsic sizing
-        // The backend now adds these attributes for normalized SVGs - don't remove them!
+        // ARCHITECT SOLUTION: Remove explicit width/height, set proper preserveAspectRatio
+        // Remove existing width/height attributes to let viewBox control sizing
+        cleanedSvg = cleanedSvg.replace(/\s*width\s*=\s*["'][^"']*["']/gi, '');
+        cleanedSvg = cleanedSvg.replace(/\s*height\s*=\s*["'][^"']*["']/gi, '');
         
         // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
         if (cleanedSvg.includes('preserveAspectRatio')) {
@@ -58,23 +60,6 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(
           /style\s*=\s*["'][^"']*background[^"']*["']/gi,
           ''
-        );
-        
-        // Keep SVG responsive - viewBox handles aspect ratio
-        // Remove any width/height attributes that might constrain it
-        cleanedSvg = cleanedSvg.replace(
-          /\s+width\s*=\s*["'][^"']*["']/gi,
-          ''
-        );
-        cleanedSvg = cleanedSvg.replace(
-          /\s+height\s*=\s*["'][^"']*["']/gi,
-          ''
-        );
-        
-        // Add inline style to ensure SVG scales proportionally within bounds
-        cleanedSvg = cleanedSvg.replace(
-          /<svg/,
-          '<svg style="max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"'
         );
         
         setSvgContent(cleanedSvg);
@@ -111,10 +96,6 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with Y-inversion handling
   const renderWithContentBounds = () => {
-    // CRITICAL FIX: Tight-content SVGs have normalized viewBox starting at (0,0) with internal transform
-    // They must bypass the content-bounds path to avoid incorrect transforms and overflow clipping
-    const isTightContent = logo.filename.includes('_tight-content.svg');
-    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
@@ -123,27 +104,19 @@ export default function SvgInlineRenderer({
                             'maxX' in logo.contentBounds &&
                             'maxY' in logo.contentBounds;
     
-    if (!hasContentBounds || isTightContent) {
-      if (isTightContent) {
-        console.log('🎯 Tight-content SVG detected, using flexbox centering (positioned viewBox without transform)');
-      } else {
-        console.log('🔍 No contentBounds available, using default centering');
-      }
-      // Use flexbox centering for tight-content SVGs and fallback
-      // Extract viewBox to calculate aspect ratio and add explicit sizing
-      const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-      let styledSvg = svgContent;
-      
-      // ARCHITECT FIX: Constrain SVG to fit within container to prevent clipping
-      // Use descendant selectors to force the injected <svg> to scale properly
-      console.log('🎯 PURE SVG: Constraining dimensions to prevent clipping');
-      
+    if (!hasContentBounds) {
+      console.log('🔍 No contentBounds available, using default centering');
+      // Fallback to default centering
       return (
         <div 
-          style={{ 
-            position: 'relative',
-            width: '100%',
-            height: '100%'
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
           }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />

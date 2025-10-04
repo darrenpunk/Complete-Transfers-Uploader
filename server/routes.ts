@@ -2484,48 +2484,43 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // Use PDF bounds as the authoritative source (from Ghostscript bbox device)
-                  // PDF bounds are precise and work for both dimensions and translate
+                  // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
+                  // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
+                  const { calculateSVGContentBounds } = await import('./dimension-utils');
+                  // Always use PDF content bounds - they are the authoritative source
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`📐 PDF CONTENT BOUNDS (authoritative - Ghostscript bbox): ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
                   console.log(`🔍 DEBUG: Content extraction - contentMatch found: ${!!contentMatch}`);
                   if (contentMatch) {
-                    let innerContent = contentMatch[1];
-                    
-                    // CRITICAL FIX: Strip clipPath/mask elements that reference old coordinate system
-                    // These cause clipping issues when viewBox is normalized to (0,0)
-                    innerContent = innerContent.replace(/<clipPath[^>]*>.*?<\/clipPath>/gs, '');
-                    innerContent = innerContent.replace(/<mask[^>]*>.*?<\/mask>/gs, '');
-                    // Remove clip-path and mask attributes from elements
-                    innerContent = innerContent.replace(/\s+clip-path="[^"]*"/g, '');
-                    innerContent = innerContent.replace(/\s+mask="[^"]*"/g, '');
-                    console.log(`🔧 STRIPPED CLIPPATHS/MASKS: Removed PDF coordinate-system clipping elements`);
+                    const innerContent = contentMatch[1];
                     
                     // Add minimal overflow for proper centering and glyph protection
+                    // Reduce padding to get tighter content bounds
                     const horizontalOverflow = 4;   // Minimal padding left/right
                     const verticalOverflow = 4;     // Minimal padding top/bottom
-                    
-                    // Use PDF content bounds for both viewBox dimensions AND translate
-                    // Ghostscript bbox device provides accurate bounds for both purposes
                     const expandedWidth = contentBounds.width + horizontalOverflow;
                     const expandedHeight = contentBounds.height + verticalOverflow;
                     
-                    // CRITICAL FIX: Translate to leave symmetric padding in viewBox
-                    // ViewBox has overflow/2 padding on each side (top, bottom, left, right)
-                    // Content should start at (overflow/2, overflow/2) to center properly
-                    const translateX = -(contentBounds.xMin - (horizontalOverflow / 2));
-                    const translateY = -(contentBounds.yMin - (verticalOverflow / 2));
+                    // Center both horizontally and vertically
+                    // Equal offset on all sides ensures proper centering
+                    const xOffset = horizontalOverflow / 2;
+                    const yOffset = verticalOverflow / 2;  // Center vertically as well
                     
-                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox at (0, 0) sized ${expandedWidth.toFixed(1)}×${expandedHeight.toFixed(1)}px`);
-                    console.log(`🎯 CONTENT TRANSLATE: Moving content by EXACT bounds (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) - no offset!`);
+                    // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
+                    console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
+                    console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
+                    
+                    // Calculate the translation needed to move content to (0, 0) origin
+                    const translateX = -(contentBounds.xMin - xOffset);
+                    const translateY = -(contentBounds.yMin - yOffset);
+                    
+                    console.log(`🔄 Translation: (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to normalize content position`);
                     
                     // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
-                    // Apply transform to translate content from original position to normalized origin
-                    // CRITICAL: NO width/height attributes - let viewBox control sizing
-                    // Adding explicit dimensions causes scaling issues with CSS containers
+                    // Apply transform to translate the content into the normalized coordinate system
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
@@ -2564,9 +2559,9 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 // Add minimal overflow for proper centering and glyph protection
-                // CRITICAL: Use same 4px overflow as tight-content SVG viewBox
-                const horizontalOverflow = needsTightCrop ? 4 : 0; // Must match SVG viewBox overflow
-                const verticalOverflow = needsTightCrop ? 4 : 0;   // Must match SVG viewBox overflow
+                // Reduce padding to get more accurate content dimensions
+                const horizontalOverflow = needsTightCrop ? 2 : 0; // Minimal padding left/right
+                const verticalOverflow = needsTightCrop ? 2 : 0;   // Minimal padding top/bottom
                 let contentWidth = (boundsResult.contentBounds.width + horizontalOverflow) * pxToMm;
                 let contentHeight = (boundsResult.contentBounds.height + verticalOverflow) * pxToMm;
                 
@@ -2621,28 +2616,15 @@ export async function registerRoutes(app: express.Application) {
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
-          // Save contentBounds for all SVGs (tight-content and regular)
-          // Tight-content SVGs now use positioned viewBox (not normalized), so bounds stay at original coordinates
+          // CRITICAL FIX: Save contentBounds to database for frontend centering
           ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: {
-              minX: boundsResult.contentBounds.xMin,
-              minY: boundsResult.contentBounds.yMin,
-              maxX: boundsResult.contentBounds.xMax,
-              maxY: boundsResult.contentBounds.yMax
-            }
+            contentBounds: boundsResult.contentBounds 
           })
         });
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
-          const mappedBounds = {
-            minX: boundsResult.contentBounds.xMin,
-            minY: boundsResult.contentBounds.yMin,
-            maxX: boundsResult.contentBounds.xMax,
-            maxY: boundsResult.contentBounds.yMax
-          };
-          const boundsType = finalFilename.includes('_tight-content.svg') ? 'TIGHT-CONTENT' : 'ORIGINAL';
-          console.log(`✅ SAVED CONTENTBOUNDS (${boundsType}): ${JSON.stringify(mappedBounds)} to logo ${logo.id}`);
+          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(boundsResult.contentBounds)} to logo ${logo.id}`);
         } else {
           console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
         }
