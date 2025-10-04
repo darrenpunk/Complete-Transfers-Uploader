@@ -18,16 +18,37 @@ export default function SvgInlineRenderer({
   const [isLoading, setIsLoading] = useState(true);
   const [useFallbackImg, setUseFallbackImg] = useState(false);
 
-  // PERFORMANCE FIX: Large SVG files (>1MB) can crash the browser when rendered inline
-  // Use <img> tag instead for better performance
+  // COMPLEX VECTOR PERFORMANCE FIX: Use PNG fallback for complex vectors (thousands of paths)
+  // This prevents browser crashes from rendering too many DOM elements
+  const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
+  
+  // Also check for large SVG files (legacy check - file size based)
   const LARGE_SVG_THRESHOLD = 1024 * 1024; // 1MB
   const isLargeSvg = logo.size && logo.size > LARGE_SVG_THRESHOLD;
 
   useEffect(() => {
-    // For very large SVGs, skip complex transformations but still render as HTML
-    if (isLargeSvg && !element.colorOverrides && !shouldRecolorForInk) {
-      console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using simplified rendering`);
-      setUseFallbackImg(true);
+    // CRITICAL: Reset fallback flag when color overrides or recoloring are needed
+    const needsColorManipulation = (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) || shouldRecolorForInk;
+    
+    if (needsColorManipulation) {
+      // Force SVG rendering for color manipulation - PNG fallback cannot be recolored
+      console.log(`🎨 Color manipulation needed, forcing SVG rendering (overrides: ${!!element.colorOverrides}, recolorForInk: ${shouldRecolorForInk})`);
+      setUseFallbackImg(false);
+    } else {
+      // PRIORITY CHECK: Use PNG fallback for complex vectors (only when no color manipulation)
+      if (hasComplexVectorFallback) {
+        const metrics = (logo as any).vectorComplexityMetrics;
+        console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
+        setUseFallbackImg(true);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Legacy check: For very large SVGs by file size
+      if (isLargeSvg) {
+        console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using simplified rendering`);
+        setUseFallbackImg(true);
+      }
     }
 
     const fetchSvg = async () => {
@@ -95,8 +116,51 @@ export default function SvgInlineRenderer({
     fetchSvg();
   }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor, isLargeSvg, logo.size]);
 
-  // PERFORMANCE FIX: Render large SVGs with simplified inline rendering
+  // PERFORMANCE FIX: Render complex vectors using PNG fallback or simplified SVG
   const renderSimplifiedLargeSvg = () => {
+    // COMPLEX VECTOR: Use PNG fallback if available
+    if (hasComplexVectorFallback) {
+      const pngUrl = `/uploads/${(logo as any).canvasFallbackFilename}`;
+      const metrics = (logo as any).vectorComplexityMetrics;
+      console.log('🎨 Rendering complex vector with PNG fallback:', { 
+        pngUrl, 
+        pathCount: metrics?.pathCount,
+        elementCount: metrics?.elementCount
+      });
+      
+      // Use content bounds for positioning if available
+      const hasContentBounds = logo.contentBounds && 
+                              typeof logo.contentBounds === 'object' &&
+                              'xMin' in logo.contentBounds &&
+                              'yMin' in logo.contentBounds;
+      
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
+          }}
+        >
+          <img 
+            src={pngUrl} 
+            alt={logo.originalName}
+            data-testid="complex-vector-png-fallback"
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
+      );
+    }
+    
+    // Legacy: Large SVG simplified rendering
     console.log('🎨 Rendering large SVG with simplified inline rendering:', { size: logo.size });
     
     // Render the SVG content as-is without complex transformations
@@ -199,8 +263,9 @@ export default function SvgInlineRenderer({
     );
   }
 
-  // PERFORMANCE FIX: Render large SVGs with simplified inline rendering
-  if (useFallbackImg && svgContent) {
+  // PERFORMANCE FIX: Render PNG fallback for complex vectors or simplified SVG for large files
+  // Note: PNG fallback doesn't need svgContent, so check useFallbackImg first
+  if (useFallbackImg) {
     return renderSimplifiedLargeSvg();
   }
 

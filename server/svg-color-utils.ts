@@ -687,7 +687,47 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
   }
 }
 
-// Enhanced SVG analysis function that includes stroke width detection
+/**
+ * Count paths and elements in SVG for complexity detection
+ */
+function analyzeVectorComplexity(svgContent: string): {
+  pathCount: number;
+  elementCount: number;
+  isComplex: boolean;
+} {
+  // Count path elements
+  const pathMatches = svgContent.match(/<path[^>]*>/g) || [];
+  const pathCount = pathMatches.length;
+  
+  // Count other vector elements (circle, rect, line, polygon, polyline, ellipse)
+  const circleMatches = svgContent.match(/<circle[^>]*>/g) || [];
+  const rectMatches = svgContent.match(/<rect[^>]*>/g) || [];
+  const lineMatches = svgContent.match(/<line[^>]*>/g) || [];
+  const polygonMatches = svgContent.match(/<polygon[^>]*>/g) || [];
+  const polylineMatches = svgContent.match(/<polyline[^>]*>/g) || [];
+  const ellipseMatches = svgContent.match(/<ellipse[^>]*>/g) || [];
+  
+  const elementCount = pathCount + circleMatches.length + rectMatches.length + 
+                       lineMatches.length + polygonMatches.length + 
+                       polylineMatches.length + ellipseMatches.length;
+  
+  // Threshold: >4000 paths OR >5000 total elements
+  const PATH_THRESHOLD = 4000;
+  const ELEMENT_THRESHOLD = 5000;
+  const isComplex = pathCount > PATH_THRESHOLD || elementCount > ELEMENT_THRESHOLD;
+  
+  if (isComplex) {
+    console.log(`⚠️ COMPLEX VECTOR DETECTED: ${pathCount} paths, ${elementCount} total elements`);
+  }
+  
+  return {
+    pathCount,
+    elementCount,
+    isComplex
+  };
+}
+
+// Enhanced SVG analysis function that includes stroke width detection and complexity analysis
 export function analyzeSVGWithStrokeWidths(svgPath: string): {
   colors: SVGColorInfo[];
   fonts: any[];
@@ -695,12 +735,18 @@ export function analyzeSVGWithStrokeWidths(svgPath: string): {
   hasText: boolean;
   minStrokeWidth?: number;
   maxStrokeWidth?: number;
+  vectorComplexity?: {
+    pathCount: number;
+    elementCount: number;
+    isComplex: boolean;
+  };
 } {
   try {
     const svgContent = fs.readFileSync(svgPath, 'utf8');
     const colors = extractSVGColors(svgPath);
     const fonts = extractSVGFonts(svgPath);
     const strokeWidths = extractStrokeWidths(svgContent);
+    const vectorComplexity = analyzeVectorComplexity(svgContent);
     
     return {
       colors,
@@ -708,7 +754,8 @@ export function analyzeSVGWithStrokeWidths(svgPath: string): {
       strokeWidths,
       hasText: fonts.length > 0,
       minStrokeWidth: strokeWidths.length > 0 ? Math.min(...strokeWidths) : undefined,
-      maxStrokeWidth: strokeWidths.length > 0 ? Math.max(...strokeWidths) : undefined
+      maxStrokeWidth: strokeWidths.length > 0 ? Math.max(...strokeWidths) : undefined,
+      vectorComplexity
     };
   } catch (error) {
     console.error('Error analyzing SVG with stroke widths:', error);

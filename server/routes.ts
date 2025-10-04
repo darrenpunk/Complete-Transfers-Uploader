@@ -1990,6 +1990,49 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
             
+            // Check for complex vectors and generate PNG fallback for canvas display
+            if (analysis.vectorComplexity?.isComplex) {
+              try {
+                console.log(`🎨 COMPLEX VECTOR: Generating PNG fallback for canvas (paths: ${analysis.vectorComplexity.pathCount}, elements: ${analysis.vectorComplexity.elementCount})`);
+                
+                const pngFilename = finalFilename.replace(/\.svg$/, '-canvas-fallback.png');
+                const pngPath = path.join(uploadDir, pngFilename);
+                
+                // Generate high-resolution PNG using Inkscape or rsvg-convert (2400 DPI for quality)
+                const { execSync } = await import('child_process');
+                try {
+                  // Try rsvg-convert first (faster)
+                  execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -d 300 -p 300`, { 
+                    stdio: 'pipe',
+                    timeout: 30000 
+                  });
+                  console.log(`✅ PNG fallback generated using rsvg-convert: ${pngFilename}`);
+                } catch (rsvgError) {
+                  // Fallback to Inkscape if rsvg-convert fails
+                  console.log(`⚠️ rsvg-convert failed, trying Inkscape...`);
+                  execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=300`, {
+                    stdio: 'pipe',
+                    timeout: 30000
+                  });
+                  console.log(`✅ PNG fallback generated using Inkscape: ${pngFilename}`);
+                }
+                
+                // Store PNG fallback info on file object for later database storage
+                (file as any).canvasFallbackFilename = pngFilename;
+                (file as any).isComplexVector = true;
+                (file as any).vectorComplexityMetrics = {
+                  pathCount: analysis.vectorComplexity.pathCount,
+                  elementCount: analysis.vectorComplexity.elementCount,
+                  detectedAt: new Date().toISOString()
+                };
+                
+                console.log(`✅ Complex vector metadata prepared for database storage`);
+              } catch (pngError) {
+                console.error('⚠️ Failed to generate PNG fallback:', pngError);
+                // Continue without PNG fallback - canvas will use SVG
+              }
+            }
+            
             // Automatic font outlining for PDFs with text elements
             if (analysis.hasText && (file.mimetype === 'application/pdf' || (file as any).originalVectorType === 'pdf')) {
               try {
@@ -2126,6 +2169,18 @@ export async function registerRoutes(app: express.Application) {
         if ((file as any).originalVectorPath && (file as any).originalVectorType) {
           logoData.originalFilename = file.filename; // Store the original AI/EPS filename
           logoData.originalMimeType = file.mimetype; // Keep original mime type
+        }
+        
+        // Add PNG fallback data for complex vectors
+        if ((file as any).isComplexVector) {
+          logoData.isComplexVector = true;
+          logoData.canvasFallbackFilename = (file as any).canvasFallbackFilename;
+          logoData.vectorComplexityMetrics = (file as any).vectorComplexityMetrics;
+          console.log(`💾 COMPLEX VECTOR: Storing PNG fallback data:`, {
+            canvasFallbackFilename: logoData.canvasFallbackFilename,
+            pathCount: logoData.vectorComplexityMetrics.pathCount,
+            elementCount: logoData.vectorComplexityMetrics.elementCount
+          });
         }
         
         const logo = await storage.createLogo(logoData);

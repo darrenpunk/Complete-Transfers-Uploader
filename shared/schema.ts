@@ -43,6 +43,9 @@ export const logos = pgTable("logos", {
   isPdfWithRasterOnly: boolean("is_pdf_with_raster_only").default(false), // Track if PDF contains only raster images
   extractedRasterPath: text("extracted_raster_path"), // Path to deduplicated PNG extracted from PDF
   previewFilename: text("preview_filename"), // PNG preview filename for CMYK PDFs
+  isComplexVector: boolean("is_complex_vector").default(false), // Track if SVG has too many paths for browser rendering
+  vectorComplexityMetrics: jsonb("vector_complexity_metrics"), // Store path counts and complexity metrics
+  canvasFallbackFilename: text("canvas_fallback_filename"), // PNG fallback for canvas display of complex vectors
 });
 
 export const canvasElements = pgTable("canvas_elements", {
