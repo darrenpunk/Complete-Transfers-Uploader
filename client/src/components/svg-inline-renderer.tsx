@@ -24,12 +24,10 @@ export default function SvgInlineRenderer({
   const isLargeSvg = logo.size && logo.size > LARGE_SVG_THRESHOLD;
 
   useEffect(() => {
-    // For very large SVGs, skip inline rendering and use <img> tag
+    // For very large SVGs, skip complex transformations but still render as HTML
     if (isLargeSvg && !element.colorOverrides && !shouldRecolorForInk) {
-      console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using <img> tag for performance`);
+      console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using simplified rendering`);
       setUseFallbackImg(true);
-      setIsLoading(false);
-      return;
     }
 
     const fetchSvg = async () => {
@@ -48,6 +46,17 @@ export default function SvgInlineRenderer({
         
         const response = await fetch(url);
         const text = await response.text();
+        
+        // For large SVGs, do minimal processing
+        if (isLargeSvg && !element.colorOverrides && !shouldRecolorForInk) {
+          let simpleSvg = text;
+          // Only remove XML declaration and DOCTYPE
+          simpleSvg = simpleSvg.replace(/<\?xml[^?]*\?>/g, '');
+          simpleSvg = simpleSvg.replace(/<!DOCTYPE[^>]*>/g, '');
+          setSvgContent(simpleSvg);
+          setIsLoading(false);
+          return;
+        }
         
         // Clean and normalize SVG for content-based centering
         let cleanedSvg = text;
@@ -86,30 +95,25 @@ export default function SvgInlineRenderer({
     fetchSvg();
   }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor, isLargeSvg, logo.size]);
 
-  // PERFORMANCE FIX: Render large SVGs using <img> tag with content-bounds positioning
-  const renderWithContentBoundsImg = () => {
-    const url = `/uploads/${logo.filename}`;
+  // PERFORMANCE FIX: Render large SVGs with simplified inline rendering
+  const renderSimplifiedLargeSvg = () => {
+    console.log('🎨 Rendering large SVG with simplified inline rendering:', { size: logo.size });
     
-    // For <img> tags, simply center the image - browser handles scaling with object-fit
+    // Render the SVG content as-is without complex transformations
+    // The SVG's viewBox will handle the scaling
     return (
       <div 
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full"
         style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 0,
           margin: 0,
           overflow: 'hidden'
         }}
-      >
-        <img 
-          src={url} 
-          alt={logo.originalName}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain'
-          }}
-        />
-      </div>
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+      />
     );
   };
 
@@ -195,9 +199,9 @@ export default function SvgInlineRenderer({
     );
   }
 
-  // PERFORMANCE FIX: Render large SVGs as <img> tag for better performance
-  if (useFallbackImg) {
-    return renderWithContentBoundsImg();
+  // PERFORMANCE FIX: Render large SVGs with simplified inline rendering
+  if (useFallbackImg && svgContent) {
+    return renderSimplifiedLargeSvg();
   }
 
   if (!svgContent) {
