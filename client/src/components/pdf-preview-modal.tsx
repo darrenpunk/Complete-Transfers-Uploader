@@ -157,7 +157,7 @@ export default function PDFPreviewModal({
                             src={imageUrl}
                             alt="Logo"
                             className="w-full h-full object-contain"
-                            key={`${logo.filename}-${Date.now()}`}
+                            key={`preview-${element.id}`}
                             onLoad={() => {
                               console.log('✅ Image loaded for preview');
                             }}
