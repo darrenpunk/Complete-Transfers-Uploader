@@ -500,7 +500,8 @@ export default function CanvasWorkspace({
         const text = clipboardData.getData('text/plain');
         console.log('📋 text/plain content length:', text.length);
         console.log('📋 text/plain starts with:', text.substring(0, 100));
-        if (text.trim().startsWith('<svg')) {
+        // Check if contains SVG (may start with <?xml or <svg)
+        if (text.includes('<svg') && text.includes('</svg>')) {
           svgContent = text;
           console.log('✅ Found SVG in text/plain');
         }
