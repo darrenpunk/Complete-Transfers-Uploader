@@ -134,13 +134,8 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="w-full h-full"
-          style={{ 
-            overflow: 'visible',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+          className="absolute inset-0"
+          style={{ overflow: 'visible' }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />
       );
