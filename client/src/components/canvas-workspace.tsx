@@ -735,8 +735,20 @@ export default function CanvasWorkspace({
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
           // Calculate delta from initial mouse position
-          const deltaX = mouseX - initialMousePos.x;
-          const deltaY = mouseY - initialMousePos.y;
+          let deltaX = mouseX - initialMousePos.x;
+          let deltaY = mouseY - initialMousePos.y;
+
+          // Transform deltas to account for rotation
+          const rotation = selectedElement.rotation || 0;
+          if (rotation !== 0) {
+            const rotationRad = (rotation * Math.PI) / 180;
+            const cosR = Math.cos(-rotationRad); // Negative because we're rotating back to local space
+            const sinR = Math.sin(-rotationRad);
+            const rotatedDeltaX = deltaX * cosR - deltaY * sinR;
+            const rotatedDeltaY = deltaX * sinR + deltaY * cosR;
+            deltaX = rotatedDeltaX;
+            deltaY = rotatedDeltaY;
+          }
 
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
