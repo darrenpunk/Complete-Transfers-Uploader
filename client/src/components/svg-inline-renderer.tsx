@@ -240,7 +240,7 @@ export default function SvgInlineRenderer({
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
     
     return (
-      <div className="w-full h-full relative overflow-hidden">
+      <div className="w-full h-full relative overflow-visible">
         <div
           className="w-full h-full"
           style={{
