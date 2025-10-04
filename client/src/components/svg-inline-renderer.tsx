@@ -174,20 +174,6 @@ export default function SvgInlineRenderer({
     
     return (
       <div className="w-full h-full relative overflow-hidden">
-        {/* Debug overlay for development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div 
-            className="absolute border-2 border-red-500 opacity-50 pointer-events-none"
-            style={{
-              left: '25%',
-              top: '25%', 
-              width: '50%',
-              height: '50%'
-            }}
-            title="Content bounds visualization"
-          />
-        )}
-        
         <div
           className="w-full h-full"
           style={{
