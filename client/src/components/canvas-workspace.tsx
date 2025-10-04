@@ -178,6 +178,7 @@ export default function CanvasWorkspace({
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
+  const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
   
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
@@ -605,10 +606,27 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     
+    if (!canvasRef.current || !template) return;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleFactor = zoom / 100;
+    let mmToPixelRatio = template.pixelWidth / template.width;
+    
+    // Use proper DPI for PDF-derived elements
+    const isPdfDerived = element.width > 200 || element.height > 200;
+    if (isPdfDerived) {
+      mmToPixelRatio = 2.834645669; // 72 DPI conversion
+    }
+    
+    // Capture initial mouse position in mm coordinates
+    const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
+    const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
+    
     setIsResizing(true);
     setResizeHandle(handle);
     setInitialSize({ width: element.width, height: element.height });
     setInitialPosition({ x: element.x, y: element.y });
+    setInitialMousePos({ x: mouseX, y: mouseY });
     onElementSelect(element);
   };
 
@@ -716,6 +734,10 @@ export default function CanvasWorkspace({
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
+          // Calculate delta from initial mouse position
+          const deltaX = mouseX - initialMousePos.x;
+          const deltaY = mouseY - initialMousePos.y;
+
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
           let newX = initialPosition.x;
@@ -724,16 +746,16 @@ export default function CanvasWorkspace({
           // Calculate aspect ratio from initial size
           const aspectRatio = initialSize.width / initialSize.height;
           
-          // Calculate new dimensions based on resize handle
+          // Calculate new dimensions based on resize handle using deltas
           switch (resizeHandle) {
             case 'se': // Southeast
-              newWidth = Math.max(20, mouseX - initialPosition.x);
-              newHeight = Math.max(20, mouseY - initialPosition.y);
+              newWidth = Math.max(20, initialSize.width + deltaX);
+              newHeight = Math.max(20, initialSize.height + deltaY);
               
               if (maintainAspectRatio) {
                 // Use the dimension that changed the most
-                const widthChange = Math.abs(newWidth - initialSize.width);
-                const heightChange = Math.abs(newHeight - initialSize.height);
+                const widthChange = Math.abs(deltaX);
+                const heightChange = Math.abs(deltaY);
                 
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
@@ -744,13 +766,13 @@ export default function CanvasWorkspace({
               break;
               
             case 'sw': // Southwest
-              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
-              newHeight = Math.max(20, mouseY - initialPosition.y);
-              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              newWidth = Math.max(20, initialSize.width - deltaX);
+              newHeight = Math.max(20, initialSize.height + deltaY);
+              newX = initialPosition.x + deltaX;
               
               if (maintainAspectRatio) {
-                const widthChange = Math.abs(newWidth - initialSize.width);
-                const heightChange = Math.abs(newHeight - initialSize.height);
+                const widthChange = Math.abs(deltaX);
+                const heightChange = Math.abs(deltaY);
                 
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
@@ -762,13 +784,13 @@ export default function CanvasWorkspace({
               break;
               
             case 'ne': // Northeast
-              newWidth = Math.max(20, mouseX - initialPosition.x);
-              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
-              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              newWidth = Math.max(20, initialSize.width + deltaX);
+              newHeight = Math.max(20, initialSize.height - deltaY);
+              newY = initialPosition.y + deltaY;
               
               if (maintainAspectRatio) {
-                const widthChange = Math.abs(newWidth - initialSize.width);
-                const heightChange = Math.abs(newHeight - initialSize.height);
+                const widthChange = Math.abs(deltaX);
+                const heightChange = Math.abs(deltaY);
                 
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
@@ -780,14 +802,14 @@ export default function CanvasWorkspace({
               break;
               
             case 'nw': // Northwest
-              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
-              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
-              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
-              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              newWidth = Math.max(20, initialSize.width - deltaX);
+              newHeight = Math.max(20, initialSize.height - deltaY);
+              newX = initialPosition.x + deltaX;
+              newY = initialPosition.y + deltaY;
               
               if (maintainAspectRatio) {
-                const widthChange = Math.abs(newWidth - initialSize.width);
-                const heightChange = Math.abs(newHeight - initialSize.height);
+                const widthChange = Math.abs(deltaX);
+                const heightChange = Math.abs(deltaY);
                 
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
@@ -800,30 +822,30 @@ export default function CanvasWorkspace({
               break;
               
             case 'e': // East
-              newWidth = Math.max(20, mouseX - initialPosition.x);
+              newWidth = Math.max(20, initialSize.width + deltaX);
               if (maintainAspectRatio) {
                 newHeight = newWidth / aspectRatio;
               }
               break;
               
             case 'w': // West
-              newWidth = Math.max(20, initialPosition.x + initialSize.width - mouseX);
-              newX = Math.min(mouseX, initialPosition.x + initialSize.width - 20);
+              newWidth = Math.max(20, initialSize.width - deltaX);
+              newX = initialPosition.x + deltaX;
               if (maintainAspectRatio) {
                 newHeight = newWidth / aspectRatio;
               }
               break;
               
             case 'n': // North
-              newHeight = Math.max(20, initialPosition.y + initialSize.height - mouseY);
-              newY = Math.min(mouseY, initialPosition.y + initialSize.height - 20);
+              newHeight = Math.max(20, initialSize.height - deltaY);
+              newY = initialPosition.y + deltaY;
               if (maintainAspectRatio) {
                 newWidth = newHeight * aspectRatio;
               }
               break;
               
             case 's': // South
-              newHeight = Math.max(20, mouseY - initialPosition.y);
+              newHeight = Math.max(20, initialSize.height + deltaY);
               if (maintainAspectRatio) {
                 newWidth = newHeight * aspectRatio;
               }
@@ -858,7 +880,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, zoom, template]);
+  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
