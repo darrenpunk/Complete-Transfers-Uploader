@@ -2583,11 +2583,12 @@ export async function registerRoutes(app: express.Application) {
   widthDiff: ${widthDiff}mm
   heightDiff: ${heightDiff}mm`);
                 
-                // CRITICAL: Enable tight content when content extends beyond viewBox OR has negative coordinates
-                // This handles pasted SVG from Illustrator where content extends beyond artboard
+                // CRITICAL: Do NOT create tight content for SVGs with overflow
+                // SVG viewport will naturally render all content, even outside viewBox bounds
+                // Creating tight content changes the coordinate system and breaks positioning
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
                 const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
-                const needsTightCrop = hasNegativeCoords || extendsBeyondViewBox || widthDiff > 2 || heightDiff > 2;
+                const needsTightCrop = false; // DISABLED: Let browser render all content naturally
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
@@ -2713,21 +2714,16 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // Add minimal overflow for proper centering and glyph protection
-                // Reduce padding to get more accurate content dimensions
-                const horizontalOverflow = needsTightCrop ? 2 : 0; // Minimal padding left/right
-                const verticalOverflow = needsTightCrop ? 2 : 0;   // Minimal padding top/bottom
-                // Use the potentially updated contentBounds (which may include clipping path expansion)
-                let contentWidth = (contentBounds.width + horizontalOverflow) * pxToMm;
-                let contentHeight = (contentBounds.height + verticalOverflow) * pxToMm;
+                // CRITICAL: When tight content SVG is created, keep original artboard dimensions
+                // The tight SVG will show all content (including parts outside artboard),
+                // but the canvas element size should match the artboard, not the expanded content
+                console.log(`✅ TIGHT CONTENT SVG CREATED: Shows all content including overflow`);
+                console.log(`📐 KEEPING ORIGINAL ARTBOARD DIMENSIONS: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm`);
                 
-                console.log(`✅ FINAL CONTENT DIMENSIONS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}mm (PDF bounds + minimal overflow)`);
-                
-                // Use content bounds with overflow for canvas display
-                // This ensures text glyphs are not clipped
-                displayWidth = contentWidth;
-                displayHeight = contentHeight;
-                console.log(`🎯 CANVAS DISPLAY: Using content bounds with overflow ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+                // Use original artboard dimensions for canvas display
+                displayWidth = originalWidthMm;
+                displayHeight = originalHeightMm;
+                console.log(`🎯 CANVAS DISPLAY: Using artboard dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (tight SVG will scale to fit)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
@@ -2767,11 +2763,7 @@ export async function registerRoutes(app: express.Application) {
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
-        
-        // CRITICAL FIX: When tight content SVG is created, update logo dimensions to match
-        // This ensures the frontend displays the full content, not just the original artboard
-        const pxToMm = 1 / 2.834645669; // 72 DPI standard
-        const logoUpdateData: any = {
+        const updatedLogo = await storage.updateLogo(logo.id, {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
@@ -2780,16 +2772,7 @@ export async function registerRoutes(app: express.Application) {
           ...(boundsResult?.success && boundsResult.contentBounds && { 
             contentBounds: boundsResult.contentBounds 
           })
-        };
-        
-        // Update width/height to match tight content dimensions (in pixels)
-        if (displayWidth && displayHeight) {
-          logoUpdateData.width = Math.round(displayWidth / pxToMm);
-          logoUpdateData.height = Math.round(displayHeight / pxToMm);
-          console.log(`✅ UPDATING LOGO DIMENSIONS: ${logoUpdateData.width}×${logoUpdateData.height}px (${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm)`);
-        }
-        
-        const updatedLogo = await storage.updateLogo(logo.id, logoUpdateData);
+        });
         
         // Debug: Log if contentBounds were saved
         if (boundsResult?.success && boundsResult.contentBounds) {
