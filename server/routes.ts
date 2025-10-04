@@ -2479,10 +2479,9 @@ export async function registerRoutes(app: express.Application) {
                 const widthDiff = Math.abs(originalWidthMm - contentWidthMm);
                 const heightDiff = Math.abs(originalHeightMm - contentHeightMm);
                 
-                // DISABLED: Tight content creation causes clipping mask content loss
-                // PDFs with clipping masks lose content during tight crop
-                // Use original SVG dimensions to preserve all content including clipped elements
-                const needsTightCrop = false; // widthDiff > 2 || heightDiff > 2;
+                // Create tight content if there's significant padding
+                // Now safe since we detect clipping masks via PDF bitmap rendering
+                const needsTightCrop = widthDiff > 2 || heightDiff > 2;
                 
                 if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
@@ -2534,47 +2533,54 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Ghostscript bbox misses clipping masks and some edge content
-                  // Always use Ghostscript as primary, but verify with bitmap rendering
+                  // CRITICAL FIX: Ghostscript bbox misses clipping masks
+                  // Render ORIGINAL PDF to bitmap to measure true visual bounds
                   let contentBounds = boundsResult.contentBounds;
                   console.log(`✅ GHOSTSCRIPT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
-                  // CRITICAL FIX: Verify bounds by rendering ORIGINAL SVG to catch content Ghostscript missed
-                  // This must happen BEFORE creating tight content SVG to avoid verifying already-clipped content
-                  const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
-                  const boundsExtractor = new PDFBoundsExtractor();
-                  
-                  // Convert SVGBounds to BoundingBox format for verification
-                  const bboxForVerification = {
-                    xMin: contentBounds.xMin,
-                    yMin: contentBounds.yMin,
-                    xMax: contentBounds.xMax,
-                    yMax: contentBounds.yMax,
-                    width: contentBounds.width,
-                    height: contentBounds.height,
-                    units: 'pt' as const
-                  };
-                  
-                  // CRITICAL: Use bitmap rendering to detect clipped content Ghostscript misses
-                  const visualBounds = await boundsExtractor.verifySVGBounds(svgPath, bboxForVerification);
-                  
-                  if (visualBounds) {
-                    // Check if bitmap found LARGER bounds (more visible content)
-                    const widthExpansion = visualBounds.width - contentBounds.width;
-                    const heightExpansion = visualBounds.height - contentBounds.height;
+                  // Render ORIGINAL PDF (not converted SVG) to measure actual visual content
+                  const pdfBitmapPath = svgPath.replace('.svg', '_bounds_check.png');
+                  try {
+                    // Render original PDF at 150 DPI for bounds detection
+                    await execAsync(`convert -density 150 "${pdfPath}" -background white -flatten -alpha remove -trim +repage "${pdfBitmapPath}"`);
                     
-                    if (widthExpansion > 5 || heightExpansion > 5) {
-                      // Bitmap rendering found significantly more content (clipping masks, etc.)
-                      console.log(`🎯 VISUAL BOUNDS EXPANDED: Ghostscript ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts → Visual ${visualBounds.width.toFixed(1)}×${visualBounds.height.toFixed(1)}pts`);
-                      console.log(`📐 Found ${widthExpansion.toFixed(1)}pts more width, ${heightExpansion.toFixed(1)}pts more height`);
-                      contentBounds = visualBounds;
-                      boundsResult.contentBounds = visualBounds;
-                    } else if (widthExpansion < -10 || heightExpansion < -10) {
-                      // Bitmap trimmed content significantly - keep Ghostscript bounds
-                      console.log(`⚠️ VISUAL BOUNDS SMALLER: Keeping Ghostscript bounds (bitmap trimmed ${Math.abs(heightExpansion).toFixed(1)}pts)`);
-                    } else {
-                      console.log(`✅ BOUNDS MATCH: Ghostscript and visual rendering agree within tolerance`);
+                    if (fs.existsSync(pdfBitmapPath)) {
+                      // Get dimensions of trimmed bitmap
+                      const identifyOutput = await execAsync(`identify -format "%w %h" "${pdfBitmapPath}"`);
+                      const [bitmapWidth, bitmapHeight] = identifyOutput.trim().split(' ').map(Number);
+                      
+                      if (bitmapWidth && bitmapHeight) {
+                        // Convert pixels to points (150 DPI)
+                        const pxToPt = 72 / 150;
+                        const visualWidth = bitmapWidth * pxToPt;
+                        const visualHeight = bitmapHeight * pxToPt;
+                        
+                        console.log(`📐 PDF BITMAP BOUNDS: ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}pts (from ${bitmapWidth}×${bitmapHeight}px @150dpi)`);
+                        
+                        const heightDiff = visualHeight - contentBounds.height;
+                        const widthDiff = visualWidth - contentBounds.width;
+                        
+                        if (heightDiff > 5 || widthDiff > 5) {
+                          // Bitmap found MORE content (clipping masks!)
+                          console.log(`🎯 BITMAP EXPANDED BOUNDS: Found ${widthDiff.toFixed(1)}pts more width, ${heightDiff.toFixed(1)}pts more height`);
+                          contentBounds = {
+                            ...contentBounds,
+                            width: visualWidth,
+                            height: visualHeight,
+                            xMax: contentBounds.xMin + visualWidth,
+                            yMax: contentBounds.yMin + visualHeight
+                          };
+                          boundsResult.contentBounds = contentBounds;
+                        } else {
+                          console.log(`✅ GHOSTSCRIPT BOUNDS SUFFICIENT: Bitmap agrees within tolerance`);
+                        }
+                      }
+                      
+                      // Clean up temp bitmap
+                      fs.unlinkSync(pdfBitmapPath);
                     }
+                  } catch (error) {
+                    console.log(`⚠️ PDF bitmap verification failed:`, error);
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
