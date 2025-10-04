@@ -2534,12 +2534,34 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL FIX: Calculate actual SVG content bounds, not PDF bounds
-                  // SVG content may extend beyond PDF bounds due to text baselines, strokes, etc.
-                  const { calculateSVGContentBounds } = await import('./dimension-utils');
-                  // Always use PDF content bounds - they are the authoritative source
+                  // CRITICAL FIX: Use FULL PAGE bounds instead of trimmed content bounds
+                  // Many PDFs have edge content (text, borders) that shouldn't be trimmed
+                  // Use the full SVG viewBox dimensions as the authoritative bounds
+                  const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  
+                  if (viewBoxMatch) {
+                    const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
+                    if (viewBoxValues.length === 4) {
+                      const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
+                      
+                      // Use full page dimensions instead of trimmed content
+                      contentBounds = {
+                        xMin: vbX,
+                        yMin: vbY,
+                        xMax: vbX + vbWidth,
+                        yMax: vbY + vbHeight,
+                        width: vbWidth,
+                        height: vbHeight,
+                        units: 'pt' as const
+                      };
+                      
+                      console.log(`✅ USING FULL PAGE BOUNDS FROM VIEWBOX: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                      boundsResult.contentBounds = contentBounds;
+                    }
+                  } else {
+                    console.log(`✅ USING PDF CONTENT BOUNDS: ${contentBounds.xMin.toFixed(1)},${contentBounds.yMin.toFixed(1)} → ${contentBounds.xMax.toFixed(1)},${contentBounds.yMax.toFixed(1)} = ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+                  }
                   
                   // CRITICAL FIX: Verify bounds by rendering ORIGINAL SVG to catch content Ghostscript missed
                   // This must happen BEFORE creating tight content SVG to avoid verifying already-clipped content
@@ -2557,31 +2579,9 @@ export async function registerRoutes(app: express.Application) {
                     units: 'pt' as const
                   };
                   
-                  const verifiedBounds = await boundsExtractor.verifySVGBounds(svgPath, bboxForVerification);
-                  
-                  if (verifiedBounds) {
-                    // Check if verification found LARGER bounds (more content than Ghostscript)
-                    // OR if verification shrunk bounds by <25% (minor trim is OK)
-                    const widthChange = (verifiedBounds.width - contentBounds.width) / contentBounds.width;
-                    const heightChange = (verifiedBounds.height - contentBounds.height) / contentBounds.height;
-                    const widthShrinkage = Math.abs(Math.min(0, widthChange));
-                    const heightShrinkage = Math.abs(Math.min(0, heightChange));
-                    const maxShrinkage = Math.max(widthShrinkage, heightShrinkage);
-                    
-                    if (maxShrinkage > 0.25) {
-                      console.log(`⚠️ SVG VERIFICATION SHRUNK BOUNDS BY ${(maxShrinkage * 100).toFixed(0)}% - Ignoring to preserve full content`);
-                      console.log(`📐 Keeping Ghostscript bounds: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
-                    } else if (widthChange > 0 || heightChange > 0) {
-                      // Verification found MORE content than Ghostscript detected!
-                      console.log(`🎯 BOUNDS EXPANDED: Using verified SVG bounds (found more content)`);
-                      contentBounds = verifiedBounds;
-                      boundsResult.contentBounds = verifiedBounds;
-                    } else {
-                      console.log(`✅ BOUNDS VERIFIED: Minor trim accepted, using verified bounds`);
-                      contentBounds = verifiedBounds;
-                      boundsResult.contentBounds = verifiedBounds;
-                    }
-                  }
+                  // DISABLED: Skip verification to preserve full page bounds
+                  // Verification often trims edge content like text, borders, etc.
+                  console.log(`✅ SKIPPING VERIFICATION: Using full page bounds to preserve all edge content`);
                   
                   // Extract all content elements (paths, circles, rects, etc.)
                   const contentMatch = svgContent.match(/<svg[^>]*>(.*?)<\/svg>/s);
