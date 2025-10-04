@@ -2533,48 +2533,120 @@ export async function registerRoutes(app: express.Application) {
                   // Only do bounds calculation if crop dimensions weren't used
                   if (!useCropDimensions) {
                   
-                  // CRITICAL: Clipping paths detected are for INDIVIDUAL elements (logos), not full content boundary
-                  // Use original SVG viewBox for full content dimensions when content appears clipped
+                  // CRITICAL: Detect ALL SVG element boundaries including clipped content
+                  // Ghostscript only sees painted content, but we need geometric bounds of ALL elements
                   let contentBounds = boundsResult.contentBounds;
-                  console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                  console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                   
-                  // Check if there are clipping paths (indicates potential clipping mask usage)
-                  const clipPathRegex = /<clipPath[^>]*>/g;
-                  const hasClippingPaths = clipPathRegex.test(svgContent);
+                  // Parse ALL SVG elements to find true geometric bounds
+                  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                  let elementCount = 0;
                   
-                  if (hasClippingPaths) {
-                    console.log(`🔍 CLIPPING PATHS DETECTED - Content may be clipped, checking viewBox for true dimensions`);
+                  // Extract rect elements (including those in clipPaths)
+                  const rectRegex = /<rect[^>]*>/g;
+                  let rectMatch;
+                  while ((rectMatch = rectRegex.exec(svgContent)) !== null) {
+                    const rect = rectMatch[0];
+                    const x = parseFloat(rect.match(/x="([^"]+)"/)?.[1] || '0');
+                    const y = parseFloat(rect.match(/y="([^"]+)"/)?.[1] || '0');
+                    const width = parseFloat(rect.match(/width="([^"]+)"/)?.[1] || '0');
+                    const height = parseFloat(rect.match(/height="([^"]+)"/)?.[1] || '0');
                     
-                    // Extract original SVG viewBox which shows full artboard dimensions
-                    const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-                    if (viewBoxMatch) {
-                      const viewBoxValues = viewBoxMatch[1].split(/\s+/).map(Number);
-                      if (viewBoxValues.length === 4) {
-                        const [vbX, vbY, vbWidth, vbHeight] = viewBoxValues;
-                        
-                        console.log(`📐 ORIGINAL VIEWBOX: ${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}pts`);
-                        
-                        // If viewBox is significantly larger than content bounds, use viewBox
-                        // This means content is clipped and we need the full dimensions
-                        if (vbWidth > contentBounds.width + 10 || vbHeight > contentBounds.height + 10) {
-                          console.log(`✅ VIEWBOX LARGER: Using viewBox dimensions for clipped content (+${(vbWidth - contentBounds.width).toFixed(1)}pts width, +${(vbHeight - contentBounds.height).toFixed(1)}pts height)`);
-                          
-                          contentBounds = {
-                            xMin: vbX,
-                            yMin: vbY,
-                            xMax: vbX + vbWidth,
-                            yMax: vbY + vbHeight,
-                            width: vbWidth,
-                            height: vbHeight
-                          };
-                          boundsResult.contentBounds = contentBounds;
-                        } else {
-                          console.log(`✅ CONTENT BOUNDS SUFFICIENT: Clipping paths are for individual elements, not full content`);
+                    if (width > 0 && height > 0) {
+                      minX = Math.min(minX, x);
+                      minY = Math.min(minY, y);
+                      maxX = Math.max(maxX, x + width);
+                      maxY = Math.max(maxY, y + height);
+                      elementCount++;
+                    }
+                  }
+                  
+                  // Extract path elements (including those in clipPaths)
+                  const pathRegex = /<path[^>]*d="([^"]+)"/g;
+                  let pathMatch;
+                  while ((pathMatch = pathRegex.exec(svgContent)) !== null) {
+                    const pathData = pathMatch[1];
+                    // Extract all coordinate pairs from path data
+                    const coords = pathData.match(/[-]?[\d.]+/g);
+                    if (coords) {
+                      for (let i = 0; i < coords.length - 1; i += 2) {
+                        const x = parseFloat(coords[i]);
+                        const y = parseFloat(coords[i + 1]);
+                        if (!isNaN(x) && !isNaN(y)) {
+                          minX = Math.min(minX, x);
+                          minY = Math.min(minY, y);
+                          maxX = Math.max(maxX, x);
+                          maxY = Math.max(maxY, y);
                         }
                       }
+                      elementCount++;
+                    }
+                  }
+                  
+                  // Extract circle elements
+                  const circleRegex = /<circle[^>]*>/g;
+                  let circleMatch;
+                  while ((circleMatch = circleRegex.exec(svgContent)) !== null) {
+                    const circle = circleMatch[0];
+                    const cx = parseFloat(circle.match(/cx="([^"]+)"/)?.[1] || '0');
+                    const cy = parseFloat(circle.match(/cy="([^"]+)"/)?.[1] || '0');
+                    const r = parseFloat(circle.match(/r="([^"]+)"/)?.[1] || '0');
+                    
+                    if (r > 0) {
+                      minX = Math.min(minX, cx - r);
+                      minY = Math.min(minY, cy - r);
+                      maxX = Math.max(maxX, cx + r);
+                      maxY = Math.max(maxY, cy + r);
+                      elementCount++;
+                    }
+                  }
+                  
+                  // Extract ellipse elements
+                  const ellipseRegex = /<ellipse[^>]*>/g;
+                  let ellipseMatch;
+                  while ((ellipseMatch = ellipseRegex.exec(svgContent)) !== null) {
+                    const ellipse = ellipseMatch[0];
+                    const cx = parseFloat(ellipse.match(/cx="([^"]+)"/)?.[1] || '0');
+                    const cy = parseFloat(ellipse.match(/cy="([^"]+)"/)?.[1] || '0');
+                    const rx = parseFloat(ellipse.match(/rx="([^"]+)"/)?.[1] || '0');
+                    const ry = parseFloat(ellipse.match(/ry="([^"]+)"/)?.[1] || '0');
+                    
+                    if (rx > 0 && ry > 0) {
+                      minX = Math.min(minX, cx - rx);
+                      minY = Math.min(minY, cy - ry);
+                      maxX = Math.max(maxX, cx + rx);
+                      maxY = Math.max(maxY, cy + ry);
+                      elementCount++;
+                    }
+                  }
+                  
+                  if (elementCount > 0 && minX < Infinity) {
+                    const allElementsWidth = maxX - minX;
+                    const allElementsHeight = maxY - minY;
+                    
+                    console.log(`🔍 ANALYZED ${elementCount} SVG ELEMENTS (including clipped): ${allElementsWidth.toFixed(1)}×${allElementsHeight.toFixed(1)}pts`);
+                    
+                    // If geometric bounds are larger than Ghostscript bounds, use geometric bounds
+                    // This catches clipped content that Ghostscript doesn't see
+                    if (allElementsWidth > contentBounds.width || allElementsHeight > contentBounds.height) {
+                      const widthDiff = allElementsWidth - contentBounds.width;
+                      const heightDiff = allElementsHeight - contentBounds.height;
+                      console.log(`✅ GEOMETRIC BOUNDS LARGER: Using all element bounds (+${widthDiff.toFixed(1)}pts width, +${heightDiff.toFixed(1)}pts height)`);
+                      
+                      contentBounds = {
+                        xMin: minX,
+                        yMin: minY,
+                        xMax: maxX,
+                        yMax: maxY,
+                        width: allElementsWidth,
+                        height: allElementsHeight
+                      };
+                      boundsResult.contentBounds = contentBounds;
+                    } else {
+                      console.log(`✅ GHOSTSCRIPT BOUNDS SUFFICIENT: Painted content matches geometric bounds`);
                     }
                   } else {
-                    console.log(`ℹ️ No clipping paths found in SVG`);
+                    console.log(`⚠️ Could not analyze SVG geometry, using Ghostscript bounds`);
                   }
                   
                   // Extract all content elements (paths, circles, rects, etc.)
