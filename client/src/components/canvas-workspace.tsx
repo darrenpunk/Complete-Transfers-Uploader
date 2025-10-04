@@ -471,7 +471,7 @@ export default function CanvasWorkspace({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
-  // Add clipboard paste support for SVG import from Illustrator
+  // Add clipboard paste support for PDF/SVG import from Illustrator
   useEffect(() => {
     const handlePaste = async (event: ClipboardEvent) => {
       // Only process paste if canvas area is focused (not in input fields)
@@ -481,88 +481,101 @@ export default function CanvasWorkspace({
       }
 
       console.log('📋 Paste event detected');
-      
-      const clipboardData = event.clipboardData;
-      if (!clipboardData) {
-        console.log('⚠️ No clipboard data');
-        return;
-      }
-
-      // Try to get SVG from clipboard
-      let svgContent: string | null = null;
-      
-      // Check for SVG in different clipboard types
-      const types = clipboardData.types;
-      console.log('📋 Clipboard types:', types);
-
-      // Try text/plain FIRST (Illustrator puts SVG here)
-      if (types.includes('text/plain')) {
-        const text = clipboardData.getData('text/plain');
-        console.log('📋 text/plain content length:', text.length);
-        console.log('📋 text/plain starts with:', text.substring(0, 100));
-        // Check if contains SVG (may start with <?xml or <svg)
-        if (text.includes('<svg') && text.includes('</svg>')) {
-          svgContent = text;
-          console.log('✅ Found SVG in text/plain');
-        }
-      }
-      // Try text/html (fallback)
-      if (!svgContent && types.includes('text/html')) {
-        const html = clipboardData.getData('text/html');
-        console.log('📋 text/html content length:', html.length);
-        // Extract SVG from HTML if present
-        const svgMatch = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
-        if (svgMatch) {
-          svgContent = svgMatch[0];
-          console.log('✅ Extracted SVG from text/html');
-        }
-      }
-      // Try image/svg+xml (least reliable)
-      if (!svgContent && types.includes('image/svg+xml')) {
-        const svg = clipboardData.getData('image/svg+xml');
-        console.log('📋 image/svg+xml content length:', svg.length);
-        if (svg) {
-          svgContent = svg;
-          console.log('✅ Found SVG in image/svg+xml');
-        }
-      }
-
-      if (!svgContent) {
-        console.log('ℹ️ No SVG content found in clipboard');
-        return;
-      }
-
       event.preventDefault();
-      console.log('🎯 Processing pasted SVG content');
 
       try {
-        // CRITICAL FIX: Trim leading/trailing whitespace (Illustrator adds tab before <?xml)
-        // XML declaration MUST be the absolute first thing in the file
+        // CRITICAL: Use modern Clipboard API to access binary PDF data
+        // Illustrator puts BOTH PDF (vector-perfect) and SVG (degraded) on clipboard
+        // PDF preserves masked gradients as vectors; SVG degrades them to raster images
+        const clipboardItems = await navigator.clipboard.read();
+        
+        for (const item of clipboardItems) {
+          console.log('📋 Clipboard item types:', item.types);
+          
+          // PRIORITY 1: Try PDF first (preserves gradients as vectors)
+          if (item.types.includes('application/pdf')) {
+            console.log('🎯 Found native PDF on clipboard - using for perfect gradient preservation!');
+            const pdfBlob = await item.getType('application/pdf');
+            const filename = `pasted-artwork-${Date.now()}.pdf`;
+            const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+            toast({
+              title: "✅ PDF Pasted",
+              description: "Artwork imported with perfect vector quality!",
+            });
+
+            if (onLogoUpload) {
+              onLogoUpload([file]);
+            }
+            return; // Done - PDF is best quality
+          }
+        }
+
+        // FALLBACK: If no PDF, try SVG (but warn user about potential quality loss)
+        console.log('⚠️ No PDF found, falling back to SVG (may lose gradient quality)');
+        
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) {
+          console.log('⚠️ No clipboard data');
+          return;
+        }
+
+        let svgContent: string | null = null;
+        const types = clipboardData.types;
+        console.log('📋 Clipboard types:', types);
+
+        // Try text/plain FIRST (Illustrator puts SVG here)
+        if (types.includes('text/plain')) {
+          const text = clipboardData.getData('text/plain');
+          if (text.includes('<svg') && text.includes('</svg>')) {
+            svgContent = text;
+            console.log('✅ Found SVG in text/plain');
+          }
+        }
+        // Try text/html (fallback)
+        if (!svgContent && types.includes('text/html')) {
+          const html = clipboardData.getData('text/html');
+          const svgMatch = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+          if (svgMatch) {
+            svgContent = svgMatch[0];
+            console.log('✅ Extracted SVG from text/html');
+          }
+        }
+        // Try image/svg+xml (least reliable)
+        if (!svgContent && types.includes('image/svg+xml')) {
+          const svg = clipboardData.getData('image/svg+xml');
+          if (svg) {
+            svgContent = svg;
+            console.log('✅ Found SVG in image/svg+xml');
+          }
+        }
+
+        if (!svgContent) {
+          console.log('ℹ️ No artwork found in clipboard');
+          return;
+        }
+
+        // Trim whitespace (Illustrator adds tab before <?xml)
         svgContent = svgContent.trim();
         
-        // Create a File object from the SVG string
         const blob = new Blob([svgContent], { type: 'image/svg+xml' });
         const filename = `pasted-artwork-${Date.now()}.svg`;
         const file = new File([blob], filename, { type: 'image/svg+xml' });
 
-        console.log('📦 Created file from pasted SVG:', filename);
-
-        // Show success toast
         toast({
           title: "✅ SVG Pasted",
-          description: "Artwork imported from clipboard with perfect dimensions!",
+          description: "Artwork imported from clipboard",
         });
 
-        // Upload using existing handler
         if (onLogoUpload) {
           onLogoUpload([file]);
         }
       } catch (error) {
-        console.error('❌ Failed to process pasted SVG:', error);
+        console.error('❌ Failed to process paste:', error);
         toast({
           variant: "destructive",
           title: "❌ Paste Failed",
-          description: "Could not import SVG from clipboard. Try uploading the file instead.",
+          description: "Could not import from clipboard. Try uploading the file instead.",
         });
       }
     };
