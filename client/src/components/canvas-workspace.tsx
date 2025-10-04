@@ -471,6 +471,94 @@ export default function CanvasWorkspace({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleUndo, handleRedo]);
 
+  // Add clipboard paste support for SVG import from Illustrator
+  useEffect(() => {
+    const handlePaste = async (event: ClipboardEvent) => {
+      // Only process paste if canvas area is focused (not in input fields)
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      console.log('📋 Paste event detected');
+      
+      const clipboardData = event.clipboardData;
+      if (!clipboardData) {
+        console.log('⚠️ No clipboard data');
+        return;
+      }
+
+      // Try to get SVG from clipboard
+      let svgContent: string | null = null;
+      
+      // Check for SVG in different clipboard types
+      const types = clipboardData.types;
+      console.log('📋 Clipboard types:', types);
+
+      // Try image/svg+xml first (most specific)
+      if (types.includes('image/svg+xml')) {
+        svgContent = clipboardData.getData('image/svg+xml');
+        console.log('✅ Found SVG in image/svg+xml');
+      }
+      // Try text/html (Illustrator often puts SVG here)
+      else if (types.includes('text/html')) {
+        const html = clipboardData.getData('text/html');
+        // Extract SVG from HTML if present
+        const svgMatch = html.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+        if (svgMatch) {
+          svgContent = svgMatch[0];
+          console.log('✅ Extracted SVG from text/html');
+        }
+      }
+      // Try text/plain as fallback
+      else if (types.includes('text/plain')) {
+        const text = clipboardData.getData('text/plain');
+        if (text.trim().startsWith('<svg')) {
+          svgContent = text;
+          console.log('✅ Found SVG in text/plain');
+        }
+      }
+
+      if (!svgContent) {
+        console.log('ℹ️ No SVG content found in clipboard');
+        return;
+      }
+
+      event.preventDefault();
+      console.log('🎯 Processing pasted SVG content');
+
+      try {
+        // Create a File object from the SVG string
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const filename = `pasted-artwork-${Date.now()}.svg`;
+        const file = new File([blob], filename, { type: 'image/svg+xml' });
+
+        console.log('📦 Created file from pasted SVG:', filename);
+
+        // Show success toast
+        toast({
+          title: "✅ SVG Pasted",
+          description: "Artwork imported from clipboard with perfect dimensions!",
+        });
+
+        // Upload using existing handler
+        if (onLogoUpload) {
+          onLogoUpload([file]);
+        }
+      } catch (error) {
+        console.error('❌ Failed to process pasted SVG:', error);
+        toast({
+          variant: "destructive",
+          title: "❌ Paste Failed",
+          description: "Could not import SVG from clipboard. Try uploading the file instead.",
+        });
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [onLogoUpload, toast]);
+
   // Color management now handled purely with CSS filters - no server processing needed
 
   // Function to get the image URL for display
