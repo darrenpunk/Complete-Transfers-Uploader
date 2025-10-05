@@ -2807,7 +2807,6 @@ export async function registerRoutes(app: express.Application) {
 
         // AUTO-FIT TO CONTENT: For PDF uploads only (not pasted SVGs from Illustrator)
         // PDFs need bounds fitted to content, but pasted SVGs already have correct bounds
-        let autoFitContentScale = null;
         const isOriginalPDF = !!(file as any).originalPdfPath;
         
         if (isOriginalPDF && contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
@@ -2817,10 +2816,7 @@ export async function registerRoutes(app: express.Application) {
           
           console.log(`🎯 AUTO-FIT PDF TO CONTENT: Using contentBounds ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm instead of full page ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
           console.log(`✅ PDF ILLUSTRATOR WORKFLOW: Bounds automatically fitted to content on import`);
-          
-          // Lock contentScale at 1.0 to prevent visual content from shrinking
-          autoFitContentScale = 1.0;
-          console.log(`🔒 LOCKING CONTENTSCALE: 1.0 (prevents visual content from scaling)`);
+          console.log(`📐 RENDERER: Will calculate correct contentScale on first render (no manual override needed)`);
           
           displayWidth = contentWidthMm;
           displayHeight = contentHeightMm;
@@ -2853,8 +2849,7 @@ export async function registerRoutes(app: express.Application) {
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: colorOverrides,
-          ...(autoFitContentScale !== null && { contentScale: autoFitContentScale })
+          colorOverrides: colorOverrides
         };
 
         const createdElement = await storage.createCanvasElement(canvasElementData);
