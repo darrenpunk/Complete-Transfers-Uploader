@@ -338,25 +338,42 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Standard translate-based centering (no scale)
-    const translateX = `calc(50% - ${contentCenterX}px)`;
-    const translateY = `calc(50% - ${adjustedCenterY}px)`;
+    // Standard viewBox-based centering (no scale)
+    // Instead of CSS transforms, adjust the SVG viewBox to show only content bounds
+    // Then use flexbox to center the result
+    const newViewBox = `${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`;
     
-    console.log(`🎯 Standard centering: content center (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
-    console.log(`   Transform: translate(${translateX}, ${translateY})`);
+    console.log(`🎯 ViewBox centering: cropping to content bounds`);
+    console.log(`   Original viewBox center: (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
+    console.log(`   New viewBox: ${newViewBox}`);
+    
+    // Replace the viewBox in the SVG
+    let centeredSvg = svgContent.replace(
+      /viewBox\s*=\s*["']([^"']+)["']/i,
+      `viewBox="${newViewBox}"`
+    );
+    
+    // If no viewBox found, add one after the opening <svg tag
+    if (!centeredSvg.includes('viewBox=')) {
+      centeredSvg = centeredSvg.replace(
+        /<svg([^>]*)>/i,
+        `<svg$1 viewBox="${newViewBox}">`
+      );
+    }
     
     return (
-      <div className="w-full h-full relative overflow-visible">
-        <div
-          className="w-full h-full"
-          style={{
-            transform: `translate(${translateX}, ${translateY})`,
-            transformOrigin: 'top left',
-            overflow: 'visible'
-          }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
-      </div>
+      <div 
+        className="w-full h-full"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+          margin: 0,
+          overflow: 'visible'
+        }}
+        dangerouslySetInnerHTML={{ __html: centeredSvg }}
+      />
     );
   };
 
