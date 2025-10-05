@@ -78,6 +78,7 @@ export class MemStorage implements IStorage {
       { id: "template-square", name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
       { id: "template-badge", name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
       { id: "template-small", name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
+      { id: "template-295x300", name: "295x300", label: "295×300mm", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers" },
       
       // Screen Printed Transfers - Full Colour Metallic
       { id: "metallic-A3", name: "metallic_A3", label: "A3 Metallic", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
@@ -88,10 +89,12 @@ export class MemStorage implements IStorage {
       { id: "metallic-square", name: "metallic_square", label: "95×95mm Metallic", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
       { id: "metallic-badge", name: "metallic_badge", label: "100×70mm Metallic", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
       { id: "metallic-small", name: "metallic_small", label: "60×60mm Metallic", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
+      { id: "metallic-295x300", name: "metallic_295x300", label: "295×300mm Metallic", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish" },
       
       // Screen Printed Transfers - Full Colour HD
       { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers" },
       { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers" },
+      { id: "hd-295x300", name: "hd_295x300", label: "295×300mm HD", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers" },
       
       // Screen Printed Transfers - Single Colour
       { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
@@ -102,6 +105,7 @@ export class MemStorage implements IStorage {
       { id: "single-square", name: "single_square", label: "95×95mm Single Colour", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
       { id: "single-badge", name: "single_badge", label: "100×70mm Single Colour", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
       { id: "single-small", name: "single_small", label: "60×60mm Single Colour", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
+      { id: "single-295x300", name: "single_295x300", label: "295×300mm Single Colour", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range" },
       
       // Screen Printed Transfers - Zero
       { id: "zero-A3", name: "zero_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!" },
@@ -245,7 +249,10 @@ export class MemStorage implements IStorage {
       isCMYKPreserved: insertLogo.isCMYKPreserved || false,
       isPdfWithRasterOnly: insertLogo.isPdfWithRasterOnly || false,
       extractedRasterPath: insertLogo.extractedRasterPath ?? null,
-      previewFilename: insertLogo.previewFilename || null
+      previewFilename: insertLogo.previewFilename || null,
+      isComplexVector: insertLogo.isComplexVector || false,
+      vectorComplexityMetrics: insertLogo.vectorComplexityMetrics || null,
+      canvasFallbackFilename: insertLogo.canvasFallbackFilename || null
     };
     this.logos.set(id, logo);
     return logo;
