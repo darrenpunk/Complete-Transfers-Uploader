@@ -3186,12 +3186,18 @@ export async function registerRoutes(app: express.Application) {
       const contentWidthMm = logo.contentBounds.width * pxToMm;
       const contentHeightMm = logo.contentBounds.height * pxToMm;
       
-      // Calculate scale factor to keep visual content at original size
-      const scaleX = element.width / contentWidthMm;
-      const scaleY = element.height / contentHeightMm;
+      // Get original SVG dimensions from logo (stored in mm)
+      // These are the full viewBox dimensions, not the content bounds
+      const originalWidthMm = logo.width ? logo.width * pxToMm : contentWidthMm;
+      const originalHeightMm = logo.height ? logo.height * pxToMm : contentHeightMm;
+      
+      // Calculate scale factor from ORIGINAL SVG size to keep visual content at original size
+      // contentScale = how much to scale UP the content to get back to original size
+      const scaleX = originalWidthMm / contentWidthMm;
+      const scaleY = originalHeightMm / contentHeightMm;
       const contentScale = Math.max(scaleX, scaleY);
       
-      console.log(`📐 Original element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+      console.log(`📐 Original SVG: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm`);
       console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
       console.log(`📐 Content scale: ${contentScale.toFixed(2)}x`);
       
