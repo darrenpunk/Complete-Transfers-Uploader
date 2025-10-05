@@ -190,9 +190,14 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // ORIGINAL SIMPLE RENDERING: Center SVG with no scaling or transformations
+  // ORIGINAL SIMPLE RENDERING: Center SVG and scale to fit container
   const renderWithContentBounds = () => {
-    // Original behavior - just center the SVG as-is
+    // Add width/height 100% to SVG so it scales to fit the parent container
+    let scaledSvg = svgContent.replace(
+      /<svg([^>]*)>/i,
+      '<svg$1 width="100%" height="100%">'
+    );
+    
     return (
       <div 
         className="w-full h-full"
@@ -204,7 +209,7 @@ export default function SvgInlineRenderer({
           margin: 0,
           overflow: 'hidden'
         }}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
+        dangerouslySetInnerHTML={{ __html: scaledSvg }}
       />
     );
   };
