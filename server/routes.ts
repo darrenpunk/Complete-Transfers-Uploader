@@ -3165,6 +3165,55 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Fit canvas element to content bounds (keeps visual content at original size)
+  app.post('/api/canvas-elements/:elementId/fit-to-content', async (req, res) => {
+    try {
+      const elementId = req.params.elementId;
+      console.log(`🎯 Fitting canvas element to content bounds: ${elementId}`);
+      
+      const element = await storage.getCanvasElement(elementId);
+      if (!element) {
+        return res.status(404).json({ error: 'Canvas element not found' });
+      }
+      
+      const logo = await storage.getLogo(element.logoId);
+      if (!logo || !logo.contentBounds) {
+        return res.status(400).json({ error: 'Logo or content bounds not found' });
+      }
+      
+      // Calculate new dimensions based on contentBounds
+      const pxToMm = 1 / 2.834645669; // 72 DPI conversion
+      const contentWidthMm = logo.contentBounds.width * pxToMm;
+      const contentHeightMm = logo.contentBounds.height * pxToMm;
+      
+      // Calculate scale factor to keep visual content at original size
+      const scaleX = element.width / contentWidthMm;
+      const scaleY = element.height / contentHeightMm;
+      const contentScale = Math.max(scaleX, scaleY);
+      
+      console.log(`📐 Original element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+      console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
+      console.log(`📐 Content scale: ${contentScale.toFixed(2)}x`);
+      
+      // Update element with content bounds dimensions and scale factor
+      const updatedElement = await storage.updateCanvasElement(elementId, {
+        width: contentWidthMm,
+        height: contentHeightMm,
+        contentScale: contentScale
+      });
+      
+      if (!updatedElement) {
+        return res.status(500).json({ error: 'Failed to update canvas element' });
+      }
+      
+      console.log(`✅ Element fitted to content with scale ${contentScale.toFixed(2)}x`);
+      res.json(updatedElement);
+    } catch (error) {
+      console.error('Fit to content error:', error);
+      res.status(500).json({ error: 'Failed to fit element to content' });
+    }
+  });
+
   // Removed duplicate /uploads route handler - already handled in server/index.ts
 
   // Fix oversized canvas elements endpoint

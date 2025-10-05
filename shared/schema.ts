@@ -64,6 +64,7 @@ export const canvasElements = pgTable("canvas_elements", {
   isLocked: boolean("is_locked").notNull().default(false),
   colorOverrides: jsonb("color_overrides"), // Store SVG color changes as JSON
   garmentColor: text("garment_color"), // Individual garment color per logo
+  contentScale: real("content_scale").default(1), // Scale factor to show content at original size when fitted to bounds
   // Text element properties
   textContent: text("text_content"), // Text content for text elements
   fontSize: real("font_size").default(16), // Font size in points

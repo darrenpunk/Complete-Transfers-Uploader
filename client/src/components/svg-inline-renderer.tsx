@@ -190,6 +190,10 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with viewBox expansion for negative coordinates
   const renderWithContentBounds = () => {
+    // Check for contentScale - if set, apply it to keep visual content at original size
+    const contentScale = element.contentScale || 1;
+    const hasContentScale = contentScale !== 1;
+    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
@@ -199,6 +203,26 @@ export default function SvgInlineRenderer({
                             'yMax' in logo.contentBounds;
     
     if (!hasContentBounds) {
+      // Apply contentScale if present (even without contentBounds)
+      if (hasContentScale) {
+        return (
+          <div 
+            className="w-full h-full"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              margin: 0,
+              overflow: 'visible',
+              transform: `scale(${contentScale})`,
+              transformOrigin: 'center center'
+            }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        );
+      }
+      
       // Fallback to default centering
       return (
         <div 
@@ -237,6 +261,9 @@ export default function SvgInlineRenderer({
         );
       }
       
+      // Apply contentScale if present
+      const scaleTransform = hasContentScale ? `scale(${contentScale})` : '';
+      
       // Use simplified rendering - just render the SVG as-is
       // The browser handles SVG overflow naturally when not wrapped
       return (
@@ -248,7 +275,11 @@ export default function SvgInlineRenderer({
             justifyContent: 'center',
             padding: 0,
             margin: 0,
-            overflow: 'visible'
+            overflow: 'visible',
+            ...(hasContentScale && {
+              transform: scaleTransform,
+              transformOrigin: 'center center'
+            })
           }}
           dangerouslySetInnerHTML={{ __html: processedSvg }}
         />
@@ -278,13 +309,18 @@ export default function SvgInlineRenderer({
     const translateX = `calc(50% - ${contentCenterX}px)`;
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
     
+    // Combine translate and scale if contentScale is present
+    const combinedTransform = hasContentScale 
+      ? `translate(${translateX}, ${translateY}) scale(${contentScale})`
+      : `translate(${translateX}, ${translateY})`;
+    
     return (
       <div className="w-full h-full relative overflow-visible">
         <div
           className="w-full h-full"
           style={{
-            transform: `translate(${translateX}, ${translateY})`,
-            transformOrigin: 'top left',
+            transform: combinedTransform,
+            transformOrigin: hasContentScale ? 'center center' : 'top left',
             overflow: 'visible'
           }}
           dangerouslySetInnerHTML={{ __html: svgContent }}

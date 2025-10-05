@@ -979,6 +979,45 @@ export default function CanvasWorkspace({
 
 
 
+  // Fit element to content bounds (keeps visual content at original size via contentScale)
+  const handleFitToContent = async () => {
+    if (!selectedElement || !project?.id) {
+      toast({
+        title: "No element selected",
+        description: "Please select an element to fit to content",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      console.log(`🎯 Fitting element ${selectedElement.id} to content bounds`);
+      
+      const response = await apiRequest('POST', `/api/canvas-elements/${selectedElement.id}/fit-to-content`);
+      
+      if (response.ok) {
+        const updatedElement = await response.json();
+        console.log(`✅ Element fitted: ${updatedElement.width.toFixed(1)}×${updatedElement.height.toFixed(1)}mm @ ${updatedElement.contentScale.toFixed(2)}x scale`);
+        
+        await queryClient.invalidateQueries({ queryKey: ['/api/projects', project.id, 'canvas-elements'] });
+        
+        toast({
+          title: "Fitted to content",
+          description: `Selection box resized to actual content area`,
+        });
+      } else {
+        throw new Error('Failed to fit to content');
+      }
+    } catch (error) {
+      console.error('Error fitting to content:', error);
+      toast({
+        title: "Failed to fit to content",
+        description: "Could not resize to content bounds",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Function to fit all content within safety margins
   const handleFitToBounds = () => {
     if (!template || !canvasElements || canvasElements.length === 0) {
@@ -1298,6 +1337,7 @@ export default function CanvasWorkspace({
                       variant="outline"
                       size="sm"
                       onClick={handleFitToBounds}
+                      data-testid="button-fit-in-bounds"
                     >
                       <Maximize2 className="w-4 h-4 mr-1" />
                       Fit in Bounds
@@ -1305,6 +1345,26 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Scale and center all content within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Fit to Content Button - show when element is selected */}
+              {selectedElement && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFitToContent}
+                      data-testid="button-fit-to-content"
+                    >
+                      <Maximize2 className="w-4 h-4 mr-1" />
+                      Fit to Content
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Resize selection box to actual content (keeps visual size)</p>
                   </TooltipContent>
                 </Tooltip>
               )}
