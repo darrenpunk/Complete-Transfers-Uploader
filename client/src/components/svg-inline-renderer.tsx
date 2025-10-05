@@ -305,22 +305,44 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // Calculate transform to center the content
+    // When contentScale is present, we need to scale from center
+    // Otherwise use the standard translate-based centering
+    if (hasContentScale) {
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'visible'
+          }}
+        >
+          <div
+            style={{
+              transform: `scale(${contentScale})`,
+              transformOrigin: 'center center',
+              overflow: 'visible'
+            }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        </div>
+      );
+    }
+    
+    // Standard translate-based centering (no scale)
     const translateX = `calc(50% - ${contentCenterX}px)`;
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
-    
-    // Combine translate and scale if contentScale is present
-    const combinedTransform = hasContentScale 
-      ? `translate(${translateX}, ${translateY}) scale(${contentScale})`
-      : `translate(${translateX}, ${translateY})`;
     
     return (
       <div className="w-full h-full relative overflow-visible">
         <div
           className="w-full h-full"
           style={{
-            transform: combinedTransform,
-            transformOrigin: hasContentScale ? 'center center' : 'top left',
+            transform: `translate(${translateX}, ${translateY})`,
+            transformOrigin: 'top left',
             overflow: 'visible'
           }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
