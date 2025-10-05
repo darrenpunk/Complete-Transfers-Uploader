@@ -239,21 +239,22 @@ export default function SvgInlineRenderer({
       console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
       console.log(`   Element size: ${element.width} × ${element.height}mm`);
       
-      // Calculate scale: Backend stores dimensions at 72 DPI (viewBox px → mm)
-      // So we must use same conversion to get correct scale
-      const pxToMm = 1 / 2.834645669; // PDF DPI (72 DPI: 1mm = 2.834645669px)
-      const svgWidthMm = viewBoxWidth * pxToMm;
-      const svgHeightMm = viewBoxHeight * pxToMm;
+      // Calculate scale: Canvas layout displays elements at 96 DPI CSS standard
+      // SVG viewBox is in 72 DPI PDF units, so we need to scale to match 96 DPI display
+      const mmToPixel96DPI = 96 / 25.4; // 3.779 px/mm (CSS standard)
+      const targetPixelWidth = element.width * mmToPixel96DPI;
+      const targetPixelHeight = element.height * mmToPixel96DPI;
       
-      const scaleX = element.width / svgWidthMm;
-      const scaleY = element.height / svgHeightMm;
+      const scaleX = targetPixelWidth / viewBoxWidth;
+      const scaleY = targetPixelHeight / viewBoxHeight;
       const scale = Math.min(scaleX, scaleY);
       
       // Calculate rendered pixel dimensions
       const renderedWidth = viewBoxWidth * scale;
       const renderedHeight = viewBoxHeight * scale;
       
-      console.log(`   ViewBox: ${viewBoxWidth}×${viewBoxHeight}px = ${svgWidthMm.toFixed(1)}×${svgHeightMm.toFixed(1)}mm`);
+      console.log(`   Target: ${targetPixelWidth.toFixed(1)}×${targetPixelHeight.toFixed(1)}px (${element.width.toFixed(1)}×${element.height.toFixed(1)}mm @ 96 DPI)`);
+      console.log(`   ViewBox: ${viewBoxWidth}×${viewBoxHeight}px (72 DPI)`);
       console.log(`   Scale: ${scale.toFixed(4)}, Rendered: ${renderedWidth.toFixed(1)}×${renderedHeight.toFixed(1)}px`);
       
       // Ensure SVG has proper namespace and remove width/height attrs
