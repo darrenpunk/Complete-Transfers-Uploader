@@ -282,8 +282,9 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
-          className="w-full h-full"
           style={{
+            width: `${renderedWidth}px`,
+            height: `${renderedHeight}px`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
