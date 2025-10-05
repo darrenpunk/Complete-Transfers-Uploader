@@ -224,23 +224,23 @@ export class PDFGenerator {
         top: origHeight - contentBounds.yMin,
       };
       
-      // Calculate target dimensions based on actual content
+      // CRITICAL: Use actual content dimensions, NOT scaled to viewBox
+      // Content bounds are in pixels at 72 DPI, convert to points (1:1 at 72 DPI)
+      targetWidth = contentWidthPts;
+      targetHeight = contentHeightPts;
+      
+      // Calculate content dimensions in mm for positioning
       const contentWidthMm = contentWidthPts / 2.834645669;
       const contentHeightMm = contentHeightPts / 2.834645669;
       
-      // Calculate scale to match displayed size on canvas
-      const isRotated = element.rotation === 90 || element.rotation === 270;
-      const displayWidthMm = isRotated ? element.height : element.width;
-      const displayHeightMm = isRotated ? element.width : element.height;
+      // Calculate position - element.x and element.y are center positions in mm
+      // Convert to PDF coordinates (points) and adjust for content size
+      // PDF uses bottom-left origin, so we calculate top-left corner position
+      const centerXMm = element.x + (templateSize.width / 2); // Convert from center-based to absolute
+      const centerYMm = element.y + (templateSize.height / 2); // Convert from center-based to absolute
       
-      const scale = Math.min(displayWidthMm / contentWidthMm, displayHeightMm / contentHeightMm);
-      
-      targetWidth = contentWidthPts * scale * 2.834645669 / 2.834645669; // Keep in points
-      targetHeight = contentHeightPts * scale * 2.834645669 / 2.834645669;
-      
-      // Calculate position - element.x and element.y are already center-based
-      drawX = element.x * 2.834645669;
-      drawY = (templateSize.height - element.y - (targetHeight / 2.834645669)) * 2.834645669;
+      drawX = (centerXMm - (contentWidthMm / 2)) * 2.834645669; // Left edge
+      drawY = (templateSize.height - centerYMm - (contentHeightMm / 2)) * 2.834645669; // Bottom edge
     } else {
       // No content bounds - use full page dimensions
       embedOptions = {
