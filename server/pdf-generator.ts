@@ -155,7 +155,7 @@ export class PDFGenerator {
     try {
       if (shouldUseOriginal) {
         // Embed original PDF as vector
-        await this.embedOriginalPDF(pdfDoc, page, element, filePath, templateSize);
+        await this.embedOriginalPDF(pdfDoc, page, element, filePath, logo, templateSize);
       } else if (isCMYKImage) {
         // Special handling for CMYK images
         await this.embedCMYKImage(pdfDoc, page, element, filePath, logo, templateSize);
@@ -180,6 +180,7 @@ export class PDFGenerator {
     page: ReturnType<PDFDocument['addPage']>,
     element: CanvasElement,
     pdfPath: string,
+    logo: Logo,
     templateSize: TemplateSize
   ) {
     // Read and embed the original PDF
@@ -194,33 +195,84 @@ export class PDFGenerator {
     
     // Embed the first page as an embedded page
     const firstPage = originalPages[0];
-    const embeddedPage = await pdfDoc.embedPage(firstPage, {
-      left: 0,
-      bottom: 0,
-      right: firstPage.getWidth(),
-      top: firstPage.getHeight(),
-    });
-    
-    // Calculate position and scale
-    const x = element.x * 2.834645669; // Convert from mm to points
-    const y = (templateSize.height - element.y - element.height) * 2.834645669;
-    const targetWidth = element.width * 2.834645669;
-    const targetHeight = element.height * 2.834645669;
     
     // Get original page dimensions
-    const { width: origWidth, height: origHeight } = embeddedPage.size();
+    const origWidth = firstPage.getWidth();
+    const origHeight = firstPage.getHeight();
     
-    // Calculate scale to fit the element bounds while maintaining aspect ratio
-    const scaleX = targetWidth / origWidth;
-    const scaleY = targetHeight / origHeight;
-    const scale = Math.min(scaleX, scaleY);
+    // Check if we have content bounds to use actual content dimensions
+    const contentBounds = logo.contentBounds as any;
+    const hasContentBounds = contentBounds && 
+      typeof contentBounds.xMin === 'number' && 
+      typeof contentBounds.yMin === 'number' &&
+      typeof contentBounds.xMax === 'number' &&
+      typeof contentBounds.yMax === 'number';
+    
+    let embedOptions;
+    let targetWidth, targetHeight, drawX, drawY;
+    
+    if (hasContentBounds) {
+      // Use content bounds to crop and scale properly
+      const contentWidthPts = contentBounds.xMax - contentBounds.xMin;
+      const contentHeightPts = contentBounds.yMax - contentBounds.yMin;
+      
+      // Embed only the content area
+      embedOptions = {
+        left: contentBounds.xMin,
+        bottom: origHeight - contentBounds.yMax,
+        right: contentBounds.xMax,
+        top: origHeight - contentBounds.yMin,
+      };
+      
+      // Calculate target dimensions based on actual content
+      const contentWidthMm = contentWidthPts / 2.834645669;
+      const contentHeightMm = contentHeightPts / 2.834645669;
+      
+      // Calculate scale to match displayed size on canvas
+      const isRotated = element.rotation === 90 || element.rotation === 270;
+      const displayWidthMm = isRotated ? element.height : element.width;
+      const displayHeightMm = isRotated ? element.width : element.height;
+      
+      const scale = Math.min(displayWidthMm / contentWidthMm, displayHeightMm / contentHeightMm);
+      
+      targetWidth = contentWidthPts * scale * 2.834645669 / 2.834645669; // Keep in points
+      targetHeight = contentHeightPts * scale * 2.834645669 / 2.834645669;
+      
+      // Calculate position - element.x and element.y are already center-based
+      drawX = element.x * 2.834645669;
+      drawY = (templateSize.height - element.y - (targetHeight / 2.834645669)) * 2.834645669;
+    } else {
+      // No content bounds - use full page dimensions
+      embedOptions = {
+        left: 0,
+        bottom: 0,
+        right: origWidth,
+        top: origHeight,
+      };
+      
+      targetWidth = element.width * 2.834645669;
+      targetHeight = element.height * 2.834645669;
+      
+      // Calculate scale to fit the element bounds while maintaining aspect ratio
+      const scaleX = targetWidth / origWidth;
+      const scaleY = targetHeight / origHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      targetWidth = origWidth * scale;
+      targetHeight = origHeight * scale;
+      
+      drawX = element.x * 2.834645669;
+      drawY = (templateSize.height - element.y - element.height) * 2.834645669;
+    }
+    
+    const embeddedPage = await pdfDoc.embedPage(firstPage, embedOptions);
     
     // Draw the embedded page with proper scaling
     page.drawPage(embeddedPage, {
-      x: x,
-      y: y,
-      width: origWidth * scale,
-      height: origHeight * scale,
+      x: drawX,
+      y: drawY,
+      width: targetWidth,
+      height: targetHeight,
       rotate: degrees(element.rotation || 0),
     });
   }
