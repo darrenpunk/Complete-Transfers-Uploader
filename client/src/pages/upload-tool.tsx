@@ -886,10 +886,10 @@ export default function UploadTool() {
             
             // Define exact template IDs for each product type matching actual storage data
             const productTemplates: { [key: string]: string[] } = {
-              "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
-              "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
-              "Full Colour HD": ["hd-A3", "hd-A4"],
-              "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
+              "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small", "template-295x300"],
+              "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small", "metallic-295x300"],
+              "Full Colour HD": ["hd-A3", "hd-A4", "hd-295x300"],
+              "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small", "single-295x300"],
               "DTF - Digital Film Transfers": ["dtf-SRA3", "dtf-large"],
               "UV DTF": ["uvdtf-A3"],
               "Custom Badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
@@ -1089,10 +1089,10 @@ export default function UploadTool() {
           
           // Define exact template IDs for each product type matching actual storage data
           const productTemplates: { [key: string]: string[] } = {
-            "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small"],
-            "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
-            "Full Colour HD": ["hd-A3", "hd-A4"],
-            "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
+            "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small", "template-295x300"],
+            "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small", "metallic-295x300"],
+            "Full Colour HD": ["hd-A3", "hd-A4", "hd-295x300"],
+            "Single Colour Transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small", "single-295x300"],
             "DTF - Digital Film Transfers": ["dtf-SRA3", "dtf-large"],
             "UV DTF": ["uvdtf-A3"],
             "Custom Badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
