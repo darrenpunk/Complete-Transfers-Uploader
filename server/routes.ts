@@ -2840,6 +2840,21 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
+        // CRITICAL: Use contentBounds for canvas element dimensions to match actual content
+        // This makes the selection box match the actual content, not the full viewBox
+        if (contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
+          const pxToMm = 1 / 2.834645669; // 72 DPI conversion
+          const contentWidthMm = contentBoundsToSave.width * pxToMm;
+          const contentHeightMm = contentBoundsToSave.height * pxToMm;
+          
+          console.log(`🎯 USING CONTENT BOUNDS for canvas element: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (actual content size)`);
+          console.log(`📐 Original displayWidth/Height: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (full viewBox)`);
+          
+          // Override display dimensions with content bounds
+          displayWidth = contentWidthMm;
+          displayHeight = contentHeightMm;
+        }
+
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
         if (isSingleColourTemplate && project.inkColor && finalMimeType === 'image/svg+xml') {
