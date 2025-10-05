@@ -2323,43 +2323,12 @@ export async function registerRoutes(app: express.Application) {
               // For PDF-converted SVGs, try to use the original PDF bounds first
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
-                // CRITICAL FIX: Extract PDF PAGE DIMENSIONS (MediaBox), not content bounds
-                // The MediaBox defines the intended artwork size - use it directly with NO scaling
-                console.log('📐 Extracting PDF PAGE DIMENSIONS (MediaBox) from original PDF - will use 1:1 with NO scaling');
+                // Use Ghostscript bbox to detect ACTUAL PAINTED CONTENT, not the full page
+                console.log('📐 Extracting ACTUAL PAINTED CONTENT BOUNDS from PDF using Ghostscript bbox');
                 
-                // Use pdf-lib to get exact MediaBox dimensions
-                try {
-                  const { PDFDocument } = await import('pdf-lib');
-                  const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
-                  const originalPdf = await PDFDocument.load(originalPdfBytes);
-                  const firstPage = originalPdf.getPages()[0];
-                  const mediaBox = firstPage.getMediaBox();
-                  
-                  const pageWidth = mediaBox.width;
-                  const pageHeight = mediaBox.height;
-                  
-                  console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
-                  console.log(`📄 This is the intended artwork size - will be used 1:1 with NO scaling`);
-                  
-                  // Use the PDF page dimensions directly - this is the intended artwork size
-                  boundsResult = {
-                    success: true,
-                    contentBounds: {
-                      xMin: mediaBox.x,
-                      yMin: mediaBox.y,
-                      xMax: mediaBox.x + pageWidth,
-                      yMax: mediaBox.y + pageHeight,
-                      width: pageWidth,
-                      height: pageHeight
-                    },
-                    method: 'pdf-mediabox-dimensions'
-                  };
-                  
-                  console.log(`🎯 Using PDF MediaBox as content bounds - NO content detection, NO scaling`);
-                } catch (pdfLibError) {
-                  console.error('Failed to extract PDF MediaBox:', pdfLibError);
-                  // Fall through to SVG bounds analyzer
-                }
+                // Ghostscript bbox extracts will be done by SVG bounds analyzer below
+                // Don't use MediaBox - it gives the full page size, not the content
+                console.log('🎯 Will use Ghostscript bbox detection for actual content size');
               }
               
               // Import SVG analyzer for later use
