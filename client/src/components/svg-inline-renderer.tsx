@@ -194,15 +194,27 @@ export default function SvgInlineRenderer({
 
   // ORIGINAL SIMPLE RENDERING: SVG fills container exactly
   const renderWithContentBounds = () => {
-    // CRITICAL FIX: Remove ALL sizing/scaling attributes and inject exact dimensions
-    // Remove width, height, viewBox, AND preserveAspectRatio
-    let scaledSvg = svgContent.replace(/\s+(width|height|viewBox|preserveAspectRatio)\s*=\s*["'][^"']*["']/gi, '');
+    // Extract the original viewBox if it exists
+    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']*)["']/i);
+    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
     
-    // Inject exact pixel dimensions - without viewBox, SVG will stretch to these dimensions
-    scaledSvg = scaledSvg.replace(
-      /<svg([^>]*)>/i,
-      `<svg$1 width="${containerWidth}px" height="${containerHeight}px" preserveAspectRatio="none" style="display: block;">`
-    );
+    // Remove width, height, and preserveAspectRatio but keep viewBox
+    let scaledSvg = svgContent.replace(/\s+(width|height|preserveAspectRatio)\s*=\s*["'][^"']*["']/gi, '');
+    
+    // If no viewBox, we need to create one based on the content
+    // For now, inject container dimensions with preserveAspectRatio="none" to force stretching
+    if (viewBox) {
+      scaledSvg = scaledSvg.replace(
+        /<svg([^>]*)>/i,
+        `<svg$1 width="${containerWidth}px" height="${containerHeight}px" preserveAspectRatio="none" style="display: block;">`
+      );
+    } else {
+      // No viewBox - create one that matches container aspect ratio
+      scaledSvg = scaledSvg.replace(
+        /<svg([^>]*)>/i,
+        `<svg$1 width="${containerWidth}px" height="${containerHeight}px" viewBox="0 0 ${containerWidth} ${containerHeight}" preserveAspectRatio="none" style="display: block;">`
+      );
+    }
     
     return (
       <div 
