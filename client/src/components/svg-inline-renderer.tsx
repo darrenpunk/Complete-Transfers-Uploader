@@ -190,31 +190,21 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // SIMPLE RENDERING: Just strip width/height and add CSS to make SVG fill parent
-  // Parent container in canvas-workspace handles mm→px conversion at correct zoom
+  // ORIGINAL SIMPLE RENDERING: Center SVG with no scaling or transformations
   const renderWithContentBounds = () => {
-    // Remove width/height attributes and add CSS to fill parent
-    let cleanedSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
-    cleanedSvg = cleanedSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
-    
-    // Add inline styles to SVG element to fill container
-    cleanedSvg = cleanedSvg.replace(
-      /<svg([^>]*)>/i,
-      '<svg$1 style="width: 100%; height: 100%; display: block;">'
-    );
-    
-    // Simple container that fills parent - parent is already sized correctly
+    // Original behavior - just center the SVG as-is
     return (
       <div 
         className="w-full h-full"
         style={{
-          display: 'block',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 0,
           margin: 0,
-          overflow: 'hidden',
-          lineHeight: 0
+          overflow: 'hidden'
         }}
-        dangerouslySetInnerHTML={{ __html: cleanedSvg }}
+        dangerouslySetInnerHTML={{ __html: svgContent }}
       />
     );
   };
