@@ -287,18 +287,24 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // Fixed size rendering - Content ALWAYS at original size using viewBox only
-    // Let SVG render at its natural viewBox dimensions without any width/height constraints
+    // Fixed size rendering - Content ALWAYS at original size with explicit pixel dimensions
+    // Set width/height to exact viewBox dimensions so SVG doesn't scale with container
     const pxToMm = 1 / 2.834645669; // 72 DPI conversion
     const absoluteWidthMm = viewBoxWidth * pxToMm;
     const absoluteHeightMm = viewBoxHeight * pxToMm;
     
-    console.log(`🎯 Fixed size: ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (viewBox only, no scaling)`);
+    console.log(`🎯 Fixed size: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (never scales)`);
     
-    // Remove width/height and just use viewBox - this prevents any automatic scaling
-    // The SVG will render at exactly its viewBox dimensions (595×842px)
+    // Set explicit pixel dimensions matching viewBox - this prevents automatic scaling
+    // First remove any existing width/height attributes
     let fixedSizeSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
     fixedSizeSvg = fixedSizeSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+    
+    // Then add back fixed pixel dimensions from viewBox
+    fixedSizeSvg = fixedSizeSvg.replace(
+      /<svg([^>]*)>/,
+      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="display: block;">`
+    );
     
     return (
       <div 
