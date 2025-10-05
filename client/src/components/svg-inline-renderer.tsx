@@ -194,19 +194,15 @@ export default function SvgInlineRenderer({
 
   // ORIGINAL SIMPLE RENDERING: SVG fills container exactly
   const renderWithContentBounds = () => {
-    console.log('🎨 SVG Renderer: Container dimensions', { containerWidth, containerHeight, zoom });
+    // CRITICAL FIX: Remove ALL sizing/scaling attributes and inject exact dimensions
+    // Remove width, height, viewBox, AND preserveAspectRatio
+    let scaledSvg = svgContent.replace(/\s+(width|height|viewBox|preserveAspectRatio)\s*=\s*["'][^"']*["']/gi, '');
     
-    // CRITICAL FIX: Remove viewBox to force SVG to use explicit width/height
-    // Step 1: Remove existing width/height/viewBox attributes
-    let scaledSvg = svgContent.replace(/\s+(width|height|viewBox)\s*=\s*["'][^"']*["']/gi, '');
-    
-    // Step 2: Inject the container's exact pixel dimensions
+    // Inject exact pixel dimensions - without viewBox, SVG will stretch to these dimensions
     scaledSvg = scaledSvg.replace(
       /<svg([^>]*)>/i,
-      `<svg$1 width="${containerWidth}px" height="${containerHeight}px" style="display: block;">`
+      `<svg$1 width="${containerWidth}px" height="${containerHeight}px" preserveAspectRatio="none" style="display: block;">`
     );
-    
-    console.log('🎨 SVG after modification (first 200 chars):', scaledSvg.substring(0, 200));
     
     return (
       <div 
