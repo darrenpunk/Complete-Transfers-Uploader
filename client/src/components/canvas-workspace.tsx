@@ -997,13 +997,13 @@ export default function CanvasWorkspace({
       
       if (response.ok) {
         const updatedElement = await response.json();
-        console.log(`✅ Element fitted: ${updatedElement.width.toFixed(1)}×${updatedElement.height.toFixed(1)}mm @ ${updatedElement.contentScale.toFixed(2)}x scale`);
+        console.log(`✅ Element fitted: ${updatedElement.width.toFixed(1)}×${updatedElement.height.toFixed(1)}mm (no scaling)`);
         
         await queryClient.invalidateQueries({ queryKey: ['/api/projects', project.id, 'canvas-elements'] });
         
         toast({
           title: "Fitted to content",
-          description: `Selection box resized to actual content area`,
+          description: `Selection box resized to actual content area (no scaling)`,
         });
       } else {
         throw new Error('Failed to fit to content');

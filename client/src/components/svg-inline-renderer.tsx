@@ -342,6 +342,9 @@ export default function SvgInlineRenderer({
     const translateX = `calc(50% - ${contentCenterX}px)`;
     const translateY = `calc(50% - ${adjustedCenterY}px)`;
     
+    console.log(`🎯 Standard centering: content center (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
+    console.log(`   Transform: translate(${translateX}, ${translateY})`);
+    
     return (
       <div className="w-full h-full relative overflow-visible">
         <div
