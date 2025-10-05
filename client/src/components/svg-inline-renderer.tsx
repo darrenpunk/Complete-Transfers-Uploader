@@ -339,16 +339,9 @@ export default function SvgInlineRenderer({
     }
     
     // Standard centering (no scale) - Fixed size to prevent scaling
-    // Extract viewBox to get the SVG's natural dimensions
-    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-    let svgPixelWidth = 400;  // Default fallback
-    let svgPixelHeight = 400;
-    
-    if (viewBoxMatch) {
-      const [, , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-      svgPixelWidth = vbWidth;
-      svgPixelHeight = vbHeight;
-    }
+    // Use the viewBox dimensions extracted earlier
+    let svgPixelWidth = viewBoxWidth;   // Already extracted above
+    let svgPixelHeight = viewBoxHeight;
     
     console.log(`🎯 Standard centering: Fixed SVG size ${svgPixelWidth}×${svgPixelHeight}px to prevent scaling`);
     
