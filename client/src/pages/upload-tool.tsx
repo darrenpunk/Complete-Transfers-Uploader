@@ -182,12 +182,12 @@ export default function UploadTool() {
       console.log('Project data for Odoo integration:', {
         name: projectData.name,
         comments: projectData.comments,
-        quantity: 1 // Default quantity since it's now managed in template selection
+        quantity: currentProject?.quantity || 1
       });
 
       // Execute the pending action
       if (pendingAction === 'pdf') {
-        generatePDFMutation.mutate({ name: projectData.name, quantity: 1 });
+        generatePDFMutation.mutate({ name: projectData.name, quantity: currentProject?.quantity || 1 });
       } else if (pendingAction === 'continue') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
       }
