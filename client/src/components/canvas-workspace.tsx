@@ -979,48 +979,6 @@ export default function CanvasWorkspace({
 
 
 
-
-  // Function to fit element to actual content bounds (clipping paths)
-  const handleFitToContent = async () => {
-    if (!selectedElement || !project?.id) {
-      toast({
-        title: "No element selected",
-        description: "Please select an element to fit to content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      console.log(`🎯 Fitting element ${selectedElement.id} to content bounds`);
-      
-      // Call backend API to recalculate element dimensions based on clipping paths
-      const response = await apiRequest('POST', `/api/canvas-elements/${selectedElement.id}/fit-to-content`);
-      
-      if (response.ok) {
-        const updatedElement = await response.json();
-        console.log(`✅ Element fitted to content: ${updatedElement.width.toFixed(1)}×${updatedElement.height.toFixed(1)}mm`);
-        
-        // Refresh canvas elements
-        await queryClient.invalidateQueries({ queryKey: ['/api/projects', project.id, 'canvas-elements'] });
-        
-        toast({
-          title: "Element fitted to content",
-          description: `Canvas element now matches actual content bounds`,
-        });
-      } else {
-        throw new Error('Failed to fit to content');
-      }
-    } catch (error) {
-      console.error('Error fitting to content:', error);
-      toast({
-        title: "Failed to fit to content",
-        description: "Could not recalculate element bounds",
-        variant: "destructive"
-      });
-    }
-  };
-
   // Function to fit all content within safety margins
   const handleFitToBounds = () => {
     if (!template || !canvasElements || canvasElements.length === 0) {
@@ -1351,26 +1309,6 @@ export default function CanvasWorkspace({
                 </Tooltip>
               )}
               
-              {/* Fit to Content Button - show when element is selected */}
-              {selectedElement && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleFitToContent}
-                      data-testid="button-fit-to-content"
-                    >
-                      <Maximize2 className="w-4 h-4 mr-1" />
-                      Fit to Content
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Resize selection box to match actual content bounds (ignores page margins)</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
             </div>
 
           </div>
