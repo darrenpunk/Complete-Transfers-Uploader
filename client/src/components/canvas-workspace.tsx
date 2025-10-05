@@ -1808,6 +1808,10 @@ export default function CanvasWorkspace({
                 console.log(`Canvas element ${element.id} dimensions:`, {
                   dbWidth: element.width,
                   dbHeight: element.height,
+                  mmToPixelRatio,
+                  zoom,
+                  zoomFactor: zoom / 100,
+                  calculation: `${element.width.toFixed(1)} × ${mmToPixelRatio.toFixed(3)} × ${(zoom / 100).toFixed(2)} = ${elementWidth.toFixed(1)}`,
                   pixelWidth: elementWidth,
                   pixelHeight: elementHeight,
                   rotation: element.rotation

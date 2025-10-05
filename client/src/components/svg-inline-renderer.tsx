@@ -100,10 +100,8 @@ export default function SvgInlineRenderer({
           '$1$3' // Remove height from svg tag
         );
         
-        // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
-        if (cleanedSvg.includes('preserveAspectRatio')) {
-          cleanedSvg = cleanedSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, 'preserveAspectRatio="xMidYMid meet"');
-        } else {
+        // Keep aspect ratio but ensure proper scaling
+        if (!cleanedSvg.includes('preserveAspectRatio')) {
           cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 preserveAspectRatio="xMidYMid meet">');
         }
         
