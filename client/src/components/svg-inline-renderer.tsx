@@ -338,8 +338,12 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Standard centering (no scale) - Let SVG fill container naturally
-    console.log(`🎯 Standard centering: SVG will scale to fit container`);
+    // Absolute size rendering - Content at original size, bounds independent
+    // Use viewBox dimensions to render at absolute size
+    const absoluteWidthPx = viewBoxWidth;
+    const absoluteHeightPx = viewBoxHeight;
+    
+    console.log(`🎯 Absolute size rendering: ${absoluteWidthPx}×${absoluteHeightPx}px (bounds independent)`);
     
     return (
       <div 
@@ -350,10 +354,23 @@ export default function SvgInlineRenderer({
           justifyContent: 'center',
           padding: 0,
           margin: 0,
-          overflow: 'visible'
+          overflow: 'visible',
+          position: 'relative'
         }}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
-      />
+      >
+        <div
+          style={{
+            width: `${absoluteWidthPx}px`,
+            height: `${absoluteHeightPx}px`,
+            flexShrink: 0,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      </div>
     );
   };
 
