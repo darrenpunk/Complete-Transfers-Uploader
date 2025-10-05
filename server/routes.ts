@@ -2780,16 +2780,16 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // CRITICAL: When tight content SVG is created, keep original artboard dimensions
-                // The tight SVG will show all content (including parts outside artboard),
-                // but the canvas element size should match the artboard, not the expanded content
+                // CRITICAL FIX: Use actual content bounds, not the full artboard/viewBox dimensions
+                // The canvas element size should match the actual content size, not the template size
                 console.log(`✅ TIGHT CONTENT SVG CREATED: Shows all content including overflow`);
-                console.log(`📐 KEEPING ORIGINAL ARTBOARD DIMENSIONS: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm`);
+                console.log(`📐 USING ACTUAL CONTENT BOUNDS: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
+                console.log(`📐 (NOT using artboard dimensions: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm)`);
                 
-                // Use original artboard dimensions for canvas display
-                displayWidth = originalWidthMm;
-                displayHeight = originalHeightMm;
-                console.log(`🎯 CANVAS DISPLAY: Using artboard dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (tight SVG will scale to fit)`);
+                // Use actual content bounds for canvas display
+                displayWidth = contentWidthMm;
+                displayHeight = contentHeightMm;
+                console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (matches actual artwork size)`);
               } else {
                 console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
                 
