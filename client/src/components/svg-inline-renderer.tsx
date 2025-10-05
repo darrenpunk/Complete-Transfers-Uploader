@@ -188,24 +188,26 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // ORIGINAL SIMPLE RENDERING: Center SVG and scale to fit container
+  // ORIGINAL SIMPLE RENDERING: SVG fills container exactly
   const renderWithContentBounds = () => {
-    // Add width/height 100% to SVG so it scales to fit the parent container
-    let scaledSvg = svgContent.replace(
+    // Remove any existing style attribute first
+    let scaledSvg = svgContent.replace(/\s+style\s*=\s*["'][^"']*["']/gi, '');
+    
+    // Add our style to make SVG fill container
+    scaledSvg = scaledSvg.replace(
       /<svg([^>]*)>/i,
-      '<svg$1 width="100%" height="100%">'
+      '<svg$1 style="width: 100%; height: 100%; display: block;">'
     );
     
     return (
       <div 
         className="w-full h-full"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'block',
           padding: 0,
           margin: 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          lineHeight: 0
         }}
         dangerouslySetInnerHTML={{ __html: scaledSvg }}
       />
