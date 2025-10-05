@@ -295,19 +295,17 @@ export default function SvgInlineRenderer({
     
     console.log(`🎯 Fixed size: ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (content never scales)`);
     
-    // Set explicit pixel dimensions to prevent any automatic scaling
+    // Set explicit pixel dimensions with absolute positioning to prevent any scaling
     const fixedSizeSvg = svgContent.replace(
       /<svg([^>]*)>/,
-      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="display: block; flex-shrink: 0;">`
+      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: none; max-height: none;">`
     );
     
     return (
       <div 
         className="w-full h-full"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          position: 'relative',
           padding: 0,
           margin: 0,
           overflow: 'visible'
