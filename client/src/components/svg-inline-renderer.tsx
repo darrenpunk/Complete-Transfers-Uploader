@@ -287,39 +287,34 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // Fixed size rendering - Content ALWAYS at original size with explicit pixel dimensions
-    // Set width/height to exact viewBox dimensions so SVG doesn't scale with container
+    // Simple rendering - SVG scales to fill container (100% width/height)
+    // This way the visual size is controlled by the container dimensions
     const pxToMm = 1 / 2.834645669; // 72 DPI conversion
     const absoluteWidthMm = viewBoxWidth * pxToMm;
     const absoluteHeightMm = viewBoxHeight * pxToMm;
     
-    console.log(`🎯 Fixed size: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (LOCKED, never scales)`);
+    console.log(`🎯 SVG viewBox: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm`);
     
-    // Set explicit pixel dimensions matching viewBox - this prevents automatic scaling
-    // First remove any existing width/height attributes
-    let fixedSizeSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
-    fixedSizeSvg = fixedSizeSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+    // Remove width/height attributes to let SVG scale naturally with container
+    let scalableSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
+    scalableSvg = scalableSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
     
-    // Then add back fixed pixel dimensions with aggressive inline styles to prevent ANY scaling
-    fixedSizeSvg = fixedSizeSvg.replace(
+    // Add 100% dimensions so SVG fills its container
+    scalableSvg = scalableSvg.replace(
       /<svg([^>]*)>/,
-      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="display: block; min-width: ${viewBoxWidth}px; min-height: ${viewBoxHeight}px; max-width: ${viewBoxWidth}px; max-height: ${viewBoxHeight}px; flex-shrink: 0;">`
+      `<svg$1 width="100%" height="100%" style="display: block;">`
     );
     
     return (
       <div 
         style={{
-          position: 'relative',
           width: '100%',
           height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           padding: 0,
           margin: 0,
           overflow: 'visible'
         }}
-        dangerouslySetInnerHTML={{ __html: fixedSizeSvg }}
+        dangerouslySetInnerHTML={{ __html: scalableSvg }}
       />
     );
   };
