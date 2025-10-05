@@ -41,7 +41,7 @@ export default function UploadTool() {
   const [showPDFPreviewModal, setShowPDFPreviewModal] = useState(false);
   const [showAppliqueBadgesModal, setShowAppliqueBadgesModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
-  const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string } | null>(null);
+  const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string; quantity?: number } | null>(null);
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showVectorizationForm, setShowVectorizationForm] = useState(false);
@@ -79,7 +79,7 @@ export default function UploadTool() {
 
   // Create new project
   const createProjectMutation = useMutation({
-    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string; appliqueBadgesForm?: any }) => {
+    mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string; appliqueBadgesForm?: any; quantity?: number }) => {
       const response = await apiRequest("POST", "/api/projects", projectData);
       return response.json();
     },
@@ -302,7 +302,9 @@ export default function UploadTool() {
         console.log('Custom/Applique Badges template detected, triggering form modal');
         setPendingTemplateData({
           templateId,
-          garmentColor: "#FFFFFF"
+          garmentColor: "#FFFFFF",
+          inkColor: undefined,
+          quantity: copies
         });
         console.log('Directly showing applique badges modal');
         
@@ -317,7 +319,8 @@ export default function UploadTool() {
           name: "Untitled Project",
           templateSize: templateId,
           garmentColor: isFullColourTemplate ? "" : "#FFFFFF",
-          inkColor: isSingleColourTemplate ? "" : undefined
+          inkColor: isSingleColourTemplate ? "" : undefined,
+          quantity: copies
         });
       }
     }
@@ -537,7 +540,8 @@ export default function UploadTool() {
         templateSize: pendingTemplateData.templateId,
         garmentColor: pendingTemplateData.garmentColor,
         inkColor: pendingTemplateData.inkColor,
-        appliqueBadgesForm: formData
+        appliqueBadgesForm: formData,
+        quantity: pendingTemplateData.quantity || 1
       });
       setPendingTemplateData(null);
     }
