@@ -1856,14 +1856,15 @@ export default function CanvasWorkspace({
                       ? `2px solid #961E75` 
                       : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    overflow: 'visible'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="absolute inset-0 overflow-hidden" 
+                    className="absolute inset-0 overflow-visible" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent',
                       padding: 0,
