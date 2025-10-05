@@ -2781,7 +2781,7 @@ export async function registerRoutes(app: express.Application) {
                 displayHeight = contentHeightMm;
                 console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (matches actual artwork size)`);
               } else {
-                console.log(`⚠️ Bounds extraction failed (${boundsResult.error}), falling back to viewBox dimensions`);
+                console.log(`⚠️ Bounds extraction failed, falling back to viewBox dimensions`);
                 
                 // Fallback to the original robust dimension system
                 const { detectDimensionsFromSVG } = await import('./dimension-utils');

@@ -218,17 +218,10 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
-    // CRITICAL FIX: Convert element dimensions to pixels for proper comparison
-    // Bounds are in pixels, but element.width/height are in millimeters
-    const isPdfDerived = logo.originalMimeType === 'application/pdf';
-    const mmToPx = isPdfDerived ? 2.834645669 : 1; // PDF uses 72 DPI conversion
-    
-    const elementWidthPx = element.width * mmToPx;
-    const elementHeightPx = element.height * mmToPx;
-    
-    // Check for overflow using pixel-to-pixel comparison
+    // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
+    // This lets the browser's native SVG overflow handling work correctly
     const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        bounds.xMax > elementWidthPx || bounds.yMax > elementHeightPx;
+                        bounds.xMax > element.width || bounds.xMax > element.height;
     
     if (hasOverflow) {
       console.log('🎯 OVERFLOW DETECTED: Using simplified rendering for content with negative coords or overflow');
