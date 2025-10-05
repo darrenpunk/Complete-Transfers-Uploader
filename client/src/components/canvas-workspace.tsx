@@ -1635,8 +1635,15 @@ export default function CanvasWorkspace({
                               contentOffsetX = contentCenterX - viewBoxCenterX;
                               contentOffsetY = contentCenterY - viewBoxCenterY;
                             }
+                          } else if (logo) {
+                            // Content bounds missing - assume content fills entire viewBox
+                            // This ensures position warnings are based on actual element size, not viewBox
+                            console.warn(`⚠️ Content bounds missing for logo ${logo.id}, using element dimensions`);
+                            const isRotated = element.rotation === 90 || element.rotation === 270;
+                            visualWidth = isRotated ? element.height : element.width;
+                            visualHeight = isRotated ? element.width : element.height;
                           } else {
-                            // Fall back to full element bounds
+                            // Non-logo element (text, shape, etc.)
                             const isRotated = element.rotation === 90 || element.rotation === 270;
                             visualWidth = isRotated ? element.height : element.width;
                             visualHeight = isRotated ? element.width : element.height;

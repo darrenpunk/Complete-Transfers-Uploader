@@ -2829,23 +2829,39 @@ export async function registerRoutes(app: express.Application) {
 
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
+        
+        // CRITICAL: Always save content bounds - use extracted bounds or fallback to full element
+        let contentBoundsToSave = null;
+        if (boundsResult?.success && boundsResult.contentBounds) {
+          contentBoundsToSave = boundsResult.contentBounds;
+          console.log(`✅ Using extracted content bounds: ${JSON.stringify(contentBoundsToSave)}`);
+        } else {
+          // Fallback: Create content bounds from display dimensions
+          // This ensures ALL logos have content bounds for position warnings
+          const mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          const widthPx = displayWidth * mmToPixelRatio;
+          const heightPx = displayHeight * mmToPixelRatio;
+          contentBoundsToSave = {
+            xMin: 0,
+            yMin: 0,
+            xMax: widthPx,
+            yMax: heightPx,
+            width: widthPx,
+            height: heightPx
+          };
+          console.log(`⚠️ Bounds extraction failed - using fallback content bounds from display size: ${displayWidth}×${displayHeight}mm = ${widthPx.toFixed(1)}×${heightPx.toFixed(1)}px`);
+        }
+        
         const updatedLogo = await storage.updateLogo(logo.id, {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
           mimeType: finalMimeType,
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
-          // CRITICAL FIX: Save contentBounds to database for frontend centering
-          ...(boundsResult?.success && boundsResult.contentBounds && { 
-            contentBounds: boundsResult.contentBounds 
-          })
+          // CRITICAL FIX: ALWAYS save contentBounds - use extracted or fallback
+          contentBounds: contentBoundsToSave
         });
         
-        // Debug: Log if contentBounds were saved
-        if (boundsResult?.success && boundsResult.contentBounds) {
-          console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(boundsResult.contentBounds)} to logo ${logo.id}`);
-        } else {
-          console.log(`⚠️ NO CONTENTBOUNDS: boundsResult=${!!boundsResult}, success=${boundsResult?.success}, contentBounds=${!!boundsResult?.contentBounds}`);
-        }
+        console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(contentBoundsToSave)} to logo ${logo.id}`);
         
         if (!updatedLogo) {
           throw new Error(`Failed to update logo ${logo.id}`);
