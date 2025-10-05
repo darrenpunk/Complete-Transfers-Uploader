@@ -995,9 +995,7 @@ export default function CanvasWorkspace({
       console.log(`🎯 Fitting element ${selectedElement.id} to content bounds`);
       
       // Call backend API to recalculate element dimensions based on clipping paths
-      const response = await apiRequest(`/api/canvas-elements/${selectedElement.id}/fit-to-content`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/canvas-elements/${selectedElement.id}/fit-to-content`);
       
       if (response.ok) {
         const updatedElement = await response.json();
