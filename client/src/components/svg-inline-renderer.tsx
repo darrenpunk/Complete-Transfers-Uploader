@@ -288,7 +288,9 @@ export default function SvgInlineRenderer({
     }
     
     // Use stored contentScale if available, otherwise calculate from current bounds
-    const pxToMm = 1 / 2.834645669; // 72 DPI conversion
+    // CRITICAL: Use CSS DPI (96) not PDF DPI (72) to match browser layout
+    // CSS spec: 1mm = 96/25.4 = 3.7795275591 pixels
+    const pxToMm = 25.4 / 96; // CSS DPI conversion (96 DPI)
     const svgWidthMm = viewBoxWidth * pxToMm;
     const svgHeightMm = viewBoxHeight * pxToMm;
     

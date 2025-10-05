@@ -615,7 +615,7 @@ export default function CanvasWorkspace({
     // Use proper DPI for PDF-derived elements
     const isPdfDerived = element.width > 200 || element.height > 200;
     if (isPdfDerived) {
-      mmToPixelRatio = 2.834645669; // 72 DPI conversion
+      mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591)
     }
     
     // Capture initial mouse position in mm coordinates
@@ -647,7 +647,7 @@ export default function CanvasWorkspace({
       // Use proper DPI for PDF-derived elements
       const isPdfDerived = element.width > 200 || element.height > 200;
       if (isPdfDerived) {
-        mmToPixelRatio = 2.834645669; // 72 DPI conversion
+        mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591)
       }
       // Convert element center position to screen coordinates
       const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
@@ -688,7 +688,7 @@ export default function CanvasWorkspace({
           // Use proper DPI for PDF-derived elements
           const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
           if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+            mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591)
           }
           // Convert mouse position to center-based coordinates
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
@@ -729,7 +729,7 @@ export default function CanvasWorkspace({
           // Use proper DPI for PDF-derived elements
           const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
           if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+            mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591)
           }
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
@@ -1595,7 +1595,7 @@ export default function CanvasWorkspace({
                   // Check if we have any PDF-derived elements and use their ratio for margin consistency
                   const hasPdfElements = canvasElements.some(el => el.width > 200 || el.height > 200);
                   if (hasPdfElements) {
-                    mmToPixelRatio = 2.834645669; // 72 DPI conversion for consistency
+                    mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591) for consistency
                   }
                   
                   const marginInPixels = 3 * mmToPixelRatio * (zoom / 100); // 3mm margin
@@ -1659,7 +1659,7 @@ export default function CanvasWorkspace({
                             // Content bounds are in pixels, need to convert to mm
                             // Use PDF DPI conversion for PDF-derived content
                             const isPdfDerived = element.width > 200 || element.height > 200;
-                            const mmToPixelRatio = isPdfDerived ? 2.834645669 : (template.pixelWidth / template.width);
+                            const mmToPixelRatio = isPdfDerived ? (96 / 25.4) : (template.pixelWidth / template.width);
                             
                             // Convert content bounds from pixels to mm
                             const contentWidthMm = contentBounds.width / mmToPixelRatio;
@@ -1805,7 +1805,7 @@ export default function CanvasWorkspace({
               
               if (isPdfDerived) {
                 // Use standard 72 DPI conversion for PDF-derived elements: 1mm = 2.834645669 pixels
-                mmToPixelRatio = 2.834645669; // 72 DPI conversion
+                mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591)
                 console.log(`🔍 PDF-derived element detected, using 72 DPI conversion: ${mmToPixelRatio} px/mm`);
               }
               
