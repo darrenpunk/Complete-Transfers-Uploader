@@ -3186,15 +3186,30 @@ export async function registerRoutes(app: express.Application) {
       const contentWidthMm = logo.contentBounds.width * pxToMm;
       const contentHeightMm = logo.contentBounds.height * pxToMm;
       
+      // Calculate and store the current scale BEFORE changing bounds
+      // This locks the visual size so it doesn't change when bounds shrink
+      let contentScale = element.contentScale;
+      if (!contentScale) {
+        // Calculate scale from current bounds (before fitting)
+        // Assume SVG viewBox is the full page size (595×842px for A4)
+        const svgWidthMm = 210; // A4 width in mm
+        const svgHeightMm = 297; // A4 height in mm
+        const scaleX = element.width / svgWidthMm;
+        const scaleY = element.height / svgHeightMm;
+        contentScale = Math.min(scaleX, scaleY);
+        console.log(`💾 Storing contentScale: ${contentScale.toFixed(4)} (locks visual size)`);
+      }
+      
       console.log(`📐 Element size before: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
       console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-      console.log(`📐 Bounds resized to content - content stays at fixed size`);
+      console.log(`📐 Bounds resized to content - content scale locked at ${contentScale.toFixed(4)}`);
       
-      // Update element with content bounds dimensions only
-      // Content always renders at fixed size regardless of bounds
+      // Update element with content bounds dimensions AND contentScale
+      // contentScale ensures visual size stays constant when bounds change
       const updatedElement = await storage.updateCanvasElement(elementId, {
         width: contentWidthMm,
-        height: contentHeightMm
+        height: contentHeightMm,
+        contentScale: contentScale
       });
       
       if (!updatedElement) {

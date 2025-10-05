@@ -287,22 +287,39 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // Simple rendering - SVG scales to fill container (100% width/height)
-    // This way the visual size is controlled by the container dimensions
+    // Use stored contentScale if available, otherwise calculate from current bounds
     const pxToMm = 1 / 2.834645669; // 72 DPI conversion
-    const absoluteWidthMm = viewBoxWidth * pxToMm;
-    const absoluteHeightMm = viewBoxHeight * pxToMm;
+    const svgWidthMm = viewBoxWidth * pxToMm;
+    const svgHeightMm = viewBoxHeight * pxToMm;
     
-    console.log(`🎯 SVG viewBox: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm`);
+    let scale;
+    if (element.contentScale && element.contentScale > 0) {
+      // Use stored scale - this keeps content at original size when bounds change
+      scale = element.contentScale;
+      console.log(`🎯 Using STORED contentScale: ${scale.toFixed(4)} (content size locked)`);
+    } else {
+      // Calculate scale from current bounds (first import)
+      const scaleX = element.width / svgWidthMm;
+      const scaleY = element.height / svgHeightMm;
+      scale = Math.min(scaleX, scaleY);
+      console.log(`🎯 Calculating NEW scale: ${scale.toFixed(4)} from bounds ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+    }
     
-    // Remove width/height attributes to let SVG scale naturally with container
-    let scalableSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
-    scalableSvg = scalableSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+    // Calculate the rendered pixel dimensions at this scale
+    const renderedWidth = viewBoxWidth * scale;
+    const renderedHeight = viewBoxHeight * scale;
     
-    // Add 100% dimensions so SVG fills its container
-    scalableSvg = scalableSvg.replace(
+    console.log(`   Bounds: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm | Rendered: ${renderedWidth.toFixed(1)}×${renderedHeight.toFixed(1)}px`);
+    
+    // Remove width/height attributes
+    let scaledSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
+    scaledSvg = scaledSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+    
+    // Set explicit pixel dimensions based on the scale factor
+    // These dimensions are independent of the container size
+    scaledSvg = scaledSvg.replace(
       /<svg([^>]*)>/,
-      `<svg$1 width="100%" height="100%" style="display: block;">`
+      `<svg$1 width="${renderedWidth}px" height="${renderedHeight}px" style="display: block;">`
     );
     
     return (
@@ -310,11 +327,14 @@ export default function SvgInlineRenderer({
         style={{
           width: '100%',
           height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 0,
           margin: 0,
           overflow: 'visible'
         }}
-        dangerouslySetInnerHTML={{ __html: scalableSvg }}
+        dangerouslySetInnerHTML={{ __html: scaledSvg }}
       />
     );
   };
