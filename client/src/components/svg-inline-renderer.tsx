@@ -338,12 +338,14 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Absolute size rendering - Content at original size, bounds independent
-    // Use viewBox dimensions to render at absolute size
-    const absoluteWidthPx = viewBoxWidth;
-    const absoluteHeightPx = viewBoxHeight;
+    // Responsive scaling - SVG fills element bounds naturally
+    // Add width/height 100% to make SVG responsive to container
+    const responsiveSvg = svgContent.replace(
+      /<svg([^>]*)>/,
+      '<svg$1 width="100%" height="100%" style="display: block;">'
+    );
     
-    console.log(`🎯 Absolute size rendering: ${absoluteWidthPx}×${absoluteHeightPx}px (bounds independent)`);
+    console.log(`🎯 Responsive rendering: SVG scales to fit element bounds`);
     
     return (
       <div 
@@ -353,24 +355,10 @@ export default function SvgInlineRenderer({
           alignItems: 'center',
           justifyContent: 'center',
           padding: 0,
-          margin: 0,
-          overflow: 'visible',
-          position: 'relative'
+          margin: 0
         }}
-      >
-        <div
-          style={{
-            width: `${absoluteWidthPx}px`,
-            height: `${absoluteHeightPx}px`,
-            flexShrink: 0,
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)'
-          }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
-      </div>
+        dangerouslySetInnerHTML={{ __html: responsiveSvg }}
+      />
     );
   };
 
