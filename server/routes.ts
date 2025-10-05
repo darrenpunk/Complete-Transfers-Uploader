@@ -1390,7 +1390,7 @@ export async function registerRoutes(app: express.Application) {
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_applique.pdf"`);
+            res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity}_applique.pdf"`);
             res.send(appliquePdfBytes);
             return;
           } catch (error) {
@@ -1404,7 +1404,7 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🎯 BYPASSING ALL COLOR CONVERSION - RETURNING ORIGINAL PDF WITH EXACT COLORS`);
         
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity || 1}_original.pdf"`);
+        res.setHeader('Content-Disposition', `inline; filename="${project.name}_qty${project.quantity}.pdf"`);
         res.send(Buffer.from(pdfBytes));
         return;
         
