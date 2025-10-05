@@ -2807,6 +2807,7 @@ export async function registerRoutes(app: express.Application) {
 
         // AUTO-FIT TO CONTENT: Like Illustrator, automatically fit bounds to content on import
         // Use contentBounds for initial element size instead of full page dimensions
+        let autoFitContentScale = null;
         if (contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
           const pxToMm = 1 / 2.834645669; // 72 DPI standard
           const contentWidthMm = contentBoundsToSave.width * pxToMm;
@@ -2814,6 +2815,12 @@ export async function registerRoutes(app: express.Application) {
           
           console.log(`🎯 AUTO-FIT TO CONTENT: Using contentBounds ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm instead of full page ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
           console.log(`✅ ILLUSTRATOR WORKFLOW: Bounds automatically fitted to content on import (no manual "Fit to Content" needed)`);
+          
+          // CRITICAL: Lock contentScale at 1.0 to prevent visual content from shrinking
+          // When bounds shrink to content, the SVG renderer would normally recalculate scale
+          // Setting contentScale=1.0 locks the visual size (like Illustrator paste behavior)
+          autoFitContentScale = 1.0;
+          console.log(`🔒 LOCKING CONTENTSCALE: 1.0 (prevents visual content from scaling when bounds fit to content)`);
           
           displayWidth = contentWidthMm;
           displayHeight = contentHeightMm;
@@ -2844,7 +2851,8 @@ export async function registerRoutes(app: express.Application) {
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: colorOverrides
+          colorOverrides: colorOverrides,
+          ...(autoFitContentScale !== null && { contentScale: autoFitContentScale })
         };
 
         const createdElement = await storage.createCanvasElement(canvasElementData);
