@@ -2805,28 +2805,9 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
-        // AUTO-FIT TO CONTENT: Like Illustrator, automatically fit bounds to content on import
-        // Use contentBounds for initial element size instead of full page dimensions
-        let autoFitContentScale = null;
-        if (contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
-          const pxToMm = 1 / 2.834645669; // 72 DPI standard
-          const contentWidthMm = contentBoundsToSave.width * pxToMm;
-          const contentHeightMm = contentBoundsToSave.height * pxToMm;
-          
-          console.log(`🎯 AUTO-FIT TO CONTENT: Using contentBounds ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm instead of full page ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-          console.log(`✅ ILLUSTRATOR WORKFLOW: Bounds automatically fitted to content on import (no manual "Fit to Content" needed)`);
-          
-          // CRITICAL: Lock contentScale at 1.0 to prevent visual content from shrinking
-          // When bounds shrink to content, the SVG renderer would normally recalculate scale
-          // Setting contentScale=1.0 locks the visual size (like Illustrator paste behavior)
-          autoFitContentScale = 1.0;
-          console.log(`🔒 LOCKING CONTENTSCALE: 1.0 (prevents visual content from scaling when bounds fit to content)`);
-          
-          displayWidth = contentWidthMm;
-          displayHeight = contentHeightMm;
-        } else {
-          console.log(`⚠️ No contentBounds available - using full dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-        }
+        // NOTE: contentBounds are saved to the logo for later use with "Fit to Content" button
+        // Initial canvas element uses full SVG dimensions (displayWidth/displayHeight)
+        // User can click "Fit to Content" to resize to contentBounds if needed
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
@@ -2851,8 +2832,7 @@ export async function registerRoutes(app: express.Application) {
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: colorOverrides,
-          ...(autoFitContentScale !== null && { contentScale: autoFitContentScale })
+          colorOverrides: colorOverrides
         };
 
         const createdElement = await storage.createCanvasElement(canvasElementData);
