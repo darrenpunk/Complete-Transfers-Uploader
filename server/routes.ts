@@ -2805,9 +2805,30 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
-        // NOTE: contentBounds are saved to the logo for later use with "Fit to Content" button
-        // Initial canvas element uses full SVG dimensions (displayWidth/displayHeight)
-        // User can click "Fit to Content" to resize to contentBounds if needed
+        // AUTO-FIT TO CONTENT: For PDF uploads only (not pasted SVGs from Illustrator)
+        // PDFs need bounds fitted to content, but pasted SVGs already have correct bounds
+        let autoFitContentScale = null;
+        const isOriginalPDF = !!(file as any).originalPdfPath;
+        
+        if (isOriginalPDF && contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
+          const pxToMm = 1 / 2.834645669; // 72 DPI standard
+          const contentWidthMm = contentBoundsToSave.width * pxToMm;
+          const contentHeightMm = contentBoundsToSave.height * pxToMm;
+          
+          console.log(`🎯 AUTO-FIT PDF TO CONTENT: Using contentBounds ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm instead of full page ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+          console.log(`✅ PDF ILLUSTRATOR WORKFLOW: Bounds automatically fitted to content on import`);
+          
+          // Lock contentScale at 1.0 to prevent visual content from shrinking
+          autoFitContentScale = 1.0;
+          console.log(`🔒 LOCKING CONTENTSCALE: 1.0 (prevents visual content from scaling)`);
+          
+          displayWidth = contentWidthMm;
+          displayHeight = contentHeightMm;
+        } else if (!isOriginalPDF) {
+          console.log(`ℹ️ PASTED SVG: Using original bounds (already fitted to content by Illustrator)`);
+        } else {
+          console.log(`⚠️ No contentBounds available - using full dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        }
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
@@ -2832,7 +2853,8 @@ export async function registerRoutes(app: express.Application) {
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: colorOverrides
+          colorOverrides: colorOverrides,
+          ...(autoFitContentScale !== null && { contentScale: autoFitContentScale })
         };
 
         const createdElement = await storage.createCanvasElement(canvasElementData);
