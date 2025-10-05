@@ -2323,12 +2323,12 @@ export async function registerRoutes(app: express.Application) {
               // For PDF-converted SVGs, try to use the original PDF bounds first
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
-                // Use Ghostscript bbox to detect ACTUAL PAINTED CONTENT, not the full page
-                console.log('📐 Extracting ACTUAL PAINTED CONTENT BOUNDS from PDF using Ghostscript bbox');
+                // Use clipping path vectors to detect ACTUAL ARTWORK BOUNDS (includes white elements)
+                console.log('📐 Extracting ACTUAL ARTWORK BOUNDS from clipping paths (includes white elements)');
                 
-                // Ghostscript bbox extracts will be done by SVG bounds analyzer below
-                // Don't use MediaBox - it gives the full page size, not the content
-                console.log('🎯 Will use Ghostscript bbox detection for actual content size');
+                // Clipping paths define the cut area - this is what we need for accurate selection
+                // The SVG bounds analyzer will extract clipping path vectors below
+                console.log('🎯 Will use clipping path vectors for actual artwork size');
               }
               
               // Import SVG analyzer for later use
@@ -2526,27 +2526,23 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
                     
-                    // If clipping path vectors extend beyond painted content, use clip bounds
-                    // This detects the true content extent including masked areas
-                    if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
-                      const widthExpansion = clipWidth - contentBounds.width;
-                      const heightExpansion = clipHeight - contentBounds.height;
-                      console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
-                      
-                      contentBounds = {
-                        xMin: globalMinX,
-                        yMin: globalMinY,
-                        xMax: globalMaxX,
-                        yMax: globalMaxY,
-                        width: clipWidth,
-                        height: clipHeight
-                      };
-                      boundsResult.contentBounds = contentBounds;
-                    } else {
-                      console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
-                    }
+                    // ALWAYS use clipping path vectors when available
+                    // Clipping paths define the actual artwork area including white elements
+                    console.log(`✅ USING CLIPPING PATH VECTORS AS CONTENT BOUNDS (includes white elements)`);
+                    console.log(`📐 Painted content was: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                    console.log(`📐 Clipping path bounds: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                    
+                    contentBounds = {
+                      xMin: globalMinX,
+                      yMin: globalMinY,
+                      xMax: globalMaxX,
+                      yMax: globalMaxY,
+                      width: clipWidth,
+                      height: clipHeight
+                    };
+                    boundsResult.contentBounds = contentBounds;
                   } else {
-                    console.log(`⚠️ Could not extract clipping path geometry`);
+                    console.log(`⚠️ Could not extract clipping path geometry - using painted content bounds`);
                   }
                 } else {
                   console.log(`ℹ️ No clipping paths found in SVG`);
