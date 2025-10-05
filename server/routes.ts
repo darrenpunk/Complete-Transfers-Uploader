@@ -2383,33 +2383,42 @@ export async function registerRoutes(app: express.Application) {
               // For PDF-converted SVGs, try to use the original PDF bounds first
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
-                // Try to extract bounds from the original PDF for accuracy
-                console.log('📐 Attempting to extract CONTENT bounds from original PDF (not page bounds)');
-                const { PDFBoundsExtractor } = await import('./pdf-bounds-extractor');
-                const pdfExtractor = new PDFBoundsExtractor();
-                const pdfBoundsResult = await pdfExtractor.extractContentBounds(
-                  (file as any).originalPdfPath,
-                  1,
-                  { includeStrokeExtents: true, highDpiRasterFallback: true }
-                );
+                // CRITICAL FIX: Extract PDF PAGE DIMENSIONS (MediaBox), not content bounds
+                // The MediaBox defines the intended artwork size - use it directly with NO scaling
+                console.log('📐 Extracting PDF PAGE DIMENSIONS (MediaBox) from original PDF - will use 1:1 with NO scaling');
                 
-                if (pdfBoundsResult.success && pdfBoundsResult.bbox) {
-                  console.log(`✅ PDF CONTENT BOUNDS EXTRACTED: ${pdfBoundsResult.bbox.width.toFixed(1)}×${pdfBoundsResult.bbox.height.toFixed(1)}pts`);
-                  console.log(`📄 Content bounds: (${pdfBoundsResult.bbox.xMin.toFixed(1)}, ${pdfBoundsResult.bbox.yMin.toFixed(1)}) to (${pdfBoundsResult.bbox.xMax.toFixed(1)}, ${pdfBoundsResult.bbox.yMax.toFixed(1)})`);
+                // Use pdf-lib to get exact MediaBox dimensions
+                try {
+                  const { PDFDocument } = await import('pdf-lib');
+                  const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
+                  const originalPdf = await PDFDocument.load(originalPdfBytes);
+                  const firstPage = originalPdf.getPages()[0];
+                  const mediaBox = firstPage.getMediaBox();
                   
-                  // These are CONTENT bounds, not page bounds - use them directly
+                  const pageWidth = mediaBox.width;
+                  const pageHeight = mediaBox.height;
+                  
+                  console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
+                  console.log(`📄 This is the intended artwork size - will be used 1:1 with NO scaling`);
+                  
+                  // Use the PDF page dimensions directly - this is the intended artwork size
                   boundsResult = {
                     success: true,
                     contentBounds: {
-                      xMin: pdfBoundsResult.bbox.xMin,
-                      yMin: pdfBoundsResult.bbox.yMin,
-                      xMax: pdfBoundsResult.bbox.xMax,
-                      yMax: pdfBoundsResult.bbox.yMax,
-                      width: pdfBoundsResult.bbox.width,
-                      height: pdfBoundsResult.bbox.height
+                      xMin: mediaBox.x,
+                      yMin: mediaBox.y,
+                      xMax: mediaBox.x + pageWidth,
+                      yMax: mediaBox.y + pageHeight,
+                      width: pageWidth,
+                      height: pageHeight
                     },
-                    method: 'pdf-content-bounds'
+                    method: 'pdf-mediabox-dimensions'
                   };
+                  
+                  console.log(`🎯 Using PDF MediaBox as content bounds - NO content detection, NO scaling`);
+                } catch (pdfLibError) {
+                  console.error('Failed to extract PDF MediaBox:', pdfLibError);
+                  // Fall through to SVG bounds analyzer
                 }
               }
               
