@@ -872,72 +872,12 @@ export async function registerRoutes(app: express.Application) {
             let vectorBytes: Buffer;
             
             if (useOriginalPdf) {
-              // CROP TO CONTENT: Extract just the content at its ACTUAL SIZE (no scaling)
-              console.log(`🎯 CROPPING ORIGINAL PDF TO CONTENT BOUNDS - NO SCALING`);
+              // SIMPLE: Use the original PDF directly - no cropping, no scaling
+              // The original PDF already has the correct size and positioning
+              console.log(`🎯 USING ORIGINAL PDF DIRECTLY - NO PROCESSING`);
+              console.log(`📄 Original PDF will be embedded as-is at canvas size`);
               
-              const ts = Date.now() + Math.random();
-              const croppedPdf = path.join(process.cwd(), 'uploads', `cropped_${ts}.pdf`);
-              
-              try {
-                // Get the actual content bounding box
-                const bboxCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=bbox "${originalPdfPath}" 2>&1 | grep "%%HiResBoundingBox"`;
-                const bboxOutput = execSync(bboxCmd, { encoding: 'utf8' });
-                console.log(`📊 BBox: ${bboxOutput}`);
-                
-                const match = bboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-                if (!match) throw new Error('No bbox found');
-                
-                const [, x1, y1, x2, y2] = match.map(Number);
-                const contentWidth = x2 - x1;
-                const contentHeight = y2 - y1;
-                
-                console.log(`📐 Content is ${contentWidth}×${contentHeight}pts at offset ${x1},${y1}`);
-                console.log(`📐 Canvas expects ${widthPts}×${heightPts}pts`);
-                
-                // CRITICAL FIX: Create PDF at CANVAS size with original content at 1:1 scale
-                // The PDF page should be the canvas size, with content centered on it
-                console.log(`🎯 Creating PDF at CANVAS SIZE with original content at 1:1 scale (NO scaling)`);
-                const scaleX = 1.0;
-                const scaleY = 1.0;
-                
-                // Center the original content on the canvas-sized page
-                const centerOffsetX = (widthPts - contentWidth) / 2;
-                const centerOffsetY = (heightPts - contentHeight) / 2;
-                
-                console.log(`📊 Scale: 1:1 (no scaling of content)`);
-                console.log(`📊 Output PDF size: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts (canvas size)`);
-                console.log(`📊 Content size: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts (original, no scaling)`);
-                console.log(`📊 Centering content at offset: X=${centerOffsetX.toFixed(1)}, Y=${centerOffsetY.toFixed(1)}`);
-                
-                const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
-                  `-sDEVICE=pdfwrite ` +
-                  `-sOutputFile="${croppedPdf}" ` +
-                  `-dDEVICEWIDTHPOINTS=${widthPts} ` +
-                  `-dDEVICEHEIGHTPOINTS=${heightPts} ` +
-                  `-dFIXEDMEDIA ` +
-                  `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-                  `-dPreserveMarkedContent=true ` +
-                  `-dPreserveSeparation=true ` +
-                  `-dPreserveDeviceN=true ` +
-                  `-c "<<` +
-                    `/Install {` +
-                      `${centerOffsetX} ${centerOffsetY} translate ` +
-                      `${scaleX} ${scaleY} scale ` +
-                      `-${x1} -${y1} translate` +
-                    `}` +
-                  `>> setpagedevice" ` +
-                  `-f "${originalPdfPath}"`;
-                
-                execSync(cropCmd);
-                console.log(`✅ PDF created: Canvas size ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts with content at 1:1 scale`);
-                
-                vectorBytes = fs.readFileSync(croppedPdf);
-                fs.unlinkSync(croppedPdf);
-                
-              } catch (error) {
-                console.log(`⚠️ Crop failed, using original: ${error}`);
-                vectorBytes = fs.readFileSync(originalPdfPath);
-              }
+              vectorBytes = fs.readFileSync(originalPdfPath);
             } else {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');
