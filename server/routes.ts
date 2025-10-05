@@ -2468,12 +2468,13 @@ export async function registerRoutes(app: express.Application) {
                 let contentBounds = boundsResult.contentBounds;
                 console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                 
-                // Extract ALL clipping path geometries from SVG
-                const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
-                const clipPathMatches = svgContent.match(clipPathRegex);
+                // DISABLED: Clipping path detection often finds wrong bounds (e.g., 134×54pts instead of 860×267pts)
+                // Use Ghostscript painted content bounds directly - most accurate for PDF artwork
+                console.log(`✅ USING GHOSTSCRIPT PAINTED BOUNDS ONLY (disabling clipping path detection)`);
                 
-                if (clipPathMatches && clipPathMatches.length > 0) {
-                  console.log(`🔍 ANALYZING ${clipPathMatches.length} CLIPPING PATH VECTORS`);
+                const disableClippingPathDetection = true;
+                if (false) {
+                  console.log(`🔍 ANALYZING CLIPPING PATH VECTORS (DISABLED)`);
                   
                   let globalMinX = Infinity, globalMinY = Infinity;
                   let globalMaxX = -Infinity, globalMaxY = -Infinity;
@@ -2805,26 +2806,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
-        // AUTO-FIT TO CONTENT: For PDF uploads only (not pasted SVGs from Illustrator)
-        // PDFs need bounds fitted to content, but pasted SVGs already have correct bounds
-        const isOriginalPDF = !!(file as any).originalPdfPath;
-        
-        if (isOriginalPDF && contentBoundsToSave && contentBoundsToSave.width && contentBoundsToSave.height) {
-          const pxToMm = 1 / 2.834645669; // 72 DPI standard
-          const contentWidthMm = contentBoundsToSave.width * pxToMm;
-          const contentHeightMm = contentBoundsToSave.height * pxToMm;
-          
-          console.log(`🎯 AUTO-FIT PDF TO CONTENT: Using contentBounds ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm instead of full page ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-          console.log(`✅ PDF ILLUSTRATOR WORKFLOW: Bounds automatically fitted to content on import`);
-          console.log(`📐 RENDERER: Will calculate correct contentScale on first render (no manual override needed)`);
-          
-          displayWidth = contentWidthMm;
-          displayHeight = contentHeightMm;
-        } else if (!isOriginalPDF) {
-          console.log(`ℹ️ PASTED SVG: Using original bounds (already fitted to content by Illustrator)`);
-        } else {
-          console.log(`⚠️ No contentBounds available - using full dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-        }
+        // DISABLED: Auto-fit to content for PDFs
+        // CRITICAL LIMITATION: Painted bounds cannot detect white elements (logos, text, graphics)
+        // Ghostscript's bbox only detects visible ink - white content is invisible and gets cropped
+        // Clipping path detection is unreliable (often finds wrong vectors, e.g., 134×54 instead of 860×267)
+        // SOLUTION: Use full viewBox dimensions for all PDFs to preserve white content
+        console.log(`✅ USING FULL VIEWBOX: Preserves all content including white elements`);
+        console.log(`📐 PDF/SVG: Using viewBox dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
