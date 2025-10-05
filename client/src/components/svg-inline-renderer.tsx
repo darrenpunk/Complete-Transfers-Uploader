@@ -338,12 +338,8 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Standard centering (no scale) - Fixed size to prevent scaling
-    // Use the viewBox dimensions extracted earlier
-    let svgPixelWidth = viewBoxWidth;   // Already extracted above
-    let svgPixelHeight = viewBoxHeight;
-    
-    console.log(`🎯 Standard centering: Fixed SVG size ${svgPixelWidth}×${svgPixelHeight}px to prevent scaling`);
+    // Standard centering (no scale) - Let SVG fill container naturally
+    console.log(`🎯 Standard centering: SVG will scale to fit container`);
     
     return (
       <div 
@@ -356,16 +352,8 @@ export default function SvgInlineRenderer({
           margin: 0,
           overflow: 'visible'
         }}
-      >
-        <div
-          style={{
-            width: `${svgPixelWidth}px`,
-            height: `${svgPixelHeight}px`,
-            flexShrink: 0  // Prevent shrinking
-          }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
-      </div>
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+      />
     );
   };
 
