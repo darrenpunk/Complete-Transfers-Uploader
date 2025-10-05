@@ -7,6 +7,8 @@ interface SvgInlineRendererProps {
   project: Project;
   shouldRecolorForInk: boolean;
   zoom: number;
+  containerWidth: number;
+  containerHeight: number;
 }
 
 export default function SvgInlineRenderer({ 
@@ -14,7 +16,9 @@ export default function SvgInlineRenderer({
   logo, 
   project,
   shouldRecolorForInk,
-  zoom
+  zoom,
+  containerWidth,
+  containerHeight
 }: SvgInlineRendererProps) {
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -190,13 +194,15 @@ export default function SvgInlineRenderer({
 
   // ORIGINAL SIMPLE RENDERING: SVG fills container exactly
   const renderWithContentBounds = () => {
-    // Remove any existing style attribute first
-    let scaledSvg = svgContent.replace(/\s+style\s*=\s*["'][^"']*["']/gi, '');
+    // CRITICAL FIX: Inject exact pixel dimensions into SVG to override viewBox behavior
+    // Remove existing width/height attributes first
+    let scaledSvg = svgContent.replace(/\s+(width|height)\s*=\s*["'][^"']*["']/gi, '');
     
-    // Add our style to make SVG fill container
+    // Inject the container's exact pixel dimensions as SVG attributes
+    // This overrides the viewBox coordinate system and forces the SVG to match container size
     scaledSvg = scaledSvg.replace(
       /<svg([^>]*)>/i,
-      '<svg$1 style="width: 100%; height: 100%; display: block;">'
+      `<svg$1 width="${containerWidth}px" height="${containerHeight}px" style="display: block;">`
     );
     
     return (

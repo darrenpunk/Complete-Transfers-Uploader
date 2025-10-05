@@ -1863,6 +1863,8 @@ export default function CanvasWorkspace({
                           project={project}
                           shouldRecolorForInk={shouldRecolorForInk}
                           zoom={zoom}
+                          containerWidth={elementWidth}
+                          containerHeight={elementHeight}
                         />
                       ) : (
                         // For non-SVG files (PNG, JPEG), use regular img element
