@@ -190,180 +190,26 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // ARCHITECT SOLUTION: Content-bounds-based centering with viewBox expansion for negative coordinates
+  // SIMPLE RENDERING: Just strip width/height and let SVG fill parent
+  // Parent container in canvas-workspace handles mm→px conversion at correct zoom
   const renderWithContentBounds = () => {
-    // Check if we have valid content bounds for precise positioning
-    const hasContentBounds = logo.contentBounds && 
-                            typeof logo.contentBounds === 'object' &&
-                            'xMin' in logo.contentBounds &&
-                            'yMin' in logo.contentBounds &&
-                            'xMax' in logo.contentBounds &&
-                            'yMax' in logo.contentBounds;
+    // Remove width/height attributes from SVG to let it scale naturally
+    let cleanedSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
+    cleanedSvg = cleanedSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
     
-    if (!hasContentBounds) {
-      // Fallback to default centering - content always at fixed size
-      return (
-        <div 
-          className="w-full h-full"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
-            overflow: 'hidden'
-          }}
-          dangerouslySetInnerHTML={{ __html: svgContent }}
-        />
-      );
-    }
-    
-    const bounds = logo.contentBounds as ContentBounds;
-    
-    // Get viewBox dimensions to check for overflow
-    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-    let viewBoxWidth = element.width;
-    let viewBoxHeight = element.height;
-    
-    if (viewBoxMatch) {
-      const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-      viewBoxWidth = vbWidth;
-      viewBoxHeight = vbHeight;
-    }
-    
-    // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
-    // Compare bounds (in viewBox coordinates) against viewBox size (not element size!)
-    const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        bounds.xMax > viewBoxWidth || bounds.yMax > viewBoxHeight;
-    
-    if (hasOverflow) {
-      console.log('🎯 OVERFLOW DETECTED: Using full viewBox rendering with proper scaling');
-      console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
-      console.log(`   Element size: ${element.width} × ${element.height}mm`);
-      
-      // Calculate scale: Canvas layout displays elements at 96 DPI CSS standard
-      // SVG viewBox is in 72 DPI PDF units, so we need to scale to match 96 DPI display
-      // CRITICAL: Must also account for canvas zoom level
-      const mmToPixel96DPI = 96 / 25.4; // 3.779 px/mm (CSS standard)
-      const zoomFactor = zoom / 100; // Convert percentage to decimal (67% = 0.67)
-      const targetPixelWidth = element.width * mmToPixel96DPI * zoomFactor;
-      const targetPixelHeight = element.height * mmToPixel96DPI * zoomFactor;
-      
-      const scaleX = targetPixelWidth / viewBoxWidth;
-      const scaleY = targetPixelHeight / viewBoxHeight;
-      const scale = Math.min(scaleX, scaleY);
-      
-      // Calculate rendered pixel dimensions
-      const renderedWidth = viewBoxWidth * scale;
-      const renderedHeight = viewBoxHeight * scale;
-      
-      console.log(`   Target: ${targetPixelWidth.toFixed(1)}×${targetPixelHeight.toFixed(1)}px (${element.width.toFixed(1)}×${element.height.toFixed(1)}mm @ 96 DPI)`);
-      console.log(`   ViewBox: ${viewBoxWidth}×${viewBoxHeight}px (72 DPI)`);
-      console.log(`   Scale: ${scale.toFixed(4)}, Rendered: ${renderedWidth.toFixed(1)}×${renderedHeight.toFixed(1)}px`);
-      
-      // Ensure SVG has proper namespace and remove width/height attrs
-      let processedSvg = svgContent;
-      if (!svgContent.includes('xmlns:xlink')) {
-        processedSvg = processedSvg.replace(
-          /<svg([^>]*)>/i,
-          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
-        );
-      }
-      
-      // Remove existing width/height attributes
-      processedSvg = processedSvg.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
-      processedSvg = processedSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
-      
-      // Set explicit pixel dimensions based on scale
-      processedSvg = processedSvg.replace(
-        /<svg([^>]*)>/,
-        `<svg$1 width="${renderedWidth}px" height="${renderedHeight}px" style="display: block;">`
-      );
-      
-      return (
-        <div 
-          className="w-full h-full"
-          style={{
-            display: 'block',
-            padding: 0,
-            margin: 0,
-            overflow: 'visible',
-            lineHeight: 0
-          }}
-          dangerouslySetInnerHTML={{ __html: processedSvg }}
-        />
-      );
-    }
-    
-    // No negative coordinates - use standard centering
-    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
-    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
-    
-    // Detect Y-inversion by checking for scaleY(-1) in the SVG
-    const hasYFlip = svgContent.includes('matrix(') && 
-                     (svgContent.includes('matrix(1, 0, 0, -1') || 
-                      svgContent.includes('matrix(1,0,0,-1'));
-    
-    // Handle Y-inversion for PDF-derived content
-    let adjustedCenterY = contentCenterY;
-    if (hasYFlip) {
-      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-      if (viewBoxMatch) {
-        const [, , , svgHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-        adjustedCenterY = svgHeight - contentCenterY;
-      }
-    }
-    
-    // Use stored contentScale if available, otherwise calculate from current bounds
-    // CRITICAL: Backend stores element dimensions at 72 DPI (PDF standard)
-    // So we must use 72 DPI here to match: viewBox pixels → mm using same conversion
-    const pxToMm = 1 / 2.834645669; // PDF DPI conversion (72 DPI: 1mm = 2.834645669px)
-    const svgWidthMm = viewBoxWidth * pxToMm;
-    const svgHeightMm = viewBoxHeight * pxToMm;
-    
-    let scale;
-    if (element.contentScale && element.contentScale > 0) {
-      // Use stored scale - this keeps content at original size when bounds change
-      scale = element.contentScale;
-      console.log(`🎯 Using STORED contentScale: ${scale.toFixed(4)} (content size locked)`);
-    } else {
-      // Calculate scale from current bounds (first import)
-      const scaleX = element.width / svgWidthMm;
-      const scaleY = element.height / svgHeightMm;
-      scale = Math.min(scaleX, scaleY);
-      console.log(`🎯 Calculating NEW scale: ${scale.toFixed(4)} from bounds ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
-    }
-    
-    // Calculate the rendered pixel dimensions at this scale
-    const renderedWidth = viewBoxWidth * scale;
-    const renderedHeight = viewBoxHeight * scale;
-    
-    console.log(`   Bounds: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm | Rendered: ${renderedWidth.toFixed(1)}×${renderedHeight.toFixed(1)}px`);
-    
-    // Remove width/height attributes
-    let scaledSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
-    scaledSvg = scaledSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
-    
-    // Set explicit pixel dimensions based on the scale factor
-    // These dimensions are independent of the container size
-    scaledSvg = scaledSvg.replace(
-      /<svg([^>]*)>/,
-      `<svg$1 width="${renderedWidth}px" height="${renderedHeight}px" style="display: block;">`
-    );
-    
+    // Simple container that fills parent - parent is already sized correctly
     return (
       <div 
+        className="w-full h-full"
         style={{
-          width: '100%',
-          height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: 0,
           margin: 0,
-          overflow: 'visible'
+          overflow: 'hidden'
         }}
-        dangerouslySetInnerHTML={{ __html: scaledSvg }}
+        dangerouslySetInnerHTML={{ __html: cleanedSvg }}
       />
     );
   };
