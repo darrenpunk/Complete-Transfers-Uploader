@@ -3165,7 +3165,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Fit canvas element to content bounds (keeps visual content at original size)
+  // Fit canvas element to content bounds (resizes selection box, centers content without scaling)
   app.post('/api/canvas-elements/:elementId/fit-to-content', async (req, res) => {
     try {
       const elementId = req.params.elementId;
@@ -3186,33 +3186,22 @@ export async function registerRoutes(app: express.Application) {
       const contentWidthMm = logo.contentBounds.width * pxToMm;
       const contentHeightMm = logo.contentBounds.height * pxToMm;
       
-      // Get original SVG dimensions from logo (stored in mm)
-      // These are the full viewBox dimensions, not the content bounds
-      const originalWidthMm = logo.width ? logo.width * pxToMm : contentWidthMm;
-      const originalHeightMm = logo.height ? logo.height * pxToMm : contentHeightMm;
-      
-      // Calculate scale factor from ORIGINAL SVG size to keep visual content at original size
-      // contentScale = how much to scale UP the content to get back to original size
-      const scaleX = originalWidthMm / contentWidthMm;
-      const scaleY = originalHeightMm / contentHeightMm;
-      const contentScale = Math.max(scaleX, scaleY);
-      
-      console.log(`📐 Original SVG: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm`);
+      console.log(`📐 Element size before: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
       console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-      console.log(`📐 Content scale: ${contentScale.toFixed(2)}x`);
+      console.log(`📐 NO SCALING - just centering content in smaller box`);
       
-      // Update element with content bounds dimensions and scale factor
+      // Update element with content bounds dimensions only - no scaling
       const updatedElement = await storage.updateCanvasElement(elementId, {
         width: contentWidthMm,
         height: contentHeightMm,
-        contentScale: contentScale
+        contentScale: null // Remove any existing scale
       });
       
       if (!updatedElement) {
         return res.status(500).json({ error: 'Failed to update canvas element' });
       }
       
-      console.log(`✅ Element fitted to content with scale ${contentScale.toFixed(2)}x`);
+      console.log(`✅ Element fitted to content bounds - content centered without scaling`);
       res.json(updatedElement);
     } catch (error) {
       console.error('Fit to content error:', error);

@@ -261,54 +261,28 @@ export default function SvgInlineRenderer({
         );
       }
       
-      // When contentScale is present, we need to offset the SVG so content bounds center aligns with element center
-      if (hasContentScale) {
-        // Calculate center of content bounds
-        const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
-        const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
-        
-        // Get SVG viewBox to find its center
-        const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-        let svgCenterX = element.width / 2;
-        let svgCenterY = element.height / 2;
-        
-        if (viewBoxMatch) {
-          const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-          svgCenterX = vbX + vbWidth / 2;
-          svgCenterY = vbY + vbHeight / 2;
-        }
-        
-        // Calculate offset needed to center content bounds
-        const offsetX = svgCenterX - contentCenterX;
-        const offsetY = svgCenterY - contentCenterY;
-        
-        console.log(`🎯 Content centering: offset (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})px`);
-        
-        return (
-          <div 
-            className="w-full h-full"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              margin: 0,
-              overflow: 'visible'
-            }}
-          >
-            <div
-              style={{
-                transform: `translate(${offsetX}px, ${offsetY}px) scale(${contentScale})`,
-                transformOrigin: 'center center',
-                overflow: 'visible'
-              }}
-              dangerouslySetInnerHTML={{ __html: processedSvg }}
-            />
-          </div>
-        );
+      // When contentScale is null (after fit-to-content), just center without scaling
+      // Calculate center of content bounds
+      const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
+      const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
+      
+      // Get SVG viewBox to find its center
+      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+      let svgCenterX = element.width / 2;
+      let svgCenterY = element.height / 2;
+      
+      if (viewBoxMatch) {
+        const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+        svgCenterX = vbX + vbWidth / 2;
+        svgCenterY = vbY + vbHeight / 2;
       }
       
-      // No contentScale - use simple centered rendering
+      // Calculate offset needed to center content bounds (no scaling)
+      const offsetX = svgCenterX - contentCenterX;
+      const offsetY = svgCenterY - contentCenterY;
+      
+      console.log(`🎯 Content centering (no scale): offset (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})px`);
+      
       return (
         <div 
           className="w-full h-full"
@@ -320,8 +294,16 @@ export default function SvgInlineRenderer({
             margin: 0,
             overflow: 'visible'
           }}
-          dangerouslySetInnerHTML={{ __html: processedSvg }}
-        />
+        >
+          <div
+            style={{
+              transform: `translate(${offsetX}px, ${offsetY}px)`,
+              transformOrigin: 'center center',
+              overflow: 'visible'
+            }}
+            dangerouslySetInnerHTML={{ __html: processedSvg }}
+          />
+        </div>
       );
     }
     
