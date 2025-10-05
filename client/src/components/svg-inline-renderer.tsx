@@ -235,22 +235,45 @@ export default function SvgInlineRenderer({
                         bounds.xMax > viewBoxWidth || bounds.yMax > viewBoxHeight;
     
     if (hasOverflow) {
-      console.log('🎯 OVERFLOW DETECTED: Using simplified rendering for content with negative coords or overflow');
+      console.log('🎯 OVERFLOW DETECTED: Using full viewBox rendering with proper scaling');
       console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
-      console.log(`   Element size: ${element.width} × ${element.height}px`);
+      console.log(`   Element size: ${element.width} × ${element.height}mm`);
       
-      // Ensure SVG has proper namespace declarations for xlink (required for embedded images)
+      // Calculate scale: Backend stores dimensions at 72 DPI (viewBox px → mm)
+      // So we must use same conversion to get correct scale
+      const pxToMm = 1 / 2.834645669; // PDF DPI (72 DPI: 1mm = 2.834645669px)
+      const svgWidthMm = viewBoxWidth * pxToMm;
+      const svgHeightMm = viewBoxHeight * pxToMm;
+      
+      const scaleX = element.width / svgWidthMm;
+      const scaleY = element.height / svgHeightMm;
+      const scale = Math.min(scaleX, scaleY);
+      
+      // Calculate rendered pixel dimensions
+      const renderedWidth = viewBoxWidth * scale;
+      const renderedHeight = viewBoxHeight * scale;
+      
+      console.log(`   ViewBox: ${viewBoxWidth}×${viewBoxHeight}px = ${svgWidthMm.toFixed(1)}×${svgHeightMm.toFixed(1)}mm`);
+      console.log(`   Scale: ${scale.toFixed(4)}, Rendered: ${renderedWidth.toFixed(1)}×${renderedHeight.toFixed(1)}px`);
+      
+      // Ensure SVG has proper namespace and remove width/height attrs
       let processedSvg = svgContent;
       if (!svgContent.includes('xmlns:xlink')) {
-        processedSvg = svgContent.replace(
+        processedSvg = processedSvg.replace(
           /<svg([^>]*)>/i,
           '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
         );
       }
       
-      // Simple centering - just render SVG normally and let browser handle it
-      // The SVG will be centered within the fitted element box
-      console.log(`🎯 Simple centered rendering (no transform needed)`);
+      // Remove existing width/height attributes
+      processedSvg = processedSvg.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
+      processedSvg = processedSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+      
+      // Set explicit pixel dimensions based on scale
+      processedSvg = processedSvg.replace(
+        /<svg([^>]*)>/,
+        `<svg$1 width="${renderedWidth}px" height="${renderedHeight}px" style="display: block;">`
+      );
       
       return (
         <div 
