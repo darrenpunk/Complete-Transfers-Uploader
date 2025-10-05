@@ -287,25 +287,23 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // Fixed size rendering - Content ALWAYS at original size, bounds independent
-    // Convert viewBox dimensions from pixels to actual size at 72 DPI
+    // Fixed size rendering - Content ALWAYS at original size using viewBox only
+    // Let SVG render at its natural viewBox dimensions without any width/height constraints
     const pxToMm = 1 / 2.834645669; // 72 DPI conversion
     const absoluteWidthMm = viewBoxWidth * pxToMm;
     const absoluteHeightMm = viewBoxHeight * pxToMm;
     
-    console.log(`🎯 Fixed size: ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (content never scales)`);
+    console.log(`🎯 Fixed size: ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (viewBox only, no scaling)`);
     
-    // Set explicit pixel dimensions with absolute positioning to prevent any scaling
-    const fixedSizeSvg = svgContent.replace(
-      /<svg([^>]*)>/,
-      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: none; max-height: none;">`
-    );
+    // Remove width/height and just use viewBox - this prevents any automatic scaling
+    // The SVG will render at exactly its viewBox dimensions (595×842px)
+    let fixedSizeSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
+    fixedSizeSvg = fixedSizeSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
     
     return (
       <div 
-        className="w-full h-full"
+        className="w-full h-full flex items-center justify-center"
         style={{
-          position: 'relative',
           padding: 0,
           margin: 0,
           overflow: 'visible'
