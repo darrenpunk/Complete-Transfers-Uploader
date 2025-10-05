@@ -338,9 +338,19 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Standard centering (no scale) - Simple CSS approach without modifying SVG
-    // Use object-fit-like behavior with the content bounds as a guide
-    console.log(`🎯 Standard centering: content at (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
+    // Standard centering (no scale) - Fixed size to prevent scaling
+    // Extract viewBox to get the SVG's natural dimensions
+    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+    let svgPixelWidth = 400;  // Default fallback
+    let svgPixelHeight = 400;
+    
+    if (viewBoxMatch) {
+      const [, , vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+      svgPixelWidth = vbWidth;
+      svgPixelHeight = vbHeight;
+    }
+    
+    console.log(`🎯 Standard centering: Fixed SVG size ${svgPixelWidth}×${svgPixelHeight}px to prevent scaling`);
     
     return (
       <div 
@@ -353,8 +363,16 @@ export default function SvgInlineRenderer({
           margin: 0,
           overflow: 'visible'
         }}
-        dangerouslySetInnerHTML={{ __html: svgContent }}
-      />
+      >
+        <div
+          style={{
+            width: `${svgPixelWidth}px`,
+            height: `${svgPixelHeight}px`,
+            flexShrink: 0  // Prevent shrinking
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      </div>
     );
   };
 
