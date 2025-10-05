@@ -288,9 +288,9 @@ export default function SvgInlineRenderer({
     }
     
     // Use stored contentScale if available, otherwise calculate from current bounds
-    // CRITICAL: Use CSS DPI (96) not PDF DPI (72) to match browser layout
-    // CSS spec: 1mm = 96/25.4 = 3.7795275591 pixels
-    const pxToMm = 25.4 / 96; // CSS DPI conversion (96 DPI)
+    // CRITICAL: Backend stores element dimensions at 72 DPI (PDF standard)
+    // So we must use 72 DPI here to match: viewBox pixels → mm using same conversion
+    const pxToMm = 1 / 2.834645669; // PDF DPI conversion (72 DPI: 1mm = 2.834645669px)
     const svgWidthMm = viewBoxWidth * pxToMm;
     const svgHeightMm = viewBoxHeight * pxToMm;
     
