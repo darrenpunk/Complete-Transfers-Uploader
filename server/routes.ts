@@ -3186,15 +3186,21 @@ export async function registerRoutes(app: express.Application) {
       const contentWidthMm = logo.contentBounds.width * pxToMm;
       const contentHeightMm = logo.contentBounds.height * pxToMm;
       
+      // Calculate scale factor to maintain current visual size
+      const currentScale = element.contentScale || 1.0;
+      const scaleX = element.width / contentWidthMm;
+      const scaleY = element.height / contentHeightMm;
+      const newContentScale = currentScale * Math.min(scaleX, scaleY);
+      
       console.log(`📐 Element size before: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
       console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-      console.log(`📐 NO SCALING - just centering content in smaller box`);
+      console.log(`📐 Scale factor to maintain visual size: ${newContentScale.toFixed(3)}`);
       
-      // Update element with content bounds dimensions only - no scaling
+      // Update element with content bounds dimensions + scale to maintain visual size
       const updatedElement = await storage.updateCanvasElement(elementId, {
         width: contentWidthMm,
         height: contentHeightMm,
-        contentScale: null // Remove any existing scale
+        contentScale: newContentScale
       });
       
       if (!updatedElement) {
