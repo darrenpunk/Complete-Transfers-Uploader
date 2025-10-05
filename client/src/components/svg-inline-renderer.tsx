@@ -190,10 +190,6 @@ export default function SvgInlineRenderer({
 
   // ARCHITECT SOLUTION: Content-bounds-based centering with viewBox expansion for negative coordinates
   const renderWithContentBounds = () => {
-    // Check for contentScale - if set, apply it to keep visual content at original size
-    const contentScale = element.contentScale || 1;
-    const hasContentScale = contentScale !== 1;
-    
     // Check if we have valid content bounds for precise positioning
     const hasContentBounds = logo.contentBounds && 
                             typeof logo.contentBounds === 'object' &&
@@ -203,27 +199,7 @@ export default function SvgInlineRenderer({
                             'yMax' in logo.contentBounds;
     
     if (!hasContentBounds) {
-      // Apply contentScale if present (even without contentBounds)
-      if (hasContentScale) {
-        return (
-          <div 
-            className="w-full h-full"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              margin: 0,
-              overflow: 'visible',
-              transform: `scale(${contentScale})`,
-              transformOrigin: 'center center'
-            }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
-        );
-      }
-      
-      // Fallback to default centering
+      // Fallback to default centering - content always at fixed size
       return (
         <div 
           className="w-full h-full"
@@ -311,34 +287,7 @@ export default function SvgInlineRenderer({
       }
     }
     
-    // When contentScale is present, we need to scale from center
-    // Otherwise use the standard translate-based centering
-    if (hasContentScale) {
-      return (
-        <div 
-          className="w-full h-full"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
-            overflow: 'visible'
-          }}
-        >
-          <div
-            style={{
-              transform: `scale(${contentScale})`,
-              transformOrigin: 'center center',
-              overflow: 'visible'
-            }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
-        </div>
-      );
-    }
-    
-    // Fixed size rendering - Content at original size, bounds independent
+    // Fixed size rendering - Content ALWAYS at original size, bounds independent
     // Convert viewBox dimensions from pixels to actual size at 72 DPI
     const pxToMm = 1 / 2.834645669; // 72 DPI conversion
     const absoluteWidthMm = viewBoxWidth * pxToMm;

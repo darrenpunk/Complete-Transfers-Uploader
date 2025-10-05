@@ -3186,21 +3186,15 @@ export async function registerRoutes(app: express.Application) {
       const contentWidthMm = logo.contentBounds.width * pxToMm;
       const contentHeightMm = logo.contentBounds.height * pxToMm;
       
-      // Calculate scale factor to maintain current visual size
-      const currentScale = element.contentScale || 1.0;
-      const scaleX = element.width / contentWidthMm;
-      const scaleY = element.height / contentHeightMm;
-      const newContentScale = currentScale * Math.min(scaleX, scaleY);
-      
       console.log(`📐 Element size before: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
       console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-      console.log(`📐 Scale factor to maintain visual size: ${newContentScale.toFixed(3)}`);
+      console.log(`📐 Bounds resized to content - content stays at fixed size`);
       
-      // Update element with content bounds dimensions + scale to maintain visual size
+      // Update element with content bounds dimensions only
+      // Content always renders at fixed size regardless of bounds
       const updatedElement = await storage.updateCanvasElement(elementId, {
         width: contentWidthMm,
-        height: contentHeightMm,
-        contentScale: newContentScale
+        height: contentHeightMm
       });
       
       if (!updatedElement) {
