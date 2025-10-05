@@ -338,28 +338,9 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Standard viewBox-based centering (no scale)
-    // Instead of CSS transforms, adjust the SVG viewBox to show only content bounds
-    // Then use flexbox to center the result
-    const newViewBox = `${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`;
-    
-    console.log(`🎯 ViewBox centering: cropping to content bounds`);
-    console.log(`   Original viewBox center: (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
-    console.log(`   New viewBox: ${newViewBox}`);
-    
-    // Replace the viewBox in the SVG
-    let centeredSvg = svgContent.replace(
-      /viewBox\s*=\s*["']([^"']+)["']/i,
-      `viewBox="${newViewBox}"`
-    );
-    
-    // If no viewBox found, add one after the opening <svg tag
-    if (!centeredSvg.includes('viewBox=')) {
-      centeredSvg = centeredSvg.replace(
-        /<svg([^>]*)>/i,
-        `<svg$1 viewBox="${newViewBox}">`
-      );
-    }
+    // Standard centering (no scale) - Simple CSS approach without modifying SVG
+    // Use object-fit-like behavior with the content bounds as a guide
+    console.log(`🎯 Standard centering: content at (${contentCenterX.toFixed(1)}, ${adjustedCenterY.toFixed(1)})`);
     
     return (
       <div 
@@ -372,7 +353,7 @@ export default function SvgInlineRenderer({
           margin: 0,
           overflow: 'visible'
         }}
-        dangerouslySetInnerHTML={{ __html: centeredSvg }}
+        dangerouslySetInnerHTML={{ __html: svgContent }}
       />
     );
   };
