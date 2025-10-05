@@ -242,10 +242,21 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
+    // Get viewBox dimensions to check for overflow
+    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+    let viewBoxWidth = element.width;
+    let viewBoxHeight = element.height;
+    
+    if (viewBoxMatch) {
+      const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+      viewBoxWidth = vbWidth;
+      viewBoxHeight = vbHeight;
+    }
+    
     // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
-    // This lets the browser's native SVG overflow handling work correctly
+    // Compare bounds (in viewBox coordinates) against viewBox size (not element size!)
     const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        bounds.xMax > element.width || bounds.xMax > element.height;
+                        bounds.xMax > viewBoxWidth || bounds.yMax > viewBoxHeight;
     
     if (hasOverflow) {
       console.log('🎯 OVERFLOW DETECTED: Using simplified rendering for content with negative coords or overflow');
@@ -261,27 +272,9 @@ export default function SvgInlineRenderer({
         );
       }
       
-      // When contentScale is null (after fit-to-content), just center without scaling
-      // Calculate center of content bounds
-      const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
-      const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
-      
-      // Get SVG viewBox to find its center
-      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
-      let svgCenterX = element.width / 2;
-      let svgCenterY = element.height / 2;
-      
-      if (viewBoxMatch) {
-        const [vbX, vbY, vbWidth, vbHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
-        svgCenterX = vbX + vbWidth / 2;
-        svgCenterY = vbY + vbHeight / 2;
-      }
-      
-      // Calculate offset needed to center content bounds (no scaling)
-      const offsetX = svgCenterX - contentCenterX;
-      const offsetY = svgCenterY - contentCenterY;
-      
-      console.log(`🎯 Content centering (no scale): offset (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})px`);
+      // Simple centering - just render SVG normally and let browser handle it
+      // The SVG will be centered within the fitted element box
+      console.log(`🎯 Simple centered rendering (no transform needed)`);
       
       return (
         <div 
@@ -294,16 +287,8 @@ export default function SvgInlineRenderer({
             margin: 0,
             overflow: 'visible'
           }}
-        >
-          <div
-            style={{
-              transform: `translate(${offsetX}px, ${offsetY}px)`,
-              transformOrigin: 'center center',
-              overflow: 'visible'
-            }}
-            dangerouslySetInnerHTML={{ __html: processedSvg }}
-          />
-        </div>
+          dangerouslySetInnerHTML={{ __html: processedSvg }}
+        />
       );
     }
     
