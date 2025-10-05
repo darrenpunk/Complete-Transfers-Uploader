@@ -293,23 +293,28 @@ export default function SvgInlineRenderer({
     const absoluteWidthMm = viewBoxWidth * pxToMm;
     const absoluteHeightMm = viewBoxHeight * pxToMm;
     
-    console.log(`🎯 Fixed size: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (never scales)`);
+    console.log(`🎯 Fixed size: ${viewBoxWidth}×${viewBoxHeight}px = ${absoluteWidthMm.toFixed(1)}×${absoluteHeightMm.toFixed(1)}mm (LOCKED, never scales)`);
     
     // Set explicit pixel dimensions matching viewBox - this prevents automatic scaling
     // First remove any existing width/height attributes
     let fixedSizeSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
     fixedSizeSvg = fixedSizeSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
     
-    // Then add back fixed pixel dimensions from viewBox
+    // Then add back fixed pixel dimensions with aggressive inline styles to prevent ANY scaling
     fixedSizeSvg = fixedSizeSvg.replace(
       /<svg([^>]*)>/,
-      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="display: block;">`
+      `<svg$1 width="${viewBoxWidth}px" height="${viewBoxHeight}px" style="display: block; min-width: ${viewBoxWidth}px; min-height: ${viewBoxHeight}px; max-width: ${viewBoxWidth}px; max-height: ${viewBoxHeight}px; flex-shrink: 0;">`
     );
     
     return (
       <div 
-        className="w-full h-full flex items-center justify-center"
         style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 0,
           margin: 0,
           overflow: 'visible'
