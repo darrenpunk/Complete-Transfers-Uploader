@@ -282,15 +282,13 @@ export default function SvgInlineRenderer({
       
       return (
         <div 
+          className="w-full h-full"
           style={{
-            width: `${renderedWidth}px`,
-            height: `${renderedHeight}px`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: 'block',
             padding: 0,
             margin: 0,
-            overflow: 'visible'
+            overflow: 'visible',
+            lineHeight: 0
           }}
           dangerouslySetInnerHTML={{ __html: processedSvg }}
         />
