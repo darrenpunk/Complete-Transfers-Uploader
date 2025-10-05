@@ -1027,6 +1027,32 @@ export async function registerRoutes(app: express.Application) {
             const vectorDoc = await PDFDocument.load(vectorBytes);
             const [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
             
+            // CRITICAL FIX: Get actual content dimensions from the embedded page
+            // For original PDFs, the page size might be different from content size
+            let actualContentWidthPts = widthPts;
+            let actualContentHeightPts = heightPts;
+            
+            if (useOriginalPdf) {
+              // Get the bounding box of the actual content
+              try {
+                const { execSync } = await import('child_process');
+                const bboxCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=bbox "${originalPdfPath}" 2>&1 | grep "%%HiResBoundingBox"`;
+                const bboxOutput = execSync(bboxCmd, { encoding: 'utf8' });
+                const match = bboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                
+                if (match) {
+                  const [, x1, y1, x2, y2] = match.map(Number);
+                  actualContentWidthPts = x2 - x1;
+                  actualContentHeightPts = y2 - y1;
+                  console.log(`📐 CONTENT BOUNDS: ${actualContentWidthPts.toFixed(1)}×${actualContentHeightPts.toFixed(1)}pts (actual artwork)`);
+                  console.log(`📐 CANVAS ELEMENT: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts (canvas size)`);
+                  console.log(`📐 SCALE FACTOR: ${(widthPts / actualContentWidthPts).toFixed(2)}x`);
+                }
+              } catch (error) {
+                console.log(`⚠️ Could not extract bbox, using page dimensions`);
+              }
+            }
+            
             // CRITICAL: For original PDFs, we embed at EXACT canvas dimensions
             // This ensures the content appears at the same size as in the canvas
             
