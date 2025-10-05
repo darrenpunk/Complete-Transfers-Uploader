@@ -894,20 +894,19 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 Content is ${contentWidth}×${contentHeight}pts at offset ${x1},${y1}`);
                 console.log(`📐 Canvas expects ${widthPts}×${heightPts}pts`);
                 
-                // Create PDF with content scaled to match canvas exactly
-                // We need to scale AND center the content properly
-                const scaleX = widthPts / contentWidth;
-                const scaleY = heightPts / contentHeight;
+                // CRITICAL FIX: Use 1:1 scale - NO SCALING of the PDF content
+                // The PDF should be embedded at its original size
+                console.log(`🎯 USING 1:1 SCALE - NO SCALING OF PDF CONTENT`);
+                const scaleX = 1.0;
+                const scaleY = 1.0;
                 
-                // When scaling down, we need to center the content
-                // Calculate centering offset after scaling
-                const scaledWidth = contentWidth * scaleX;
-                const scaledHeight = contentHeight * scaleY;
-                const centerOffsetX = (widthPts - scaledWidth) / 2;
-                const centerOffsetY = (heightPts - scaledHeight) / 2;
+                // Center the content at its original size
+                const centerOffsetX = (widthPts - contentWidth) / 2;
+                const centerOffsetY = (heightPts - contentHeight) / 2;
                 
-                console.log(`📊 Scale factors: X=${scaleX}, Y=${scaleY}`);
-                console.log(`📊 Centering offsets: X=${centerOffsetX}, Y=${centerOffsetY}`);
+                console.log(`📊 Scale: 1:1 (no scaling)`);
+                console.log(`📊 Centering offsets: X=${centerOffsetX.toFixed(1)}, Y=${centerOffsetY.toFixed(1)}`);
+                console.log(`📊 Final size will be: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts (original PDF content size)`);
                 
                 const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
                   `-sDEVICE=pdfwrite ` +
@@ -929,7 +928,7 @@ export async function registerRoutes(app: express.Application) {
                   `-f "${originalPdfPath}"`;
                 
                 execSync(cropCmd);
-                console.log(`✅ Content scaled to exact canvas size: ${widthPts}×${heightPts}pts`);
+                console.log(`✅ PDF embedded at 1:1 scale (no scaling): ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts`);
                 
                 vectorBytes = fs.readFileSync(croppedPdf);
                 fs.unlinkSync(croppedPdf);
