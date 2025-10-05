@@ -190,24 +190,29 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // SIMPLE RENDERING: Just strip width/height and let SVG fill parent
+  // SIMPLE RENDERING: Just strip width/height and add CSS to make SVG fill parent
   // Parent container in canvas-workspace handles mm→px conversion at correct zoom
   const renderWithContentBounds = () => {
-    // Remove width/height attributes from SVG to let it scale naturally
+    // Remove width/height attributes and add CSS to fill parent
     let cleanedSvg = svgContent.replace(/\s+width\s*=\s*["'][^"']*["']/gi, '');
     cleanedSvg = cleanedSvg.replace(/\s+height\s*=\s*["'][^"']*["']/gi, '');
+    
+    // Add inline styles to SVG element to fill container
+    cleanedSvg = cleanedSvg.replace(
+      /<svg([^>]*)>/i,
+      '<svg$1 style="width: 100%; height: 100%; display: block;">'
+    );
     
     // Simple container that fills parent - parent is already sized correctly
     return (
       <div 
         className="w-full h-full"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'block',
           padding: 0,
           margin: 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          lineHeight: 0
         }}
         dangerouslySetInnerHTML={{ __html: cleanedSvg }}
       />
