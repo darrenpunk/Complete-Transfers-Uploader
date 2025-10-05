@@ -6,13 +6,15 @@ interface SvgInlineRendererProps {
   logo: Logo;
   project: Project;
   shouldRecolorForInk: boolean;
+  zoom: number;
 }
 
 export default function SvgInlineRenderer({ 
   element, 
   logo, 
   project,
-  shouldRecolorForInk 
+  shouldRecolorForInk,
+  zoom
 }: SvgInlineRendererProps) {
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -241,9 +243,11 @@ export default function SvgInlineRenderer({
       
       // Calculate scale: Canvas layout displays elements at 96 DPI CSS standard
       // SVG viewBox is in 72 DPI PDF units, so we need to scale to match 96 DPI display
+      // CRITICAL: Must also account for canvas zoom level
       const mmToPixel96DPI = 96 / 25.4; // 3.779 px/mm (CSS standard)
-      const targetPixelWidth = element.width * mmToPixel96DPI;
-      const targetPixelHeight = element.height * mmToPixel96DPI;
+      const zoomFactor = zoom / 100; // Convert percentage to decimal (67% = 0.67)
+      const targetPixelWidth = element.width * mmToPixel96DPI * zoomFactor;
+      const targetPixelHeight = element.height * mmToPixel96DPI * zoomFactor;
       
       const scaleX = targetPixelWidth / viewBoxWidth;
       const scaleY = targetPixelHeight / viewBoxHeight;

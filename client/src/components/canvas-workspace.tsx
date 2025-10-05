@@ -1858,6 +1858,7 @@ export default function CanvasWorkspace({
                           logo={logo}
                           project={project}
                           shouldRecolorForInk={shouldRecolorForInk}
+                          zoom={zoom}
                         />
                       ) : (
                         // For non-SVG files (PNG, JPEG), use regular img element
