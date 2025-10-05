@@ -610,7 +610,7 @@ export default function PropertiesPanel({
       if (cb.xMin !== undefined && cb.yMin !== undefined && cb.xMax !== undefined && cb.yMax !== undefined) {
         // Content bounds are in pixels, convert to mm
         const isPdfDerived = currentElement.width > 200 || currentElement.height > 200;
-        const mmToPixelRatio = isPdfDerived ? (96 / 25.4) : ((currentTemplate?.pixelWidth || 842) / templateWidth);
+        const mmToPixelRatio = isPdfDerived ? 2.834645669 : ((currentTemplate?.pixelWidth || 842) / templateWidth);
         
         const contentWidthMm = cb.width / mmToPixelRatio;
         const contentHeightMm = cb.height / mmToPixelRatio;

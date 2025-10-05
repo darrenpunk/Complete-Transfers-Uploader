@@ -2323,12 +2323,43 @@ export async function registerRoutes(app: express.Application) {
               // For PDF-converted SVGs, try to use the original PDF bounds first
               
               if ((file as any).originalPdfPath && file.mimetype === 'application/pdf') {
-                // Use clipping path vectors to detect ACTUAL ARTWORK BOUNDS (includes white elements)
-                console.log('📐 Extracting ACTUAL ARTWORK BOUNDS from clipping paths (includes white elements)');
+                // CRITICAL FIX: Extract PDF PAGE DIMENSIONS (MediaBox), not content bounds
+                // The MediaBox defines the intended artwork size - use it directly with NO scaling
+                console.log('📐 Extracting PDF PAGE DIMENSIONS (MediaBox) from original PDF - will use 1:1 with NO scaling');
                 
-                // Clipping paths define the cut area - this is what we need for accurate selection
-                // The SVG bounds analyzer will extract clipping path vectors below
-                console.log('🎯 Will use clipping path vectors for actual artwork size');
+                // Use pdf-lib to get exact MediaBox dimensions
+                try {
+                  const { PDFDocument } = await import('pdf-lib');
+                  const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
+                  const originalPdf = await PDFDocument.load(originalPdfBytes);
+                  const firstPage = originalPdf.getPages()[0];
+                  const mediaBox = firstPage.getMediaBox();
+                  
+                  const pageWidth = mediaBox.width;
+                  const pageHeight = mediaBox.height;
+                  
+                  console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
+                  console.log(`📄 This is the intended artwork size - will be used 1:1 with NO scaling`);
+                  
+                  // Use the PDF page dimensions directly - this is the intended artwork size
+                  boundsResult = {
+                    success: true,
+                    contentBounds: {
+                      xMin: mediaBox.x,
+                      yMin: mediaBox.y,
+                      xMax: mediaBox.x + pageWidth,
+                      yMax: mediaBox.y + pageHeight,
+                      width: pageWidth,
+                      height: pageHeight
+                    },
+                    method: 'pdf-mediabox-dimensions'
+                  };
+                  
+                  console.log(`🎯 Using PDF MediaBox as content bounds - NO content detection, NO scaling`);
+                } catch (pdfLibError) {
+                  console.error('Failed to extract PDF MediaBox:', pdfLibError);
+                  // Fall through to SVG bounds analyzer
+                }
               }
               
               // Import SVG analyzer for later use
@@ -2468,13 +2499,12 @@ export async function registerRoutes(app: express.Application) {
                 let contentBounds = boundsResult.contentBounds;
                 console.log(`✅ GHOSTSCRIPT CONTENT BOUNDS (painted only): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                 
-                // DISABLED: Clipping path detection often finds wrong bounds (e.g., 134×54pts instead of 860×267pts)
-                // Use Ghostscript painted content bounds directly - most accurate for PDF artwork
-                console.log(`✅ USING GHOSTSCRIPT PAINTED BOUNDS ONLY (disabling clipping path detection)`);
+                // Extract ALL clipping path geometries from SVG
+                const clipPathRegex = /<clipPath[^>]*>(.*?)<\/clipPath>/gs;
+                const clipPathMatches = svgContent.match(clipPathRegex);
                 
-                const disableClippingPathDetection = true;
-                if (false) {
-                  console.log(`🔍 ANALYZING CLIPPING PATH VECTORS (DISABLED)`);
+                if (clipPathMatches && clipPathMatches.length > 0) {
+                  console.log(`🔍 ANALYZING ${clipPathMatches.length} CLIPPING PATH VECTORS`);
                   
                   let globalMinX = Infinity, globalMinY = Infinity;
                   let globalMaxX = -Infinity, globalMaxY = -Infinity;
@@ -2527,23 +2557,27 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
                     
-                    // ALWAYS use clipping path vectors when available
-                    // Clipping paths define the actual artwork area including white elements
-                    console.log(`✅ USING CLIPPING PATH VECTORS AS CONTENT BOUNDS (includes white elements)`);
-                    console.log(`📐 Painted content was: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
-                    console.log(`📐 Clipping path bounds: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                    
-                    contentBounds = {
-                      xMin: globalMinX,
-                      yMin: globalMinY,
-                      xMax: globalMaxX,
-                      yMax: globalMaxY,
-                      width: clipWidth,
-                      height: clipHeight
-                    };
-                    boundsResult.contentBounds = contentBounds;
+                    // If clipping path vectors extend beyond painted content, use clip bounds
+                    // This detects the true content extent including masked areas
+                    if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
+                      const widthExpansion = clipWidth - contentBounds.width;
+                      const heightExpansion = clipHeight - contentBounds.height;
+                      console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
+                      
+                      contentBounds = {
+                        xMin: globalMinX,
+                        yMin: globalMinY,
+                        xMax: globalMaxX,
+                        yMax: globalMaxY,
+                        width: clipWidth,
+                        height: clipHeight
+                      };
+                      boundsResult.contentBounds = contentBounds;
+                    } else {
+                      console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
+                    }
                   } else {
-                    console.log(`⚠️ Could not extract clipping path geometry - using painted content bounds`);
+                    console.log(`⚠️ Could not extract clipping path geometry`);
                   }
                 } else {
                   console.log(`ℹ️ No clipping paths found in SVG`);
@@ -2805,14 +2839,6 @@ export async function registerRoutes(app: express.Application) {
         
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-
-        // DISABLED: Auto-fit to content for PDFs
-        // CRITICAL LIMITATION: Painted bounds cannot detect white elements (logos, text, graphics)
-        // Ghostscript's bbox only detects visible ink - white content is invisible and gets cropped
-        // Clipping path detection is unreliable (often finds wrong vectors, e.g., 134×54 instead of 860×267)
-        // SOLUTION: Use full viewBox dimensions for all PDFs to preserve white content
-        console.log(`✅ USING FULL VIEWBOX: Preserves all content including white elements`);
-        console.log(`📐 PDF/SVG: Using viewBox dimensions ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
@@ -3167,65 +3193,6 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('Duplicate canvas element error:', error);
       res.status(500).json({ error: 'Failed to duplicate canvas element' });
-    }
-  });
-
-  // Fit canvas element to content bounds (resizes selection box, centers content without scaling)
-  app.post('/api/canvas-elements/:elementId/fit-to-content', async (req, res) => {
-    try {
-      const elementId = req.params.elementId;
-      console.log(`🎯 Fitting canvas element to content bounds: ${elementId}`);
-      
-      const element = await storage.getCanvasElement(elementId);
-      if (!element) {
-        return res.status(404).json({ error: 'Canvas element not found' });
-      }
-      
-      const logo = await storage.getLogo(element.logoId);
-      if (!logo || !logo.contentBounds) {
-        return res.status(400).json({ error: 'Logo or content bounds not found' });
-      }
-      
-      // Calculate new dimensions based on contentBounds
-      const pxToMm = 1 / 2.834645669; // 72 DPI conversion
-      const contentWidthMm = logo.contentBounds.width * pxToMm;
-      const contentHeightMm = logo.contentBounds.height * pxToMm;
-      
-      // Calculate and store the current scale BEFORE changing bounds
-      // This locks the visual size so it doesn't change when bounds shrink
-      let contentScale = element.contentScale;
-      if (!contentScale) {
-        // Calculate scale from current bounds (before fitting)
-        // Assume SVG viewBox is the full page size (595×842px for A4)
-        const svgWidthMm = 210; // A4 width in mm
-        const svgHeightMm = 297; // A4 height in mm
-        const scaleX = element.width / svgWidthMm;
-        const scaleY = element.height / svgHeightMm;
-        contentScale = Math.min(scaleX, scaleY);
-        console.log(`💾 Storing contentScale: ${contentScale.toFixed(4)} (locks visual size)`);
-      }
-      
-      console.log(`📐 Element size before: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
-      console.log(`📐 Content bounds: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-      console.log(`📐 Bounds resized to content - content scale locked at ${contentScale.toFixed(4)}`);
-      
-      // Update element with content bounds dimensions AND contentScale
-      // contentScale ensures visual size stays constant when bounds change
-      const updatedElement = await storage.updateCanvasElement(elementId, {
-        width: contentWidthMm,
-        height: contentHeightMm,
-        contentScale: contentScale
-      });
-      
-      if (!updatedElement) {
-        return res.status(500).json({ error: 'Failed to update canvas element' });
-      }
-      
-      console.log(`✅ Element fitted to content bounds - content centered without scaling`);
-      res.json(updatedElement);
-    } catch (error) {
-      console.error('Fit to content error:', error);
-      res.status(500).json({ error: 'Failed to fit element to content' });
     }
   });
 

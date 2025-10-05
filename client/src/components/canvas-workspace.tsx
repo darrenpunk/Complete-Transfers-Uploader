@@ -17,14 +17,6 @@ import SvgInlineRenderer from "./svg-inline-renderer";
 // Import garment color utilities from shared module
 import { gildanColors, fruitOfTheLoomColors, type ManufacturerColor } from "@shared/garment-colors";
 
-function getMmToPixelRatio(element: CanvasElement, template: TemplateSize): number {
-  const isPdfDerived = element.width > 200 || element.height > 200;
-  if (isPdfDerived) {
-    return 96 / 25.4;
-  }
-  return template.pixelWidth / template.width;
-}
-
 function getColorName(hex: string): string {
   // Professional Colors (same as in garment color modal)
   const quickColors = [
@@ -618,7 +610,13 @@ export default function CanvasWorkspace({
     
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleFactor = zoom / 100;
-    const mmToPixelRatio = getMmToPixelRatio(element, template);
+    let mmToPixelRatio = template.pixelWidth / template.width;
+    
+    // Use proper DPI for PDF-derived elements
+    const isPdfDerived = element.width > 200 || element.height > 200;
+    if (isPdfDerived) {
+      mmToPixelRatio = 2.834645669; // 72 DPI conversion
+    }
     
     // Capture initial mouse position in mm coordinates
     const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
@@ -644,7 +642,13 @@ export default function CanvasWorkspace({
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
       // Convert mm to pixels for drag offset calculation
-      const mmToPixelRatio = getMmToPixelRatio(element, template);
+      let mmToPixelRatio = template.pixelWidth / template.width;
+      
+      // Use proper DPI for PDF-derived elements
+      const isPdfDerived = element.width > 200 || element.height > 200;
+      if (isPdfDerived) {
+        mmToPixelRatio = 2.834645669; // 72 DPI conversion
+      }
       // Convert element center position to screen coordinates
       const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
       const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
@@ -679,7 +683,13 @@ export default function CanvasWorkspace({
       requestAnimationFrame(() => {
         if (isDragging && selectedElement && template) {
           // Convert pixels back to mm for storage
-          const mmToPixelRatio = getMmToPixelRatio(selectedElement, template);
+          let mmToPixelRatio = template.pixelWidth / template.width;
+          
+          // Use proper DPI for PDF-derived elements
+          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          if (isPdfDerived) {
+            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          }
           // Convert mouse position to center-based coordinates
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
@@ -714,7 +724,13 @@ export default function CanvasWorkspace({
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
-          const mmToPixelRatio = getMmToPixelRatio(selectedElement, template);
+          let mmToPixelRatio = template.pixelWidth / template.width;
+          
+          // Use proper DPI for PDF-derived elements
+          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          if (isPdfDerived) {
+            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          }
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
@@ -963,44 +979,6 @@ export default function CanvasWorkspace({
 
 
 
-  // Fit element to content bounds (keeps visual content at original size via contentScale)
-  const handleFitToContent = async () => {
-    if (!selectedElement || !project?.id) {
-      toast({
-        title: "No element selected",
-        description: "Please select an element to fit to content",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      console.log(`🎯 Fitting element ${selectedElement.id} to content bounds`);
-      
-      const response = await apiRequest('POST', `/api/canvas-elements/${selectedElement.id}/fit-to-content`);
-      
-      if (response.ok) {
-        const updatedElement = await response.json();
-        console.log(`✅ Element fitted: ${updatedElement.width.toFixed(1)}×${updatedElement.height.toFixed(1)}mm (no scaling)`);
-        
-        await queryClient.invalidateQueries({ queryKey: ['/api/projects', project.id, 'canvas-elements'] });
-        
-        toast({
-          title: "Fitted to content",
-          description: `Selection box resized to actual content area (no scaling)`,
-        });
-      } else {
-        throw new Error('Failed to fit to content');
-      }
-    } catch (error) {
-      console.error('Error fitting to content:', error);
-      toast({
-        title: "Failed to fit to content",
-        description: "Could not resize to content bounds",
-        variant: "destructive"
-      });
-    }
-  };
 
   // Function to fit all content within safety margins
   const handleFitToBounds = () => {
@@ -1321,7 +1299,6 @@ export default function CanvasWorkspace({
                       variant="outline"
                       size="sm"
                       onClick={handleFitToBounds}
-                      data-testid="button-fit-in-bounds"
                     >
                       <Maximize2 className="w-4 h-4 mr-1" />
                       Fit in Bounds
@@ -1332,27 +1309,7 @@ export default function CanvasWorkspace({
                   </TooltipContent>
                 </Tooltip>
               )}
-              
-              {/* Fit to Content Button - show when element is selected */}
-              {selectedElement && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleFitToContent}
-                      data-testid="button-fit-to-content"
-                    >
-                      <Maximize2 className="w-4 h-4 mr-1" />
-                      Fit to Content
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Resize selection box to actual content (keeps visual size)</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
+
             </div>
 
           </div>
@@ -1579,7 +1536,7 @@ export default function CanvasWorkspace({
                   // Check if we have any PDF-derived elements and use their ratio for margin consistency
                   const hasPdfElements = canvasElements.some(el => el.width > 200 || el.height > 200);
                   if (hasPdfElements) {
-                    mmToPixelRatio = 96 / 25.4; // CSS DPI conversion (96 DPI = 3.7795275591) for consistency
+                    mmToPixelRatio = 2.834645669; // 72 DPI conversion for consistency
                   }
                   
                   const marginInPixels = 3 * mmToPixelRatio * (zoom / 100); // 3mm margin
@@ -1643,7 +1600,7 @@ export default function CanvasWorkspace({
                             // Content bounds are in pixels, need to convert to mm
                             // Use PDF DPI conversion for PDF-derived content
                             const isPdfDerived = element.width > 200 || element.height > 200;
-                            const mmToPixelRatio = isPdfDerived ? (96 / 25.4) : (template.pixelWidth / template.width);
+                            const mmToPixelRatio = isPdfDerived ? 2.834645669 : (template.pixelWidth / template.width);
                             
                             // Convert content bounds from pixels to mm
                             const contentWidthMm = contentBounds.width / mmToPixelRatio;
@@ -1780,8 +1737,18 @@ export default function CanvasWorkspace({
                 console.log(`Element ${element.id} has color overrides:`, element.colorOverrides);
               }
               
-              // Convert mm to pixels for display using consistent DPI for PDF-derived elements
-              const mmToPixelRatio = getMmToPixelRatio(element, template);
+              // Convert mm to pixels for display
+              // For PDF-derived large format elements, use proper DPI conversion instead of template workspace ratio
+              let mmToPixelRatio = template.pixelWidth / template.width; // Default template ratio
+              
+              // Check if this is a PDF-derived element (large format) by checking dimensions
+              const isPdfDerived = element.width > 200 || element.height > 200; // Large elements are likely PDF-derived
+              
+              if (isPdfDerived) {
+                // Use standard 72 DPI conversion for PDF-derived elements: 1mm = 2.834645669 pixels
+                mmToPixelRatio = 2.834645669; // 72 DPI conversion
+                console.log(`🔍 PDF-derived element detected, using 72 DPI conversion: ${mmToPixelRatio} px/mm`);
+              }
               
               // Always use the database dimensions directly - they're already swapped by the backend
               // Apply zoom to match the canvas scaling
@@ -1808,10 +1775,6 @@ export default function CanvasWorkspace({
                 console.log(`Canvas element ${element.id} dimensions:`, {
                   dbWidth: element.width,
                   dbHeight: element.height,
-                  mmToPixelRatio,
-                  zoom,
-                  zoomFactor: zoom / 100,
-                  calculation: `${element.width.toFixed(1)} × ${mmToPixelRatio.toFixed(3)} × ${(zoom / 100).toFixed(2)} = ${elementWidth.toFixed(1)}`,
                   pixelWidth: elementWidth,
                   pixelHeight: elementHeight,
                   rotation: element.rotation
@@ -1834,15 +1797,14 @@ export default function CanvasWorkspace({
                       ? `2px solid #961E75` 
                       : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
-                    boxSizing: 'border-box',
-                    overflow: 'visible'
+                    boxSizing: 'border-box'
                   }}
                   onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="absolute inset-0 overflow-visible" 
+                    className="absolute inset-0 overflow-hidden" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent',
                       padding: 0,
@@ -1862,9 +1824,6 @@ export default function CanvasWorkspace({
                           logo={logo}
                           project={project}
                           shouldRecolorForInk={shouldRecolorForInk}
-                          zoom={zoom}
-                          containerWidth={elementWidth}
-                          containerHeight={elementHeight}
                         />
                       ) : (
                         // For non-SVG files (PNG, JPEG), use regular img element

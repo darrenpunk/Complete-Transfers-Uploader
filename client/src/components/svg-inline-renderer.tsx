@@ -6,19 +6,13 @@ interface SvgInlineRendererProps {
   logo: Logo;
   project: Project;
   shouldRecolorForInk: boolean;
-  zoom: number;
-  containerWidth: number;
-  containerHeight: number;
 }
 
 export default function SvgInlineRenderer({ 
   element, 
   logo, 
   project,
-  shouldRecolorForInk,
-  zoom,
-  containerWidth,
-  containerHeight
+  shouldRecolorForInk 
 }: SvgInlineRendererProps) {
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -104,8 +98,10 @@ export default function SvgInlineRenderer({
           '$1$3' // Remove height from svg tag
         );
         
-        // Keep aspect ratio but ensure proper scaling
-        if (!cleanedSvg.includes('preserveAspectRatio')) {
+        // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
+        if (cleanedSvg.includes('preserveAspectRatio')) {
+          cleanedSvg = cleanedSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, 'preserveAspectRatio="xMidYMid meet"');
+        } else {
           cleanedSvg = cleanedSvg.replace(/<svg([^>]*)>/, '<svg$1 preserveAspectRatio="xMidYMid meet">');
         }
         
@@ -192,42 +188,108 @@ export default function SvgInlineRenderer({
     );
   };
 
-  // ORIGINAL SIMPLE RENDERING: SVG fills container exactly
+  // ARCHITECT SOLUTION: Content-bounds-based centering with viewBox expansion for negative coordinates
   const renderWithContentBounds = () => {
-    // Extract the original viewBox if it exists
-    const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']*)["']/i);
-    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
+    // Check if we have valid content bounds for precise positioning
+    const hasContentBounds = logo.contentBounds && 
+                            typeof logo.contentBounds === 'object' &&
+                            'xMin' in logo.contentBounds &&
+                            'yMin' in logo.contentBounds &&
+                            'xMax' in logo.contentBounds &&
+                            'yMax' in logo.contentBounds;
     
-    // Remove width, height, and preserveAspectRatio but keep viewBox
-    let scaledSvg = svgContent.replace(/\s+(width|height|preserveAspectRatio)\s*=\s*["'][^"']*["']/gi, '');
-    
-    // If no viewBox, we need to create one based on the content
-    // For now, inject container dimensions with preserveAspectRatio="none" to force stretching
-    if (viewBox) {
-      scaledSvg = scaledSvg.replace(
-        /<svg([^>]*)>/i,
-        `<svg$1 width="${containerWidth}px" height="${containerHeight}px" preserveAspectRatio="none" style="display: block;">`
-      );
-    } else {
-      // No viewBox - create one that matches container aspect ratio
-      scaledSvg = scaledSvg.replace(
-        /<svg([^>]*)>/i,
-        `<svg$1 width="${containerWidth}px" height="${containerHeight}px" viewBox="0 0 ${containerWidth} ${containerHeight}" preserveAspectRatio="none" style="display: block;">`
+    if (!hasContentBounds) {
+      // Fallback to default centering
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'hidden'
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
       );
     }
     
+    const bounds = logo.contentBounds as ContentBounds;
+    
+    // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
+    // This lets the browser's native SVG overflow handling work correctly
+    const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
+                        bounds.xMax > element.width || bounds.xMax > element.height;
+    
+    if (hasOverflow) {
+      console.log('🎯 OVERFLOW DETECTED: Using simplified rendering for content with negative coords or overflow');
+      console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
+      console.log(`   Element size: ${element.width} × ${element.height}px`);
+      
+      // Ensure SVG has proper namespace declarations for xlink (required for embedded images)
+      let processedSvg = svgContent;
+      if (!svgContent.includes('xmlns:xlink')) {
+        processedSvg = svgContent.replace(
+          /<svg([^>]*)>/i,
+          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
+        );
+      }
+      
+      // Use simplified rendering - just render the SVG as-is
+      // The browser handles SVG overflow naturally when not wrapped
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'visible'
+          }}
+          dangerouslySetInnerHTML={{ __html: processedSvg }}
+        />
+      );
+    }
+    
+    // No negative coordinates - use standard centering
+    const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
+    const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
+    
+    // Detect Y-inversion by checking for scaleY(-1) in the SVG
+    const hasYFlip = svgContent.includes('matrix(') && 
+                     (svgContent.includes('matrix(1, 0, 0, -1') || 
+                      svgContent.includes('matrix(1,0,0,-1'));
+    
+    // Handle Y-inversion for PDF-derived content
+    let adjustedCenterY = contentCenterY;
+    if (hasYFlip) {
+      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+      if (viewBoxMatch) {
+        const [, , , svgHeight] = viewBoxMatch[1].split(/\s+/).map(Number);
+        adjustedCenterY = svgHeight - contentCenterY;
+      }
+    }
+    
+    // Calculate transform to center the content
+    const translateX = `calc(50% - ${contentCenterX}px)`;
+    const translateY = `calc(50% - ${adjustedCenterY}px)`;
+    
     return (
-      <div 
-        className="w-full h-full"
-        style={{
-          display: 'block',
-          padding: 0,
-          margin: 0,
-          overflow: 'hidden',
-          lineHeight: 0
-        }}
-        dangerouslySetInnerHTML={{ __html: scaledSvg }}
-      />
+      <div className="w-full h-full relative overflow-visible">
+        <div
+          className="w-full h-full"
+          style={{
+            transform: `translate(${translateX}, ${translateY})`,
+            transformOrigin: 'top left',
+            overflow: 'visible'
+          }}
+          dangerouslySetInnerHTML={{ __html: svgContent }}
+        />
+      </div>
     );
   };
 
