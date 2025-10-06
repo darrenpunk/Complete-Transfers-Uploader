@@ -2554,32 +2554,39 @@ export async function registerRoutes(app: express.Application) {
                     const clipWidth = globalMaxX - globalMinX;
                     const clipHeight = globalMaxY - globalMinY;
                     
-                    console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                    console.log(`📐 VISIBLE VECTOR CONTENT: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts (from SVG analyzer)`);
+                    console.log(`🎯 CLIPPING PATH VECTORS DETECTED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                    console.log(`📐 RAW VECTOR GEOMETRY (BEFORE CLIPPING): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                     
-                    // CRITICAL FIX: Only use clipping path if it EXTENDS beyond visible content
-                    // If clipping is smaller, it's just masking - use the actual visible vector geometry
-                    const widthDiff = clipWidth - contentBounds.width;
-                    const heightDiff = clipHeight - contentBounds.height;
+                    // CRITICAL FIX: Clipping paths are AUTHORITATIVE - they define the visible region (like a mask)
+                    // Geometry outside the clip is NOT visible, even if it exists in the SVG
+                    // ALWAYS use clipping bounds when detected - they constrain what's actually visible
                     
-                    if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
-                      // Clipping path reveals MORE content than visible - use it
-                      console.log(`✅ CLIPPING EXTENDS BEYOND VISIBLE: +${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}pts → Using clip bounds to reveal masked content`);
-                      contentBounds = {
-                        xMin: globalMinX,
-                        yMin: globalMinY,
-                        xMax: globalMaxX,
-                        yMax: globalMaxY,
-                        width: clipWidth,
-                        height: clipHeight,
-                        units: contentBounds.units || 'px'
-                      };
-                      boundsResult.contentBounds = contentBounds;
-                    } else {
-                      // Clipping path is smaller - it's just masking, ignore it and use visible content
-                      console.log(`⚠️ CLIPPING SMALLER THAN VISIBLE: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}pts → Ignoring clip, using visible vector geometry`);
-                      console.log(`🎯 USING VISIBLE VECTOR GEOMETRY AS TRUE CONTENT: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
-                    }
+                    // Intersect clipping bounds with PDF page to ensure we don't exceed MediaBox
+                    const viewBoxWidthPx = originalWidthMm / pxToMm;
+                    const viewBoxHeightPx = originalHeightMm / pxToMm;
+                    
+                    const clampedClipXMin = Math.max(globalMinX, 0);
+                    const clampedClipYMin = Math.max(globalMinY, 0);
+                    const clampedClipXMax = Math.min(globalMaxX, viewBoxWidthPx);
+                    const clampedClipYMax = Math.min(globalMaxY, viewBoxHeightPx);
+                    
+                    const clampedClipWidth = clampedClipXMax - clampedClipXMin;
+                    const clampedClipHeight = clampedClipYMax - clampedClipYMin;
+                    
+                    console.log(`✅ CLIPPING PATHS DEFINE VISIBLE BOUNDS: ${clampedClipWidth.toFixed(1)}×${clampedClipHeight.toFixed(1)}pts (intersected with PDF page)`);
+                    
+                    // Use clipping as authoritative bounds
+                    contentBounds = {
+                      xMin: clampedClipXMin,
+                      yMin: clampedClipYMin,
+                      xMax: clampedClipXMax,
+                      yMax: clampedClipYMax,
+                      width: clampedClipWidth,
+                      height: clampedClipHeight,
+                      units: contentBounds.units || 'px'
+                    };
+                    boundsResult.contentBounds = contentBounds;
+                    console.log(`🎯 USING CLIPPING PATH BOUNDS AS AUTHORITATIVE: ${clampedClipWidth.toFixed(1)}×${clampedClipHeight.toFixed(1)}pts`);
                   } else {
                     console.log(`⚠️ Could not extract clipping path geometry`);
                   }
