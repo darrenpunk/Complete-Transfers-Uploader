@@ -528,6 +528,22 @@ export class SVGBoundsAnalyzer {
       let minX = Infinity, minY = Infinity;
       let maxX = -Infinity, maxY = -Infinity;
 
+      // CRITICAL: Check for transform matrix ONCE before processing coordinates
+      let transform = null;
+      let hasTransform = false;
+      if (element) {
+        const transformAttr = element.getAttribute('transform');
+        if (transformAttr) {
+          const matrixMatch = transformAttr.match(/matrix\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\)/);
+          if (matrixMatch) {
+            const [, a, b, c, d, e, f] = matrixMatch.map(Number);
+            transform = { a, b, c, d, e, f };
+            hasTransform = true;
+            console.log(`🔧 Found transform matrix: translate(${e.toFixed(1)}, ${f.toFixed(1)}) scale(${a}, ${d})`);
+          }
+        }
+      }
+
       // Process coordinates in pairs to find actual content bounds
       for (let i = 0; i < numbers.length - 1; i += 2) {
         let x = numbers[i];
@@ -535,19 +551,12 @@ export class SVGBoundsAnalyzer {
         
         if (!isNaN(x) && !isNaN(y)) {
           // CRITICAL: Apply transform matrix if present
-          if (element) {
-            const transform = element.getAttribute('transform');
-            if (transform) {
-              const matrixMatch = transform.match(/matrix\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\)/);
-              if (matrixMatch) {
-                const [, a, b, c, d, e, f] = matrixMatch.map(Number);
-                // Apply matrix transformation: [x', y'] = [a*x + c*y + e, b*x + d*y + f]
-                const transformedX = a * x + c * y + e;
-                const transformedY = b * x + d * y + f;
-                x = transformedX;
-                y = transformedY;
-              }
-            }
+          if (hasTransform && transform) {
+            // Apply matrix transformation: [x', y'] = [a*x + c*y + e, b*x + d*y + f]
+            const transformedX = transform.a * x + transform.c * y + transform.e;
+            const transformedY = transform.b * x + transform.d * y + transform.f;
+            x = transformedX;
+            y = transformedY;
           }
           
           minX = Math.min(minX, x);
