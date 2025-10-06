@@ -466,34 +466,59 @@ export class SVGBoundsAnalyzer {
 
   /**
    * Get bounds for individual SVG element
+   * CRITICAL: Includes stroke width in bounds calculation
    */
   private getElementBounds(element: Element): SVGBounds | null {
     const tagName = element.tagName.toLowerCase();
+    let bounds: SVGBounds | null = null;
 
     switch (tagName) {
       case 'rect':
-        return this.getRectBounds(element);
+        bounds = this.getRectBounds(element);
+        break;
       case 'circle':
-        return this.getCircleBounds(element);
+        bounds = this.getCircleBounds(element);
+        break;
       case 'ellipse':
-        return this.getEllipseBounds(element);
+        bounds = this.getEllipseBounds(element);
+        break;
       case 'line':
-        return this.getLineBounds(element);
+        bounds = this.getLineBounds(element);
+        break;
       case 'path':
         const d = element.getAttribute('d');
-        return d ? this.parsePathData(d) : null;
+        bounds = d ? this.parsePathData(d, element) : null;
+        break;
       case 'polygon':
       case 'polyline':
-        return this.getPolygonBounds(element);
+        bounds = this.getPolygonBounds(element);
+        break;
       default:
         return null;
     }
+
+    // CRITICAL: Expand bounds by half the stroke width on all sides
+    if (bounds) {
+      const strokeWidth = Number(element.getAttribute('stroke-width') || 0);
+      if (strokeWidth > 0) {
+        const halfStroke = strokeWidth / 2;
+        bounds.xMin -= halfStroke;
+        bounds.yMin -= halfStroke;
+        bounds.xMax += halfStroke;
+        bounds.yMax += halfStroke;
+        bounds.width += strokeWidth;
+        bounds.height += strokeWidth;
+      }
+    }
+
+    return bounds;
   }
 
   /**
    * Parse path data for bounds calculation
+   * CRITICAL: Applies transform matrix to get actual positioned bounds
    */
-  private parsePathData(pathData: string): SVGBounds | null {
+  private parsePathData(pathData: string, element?: Element): SVGBounds | null {
     try {
       // Enhanced path parsing for better bounds detection
       const coords = pathData.match(/([-+]?\d*\.?\d+)/g);
@@ -505,10 +530,26 @@ export class SVGBoundsAnalyzer {
 
       // Process coordinates in pairs to find actual content bounds
       for (let i = 0; i < numbers.length - 1; i += 2) {
-        const x = numbers[i];
-        const y = numbers[i + 1];
+        let x = numbers[i];
+        let y = numbers[i + 1];
         
         if (!isNaN(x) && !isNaN(y)) {
+          // CRITICAL: Apply transform matrix if present
+          if (element) {
+            const transform = element.getAttribute('transform');
+            if (transform) {
+              const matrixMatch = transform.match(/matrix\(([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\)/);
+              if (matrixMatch) {
+                const [, a, b, c, d, e, f] = matrixMatch.map(Number);
+                // Apply matrix transformation: [x', y'] = [a*x + c*y + e, b*x + d*y + f]
+                const transformedX = a * x + c * y + e;
+                const transformedY = b * x + d * y + f;
+                x = transformedX;
+                y = transformedY;
+              }
+            }
+          }
+          
           minX = Math.min(minX, x);
           minY = Math.min(minY, y);
           maxX = Math.max(maxX, x);
