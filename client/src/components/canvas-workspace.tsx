@@ -1583,91 +1583,29 @@ export default function CanvasWorkspace({
                           const templateHalfWidth = template.width / 2;
                           const templateHalfHeight = template.height / 2;
                           
-                          // Get the logo if it exists
-                          const logo = element.logoId ? logos.find(l => l.id === element.logoId) : null;
+                          // Use element dimensions directly (they're already correct for rotated elements)
+                          // The element.x/y position is the center of the element relative to template center
+                          const isRotated = element.rotation === 90 || element.rotation === 270;
+                          const visualWidth = isRotated ? element.height : element.width;
+                          const visualHeight = isRotated ? element.width : element.height;
                           
-                          // Use content bounds if available, otherwise use full element bounds
-                          let visualWidth: number;
-                          let visualHeight: number;
-                          let contentOffsetX = 0;
-                          let contentOffsetY = 0;
-                          
-                          if (logo && hasValidContentBounds(logo)) {
-                            // Use actual content bounds (not viewBox)
-                            const contentBounds = logo.contentBounds;
-                            const isRotated = element.rotation === 90 || element.rotation === 270;
-                            
-                            // Content bounds are in pixels, need to convert to mm
-                            // Use PDF DPI conversion for PDF-derived content
-                            const isPdfDerived = element.width > 200 || element.height > 200;
-                            const mmToPixelRatio = isPdfDerived ? 2.834645669 : (template.pixelWidth / template.width);
-                            
-                            // Convert content bounds from pixels to mm
-                            const contentWidthMm = contentBounds.width / mmToPixelRatio;
-                            const contentHeightMm = contentBounds.height / mmToPixelRatio;
-                            const contentXMinMm = contentBounds.xMin / mmToPixelRatio;
-                            const contentYMinMm = contentBounds.yMin / mmToPixelRatio;
-                            const contentXMaxMm = contentBounds.xMax / mmToPixelRatio;
-                            const contentYMaxMm = contentBounds.yMax / mmToPixelRatio;
-                            
-                            if (isRotated) {
-                              visualWidth = contentHeightMm;
-                              visualHeight = contentWidthMm;
-                            } else {
-                              visualWidth = contentWidthMm;
-                              visualHeight = contentHeightMm;
-                            }
-                            
-                            // Calculate offset from element center to content center (in mm)
-                            // Content bounds are relative to viewBox
-                            const viewBoxWidth = isRotated ? element.height : element.width;
-                            const viewBoxHeight = isRotated ? element.width : element.height;
-                            const contentCenterX = (contentXMinMm + contentXMaxMm) / 2;
-                            const contentCenterY = (contentYMinMm + contentYMaxMm) / 2;
-                            const viewBoxCenterX = viewBoxWidth / 2;
-                            const viewBoxCenterY = viewBoxHeight / 2;
-                            
-                            if (isRotated) {
-                              // When rotated, swap and adjust offsets
-                              contentOffsetX = contentCenterY - viewBoxCenterY;
-                              contentOffsetY = -(contentCenterX - viewBoxCenterX);
-                            } else {
-                              contentOffsetX = contentCenterX - viewBoxCenterX;
-                              contentOffsetY = contentCenterY - viewBoxCenterY;
-                            }
-                          } else if (logo) {
-                            // Content bounds missing - assume content fills entire viewBox
-                            // This ensures position warnings are based on actual element size, not viewBox
-                            console.warn(`⚠️ Content bounds missing for logo ${logo.id}, using element dimensions`);
-                            const isRotated = element.rotation === 90 || element.rotation === 270;
-                            visualWidth = isRotated ? element.height : element.width;
-                            visualHeight = isRotated ? element.width : element.height;
-                          } else {
-                            // Non-logo element (text, shape, etc.)
-                            const isRotated = element.rotation === 90 || element.rotation === 270;
-                            visualWidth = isRotated ? element.height : element.width;
-                            visualHeight = isRotated ? element.width : element.height;
-                          }
-                          
-                          // Calculate content bounds from center position (accounting for content offset)
+                          // Calculate element bounds from center position
                           const elementHalfWidth = visualWidth / 2;
                           const elementHalfHeight = visualHeight / 2;
-                          const contentCenterX = element.x + contentOffsetX;
-                          const contentCenterY = element.y + contentOffsetY;
                           
-                          // Content edges in center-based coordinates
-                          const elementLeft = contentCenterX - elementHalfWidth;
-                          const elementRight = contentCenterX + elementHalfWidth;
-                          const elementTop = contentCenterY - elementHalfHeight;
-                          const elementBottom = contentCenterY + elementHalfHeight;
+                          // Element edges in center-based coordinates (mm)
+                          const elementLeft = element.x - elementHalfWidth;
+                          const elementRight = element.x + elementHalfWidth;
+                          const elementTop = element.y - elementHalfHeight;
+                          const elementBottom = element.y + elementHalfHeight;
                           
-                          // Safety margins in center-based coordinates
+                          // Safety margins in center-based coordinates (mm)
                           const marginLeft = -templateHalfWidth + marginInMm;
                           const marginRight = templateHalfWidth - marginInMm;
                           const marginTop = -templateHalfHeight + marginInMm;
                           const marginBottom = templateHalfHeight - marginInMm;
                           
-                          // Check if content is outside safety margins
+                          // Check if element edges are outside safety margins
                           const outsideLeft = elementLeft < marginLeft;
                           const outsideTop = elementTop < marginTop;
                           const outsideRight = elementRight > marginRight;
