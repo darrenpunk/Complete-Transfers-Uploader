@@ -425,16 +425,9 @@ export class SVGBoundsAnalyzer {
           return; // Skip this element - it's a definition, not visible content
         }
         
-        // CRITICAL: Skip gradient-filled backgrounds (they're decorative, not content)
-        const fill = element.getAttribute('fill');
-        const stroke = element.getAttribute('stroke');
-        const strokeWidth = element.getAttribute('stroke-width');
-        
-        // Skip elements that ONLY have gradient fills with no stroke
-        if (fill && fill.startsWith('url(#') && !stroke && !strokeWidth) {
-          console.log(`⏭️ Skipping gradient background: fill=${fill}`);
-          return;
-        }
+        // NOTE: We used to skip gradient-filled elements, but this was too aggressive
+        // Gradients can be legitimate logo content (e.g., FREEUDENBURG logo), not just backgrounds
+        // The bounds clamping to page dimensions handles any overflow issues
         
         const bounds = this.getElementBounds(element);
         if (bounds) {
