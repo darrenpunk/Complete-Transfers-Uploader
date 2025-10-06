@@ -2480,8 +2480,8 @@ export async function registerRoutes(app: express.Application) {
                 // For properly sized artwork, keep original to avoid clipping
                 const usingPdfContentBounds = boundsResult.method === 'pdf-content-bounds';
                 // pxToMm is already declared above
-                const contentWidthMm = boundsResult.contentBounds.width * pxToMm;
-                const contentHeightMm = boundsResult.contentBounds.height * pxToMm;
+                let contentWidthMm = boundsResult.contentBounds.width * pxToMm;
+                let contentHeightMm = boundsResult.contentBounds.height * pxToMm;
                 
                 // Get original SVG dimensions to compare with content bounds
                 const { detectDimensionsFromSVG } = await import('./dimension-utils');
