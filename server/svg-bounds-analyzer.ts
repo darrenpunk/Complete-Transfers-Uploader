@@ -421,13 +421,17 @@ export class SVGBoundsAnalyzer {
           parent = parent.parentElement;
         }
         
-        if (isInsideDefinition) {
-          return; // Skip this element - it's a definition, not visible content
+        // ARCHITECT FIX: Include elements that REFERENCE clip-paths (they're visible), only skip definitions
+        const hasClipPathReference = element.getAttribute('clip-path');
+        
+        if (isInsideDefinition && !hasClipPathReference) {
+          return; // Skip this element - it's a definition and doesn't reference a clip-path
         }
         
-        // NOTE: We used to skip gradient-filled elements, but this was too aggressive
-        // Gradients can be legitimate logo content (e.g., FREEUDENBURG logo), not just backgrounds
-        // The bounds clamping to page dimensions handles any overflow issues
+        // If element references a clip-path, it's visible content even if inside a definition
+        if (hasClipPathReference && isInsideDefinition) {
+          console.log(`✅ Including clip-path referenced element: ${element.tagName} (${hasClipPathReference})`);
+        }
         
         const bounds = this.getElementBounds(element);
         if (bounds) {

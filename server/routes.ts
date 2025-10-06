@@ -2769,6 +2769,11 @@ export async function registerRoutes(app: express.Application) {
                     
                     // Replace the original bounds with normalized bounds for correct frontend rendering
                     contentBounds = normalizedContentBounds;
+                    
+                    // ARCHITECT FIX: Recalculate dimensions from NORMALIZED bounds, not original bounds
+                    contentWidthMm = contentBounds.width * pxToMm;
+                    contentHeightMm = contentBounds.height * pxToMm;
+                    console.log(`📐 RECALCULATED DIMENSIONS FROM NORMALIZED BOUNDS: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
                   }
                 } else if (usingPdfContentBounds) {
                   // We have exact PDF content bounds, use them directly
