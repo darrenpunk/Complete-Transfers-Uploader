@@ -1531,13 +1531,8 @@ export default function CanvasWorkspace({
               <div className="absolute inset-0 pointer-events-none">
                 {/* Calculate 3mm margin in pixels */}
                 {(() => {
-                  let mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
-                  
-                  // Check if we have any PDF-derived elements and use their ratio for margin consistency
-                  const hasPdfElements = canvasElements.some(el => el.width > 200 || el.height > 200);
-                  if (hasPdfElements) {
-                    mmToPixelRatio = 2.834645669; // 72 DPI conversion for consistency
-                  }
+                  // Always use template's actual pixel ratio for consistent margins across all templates
+                  const mmToPixelRatio = template.pixelWidth / template.width; // pixels per mm
                   
                   const marginInPixels = 3 * mmToPixelRatio * (zoom / 100); // 3mm margin
                   
