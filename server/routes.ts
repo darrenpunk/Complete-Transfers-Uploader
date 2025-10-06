@@ -2637,9 +2637,21 @@ export async function registerRoutes(app: express.Application) {
                 const originalWidthDiff = Math.abs(originalWidthMm - originalContentWidthMm);
                 const originalHeightDiff = Math.abs(originalHeightMm - originalContentHeightMm);
                 
+                // CRITICAL FIX: For standard artboard sizes, use artboard dimensions even if content extends beyond
+                // Decorative backgrounds often inflate bounds beyond the actual artwork
+                const isStandardCutSize = (
+                  (Math.abs(originalWidthMm - 295) < 1 && Math.abs(originalHeightMm - 100) < 1) || // 295×100mm
+                  (Math.abs(originalWidthMm - 100) < 1 && Math.abs(originalHeightMm - 100) < 1) || // 100×100mm
+                  (Math.abs(originalWidthMm - 150) < 1 && Math.abs(originalHeightMm - 150) < 1) || // 150×150mm
+                  (Math.abs(originalWidthMm - 200) < 1 && Math.abs(originalHeightMm - 200) < 1)    // 200×200mm
+                );
+                
+                // For standard sizes, use artboard dimensions (decorative elements are extending beyond)
+                const shouldUseArtboard = isStandardCutSize && originalWidthDiff < 100 && originalHeightDiff < 50;
+                
                 // Enable tight crop when ORIGINAL content bounds differ significantly from viewBox
                 // This gives us tight bounds for all uploaded files (PDFs, SVGs from any application)
-                const needsTightCrop = originalWidthDiff > 5 || originalHeightDiff > 5; // Use tight bounds when diff > 5mm
+                const needsTightCrop = !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5); // Use tight bounds when diff > 5mm
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
