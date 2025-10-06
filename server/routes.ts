@@ -2707,9 +2707,10 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // CRITICAL: Use ORIGINAL bounds (not clamped) for tight crop
-                    // Clamping was only to prevent coordinate overflow, not to affect the actual crop
-                    const boundsForCrop = originalContentBounds;
+                    // CRITICAL FIX: Use FINAL contentBounds (after clipping path analysis and merging)
+                    // Don't use originalContentBounds which was captured before analysis
+                    const boundsForCrop = contentBounds;
+                    console.log(`🎯 USING FINAL CONTENT BOUNDS FOR TIGHT CROP: ${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}px (after all analysis)`);
                     
                     // Add minimal overflow for proper centering and glyph protection
                     // Reduce padding to get tighter content bounds
