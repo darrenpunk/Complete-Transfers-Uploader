@@ -409,7 +409,7 @@ export class SVGBoundsAnalyzer {
       const elements = svgElement.querySelectorAll(selector);
       
       elements.forEach(element => {
-        // CRITICAL FIX: Skip elements inside <clipPath>, <defs>, or <mask> - they're definitions, not visible content
+        // CRITICAL: Skip elements inside <clipPath>, <defs>, or <mask> - they're definitions, not visible content
         let parent = element.parentElement;
         let isInsideDefinition = false;
         while (parent) {
@@ -421,16 +421,16 @@ export class SVGBoundsAnalyzer {
           parent = parent.parentElement;
         }
         
-        // ARCHITECT FIX: Include elements that REFERENCE clip-paths (they're visible), only skip definitions
-        const hasClipPathReference = element.getAttribute('clip-path');
-        
-        if (isInsideDefinition && !hasClipPathReference) {
-          return; // Skip this element - it's a definition and doesn't reference a clip-path
+        if (isInsideDefinition) {
+          return; // Skip - this is a definition, not visible content
         }
         
-        // If element references a clip-path, it's visible content even if inside a definition
-        if (hasClipPathReference && isInsideDefinition) {
-          console.log(`✅ Including clip-path referenced element: ${element.tagName} (${hasClipPathReference})`);
+        // CRITICAL USER REQUIREMENT: Skip elements that are BEING CLIPPED (have clip-path attribute)
+        // These elements are masked/hidden - only the clipping path shape itself should be included
+        const hasClipPathReference = element.getAttribute('clip-path') || element.getAttribute('style')?.includes('clip-path');
+        
+        if (hasClipPathReference) {
+          return; // Skip - this element is being clipped/masked, so it's not fully visible
         }
         
         const bounds = this.getElementBounds(element);
