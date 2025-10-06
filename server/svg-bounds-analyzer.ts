@@ -338,6 +338,7 @@ export class SVGBoundsAnalyzer {
 
   /**
    * Analyze all geometric elements for bounds
+   * INCLUDES ALL VECTOR DATA: visible elements AND clipping paths
    */
   private analyzeGeometryBounds(svgElement: Element): SVGBounds | null {
     const geometrySelectors = [
@@ -347,7 +348,10 @@ export class SVGBoundsAnalyzer {
     let minX = Infinity, minY = Infinity;
     let maxX = -Infinity, maxY = -Infinity;
     let hasContent = false;
+    let visibleElements = 0;
+    let clippingElements = 0;
 
+    // Extract bounds from ALL visible geometry
     geometrySelectors.forEach(selector => {
       const elements = svgElement.querySelectorAll(selector);
       
@@ -359,9 +363,35 @@ export class SVGBoundsAnalyzer {
           maxX = Math.max(maxX, bounds.xMax);
           maxY = Math.max(maxY, bounds.yMax);
           hasContent = true;
+          visibleElements++;
         }
       });
     });
+
+    // CRITICAL: Also extract bounds from ALL clipping path vectors
+    // Clipping paths define the artwork boundaries even if not painted
+    const clipPaths = svgElement.querySelectorAll('clipPath');
+    clipPaths.forEach(clipPath => {
+      geometrySelectors.forEach(selector => {
+        const elements = clipPath.querySelectorAll(selector);
+        
+        elements.forEach(element => {
+          const bounds = this.getElementBounds(element);
+          if (bounds) {
+            minX = Math.min(minX, bounds.xMin);
+            minY = Math.min(minY, bounds.yMin);
+            maxX = Math.max(maxX, bounds.xMax);
+            maxY = Math.max(maxY, bounds.yMax);
+            hasContent = true;
+            clippingElements++;
+          }
+        });
+      });
+    });
+
+    if (hasContent) {
+      console.log(`📐 ALL VECTOR GEOMETRY DETECTED: ${visibleElements} visible + ${clippingElements} clipping elements`);
+    }
 
     if (!hasContent) return null;
 
