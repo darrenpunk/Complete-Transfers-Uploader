@@ -74,6 +74,25 @@ export default function SvgInlineRenderer({
           // Only remove XML declaration and DOCTYPE
           simpleSvg = simpleSvg.replace(/<\?xml[^?]*\?>/g, '');
           simpleSvg = simpleSvg.replace(/<!DOCTYPE[^>]*>/g, '');
+          
+          // CRITICAL FIX: Remove width/height from root <svg> to allow proper scaling with gradients/clipping masks
+          // Fixed dimensions break gradient references when SVG is scaled to fit container
+          simpleSvg = simpleSvg.replace(
+            /(<svg[^>]*?)(\s+width\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3'
+          );
+          simpleSvg = simpleSvg.replace(
+            /(<svg[^>]*?)(\s+height\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3'
+          );
+          
+          // Ensure preserveAspectRatio for consistent scaling with gradients
+          if (simpleSvg.includes('preserveAspectRatio')) {
+            simpleSvg = simpleSvg.replace(/preserveAspectRatio\s*=\s*["'][^"']*["']/gi, 'preserveAspectRatio="xMidYMid meet"');
+          } else {
+            simpleSvg = simpleSvg.replace(/<svg([^>]*)>/, '<svg$1 preserveAspectRatio="xMidYMid meet">');
+          }
+          
           setSvgContent(simpleSvg);
           setIsLoading(false);
           return;
