@@ -134,44 +134,21 @@ export default function UploadTool() {
         throw new Error('Please provide a project name before generating PDF');
       }
       
+      // Open PDF in new window - bypasses iframe download restrictions
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to generate PDF');
-      const blob = await response.blob();
-      
-      // Create filename with quantity
       const filename = `${name}_qty${quantity}_cmyk.pdf`;
-      return { blob, filename };
+      
+      console.log('🔽 Opening PDF in new window:', filename);
+      window.open(url, '_blank');
+      
+      return { filename };
     },
-    onSuccess: ({ blob, filename }) => {
-      console.log('✅ PDF Generation Success! Blob size:', blob.size, 'bytes, Filename:', filename);
-      
-      // Create download link with proper timing for browser compatibility
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      
-      console.log('🔽 Triggering download for:', filename);
-      
-      // Trigger download with a small delay to ensure browser processes it
-      setTimeout(() => {
-        a.click();
-        console.log('✅ Download clicked');
-        
-        // Clean up after download starts
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          console.log('✅ Cleanup complete');
-        }, 100);
-      }, 0);
+    onSuccess: ({ filename }) => {
+      console.log('✅ PDF download initiated:', filename);
       
       toast({
         title: "CMYK PDF Generated",
-        description: "Professional CMYK PDF downloaded with preserved vector graphics",
+        description: "PDF opened in new tab. Save it to download.",
       });
     },
     onError: (error) => {
