@@ -471,6 +471,18 @@ export class SVGBoundsAnalyzer {
    */
   private getElementBounds(element: Element): SVGBounds | null {
     const tagName = element.tagName.toLowerCase();
+    
+    // CRITICAL: Exclude gradient-only fill paths (backgrounds/masks, not artwork)
+    const fill = element.getAttribute('fill') || '';
+    const stroke = element.getAttribute('stroke') || 'none';
+    const style = element.getAttribute('style') || '';
+    
+    // Skip elements with ONLY gradient fills and no stroke (decorative backgrounds)
+    if (fill.startsWith('url(#') && (stroke === 'none' || !stroke) && !style.includes('stroke:')) {
+      console.log(`⏭️  Skipping gradient-only element: fill="${fill}" (background, not artwork)`);
+      return null;
+    }
+    
     let bounds: SVGBounds | null = null;
 
     switch (tagName) {
