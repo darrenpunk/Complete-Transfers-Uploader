@@ -2602,6 +2602,9 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 PDF PAGE DIMENSIONS: ${viewBoxWidthPx.toFixed(1)}×${viewBoxHeightPx.toFixed(1)}px (${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm)`);
                 console.log(`📐 RAW CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px BEFORE clamping`);
                 
+                // CRITICAL FIX: Save ORIGINAL bounds BEFORE clamping for tight crop decision
+                const originalContentBounds = { ...contentBounds };
+                
                 // Clamp bounds to page dimensions - content cannot exceed the artboard
                 const clampedXMax = Math.min(contentBounds.xMax, viewBoxWidthPx);
                 const clampedYMax = Math.min(contentBounds.yMax, viewBoxHeightPx);
@@ -2630,15 +2633,16 @@ export async function registerRoutes(app: express.Application) {
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
                 const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
                 
-                // Recalculate diff after clamping
-                const clampedContentWidthMm = (contentBounds.width * pxToMm);
-                const clampedContentHeightMm = (contentBounds.height * pxToMm);
-                const clampedWidthDiff = Math.abs(originalWidthMm - clampedContentWidthMm);
-                const clampedHeightDiff = Math.abs(originalHeightMm - clampedContentHeightMm);
+                // CRITICAL FIX: Use ORIGINAL bounds (before clamping) to decide if tight crop is needed
+                // Clamping artificially makes bounds match page size, hiding the need for tight crop
+                const originalContentWidthMm = (originalContentBounds.width * pxToMm);
+                const originalContentHeightMm = (originalContentBounds.height * pxToMm);
+                const originalWidthDiff = Math.abs(originalWidthMm - originalContentWidthMm);
+                const originalHeightDiff = Math.abs(originalHeightMm - originalContentHeightMm);
                 
-                // Enable tight crop when content bounds differ significantly from viewBox
+                // Enable tight crop when ORIGINAL content bounds differ significantly from viewBox
                 // This gives us tight bounds for all uploaded files (PDFs, SVGs from any application)
-                const needsTightCrop = clampedWidthDiff > 5 || clampedHeightDiff > 5; // Use tight bounds when diff > 5mm
+                const needsTightCrop = originalWidthDiff > 5 || originalHeightDiff > 5; // Use tight bounds when diff > 5mm
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
@@ -2648,9 +2652,9 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 if (needsTightCrop) {
-                  console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
+                  console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${originalContentWidthMm.toFixed(1)}×${originalContentHeightMm.toFixed(1)}mm (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 } else {
-                  console.log(`✅ CONTENT MATCHES VIEWBOX: No tight crop needed (diff: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}mm)`);
+                  console.log(`✅ CONTENT MATCHES VIEWBOX: No tight crop needed (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 }
                 
                 if (needsTightCrop) {
@@ -2703,12 +2707,16 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
+                    // CRITICAL: Use ORIGINAL bounds (not clamped) for tight crop
+                    // Clamping was only to prevent coordinate overflow, not to affect the actual crop
+                    const boundsForCrop = originalContentBounds;
+                    
                     // Add minimal overflow for proper centering and glyph protection
                     // Reduce padding to get tighter content bounds
                     const horizontalOverflow = 4;   // Minimal padding left/right
                     const verticalOverflow = 4;     // Minimal padding top/bottom
-                    const expandedWidth = contentBounds.width + horizontalOverflow;
-                    const expandedHeight = contentBounds.height + verticalOverflow;
+                    const expandedWidth = boundsForCrop.width + horizontalOverflow;
+                    const expandedHeight = boundsForCrop.height + verticalOverflow;
                     
                     // Center both horizontally and vertically
                     // Equal offset on all sides ensures proper centering
@@ -2717,11 +2725,11 @@ export async function registerRoutes(app: express.Application) {
                     
                     // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
                     console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
-                    console.log(`📐 Original content bounds: (${contentBounds.xMin}, ${contentBounds.yMin}) to (${contentBounds.xMax}, ${contentBounds.yMax})`);
+                    console.log(`📐 Original content bounds: (${boundsForCrop.xMin}, ${boundsForCrop.yMin}) to (${boundsForCrop.xMax}, ${boundsForCrop.yMax})`);
                     
                     // Calculate the translation needed to move content to (0, 0) origin
-                    const translateX = -(contentBounds.xMin - xOffset);
-                    const translateY = -(contentBounds.yMin - yOffset);
+                    const translateX = -(boundsForCrop.xMin - xOffset);
+                    const translateY = -(boundsForCrop.yMin - yOffset);
                     
                     console.log(`🔄 Translation: (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to normalize content position`);
                     
@@ -2732,7 +2740,7 @@ export async function registerRoutes(app: express.Application) {
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
                       data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
-                      data-original-bounds="${contentBounds.xMin},${contentBounds.yMin},${contentBounds.xMax},${contentBounds.yMax}">
+                      data-original-bounds="${boundsForCrop.xMin},${boundsForCrop.yMin},${boundsForCrop.xMax},${boundsForCrop.yMax}">
                         <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
                         </g>
@@ -2757,11 +2765,11 @@ export async function registerRoutes(app: express.Application) {
                     const normalizedContentBounds = {
                       xMin: xOffset,
                       yMin: yOffset,
-                      xMax: xOffset + (contentBounds?.width || 0),
-                      yMax: yOffset + (contentBounds?.height || 0),
-                      width: contentBounds?.width || 0,
-                      height: contentBounds?.height || 0,
-                      units: (contentBounds?.units || 'px') as 'px' | 'mm' | 'pt'
+                      xMax: xOffset + (boundsForCrop?.width || 0),
+                      yMax: yOffset + (boundsForCrop?.height || 0),
+                      width: boundsForCrop?.width || 0,
+                      height: boundsForCrop?.height || 0,
+                      units: (boundsForCrop?.units || 'px') as 'px' | 'mm' | 'pt'
                     };
                     
                     console.log(`🎯 NORMALIZED CONTENT BOUNDS: (${normalizedContentBounds.xMin}, ${normalizedContentBounds.yMin}) to (${normalizedContentBounds.xMax}, ${normalizedContentBounds.yMax})`);
