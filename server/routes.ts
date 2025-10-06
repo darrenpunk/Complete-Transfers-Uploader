@@ -2556,25 +2556,31 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`🎯 ALL CLIPPING PATH VECTORS COMBINED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
                     
-                    // If clipping path vectors extend beyond painted content, use clip bounds
-                    // This detects the true content extent including masked areas
-                    if (clipWidth > contentBounds.width + 5 || clipHeight > contentBounds.height + 5) {
-                      const widthExpansion = clipWidth - contentBounds.width;
-                      const heightExpansion = clipHeight - contentBounds.height;
-                      console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED CONTENT: +${widthExpansion.toFixed(1)}pts width, +${heightExpansion.toFixed(1)}pts height`);
-                      
-                      contentBounds = {
-                        xMin: globalMinX,
-                        yMin: globalMinY,
-                        xMax: globalMaxX,
-                        yMax: globalMaxY,
-                        width: clipWidth,
-                        height: clipHeight
-                      };
-                      boundsResult.contentBounds = contentBounds;
-                    } else {
-                      console.log(`✅ PAINTED CONTENT MATCHES CLIPPING VECTORS: No expansion needed`);
+                    // CRITICAL FIX: ALWAYS use clipping path bounds as the true content extent
+                    // Clipping paths define what's actually visible - everything else is masked
+                    const widthDiff = clipWidth - contentBounds.width;
+                    const heightDiff = clipHeight - contentBounds.height;
+                    
+                    if (Math.abs(widthDiff) > 5 || Math.abs(heightDiff) > 5) {
+                      if (clipWidth > contentBounds.width || clipHeight > contentBounds.height) {
+                        console.log(`✅ CLIPPING VECTORS EXTEND BEYOND PAINTED: +${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}pts (using clip bounds)`);
+                      } else {
+                        console.log(`✅ CLIPPING VECTORS SMALLER THAN PAINTED: ${widthDiff.toFixed(1)}×${heightDiff.toFixed(1)}pts (using tight clip bounds)`);
+                      }
                     }
+                    
+                    // Always use clipping path bounds as the true content
+                    contentBounds = {
+                      xMin: globalMinX,
+                      yMin: globalMinY,
+                      xMax: globalMaxX,
+                      yMax: globalMaxY,
+                      width: clipWidth,
+                      height: clipHeight,
+                      units: contentBounds.units || 'px'
+                    };
+                    boundsResult.contentBounds = contentBounds;
+                    console.log(`🎯 USING CLIPPING PATH BOUNDS AS TRUE CONTENT: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
                   } else {
                     console.log(`⚠️ Could not extract clipping path geometry`);
                   }
