@@ -107,27 +107,29 @@ export class SVGBoundsAnalyzer {
       // Method 3: Analyze all geometric elements
       const geometryResult = this.analyzeGeometryBounds(svgElement);
 
-      // Choose the most accurate result
-      // For AI-vectorized content, always calculate actual content bounds, not viewBox
+      // CRITICAL: ALWAYS calculate actual painted content bounds, NEVER use viewBox as fallback
+      // This ensures tight bounds work for all applications (Illustrator, CorelDRAW, Inkscape, etc.)
       const isAIVectorized = svgContent.includes('data-ai-vectorized="true"');
-      console.log(`🔍 DEBUG: isAIVectorized=${isAIVectorized}, SVG content preview: ${svgContent.substring(0, 200)}...`);
+      console.log(`🔍 BOUNDS DETECTION: isAIVectorized=${isAIVectorized}`);
       let contentBounds;
       
       if (isAIVectorized) {
-        // For AI-vectorized content, calculate actual content bounds excluding background paths
-        console.log(`🎯 AI-VECTORIZED CONTENT DETECTED: Calculating actual content bounds`);
-        
-        // Try content-focused bounds analysis that excludes large background paths
+        // For AI-vectorized content, use content-focused bounds that excludes large background paths
+        console.log(`🎯 AI-VECTORIZED CONTENT: Calculating content-focused bounds`);
         const contentFocusedBounds = this.calculateContentFocusedBounds(svgElement);
         contentBounds = contentFocusedBounds || pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
+      } else {
+        // For ALL other SVGs: Calculate actual painted content bounds
+        // Try multiple methods, NEVER fall back to viewBox
+        console.log(`🎯 CALCULATING PAINTED CONTENT BOUNDS (all apps supported)`);
+        contentBounds = pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
         
         if (contentBounds) {
-          console.log(`📐 AI-VECTORIZED CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (actual content size)`);
-          console.log(`📍 AI-VECTORIZED POSITION: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
+          console.log(`✅ TIGHT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (actual painted content)`);
+          console.log(`📍 POSITION: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
+        } else {
+          console.log(`⚠️ Could not calculate content bounds - no drawable elements found`);
         }
-      } else {
-        // For normal SVGs, prioritize path and geometry calculations over viewBox
-        contentBounds = pathResult || geometryResult || viewBoxResult;
       }
       
       if (contentBounds) {

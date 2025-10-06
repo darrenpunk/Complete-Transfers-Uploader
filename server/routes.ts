@@ -2656,12 +2656,14 @@ export async function registerRoutes(app: express.Application) {
   widthDiff: ${widthDiff}mm
   heightDiff: ${heightDiff}mm`);
                 
-                // CRITICAL: Do NOT create tight content for SVGs with overflow
-                // SVG viewport will naturally render all content, even outside viewBox bounds
-                // Creating tight content changes the coordinate system and breaks positioning
+                // CRITICAL: For uploaded files, ALWAYS use tight bounds based on actual content
+                // This ensures the element size matches the actual artwork, not the page/viewBox
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
                 const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
-                const needsTightCrop = false; // DISABLED: Let browser render all content naturally
+                
+                // Enable tight crop when content bounds differ significantly from viewBox
+                // This gives us tight bounds for all uploaded files (PDFs, SVGs from any application)
+                const needsTightCrop = widthDiff > 5 || heightDiff > 5; // Use tight bounds when diff > 5mm
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
