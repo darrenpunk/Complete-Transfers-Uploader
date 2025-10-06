@@ -380,9 +380,40 @@ export default function UploadTool() {
     }
   };
 
-  const handleInkColorChange = (color: string) => {
+  const handleInkColorChange = async (color: string) => {
     if (currentProject) {
+      // Update project ink color
       updateProjectMutation.mutate({ inkColor: color });
+      
+      // Update all canvas elements with color overrides for single-color templates
+      if (canvasElements && canvasElements.length > 0) {
+        for (const element of canvasElements) {
+          // Find the logo for this element
+          const logo = logos?.find(l => l.id === element.logoId);
+          if (logo && logo.svgColors) {
+            // Create color overrides mapping original colors to new ink color
+            const colorOverrides: Record<string, string> = {};
+            const svgColors = logo.svgColors as any[];
+            
+            // Map all detected colors to the new ink color
+            for (const colorInfo of svgColors) {
+              if (colorInfo.color) {
+                colorOverrides[colorInfo.color] = color;
+              }
+            }
+            
+            // Update the element with color overrides
+            if (Object.keys(colorOverrides).length > 0) {
+              await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
+                colorOverrides
+              });
+            }
+          }
+        }
+        
+        // Invalidate queries to trigger re-render
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "canvas-elements"] });
+      }
     }
   };
 
