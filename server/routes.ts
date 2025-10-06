@@ -2721,17 +2721,15 @@ export async function registerRoutes(app: express.Application) {
                     const boundsForCrop = unclampedContentBounds;
                     console.log(`🎯 USING UNCLAMPED CONTENT BOUNDS FOR TIGHT CROP: ${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}px (unclamped, with clipping)`);
                     
-                    // Add minimal overflow for proper centering and glyph protection
-                    // Reduce padding to get tighter content bounds
-                    const horizontalOverflow = 4;   // Minimal padding left/right
-                    const verticalOverflow = 4;     // Minimal padding top/bottom
-                    const expandedWidth = boundsForCrop.width + horizontalOverflow;
-                    const expandedHeight = boundsForCrop.height + verticalOverflow;
+                    // CRITICAL FIX: Add equal padding on ALL sides to properly center content
+                    // This fixes asymmetric PDFs where content is off-center (e.g., 226pt top margin vs 8pt bottom)
+                    const padding = 10;  // Equal padding on all sides for perfect centering
+                    const expandedWidth = boundsForCrop.width + (padding * 2);
+                    const expandedHeight = boundsForCrop.height + (padding * 2);
                     
-                    // Center both horizontally and vertically
-                    // Equal offset on all sides ensures proper centering
-                    const xOffset = horizontalOverflow / 2;
-                    const yOffset = verticalOverflow / 2;  // Center vertically as well
+                    // Center both horizontally and vertically with equal padding
+                    const xOffset = padding;
+                    const yOffset = padding;
                     
                     // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
                     console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
@@ -2749,7 +2747,7 @@ export async function registerRoutes(app: express.Application) {
                       viewBox="0 0 ${expandedWidth} ${expandedHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
-                      data-overflow="horizontal:${horizontalOverflow},vertical:${verticalOverflow}"
+                      data-padding="${padding}"
                       data-original-bounds="${boundsForCrop.xMin},${boundsForCrop.yMin},${boundsForCrop.xMax},${boundsForCrop.yMax}">
                         <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
