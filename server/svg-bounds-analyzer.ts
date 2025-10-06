@@ -112,28 +112,24 @@ export class SVGBoundsAnalyzer {
       const geometryResult = this.analyzeGeometryBounds(svgElement);
 
       // CRITICAL: ALWAYS calculate actual vector bounds, NEVER use viewBox as fallback
-      // Priority: Clipping paths > All geometry > Path data
+      // Priority: All visible geometry (includes transforms and strokes)
       const isAIVectorized = svgContent.includes('data-ai-vectorized="true"');
       console.log(`🔍 BOUNDS DETECTION: isAIVectorized=${isAIVectorized}, hasClipPaths=${!!clipPathBounds}`);
       let contentBounds;
       
-      if (clipPathBounds) {
-        // PRIORITY: If clipping paths exist, use ONLY their boundaries (not the clipped content)
-        console.log(`🎯 USING CLIPPING PATH BOUNDARIES: These define the visible artwork extent`);
-        contentBounds = clipPathBounds;
-      } else if (isAIVectorized) {
+      if (isAIVectorized) {
         // For AI-vectorized content, use content-focused bounds that excludes large background paths
         console.log(`🎯 AI-VECTORIZED CONTENT: Calculating content-focused bounds`);
         const contentFocusedBounds = this.calculateContentFocusedBounds(svgElement);
         contentBounds = contentFocusedBounds || pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
       } else {
-        // For ALL other SVGs: Calculate from all geometry
-        console.log(`🎯 CALCULATING VECTOR CONTENT BOUNDS (all vector geometry)`);
+        // For ALL other SVGs: Use all visible geometry (includes transforms, strokes, all visible elements)
+        console.log(`🎯 USING ALL VISIBLE GEOMETRY: Including transformed elements and strokes`);
         contentBounds = geometryResult || pathResult || this.calculateVisibleContentBounds(svgElement);
         
         if (contentBounds) {
-          console.log(`✅ TIGHT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (all vector content)`);
-          console.log(`📍 POSITION: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
+          console.log(`✅ DETECTED ALL VECTOR CONTENT: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px`);
+          console.log(`📍 BOUNDS: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
         } else {
           console.log(`⚠️ Could not calculate content bounds - no drawable elements found`);
         }
