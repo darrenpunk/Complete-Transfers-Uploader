@@ -2554,33 +2554,24 @@ export async function registerRoutes(app: express.Application) {
                     const clipWidth = globalMaxX - globalMinX;
                     const clipHeight = globalMaxY - globalMinY;
                     
-                    console.log(`🎯 CLIPPING PATH GEOMETRY: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                    console.log(`📐 VISIBLE VECTOR GEOMETRY: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                    console.log(`🎯 CLIPPING PATH DEFINES VISIBLE REGION: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                    console.log(`📐 RAW VECTOR GEOMETRY (before clipping): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                     
-                    // CRITICAL: User requirement - calculate bounds from:
-                    // 1. ALL visible vector geometry (not clipped)
-                    // 2. PLUS clipping path shapes themselves (as geometry)
-                    // 3. Geometry INSIDE clipping masks is excluded (it's hidden)
+                    // CRITICAL USER REQUIREMENT:
+                    // Clipping paths define the VIEWPORT - use ONLY the clipping path bounds
+                    // Any geometry outside the clipping region is masked/hidden
+                    // User confirmed: "all elements are within their sizes" - so use clip bounds as-is
                     
-                    // Combine clipping path bounds with visible geometry bounds
-                    const combinedMinX = Math.min(contentBounds.xMin, globalMinX);
-                    const combinedMinY = Math.min(contentBounds.yMin, globalMinY);
-                    const combinedMaxX = Math.max(contentBounds.xMax, globalMaxX);
-                    const combinedMaxY = Math.max(contentBounds.yMax, globalMaxY);
+                    console.log(`✅ USING CLIPPING PATH BOUNDS AS ARTWORK BOUNDS (geometry outside is masked)`);
                     
-                    const combinedWidth = combinedMaxX - combinedMinX;
-                    const combinedHeight = combinedMaxY - combinedMinY;
-                    
-                    console.log(`✅ COMBINED BOUNDS (visible geometry + clipping paths): ${combinedWidth.toFixed(1)}×${combinedHeight.toFixed(1)}pts`);
-                    
-                    // Use combined bounds (clipping paths as geometry + visible content)
+                    // Use ONLY clipping path bounds - this is the visible artwork region
                     contentBounds = {
-                      xMin: combinedMinX,
-                      yMin: combinedMinY,
-                      xMax: combinedMaxX,
-                      yMax: combinedMaxY,
-                      width: combinedWidth,
-                      height: combinedHeight,
+                      xMin: globalMinX,
+                      yMin: globalMinY,
+                      xMax: globalMaxX,
+                      yMax: globalMaxY,
+                      width: clipWidth,
+                      height: clipHeight,
                       units: contentBounds.units || 'px'
                     };
                     boundsResult.contentBounds = contentBounds;
