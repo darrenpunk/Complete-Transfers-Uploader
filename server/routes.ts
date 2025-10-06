@@ -2554,29 +2554,14 @@ export async function registerRoutes(app: express.Application) {
                     const clipWidth = globalMaxX - globalMinX;
                     const clipHeight = globalMaxY - globalMinY;
                     
-                    console.log(`🎯 CLIPPING PATH DEFINES VISIBLE REGION: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                    console.log(`📐 RAW VECTOR GEOMETRY (before clipping): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                    console.log(`📊 CLIPPING PATHS DETECTED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts (likely gradient masks)`);
+                    console.log(`📐 VISIBLE VECTOR GEOMETRY: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                     
-                    // CRITICAL USER REQUIREMENT:
-                    // Clipping paths define the VIEWPORT - use ONLY the clipping path bounds
-                    // Any geometry outside the clipping region is masked/hidden
-                    // User confirmed: "all elements are within their sizes" - so use clip bounds as-is
-                    
-                    console.log(`✅ USING CLIPPING PATH BOUNDS AS ARTWORK BOUNDS (geometry outside is masked)`);
-                    
-                    // Use ONLY clipping path bounds - this is the visible artwork region
-                    contentBounds = {
-                      xMin: globalMinX,
-                      yMin: globalMinY,
-                      xMax: globalMaxX,
-                      yMax: globalMaxY,
-                      width: clipWidth,
-                      height: clipHeight,
-                      units: contentBounds.units || 'px'
-                    };
-                    boundsResult.contentBounds = contentBounds;
+                    // CRITICAL: User confirmed clipping paths are gradient masks, NOT artwork bounds
+                    // Use ONLY visible geometry bounds (with stroke expansion disabled)
+                    console.log(`✅ IGNORING CLIPPING PATHS - Using only visible vector geometry for bounds`);
                   } else {
-                    console.log(`⚠️ No clipping paths detected, using visible geometry only`);
+                    console.log(`📊 No clipping paths detected - using visible geometry bounds`);
                   }
                 } else {
                   console.log(`ℹ️ No clipping paths found in SVG`);

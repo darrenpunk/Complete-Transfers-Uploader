@@ -498,19 +498,10 @@ export class SVGBoundsAnalyzer {
         return null;
     }
 
-    // CRITICAL: Expand bounds by half the stroke width on all sides
-    if (bounds) {
-      const strokeWidth = Number(element.getAttribute('stroke-width') || 0);
-      if (strokeWidth > 0) {
-        const halfStroke = strokeWidth / 2;
-        bounds.xMin -= halfStroke;
-        bounds.yMin -= halfStroke;
-        bounds.xMax += halfStroke;
-        bounds.yMax += halfStroke;
-        bounds.width += strokeWidth;
-        bounds.height += strokeWidth;
-      }
-    }
+    // CRITICAL FIX: DO NOT expand bounds by stroke width
+    // User confirmed bounds are too large (65mm vs 38mm height)
+    // Stroke expansion was causing oversized detection
+    // The path geometry itself should define the visible bounds
 
     return bounds;
   }
