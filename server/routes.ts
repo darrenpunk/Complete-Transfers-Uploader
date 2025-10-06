@@ -2360,6 +2360,9 @@ export async function registerRoutes(app: express.Application) {
             // PRECISE VECTOR BOUNDS: Use the new bounds extraction system for accurate content sizing
             console.log(`📐 EXTRACTING PRECISE VECTOR BOUNDS: Using advanced bounds detection for accurate content sizing`);
             
+            // Store PDF page dimensions for fallback use
+            let pdfPageDimensions = null;
+            
             try {
               // For PDF-converted SVGs, try to use the original PDF bounds first
               
@@ -2379,8 +2382,17 @@ export async function registerRoutes(app: express.Application) {
                   const pageWidth = mediaBox.width;
                   const pageHeight = mediaBox.height;
                   
+                  // CRITICAL: Store PDF page dimensions for fallback use
+                  const pxToMm = 1 / 2.834645669; // 72 DPI standard
+                  pdfPageDimensions = {
+                    widthMm: pageWidth * pxToMm,
+                    heightMm: pageHeight * pxToMm,
+                    widthPts: pageWidth,
+                    heightPts: pageHeight
+                  };
+                  
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
-                  console.log(`📄 This is the intended artwork size - will be used 1:1 with NO scaling`);
+                  console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                   
                   // Use the PDF page dimensions directly - this is the intended artwork size
                   boundsResult = {
@@ -2783,6 +2795,35 @@ export async function registerRoutes(app: express.Application) {
               } else {
                 console.log(`⚠️ Bounds extraction failed, falling back to viewBox dimensions`);
                 
+                // CRITICAL FIX: If we have PDF page dimensions, use them instead of generic fallback
+                if (pdfPageDimensions) {
+                  displayWidth = pdfPageDimensions.widthMm;
+                  displayHeight = pdfPageDimensions.heightMm;
+                  console.log(`✅ USING PDF PAGE DIMENSIONS AS FALLBACK: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (from MediaBox)`);
+                  console.log(`🎯 This preserves the original PDF page size - NO scaling to painted pixels`);
+                } else {
+                  // Fallback to the original robust dimension system
+                  const { detectDimensionsFromSVG } = await import('./dimension-utils');
+                  const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
+                  const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
+                  displayWidth = dimensionResult.widthMm;
+                  displayHeight = dimensionResult.heightMm;
+                  
+                  console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
+                }
+              }
+              
+            } // End of if (!useCropDimensions) block
+              
+            } catch (boundsError) {
+              console.error('❌ Bounds extraction error:', boundsError);
+              
+              // CRITICAL FIX: If we have PDF page dimensions, use them instead of generic fallback
+              if (pdfPageDimensions) {
+                displayWidth = pdfPageDimensions.widthMm;
+                displayHeight = pdfPageDimensions.heightMm;
+                console.log(`✅ USING PDF PAGE DIMENSIONS AS ERROR FALLBACK: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (from MediaBox)`);
+              } else {
                 // Fallback to the original robust dimension system
                 const { detectDimensionsFromSVG } = await import('./dimension-utils');
                 const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
@@ -2790,21 +2831,8 @@ export async function registerRoutes(app: express.Application) {
                 displayWidth = dimensionResult.widthMm;
                 displayHeight = dimensionResult.heightMm;
                 
-                console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
+                console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
               }
-              
-            } // End of if (!useCropDimensions) block
-              
-            } catch (boundsError) {
-              console.error('❌ Bounds extraction error:', boundsError);
-              // Fallback to the original robust dimension system
-              const { detectDimensionsFromSVG } = await import('./dimension-utils');
-              const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-              const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
-              displayWidth = dimensionResult.widthMm;
-              displayHeight = dimensionResult.heightMm;
-              
-              console.log(`🔄 ERROR FALLBACK: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
             }
 
           } else {
