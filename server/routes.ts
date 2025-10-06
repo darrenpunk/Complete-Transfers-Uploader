@@ -2554,41 +2554,38 @@ export async function registerRoutes(app: express.Application) {
                     const clipWidth = globalMaxX - globalMinX;
                     const clipHeight = globalMaxY - globalMinY;
                     
-                    console.log(`🎯 CLIPPING PATH VECTORS DETECTED: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
-                    console.log(`📐 RAW VECTOR GEOMETRY (BEFORE CLIPPING): ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
+                    console.log(`🎯 CLIPPING PATH GEOMETRY: ${clipWidth.toFixed(1)}×${clipHeight.toFixed(1)}pts`);
+                    console.log(`📐 VISIBLE VECTOR GEOMETRY: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}pts`);
                     
-                    // CRITICAL FIX: Clipping paths are AUTHORITATIVE - they define the visible region (like a mask)
-                    // Geometry outside the clip is NOT visible, even if it exists in the SVG
-                    // ALWAYS use clipping bounds when detected - they constrain what's actually visible
+                    // CRITICAL: User requirement - calculate bounds from:
+                    // 1. ALL visible vector geometry (not clipped)
+                    // 2. PLUS clipping path shapes themselves (as geometry)
+                    // 3. Geometry INSIDE clipping masks is excluded (it's hidden)
                     
-                    // Intersect clipping bounds with PDF page to ensure we don't exceed MediaBox
-                    const viewBoxWidthPx = originalWidthMm / pxToMm;
-                    const viewBoxHeightPx = originalHeightMm / pxToMm;
+                    // Combine clipping path bounds with visible geometry bounds
+                    const combinedMinX = Math.min(contentBounds.xMin, globalMinX);
+                    const combinedMinY = Math.min(contentBounds.yMin, globalMinY);
+                    const combinedMaxX = Math.max(contentBounds.xMax, globalMaxX);
+                    const combinedMaxY = Math.max(contentBounds.yMax, globalMaxY);
                     
-                    const clampedClipXMin = Math.max(globalMinX, 0);
-                    const clampedClipYMin = Math.max(globalMinY, 0);
-                    const clampedClipXMax = Math.min(globalMaxX, viewBoxWidthPx);
-                    const clampedClipYMax = Math.min(globalMaxY, viewBoxHeightPx);
+                    const combinedWidth = combinedMaxX - combinedMinX;
+                    const combinedHeight = combinedMaxY - combinedMinY;
                     
-                    const clampedClipWidth = clampedClipXMax - clampedClipXMin;
-                    const clampedClipHeight = clampedClipYMax - clampedClipYMin;
+                    console.log(`✅ COMBINED BOUNDS (visible geometry + clipping paths): ${combinedWidth.toFixed(1)}×${combinedHeight.toFixed(1)}pts`);
                     
-                    console.log(`✅ CLIPPING PATHS DEFINE VISIBLE BOUNDS: ${clampedClipWidth.toFixed(1)}×${clampedClipHeight.toFixed(1)}pts (intersected with PDF page)`);
-                    
-                    // Use clipping as authoritative bounds
+                    // Use combined bounds (clipping paths as geometry + visible content)
                     contentBounds = {
-                      xMin: clampedClipXMin,
-                      yMin: clampedClipYMin,
-                      xMax: clampedClipXMax,
-                      yMax: clampedClipYMax,
-                      width: clampedClipWidth,
-                      height: clampedClipHeight,
+                      xMin: combinedMinX,
+                      yMin: combinedMinY,
+                      xMax: combinedMaxX,
+                      yMax: combinedMaxY,
+                      width: combinedWidth,
+                      height: combinedHeight,
                       units: contentBounds.units || 'px'
                     };
                     boundsResult.contentBounds = contentBounds;
-                    console.log(`🎯 USING CLIPPING PATH BOUNDS AS AUTHORITATIVE: ${clampedClipWidth.toFixed(1)}×${clampedClipHeight.toFixed(1)}pts`);
                   } else {
-                    console.log(`⚠️ Could not extract clipping path geometry`);
+                    console.log(`⚠️ No clipping paths detected, using visible geometry only`);
                   }
                 } else {
                   console.log(`ℹ️ No clipping paths found in SVG`);
