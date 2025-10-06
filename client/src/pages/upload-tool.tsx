@@ -144,15 +144,20 @@ export default function UploadTool() {
       return { blob, filename };
     },
     onSuccess: ({ blob, filename }) => {
+      console.log('✅ PDF Generation Success! Blob size:', blob.size, 'bytes, Filename:', filename);
+      
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
+      console.log('🔽 Triggering download for:', filename);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      console.log('✅ Download triggered successfully');
       
       toast({
         title: "CMYK PDF Generated",
