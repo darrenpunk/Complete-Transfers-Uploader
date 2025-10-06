@@ -804,23 +804,29 @@ export default function PropertiesPanel({
 
             {/* Rotation */}
             <div>
-              <Label className="text-sm font-medium mb-2 block">Rotation</Label>
+              <Label className="text-sm font-medium mb-2 block">Rotation ({currentElement.rotation || 0}°)</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  variant={currentElement.rotation === 0 ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => handlePropertyChange('rotation', 0)}
                   className="h-8"
+                  data-testid="button-reset-rotation"
                 >
-                  0° Rotation
+                  Reset to 0°
                 </Button>
                 <Button
-                  variant={currentElement.rotation === 90 ? "default" : "outline"}
+                  variant="default"
                   size="sm"
-                  onClick={() => handlePropertyChange('rotation', 90)}
+                  onClick={() => {
+                    const currentRotation = currentElement.rotation || 0;
+                    const newRotation = (currentRotation + 90) % 360;
+                    handlePropertyChange('rotation', newRotation);
+                  }}
                   className="h-8"
+                  data-testid="button-rotate-90"
                 >
-                  90° Rotation
+                  Rotate 90°
                 </Button>
               </div>
             </div>
