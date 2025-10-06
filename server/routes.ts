@@ -2602,7 +2602,10 @@ export async function registerRoutes(app: express.Application) {
                 console.log(`📐 PDF PAGE DIMENSIONS: ${viewBoxWidthPx.toFixed(1)}×${viewBoxHeightPx.toFixed(1)}px (${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm)`);
                 console.log(`📐 RAW CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px BEFORE clamping`);
                 
-                // CRITICAL FIX: Save ORIGINAL bounds BEFORE clamping for tight crop decision
+                // CRITICAL FIX: Save UNCLAMPED bounds (after clipping analysis, before clamping) for tight crop
+                const unclampedContentBounds = { ...contentBounds };
+                
+                // Also save original for crop decision comparison
                 const originalContentBounds = { ...contentBounds };
                 
                 // Clamp bounds to page dimensions - content cannot exceed the artboard
@@ -2707,10 +2710,10 @@ export async function registerRoutes(app: express.Application) {
                   if (contentMatch) {
                     const innerContent = contentMatch[1];
                     
-                    // CRITICAL FIX: Use FINAL contentBounds (after clipping path analysis and merging)
-                    // Don't use originalContentBounds which was captured before analysis
-                    const boundsForCrop = contentBounds;
-                    console.log(`🎯 USING FINAL CONTENT BOUNDS FOR TIGHT CROP: ${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}px (after all analysis)`);
+                    // CRITICAL FIX: Use UNCLAMPED bounds (after clipping analysis, BEFORE clamping to page)
+                    // This preserves the actual artwork bounds, not the artificially limited page bounds
+                    const boundsForCrop = unclampedContentBounds;
+                    console.log(`🎯 USING UNCLAMPED CONTENT BOUNDS FOR TIGHT CROP: ${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}px (unclamped, with clipping)`);
                     
                     // Add minimal overflow for proper centering and glyph protection
                     // Reduce padding to get tighter content bounds
