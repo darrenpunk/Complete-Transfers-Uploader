@@ -2597,14 +2597,48 @@ export async function registerRoutes(app: express.Application) {
   widthDiff: ${widthDiff}mm
   heightDiff: ${heightDiff}mm`);
                 
+                // CRITICAL FIX: Clamp bounds to PDF page dimensions
+                // Transformed elements can expand bounds beyond the artboard - this prevents that
+                console.log(`📐 PDF PAGE DIMENSIONS: ${viewBoxWidthPx.toFixed(1)}×${viewBoxHeightPx.toFixed(1)}px (${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm)`);
+                console.log(`📐 RAW CONTENT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px BEFORE clamping`);
+                
+                // Clamp bounds to page dimensions - content cannot exceed the artboard
+                const clampedXMax = Math.min(contentBounds.xMax, viewBoxWidthPx);
+                const clampedYMax = Math.min(contentBounds.yMax, viewBoxHeightPx);
+                const clampedXMin = Math.max(contentBounds.xMin, 0);
+                const clampedYMin = Math.max(contentBounds.yMin, 0);
+                
+                const clampedWidth = clampedXMax - clampedXMin;
+                const clampedHeight = clampedYMax - clampedYMin;
+                
+                // If bounds were clamped, log the change
+                if (clampedWidth !== contentBounds.width || clampedHeight !== contentBounds.height) {
+                  console.log(`✂️ CLAMPED BOUNDS TO PAGE SIZE: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px → ${clampedWidth.toFixed(1)}×${clampedHeight.toFixed(1)}px`);
+                  contentBounds = {
+                    xMin: clampedXMin,
+                    yMin: clampedYMin,
+                    xMax: clampedXMax,
+                    yMax: clampedYMax,
+                    width: clampedWidth,
+                    height: clampedHeight,
+                    units: contentBounds.units
+                  };
+                }
+                
                 // CRITICAL: For uploaded files, ALWAYS use tight bounds based on actual content
                 // This ensures the element size matches the actual artwork, not the page/viewBox
                 const hasNegativeCoords = contentBounds.xMin < 0 || contentBounds.yMin < 0;
                 const extendsBeyondViewBox = contentBounds.xMax > viewBoxWidthPx || contentBounds.yMax > viewBoxHeightPx;
                 
+                // Recalculate diff after clamping
+                const clampedContentWidthMm = (contentBounds.width * pxToMm);
+                const clampedContentHeightMm = (contentBounds.height * pxToMm);
+                const clampedWidthDiff = Math.abs(originalWidthMm - clampedContentWidthMm);
+                const clampedHeightDiff = Math.abs(originalHeightMm - clampedContentHeightMm);
+                
                 // Enable tight crop when content bounds differ significantly from viewBox
                 // This gives us tight bounds for all uploaded files (PDFs, SVGs from any application)
-                const needsTightCrop = widthDiff > 5 || heightDiff > 5; // Use tight bounds when diff > 5mm
+                const needsTightCrop = clampedWidthDiff > 5 || clampedHeightDiff > 5; // Use tight bounds when diff > 5mm
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
