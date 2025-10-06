@@ -2353,21 +2353,67 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                   
-                  // Use the PDF page dimensions directly - this is the intended artwork size
-                  boundsResult = {
-                    success: true,
-                    contentBounds: {
-                      xMin: mediaBox.x,
-                      yMin: mediaBox.y,
-                      xMax: mediaBox.x + pageWidth,
-                      yMax: mediaBox.y + pageHeight,
-                      width: pageWidth,
-                      height: pageHeight
-                    },
-                    method: 'pdf-mediabox-dimensions'
-                  };
-                  
-                  console.log(`🎯 Using PDF MediaBox as content bounds - NO content detection, NO scaling`);
+                  // CRITICAL: Extract PAINTED CONTENT bounds for position warnings
+                  // Use Ghostscript bbox to find actual content, not page size
+                  try {
+                    const bboxCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=bbox "${(file as any).originalPdfPath}" 2>&1 | grep "%%HiResBoundingBox"`;
+                    const bboxOutput = execSync(bboxCmd, { encoding: 'utf8' });
+                    const match = bboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                    
+                    if (match) {
+                      const [, x1, y1, x2, y2] = match.map(Number);
+                      const contentWidth = x2 - x1;
+                      const contentHeight = y2 - y1;
+                      
+                      console.log(`✅ PAINTED CONTENT BOUNDS: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts at offset (${x1.toFixed(1)}, ${y1.toFixed(1)})`);
+                      
+                      // Store painted content bounds for position warnings
+                      boundsResult = {
+                        success: true,
+                        contentBounds: {
+                          xMin: x1,
+                          yMin: y1,
+                          xMax: x2,
+                          yMax: y2,
+                          width: contentWidth,
+                          height: contentHeight
+                        },
+                        method: 'pdf-ghostscript-bbox'
+                      };
+                      
+                      console.log(`🎯 Using painted content bounds for position warnings - preserves white elements`);
+                    } else {
+                      console.log(`⚠️ No bbox found, falling back to PDF page dimensions`);
+                      // Use PDF page dimensions as fallback
+                      boundsResult = {
+                        success: true,
+                        contentBounds: {
+                          xMin: mediaBox.x,
+                          yMin: mediaBox.y,
+                          xMax: mediaBox.x + pageWidth,
+                          yMax: mediaBox.y + pageHeight,
+                          width: pageWidth,
+                          height: pageHeight
+                        },
+                        method: 'pdf-mediabox-dimensions'
+                      };
+                    }
+                  } catch (bboxError) {
+                    console.log(`⚠️ Bbox extraction failed: ${bboxError}, using PDF page dimensions`);
+                    // Use PDF page dimensions as fallback
+                    boundsResult = {
+                      success: true,
+                      contentBounds: {
+                        xMin: mediaBox.x,
+                        yMin: mediaBox.y,
+                        xMax: mediaBox.x + pageWidth,
+                        yMax: mediaBox.y + pageHeight,
+                        width: pageWidth,
+                        height: pageHeight
+                      },
+                      method: 'pdf-mediabox-dimensions'
+                    };
+                  }
                 } catch (pdfLibError) {
                   console.error('Failed to extract PDF MediaBox:', pdfLibError);
                   // Fall through to SVG bounds analyzer
