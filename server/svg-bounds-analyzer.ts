@@ -405,11 +405,22 @@ export class SVGBoundsAnalyzer {
     let visibleElements = 0;
     let clippingElements = 0;
 
-    // Extract bounds from ALL visible geometry
+    // Extract bounds from ALL visible geometry (exclude gradient-filled backgrounds)
     geometrySelectors.forEach(selector => {
       const elements = svgElement.querySelectorAll(selector);
       
       elements.forEach(element => {
+        // CRITICAL: Skip gradient-filled backgrounds (they're decorative, not content)
+        const fill = element.getAttribute('fill');
+        const stroke = element.getAttribute('stroke');
+        const strokeWidth = element.getAttribute('stroke-width');
+        
+        // Skip elements that ONLY have gradient fills with no stroke
+        if (fill && fill.startsWith('url(#') && !stroke && !strokeWidth) {
+          console.log(`⏭️ Skipping gradient background: fill=${fill}`);
+          return;
+        }
+        
         const bounds = this.getElementBounds(element);
         if (bounds) {
           minX = Math.min(minX, bounds.xMin);
