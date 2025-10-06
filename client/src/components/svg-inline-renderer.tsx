@@ -105,17 +105,23 @@ export default function SvgInlineRenderer({
         cleanedSvg = cleanedSvg.replace(/<\?xml[^?]*\?>/g, '');
         cleanedSvg = cleanedSvg.replace(/<!DOCTYPE[^>]*>/g, '');
         
-        // CRITICAL FIX: Only remove width/height from root <svg> tag, NOT from child elements like <image>
-        // Removing width/height from <image> elements collapses embedded images to 0×0
-        // Use targeted replacement that only affects the opening <svg> tag
-        cleanedSvg = cleanedSvg.replace(
-          /(<svg[^>]*?)(\s+width\s*=\s*["'][^"']*["'])([^>]*?>)/i,
-          '$1$3' // Remove width from svg tag
-        );
-        cleanedSvg = cleanedSvg.replace(
-          /(<svg[^>]*?)(\s+height\s*=\s*["'][^"']*["'])([^>]*?>)/i,
-          '$1$3' // Remove height from svg tag
-        );
+        // CRITICAL FIX: Detect gradients with userSpaceOnUse - they need width/height to scale properly
+        // When width/height are removed, gradients with absolute coordinates break
+        const hasUserSpaceGradients = text.includes('gradientUnits="userSpaceOnUse"');
+        
+        if (!hasUserSpaceGradients) {
+          // CRITICAL FIX: Only remove width/height from root <svg> tag, NOT from child elements like <image>
+          // Removing width/height from <image> elements collapses embedded images to 0×0
+          // Use targeted replacement that only affects the opening <svg> tag
+          cleanedSvg = cleanedSvg.replace(
+            /(<svg[^>]*?)(\s+width\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3' // Remove width from svg tag
+          );
+          cleanedSvg = cleanedSvg.replace(
+            /(<svg[^>]*?)(\s+height\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3' // Remove height from svg tag
+          );
+        }
         
         // Set preserveAspectRatio="xMidYMid meet" for consistent scaling
         if (cleanedSvg.includes('preserveAspectRatio')) {
