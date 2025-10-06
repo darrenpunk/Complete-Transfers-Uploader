@@ -787,19 +787,28 @@ export async function registerRoutes(app: express.Application) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (!logo) continue;
           
-          // CRITICAL: Use ORIGINAL PDF if available to preserve exact CMYK colors
+          // CRITICAL FIX: Use tight-content SVG when available (already has correct bounds)
+          // Original PDF has full artboard dimensions which causes scaling issues
           const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename || '');
           const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
           
           let usePath = svgPath;
           let useOriginalPdf = false;
           
-          if ((logo as any).originalFilename && fs.existsSync(originalPdfPath)) {
+          // CRITICAL: Prefer tight-content SVG over original PDF to avoid scaling issues
+          // The tight-content SVG already has the exact content bounds we detected
+          const isTightContent = (logo as any).filename && (logo as any).filename.includes('_tight-content');
+          
+          if (isTightContent) {
+            console.log(`🎯 USING TIGHT-CONTENT SVG: ${(logo as any).filename} (exact content bounds)`);
+            usePath = svgPath;
+            useOriginalPdf = false;
+          } else if ((logo as any).originalFilename && fs.existsSync(originalPdfPath)) {
             console.log(`🎯 USING ORIGINAL PDF WITH EXACT CMYK COLORS: ${(logo as any).originalFilename}`);
             usePath = originalPdfPath;
             useOriginalPdf = true;
           } else {
-            console.log(`📄 Processing SVG (colors already corrupted): ${(logo as any).filename}`);
+            console.log(`📄 Processing SVG: ${(logo as any).filename}`);
             if (!fs.existsSync(svgPath)) {
               console.log(`❌ SVG not found: ${svgPath}`);
               continue;
