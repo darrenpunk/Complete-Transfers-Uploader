@@ -101,31 +101,38 @@ export class SVGBoundsAnalyzer {
       // Method 1: Parse viewBox if available
       const viewBoxResult = this.parseViewBox(svgElement);
       
+      // CRITICAL: For artwork with clipping paths, use ONLY the clipping path boundaries
+      // The clipping paths define the visible artwork extent, not the content being clipped
+      const clipPathBounds = this.calculateClippingPathBounds(svgElement);
+      
       // Method 2: Calculate from path data
       const pathResult = this.calculatePathBounds(svgElement);
       
       // Method 3: Analyze all geometric elements
       const geometryResult = this.analyzeGeometryBounds(svgElement);
 
-      // CRITICAL: ALWAYS calculate actual painted content bounds, NEVER use viewBox as fallback
-      // This ensures tight bounds work for all applications (Illustrator, CorelDRAW, Inkscape, etc.)
+      // CRITICAL: ALWAYS calculate actual vector bounds, NEVER use viewBox as fallback
+      // Priority: Clipping paths > All geometry > Path data
       const isAIVectorized = svgContent.includes('data-ai-vectorized="true"');
-      console.log(`🔍 BOUNDS DETECTION: isAIVectorized=${isAIVectorized}`);
+      console.log(`🔍 BOUNDS DETECTION: isAIVectorized=${isAIVectorized}, hasClipPaths=${!!clipPathBounds}`);
       let contentBounds;
       
-      if (isAIVectorized) {
+      if (clipPathBounds) {
+        // PRIORITY: If clipping paths exist, use ONLY their boundaries (not the clipped content)
+        console.log(`🎯 USING CLIPPING PATH BOUNDARIES: These define the visible artwork extent`);
+        contentBounds = clipPathBounds;
+      } else if (isAIVectorized) {
         // For AI-vectorized content, use content-focused bounds that excludes large background paths
         console.log(`🎯 AI-VECTORIZED CONTENT: Calculating content-focused bounds`);
         const contentFocusedBounds = this.calculateContentFocusedBounds(svgElement);
         contentBounds = contentFocusedBounds || pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
       } else {
-        // For ALL other SVGs: Calculate actual painted content bounds
-        // Try multiple methods, NEVER fall back to viewBox
-        console.log(`🎯 CALCULATING PAINTED CONTENT BOUNDS (all apps supported)`);
-        contentBounds = pathResult || geometryResult || this.calculateVisibleContentBounds(svgElement);
+        // For ALL other SVGs: Calculate from all geometry
+        console.log(`🎯 CALCULATING VECTOR CONTENT BOUNDS (all vector geometry)`);
+        contentBounds = geometryResult || pathResult || this.calculateVisibleContentBounds(svgElement);
         
         if (contentBounds) {
-          console.log(`✅ TIGHT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (actual painted content)`);
+          console.log(`✅ TIGHT BOUNDS: ${contentBounds.width.toFixed(1)}×${contentBounds.height.toFixed(1)}px (all vector content)`);
           console.log(`📍 POSITION: (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)}) to (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)})`);
         } else {
           console.log(`⚠️ Could not calculate content bounds - no drawable elements found`);
@@ -294,6 +301,57 @@ export class SVGBoundsAnalyzer {
       yMax: y + height,
       width,
       height,
+      units: 'px'
+    };
+  }
+
+  /**
+   * Calculate bounds from ONLY clipping path geometries
+   * Clipping paths define the visible artwork extent
+   */
+  private calculateClippingPathBounds(svgElement: Element): SVGBounds | null {
+    const clipPaths = svgElement.querySelectorAll('clipPath');
+    if (clipPaths.length === 0) return null;
+
+    const geometrySelectors = [
+      'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path'
+    ];
+
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+    let hasGeometry = false;
+    let clipElementCount = 0;
+
+    clipPaths.forEach(clipPath => {
+      geometrySelectors.forEach(selector => {
+        const elements = clipPath.querySelectorAll(selector);
+        
+        elements.forEach(element => {
+          const bounds = this.getElementBounds(element);
+          if (bounds) {
+            minX = Math.min(minX, bounds.xMin);
+            minY = Math.min(minY, bounds.yMin);
+            maxX = Math.max(maxX, bounds.xMax);
+            maxY = Math.max(maxY, bounds.yMax);
+            hasGeometry = true;
+            clipElementCount++;
+          }
+        });
+      });
+    });
+
+    if (!hasGeometry) return null;
+
+    console.log(`🎯 CLIPPING PATH BOUNDS: ${clipPaths.length} clipPaths with ${clipElementCount} geometry elements`);
+    console.log(`📐 Bounds: ${(maxX - minX).toFixed(1)}×${(maxY - minY).toFixed(1)}px`);
+
+    return {
+      xMin: minX,
+      yMin: minY,
+      xMax: maxX,
+      yMax: maxY,
+      width: maxX - minX,
+      height: maxY - minY,
       units: 'px'
     };
   }
