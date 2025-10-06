@@ -474,12 +474,16 @@ export class SVGBoundsAnalyzer {
     
     // CRITICAL: Exclude gradient-only fill paths (backgrounds/masks, not artwork)
     const fill = element.getAttribute('fill') || '';
-    const stroke = element.getAttribute('stroke') || 'none';
+    const stroke = element.getAttribute('stroke');
     const style = element.getAttribute('style') || '';
     
     // Skip elements with ONLY gradient fills and no stroke (decorative backgrounds)
-    if (fill.startsWith('url(#') && (stroke === 'none' || !stroke) && !style.includes('stroke:')) {
-      console.log(`⏭️  Skipping gradient-only element: fill="${fill}" (background, not artwork)`);
+    const hasGradientFill = fill.startsWith('url(#');
+    const hasNoStroke = !stroke || stroke === 'none';
+    const hasNoStrokeInStyle = !style.includes('stroke:');
+    
+    if (hasGradientFill && hasNoStroke && hasNoStrokeInStyle) {
+      console.log(`⏭️  SKIPPING GRADIENT-ONLY: fill="${fill}", stroke="${stroke}", tag="${tagName}"`);
       return null;
     }
     
