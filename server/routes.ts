@@ -2718,9 +2718,23 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
                     
-                    // DON'T RE-ANALYZE! Use the original content bounds we already have
-                    // Re-analyzing the tight content SVG gives wrong dimensions
-                    console.log(`✅ USING ORIGINAL CONTENT BOUNDS: No re-analysis needed, we already have correct dimensions`);
+                    // CRITICAL FIX: Update contentBounds to reflect the NORMALIZED coordinates
+                    // After translation, content now starts at (xOffset, yOffset) instead of (xMin, yMin)
+                    const normalizedContentBounds = {
+                      xMin: xOffset,
+                      yMin: yOffset,
+                      xMax: xOffset + (contentBounds?.width || 0),
+                      yMax: yOffset + (contentBounds?.height || 0),
+                      width: contentBounds?.width || 0,
+                      height: contentBounds?.height || 0,
+                      units: (contentBounds?.units || 'px') as 'px' | 'mm' | 'pt'
+                    };
+                    
+                    console.log(`🎯 NORMALIZED CONTENT BOUNDS: (${normalizedContentBounds.xMin}, ${normalizedContentBounds.yMin}) to (${normalizedContentBounds.xMax}, ${normalizedContentBounds.yMax})`);
+                    console.log(`✅ Content is now centered in viewBox - frontend will render correctly`);
+                    
+                    // Replace the original bounds with normalized bounds for correct frontend rendering
+                    contentBounds = normalizedContentBounds;
                   }
                 } else if (usingPdfContentBounds) {
                   // We have exact PDF content bounds, use them directly
