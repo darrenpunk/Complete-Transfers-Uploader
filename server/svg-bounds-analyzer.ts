@@ -403,13 +403,28 @@ export class SVGBoundsAnalyzer {
     let maxX = -Infinity, maxY = -Infinity;
     let hasContent = false;
     let visibleElements = 0;
-    let clippingElements = 0;
 
     // Extract bounds from ALL visible geometry (exclude gradient-filled backgrounds)
     geometrySelectors.forEach(selector => {
       const elements = svgElement.querySelectorAll(selector);
       
       elements.forEach(element => {
+        // CRITICAL FIX: Skip elements inside <clipPath>, <defs>, or <mask> - they're definitions, not visible content
+        let parent = element.parentElement;
+        let isInsideDefinition = false;
+        while (parent) {
+          const tagName = parent.tagName.toLowerCase();
+          if (tagName === 'clippath' || tagName === 'defs' || tagName === 'mask') {
+            isInsideDefinition = true;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        
+        if (isInsideDefinition) {
+          return; // Skip this element - it's a definition, not visible content
+        }
+        
         // CRITICAL: Skip gradient-filled backgrounds (they're decorative, not content)
         const fill = element.getAttribute('fill');
         const stroke = element.getAttribute('stroke');
@@ -433,29 +448,11 @@ export class SVGBoundsAnalyzer {
       });
     });
 
-    // CRITICAL: Also extract bounds from ALL clipping path vectors
-    // Clipping paths define the artwork boundaries even if not painted
-    const clipPaths = svgElement.querySelectorAll('clipPath');
-    clipPaths.forEach(clipPath => {
-      geometrySelectors.forEach(selector => {
-        const elements = clipPath.querySelectorAll(selector);
-        
-        elements.forEach(element => {
-          const bounds = this.getElementBounds(element);
-          if (bounds) {
-            minX = Math.min(minX, bounds.xMin);
-            minY = Math.min(minY, bounds.yMin);
-            maxX = Math.max(maxX, bounds.xMax);
-            maxY = Math.max(maxY, bounds.yMax);
-            hasContent = true;
-            clippingElements++;
-          }
-        });
-      });
-    });
+    // NOTE: Clip-paths are NOT included in bounds - they're definitions, not visible content
+    // Including them was causing bounds to expand beyond the artboard (root cause of 383mm vs 295mm issue)
 
     if (hasContent) {
-      console.log(`📐 ALL VECTOR GEOMETRY DETECTED: ${visibleElements} visible + ${clippingElements} clipping elements`);
+      console.log(`📐 VISIBLE VECTOR CONTENT DETECTED: ${visibleElements} elements (clip-paths/defs excluded)`);
     }
 
     if (!hasContent) return null;
