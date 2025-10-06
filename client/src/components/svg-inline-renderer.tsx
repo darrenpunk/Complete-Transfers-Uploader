@@ -218,13 +218,15 @@ export default function SvgInlineRenderer({
     
     const bounds = logo.contentBounds as ContentBounds;
     
-    // For content with negative positioning, use simplified rendering
+    // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
     // This lets the browser's native SVG overflow handling work correctly
-    const hasNegativePosition = bounds.xMin < 0 || bounds.yMin < 0;
+    const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
+                        bounds.xMax > element.width || bounds.xMax > element.height;
     
-    if (hasNegativePosition) {
-      console.log('🎯 Content positioned outside viewBox origin, using simplified rendering');
-      console.log(`   Content position: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
+    if (hasOverflow) {
+      console.log('🎯 Content extends beyond bounds: Using simplified rendering for proper display');
+      console.log(`   Content bounds: (${bounds.xMin}, ${bounds.yMin}) to (${bounds.xMax}, ${bounds.yMax})`);
+      console.log(`   Element size: ${element.width} × ${element.height}px`);
       
       // Ensure SVG has proper namespace declarations for xlink (required for embedded images)
       let processedSvg = svgContent;
