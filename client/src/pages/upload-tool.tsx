@@ -146,18 +146,28 @@ export default function UploadTool() {
     onSuccess: ({ blob, filename }) => {
       console.log('✅ PDF Generation Success! Blob size:', blob.size, 'bytes, Filename:', filename);
       
-      // Create download link
+      // Create download link with proper timing for browser compatibility
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      a.style.display = 'none';
       document.body.appendChild(a);
-      console.log('🔽 Triggering download for:', filename);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
       
-      console.log('✅ Download triggered successfully');
+      console.log('🔽 Triggering download for:', filename);
+      
+      // Trigger download with a small delay to ensure browser processes it
+      setTimeout(() => {
+        a.click();
+        console.log('✅ Download clicked');
+        
+        // Clean up after download starts
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          console.log('✅ Cleanup complete');
+        }, 100);
+      }, 0);
       
       toast({
         title: "CMYK PDF Generated",
