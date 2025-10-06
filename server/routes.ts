@@ -872,53 +872,12 @@ export async function registerRoutes(app: express.Application) {
             let vectorBytes: Buffer;
             
             if (useOriginalPdf) {
-              // ARCHITECT SOLUTION: Crop PDF to content bounds before embedding
-              // This ensures the PDF page size matches the actual content, not the canvas
-              console.log(`🎯 CROPPING PDF TO CONTENT BOUNDS for proper scaling`);
+              // CRITICAL FIX: Use original PDF at full page dimensions - NO cropping to painted pixels
+              // Cropping to content bounds removes white elements which is unacceptable
+              console.log(`🎯 USING ORIGINAL PDF AT FULL PAGE DIMENSIONS - NO cropping to painted pixels`);
+              console.log(`📄 This preserves white elements and uses the intended artwork size from the PDF`);
               
-              const ts = Date.now() + Math.random();
-              const croppedPdf = path.join(process.cwd(), 'uploads', `cropped_${ts}.pdf`);
-              
-              try {
-                // Get the actual content bounding box
-                const bboxCmd = `gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=bbox "${originalPdfPath}" 2>&1 | grep "%%HiResBoundingBox"`;
-                const bboxOutput = execSync(bboxCmd, { encoding: 'utf8' });
-                console.log(`📊 BBox: ${bboxOutput}`);
-                
-                const match = bboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-                if (!match) throw new Error('No bbox found');
-                
-                const [, x1, y1, x2, y2] = match.map(Number);
-                const contentWidth = x2 - x1;
-                const contentHeight = y2 - y1;
-                
-                console.log(`📐 Content bounds: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts at offset (${x1}, ${y1})`);
-                
-                // CRITICAL: Create a PDF with page size = content size (not canvas size)
-                // This way when pdf-lib scales it to canvas dimensions, the content scales correctly
-                const cropCmd = `gs -dNOPAUSE -dBATCH -dSAFER ` +
-                  `-sDEVICE=pdfwrite ` +
-                  `-sOutputFile="${croppedPdf}" ` +
-                  `-dDEVICEWIDTHPOINTS=${contentWidth} ` +
-                  `-dDEVICEHEIGHTPOINTS=${contentHeight} ` +
-                  `-dFIXEDMEDIA ` +
-                  `-dColorConversionStrategy=/LeaveColorUnchanged ` +
-                  `-dPreserveMarkedContent=true ` +
-                  `-dPreserveSeparation=true ` +
-                  `-dPreserveDeviceN=true ` +
-                  `-c "<</Install {-${x1} -${y1} translate}>> setpagedevice" ` +
-                  `-f "${originalPdfPath}"`;
-                
-                execSync(cropCmd);
-                console.log(`✅ PDF cropped to content bounds: ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}pts`);
-                
-                vectorBytes = fs.readFileSync(croppedPdf);
-                fs.unlinkSync(croppedPdf);
-                
-              } catch (error) {
-                console.log(`⚠️ Crop failed, using original: ${error}`);
-                vectorBytes = fs.readFileSync(originalPdfPath);
-              }
+              vectorBytes = fs.readFileSync(originalPdfPath);
             } else {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');
