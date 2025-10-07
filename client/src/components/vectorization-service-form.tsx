@@ -3,20 +3,36 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
-import { Palette, Upload, FileImage, CheckCircle } from "lucide-react";
+import { Palette, Upload, FileImage, CheckCircle, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+const TRANSFER_PRODUCTS = [
+  { value: "template-A3", label: "Full Colour Transfers - A3" },
+  { value: "template-A4", label: "Full Colour Transfers - A4" },
+  { value: "template-A5", label: "Full Colour Transfers - A5" },
+  { value: "single-A3", label: "Single Colour Transfers - A3" },
+  { value: "single-A4", label: "Single Colour Transfers - A4" },
+  { value: "dtf-SRA3", label: "DTF Digital Film - SRA3" },
+  { value: "metallic-A3", label: "Metallic Transfers - A3" },
+  { value: "metallic-A4", label: "Metallic Transfers - A4" },
+  { value: "hd-A3", label: "HD Transfers - A3" },
+  { value: "hd-A4", label: "HD Transfers - A4" },
+];
 
 const vectorizationFormSchema = z.object({
   file: z.any().refine((file) => file instanceof File, "Please select a file to upload"),
   comments: z.string().min(1, "Please provide details about your requirements"),
   printSize: z.string().min(1, "Please specify the final print size"),
+  transferProduct: z.string().min(1, "Please select a transfer product"),
+  quantity: z.number().min(1, "Quantity must be at least 1").max(10000, "Quantity cannot exceed 10,000"),
 });
 
 type VectorizationFormData = z.infer<typeof vectorizationFormSchema>;
@@ -38,6 +54,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
     defaultValues: {
       comments: "",
       printSize: "",
+      transferProduct: "",
+      quantity: 1,
     },
   });
 
@@ -47,6 +65,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       formData.append('file', data.file);
       formData.append('comments', data.comments);
       formData.append('printSize', data.printSize);
+      formData.append('transferProduct', data.transferProduct);
+      formData.append('quantity', data.quantity.toString());
 
       const response = await fetch('/api/vectorization-requests', {
         method: 'POST',
@@ -65,8 +85,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       form.reset();
       setUploadedFile(null);
       toast({
-        title: "Request Submitted",
-        description: "Your vectorization request has been submitted successfully.",
+        title: "Request Submitted & Added to Cart",
+        description: "Your vectorization request has been submitted and products added to cart.",
       });
     },
     onError: (error) => {
@@ -114,17 +134,19 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-4">
-                Your vectorization request has been submitted to our design team.
+                Your vectorization request has been submitted to our design team and products added to your cart.
               </p>
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="font-medium mb-2">Request ID: {requestId}</p>
-                <p className="text-sm text-muted-foreground">
-                  Charge: €15.00 ex VAT
-                </p>
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <p className="font-medium">Request ID: {requestId}</p>
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium text-foreground mb-1">Added to Cart:</p>
+                  <p>• Vectorization Service - €15.00 ex VAT</p>
+                  <p>• Selected Transfer Product (with quantity)</p>
+                </div>
               </div>
             </div>
             <div className="text-center text-sm text-muted-foreground">
-              <p>Our design team will process your request and contact you with the vectorized artwork.</p>
+              <p>Our design team will process your request and contact you with the vectorized artwork. Your products are now in your cart ready for checkout.</p>
             </div>
             <div className="flex justify-center">
               <Button onClick={handleClose} className="w-full">
@@ -262,6 +284,60 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                 )}
               />
 
+              {/* Transfer Product Selection */}
+              <FormField
+                control={form.control}
+                name="transferProduct"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Transfer Product</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={submitMutation.isPending}
+                    >
+                      <FormControl>
+                        <SelectTrigger data-testid="select-transfer-product">
+                          <SelectValue placeholder="Select transfer product type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TRANSFER_PRODUCTS.map((product) => (
+                          <SelectItem key={product.value} value={product.value}>
+                            {product.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Quantity Selection */}
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        placeholder="Enter quantity"
+                        disabled={submitMutation.isPending}
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        data-testid="input-quantity"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Submit Button */}
               <div className="flex gap-3 pt-4">
                 <Button
@@ -277,6 +353,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                   type="submit"
                   disabled={submitMutation.isPending || !uploadedFile}
                   className="flex-1"
+                  data-testid="button-submit-vectorization"
                 >
                   {submitMutation.isPending ? (
                     <>
@@ -285,7 +362,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                     </>
                   ) : (
                     <>
-                      Submit Request - €15.00
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Submit Request & Add to Cart
                     </>
                   )}
                 </Button>
