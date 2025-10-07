@@ -128,10 +128,17 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
     }
   };
 
-  const handleProductSelect = (template: TemplateSize) => {
+  const handleProductSelect = (
+    template: TemplateSize, 
+    garmentColor: string | null, 
+    inkColor: string | null, 
+    quantity: number
+  ) => {
     setSelectedProduct(template);
     form.setValue('transferProduct', template.id);
+    form.setValue('quantity', quantity);
     form.clearErrors('transferProduct');
+    form.clearErrors('quantity');
     setShowProductSelector(false);
   };
 
