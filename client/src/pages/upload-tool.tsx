@@ -390,24 +390,17 @@ export default function UploadTool() {
         for (const element of canvasElements) {
           // Find the logo for this element
           const logo = logos?.find(l => l.id === element.logoId);
-          if (logo && logo.svgColors) {
-            // Create color overrides mapping original colors to new ink color
-            const colorOverrides: Record<string, string> = {};
-            const svgColors = logo.svgColors as any[];
-            
-            // Map all detected colors to the new ink color
-            for (const colorInfo of svgColors) {
-              if (colorInfo.color) {
-                colorOverrides[colorInfo.color] = color;
-              }
-            }
+          if (logo) {
+            // For single-color templates, just set the inkColor override directly
+            const colorOverrides = {
+              inkColor: color,
+              appliedAt: new Date().toISOString()
+            };
             
             // Update the element with color overrides
-            if (Object.keys(colorOverrides).length > 0) {
-              await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
-                colorOverrides
-              });
-            }
+            await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
+              colorOverrides
+            });
           }
         }
         
