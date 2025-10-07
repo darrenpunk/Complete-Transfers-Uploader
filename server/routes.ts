@@ -4528,6 +4528,8 @@ ${svgClose}`;
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
+      const serviceType = req.body.serviceType || 'vectorization-with-product'; // Default to legacy behavior
+
       // Validate request body
       const requestData = insertVectorizationRequestSchema.parse({
         filename: req.file.filename,
@@ -4548,8 +4550,9 @@ ${svgClose}`;
         charge: vectorizationRequest.charge,
         comments: vectorizationRequest.comments,
         printSize: vectorizationRequest.printSize,
-        transferProduct: req.body.transferProduct,
-        quantity: req.body.quantity
+        serviceType,
+        transferProduct: req.body.transferProduct || 'none',
+        quantity: req.body.quantity || 0
       });
 
       // Add items to Odoo cart
@@ -4561,21 +4564,22 @@ ${svgClose}`;
 
       try {
         // This would integrate with Odoo's cart API
-        // For production, you would make HTTP requests to:
-        // 1. Add vectorization service (€15) to cart
-        // 2. Add selected transfer product with quantity to cart
-        
         console.log('📦 Cart Integration - Items to add:');
         console.log('  1. Vectorization Service - €15.00');
-        console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
+        
+        // Only add transfer product if service type includes product
+        if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
+          console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
+          // In production: await addToOdooCart(req.body.transferProduct, req.body.quantity);
+          cartResults.transferAdded = true;
+        } else {
+          console.log('  (Vectorization-only service - no transfer product)');
+        }
         
         // Placeholder for actual Odoo integration
-        // In production, this would be:
-        // await addToOdooCart('vectorization-service', 1, 15);
-        // await addToOdooCart(req.body.transferProduct, req.body.quantity);
+        // In production: await addToOdooCart('vectorization-service', 1, 15);
         
         cartResults.vectorizationAdded = true;
-        cartResults.transferAdded = true;
       } catch (cartError) {
         console.error('Cart integration error:', cartError);
         // Continue even if cart fails - request is still saved
@@ -4584,11 +4588,14 @@ ${svgClose}`;
       res.json({
         id: vectorizationRequest.id,
         success: true,
-        message: 'Vectorization request submitted and products added to cart',
+        message: serviceType === 'vectorization-only' 
+          ? 'Vectorization request submitted'
+          : 'Vectorization request submitted and products added to cart',
         charge: vectorizationRequest.charge,
+        serviceType,
         cart: cartResults,
-        transferProduct: req.body.transferProduct,
-        quantity: parseInt(req.body.quantity) || 1
+        transferProduct: req.body.transferProduct || null,
+        quantity: req.body.transferProduct ? (parseInt(req.body.quantity) || 1) : 0
       });
 
     } catch (error) {
