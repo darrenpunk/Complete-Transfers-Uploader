@@ -269,49 +269,24 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                   )}
                 />
 
-                {/* Print Size and Quantity in a row */}
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="printSize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Final Print Size</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., A4, 200x100mm"
-                            disabled={submitMutation.isPending}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="10000"
-                            placeholder="Enter quantity"
-                            disabled={submitMutation.isPending}
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            data-testid="input-quantity"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Print Size */}
+                <FormField
+                  control={form.control}
+                  name="printSize"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Final Print Size</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., A4, 200x100mm"
+                          disabled={submitMutation.isPending}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Transfer Product Selection */}
                 <FormField
@@ -338,6 +313,30 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Quantity of Transfers */}
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity of Transfers Required</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="10000"
+                          placeholder="Enter quantity"
+                          disabled={submitMutation.isPending}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                          data-testid="input-quantity"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
