@@ -284,9 +284,10 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                 onClick={handleClose} 
                 variant="outline"
                 className="flex-1"
-                data-testid="button-close-vectorization"
+                data-testid="button-order-more"
               >
-                Close
+                <Package className="w-4 h-4 mr-2" />
+                Order More Transfers
               </Button>
               <Button 
                 onClick={() => {
