@@ -464,10 +464,18 @@ This guide provides a practical, day-by-day implementation plan for migrating Pr
 
 **Day 9 (Full day): Migrate File Attachments**
 
-4. **Export files from Replit Object Storage**:
+4. **Export files from Dropbox**:
    ```bash
-   # Download all files from GCS
-   gsutil -m cp -r gs://your-bucket/* ./migration-files/
+   # Download all artwork files from Dropbox
+   # Option 1: Use Dropbox web interface to download as ZIP
+   # Option 2: Use Dropbox API or CLI tool
+   
+   # Create migration directory
+   mkdir -p ./migration-files
+   
+   # Download files (adjust path to your Dropbox artwork folder)
+   # Example: if using rclone or Dropbox CLI
+   # rclone copy dropbox:artwork-uploads ./migration-files/
    ```
 
 5. **Import to Odoo attachments**:

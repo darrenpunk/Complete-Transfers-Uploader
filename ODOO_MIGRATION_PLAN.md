@@ -77,7 +77,7 @@ Environment variables needed:
 - `VITE_API_BASE_URL` → Should point to Odoo backend
 - `VECTORIZER_API_ID` → Odoo system parameter
 - `VECTORIZER_API_SECRET` → Odoo system parameter
-- `GCS_*` variables → Remove (use Odoo attachments)
+- Dropbox storage variables → Remove (use Odoo attachments)
 - `DATABASE_URL` → Remove (use Odoo ORM)
 
 **Migration**:
@@ -407,17 +407,17 @@ class SVGBoundsAnalyzer:
 
 ### Phase 4: Storage Migration (Days 12-13)
 
-#### 4.1 From Replit Object Storage to Odoo Attachments
+#### 4.1 From Dropbox Storage to Odoo Attachments
 
-**Current**: Google Cloud Storage via `@google-cloud/storage`
+**Current**: Dropbox for artwork file storage
 **Target**: Odoo `ir.attachment` model
 
 **Migration Steps**:
 
-1. **Remove GCS Dependencies**:
-   - Delete `server/gcs-uploader.ts`
-   - Remove `@google-cloud/storage` package
-   - Remove GCS environment variables
+1. **Remove Dropbox Dependencies**:
+   - Remove Dropbox storage integration code
+   - Remove `@google-cloud/storage` package (if still present)
+   - Remove Dropbox access tokens from environment variables
 
 2. **Use Odoo Attachments**:
    ```python
@@ -439,7 +439,7 @@ class SVGBoundsAnalyzer:
    ```
 
 3. **Frontend URL Updates**:
-   - Change from GCS URLs to Odoo content URLs
+   - Change from Dropbox URLs to Odoo content URLs
    - Update `UploadTool.tsx` to use new endpoint
    - Update preview URLs to point to `/web/content/{id}`
 

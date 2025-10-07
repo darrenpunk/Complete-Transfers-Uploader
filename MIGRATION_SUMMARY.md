@@ -66,7 +66,7 @@
 - Same algorithms, identical output quality
 
 ### Storage (Migrated to Odoo)
-- **From**: Replit Object Storage (Google Cloud Storage)
+- **From**: Dropbox (current artwork storage)
 - **To**: Odoo `ir.attachment` model
 - Built-in, no external dependencies
 

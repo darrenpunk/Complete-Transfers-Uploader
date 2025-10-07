@@ -208,9 +208,9 @@ VITE_API_BASE_URL=http://localhost:5000
 VECTORIZER_API_ID=your_api_id
 VECTORIZER_API_SECRET=your_api_secret
 
-# Storage (will be removed)
-GCS_BUCKET_NAME=your_bucket
-GCS_PROJECT_ID=your_project
+# Storage (will be removed - currently using Dropbox)
+DROPBOX_ACCESS_TOKEN=your_token  # If using Dropbox API
+DROPBOX_FOLDER_PATH=/artwork-uploads
 ```
 
 ### Odoo Environment Variables
@@ -418,7 +418,7 @@ def upload_file(self, **kwargs):
 
 ### Pre-Build
 - [ ] Update `VITE_API_BASE_URL` to point to Odoo endpoints
-- [ ] Remove unused environment variables (GCS, DATABASE_URL)
+- [ ] Remove unused environment variables (Dropbox tokens, DATABASE_URL)
 - [ ] Test build completes without errors: `npm run build`
 
 ### Build & Deploy
@@ -539,6 +539,6 @@ chmod +x build-and-deploy-odoo.sh
 3. ✅ Update Odoo template to load bundled JS/CSS
 4. ✅ Configure API base URL to point to Odoo controllers
 5. ✅ Handle Odoo session cookies with `credentials: 'include'`
-6. ✅ Remove Replit-specific configs (GCS, session storage)
+6. ✅ Remove Replit-specific configs (Dropbox storage, session storage)
 
 **Result**: React app runs inside Odoo as native module, using Odoo's infrastructure for hosting, sessions, and API endpoints.
