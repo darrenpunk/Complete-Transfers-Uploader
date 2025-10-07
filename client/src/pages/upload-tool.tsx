@@ -864,6 +864,12 @@ export default function UploadTool() {
           onConfirm={handleAppliqueBadgesFormConfirm}
           isLoading={createProjectMutation.isPending}
         />
+        
+        {/* Vectorization Service Form - Must be here since it can be accessed before project creation */}
+        <VectorizationServiceForm
+          open={showVectorizationForm}
+          onOpenChange={setShowVectorizationForm}
+        />
       </div>
     );
   }
