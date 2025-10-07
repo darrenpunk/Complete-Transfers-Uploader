@@ -100,6 +100,11 @@ export const vectorizationRequests = pgTable("vectorization_requests", {
   url: text("url").notNull(),
   comments: text("comments").notNull(),
   printSize: text("print_size").notNull(), // Final print size requirement
+  serviceType: text("service_type").notNull().default("vectorization-only"), // vectorization-only or vectorization-with-product
+  transferProduct: text("transfer_product"), // Template ID if vectorization-with-product
+  quantity: integer("quantity"), // Quantity if vectorization-with-product
+  garmentColor: text("garment_color"), // Garment color for the transfer
+  inkColor: text("ink_color"), // Ink color for single-color transfers
   charge: real("charge").notNull().default(15), // 15 euro charge
   status: text("status").notNull().default("pending"), // pending, processing, completed, cancelled
   webcartOrderId: text("webcart_order_id"), // ID from webcart integration

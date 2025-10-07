@@ -4539,6 +4539,11 @@ ${svgClose}`;
         url: `/uploads/${req.file.filename}`,
         comments: req.body.comments,
         printSize: req.body.printSize,
+        serviceType,
+        transferProduct: req.body.transferProduct || null,
+        quantity: req.body.quantity ? parseInt(req.body.quantity) : null,
+        garmentColor: req.body.garmentColor || null,
+        inkColor: req.body.inkColor || null,
         charge: 15 // Fixed 15 euro charge
       });
 
@@ -4552,7 +4557,9 @@ ${svgClose}`;
         printSize: vectorizationRequest.printSize,
         serviceType,
         transferProduct: req.body.transferProduct || 'none',
-        quantity: req.body.quantity || 0
+        quantity: req.body.quantity || 0,
+        garmentColor: req.body.garmentColor || 'none',
+        inkColor: req.body.inkColor || 'none'
       });
 
       // Add items to Odoo cart

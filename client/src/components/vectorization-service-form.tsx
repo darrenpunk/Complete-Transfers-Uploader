@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Palette, Upload, FileImage, CheckCircle, ShoppingCart, Package } from "lucide-react";
+import { Palette, Upload, FileImage, CheckCircle, ShoppingCart, Package, PaintBucket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import ProductLauncherModal from "@/components/product-launcher-modal";
 import TemplateSelectorModal from "@/components/template-selector-modal";
+import GarmentColorModal from "@/components/garment-color-modal";
+import InkColorModal from "@/components/ink-color-modal";
 
 const vectorizationFormSchema = z.object({
   file: z.any().refine((file) => file instanceof File, "Please select a file to upload"),
@@ -25,6 +27,8 @@ const vectorizationFormSchema = z.object({
   }),
   transferProduct: z.string().optional(),
   quantity: z.number().optional(),
+  garmentColor: z.string().optional(),
+  inkColor: z.string().optional(),
 });
 
 type VectorizationFormData = z.infer<typeof vectorizationFormSchema>;
@@ -55,6 +59,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<TemplateSize | null>(null);
+  const [garmentColor, setGarmentColor] = useState<string | null>(null);
+  const [inkColor, setInkColor] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch available templates
@@ -70,10 +76,26 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       serviceType: "vectorization-only",
       transferProduct: "",
       quantity: 1,
+      garmentColor: "",
+      inkColor: "",
     },
   });
 
   const serviceType = form.watch("serviceType");
+
+  // Check if the selected product is a single-color template
+  const isSingleColorTemplate = (template: TemplateSize | null): boolean => {
+    if (!template || !template.id) return false;
+    const id = template.id.toLowerCase();
+    // Check if template ID starts with single-, zero-, or reflective-
+    const isSingleColor = id.startsWith('single-') || id.startsWith('zero-') || id.startsWith('reflective-');
+    console.log('🎨 Checking if template is single-color:', { 
+      templateId: template.id, 
+      templateLabel: template.label,
+      isSingleColor 
+    });
+    return isSingleColor;
+  };
 
   const submitMutation = useMutation({
     mutationFn: async (data: VectorizationFormData) => {
@@ -89,6 +111,16 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
         }
         formData.append('transferProduct', data.transferProduct);
         formData.append('quantity', (data.quantity || 1).toString());
+        
+        // Add garment color (required for all products)
+        if (data.garmentColor) {
+          formData.append('garmentColor', data.garmentColor);
+        }
+        
+        // Add ink color (required for single-color templates)
+        if (data.inkColor) {
+          formData.append('inkColor', data.inkColor);
+        }
       }
 
       const response = await fetch('/api/vectorization-requests', {
@@ -147,6 +179,11 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       form.setValue('quantity', copies);
       form.clearErrors('transferProduct');
       form.clearErrors('quantity');
+      // Reset colors when changing product
+      setGarmentColor(null);
+      setInkColor(null);
+      form.setValue('garmentColor', '');
+      form.setValue('inkColor', '');
     }
     setShowTemplateSelector(false);
   };
@@ -158,13 +195,35 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
 
   const onSubmit = (data: VectorizationFormData) => {
     // Validate product selection for vectorization-with-product
-    if (data.serviceType === "vectorization-with-product" && !selectedProduct) {
-      toast({
-        title: "Product Required",
-        description: "Please select a transfer product",
-        variant: "destructive",
-      });
-      return;
+    if (data.serviceType === "vectorization-with-product") {
+      if (!selectedProduct) {
+        toast({
+          title: "Product Required",
+          description: "Please select a transfer product",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate garment color
+      if (!garmentColor) {
+        toast({
+          title: "Garment Color Required",
+          description: "Please select a garment color for your transfer",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate ink color for single-color templates
+      if (isSingleColorTemplate(selectedProduct) && !inkColor) {
+        toast({
+          title: "Ink Color Required",
+          description: "Please select an ink color for single-color transfers",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     submitMutation.mutate(data);
@@ -177,6 +236,8 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       form.reset();
       setUploadedFile(null);
       setSelectedProduct(null);
+      setGarmentColor(null);
+      setInkColor(null);
       onOpenChange(false);
     }
   };
@@ -416,6 +477,140 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                             </FormItem>
                           )}
                         />
+                      )}
+
+                      {/* Garment Color Selection (only show if product selected) */}
+                      {selectedProduct && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Palette className="w-4 h-4" />
+                            Garment Color
+                            <span className="text-red-500 text-sm">*Required</span>
+                          </Label>
+                          <div className="border rounded-lg p-4 bg-muted/50">
+                            {garmentColor ? (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="w-10 h-10 rounded border border-gray-300 shadow-sm"
+                                    style={{ backgroundColor: garmentColor }}
+                                  />
+                                  <div>
+                                    <p className="font-medium text-sm">Selected Color</p>
+                                    <p className="text-xs text-muted-foreground">{garmentColor}</p>
+                                  </div>
+                                </div>
+                                <GarmentColorModal
+                                  currentColor={garmentColor}
+                                  onColorChange={(color) => {
+                                    setGarmentColor(color);
+                                    form.setValue('garmentColor', color);
+                                  }}
+                                  trigger={
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={submitMutation.isPending}
+                                    >
+                                      Change
+                                    </Button>
+                                  }
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-center py-2">
+                                <GarmentColorModal
+                                  currentColor={garmentColor}
+                                  onColorChange={(color) => {
+                                    setGarmentColor(color);
+                                    form.setValue('garmentColor', color);
+                                  }}
+                                  trigger={
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={submitMutation.isPending}
+                                      data-testid="button-select-garment-color"
+                                    >
+                                      <Palette className="w-4 h-4 mr-2" />
+                                      Select Garment Color
+                                    </Button>
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Ink Color Selection (only show if product is single-color template) */}
+                      {selectedProduct && isSingleColorTemplate(selectedProduct) && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <PaintBucket className="w-4 h-4" />
+                            Ink Color
+                            <span className="text-red-500 text-sm">*Required for Single-Color</span>
+                          </Label>
+                          <div className="border rounded-lg p-4 bg-muted/50">
+                            {inkColor ? (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div 
+                                    className="w-10 h-10 rounded border border-gray-300 shadow-sm"
+                                    style={{ backgroundColor: inkColor }}
+                                  />
+                                  <div>
+                                    <p className="font-medium text-sm">Selected Ink Color</p>
+                                    <p className="text-xs text-muted-foreground">{inkColor}</p>
+                                  </div>
+                                </div>
+                                <InkColorModal
+                                  currentColor={inkColor}
+                                  onColorChange={(color) => {
+                                    setInkColor(color);
+                                    form.setValue('inkColor', color);
+                                  }}
+                                  templateId={selectedProduct.id}
+                                  trigger={
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={submitMutation.isPending}
+                                    >
+                                      Change
+                                    </Button>
+                                  }
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-center py-2">
+                                <InkColorModal
+                                  currentColor={inkColor}
+                                  onColorChange={(color) => {
+                                    setInkColor(color);
+                                    form.setValue('inkColor', color);
+                                  }}
+                                  templateId={selectedProduct.id}
+                                  trigger={
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={submitMutation.isPending}
+                                      data-testid="button-select-ink-color"
+                                    >
+                                      <PaintBucket className="w-4 h-4 mr-2" />
+                                      Select Ink Color
+                                    </Button>
+                                  }
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
                     </>
                   )}
