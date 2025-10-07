@@ -21,8 +21,9 @@ try:
 except ImportError:
     print("❌ PyMuPDF not installed. Installing...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "PyMuPDF==1.23.26"])
-    import fitz
-    print("✅ PyMuPDF installed successfully")
+    print("✅ PyMuPDF installed - please run the script again to use it")
+    print("   Run: python3 test-pymupdf-comparison.py")
+    sys.exit(0)
 
 # PyMuPDF bounds extraction (Python implementation)
 def extract_bounds_pymupdf(pdf_path):
