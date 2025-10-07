@@ -15,7 +15,7 @@ import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowRight, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText } from "lucide-react";
+import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -1047,6 +1047,8 @@ export default function UploadTool() {
             isUploading={isUploading}
             uploadProgress={uploadProgress}
             maintainAspectRatio={maintainAspectRatio}
+            onContinue={handleNextStep}
+            currentStep={currentStep}
           />
         </div>
 
@@ -1084,10 +1086,6 @@ export default function UploadTool() {
             >
               <Download className="w-4 h-4 mr-2" />
               Generate PDF
-            </Button>
-            <Button onClick={handleNextStep} disabled={currentStep === 5}>
-              {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
-              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -122,6 +122,8 @@ interface CanvasWorkspaceProps {
   isUploading?: boolean;
   uploadProgress?: number;
   maintainAspectRatio?: boolean;
+  onContinue?: () => void;
+  currentStep?: number;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -148,7 +150,9 @@ export default function CanvasWorkspace({
   onLogoUpload,
   isUploading = false,
   uploadProgress = 0,
-  maintainAspectRatio = true
+  maintainAspectRatio = true,
+  onContinue,
+  currentStep = 1
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   
@@ -1289,6 +1293,26 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Scale and center all content within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Continue Button - green color */}
+              {onContinue && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={onContinue}
+                      disabled={currentStep === 5}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {currentStep === 2 ? "Continue to Pre-flight Check" : "Continue"}
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Continue to the next step</p>
                   </TooltipContent>
                 </Tooltip>
               )}
