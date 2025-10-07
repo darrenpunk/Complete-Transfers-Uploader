@@ -13,7 +13,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { ProductSelectorModal } from "@/components/product-selector-modal";
+import ProductLauncherModal from "@/components/product-launcher-modal";
+import TemplateSelectorModal from "@/components/template-selector-modal";
 
 const vectorizationFormSchema = z.object({
   file: z.any().refine((file) => file instanceof File, "Please select a file to upload"),
@@ -39,8 +40,10 @@ interface TemplateSize {
   label: string;
   width: number;
   height: number;
+  pixelWidth: number;
+  pixelHeight: number;
   group: string;
-  description: string;
+  description: string | null;
 }
 
 export function VectorizationServiceForm({ open, onOpenChange }: VectorizationServiceFormProps) {
@@ -48,7 +51,9 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string>("");
-  const [showProductSelector, setShowProductSelector] = useState(false);
+  const [showProductLauncher, setShowProductLauncher] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<TemplateSize | null>(null);
   const { toast } = useToast();
 
@@ -128,18 +133,27 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
     }
   };
 
-  const handleProductSelect = (
-    template: TemplateSize, 
-    garmentColor: string | null, 
-    inkColor: string | null, 
-    quantity: number
-  ) => {
-    setSelectedProduct(template);
-    form.setValue('transferProduct', template.id);
-    form.setValue('quantity', quantity);
-    form.clearErrors('transferProduct');
-    form.clearErrors('quantity');
-    setShowProductSelector(false);
+  const handleProductLauncherSelect = (productId: string) => {
+    setSelectedProductGroup(productId);
+    setShowProductLauncher(false);
+    setShowTemplateSelector(true);
+  };
+
+  const handleTemplateSelect = (templateId: string, copies: number) => {
+    const template = templates.find(t => t.id === templateId);
+    if (template) {
+      setSelectedProduct(template);
+      form.setValue('transferProduct', template.id);
+      form.setValue('quantity', copies);
+      form.clearErrors('transferProduct');
+      form.clearErrors('quantity');
+    }
+    setShowTemplateSelector(false);
+  };
+
+  const handleBackToProductLauncher = () => {
+    setShowTemplateSelector(false);
+    setShowProductLauncher(true);
   };
 
   const onSubmit = (data: VectorizationFormData) => {
@@ -352,7 +366,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setShowProductSelector(true)}
+                                  onClick={() => setShowProductLauncher(true)}
                                   disabled={submitMutation.isPending}
                                 >
                                   Change
@@ -367,7 +381,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setShowProductSelector(true)}
+                                onClick={() => setShowProductLauncher(true)}
                                 disabled={submitMutation.isPending}
                                 data-testid="button-select-product"
                               >
@@ -486,12 +500,38 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
         </DialogContent>
       </Dialog>
 
-      {/* Product Selector Modal */}
-      <ProductSelectorModal
-        open={showProductSelector}
-        onOpenChange={setShowProductSelector}
-        onSelectProduct={handleProductSelect}
-        templates={templates}
+      {/* Product Launcher Modal */}
+      <ProductLauncherModal
+        open={showProductLauncher}
+        onClose={() => setShowProductLauncher(false)}
+        onSelectProduct={handleProductLauncherSelect}
+      />
+
+      {/* Template Selector Modal */}
+      <TemplateSelectorModal
+        open={showTemplateSelector}
+        templates={templates.filter(t => {
+          const productMap: Record<string, string[]> = {
+            "full-colour-transfers": ["Screen Printed Transfers"],
+            "full-colour-metallic": ["Screen Printed Transfers"],
+            "full-colour-hd": ["Screen Printed Transfers"],
+            "single-colour-transfers": ["Screen Printed Transfers"],
+            "dtf-transfers": ["Digital Transfers"],
+            "uv-dtf": ["Digital Transfers"],
+            "custom-badges": ["Digital Transfers"],
+            "applique-badges": ["Digital Transfers"],
+            "reflective-transfers": ["Screen Printed Transfers"],
+            "zero-single-colour": ["Screen Printed Transfers"],
+            "sublimation-transfers": ["Digital Transfers"],
+          };
+          
+          const allowedGroups = productMap[selectedProductGroup] || [];
+          return allowedGroups.includes(t.group || '');
+        })}
+        onSelectTemplate={handleTemplateSelect}
+        onClose={() => setShowTemplateSelector(false)}
+        onBack={handleBackToProductLauncher}
+        selectedGroup={selectedProductGroup}
       />
     </>
   );
