@@ -161,7 +161,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5 text-primary" />
@@ -172,205 +172,211 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Service Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Service Details</CardTitle>
-              <CardDescription>
-                Professional vectorization service by Complete Transfers design team
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">Service Charge:</span>
-                <span className="text-lg font-bold text-primary">€15.00 ex VAT</span>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>• High-quality vector conversion</p>
-                <p>• Scalable SVG format output</p>
-                <p>• Professional design team review</p>
-                <p>• Color optimization for print</p>
-              </div>
-            </CardContent>
-          </Card>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                {/* Service Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Service Details</CardTitle>
+                    <CardDescription>
+                      Professional vectorization service by Complete Transfers design team
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Service Charge:</span>
+                      <span className="text-lg font-bold text-primary">€15.00 ex VAT</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>• High-quality vector conversion</p>
+                      <p>• Scalable SVG format output</p>
+                      <p>• Professional design team review</p>
+                      <p>• Color optimization for print</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          {/* Upload Form */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* File Upload */}
-              <FormField
-                control={form.control}
-                name="file"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Upload File</FormLabel>
-                    <FormControl>
-                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
-                        <input
-                          type="file"
-                          accept="image/*,.pdf,.ai,.eps"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          id="vectorization-file-upload"
-                          disabled={submitMutation.isPending}
-                        />
-                        <label htmlFor="vectorization-file-upload" className="cursor-pointer">
-                          {uploadedFile ? (
-                            <div className="space-y-2">
-                              <FileImage className="h-12 w-12 mx-auto text-primary" />
-                              <p className="font-medium">{uploadedFile.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
-                              <p className="font-medium">Click to upload file</p>
-                              <p className="text-sm text-muted-foreground">
-                                Supports: JPG, PNG, PDF, AI, EPS (max 200MB)
-                              </p>
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                {/* File Upload */}
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Upload File</FormLabel>
+                      <FormControl>
+                        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*,.pdf,.ai,.eps"
+                            onChange={handleFileChange}
+                            className="hidden"
+                            id="vectorization-file-upload"
+                            disabled={submitMutation.isPending}
+                          />
+                          <label htmlFor="vectorization-file-upload" className="cursor-pointer">
+                            {uploadedFile ? (
+                              <div className="space-y-2">
+                                <FileImage className="h-12 w-12 mx-auto text-primary" />
+                                <p className="font-medium">{uploadedFile.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
+                                <p className="font-medium">Click to upload file</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Supports: JPG, PNG, PDF, AI, EPS (max 200MB)
+                                </p>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              {/* Comments */}
-              <FormField
-                control={form.control}
-                name="comments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Requirements & Comments</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Please describe what you need:
+              {/* Right Column */}
+              <div className="space-y-4">
+                {/* Comments */}
+                <FormField
+                  control={form.control}
+                  name="comments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Requirements & Comments</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Please describe what you need:
 - Specific colors to use or avoid
 - Elements to include or remove
 - Style preferences
 - Any special requirements"
-                        className="min-h-[120px]"
-                        disabled={submitMutation.isPending}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Print Size */}
-              <FormField
-                control={form.control}
-                name="printSize"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Final Print Size</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., A4, 200x100mm, 8x6 inches"
-                        disabled={submitMutation.isPending}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Transfer Product Selection */}
-              <FormField
-                control={form.control}
-                name="transferProduct"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Transfer Product</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={submitMutation.isPending}
-                    >
-                      <FormControl>
-                        <SelectTrigger data-testid="select-transfer-product">
-                          <SelectValue placeholder="Select transfer product type" />
-                        </SelectTrigger>
+                          className="min-h-[140px]"
+                          disabled={submitMutation.isPending}
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {TRANSFER_PRODUCTS.map((product) => (
-                          <SelectItem key={product.value} value={product.value}>
-                            {product.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Quantity Selection */}
-              <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quantity</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="10000"
-                        placeholder="Enter quantity"
-                        disabled={submitMutation.isPending}
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        data-testid="input-quantity"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Submit Button */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  disabled={submitMutation.isPending}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={submitMutation.isPending || !uploadedFile}
-                  className="flex-1"
-                  data-testid="button-submit-vectorization"
-                >
-                  {submitMutation.isPending ? (
-                    <>
-                      <Upload className="h-4 w-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Submit Request & Add to Cart
-                    </>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
+                />
+
+                {/* Print Size and Quantity in a row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="printSize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Final Print Size</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., A4, 200x100mm"
+                            disabled={submitMutation.isPending}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10000"
+                            placeholder="Enter quantity"
+                            disabled={submitMutation.isPending}
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                            data-testid="input-quantity"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Transfer Product Selection */}
+                <FormField
+                  control={form.control}
+                  name="transferProduct"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transfer Product</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={submitMutation.isPending}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="select-transfer-product">
+                            <SelectValue placeholder="Select transfer product type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TRANSFER_PRODUCTS.map((product) => (
+                            <SelectItem key={product.value} value={product.value}>
+                              {product.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </form>
-          </Form>
-        </div>
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="flex gap-3 pt-6 mt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitMutation.isPending}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={submitMutation.isPending || !uploadedFile}
+                className="flex-1"
+                data-testid="button-submit-vectorization"
+              >
+                {submitMutation.isPending ? (
+                  <>
+                    <Upload className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Submit Request & Add to Cart
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
