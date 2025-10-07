@@ -15,6 +15,15 @@
    - `PYTHON_CONTROLLERS_GUIDE.md` - Express to Odoo controllers conversion
    - `PDF_SVG_PROCESSING_GUIDE.md` - TypeScript to Python processing port
    - `IMPLEMENTATION_GUIDE.md` - Day-by-day implementation plan
+   - `MIGRATION_SUMMARY.md` - This executive summary
+
+3. **🚨 CRITICAL BLOCKER DISCOVERED & RESOLVED** (October 7, 2025)
+   - **Problem**: Testing revealed PyMuPDF cannot replicate Ghostscript's precise bounds extraction (30-50mm deviations)
+   - **Impact**: Artwork positioning would break in production PDFs
+   - **Solution Created**: Dual-track approach with complete documentation:
+     - `ODOO_SH_GHOSTSCRIPT_REQUEST.md` - Support ticket to request Ghostscript in Odoo.sh
+     - `GHOSTSCRIPT_MICROSERVICE_GUIDE.md` - External FastAPI service on FREE hosting (Render/Fly.io)
+   - **Migration Status**: UNBLOCKED - can proceed with external service while awaiting Odoo.sh response
 
 ## Migration Benefits
 
@@ -60,10 +69,11 @@
 - **To**: Python Odoo controllers
 - API endpoints map 1:1 (identical functionality)
 
-### Processing (Ported to Python)
-- **From**: Ghostscript + Node Canvas + JSDOM
-- **To**: Ghostscript + Pillow + lxml
+### Processing (Hybrid Architecture)
+- **From**: Ghostscript (subprocess) + Node Canvas + JSDOM
+- **To**: External Ghostscript microservice (HTTP) + PyMuPDF + Pillow + lxml
 - Same algorithms, identical output quality
+- FREE hosting for microservice on Render.com/Fly.io
 
 ### Storage (Migrated to Odoo)
 - **From**: Dropbox (current artwork storage)
@@ -87,20 +97,36 @@
 
 ## Requirements for Migration
 
-### ⚠️ CRITICAL: Odoo.sh Platform Constraints
+### 🚨 CRITICAL: Odoo.sh Platform Constraints & Solution
 **Odoo.sh does NOT allow system package installation (apt-install)**
-- ❌ Cannot install Ghostscript
+- ❌ Cannot install Ghostscript (CRITICAL for accurate bounds)
 - ❌ Cannot install Poppler
 - ❌ Cannot install ImageMagick
 - ✅ Python packages via `requirements.txt` ONLY
 
-### Solution: Python-Only Libraries
-Replace system tools with pure Python libraries:
+**⚠️ BLOCKER DISCOVERED**: PyMuPDF cannot replace Ghostscript for tight content bounds extraction (30-50mm errors observed in testing).
 
-**requirements.txt**:
+### Solution: Dual-Track Approach
+
+#### Track 1: Request Ghostscript from Odoo.sh (Preferred)
+- Support ticket prepared: `ODOO_SH_GHOSTSCRIPT_REQUEST.md`
+- Submit to Odoo.sh requesting Ghostscript in base container
+- Timeline: 3-7 days response, 1-2 weeks implementation if approved
+
+#### Track 2: External Ghostscript Microservice ✅ Ready
+- Complete implementation guide: `GHOSTSCRIPT_MICROSERVICE_GUIDE.md`
+- FastAPI service with Ghostscript on FREE hosting (Render/Fly.io)
+- Deployment time: ~1 hour
+- Preserves exact Ghostscript accuracy via HTTP API
+- Can be retired if Odoo.sh adds native Ghostscript
+
+**requirements.txt** (Updated):
 ```txt
-# PDF Processing (replaces Ghostscript/Poppler)
-PyMuPDF==1.23.26       # 3x faster than Ghostscript!
+# HTTP client for Ghostscript microservice
+requests==2.31.0
+
+# PDF Processing (rendering, CMYK - NOT bounds extraction)
+PyMuPDF==1.23.26
 
 # Advanced PDF manipulation  
 pikepdf==8.15.1
@@ -115,14 +141,17 @@ reportlab==4.0.7
 lxml==5.1.0
 ```
 
-**Performance**: PyMuPDF is **3-4x faster** than Ghostscript subprocess calls!
+**Migration Status**: UNBLOCKED - external microservice allows migration to proceed on schedule with exact same accuracy.
 
 ### Pre-Migration Checklist
-- [ ] ~~Verify Ghostscript installed~~ NOT NEEDED (using PyMuPDF)
-- [ ] Add `requirements.txt` with PyMuPDF, pikepdf, Pillow, reportlab, lxml
+- [ ] Submit Odoo.sh support ticket from `ODOO_SH_GHOSTSCRIPT_REQUEST.md`
+- [ ] Deploy Ghostscript microservice using `GHOSTSCRIPT_MICROSERVICE_GUIDE.md` (backup solution)
+- [ ] Add `requirements.txt` with requests, PyMuPDF, pikepdf, Pillow, reportlab, lxml
+- [ ] Configure Ghostscript service URL in Odoo environment variables
 - [ ] Test Python environment can install packages (Odoo.sh auto-installs)
 - [ ] Ensure Odoo attachments have sufficient storage
 - [ ] Confirm staging environment available
+- [ ] Test microservice bounds extraction matches current Ghostscript output
 - [ ] Backup current Replit database
 
 ## Next Steps

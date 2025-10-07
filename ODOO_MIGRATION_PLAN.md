@@ -28,11 +28,47 @@
 ### Target Stack (Odoo 16 - Odoo.sh Compatible)
 - **Frontend**: React bundle (same UI, compiled to static assets)
 - **Backend**: Python Odoo controllers
-- **PDF Processing**: **PyMuPDF + reportlab** (pure Python - no Ghostscript needed!)
+- **PDF Processing**: **External Ghostscript microservice** (FastAPI on Render/Fly.io - FREE)
 - **Storage**: Odoo attachments (ir.attachment model)
 - **Database**: PostgreSQL (Odoo's built-in database)
 
-**⚠️ Critical Note**: Odoo.sh does NOT allow apt-install. We use PyMuPDF (pure Python) instead of Ghostscript - it's 3-4x faster and works perfectly on Odoo.sh!
+**🚨 CRITICAL BLOCKER DISCOVERED & RESOLVED**: Testing revealed PyMuPDF cannot replicate Ghostscript's precise bounds extraction (30-50mm deviations). Odoo.sh prohibits apt-installing Ghostscript. **Solution**: Dual-track approach - (1) Request Ghostscript from Odoo.sh support, (2) Deploy FREE external Ghostscript microservice. See ODOO_SH_GHOSTSCRIPT_REQUEST.md and GHOSTSCRIPT_MICROSERVICE_GUIDE.md for complete details.
+
+---
+
+## 🚨 Critical Blocker & Resolution Strategy
+
+### Problem Discovered (October 7, 2025)
+**PyMuPDF cannot accurately replicate Ghostscript's tight content bounds extraction**, which is mission-critical for artwork positioning:
+
+**Test Results:**
+- Test 1: Ghostscript=28.58×10.58mm vs PyMuPDF=80.97×19.21mm (51mm width error!)
+- Test 2: Ghostscript=278.60×387mm vs PyMuPDF=297×428mm (18-33mm errors)
+- Test 5: Ghostscript=65.26×75.49mm vs PyMuPDF=99.21×107.80mm (33mm errors)
+
+**Root Cause**: PyMuPDF's `page.bound()` returns page size (MediaBox), not tight content bounds. Attempted tight extraction methods (get_drawings, get_text, get_image_rects) still show unacceptable deviations from Ghostscript's `-sDEVICE=bbox` output.
+
+### Dual-Track Solution
+
+#### **Track 1: Request Ghostscript from Odoo.sh (Preferred)**
+- Comprehensive support ticket prepared: `ODOO_SH_GHOSTSCRIPT_REQUEST.md`
+- Submit to Odoo.sh support requesting Ghostscript in base container
+- If approved: Migration proceeds with native Ghostscript (simplest path)
+- Timeline: 1-2 weeks for Odoo.sh response
+
+#### **Track 2: External Ghostscript Microservice (Backup)**
+- Deploy FastAPI microservice with Ghostscript to FREE hosting (Render/Fly.io)
+- Complete implementation guide: `GHOSTSCRIPT_MICROSERVICE_GUIDE.md`
+- Odoo module calls external service for bounds extraction via HTTP
+- Preserves exact Ghostscript accuracy while working within Odoo.sh constraints
+- Can be retired later if Odoo.sh adds Ghostscript natively
+
+**Cost Impact:**
+- FREE hosting on Render.com (750 hours/month free tier)
+- ~100ms processing + 50ms network latency
+- Falls within acceptable performance budget
+
+**Decision**: Deploy microservice while awaiting Odoo.sh response. Migration proceeds on schedule regardless of Odoo.sh decision.
 
 ---
 

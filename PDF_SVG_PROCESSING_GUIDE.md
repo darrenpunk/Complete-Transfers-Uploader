@@ -1,14 +1,19 @@
 # PDF/SVG Processing Migration: TypeScript to Python (Odoo.sh Compatible)
 
-## ⚠️ Critical Constraint: No System Packages on Odoo.sh
+## 🚨 CRITICAL BLOCKER: PyMuPDF Cannot Replace Ghostscript
 
 **Odoo.sh does NOT allow apt-install**, which means:
-- ❌ No Ghostscript
+- ❌ No Ghostscript (CRITICAL - needed for accurate bounds)
 - ❌ No Poppler (pdfimages, pdfinfo)
 - ❌ No ImageMagick
 - ✅ Python packages ONLY via `requirements.txt`
 
-This guide uses **pure Python libraries** that work on Odoo.sh.
+**BLOCKER DISCOVERED (October 7, 2025)**: Testing proved PyMuPDF **cannot** accurately replicate Ghostscript's tight content bounds extraction:
+- **Ghostscript bbox**: 28.58×10.58mm (actual content)
+- **PyMuPDF attempt**: 80.97×19.21mm (page size - 51mm error!)
+- **Impact**: 30-50mm deviations break artwork positioning in production PDFs
+
+**SOLUTION**: Use external Ghostscript microservice (FREE hosting on Render/Fly.io). See `GHOSTSCRIPT_MICROSERVICE_GUIDE.md` for complete implementation.
 
 ---
 
@@ -44,13 +49,15 @@ Port PDF bounds extraction and SVG analysis from Node.js/TypeScript to Python us
 
 ---
 
-## Python Implementation Strategy (Odoo.sh Compatible)
+## Python Implementation Strategy (With External Ghostscript Service)
 
 ### Target Stack
-- **PDF Processing**: **PyMuPDF (fitz)** - Replaces Ghostscript completely
+- **PDF Bounds Extraction**: **External Ghostscript microservice** (FastAPI on Render/Fly.io)
+- **PDF Rendering/Analysis**: **PyMuPDF (fitz)** - For non-bounds operations
 - **SVG Processing**: **lxml** (XML parsing)
 - **Libraries**:
-  - `PyMuPDF` - PDF bounds, rendering, CMYK detection (replaces Ghostscript)
+  - `requests` - HTTP client to call Ghostscript service
+  - `PyMuPDF` - PDF rendering, CMYK detection (NOT for tight bounds)
   - `Pillow` (PIL) - Image analysis (replaces Canvas)
   - `lxml` - SVG XML parsing (replaces JSDOM)
   - `pikepdf` - PDF manipulation (replaces pdf-lib)
@@ -58,7 +65,10 @@ Port PDF bounds extraction and SVG analysis from Node.js/TypeScript to Python us
 
 ### Python Requirements (`requirements.txt`)
 ```txt
-# PDF Processing (replaces Ghostscript/Poppler)
+# HTTP client for Ghostscript microservice
+requests==2.31.0
+
+# PDF Processing (rendering, CMYK detection - NOT bounds extraction)
 PyMuPDF==1.23.26
 
 # Advanced PDF manipulation
@@ -74,9 +84,11 @@ reportlab==4.0.7
 lxml==5.1.0
 ```
 
+**Note**: Tight content bounds extraction uses external Ghostscript microservice (see GHOSTSCRIPT_MICROSERVICE_GUIDE.md).
+
 ---
 
-## Part 1: PDF Bounds Extraction with PyMuPDF
+## Part 1: PDF Bounds Extraction with External Ghostscript Service
 
 ### Current TypeScript Implementation
 
@@ -94,33 +106,36 @@ async extractWithGhostscript(pdfPath: string): Promise<BoundsExtractionResult> {
 }
 ```
 
-### Python Port with PyMuPDF
+### Python Port with External Ghostscript Microservice
+
+**⚠️ PyMuPDF Accuracy Issue**: Testing showed PyMuPDF cannot match Ghostscript bbox precision (30-50mm deviations). Using external service preserves exact accuracy.
 
 **File: `odoo_artwork_uploader/utils/pdf_processor.py`**
 
 ```python
-import fitz  # PyMuPDF
+import requests
 import io
 import logging
-from PIL import Image
 
 _logger = logging.getLogger(__name__)
 
+# Ghostscript microservice URL (from Odoo config or environment)
+GHOSTSCRIPT_SERVICE_URL = "https://your-service.onrender.com"
+
 
 class PDFBoundsExtractor:
-    """Extract tight vector content bounds from PDF files using PyMuPDF"""
+    """Extract tight vector content bounds from PDF using external Ghostscript service"""
     
     @staticmethod
     def extract_bounds(pdf_data: bytes, page_number: int = 1, options: dict = None) -> dict:
-        """Extract content bounds from PDF
+        """Extract content bounds from PDF via Ghostscript microservice
         
         Args:
             pdf_data (bytes): PDF file binary data
             page_number (int): Page to analyze (1-indexed)
             options (dict): Optional extraction options
-                - include_stroke_extents (bool): Include stroke widths
-                - padding (float): Additional padding in points
-                - tolerance (float): Numerical tolerance
+                - include_cmyk (bool): Detect CMYK colors (default: False)
+                - timeout (int): Request timeout in seconds (default: 60)
                 
         Returns:
             dict: {
