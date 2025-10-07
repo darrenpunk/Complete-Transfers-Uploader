@@ -511,22 +511,25 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       <TemplateSelectorModal
         open={showTemplateSelector}
         templates={templates.filter(t => {
-          const productMap: Record<string, string[]> = {
-            "full-colour-transfers": ["Screen Printed Transfers"],
-            "full-colour-metallic": ["Screen Printed Transfers"],
-            "full-colour-hd": ["Screen Printed Transfers"],
-            "single-colour-transfers": ["Screen Printed Transfers"],
-            "dtf-transfers": ["Digital Transfers"],
-            "uv-dtf": ["Digital Transfers"],
-            "custom-badges": ["Digital Transfers"],
-            "applique-badges": ["Digital Transfers"],
-            "reflective-transfers": ["Screen Printed Transfers"],
-            "zero-single-colour": ["Screen Printed Transfers"],
-            "sublimation-transfers": ["Digital Transfers"],
+          if (!selectedProductGroup) return true;
+          
+          // Define exact template IDs for each product type (matching upload-tool.tsx)
+          const productTemplates: { [key: string]: string[] } = {
+            "full-colour-transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small", "template-295x300"],
+            "full-colour-metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small", "metallic-295x300"],
+            "full-colour-hd": ["hd-A3", "hd-A4", "hd-295x300"],
+            "single-colour-transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small", "single-295x300"],
+            "dtf-transfers": ["dtf-SRA3", "dtf-large"],
+            "uv-dtf": ["uvdtf-A3"],
+            "custom-badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
+            "applique-badges": ["applique-A6", "applique-square", "applique-badge", "applique-small"],
+            "reflective-transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
+            "zero-single-colour": ["zero-A3", "zero-A4", "zero-A5", "zero-A6", "zero-transfer-size", "zero-square", "zero-badge", "zero-small"],
+            "sublimation-transfers": ["sublimation-SRA3", "sublimation-A4", "sublimation-A5", "sublimation-A6"],
           };
           
-          const allowedGroups = productMap[selectedProductGroup] || [];
-          return allowedGroups.includes(t.group || '');
+          const allowedTemplates = productTemplates[selectedProductGroup] || [];
+          return allowedTemplates.includes(t.id);
         })}
         onSelectTemplate={handleTemplateSelect}
         onClose={() => setShowTemplateSelector(false)}
