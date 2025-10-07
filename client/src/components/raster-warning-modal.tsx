@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Camera, Wand2, Users } from "lucide-react";
+import { AlertTriangle, Camera, Users } from "lucide-react";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { useState } from "react";
 
@@ -9,7 +9,6 @@ interface RasterWarningModalProps {
   onClose: () => void;
   fileName: string;
   onPhotographicApprove: () => void;
-  onVectorizeWithAI: () => void;
   onVectorizeWithService: () => void;
   onOpenVectorizationForm?: () => void;
 }
@@ -19,7 +18,6 @@ export function RasterWarningModal({
   onClose,
   fileName,
   onPhotographicApprove,
-  onVectorizeWithAI,
   onVectorizeWithService,
   onOpenVectorizationForm
 }: RasterWarningModalProps) {
@@ -32,10 +30,6 @@ export function RasterWarningModal({
       case 'photographic':
         onPhotographicApprove();
         onClose();
-        break;
-      case 'ai-vectorize':
-        onVectorizeWithAI();
-        // Don't call onClose() here - let the parent component handle modal transitions
         break;
       case 'service-vectorize':
         console.log('service-vectorize selected, onOpenVectorizationForm:', !!onOpenVectorizationForm);
@@ -103,30 +97,7 @@ export function RasterWarningModal({
               </div>
             </div>
 
-            {/* Option 2: AI Vectorization */}
-            <div className="border rounded-lg p-4 hover:border-primary/50 transition-colors">
-              <div className="flex items-start gap-4">
-                <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
-                  <Wand2 className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">AI Vectorization</h3>
-                  <p className="text-muted-foreground text-sm mb-4">
-                    This is a logo or simple graphic that can be automatically converted to vector format.
-                    Uses AI-powered vectorization for instant conversion with preview.
-                  </p>
-                  <Button 
-                    onClick={() => handleOptionSelect('ai-vectorize')}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Vectorize with AI Tool
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Option 3: Professional Service */}
+            {/* Option 2: Professional Service */}
             <div className="border rounded-lg p-4 hover:border-primary/50 transition-colors">
               <div className="flex items-start gap-4">
                 <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">

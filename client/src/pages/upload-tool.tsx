@@ -22,7 +22,6 @@ import { VectorizationServiceForm } from "@/components/vectorization-service-for
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
 import { RasterWarningModal } from "@/components/raster-warning-modal";
-import { VectorizerModal } from "@/components/vectorizer-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -50,7 +49,6 @@ export default function UploadTool() {
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
-  const [showVectorizer, setShowVectorizer] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -612,83 +610,6 @@ export default function UploadTool() {
     setShowRasterWarning(false);
   };
 
-  const handleVectorizeWithAI = async () => {
-    console.log('handleVectorizeWithAI called with pendingRasterFile:', pendingRasterFile);
-    
-    if (pendingRasterFile) {
-      // Check if we already have a valid PNG/JPEG file ready for vectorization
-      if (pendingRasterFile.file && pendingRasterFile.file.size > 0 && pendingRasterFile.file.type.startsWith('image/')) {
-        console.log('Already have PNG/JPEG file ready, opening vectorizer directly:', {
-          fileName: pendingRasterFile.fileName,
-          fileSize: pendingRasterFile.file.size,
-          fileType: pendingRasterFile.file.type
-        });
-        setShowRasterWarning(false);  
-        setShowVectorizer(true);
-        return;
-      }
-      
-      // Only try to extract if we don't have a valid image file yet
-      if (pendingRasterFile.logoId) {
-        console.log('Need to fetch raster image from PDF, logoId:', pendingRasterFile.logoId);
-        try {
-          // Add header to indicate this is for vectorization (should preserve quality)
-          const response = await fetch(`/api/logos/${pendingRasterFile.logoId}/raster-image?forVectorization=true`, {
-            headers: {
-              'X-Vectorization-Request': 'true'
-            }
-          });
-          console.log('Raster image fetch response:', response.status, response.ok);
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Failed to extract raster image:', errorText);
-            throw new Error('Failed to extract raster image');
-          }
-          const blob = await response.blob();
-          console.log('Received blob:', blob.size, blob.type);
-          
-          // Validate blob
-          if (blob.size === 0) {
-            throw new Error('Extracted image is empty');
-          }
-          
-          const pngFileName = pendingRasterFile.fileName.replace('.pdf', '.png');
-          const file = new File([blob], pngFileName, { type: blob.type || 'image/png' });
-          console.log('Created file object:', {
-            name: file.name,
-            size: file.size,
-            type: file.type
-          });
-          
-          // Create a new pending file object with the extracted PNG
-          const extractedPendingFile = {
-            file: file,
-            fileName: pngFileName,
-            logoId: pendingRasterFile.logoId,
-            url: URL.createObjectURL(file)
-          };
-          
-          // Update state and open vectorizer with the extracted PNG
-          setPendingRasterFile(extractedPendingFile);
-          setShowRasterWarning(false);
-          setShowVectorizer(true);
-        } catch (error) {
-          console.error('Failed to fetch PDF for vectorization:', error);
-          toast({
-            title: "Error",
-            description: "Failed to prepare file for vectorization",
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Fallback - just open the vectorizer
-        setShowRasterWarning(false);
-        setShowVectorizer(true);
-      }
-    }
-  };
-
   const handleVectorizeWithService = () => {
     if (pendingRasterFile) {
       // Open vectorization form for the PDF
@@ -969,15 +890,7 @@ export default function UploadTool() {
               <GraduationCap className="w-4 h-4 mr-2" />
               Tutorial
             </Button>
-            <Button variant="outline" onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Vectorization Service button clicked, current state:', showVectorizationForm);
-              setShowVectorizationForm(prev => {
-                console.log('Setting showVectorizationForm from', prev, 'to true');
-                return true;
-              });
-            }}>
+            <Button variant="outline" onClick={() => setShowVectorizationForm(true)}>
               <Palette className="w-4 h-4 mr-2" />
               Vectorization Service
             </Button>
@@ -1031,10 +944,7 @@ export default function UploadTool() {
             onInkColorChange={handleInkColorChange}
             onAlignElement={handleAlignElement}
             onCenterAllElements={handleCenterAllElements}
-            onOpenVectorizationForm={() => {
-              console.log('onOpenVectorizationForm called from ToolsSidebar');
-              setShowVectorizationForm(true);
-            }}
+            onOpenVectorizationForm={() => setShowVectorizationForm(true)}
           />
         </div>
 
@@ -1188,139 +1098,7 @@ export default function UploadTool() {
           onClose={handleCloseRasterWarning}
           fileName={pendingRasterFile.fileName}
           onPhotographicApprove={handlePhotographicApprove}
-          onVectorizeWithAI={handleVectorizeWithAI}
           onVectorizeWithService={handleVectorizeWithService}
-        />
-      )}
-
-      {/* Vectorizer Modal */}
-      {pendingRasterFile && pendingRasterFile.file && (
-        <VectorizerModal
-          open={showVectorizer}
-          onClose={() => {
-            setShowVectorizer(false);
-            setPendingRasterFile(null);
-          }}
-          fileName={pendingRasterFile.file.name || pendingRasterFile.fileName}
-          imageFile={pendingRasterFile.file}
-          onVectorDownload={async (vectorSvg) => {
-            console.log('Vector download handler called with SVG for replacement');
-            
-            if (!currentProject || !pendingRasterFile?.logoId) {
-              console.error('Missing project or logoId for vector replacement');
-              return;
-            }
-
-            try {
-              // Create a blob from the SVG string
-              const blob = new Blob([vectorSvg], { type: 'image/svg+xml' });
-              const vectorFile = new File([blob], pendingRasterFile.fileName.replace(/\.(png|jpg|jpeg|pdf)$/i, '.svg'), { type: 'image/svg+xml' });
-              
-              // Upload the vectorized file to get a new logo record
-              const formData = new FormData();
-              formData.append('files', vectorFile);
-              
-              const response = await fetch(`/api/projects/${currentProject.id}/logos`, {
-                method: 'POST',
-                body: formData,
-              });
-              
-              if (!response.ok) {
-                throw new Error('Failed to upload vectorized file');
-              }
-              
-              const newLogos = await response.json();
-              console.log('Vectorized file uploaded successfully:', newLogos);
-              
-              if (newLogos.length > 0) {
-                const newVectorLogo = newLogos[0];
-                
-                // Find canvas elements that reference the original logo
-                const elementsToUpdate = canvasElements?.filter(el => el.logoId === pendingRasterFile.logoId) || [];
-                console.log('Found canvas elements to update:', elementsToUpdate.length);
-                
-                // Update each canvas element to reference the new vectorized logo
-                // Use the server-calculated dimensions from the logo upload response
-                console.log('🎯 Using server-calculated dimensions for vectorized logo:', {
-                  logoId: newVectorLogo.id,
-                  displayWidth: newVectorLogo.displayWidth,
-                  displayHeight: newVectorLogo.displayHeight
-                });
-                
-                for (const element of elementsToUpdate) {
-                  try {
-                    // Use the server-calculated dimensions from the vectorized logo
-                    // The server has already calculated the correct dimensions from the SVG
-                    const logoWidth = newVectorLogo.displayWidth || element.width;
-                    const logoHeight = newVectorLogo.displayHeight || element.height;
-                    
-                    console.log('🔄 Updating canvas element to use server dimensions:', {
-                      elementId: element.id,
-                      oldDimensions: { width: element.width, height: element.height },
-                      newDimensions: { width: logoWidth, height: logoHeight },
-                      logoId: newVectorLogo.id
-                    });
-                      
-                    // Update the canvas element with new logo and server-calculated dimensions
-                    await fetch(`/api/canvas-elements/${element.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        logoId: newVectorLogo.id,
-                        width: logoWidth,
-                        height: logoHeight
-                      })
-                    });
-                    
-                    console.log('✅ Updated canvas element:', element.id, 'with vectorized logo and server dimensions');
-                  } catch (error) {
-                    console.error('Failed to update canvas element:', element.id, error);
-                  }
-                }
-                
-                // Delete the original logo and its file
-                try {
-                  await fetch(`/api/logos/${pendingRasterFile.logoId}`, {
-                    method: 'DELETE'
-                  });
-                  console.log('Deleted original logo:', pendingRasterFile.logoId);
-                } catch (error) {
-                  console.error('Failed to delete original logo:', error);
-                }
-                
-                // Update query cache - remove old logo, add new one
-                queryClient.setQueryData(
-                  ["/api/projects", currentProject.id, "logos"],
-                  (oldLogos: any[] = []) => [
-                    ...oldLogos.filter(logo => logo.id !== pendingRasterFile.logoId),
-                    newVectorLogo
-                  ]
-                );
-                
-                // Refresh canvas elements to reflect the changes
-                queryClient.invalidateQueries({ 
-                  queryKey: ["/api/projects", currentProject.id, "canvas-elements"] 
-                });
-                
-                toast({
-                  title: "Vector Replacement Complete",
-                  description: "Original file replaced with vectorized version on canvas",
-                });
-              }
-              
-            } catch (error) {
-              console.error('Vector replacement failed:', error);
-              toast({
-                title: "Vector Replacement Failed",
-                description: "Failed to replace original with vectorized version",
-                variant: "destructive",
-              });
-            } finally {
-              // Close the vectorizer modal
-              setShowVectorizer(false);
-              setPendingRasterFile(null);
-            }
-          }}
         />
       )}
 
