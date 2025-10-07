@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, Ruler } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -157,7 +157,6 @@ export default function CanvasWorkspace({
  // Default to OFF (RGB preview)
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(true);
-  const [showRulers, setShowRulers] = useState(true);
   
   // File upload state
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
@@ -1275,22 +1274,6 @@ export default function CanvasWorkspace({
                   <p>Toggle alignment guides for positioning elements</p>
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={showRulers ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowRulers(!showRulers)}
-                  >
-                    <Ruler className="w-4 h-4 mr-1" />
-                    Rulers
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Toggle rulers for precise measurements in millimeters</p>
-                </TooltipContent>
-              </Tooltip>
-              
               {/* Fit to Bounds Button - show when elements exist on canvas */}
               {canvasElements && canvasElements.length > 0 && (
                 <Tooltip>
@@ -1354,137 +1337,12 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
-        {/* Rulers positioned relative to canvas */}
-        {showRulers && template && (
-          <div className="absolute inset-0 pointer-events-none z-10">
-            {/* Horizontal Ruler - spans full width */}
-            <div 
-              className="absolute bg-white border-b border-gray-200"
-              style={{ 
-                top: 0,
-                left: '30px',
-                right: 0,
-                height: '30px'
-              }}
-            >
-              <div className="relative w-full h-full flex items-center justify-center">
-                <div 
-                  className="relative"
-                  style={{
-                    width: canvasWidth,
-                    height: '30px'
-                  }}
-                >
-                  <svg className="absolute inset-0 w-full h-full">
-                    {(() => {
-                      const mmToPixelRatio = template.pixelWidth / template.width;
-                      const pixelsPerMm = mmToPixelRatio;
-                      const ticks = [];
-                      
-                      for (let mm = 0; mm <= template.width; mm += 1) {
-                        const x = mm * pixelsPerMm;
-                        const isMajor = mm % 10 === 0;
-                        const isMedium = mm % 5 === 0;
-                        
-                        if (isMajor) {
-                          ticks.push(
-                            <g key={`h-major-${mm}`}>
-                              <line x1={x} y1="15" x2={x} y2="30" stroke="#9CA3AF" strokeWidth="1" />
-                              <text x={x} y="12" textAnchor="middle" fontSize="9" fill="#6B7280">
-                                {mm}
-                              </text>
-                            </g>
-                          );
-                        } else if (isMedium) {
-                          ticks.push(
-                            <line key={`h-medium-${mm}`} x1={x} y1="20" x2={x} y2="30" stroke="#D1D5DB" strokeWidth="0.5" />
-                          );
-                        } else {
-                          ticks.push(
-                            <line key={`h-minor-${mm}`} x1={x} y1="25" x2={x} y2="30" stroke="#E5E7EB" strokeWidth="0.25" />
-                          );
-                        }
-                      }
-                      return ticks;
-                    })()}
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Vertical Ruler - spans full height */}
-            <div 
-              className="absolute bg-white border-r border-gray-200"
-              style={{ 
-                top: '30px',
-                left: 0,
-                bottom: 0,
-                width: '30px'
-              }}
-            >
-              <div className="relative w-full h-full flex items-center justify-center">
-                <div 
-                  className="relative"
-                  style={{
-                    width: '30px',
-                    height: canvasHeight
-                  }}
-                >
-                  <svg className="absolute inset-0 w-full h-full">
-                    {(() => {
-                      const mmToPixelRatio = template.pixelHeight / template.height;
-                      const pixelsPerMm = mmToPixelRatio;
-                      const ticks = [];
-                      
-                      for (let mm = 0; mm <= template.height; mm += 1) {
-                        const y = mm * pixelsPerMm;
-                        const isMajor = mm % 10 === 0;
-                        const isMedium = mm % 5 === 0;
-                        
-                        if (isMajor) {
-                          ticks.push(
-                            <g key={`v-major-${mm}`}>
-                              <line x1="15" y1={y} x2="30" y2={y} stroke="#9CA3AF" strokeWidth="1" />
-                              <text x="12" y={y + 3} textAnchor="middle" fontSize="9" fill="#6B7280" transform={`rotate(-90, 12, ${y + 3})`}>
-                                {mm}
-                              </text>
-                            </g>
-                          );
-                        } else if (isMedium) {
-                          ticks.push(
-                            <line key={`v-medium-${mm}`} x1="20" y1={y} x2="30" y2={y} stroke="#D1D5DB" strokeWidth="0.5" />
-                          );
-                        } else {
-                          ticks.push(
-                            <line key={`v-minor-${mm}`} x1="25" y1={y} x2="30" y2={y} stroke="#E5E7EB" strokeWidth="0.25" />
-                          );
-                        }
-                      }
-                      return ticks;
-                    })()}
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Corner Square */}
-            <div 
-              className="absolute top-0 left-0 bg-white border-r border-b border-gray-200 flex items-center justify-center"
-              style={{ width: '30px', height: '30px' }}
-            >
-              <span className="text-xs text-gray-400 font-medium">mm</span>
-            </div>
-          </div>
-        )}
-        
         <div 
           className="w-full h-full overflow-auto"
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            paddingTop: showRulers ? '30px' : '0',
-            paddingLeft: showRulers ? '30px' : '0'
+            justifyContent: 'center'
           }}
         >
           <div 
