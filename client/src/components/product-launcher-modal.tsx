@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
+import { Palette } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -98,6 +99,14 @@ const productCategories = [
     description: "Sublimation heat transfers are designed for full colour decoration of white, 100% polyester",
     icon: sublimationIconPath,
     group: "Digital Transfers"
+  },
+  {
+    id: "vectorization-service",
+    name: "Vectorization Service",
+    description: "Professional vectorization service for converting photos, logos, or artwork into scalable vector graphics",
+    icon: null, // Will use Palette icon instead
+    group: "Services",
+    isService: true
   }
 ];
 
@@ -105,16 +114,23 @@ interface ProductLauncherModalProps {
   open: boolean;
   onClose: () => void;
   onSelectProduct: (productId: string) => void;
+  onOpenVectorizationForm?: () => void;
 }
 
 export default function ProductLauncherModal({ 
   open, 
   onClose, 
-  onSelectProduct 
+  onSelectProduct,
+  onOpenVectorizationForm
 }: ProductLauncherModalProps) {
   
   const handleProductSelect = (productId: string) => {
-    onSelectProduct(productId);
+    if (productId === "vectorization-service" && onOpenVectorizationForm) {
+      onClose();
+      onOpenVectorizationForm();
+    } else {
+      onSelectProduct(productId);
+    }
   };
 
   return (
@@ -136,14 +152,19 @@ export default function ProductLauncherModal({
               key={product.id}
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"
               onClick={() => handleProductSelect(product.id)}
+              data-testid={`product-card-${product.id}`}
             >
               <CardContent className="p-4 text-center space-y-3 bg-[#020202]">
                 <div className="mx-auto w-16 h-16 flex items-center justify-center">
-                  <img 
-                    src={product.icon} 
-                    alt={product.name}
-                    className="w-full h-full object-contain"
-                  />
+                  {product.icon ? (
+                    <img 
+                      src={product.icon} 
+                      alt={product.name}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Palette className="w-12 h-12 text-primary" />
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -163,6 +184,7 @@ export default function ProductLauncherModal({
                     e.stopPropagation();
                     handleProductSelect(product.id);
                   }}
+                  data-testid={`button-select-${product.id}`}
                 >
                   Select
                 </Button>

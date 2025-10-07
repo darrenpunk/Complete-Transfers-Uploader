@@ -821,6 +821,7 @@ export default function UploadTool() {
           open={showProductLauncher}
           onClose={() => setShowProductLauncher(false)}
           onSelectProduct={handleProductSelect}
+          onOpenVectorizationForm={() => setShowVectorizationForm(true)}
         />
         
         {/* Template Selector Modal */}
