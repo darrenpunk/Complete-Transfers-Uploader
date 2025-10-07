@@ -15,7 +15,7 @@ import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Eye, ArrowLeft, ArrowRight, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText } from "lucide-react";
+import { Save, ArrowRight, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -1071,19 +1071,11 @@ export default function UploadTool() {
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4 z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {currentStep === 2 ? "Back to Upload" : "Back"}
-            </Button>
             <div className="text-sm text-muted-foreground">
               Auto-saved <span className="font-medium">2 minutes ago</span>
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline">
-              <Eye className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
             <Button 
               variant="outline"
               onClick={handleGeneratePDF}
