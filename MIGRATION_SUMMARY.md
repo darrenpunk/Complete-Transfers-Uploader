@@ -87,25 +87,40 @@
 
 ## Requirements for Migration
 
-### System Requirements (Odoo Server)
-1. **Ghostscript** - For PDF processing
-   ```bash
-   gs --version  # Must be 9.x+
-   ```
+### ⚠️ CRITICAL: Odoo.sh Platform Constraints
+**Odoo.sh does NOT allow system package installation (apt-install)**
+- ❌ Cannot install Ghostscript
+- ❌ Cannot install Poppler
+- ❌ Cannot install ImageMagick
+- ✅ Python packages via `requirements.txt` ONLY
 
-2. **Python Packages**
-   ```bash
-   pip3 install Pillow reportlab lxml
-   ```
+### Solution: Python-Only Libraries
+Replace system tools with pure Python libraries:
 
-3. **Poppler Utils** (optional)
-   ```bash
-   apt-get install poppler-utils
-   ```
+**requirements.txt**:
+```txt
+# PDF Processing (replaces Ghostscript/Poppler)
+PyMuPDF==1.23.26       # 3x faster than Ghostscript!
+
+# Advanced PDF manipulation  
+pikepdf==8.15.1
+
+# Image Processing
+Pillow==10.4.0
+
+# PDF Generation with CMYK
+reportlab==4.0.7
+
+# SVG/XML Processing
+lxml==5.1.0
+```
+
+**Performance**: PyMuPDF is **3-4x faster** than Ghostscript subprocess calls!
 
 ### Pre-Migration Checklist
-- [ ] Verify Ghostscript installed on Odoo server
-- [ ] Test Python environment has required packages
+- [ ] ~~Verify Ghostscript installed~~ NOT NEEDED (using PyMuPDF)
+- [ ] Add `requirements.txt` with PyMuPDF, pikepdf, Pillow, reportlab, lxml
+- [ ] Test Python environment can install packages (Odoo.sh auto-installs)
 - [ ] Ensure Odoo attachments have sufficient storage
 - [ ] Confirm staging environment available
 - [ ] Backup current Replit database

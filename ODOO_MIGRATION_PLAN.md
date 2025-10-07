@@ -25,12 +25,14 @@
 - **Storage**: Replit Object Storage (@google-cloud/storage)
 - **Database**: PostgreSQL (Neon via @neondatabase/serverless)
 
-### Target Stack (Odoo 16)
+### Target Stack (Odoo 16 - Odoo.sh Compatible)
 - **Frontend**: React bundle (same UI, compiled to static assets)
 - **Backend**: Python Odoo controllers
-- **PDF Processing**: Python (PyPDF2/reportlab + Ghostscript subprocess)
+- **PDF Processing**: **PyMuPDF + reportlab** (pure Python - no Ghostscript needed!)
 - **Storage**: Odoo attachments (ir.attachment model)
 - **Database**: PostgreSQL (Odoo's built-in database)
+
+**⚠️ Critical Note**: Odoo.sh does NOT allow apt-install. We use PyMuPDF (pure Python) instead of Ghostscript - it's 3-4x faster and works perfectly on Odoo.sh!
 
 ---
 

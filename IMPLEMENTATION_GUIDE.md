@@ -20,26 +20,33 @@ This guide provides a practical, day-by-day implementation plan for migrating Pr
 
 **Morning (2-3 hours): Verify Requirements**
 
-1. **Check Odoo server dependencies**:
-   ```bash
-   # SSH to Odoo server
-   ssh user@odoo-server.com
+1. **⚠️ IMPORTANT: Odoo.sh does NOT allow system package installation**
+   - ❌ Cannot install Ghostscript, Poppler, ImageMagick
+   - ✅ CAN install Python packages via `requirements.txt`
+   - Solution: Use PyMuPDF (pure Python library)
+
+2. **Create `requirements.txt` for PDF processing**:
+   ```txt
+   # PDF Processing (replaces Ghostscript/Poppler)
+   PyMuPDF==1.23.26
    
-   # Verify Ghostscript
-   gs --version
-   # Expected: Ghostscript 9.x or higher
+   # Advanced PDF manipulation
+   pikepdf==8.15.1
    
-   # Verify Python
-   python3 --version
-   # Expected: Python 3.8+
+   # Image Processing
+   Pillow==10.4.0
    
-   # Install missing packages if needed
-   sudo apt-get update
-   sudo apt-get install ghostscript poppler-utils
+   # PDF Generation with CMYK
+   reportlab==4.0.7
    
-   # Install Python packages
-   pip3 install Pillow reportlab lxml
+   # SVG/XML Processing
+   lxml==5.1.0
    ```
+
+3. **Verify Odoo.sh environment**:
+   - Python 3.8+ ✅ (pre-installed)
+   - wkhtmltopdf ✅ (pre-installed)
+   - PostgreSQL client ✅ (pre-installed)
 
 2. **Clone Replit codebase**:
    ```bash
@@ -304,22 +311,24 @@ This guide provides a practical, day-by-day implementation plan for migrating Pr
      -F "projectId=1"
    ```
 
-**Day 5 (Full day): PDF/SVG Processing**
+**Day 5 (Full day): PDF/SVG Processing with PyMuPDF**
 
-5. **Create utility modules** (copy from PDF_SVG_PROCESSING_GUIDE.md):
-   - `utils/pdf_processor.py`
-   - `utils/svg_processor.py`
-   - `utils/pdf_generator.py`
+5. **Create utility modules** (using PyMuPDF - see PDF_SVG_PROCESSING_GUIDE.md):
+   - `utils/pdf_processor.py` - PyMuPDF-based PDF bounds extraction
+   - `utils/svg_processor.py` - lxml-based SVG analysis
+   - `utils/pdf_generator.py` - reportlab PDF generation
 
-6. **Test PDF bounds extraction**:
+6. **Test PDF bounds extraction with PyMuPDF**:
    ```python
    from odoo_artwork_uploader.utils.pdf_processor import PDFBoundsExtractor
    
    with open('test.pdf', 'rb') as f:
        pdf_data = f.read()
    
+   # Extract bounds using PyMuPDF (no Ghostscript needed)
    result = PDFBoundsExtractor.extract_bounds(pdf_data)
    print(result)
+   # Expected: {'success': True, 'bbox': {...}, 'method': 'pymupdf'}
    ```
 
 7. **Integrate with controllers**:
