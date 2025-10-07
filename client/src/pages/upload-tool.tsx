@@ -221,7 +221,11 @@ export default function UploadTool() {
 
   // Handle Continue button click  
   const handleNextStep = () => {
-    if (currentStep >= 3 && needsProjectName(currentProject)) {
+    if (currentStep === 2) {
+      // When on step 2 (Design), show PDF preview modal for pre-flight check
+      setPendingAction('continue');
+      setShowPDFPreviewModal(true);
+    } else if (currentStep >= 3 && needsProjectName(currentProject)) {
       setPendingAction('continue');
       setShowPDFPreviewModal(true);
     } else {
