@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useImperativeHandle, forwardRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,12 +14,16 @@ interface UploadZoneProps {
   uploadProgress?: number;
 }
 
+export interface UploadZoneRef {
+  openFilePicker: () => void;
+}
+
 interface PendingRasterFile {
   file: File;
   fileName: string;
 }
 
-export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder, isUploading, uploadProgress = 0 }: UploadZoneProps) {
+const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected, onVectorizationPlaceholder, isUploading, uploadProgress = 0 }, ref) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [pendingRasterFile, setPendingRasterFile] = useState<PendingRasterFile | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
@@ -55,7 +59,7 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'image/png': ['.png'],
@@ -73,6 +77,13 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       })));
     }
   });
+
+  // Expose openFilePicker method via ref
+  useImperativeHandle(ref, () => ({
+    openFilePicker: () => {
+      open();
+    }
+  }));
 
   const removeFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
@@ -373,4 +384,8 @@ export default function UploadZone({ onFilesSelected, onVectorizationPlaceholder
       )}
     </div>
   );
-}
+});
+
+UploadZone.displayName = 'UploadZone';
+
+export default UploadZone;

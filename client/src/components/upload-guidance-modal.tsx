@@ -13,9 +13,10 @@ interface UploadGuidanceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onViewArtworkRequirements?: () => void;
+  onStartUploading?: () => void;
 }
 
-export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequirements }: UploadGuidanceModalProps) {
+export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequirements, onStartUploading }: UploadGuidanceModalProps) {
   const fileTypes = [
     {
       icon: FileText,
@@ -144,7 +145,13 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
           {/* Action Button */}
           <Button
             className="w-full"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              if (onStartUploading) {
+                onStartUploading();
+              } else {
+                onOpenChange(false);
+              }
+            }}
             data-testid="button-start-uploading"
           >
             <Upload className="h-4 w-4 mr-2" />

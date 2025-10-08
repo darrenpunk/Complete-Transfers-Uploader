@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -31,6 +31,7 @@ export default function UploadTool() {
   const { id } = useParams();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [selectedElement, setSelectedElement] = useState<CanvasElement | null>(null);
@@ -347,17 +348,50 @@ export default function UploadTool() {
     }
   }, [currentProject, logos.length]);
 
-  // Show upload guidance modal when project is created but has no logos
+  // Track previous garment/ink color to detect when they're first set
+  const [prevGarmentColor, setPrevGarmentColor] = useState<string | undefined>();
+  const [prevInkColor, setPrevInkColor] = useState<string | undefined>();
+
+  // Show upload guidance modal after garment or ink color is selected
   useEffect(() => {
     if (currentProject && logos.length === 0 && hasInitialized) {
-      // Check if user has dismissed this modal before (in this session)
-      const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
-      if (!hasSeenGuidance) {
-        setShowUploadGuidanceModal(true);
-        sessionStorage.setItem('hasSeenUploadGuidance', 'true');
+      const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
+      const isFullColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
+        !currentTemplate?.label?.includes("Single Colour") && !currentTemplate?.label?.includes("Zero");
+      const isSingleColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
+        (currentTemplate?.label?.includes("Single Colour") || currentTemplate?.label?.includes("Zero"));
+      
+      // Check if garment color was just set (for Full Colour templates)
+      if (isFullColourTemplate && currentProject.garmentColor && !prevGarmentColor) {
+        setPrevGarmentColor(currentProject.garmentColor);
+        const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
+        if (!hasSeenGuidance) {
+          setShowUploadGuidanceModal(true);
+          sessionStorage.setItem('hasSeenUploadGuidance', 'true');
+        }
+      }
+      
+      // Check if ink color was just set (for Single Colour templates)
+      else if (isSingleColourTemplate && currentProject.inkColor && !prevInkColor) {
+        setPrevInkColor(currentProject.inkColor);
+        const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
+        if (!hasSeenGuidance) {
+          setShowUploadGuidanceModal(true);
+          sessionStorage.setItem('hasSeenUploadGuidance', 'true');
+        }
+      }
+      
+      // For other templates (DTF, etc.) that don't need color selection, show immediately
+      else if (!isFullColourTemplate && !isSingleColourTemplate && currentProject && !prevGarmentColor && !prevInkColor) {
+        setPrevGarmentColor(currentProject.garmentColor);
+        const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
+        if (!hasSeenGuidance) {
+          setShowUploadGuidanceModal(true);
+          sessionStorage.setItem('hasSeenUploadGuidance', 'true');
+        }
       }
     }
-  }, [currentProject, logos.length, hasInitialized]);
+  }, [currentProject?.garmentColor, currentProject?.inkColor, logos.length, hasInitialized, templateSizes, prevGarmentColor, prevInkColor]);
 
   // Handle applique badges modal trigger
   useEffect(() => {
@@ -1233,6 +1267,27 @@ export default function UploadTool() {
         open={showUploadGuidanceModal}
         onOpenChange={setShowUploadGuidanceModal}
         onViewArtworkRequirements={() => setShowArtworkRequirementsModal(true)}
+        onStartUploading={() => {
+          setShowUploadGuidanceModal(false);
+          fileInputRef.current?.click();
+        }}
+      />
+
+      {/* Hidden file input for upload guidance modal */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.svg,.png,.jpg,.jpeg"
+        multiple
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length > 0) {
+            handleFilesUpload(files);
+          }
+          // Reset input so same file can be selected again
+          e.target.value = '';
+        }}
       />
 
       {/* File Too Complex Dialog */}
