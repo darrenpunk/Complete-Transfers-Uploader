@@ -13,7 +13,8 @@ import {
   insertProjectSchema, 
   insertLogoSchema, 
   insertCanvasElementSchema,
-  insertVectorizationRequestSchema
+  insertVectorizationRequestSchema,
+  insertSupportTicketSchema
 } from '@shared/schema';
 import { z } from 'zod';
 import { calculateSVGContentBounds } from './svg-color-utils';
@@ -4983,6 +4984,31 @@ ${svgClose}`;
     } catch (error) {
       console.error('Failed to fetch vectorization request:', error);
       res.status(500).json({ error: 'Failed to fetch vectorization request' });
+    }
+  });
+
+  // Support ticket endpoint
+  app.post('/api/support-tickets', async (req, res) => {
+    try {
+      const validatedData = insertSupportTicketSchema.parse(req.body);
+      const ticket = await storage.createSupportTicket(validatedData);
+      
+      console.log('📧 Support ticket created:', {
+        id: ticket.id,
+        subject: ticket.subject,
+        email: ticket.email
+      });
+      
+      res.json({ 
+        success: true,
+        message: 'Support ticket submitted successfully',
+        ticketId: ticket.id
+      });
+    } catch (error) {
+      console.error('Support ticket error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to submit support ticket' 
+      });
     }
   });
 

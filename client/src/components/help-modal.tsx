@@ -6,8 +6,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertSupportTicketSchema } from "@shared/schema";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight, Mail } from "lucide-react";
+import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight, Mail, Loader2 } from "lucide-react";
+import { z } from "zod";
 
 interface HelpModalProps {
   open: boolean;
@@ -16,6 +27,38 @@ interface HelpModalProps {
 
 export function HelpModal({ open, onOpenChange }: HelpModalProps) {
   const [activeSection, setActiveSection] = useState("getting-started");
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof insertSupportTicketSchema>>({
+    resolver: zodResolver(insertSupportTicketSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: ""
+    }
+  });
+
+  const supportTicketMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof insertSupportTicketSchema>) => {
+      const response = await apiRequest('POST', '/api/support-tickets', data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Support ticket submitted",
+        description: "We'll get back to you within 24 hours during business days."
+      });
+      form.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to submit ticket",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
 
   const sections = [
     { id: "getting-started", label: "Getting Started", icon: ChevronRight },
@@ -437,47 +480,115 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                 
                 <div className="space-y-4">
                   <p className="text-muted-foreground">
-                    Have a question or need help? Our support team is here to assist you.
+                    Have a question or need help? Fill out the form below and our support team will get back to you.
                   </p>
 
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-8 w-8 text-primary" />
-                      <div>
-                        <h3 className="font-semibold text-lg">Email Support</h3>
-                        <p className="text-sm text-muted-foreground">Get help from our team</p>
-                      </div>
-                    </div>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit((data) => supportTicketMutation.mutate(data))} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Your name" 
+                                data-testid="input-support-name"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">Send your questions to:</p>
-                        <a 
-                          href="mailto:transferhelp@serigraf.com"
-                          className="text-lg font-medium text-primary hover:underline flex items-center gap-2"
-                          data-testid="link-support-email"
-                        >
-                          transferhelp@serigraf.com
-                          <ChevronRight className="h-4 w-4" />
-                        </a>
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="email" 
+                                placeholder="your@email.com" 
+                                data-testid="input-support-email"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <div className="pt-3 border-t">
-                        <h4 className="font-medium mb-2 text-sm">When contacting us, please include:</h4>
-                        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                          <li>Your project name or ID</li>
-                          <li>A description of your issue</li>
-                          <li>Any error messages you're seeing</li>
-                          <li>Screenshots if applicable</li>
-                        </ul>
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name="subject"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subject</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="What do you need help with?" 
+                                data-testid="input-support-subject"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                      <div className="pt-3 border-t">
-                        <p className="text-sm text-muted-foreground">
-                          <strong>Response Time:</strong> We typically respond within 24 hours during business days.
-                        </p>
-                      </div>
-                    </div>
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Message</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Please provide details about your issue..."
+                                className="min-h-[120px]"
+                                data-testid="textarea-support-message"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={supportTicketMutation.isPending}
+                        data-testid="button-submit-support"
+                      >
+                        {supportTicketMutation.isPending && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Submit Support Ticket
+                      </Button>
+                    </form>
+                  </Form>
+
+                  <div className="bg-muted rounded-lg p-4 mt-4">
+                    <h4 className="font-medium mb-2">Alternative Contact</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      You can also email us directly at:
+                    </p>
+                    <a 
+                      href="mailto:transferhelp@serigraf.com"
+                      className="text-sm font-medium text-primary hover:underline flex items-center gap-2"
+                      data-testid="link-support-email"
+                    >
+                      transferhelp@serigraf.com
+                      <ChevronRight className="h-3 w-3" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-3">
+                      <strong>Response Time:</strong> We typically respond within 24 hours during business days.
+                    </p>
                   </div>
 
                   <div className="bg-muted rounded-lg p-4">

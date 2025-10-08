@@ -118,6 +118,16 @@ export const vectorizationRequests = pgTable("vectorization_requests", {
   completedAt: text("completed_at"), // When vectorization was completed
 });
 
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("open"), // open, in_progress, resolved, closed
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -142,6 +152,12 @@ export const insertVectorizationRequestSchema = createInsertSchema(vectorization
   completedAt: true,
 });
 
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+});
+
 // Update schemas
 export const updateCanvasElementSchema = createInsertSchema(canvasElements).partial().omit({
   id: true,
@@ -164,6 +180,9 @@ export type TemplateSize = typeof templateSizes.$inferSelect;
 
 export type InsertVectorizationRequest = z.infer<typeof insertVectorizationRequestSchema>;
 export type VectorizationRequest = typeof vectorizationRequests.$inferSelect;
+
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type SupportTicket = typeof supportTickets.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertProjectSchema>;

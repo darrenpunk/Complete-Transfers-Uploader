@@ -10,7 +10,9 @@ import {
   type TemplateSize,
   type InsertTemplateSize,
   type VectorizationRequest,
-  type InsertVectorizationRequest
+  type InsertVectorizationRequest,
+  type SupportTicket,
+  type InsertSupportTicket
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -53,6 +55,9 @@ export interface IStorage {
   getVectorizationRequests(): Promise<VectorizationRequest[]>;
   createVectorizationRequest(request: InsertVectorizationRequest): Promise<VectorizationRequest>;
   updateVectorizationRequest(id: string, updates: Partial<VectorizationRequest>): Promise<VectorizationRequest | undefined>;
+
+  // Support ticket methods
+  createSupportTicket(ticket: InsertSupportTicket): Promise<SupportTicket>;
 }
 
 export class MemStorage implements IStorage {
@@ -62,6 +67,7 @@ export class MemStorage implements IStorage {
   private canvasElements: Map<string, CanvasElement> = new Map();
   private templateSizes: Map<string, TemplateSize> = new Map();
   private vectorizationRequests: Map<string, VectorizationRequest> = new Map();
+  private supportTickets: Map<string, SupportTicket> = new Map();
 
   constructor() {
     this.initializeTemplateSizes();
@@ -432,6 +438,19 @@ export class MemStorage implements IStorage {
     const updated = { ...existing, ...updates };
     this.vectorizationRequests.set(id, updated);
     return updated;
+  }
+
+  // Support ticket methods
+  async createSupportTicket(insertTicket: InsertSupportTicket): Promise<SupportTicket> {
+    const id = randomUUID();
+    const ticket: SupportTicket = {
+      ...insertTicket,
+      id,
+      status: "open",
+      createdAt: new Date().toISOString()
+    };
+    this.supportTickets.set(id, ticket);
+    return ticket;
   }
 }
 
