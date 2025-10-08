@@ -660,7 +660,8 @@ export default function UploadTool() {
     if (!currentProject) return;
 
     try {
-      const response: any = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/dropbox-upload`, data);
+      const response = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/dropbox-upload`, data);
+      const result = await response.json();
       
       // Invalidate queries to refresh the canvas
       await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'logos'] });
@@ -671,7 +672,7 @@ export default function UploadTool() {
         description: `Placeholder added for ${data.fileName}. Click the upload link to add your file.`,
       });
       
-      return { uploadUrl: response.uploadUrl };
+      return { uploadUrl: result.uploadUrl };
     } catch (error) {
       toast({
         title: "Error",
