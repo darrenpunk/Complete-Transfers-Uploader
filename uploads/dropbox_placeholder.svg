@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 550" preserveAspectRatio="xMidYMid meet">
+  <!-- Background -->
+  <rect width="1024" height="550" fill="#f8f9fa"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="1020" height="546" fill="none" stroke="#dee2e6" stroke-width="4" stroke-dasharray="20,10"/>
+  
+  <!-- Dropbox Icon -->
+  <g transform="translate(412, 120)">
+    <path d="M100 0 L150 30 L100 60 L50 30 Z" fill="#0061ff" opacity="0.9"/>
+    <path d="M0 30 L50 60 L100 30 L50 0 Z" fill="#0061ff" opacity="0.7"/>
+    <path d="M100 60 L150 90 L100 120 L50 90 Z" fill="#0061ff"/>
+    <path d="M0 90 L50 120 L100 90 L50 60 Z" fill="#0061ff" opacity="0.8"/>
+    <path d="M100 120 L150 150 L100 180 L50 150 Z" fill="#0061ff" opacity="0.6"/>
+  </g>
+  
+  <!-- Main Text -->
+  <text x="512" y="360" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#212529">
+    LARGE OR COMPLEX FILE
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="512" y="400" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" fill="#6c757d">
+    UPLOADED VIA DROPBOX
+  </text>
+  
+  <!-- Instructions -->
+  <text x="512" y="450" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#adb5bd">
+    Select this placeholder to access your upload link
+  </text>
+  
+  <!-- Complete Transfers Branding -->
+  <text x="512" y="520" font-family="Arial, sans-serif" font-size="14" font-weight="600" text-anchor="middle" fill="#0061ff">
+    Complete Transfers
+  </text>
+</svg>

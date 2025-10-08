@@ -3145,11 +3145,11 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📤 Dropbox file request created for project ${projectId}: ${fileRequest.url}`);
 
-      // Use the branded placeholder image
-      const placeholderFilename = 'dropbox_placeholder.png';
+      // Use the branded placeholder SVG
+      const placeholderFilename = 'dropbox_placeholder.svg';
       const placeholderPath = path.join(process.cwd(), 'uploads', placeholderFilename);
       
-      // Get placeholder image size
+      // Get placeholder file size
       const stats = fs.statSync(placeholderPath);
 
       // Create logo record with Dropbox file request info
@@ -3157,7 +3157,7 @@ export async function registerRoutes(app: express.Application) {
         projectId,
         filename: placeholderFilename,
         originalName: fileName,
-        mimeType: 'image/png',
+        mimeType: 'image/svg+xml',
         size: stats.size,
         width: 1024,
         height: 550,
