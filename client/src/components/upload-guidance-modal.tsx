@@ -12,9 +12,10 @@ import { FileText, Image, FileImage, Upload, ExternalLink, CheckCircle2 } from "
 interface UploadGuidanceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onViewArtworkRequirements?: () => void;
 }
 
-export function UploadGuidanceModal({ open, onOpenChange }: UploadGuidanceModalProps) {
+export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequirements }: UploadGuidanceModalProps) {
   const fileTypes = [
     {
       icon: FileText,
@@ -127,7 +128,13 @@ export function UploadGuidanceModal({ open, onOpenChange }: UploadGuidanceModalP
               variant="outline"
               className="w-full"
               data-testid="button-artwork-requirements"
-              onClick={() => window.open('/artwork-requirements', '_blank')}
+              onClick={() => {
+                if (onViewArtworkRequirements) {
+                  onViewArtworkRequirements();
+                } else {
+                  window.open('/artwork-requirements', '_blank');
+                }
+              }}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               View Full Artwork Requirements

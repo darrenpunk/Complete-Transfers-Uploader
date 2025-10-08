@@ -1232,6 +1232,7 @@ export default function UploadTool() {
       <UploadGuidanceModal
         open={showUploadGuidanceModal}
         onOpenChange={setShowUploadGuidanceModal}
+        onViewArtworkRequirements={() => setShowArtworkRequirementsModal(true)}
       />
 
       {/* File Too Complex Dialog */}
