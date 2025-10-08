@@ -20,7 +20,7 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
   const fileTypes = [
     {
       icon: FileText,
-      name: "PDF",
+      name: "PDF with vectors",
       extension: ".pdf",
       description: "Recommended for best quality",
       color: "text-red-500"
@@ -29,21 +29,21 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
       icon: Image,
       name: "SVG",
       extension: ".svg",
-      description: "Vector graphics",
+      description: "Scalable vector graphics",
       color: "text-orange-500"
     },
     {
-      icon: FileImage,
-      name: "PNG",
-      extension: ".png",
-      description: "Transparent backgrounds supported",
+      icon: FileText,
+      name: "AI",
+      extension: ".ai",
+      description: "Adobe Illustrator files",
       color: "text-blue-500"
     },
     {
-      icon: FileImage,
-      name: "JPEG/JPG",
-      extension: ".jpg, .jpeg",
-      description: "Photos and raster images",
+      icon: FileText,
+      name: "EPS",
+      extension: ".eps",
+      description: "Encapsulated PostScript",
       color: "text-green-500"
     }
   ];
@@ -106,7 +106,7 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Vector files (PDF, SVG) provide the sharpest print quality</span>
+                <span>Vector files (PDF, SVG, AI, EPS) provide the sharpest print quality</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -118,7 +118,7 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Transparent PNG files are fully supported</span>
+                <span>Ensure all text is converted to outlines/paths</span>
               </li>
             </ul>
           </div>
