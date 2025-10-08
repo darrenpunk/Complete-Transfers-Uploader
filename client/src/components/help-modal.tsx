@@ -46,11 +46,8 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 
   const sendSupportEmail = useMutation({
     mutationFn: async (data: typeof supportForm) => {
-      return await apiRequest("/api/support/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/support/send-email", data);
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -60,9 +57,14 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
       setSupportForm({ name: "", email: "", subject: "", message: "" });
     },
     onError: (error: any) => {
+      const errorMessage = error.message || "Please try again later.";
+      const isQuotaError = errorMessage.includes("quota") || errorMessage.includes("MS42222");
+      
       toast({
         title: "Failed to send message",
-        description: error.message || "Please try again later.",
+        description: isQuotaError 
+          ? "Unable to send email at this time. Please contact us directly at transferhelp@serigraf.com"
+          : errorMessage,
         variant: "destructive",
       });
     },
@@ -528,7 +530,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                         value={supportForm.message}
                         onChange={(e) => setSupportForm({ ...supportForm, message: e.target.value })}
                         placeholder="Describe your issue or question..."
-                        rows={6}
+                        rows={4}
                         required
                       />
                     </div>
