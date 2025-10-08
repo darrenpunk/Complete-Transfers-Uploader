@@ -1256,7 +1256,6 @@ export default function UploadTool() {
                   <li>Upload via Dropbox - we'll generate a secure upload link (recommended)</li>
                   <li>Simplify your artwork in your design software (reduce paths, flatten layers)</li>
                   <li>Export as a high-resolution PNG (300 DPI) instead</li>
-                  <li>Use our Vectorization Service for professional assistance</li>
                 </ul>
               </div>
             </div>
@@ -1278,16 +1277,6 @@ export default function UploadTool() {
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload via Dropbox
-              </Button>
-              <Button
-                onClick={() => {
-                  setComplexityError(null);
-                  setShowVectorizationForm(true);
-                }}
-                data-testid="button-open-vectorization-service"
-              >
-                <Palette className="w-4 h-4 mr-2" />
-                Use Vectorization Service
               </Button>
             </div>
           </DialogContent>
