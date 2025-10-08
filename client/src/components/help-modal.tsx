@@ -8,8 +8,14 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight } from "lucide-react";
+import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight, Mail } from "lucide-react";
 
 interface HelpModalProps {
   open: boolean;
@@ -18,6 +24,13 @@ interface HelpModalProps {
 
 export function HelpModal({ open, onOpenChange }: HelpModalProps) {
   const [activeSection, setActiveSection] = useState("getting-started");
+  const [supportForm, setSupportForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: ""
+  });
+  const { toast } = useToast();
 
   const sections = [
     { id: "getting-started", label: "Getting Started", icon: ChevronRight },
@@ -28,7 +41,32 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
     { id: "templates", label: "Templates", icon: Package },
     { id: "printing", label: "Printing", icon: Printer },
     { id: "troubleshooting", label: "Troubleshooting", icon: FileText },
+    { id: "support", label: "Contact Support", icon: Mail },
   ];
+
+  const sendSupportEmail = useMutation({
+    mutationFn: async (data: typeof supportForm) => {
+      return await apiRequest("/api/support/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you as soon as possible.",
+      });
+      setSupportForm({ name: "", email: "", subject: "", message: "" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send message",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -426,6 +464,92 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                     <p className="text-sm">
                       If you're experiencing issues not covered here, try using the "Start Over" 
                       button to begin fresh, or contact support for assistance.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === "support" && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">Contact Support</h2>
+                
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Have a question or need help? Send us a message and we'll get back to you as soon as possible.
+                  </p>
+
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    sendSupportEmail.mutate(supportForm);
+                  }} className="space-y-4">
+                    <div>
+                      <Label htmlFor="support-name">Name</Label>
+                      <Input
+                        id="support-name"
+                        data-testid="input-support-name"
+                        value={supportForm.name}
+                        onChange={(e) => setSupportForm({ ...supportForm, name: e.target.value })}
+                        placeholder="Your name"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="support-email">Email</Label>
+                      <Input
+                        id="support-email"
+                        data-testid="input-support-email"
+                        type="email"
+                        value={supportForm.email}
+                        onChange={(e) => setSupportForm({ ...supportForm, email: e.target.value })}
+                        placeholder="your.email@example.com"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="support-subject">Subject</Label>
+                      <Input
+                        id="support-subject"
+                        data-testid="input-support-subject"
+                        value={supportForm.subject}
+                        onChange={(e) => setSupportForm({ ...supportForm, subject: e.target.value })}
+                        placeholder="What's this about?"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="support-message">Message</Label>
+                      <Textarea
+                        id="support-message"
+                        data-testid="input-support-message"
+                        value={supportForm.message}
+                        onChange={(e) => setSupportForm({ ...supportForm, message: e.target.value })}
+                        placeholder="Describe your issue or question..."
+                        rows={6}
+                        required
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      data-testid="button-send-support"
+                      disabled={sendSupportEmail.isPending}
+                      className="w-full"
+                    >
+                      {sendSupportEmail.isPending ? "Sending..." : "Send Message"}
+                    </Button>
+                  </form>
+
+                  <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Direct Contact:</h4>
+                    <p className="text-sm">
+                      You can also reach us directly at{" "}
+                      <a href="mailto:transferhelp@serigraf.com" className="text-primary hover:underline">
+                        transferhelp@serigraf.com
+                      </a>
                     </p>
                   </div>
                 </div>
