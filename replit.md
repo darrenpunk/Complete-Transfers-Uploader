@@ -39,6 +39,7 @@ Current focus: Core functionality over complex color management features.
 - **PDF Generation**: Dual-page PDF output with artwork on garment background; CMYK PDF generation with FOGRA51 ICC profile; vector preservation via `pdf-lib` and Ghostscript; ink color recoloring; Applique Badges Embroidery Form; PDF filename generation.
 - **Preflight Checks**: Help guide, required project naming, CMYK color analysis, intelligent color standardization, critical font detection, accurate bounding box, enhanced typography, duplicate color detection, line thickness, Pantone detection, oversized logo detection with "Fit to Bounds." Implementation of a Canvas-PDF Matcher for exact dimension replication and aspect-ratio-preserving scaling. CMYK preservation logic.
 - **Embed Button Widget**: JavaScript widget for embedding "Order Transfers" button with popup/redirect modes.
+- **Support System**: Integrated contact support form in help modal with MailerSend email delivery to transferhelp@serigraf.com; includes error handling and fallback contact information.
 - **Monorepo Structure**: Shared TypeScript types between frontend and backend.
 - **Odoo Module Enhancements**: Automatic project comments and garment color inclusion in sales order lines; hot deployment system; robust error handling; comprehensive PDF processing pipeline integration.
 
@@ -58,5 +59,6 @@ Current focus: Core functionality over complex color management features.
 - **Image Processing**: Ghostscript, ImageMagick, `rsvg-convert`.
 - **PDF Manipulation**: `pdf-lib`.
 - **Cloud Storage**: Dropbox SDK via Replit connector.
+- **Email Service**: MailerSend for support form submissions (MAILERSEND_API_KEY required).
 - **AI Vectorization**: External AI vectorization API (manual vectorization service only).
 - **Odoo Module Specific**: ReportLab (for PDF generation).
