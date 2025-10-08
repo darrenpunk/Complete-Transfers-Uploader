@@ -56,3 +56,4 @@ localPort = 46571
 externalPort = 3003
 
 [agent]
+integrations = ["dropbox:1.0.0"]

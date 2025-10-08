@@ -50,6 +50,9 @@ export const logos = pgTable("logos", {
   externalFileUrl: text("external_file_url"), // WeTransfer/Dropbox link for files too complex to upload directly
   externalFileService: text("external_file_service"), // Service used: wetransfer, dropbox, etc.
   isPlaceholder: boolean("is_placeholder").default(false), // Track if this is a placeholder for externally hosted file
+  dropboxFileRequestId: text("dropbox_file_request_id"), // Dropbox file request ID for tracking uploads
+  dropboxFilePath: text("dropbox_file_path"), // Path to uploaded file in Dropbox
+  dropboxUploadedAt: text("dropbox_uploaded_at"), // Timestamp when file was uploaded to Dropbox
 });
 
 export const canvasElements = pgTable("canvas_elements", {
