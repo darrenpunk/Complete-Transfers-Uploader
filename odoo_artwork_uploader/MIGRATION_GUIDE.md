@@ -234,9 +234,97 @@ If issues arise:
 4. Investigate and fix issues
 5. Retry migration
 
+## New Features Requiring Migration
+
+### Support Form / Helpdesk Integration
+
+**Current Implementation (Standalone)**:
+- Integrated Help Modal with Contact Support section
+- Sends support requests via MailerSend API to `transferhelp@serigraf.com`
+- Endpoint: `POST /api/support/send-email`
+- Fields: name, email, subject, message
+- Error handling for email service failures
+
+**Required Migration to Odoo Helpdesk**:
+
+1. **Replace Email Endpoint with Odoo Helpdesk Ticket Creation**
+   ```python
+   @http.route('/artwork/api/support/create-ticket', type='json', auth='public', methods=['POST'])
+   def create_support_ticket(self, name, email, subject, message):
+       """Create helpdesk ticket from support form"""
+       try:
+           # Find or create the "Complete Transfers Help" team
+           team = request.env['helpdesk.team'].sudo().search([
+               ('name', '=', 'Complete Transfers Help')
+           ], limit=1)
+           
+           if not team:
+               return {'success': False, 'error': 'Helpdesk team not found'}
+           
+           # Create ticket
+           ticket = request.env['helpdesk.ticket'].sudo().create({
+               'name': subject,
+               'description': f"""
+   Support Request from Artwork Uploader
+   
+   From: {name} ({email})
+   Subject: {subject}
+   
+   Message:
+   {message}
+               """,
+               'team_id': team.id,
+               'partner_email': email,
+               'partner_name': name,
+               'priority': '1',  # Normal priority
+           })
+           
+           return {
+               'success': True,
+               'ticket_id': ticket.id,
+               'message': 'Support ticket created successfully'
+           }
+       except Exception as e:
+           _logger.error(f'Support ticket creation error: {str(e)}')
+           return {
+               'success': False,
+               'error': str(e)
+           }
+   ```
+
+2. **Frontend Integration**
+   - Update HelpModal component (`client/src/components/help-modal.tsx`)
+   - Change API endpoint from `/api/support/send-email` to `/artwork/api/support/create-ticket`
+   - Update success message to mention ticket creation instead of email
+   - Keep same form fields (name, email, subject, message)
+
+3. **Helpdesk Team Setup**
+   - Create "Complete Transfers Help" team in Odoo Helpdesk
+   - Configure email notifications for new tickets
+   - Set up SLA policies if needed
+   - Assign team members
+
+4. **Required Odoo Apps**
+   - Helpdesk module must be installed
+   - Configure email servers for ticket notifications
+
+5. **Migration Checklist**
+   - [ ] Install Odoo Helpdesk module
+   - [ ] Create "Complete Transfers Help" team
+   - [ ] Implement ticket creation controller
+   - [ ] Update frontend to use new endpoint
+   - [ ] Test ticket creation flow
+   - [ ] Configure email notifications
+   - [ ] Remove MailerSend dependency
+
+**Current MailerSend Configuration (To Be Removed)**:
+- Sender: `support@completetransfers.com`
+- Recipient: `transferhelp@serigraf.com`
+- API Key: Stored in `MAILERSEND_API_KEY` environment variable
+
 ## Support
 
 For migration assistance:
 - Review Odoo logs: `/var/log/odoo/odoo.log`
 - Check browser console for JavaScript errors
-- Contact Complete Transfers support team
+- Contact Complete Transfers support team via Odoo Helpdesk

@@ -5143,78 +5143,14 @@ ${svgClose}`;
     }
   });
 
-  // Support email endpoint
+  // Support contact endpoint (to be implemented in Odoo Helpdesk)
   app.post('/api/support/send-email', async (req, res) => {
-    try {
-      const { name, email, subject, message } = req.body;
-
-      if (!name || !email || !subject || !message) {
-        return res.status(400).json({ error: 'All fields are required' });
-      }
-
-      const { MailerSend, EmailParams, Sender, Recipient } = await import('mailersend');
-
-      const mailerSend = new MailerSend({
-        apiKey: process.env.MAILERSEND_API_KEY || '',
-      });
-
-      const sentFrom = new Sender("support@completetransfers.com", "CompleteTransfers Support");
-      const recipients = [
-        new Recipient("transferhelp@serigraf.com", "Transfer Support")
-      ];
-
-      const emailParams = new EmailParams()
-        .setFrom(sentFrom)
-        .setTo(recipients)
-        .setReplyTo({ email, name })
-        .setSubject(`Support Request: ${subject}`)
-        .setHtml(`
-          <h2>New Support Request</h2>
-          <p><strong>From:</strong> ${name} (${email})</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <p><strong>Message:</strong></p>
-          <p>${message.replace(/\n/g, '<br>')}</p>
-        `)
-        .setText(`
-New Support Request
-
-From: ${name} (${email})
-Subject: ${subject}
-
-Message:
-${message}
-        `);
-
-      await mailerSend.email.send(emailParams);
-
-      console.log(`📧 Support email sent from ${email} to transferhelp@serigraf.com`);
-      res.json({ success: true, message: 'Email sent successfully' });
-
-    } catch (error) {
-      console.error('❌ Support email error:', error);
-      
-      // Extract MailerSend error details
-      let errorMessage = 'Unknown error';
-      if (error && typeof error === 'object') {
-        if ('body' in error && error.body && typeof error.body === 'object' && 'message' in error.body) {
-          errorMessage = String(error.body.message);
-        } else if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-      }
-      
-      // Check if it's a quota/limit error
-      const isQuotaError = errorMessage.toLowerCase().includes('quota') || 
-                          errorMessage.toLowerCase().includes('limit') ||
-                          errorMessage.toLowerCase().includes('trial');
-      
-      res.status(500).json({ 
-        error: 'Failed to send email',
-        details: isQuotaError 
-          ? 'Email service temporarily unavailable. Please contact us directly at transferhelp@serigraf.com'
-          : errorMessage
-      });
-    }
+    // This endpoint will be replaced with Odoo Helpdesk ticket creation
+    // See: odoo_artwork_uploader/MIGRATION_NOTES_2025.md
+    res.status(501).json({ 
+      error: 'Support form will be available after Odoo migration',
+      details: 'Please contact us directly at transferhelp@serigraf.com'
+    });
   });
 
   return app;

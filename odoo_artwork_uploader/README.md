@@ -34,11 +34,18 @@ This is an Odoo 16 module that ports the Artwork Uploader & Gang Sheet Builder f
 - website_sale
 - sale
 - product
+- helpdesk (for support ticket creation)
 
 ### System Requirements
 - Ghostscript (for PDF processing)
 - Inkscape (for SVG conversion)
 - ImageMagick (for image processing)
+
+### Current Standalone Dependencies (To Be Removed After Migration)
+- MailerSend (email service) - Will be replaced by Odoo Helpdesk
+  - Used for: Support form submissions
+  - Endpoint: `/api/support/send-email`
+  - Migration path: See MIGRATION_GUIDE.md for Odoo Helpdesk integration
 
 ## Module Structure
 
