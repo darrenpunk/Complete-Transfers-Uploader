@@ -998,6 +998,39 @@ export default function PropertiesPanel({
               </div>
             </div>
 
+            {/* Dropbox Upload Link - Only show for placeholders */}
+            {currentLogo?.isPlaceholder && currentLogo?.externalFileUrl && (
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L7 6.5 12 11 7 15.5 12 20l5-4.5L12 11l5-4.5z"/>
+                    <path d="M7 15.5L2 11l5-4.5L12 11z" opacity="0.7"/>
+                    <path d="M17 6.5L22 11l-5 4.5L12 11z" opacity="0.7"/>
+                  </svg>
+                  <Label className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                    Dropbox Upload Required
+                  </Label>
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mb-3">
+                  This is a placeholder. Upload your file to complete your design.
+                </p>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => window.open(currentLogo.externalFileUrl, '_blank')}
+                  data-testid="button-open-dropbox-upload"
+                >
+                  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                  </svg>
+                  Open Dropbox Upload Link
+                </Button>
+              </div>
+            )}
+
             <Separator />
 
             {/* Actions */}
