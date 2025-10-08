@@ -3035,7 +3035,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // External file link endpoint (for files too complex to upload directly)
+  // External file link endpoint (deprecated - use Dropbox file request instead)
   app.post('/api/projects/:projectId/logos/external-link', async (req, res) => {
     try {
       const projectId = req.params.projectId;
@@ -3121,6 +3121,109 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('External file link error:', error);
       res.status(500).json({ error: 'Failed to add external file link' });
+    }
+  });
+
+  // Dropbox file request endpoint - Generate upload link dynamically
+  app.post('/api/projects/:projectId/logos/dropbox-upload', async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const { fileName, description } = req.body;
+      
+      if (!fileName) {
+        return res.status(400).json({ error: 'File name is required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // Create Dropbox file request
+      const { createFileRequest } = await import('./dropbox-service');
+      const fileRequest = await createFileRequest(projectId, fileName, description);
+      
+      console.log(`📤 Dropbox file request created for project ${projectId}: ${fileRequest.url}`);
+
+      // Create a placeholder SVG for the canvas
+      const placeholderSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="10" y="10" width="380" height="280" fill="white" stroke="#0061ff" stroke-width="2" stroke-dasharray="10,5"/>
+  <text x="200" y="100" font-family="Arial" font-size="18" fill="#0061ff" text-anchor="middle" font-weight="bold">
+    📤 DROPBOX UPLOAD
+  </text>
+  <text x="200" y="140" font-family="Arial" font-size="14" fill="#6b7280" text-anchor="middle">
+    ${fileName.substring(0, 35)}${fileName.length > 35 ? '...' : ''}
+  </text>
+  <text x="200" y="175" font-family="Arial" font-size="12" fill="#9ca3af" text-anchor="middle">
+    Click the upload link to add your file
+  </text>
+  <text x="200" y="210" font-family="Arial" font-size="11" fill="#d1d5db" text-anchor="middle">
+    File will be processed automatically
+  </text>
+  <text x="200" y="245" font-family="Arial" font-size="10" fill="#0061ff" text-anchor="middle" text-decoration="underline">
+    ${fileRequest.url.substring(0, 45)}...
+  </text>
+</svg>`;
+
+      // Save placeholder SVG to uploads directory
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      const placeholderFilename = `dropbox_placeholder_${Date.now()}.svg`;
+      const placeholderPath = path.join(uploadDir, placeholderFilename);
+      fs.writeFileSync(placeholderPath, placeholderSvg);
+
+      // Create logo record with Dropbox file request info
+      const logoData = {
+        projectId,
+        filename: placeholderFilename,
+        originalName: fileName,
+        mimeType: 'image/svg+xml',
+        size: Buffer.from(placeholderSvg).length,
+        width: 400,
+        height: 300,
+        url: `/uploads/${placeholderFilename}`,
+        externalFileUrl: fileRequest.url,
+        externalFileService: 'dropbox',
+        isPlaceholder: true,
+        dropboxFileRequestId: fileRequest.id,
+        svgColors: description ? { notes: description } : null
+      };
+
+      const logo = await storage.createLogo(logoData);
+
+      // Create canvas element for the placeholder
+      const templateSizes = await storage.getTemplateSizes();
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      
+      if (!templateSize) {
+        return res.status(404).json({ error: 'Template size not found' });
+      }
+
+      const canvasElementData = {
+        projectId,
+        logoId: logo.id,
+        elementType: 'logo' as const,
+        x: (templateSize.pixelWidth - 400) / 2,
+        y: (templateSize.pixelHeight - 300) / 2,
+        width: 400,
+        height: 300,
+        rotation: 0,
+        zIndex: 0,
+        isVisible: true,
+        isLocked: false
+      };
+
+      await storage.createCanvasElement(canvasElementData);
+
+      res.json({
+        logo,
+        uploadUrl: fileRequest.url,
+        fileRequestId: fileRequest.id
+      });
+    } catch (error) {
+      console.error('Dropbox upload request error:', error);
+      res.status(500).json({ error: 'Failed to create Dropbox upload link' });
     }
   });
 
