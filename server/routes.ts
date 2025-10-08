@@ -3166,7 +3166,7 @@ export async function registerRoutes(app: express.Application) {
         externalFileService: 'dropbox',
         isPlaceholder: true,
         dropboxFileRequestId: fileRequest.id,
-        dropboxFolderPath: fileRequest.folder,
+        dropboxFilePath: fileRequest.folder,
         svgColors: description ? { notes: description } : null
       };
 
