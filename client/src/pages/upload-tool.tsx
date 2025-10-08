@@ -16,7 +16,7 @@ import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle } from "lucide-react";
+import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -24,6 +24,7 @@ import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
 import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
+import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -49,6 +50,7 @@ export default function UploadTool() {
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
+  const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
@@ -654,6 +656,31 @@ export default function UploadTool() {
     }
   };
 
+  const handleDropboxUpload = async (data: { fileName: string; description?: string }): Promise<{ uploadUrl: string } | void> => {
+    if (!currentProject) return;
+
+    try {
+      const response: any = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/dropbox-upload`, data);
+      
+      // Invalidate queries to refresh the canvas
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'logos'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'canvas-elements'] });
+      
+      toast({
+        title: "Dropbox Upload Link Created",
+        description: `Placeholder added for ${data.fileName}. Click the upload link to add your file.`,
+      });
+      
+      return { uploadUrl: response.uploadUrl };
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create Dropbox upload link",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCloseRasterWarning = () => {
     setPendingRasterFile(null);
     setShowRasterWarning(false);
@@ -1179,6 +1206,13 @@ export default function UploadTool() {
         onSubmit={handleExternalFileLink}
       />
 
+      {/* Dropbox Upload Modal */}
+      <DropboxUploadModal
+        open={showDropboxUploadModal}
+        onOpenChange={setShowDropboxUploadModal}
+        onSubmit={handleDropboxUpload}
+      />
+
       {/* File Too Complex Dialog */}
       {complexityError && (
         <Dialog open={!!complexityError} onOpenChange={(open) => !open && setComplexityError(null)}>
@@ -1218,7 +1252,7 @@ export default function UploadTool() {
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">What you can do:</h4>
                 <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  <li>Upload via WeTransfer/Dropbox - share a link and we'll download during production</li>
+                  <li>Upload via Dropbox - we'll generate a secure upload link (recommended)</li>
                   <li>Simplify your artwork in your design software (reduce paths, flatten layers)</li>
                   <li>Export as a high-resolution PNG (300 DPI) instead</li>
                   <li>Use our Vectorization Service for professional assistance</li>
@@ -1235,15 +1269,14 @@ export default function UploadTool() {
                 Got It
               </Button>
               <Button
-                variant="outline"
                 onClick={() => {
                   setComplexityError(null);
-                  setShowExternalFileLinkModal(true);
+                  setShowDropboxUploadModal(true);
                 }}
-                data-testid="button-upload-via-link"
+                data-testid="button-upload-via-dropbox"
               >
-                <FileText className="w-4 h-4 mr-2" />
-                Upload via Link
+                <Upload className="w-4 h-4 mr-2" />
+                Upload via Dropbox
               </Button>
               <Button
                 onClick={() => {
