@@ -3145,48 +3145,28 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📤 Dropbox file request created for project ${projectId}: ${fileRequest.url}`);
 
-      // Create a placeholder SVG for the canvas
-      const placeholderSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
-  <rect width="400" height="300" fill="#f3f4f6"/>
-  <rect x="10" y="10" width="380" height="280" fill="white" stroke="#0061ff" stroke-width="2" stroke-dasharray="10,5"/>
-  <text x="200" y="100" font-family="Arial" font-size="18" fill="#0061ff" text-anchor="middle" font-weight="bold">
-    📤 DROPBOX UPLOAD
-  </text>
-  <text x="200" y="140" font-family="Arial" font-size="14" fill="#6b7280" text-anchor="middle">
-    ${fileName.substring(0, 35)}${fileName.length > 35 ? '...' : ''}
-  </text>
-  <text x="200" y="175" font-family="Arial" font-size="12" fill="#9ca3af" text-anchor="middle">
-    Click the upload link to add your file
-  </text>
-  <text x="200" y="210" font-family="Arial" font-size="11" fill="#d1d5db" text-anchor="middle">
-    File will be processed automatically
-  </text>
-  <text x="200" y="245" font-family="Arial" font-size="10" fill="#0061ff" text-anchor="middle" text-decoration="underline">
-    ${fileRequest.url.substring(0, 45)}...
-  </text>
-</svg>`;
-
-      // Save placeholder SVG to uploads directory
-      const uploadDir = path.join(process.cwd(), 'uploads');
-      const placeholderFilename = `dropbox_placeholder_${Date.now()}.svg`;
-      const placeholderPath = path.join(uploadDir, placeholderFilename);
-      fs.writeFileSync(placeholderPath, placeholderSvg);
+      // Use the branded placeholder image
+      const placeholderFilename = 'dropbox_placeholder.png';
+      const placeholderPath = path.join(process.cwd(), 'uploads', placeholderFilename);
+      
+      // Get placeholder image size
+      const stats = fs.statSync(placeholderPath);
 
       // Create logo record with Dropbox file request info
       const logoData = {
         projectId,
         filename: placeholderFilename,
         originalName: fileName,
-        mimeType: 'image/svg+xml',
-        size: Buffer.from(placeholderSvg).length,
-        width: 400,
-        height: 300,
+        mimeType: 'image/png',
+        size: stats.size,
+        width: 1024,
+        height: 550,
         url: `/uploads/${placeholderFilename}`,
         externalFileUrl: fileRequest.url,
         externalFileService: 'dropbox',
         isPlaceholder: true,
         dropboxFileRequestId: fileRequest.id,
+        dropboxFolderPath: fileRequest.folder,
         svgColors: description ? { notes: description } : null
       };
 
@@ -3204,10 +3184,10 @@ export async function registerRoutes(app: express.Application) {
         projectId,
         logoId: logo.id,
         elementType: 'logo' as const,
-        x: (templateSize.pixelWidth - 400) / 2,
-        y: (templateSize.pixelHeight - 300) / 2,
-        width: 400,
-        height: 300,
+        x: (templateSize.pixelWidth - 1024) / 2,
+        y: (templateSize.pixelHeight - 550) / 2,
+        width: 1024,
+        height: 550,
         rotation: 0,
         zIndex: 0,
         isVisible: true,
