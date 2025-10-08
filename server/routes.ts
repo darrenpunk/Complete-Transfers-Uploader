@@ -5143,5 +5143,61 @@ ${svgClose}`;
     }
   });
 
+  // Support email endpoint
+  app.post('/api/support/send-email', async (req, res) => {
+    try {
+      const { name, email, subject, message } = req.body;
+
+      if (!name || !email || !subject || !message) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      const { MailerSend, EmailParams, Sender, Recipient } = await import('mailersend');
+
+      const mailerSend = new MailerSend({
+        apiKey: process.env.MAILERSEND_API_KEY || '',
+      });
+
+      const sentFrom = new Sender("support@trial-pq3enl6nyz3lkj50.mlsender.net", "CompleteTransfers Support");
+      const recipients = [
+        new Recipient("transferhelp@serigraf.com", "Transfer Support")
+      ];
+
+      const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo(recipients)
+        .setReplyTo({ email, name })
+        .setSubject(`Support Request: ${subject}`)
+        .setHtml(`
+          <h2>New Support Request</h2>
+          <p><strong>From:</strong> ${name} (${email})</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+        `)
+        .setText(`
+New Support Request
+
+From: ${name} (${email})
+Subject: ${subject}
+
+Message:
+${message}
+        `);
+
+      await mailerSend.email.send(emailParams);
+
+      console.log(`📧 Support email sent from ${email} to transferhelp@serigraf.com`);
+      res.json({ success: true, message: 'Email sent successfully' });
+
+    } catch (error) {
+      console.error('❌ Support email error:', error);
+      res.status(500).json({ 
+        error: 'Failed to send email',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   return app;
 }
