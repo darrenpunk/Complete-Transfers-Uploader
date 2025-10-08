@@ -3015,6 +3015,95 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // External file link endpoint (for files too complex to upload directly)
+  app.post('/api/projects/:projectId/logos/external-link', async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const { fileUrl, service, fileName, notes } = req.body;
+      
+      if (!fileUrl || !fileName) {
+        return res.status(400).json({ error: 'File URL and file name are required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // Create a placeholder SVG for the canvas
+      const placeholderSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="10" y="10" width="380" height="280" fill="white" stroke="#d1d5db" stroke-width="2" stroke-dasharray="10,5"/>
+  <text x="200" y="120" font-family="Arial" font-size="18" fill="#6b7280" text-anchor="middle" font-weight="bold">
+    EXTERNAL FILE
+  </text>
+  <text x="200" y="155" font-family="Arial" font-size="14" fill="#9ca3af" text-anchor="middle">
+    ${fileName.substring(0, 35)}${fileName.length > 35 ? '...' : ''}
+  </text>
+  <text x="200" y="190" font-family="Arial" font-size="12" fill="#9ca3af" text-anchor="middle">
+    via ${service.toUpperCase()}
+  </text>
+  <text x="200" y="230" font-family="Arial" font-size="11" fill="#d1d5db" text-anchor="middle">
+    File will be downloaded during production
+  </text>
+</svg>`;
+
+      // Save placeholder SVG to uploads directory
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      const placeholderFilename = `placeholder_${Date.now()}.svg`;
+      const placeholderPath = path.join(uploadDir, placeholderFilename);
+      fs.writeFileSync(placeholderPath, placeholderSvg);
+
+      // Create logo record with external file info
+      const logoData = {
+        projectId,
+        filename: placeholderFilename,
+        originalName: fileName,
+        mimeType: 'image/svg+xml',
+        size: Buffer.from(placeholderSvg).length,
+        width: 400,
+        height: 300,
+        url: `/uploads/${placeholderFilename}`,
+        externalFileUrl: fileUrl,
+        externalFileService: service,
+        isPlaceholder: true,
+        svgColors: notes ? { notes } : null
+      };
+
+      const logo = await storage.createLogo(logoData);
+
+      // Create canvas element for the placeholder
+      const templateSizes = await storage.getTemplateSizes();
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      
+      if (!templateSize) {
+        return res.status(404).json({ error: 'Template size not found' });
+      }
+
+      const canvasElementData = {
+        projectId,
+        logoId: logo.id,
+        elementType: 'logo' as const,
+        x: (templateSize.pixelWidth - 400) / 2,
+        y: (templateSize.pixelHeight - 300) / 2,
+        width: 400,
+        height: 300,
+        rotation: 0,
+        zIndex: 0,
+        isVisible: true,
+        isLocked: false
+      };
+
+      await storage.createCanvasElement(canvasElementData);
+
+      res.json(logo);
+    } catch (error) {
+      console.error('External file link error:', error);
+      res.status(500).json({ error: 'Failed to add external file link' });
+    }
+  });
+
   // Other essential routes
   app.get('/api/projects/:projectId', async (req, res) => {
     try {

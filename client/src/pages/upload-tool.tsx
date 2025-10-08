@@ -23,6 +23,7 @@ import { VectorizationServiceForm } from "@/components/vectorization-service-for
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
 import { RasterWarningModal } from "@/components/raster-warning-modal";
+import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -47,6 +48,7 @@ export default function UploadTool() {
   const [showVectorizationForm, setShowVectorizationForm] = useState(false);
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
+  const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
@@ -629,6 +631,29 @@ export default function UploadTool() {
     }
   };
 
+  const handleExternalFileLink = async (data: { fileUrl: string; service: string; fileName: string; notes?: string }) => {
+    if (!currentProject) return;
+
+    try {
+      const response = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/external-link`, data);
+      
+      // Invalidate queries to refresh the canvas
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'logos'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'canvas-elements'] });
+      
+      toast({
+        title: "External File Added",
+        description: `Placeholder added for ${data.fileName}. File will be downloaded from ${data.service} during production.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add external file link",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCloseRasterWarning = () => {
     setPendingRasterFile(null);
     setShowRasterWarning(false);
@@ -1147,6 +1172,13 @@ export default function UploadTool() {
         />
       )}
 
+      {/* External File Link Modal */}
+      <ExternalFileLinkModal
+        open={showExternalFileLinkModal}
+        onOpenChange={setShowExternalFileLinkModal}
+        onSubmit={handleExternalFileLink}
+      />
+
       {/* File Too Complex Dialog */}
       {complexityError && (
         <Dialog open={!!complexityError} onOpenChange={(open) => !open && setComplexityError(null)}>
@@ -1186,6 +1218,7 @@ export default function UploadTool() {
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">What you can do:</h4>
                 <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>Upload via WeTransfer/Dropbox - share a link and we'll download during production</li>
                   <li>Simplify your artwork in your design software (reduce paths, flatten layers)</li>
                   <li>Export as a high-resolution PNG (300 DPI) instead</li>
                   <li>Use our Vectorization Service for professional assistance</li>
@@ -1200,6 +1233,17 @@ export default function UploadTool() {
                 data-testid="button-dismiss-complexity-error"
               >
                 Got It
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setComplexityError(null);
+                  setShowExternalFileLinkModal(true);
+                }}
+                data-testid="button-upload-via-link"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Upload via Link
               </Button>
               <Button
                 onClick={() => {
