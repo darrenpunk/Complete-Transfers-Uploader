@@ -1683,21 +1683,31 @@ export default function CanvasWorkspace({
                             });
                           }}
                           onError={(e) => {
-                            console.error('Failed to load image:', logo ? getImageUrl(logo) : 'unknown');
-                            // Show fallback icon if image fails to load
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent && logo) {
-                              parent.innerHTML = `
-                                <div class="flex flex-col items-center justify-center text-gray-500 p-2">
-                                  <svg class="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                                  </svg>
-                                  <span class="text-xs">${logo.originalName}</span>
-                                </div>
-                              `;
-                            }
+                            const failedUrl = getImageUrl(logo);
+                            console.error('❌ IMAGE LOAD FAILED');
+                            console.error('   URL:', failedUrl);
+                            console.error('   Logo filename:', logo?.filename);
+                            console.error('   Logo mime type:', logo?.mimeType);
+                            console.error('   Logo original name:', logo?.originalName);
+                            console.error('   Element ID:', element.id);
+                            console.error('   Browser:', navigator.userAgent);
+                            
+                            // Try to fetch the image to get detailed error info
+                            fetch(failedUrl).then(response => {
+                              console.error('   HTTP Status:', response.status, response.statusText);
+                              if (!response.ok) {
+                                console.error('   Server response indicates file not found or inaccessible');
+                              }
+                            }).catch(err => {
+                              console.error('   Network error:', err.message);
+                            });
+                            
+                            // Show user-friendly error in toast
+                            toast({
+                              title: "Image Load Error",
+                              description: `Failed to load ${logo?.originalName || 'image'}. Please refresh and try again.`,
+                              variant: "destructive",
+                            });
                           }}
                         />
                       )
@@ -1906,7 +1916,6 @@ export default function CanvasWorkspace({
           onClose={handleCloseRasterWarning}
           fileName={pendingRasterFile.fileName}
           onPhotographicApprove={handlePhotographicApprove}
-          onVectorizeWithAI={handleVectorizeWithAI}
           onVectorizeWithService={handleVectorizeWithService}
         />
       )}

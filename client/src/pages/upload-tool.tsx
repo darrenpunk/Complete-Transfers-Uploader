@@ -308,8 +308,9 @@ export default function UploadTool() {
         (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero"));
       const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
         (selectedTemplate.label?.includes("Applique") || selectedTemplate.label?.includes("Woven"));
+      const isDTFTemplate = selectedTemplate.group === "Digital Transfers" && selectedTemplate.label?.includes("DTF");
       
-      console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, actualGroup: selectedTemplate.group });
+      console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, isDTFTemplate, actualGroup: selectedTemplate.group });
       
       // If Custom Badges or Applique Badges template, show the applique badges modal first
       if (isCustomBadgesTemplate) {
@@ -329,10 +330,12 @@ export default function UploadTool() {
       } else {
         console.log('Non-Custom Badges template, creating project directly');
         // Create project directly for other template types
+        // DTF templates use gray (#929292), Full Colour needs selection, others use white
+        const defaultGarmentColor = isFullColourTemplate ? "" : (isDTFTemplate ? "#929292" : "#FFFFFF");
         createProjectMutation.mutate({
           name: "Untitled Project",
           templateSize: templateId,
-          garmentColor: isFullColourTemplate ? "" : "#FFFFFF",
+          garmentColor: defaultGarmentColor,
           inkColor: isSingleColourTemplate ? "" : undefined,
           quantity: copies
         });
