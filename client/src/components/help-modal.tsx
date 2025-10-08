@@ -574,24 +574,6 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   </Form>
 
                   <div className="bg-muted rounded-lg p-4 mt-4">
-                    <h4 className="font-medium mb-2">Alternative Contact</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      You can also email us directly at:
-                    </p>
-                    <a 
-                      href="mailto:transferhelp@serigraf.com"
-                      className="text-sm font-medium text-primary hover:underline flex items-center gap-2"
-                      data-testid="link-support-email"
-                    >
-                      transferhelp@serigraf.com
-                      <ChevronRight className="h-3 w-3" />
-                    </a>
-                    <p className="text-sm text-muted-foreground mt-3">
-                      <strong>Response Time:</strong> We typically respond within 24 hours during business days.
-                    </p>
-                  </div>
-
-                  <div className="bg-muted rounded-lg p-4">
                     <h4 className="font-medium mb-2">Before Contacting Support</h4>
                     <p className="text-sm text-muted-foreground">
                       Check the other sections of this help guide - many common questions are answered in the 
