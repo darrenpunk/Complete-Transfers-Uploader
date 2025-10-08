@@ -25,6 +25,7 @@ import { ArtworkRequirementsModal } from "@/components/artwork-requirements-moda
 import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
+import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -51,6 +52,7 @@ export default function UploadTool() {
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
   const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
+  const [showUploadGuidanceModal, setShowUploadGuidanceModal] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
@@ -344,6 +346,18 @@ export default function UploadTool() {
       }
     }
   }, [currentProject, logos.length]);
+
+  // Show upload guidance modal when project is created but has no logos
+  useEffect(() => {
+    if (currentProject && logos.length === 0 && hasInitialized) {
+      // Check if user has dismissed this modal before (in this session)
+      const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
+      if (!hasSeenGuidance) {
+        setShowUploadGuidanceModal(true);
+        sessionStorage.setItem('hasSeenUploadGuidance', 'true');
+      }
+    }
+  }, [currentProject, logos.length, hasInitialized]);
 
   // Handle applique badges modal trigger
   useEffect(() => {
@@ -1212,6 +1226,12 @@ export default function UploadTool() {
         open={showDropboxUploadModal}
         onOpenChange={setShowDropboxUploadModal}
         onSubmit={handleDropboxUpload}
+      />
+
+      {/* Upload Guidance Modal */}
+      <UploadGuidanceModal
+        open={showUploadGuidanceModal}
+        onOpenChange={setShowUploadGuidanceModal}
       />
 
       {/* File Too Complex Dialog */}
