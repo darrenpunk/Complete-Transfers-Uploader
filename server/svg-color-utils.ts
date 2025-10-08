@@ -690,31 +690,39 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
 /**
  * EARLY complexity check using streaming - scans entire file without loading into memory
  * Returns accurate complexity count to reject files BEFORE heavy processing
+ * @param filePath - Path to the SVG file to check
+ * @param originalFileSize - Optional original file size (for PDFs converted to SVG)
+ * @param originalFileName - Optional original file name (for error messages)
  */
-export function checkFileComplexityEarly(filePath: string): {
+export function checkFileComplexityEarly(
+  filePath: string, 
+  originalFileSize?: number,
+  originalFileName?: string
+): {
   estimatedPathCount: number;
   estimatedElementCount: number;
   isLikelyTooComplex: boolean;
   reason?: string;
+  originalFileSizeMB?: string;
+  convertedFileSizeMB?: string;
 } {
   const EARLY_PATH_THRESHOLD = 4000;
   const EARLY_ELEMENT_THRESHOLD = 5000;
   const CHUNK_SIZE = 65536; // 64KB chunks for streaming
-  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit for converted SVG
   
   try {
     const stats = fs.statSync(filePath);
     const fileSize = stats.size;
+    const convertedFileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
+    const originalFileSizeMB = originalFileSize ? (originalFileSize / (1024 * 1024)).toFixed(1) : convertedFileSizeMB;
     
-    // Hard file size check - reject very large files immediately
-    if (fileSize > MAX_FILE_SIZE) {
-      const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
-      return {
-        estimatedPathCount: 0,
-        estimatedElementCount: 0,
-        isLikelyTooComplex: true,
-        reason: `File size ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`
-      };
+    // For large converted SVGs, still try to count paths (with size warning if truly massive)
+    // This gives users accurate info about complexity, not just "0 paths"
+    const isConvertedSVGTooLarge = fileSize > MAX_FILE_SIZE;
+    
+    if (isConvertedSVGTooLarge) {
+      console.log(`⚠️ Converted SVG is ${convertedFileSizeMB}MB (original: ${originalFileSizeMB}MB) - will still count paths for accurate reporting`);
     }
     
     // Stream the entire file in chunks, counting tags without buffering all content
@@ -759,7 +767,9 @@ export function checkFileComplexityEarly(filePath: string): {
           estimatedPathCount: pathCount,
           estimatedElementCount: currentTotal,
           isLikelyTooComplex: true,
-          reason
+          reason,
+          originalFileSizeMB,
+          convertedFileSizeMB
         };
       }
       
@@ -787,15 +797,20 @@ export function checkFileComplexityEarly(filePath: string): {
     
     if (isLikelyTooComplex) {
       console.log(`🚫 EARLY COMPLEXITY CHECK FAILED: ${reason}`);
+      const fileInfo = originalFileName ? ` in ${originalFileName} (${originalFileSizeMB}MB)` : '';
+      console.log(`   Original file${fileInfo}, Converted SVG: ${convertedFileSizeMB}MB`);
     } else {
       console.log(`✅ Early complexity check passed: ${pathCount} paths, ${totalElements} total elements`);
+      console.log(`   Original: ${originalFileSizeMB}MB, Converted SVG: ${convertedFileSizeMB}MB`);
     }
     
     return {
       estimatedPathCount: pathCount,
       estimatedElementCount: totalElements,
       isLikelyTooComplex,
-      reason
+      reason,
+      originalFileSizeMB,
+      convertedFileSizeMB
     };
   } catch (error) {
     console.error('Error in early complexity check:', error);

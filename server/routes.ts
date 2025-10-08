@@ -1594,17 +1594,21 @@ export async function registerRoutes(app: express.Application) {
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                   // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
                   const { checkFileComplexityEarly } = await import('./svg-color-utils');
-                  const complexityCheck = checkFileComplexityEarly(svgPath);
+                  const originalPdfSize = fs.statSync(pdfPath).size;
+                  const complexityCheck = checkFileComplexityEarly(svgPath, originalPdfSize, file.filename);
                   
                   if (complexityCheck.isLikelyTooComplex) {
                     console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
-                    // Reject with helpful error message
+                    // Reject with helpful error message - show ORIGINAL file size, not converted SVG size
                     res.status(413).json({ 
                       error: 'file_too_complex',
                       message: 'This file is too complex for automated processing',
                       details: complexityCheck.reason,
                       estimatedPaths: complexityCheck.estimatedPathCount,
                       estimatedElements: complexityCheck.estimatedElementCount,
+                      originalFileSizeMB: complexityCheck.originalFileSizeMB,
+                      convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
+                      originalFileName: file.filename,
                       suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
                     });
                     return;
@@ -1670,17 +1674,21 @@ export async function registerRoutes(app: express.Application) {
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                 // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
                 const { checkFileComplexityEarly } = await import('./svg-color-utils');
-                const complexityCheck = checkFileComplexityEarly(svgPath);
+                const originalPdfSize = fs.statSync(pdfPath).size;
+                const complexityCheck = checkFileComplexityEarly(svgPath, originalPdfSize, file.filename);
                 
                 if (complexityCheck.isLikelyTooComplex) {
                   console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
-                  // Reject with helpful error message
+                  // Reject with helpful error message - show ORIGINAL file size, not converted SVG size
                   res.status(413).json({ 
                     error: 'file_too_complex',
                     message: 'This file is too complex for automated processing',
                     details: complexityCheck.reason,
                     estimatedPaths: complexityCheck.estimatedPathCount,
                     estimatedElements: complexityCheck.estimatedElementCount,
+                    originalFileSizeMB: complexityCheck.originalFileSizeMB,
+                    convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
+                    originalFileName: file.filename,
                     suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
                   });
                   return;

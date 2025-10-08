@@ -57,6 +57,9 @@ export default function UploadTool() {
     details: string;
     estimatedPaths: number;
     estimatedElements: number;
+    originalFileSizeMB?: string;
+    convertedFileSizeMB?: string;
+    originalFileName?: string;
   } | null>(null);
 
   // Fetch template sizes
@@ -785,7 +788,10 @@ export default function UploadTool() {
               message: errorResponse.message,
               details: errorResponse.details,
               estimatedPaths: errorResponse.estimatedPaths,
-              estimatedElements: errorResponse.estimatedElements
+              estimatedElements: errorResponse.estimatedElements,
+              originalFileSizeMB: errorResponse.originalFileSizeMB,
+              convertedFileSizeMB: errorResponse.convertedFileSizeMB,
+              originalFileName: errorResponse.originalFileName
             });
           } else {
             toast({
@@ -1160,10 +1166,21 @@ export default function UploadTool() {
                 <p className="text-sm text-orange-800 dark:text-orange-200 font-medium mb-2">
                   {complexityError.details}
                 </p>
-                <p className="text-xs text-orange-700 dark:text-orange-300">
-                  Your file has approximately {complexityError.estimatedPaths.toLocaleString()} vector paths. 
-                  Files this complex can cause system crashes.
-                </p>
+                <div className="text-xs text-orange-700 dark:text-orange-300 space-y-1">
+                  {complexityError.originalFileName && complexityError.originalFileSizeMB && (
+                    <p>
+                      <strong>Original file:</strong> {complexityError.originalFileName} ({complexityError.originalFileSizeMB}MB)
+                    </p>
+                  )}
+                  <p>
+                    <strong>Complexity:</strong> {complexityError.estimatedPaths.toLocaleString()} vector paths, {complexityError.estimatedElements.toLocaleString()} total elements
+                  </p>
+                  {complexityError.convertedFileSizeMB && complexityError.convertedFileSizeMB !== complexityError.originalFileSizeMB && (
+                    <p className="text-xs opacity-75">
+                      (Converted to {complexityError.convertedFileSizeMB}MB SVG for processing)
+                    </p>
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">
