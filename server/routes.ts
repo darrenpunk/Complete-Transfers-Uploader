@@ -1287,6 +1287,26 @@ export async function registerRoutes(app: express.Application) {
           x: 20, y: pageHeight - 60, size: 12, color: textColor 
         });
         
+        // Check for external file links and add to PDF
+        const externalFileLogos = logos.filter(logo => logo.externalFileUrl);
+        if (externalFileLogos.length > 0) {
+          let yPos = pageHeight - 80;
+          page2.drawText(`External Files (download from link):`, { 
+            x: 20, y: yPos, size: 11, color: textColor 
+          });
+          externalFileLogos.forEach((logo, index) => {
+            yPos -= 20;
+            const serviceLabel = logo.externalFileService?.toUpperCase() || 'LINK';
+            page2.drawText(`${index + 1}. ${logo.originalName} (${serviceLabel})`, { 
+              x: 30, y: yPos, size: 10, color: textColor 
+            });
+            yPos -= 15;
+            page2.drawText(`   ${logo.externalFileUrl}`, { 
+              x: 30, y: yPos, size: 8, color: textColor 
+            });
+          });
+        }
+        
         // Show all unique garment colors with CMYK values
         const getColorCMYK = (color: string) => {
           return color === '#FFFFFF' ? '(0, 0, 0, 0)' : 
