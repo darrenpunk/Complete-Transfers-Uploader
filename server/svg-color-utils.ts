@@ -688,6 +688,127 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
 }
 
 /**
+ * EARLY complexity check using streaming - scans entire file without loading into memory
+ * Returns accurate complexity count to reject files BEFORE heavy processing
+ */
+export function checkFileComplexityEarly(filePath: string): {
+  estimatedPathCount: number;
+  estimatedElementCount: number;
+  isLikelyTooComplex: boolean;
+  reason?: string;
+} {
+  const EARLY_PATH_THRESHOLD = 4000;
+  const EARLY_ELEMENT_THRESHOLD = 5000;
+  const CHUNK_SIZE = 65536; // 64KB chunks for streaming
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit
+  
+  try {
+    const stats = fs.statSync(filePath);
+    const fileSize = stats.size;
+    
+    // Hard file size check - reject very large files immediately
+    if (fileSize > MAX_FILE_SIZE) {
+      const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(1);
+      return {
+        estimatedPathCount: 0,
+        estimatedElementCount: 0,
+        isLikelyTooComplex: true,
+        reason: `File size ${fileSizeMB}MB exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`
+      };
+    }
+    
+    // Stream the entire file in chunks, counting tags without buffering all content
+    let pathCount = 0;
+    let circleCount = 0;
+    let rectCount = 0;
+    let lineCount = 0;
+    let polygonCount = 0;
+    let polylineCount = 0;
+    let ellipseCount = 0;
+    
+    const fd = fs.openSync(filePath, 'r');
+    const buffer = Buffer.alloc(CHUNK_SIZE);
+    let leftover = ''; // Handle tags split across chunks
+    let bytesRead = 0;
+    
+    while (true) {
+      bytesRead = fs.readSync(fd, buffer, 0, CHUNK_SIZE, null);
+      if (bytesRead === 0) break;
+      
+      const chunk = leftover + buffer.toString('utf8', 0, bytesRead);
+      
+      // Count all vector elements in this chunk
+      pathCount += (chunk.match(/<path[^>]*>/g) || []).length;
+      circleCount += (chunk.match(/<circle[^>]*>/g) || []).length;
+      rectCount += (chunk.match(/<rect[^>]*>/g) || []).length;
+      lineCount += (chunk.match(/<line[^>]*>/g) || []).length;
+      polygonCount += (chunk.match(/<polygon[^>]*>/g) || []).length;
+      polylineCount += (chunk.match(/<polyline[^>]*>/g) || []).length;
+      ellipseCount += (chunk.match(/<ellipse[^>]*>/g) || []).length;
+      
+      // Early exit if we've already exceeded thresholds (optimization)
+      const currentTotal = pathCount + circleCount + rectCount + lineCount + polygonCount + polylineCount + ellipseCount;
+      if (pathCount > EARLY_PATH_THRESHOLD || currentTotal > EARLY_ELEMENT_THRESHOLD) {
+        fs.closeSync(fd);
+        const reason = pathCount > EARLY_PATH_THRESHOLD
+          ? `Found ${pathCount.toLocaleString()} paths (limit: ${EARLY_PATH_THRESHOLD.toLocaleString()})`
+          : `Found ${currentTotal.toLocaleString()} vector elements (limit: ${EARLY_ELEMENT_THRESHOLD.toLocaleString()})`;
+        
+        console.log(`🚫 EARLY COMPLEXITY CHECK FAILED: ${reason}`);
+        return {
+          estimatedPathCount: pathCount,
+          estimatedElementCount: currentTotal,
+          isLikelyTooComplex: true,
+          reason
+        };
+      }
+      
+      // Retain everything from the last incomplete tag onward (from last '<') to handle tags split across chunks
+      // This ensures we never miss a tag that starts near the end of one chunk and finishes in the next
+      const lastOpenBracket = chunk.lastIndexOf('<');
+      if (lastOpenBracket !== -1) {
+        leftover = chunk.slice(lastOpenBracket);
+      } else {
+        leftover = '';
+      }
+    }
+    
+    fs.closeSync(fd);
+    
+    const totalElements = pathCount + circleCount + rectCount + lineCount + polygonCount + polylineCount + ellipseCount;
+    const isLikelyTooComplex = pathCount > EARLY_PATH_THRESHOLD || totalElements > EARLY_ELEMENT_THRESHOLD;
+    
+    let reason;
+    if (pathCount > EARLY_PATH_THRESHOLD) {
+      reason = `Found ${pathCount.toLocaleString()} paths (limit: ${EARLY_PATH_THRESHOLD.toLocaleString()})`;
+    } else if (totalElements > EARLY_ELEMENT_THRESHOLD) {
+      reason = `Found ${totalElements.toLocaleString()} vector elements (limit: ${EARLY_ELEMENT_THRESHOLD.toLocaleString()})`;
+    }
+    
+    if (isLikelyTooComplex) {
+      console.log(`🚫 EARLY COMPLEXITY CHECK FAILED: ${reason}`);
+    } else {
+      console.log(`✅ Early complexity check passed: ${pathCount} paths, ${totalElements} total elements`);
+    }
+    
+    return {
+      estimatedPathCount: pathCount,
+      estimatedElementCount: totalElements,
+      isLikelyTooComplex,
+      reason
+    };
+  } catch (error) {
+    console.error('Error in early complexity check:', error);
+    // On error, allow processing to continue (fail open)
+    return {
+      estimatedPathCount: 0,
+      estimatedElementCount: 0,
+      isLikelyTooComplex: false
+    };
+  }
+}
+
+/**
  * Count paths and elements in SVG for complexity detection
  */
 function analyzeVectorComplexity(svgContent: string): {

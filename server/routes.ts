@@ -1592,6 +1592,24 @@ export async function registerRoutes(app: express.Application) {
                 await execAsync(svgCommand);
                 
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                  // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
+                  const { checkFileComplexityEarly } = await import('./svg-color-utils');
+                  const complexityCheck = checkFileComplexityEarly(svgPath);
+                  
+                  if (complexityCheck.isLikelyTooComplex) {
+                    console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
+                    // Reject with helpful error message
+                    res.status(413).json({ 
+                      error: 'file_too_complex',
+                      message: 'This file is too complex for automated processing',
+                      details: complexityCheck.reason,
+                      estimatedPaths: complexityCheck.estimatedPathCount,
+                      estimatedElements: complexityCheck.estimatedElementCount,
+                      suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
+                    });
+                    return;
+                  }
+                  
                   // CRITICAL FIX: DO NOT clean SVG content - removeVectorizedBackgrounds was corrupting artwork
                   // The function was removing essential content, mistaking artwork for backgrounds
                   console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity`);
@@ -1650,6 +1668,24 @@ export async function registerRoutes(app: express.Application) {
               await execAsync(svgCommand);
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
+                // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
+                const { checkFileComplexityEarly } = await import('./svg-color-utils');
+                const complexityCheck = checkFileComplexityEarly(svgPath);
+                
+                if (complexityCheck.isLikelyTooComplex) {
+                  console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
+                  // Reject with helpful error message
+                  res.status(413).json({ 
+                    error: 'file_too_complex',
+                    message: 'This file is too complex for automated processing',
+                    details: complexityCheck.reason,
+                    estimatedPaths: complexityCheck.estimatedPathCount,
+                    estimatedElements: complexityCheck.estimatedElementCount,
+                    suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
+                  });
+                  return;
+                }
+                
                 // Check if this is an AI-vectorized file that should not be re-processed
                 const svgContent = fs.readFileSync(svgPath, 'utf8');
                 const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 

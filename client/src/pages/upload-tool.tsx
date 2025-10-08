@@ -15,7 +15,8 @@ import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
-import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -51,6 +52,12 @@ export default function UploadTool() {
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [complexityError, setComplexityError] = useState<{
+    message: string;
+    details: string;
+    estimatedPaths: number;
+    estimatedElements: number;
+  } | null>(null);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -769,6 +776,31 @@ export default function UploadTool() {
             variant: "destructive",
           });
         }
+      } else if (xhr.status === 413) {
+        // Handle file too complex error
+        try {
+          const errorResponse = JSON.parse(xhr.responseText);
+          if (errorResponse.error === 'file_too_complex') {
+            setComplexityError({
+              message: errorResponse.message,
+              details: errorResponse.details,
+              estimatedPaths: errorResponse.estimatedPaths,
+              estimatedElements: errorResponse.estimatedElements
+            });
+          } else {
+            toast({
+              title: "Error", 
+              description: errorResponse.message || "Upload failed. Please try again.",
+              variant: "destructive",
+            });
+          }
+        } catch (e) {
+          toast({
+            title: "Error", 
+            description: `Upload failed (${xhr.status}). Please try again.`,
+            variant: "destructive",
+          });
+        }
       } else {
         console.error('Upload failed with status:', xhr.status);
         console.log('Response text:', xhr.responseText);
@@ -1107,6 +1139,64 @@ export default function UploadTool() {
           onPhotographicApprove={handlePhotographicApprove}
           onVectorizeWithService={handleVectorizeWithService}
         />
+      )}
+
+      {/* File Too Complex Dialog */}
+      {complexityError && (
+        <Dialog open={!!complexityError} onOpenChange={(open) => !open && setComplexityError(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-500" />
+                Artwork Too Complex
+              </DialogTitle>
+              <DialogDescription>
+                {complexityError.message}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                <p className="text-sm text-orange-800 dark:text-orange-200 font-medium mb-2">
+                  {complexityError.details}
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-300">
+                  Your file has approximately {complexityError.estimatedPaths.toLocaleString()} vector paths. 
+                  Files this complex can cause system crashes.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">What you can do:</h4>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li>Simplify your artwork in your design software (reduce paths, flatten layers)</li>
+                  <li>Export as a high-resolution PNG (300 DPI) instead</li>
+                  <li>Use our Vectorization Service for professional assistance</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-end mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setComplexityError(null)}
+                data-testid="button-dismiss-complexity-error"
+              >
+                Got It
+              </Button>
+              <Button
+                onClick={() => {
+                  setComplexityError(null);
+                  setShowVectorizationForm(true);
+                }}
+                data-testid="button-open-vectorization-service"
+              >
+                <Palette className="w-4 h-4 mr-2" />
+                Use Vectorization Service
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
     </div>
