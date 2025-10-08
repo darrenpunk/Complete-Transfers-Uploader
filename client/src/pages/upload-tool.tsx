@@ -299,6 +299,9 @@ export default function UploadTool() {
       setShowProductLauncher(false); // Close product launcher if open
       setHasInitialized(true); // Prevent reopening
       
+      // Clear upload guidance flag for new project
+      sessionStorage.removeItem('hasSeenUploadGuidance');
+      
       const isFullColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
         !selectedTemplate.label?.includes("Single Colour") && !selectedTemplate.label?.includes("Zero");
       const isSingleColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
