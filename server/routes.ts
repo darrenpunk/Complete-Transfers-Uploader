@@ -3152,6 +3152,10 @@ export async function registerRoutes(app: express.Application) {
       // Get placeholder file size
       const stats = fs.statSync(placeholderPath);
 
+      // SVG viewBox dimensions in pixels
+      const svgPixelWidth = 2808;
+      const svgPixelHeight = 1456;
+      
       // Create logo record with Dropbox file request info
       const logoData = {
         projectId,
@@ -3159,8 +3163,8 @@ export async function registerRoutes(app: express.Application) {
         originalName: fileName,
         mimeType: 'image/svg+xml',
         size: stats.size,
-        width: 2808,
-        height: 1456,
+        width: svgPixelWidth,
+        height: svgPixelHeight,
         url: `/uploads/${placeholderFilename}`,
         externalFileUrl: fileRequest.url,
         externalFileService: 'dropbox',
@@ -3180,14 +3184,19 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Template size not found' });
       }
 
+      // Convert SVG pixel dimensions to mm for canvas (1 pixel = 0.35mm)
+      const svgWidthMm = Math.round(svgPixelWidth * 0.35);
+      const svgHeightMm = Math.round(svgPixelHeight * 0.35);
+      
+      // Center based on template mm dimensions
       const canvasElementData = {
         projectId,
         logoId: logo.id,
         elementType: 'logo' as const,
-        x: (templateSize.pixelWidth - 2808) / 2,
-        y: (templateSize.pixelHeight - 1456) / 2,
-        width: 2808,
-        height: 1456,
+        x: (templateSize.width - svgWidthMm) / 2,
+        y: (templateSize.height - svgHeightMm) / 2,
+        width: svgWidthMm,
+        height: svgHeightMm,
         rotation: 0,
         zIndex: 0,
         isVisible: true,
