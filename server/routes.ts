@@ -5158,7 +5158,7 @@ ${svgClose}`;
         apiKey: process.env.MAILERSEND_API_KEY || '',
       });
 
-      const sentFrom = new Sender("support@trial-pq3enl6nyz3lkj50.mlsender.net", "CompleteTransfers Support");
+      const sentFrom = new Sender("support@completetransfers.com", "CompleteTransfers Support");
       const recipients = [
         new Recipient("transferhelp@serigraf.com", "Transfer Support")
       ];
