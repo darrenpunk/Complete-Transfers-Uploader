@@ -3227,6 +3227,85 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Dropbox webhook endpoint for file upload notifications
+  app.get('/api/dropbox/webhook', async (req, res) => {
+    // Dropbox sends a GET request with a challenge parameter for verification
+    const challenge = req.query.challenge as string;
+    if (challenge) {
+      console.log('📨 Dropbox webhook verification received');
+      return res.status(200).send(challenge);
+    }
+    res.status(400).send('No challenge parameter');
+  });
+
+  app.post('/api/dropbox/webhook', async (req, res) => {
+    try {
+      console.log('📨 Dropbox webhook notification received:', JSON.stringify(req.body));
+      
+      const { list_folder } = req.body;
+      
+      if (!list_folder || !list_folder.accounts || list_folder.accounts.length === 0) {
+        return res.status(200).send('OK');
+      }
+
+      // Process webhook notification in background
+      setTimeout(async () => {
+        try {
+          const { listFolderFiles, getFileRequestStatus } = await import('./dropbox-service');
+          
+          // Check all logos with pending Dropbox uploads
+          // Note: This is a simplified check - in production you'd query by dropboxFileRequestId
+          const pendingUploads: any[] = [];
+          
+          // For now, we rely on the notification to trigger a check
+          // A production implementation would maintain a queue of pending uploads
+          
+          console.log(`📂 Found ${pendingUploads.length} pending Dropbox uploads to check`);
+          
+          for (const logo of pendingUploads) {
+            try {
+              // Check file request status
+              const fileRequest = await getFileRequestStatus(logo.dropboxFileRequestId!);
+              
+              if (fileRequest.file_count > 0) {
+                console.log(`✅ File uploaded for request ${logo.dropboxFileRequestId}: ${fileRequest.file_count} files`);
+                
+                // Get the project to determine folder path
+                const project = await storage.getProject(logo.projectId);
+                if (!project) continue;
+                
+                const folderPath = `/CompleteTransfers/Projects/${project.id}`;
+                const files = await listFolderFiles(folderPath);
+                
+                if (files.length > 0) {
+                  const uploadedFile = files[0];
+                  
+                  // Update logo with Dropbox file path
+                  await storage.updateLogo(logo.id, {
+                    dropboxFilePath: uploadedFile.path_lower,
+                    dropboxUploadedAt: new Date().toISOString()
+                  });
+                  
+                  console.log(`📥 Dropbox file tracked: ${uploadedFile.path_lower} for logo ${logo.id}`);
+                }
+              }
+            } catch (error) {
+              console.error(`Error processing logo ${logo.id}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error('Webhook processing error:', error);
+        }
+      }, 0);
+      
+      // Always respond immediately to Dropbox
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('Dropbox webhook error:', error);
+      res.status(200).send('OK'); // Still return 200 to avoid retries
+    }
+  });
+
   // Other essential routes
   app.get('/api/projects/:projectId', async (req, res) => {
     try {
