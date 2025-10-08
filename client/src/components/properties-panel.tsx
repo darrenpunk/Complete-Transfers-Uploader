@@ -158,6 +158,11 @@ export default function PropertiesPanel({
   const currentElement = selectedElement 
     ? canvasElements.find(el => el.id === selectedElement.id) ?? selectedElement
     : null;
+  
+  // Get the current logo for the selected element
+  const currentLogo = currentElement 
+    ? logos.find(logo => logo.id === currentElement.logoId)
+    : null;
     
   // Update local input values when the current element changes
   useEffect(() => {
