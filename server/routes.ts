@@ -3240,6 +3240,26 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/dropbox/webhook', async (req, res) => {
     try {
+      // Validate webhook signature to prevent spoofing
+      const signature = req.headers['x-dropbox-signature'] as string;
+      const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+      const appSecret = process.env.DROPBOX_APP_SECRET;
+      
+      // NOTE: In production, you MUST set DROPBOX_APP_SECRET environment variable
+      // Get it from: https://www.dropbox.com/developers/apps > Your App > Settings > App secret
+      if (appSecret) {
+        const { validateDropboxWebhook } = await import('./dropbox-webhook-validator');
+        const isValid = validateDropboxWebhook(signature, rawBody, appSecret);
+        
+        if (!isValid) {
+          console.error('⚠️ Dropbox webhook signature validation failed - rejecting request');
+          return res.status(403).json({ error: 'Invalid webhook signature' });
+        }
+        console.log('✅ Dropbox webhook signature validated');
+      } else {
+        console.warn('⚠️ DROPBOX_APP_SECRET not set - skipping webhook signature validation (NOT SAFE FOR PRODUCTION)');
+      }
+      
       console.log('📨 Dropbox webhook notification received:', JSON.stringify(req.body));
       
       const { list_folder } = req.body;

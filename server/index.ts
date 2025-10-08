@@ -14,7 +14,11 @@ console.log("Loaded VECTORIZER_API_ID:", process.env.VECTORIZER_API_ID ? "exists
 console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ? "exists" : "not found");
 
 const app = express();
-app.use(express.json({ limit: '200mb' }));
+
+// Import raw body middleware for webhook signature validation
+import { rawBodyMiddleware } from "./dropbox-webhook-validator";
+
+app.use(express.json({ limit: '200mb', verify: rawBodyMiddleware }));
 app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
 // Handle SVG recoloring middleware (must come before static serving)

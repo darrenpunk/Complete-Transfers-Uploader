@@ -40,6 +40,10 @@ async function getAccessToken(): Promise<string> {
     }
   );
   
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Dropbox connection: ${response.status} ${response.statusText}`);
+  }
+  
   const data = await response.json();
   connectionSettings = data.items?.[0];
 
