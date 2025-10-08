@@ -5192,9 +5192,27 @@ ${message}
 
     } catch (error) {
       console.error('❌ Support email error:', error);
+      
+      // Extract MailerSend error details
+      let errorMessage = 'Unknown error';
+      if (error && typeof error === 'object') {
+        if ('body' in error && error.body && typeof error.body === 'object' && 'message' in error.body) {
+          errorMessage = String(error.body.message);
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+      }
+      
+      // Check if it's a quota/limit error
+      const isQuotaError = errorMessage.toLowerCase().includes('quota') || 
+                          errorMessage.toLowerCase().includes('limit') ||
+                          errorMessage.toLowerCase().includes('trial');
+      
       res.status(500).json({ 
         error: 'Failed to send email',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: isQuotaError 
+          ? 'Email service temporarily unavailable. Please contact us directly at transferhelp@serigraf.com'
+          : errorMessage
       });
     }
   });

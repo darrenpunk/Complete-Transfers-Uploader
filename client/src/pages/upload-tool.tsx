@@ -357,16 +357,6 @@ export default function UploadTool() {
 
   // Show upload guidance modal after garment or ink color is selected
   useEffect(() => {
-    console.log('Upload guidance useEffect triggered:', {
-      hasProject: !!currentProject,
-      logosLength: logos.length,
-      hasInitialized,
-      garmentColor: currentProject?.garmentColor,
-      inkColor: currentProject?.inkColor,
-      prevGarmentColor,
-      prevInkColor
-    });
-    
     if (currentProject && logos.length === 0 && hasInitialized) {
       const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
       const isFullColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
@@ -374,53 +364,33 @@ export default function UploadTool() {
       const isSingleColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
         (currentTemplate?.label?.includes("Single Colour") || currentTemplate?.label?.includes("Zero"));
       
-      console.log('Template analysis:', {
-        templateId: currentProject.templateSize,
-        group: currentTemplate?.group,
-        label: currentTemplate?.label,
-        isFullColourTemplate,
-        isSingleColourTemplate
-      });
-      
       // Check if garment color was just set (for Full Colour templates)
       if (isFullColourTemplate && currentProject.garmentColor && prevGarmentColor === undefined) {
-        console.log('Full Colour template - garment color just set, showing upload guidance');
         setPrevGarmentColor(currentProject.garmentColor);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
-          console.log('Showing upload guidance modal');
           setShowUploadGuidanceModal(true);
           sessionStorage.setItem('hasSeenUploadGuidance', 'true');
-        } else {
-          console.log('Upload guidance already seen in this session');
         }
       }
       
       // Check if ink color was just set (for Single Colour templates)
       else if (isSingleColourTemplate && currentProject.inkColor && prevInkColor === undefined) {
-        console.log('Single Colour template - ink color just set, showing upload guidance');
         setPrevInkColor(currentProject.inkColor);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
-          console.log('Showing upload guidance modal');
           setShowUploadGuidanceModal(true);
           sessionStorage.setItem('hasSeenUploadGuidance', 'true');
-        } else {
-          console.log('Upload guidance already seen in this session');
         }
       }
       
       // For other templates (DTF, etc.) that don't need color selection, show immediately
       else if (!isFullColourTemplate && !isSingleColourTemplate && currentProject && !prevGarmentColor && !prevInkColor) {
-        console.log('Other template type - showing upload guidance immediately');
         setPrevGarmentColor(currentProject.garmentColor);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
-          console.log('Showing upload guidance modal');
           setShowUploadGuidanceModal(true);
           sessionStorage.setItem('hasSeenUploadGuidance', 'true');
-        } else {
-          console.log('Upload guidance already seen in this session');
         }
       }
     }

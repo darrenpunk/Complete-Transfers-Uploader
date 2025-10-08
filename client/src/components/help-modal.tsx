@@ -57,14 +57,27 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
       setSupportForm({ name: "", email: "", subject: "", message: "" });
     },
     onError: (error: any) => {
-      const errorMessage = error.message || "Please try again later.";
-      const isQuotaError = errorMessage.includes("quota") || errorMessage.includes("MS42222");
+      // Extract error details from API response
+      let errorDetails = "Please try again later.";
+      
+      if (error.message) {
+        // Error message format is "500: {json}" from apiRequest
+        const match = error.message.match(/^\d+:\s*(.+)$/);
+        if (match) {
+          try {
+            const errorData = JSON.parse(match[1]);
+            errorDetails = errorData.details || errorData.error || errorDetails;
+          } catch {
+            errorDetails = error.message;
+          }
+        } else {
+          errorDetails = error.message;
+        }
+      }
       
       toast({
         title: "Failed to send message",
-        description: isQuotaError 
-          ? "Unable to send email at this time. Please contact us directly at transferhelp@serigraf.com"
-          : errorMessage,
+        description: errorDetails,
         variant: "destructive",
       });
     },
