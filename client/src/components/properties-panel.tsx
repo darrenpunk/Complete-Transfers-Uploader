@@ -1023,7 +1023,7 @@ export default function PropertiesPanel({
                   variant="default"
                   size="sm"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => window.open(currentLogo.externalFileUrl, '_blank')}
+                  onClick={() => currentLogo?.externalFileUrl && window.open(currentLogo.externalFileUrl, '_blank')}
                   data-testid="button-open-dropbox-upload"
                 >
                   <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
