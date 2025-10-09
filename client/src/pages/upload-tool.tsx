@@ -889,7 +889,7 @@ export default function UploadTool() {
           });
         }
       } else if (xhr.status === 413) {
-        // Handle file too complex error
+        // Handle 413 errors: either file_too_complex OR file size limit from reverse proxy
         try {
           const errorResponse = JSON.parse(xhr.responseText);
           if (errorResponse.error === 'file_too_complex') {
@@ -910,11 +910,15 @@ export default function UploadTool() {
             });
           }
         } catch (e) {
+          // If parsing fails, this is likely a reverse proxy 413 (Payload Too Large)
           toast({
-            title: "Error", 
-            description: `Upload failed (${xhr.status}). Please try again.`,
+            title: "File Too Large", 
+            description: "Your file exceeds the upload size limit. For large files, please use the 'Upload via Dropbox' option instead.",
             variant: "destructive",
+            duration: 8000, // Show longer for important message
           });
+          console.error('413 Payload Too Large - File exceeds server upload limit');
+          console.error('Suggest using Dropbox File Request for large files');
         }
       } else {
         console.error('Upload failed with status:', xhr.status);

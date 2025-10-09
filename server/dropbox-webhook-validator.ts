@@ -36,8 +36,8 @@ export function validateDropboxWebhook(
  * Middleware to capture raw body for signature validation
  * Must be used before JSON body parser
  */
-export function rawBodyMiddleware(req: any, res: any, buf: Buffer, encoding: BufferEncoding | undefined) {
+export function rawBodyMiddleware(req: any, res: any, buf: Buffer, encoding: string) {
   if (req.url === '/api/dropbox/webhook') {
-    req.rawBody = buf.toString(encoding || 'utf8');
+    req.rawBody = buf.toString((encoding as BufferEncoding) || 'utf8');
   }
 }
