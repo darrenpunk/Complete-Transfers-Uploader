@@ -15,6 +15,7 @@ Current focus: Core functionality over complex color management features.
 - Improved 413 error handling with user-friendly messages suggesting Dropbox File Request for large files
 - DTF templates now default to gray (#929292) background color
 - Fixed Dropbox upload link creation error (missing placeholder SVG file)
+- Fixed alignment buttons to align elements to red boundaries (3mm safety margins) instead of canvas edges
 
 ## System Architecture
 

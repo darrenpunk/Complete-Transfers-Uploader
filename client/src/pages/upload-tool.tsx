@@ -505,31 +505,40 @@ export default function UploadTool() {
     const template = templateSizes.find(t => t.id === currentProject.templateSize);
     if (!template) return;
     
-    const safetyMargin = 3; // 3mm safety margin
-    const safetyMarginPx = safetyMargin / 0.35; // Convert to pixels
+    const safetyMarginMm = 3; // 3mm safety margin (red boundaries)
+    
+    // Center-based coordinate system - (0,0) is at center of template
+    const templateHalfWidth = template.width / 2;
+    const templateHalfHeight = template.height / 2;
+    const elementHalfWidth = element.width / 2;
+    const elementHalfHeight = element.height / 2;
     
     let updates: { x?: number; y?: number } = {};
     
     switch (alignment) {
       case 'left':
-        updates.x = safetyMarginPx;
+        // Align to left red boundary (safety margin from left edge)
+        updates.x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
         break;
       case 'center':
-        const safeZoneWidth = template.pixelWidth - (2 * safetyMarginPx);
-        updates.x = safetyMarginPx + (safeZoneWidth - element.width) / 2;
+        // Center horizontally (x = 0 in center-based coordinates)
+        updates.x = 0;
         break;
       case 'right':
-        updates.x = template.pixelWidth - safetyMarginPx - element.width;
+        // Align to right red boundary (safety margin from right edge)
+        updates.x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
         break;
       case 'top':
-        updates.y = safetyMarginPx;
+        // Align to top red boundary (safety margin from top edge)
+        updates.y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
         break;
       case 'middle':
-        const safeZoneHeight = template.pixelHeight - (2 * safetyMarginPx);
-        updates.y = safetyMarginPx + (safeZoneHeight - element.height) / 2;
+        // Center vertically (y = 0 in center-based coordinates)
+        updates.y = 0;
         break;
       case 'bottom':
-        updates.y = template.pixelHeight - safetyMarginPx - element.height;
+        // Align to bottom red boundary (safety margin from bottom edge)
+        updates.y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
         break;
     }
     

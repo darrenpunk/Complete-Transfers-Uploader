@@ -215,18 +215,11 @@ export default function PropertiesPanel({
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     if (!currentTemplate) return;
     
-    const safetyMargin = 0; // No safety margin for free positioning
+    const safetyMarginMm = 3; // 3mm safety margin (red boundaries)
     const templateWidth = currentTemplate.width;
     const templateHeight = currentTemplate.height;
     
-    // Use full template dimensions
-    const safeZoneX = 0;
-    const safeZoneY = 0;
-    const safeZoneWidth = templateWidth;
-    const safeZoneHeight = templateHeight;
-    
-    // Center-based coordinate system
-    // (0,0) is at the center of the template
+    // Center-based coordinate system - (0,0) is at the center of the template
     const templateHalfWidth = templateWidth / 2;
     const templateHalfHeight = templateHeight / 2;
     const elementHalfWidth = currentElement.width / 2;
@@ -237,40 +230,49 @@ export default function PropertiesPanel({
     
     switch (alignment) {
       case 'top-left':
-        x = -templateHalfWidth + elementHalfWidth;
-        y = -templateHalfHeight + elementHalfHeight;
+        // Align to top-left red boundary
+        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
+        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
         break;
       case 'top-center':
+        // Center horizontally, align to top red boundary
         x = 0;
-        y = -templateHalfHeight + elementHalfHeight;
+        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
         break;
       case 'top-right':
-        x = templateHalfWidth - elementHalfWidth;
-        y = -templateHalfHeight + elementHalfHeight;
+        // Align to top-right red boundary
+        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
+        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
         break;
       case 'middle-left':
-        x = -templateHalfWidth + elementHalfWidth;
+        // Align to left red boundary, center vertically
+        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
         y = 0;
         break;
       case 'center':
+        // Center both horizontally and vertically
         x = 0;
         y = 0;
         break;
       case 'middle-right':
-        x = templateHalfWidth - elementHalfWidth;
+        // Align to right red boundary, center vertically
+        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
         y = 0;
         break;
       case 'bottom-left':
-        x = -templateHalfWidth + elementHalfWidth;
-        y = templateHalfHeight - elementHalfHeight;
+        // Align to bottom-left red boundary
+        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
+        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
         break;
       case 'bottom-center':
+        // Center horizontally, align to bottom red boundary
         x = 0;
-        y = templateHalfHeight - elementHalfHeight;
+        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
         break;
       case 'bottom-right':
-        x = templateHalfWidth - elementHalfWidth;
-        y = templateHalfHeight - elementHalfHeight;
+        // Align to bottom-right red boundary
+        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
+        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
         break;
     }
     
