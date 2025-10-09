@@ -15,7 +15,6 @@ Current focus: Core functionality over complex color management features.
 - Improved 413 error handling with user-friendly messages suggesting Dropbox File Request for large files
 - DTF templates now default to gray (#929292) background color
 - Fixed Dropbox upload link creation error (missing placeholder SVG file)
-- Fixed faulty raster detection that incorrectly flagged vector PDFs as "raster-only" (removed flawed onlyClippingPaths logic)
 
 ## System Architecture
 
