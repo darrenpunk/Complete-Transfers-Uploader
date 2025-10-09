@@ -3198,17 +3198,19 @@ export async function registerRoutes(app: express.Application) {
 
       const logo = await storage.createLogo(logoData);
 
-      // Convert SVG pixel dimensions to mm for canvas (1 pixel = 0.35mm)
-      const svgWidthMm = Math.round(svgPixelWidth * 0.35);
-      const svgHeightMm = Math.round(svgPixelHeight * 0.35);
+      // Convert SVG viewBox dimensions (points) to mm for canvas
+      // 1 point = 0.352778 mm (standard conversion for PDF/SVG points to metric)
+      const svgWidthMm = Math.round(svgPixelWidth * 0.352778);
+      const svgHeightMm = Math.round(svgPixelHeight * 0.352778);
       
-      // Center based on template mm dimensions
+      // Canvas uses center-based coordinate system where (0,0) is at template center
+      // Position the placeholder at the center of the template
       const canvasElementData = {
         projectId,
         logoId: logo.id,
         elementType: 'logo' as const,
-        x: (templateSize.width - svgWidthMm) / 2,
-        y: (templateSize.height - svgHeightMm) / 2,
+        x: 0,  // Center horizontally
+        y: 0,  // Center vertically
         width: svgWidthMm,
         height: svgHeightMm,
         rotation: 0,
