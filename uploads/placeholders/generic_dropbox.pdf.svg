@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="595.28" height="841.89" viewBox="0 0 595.28 841.89" xmlns="http://www.w3.org/2000/svg">
+  <!-- A4 placeholder (210mm x 297mm) -->
+  <rect width="595.28" height="841.89" fill="#f8f9fa"/>
+  <rect x="50" y="50" width="495.28" height="741.89" fill="white" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Dropbox icon -->
+  <g transform="translate(297.64, 370)">
+    <path d="M-50,-30 L0,0 L50,-30 L0,-60 Z" fill="#0061ff"/>
+    <path d="M0,0 L50,30 L0,60 L-50,30 Z" fill="#0061ff" opacity="0.8"/>
+    <path d="M0,60 L40,80 L0,100 L-40,80 Z" fill="#0061ff" opacity="0.6"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="297.64" y="480" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#495057">
+    Upload via Dropbox
+  </text>
+  <text x="297.64" y="510" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#6c757d">
+    A4 Placeholder (210mm × 297mm)
+  </text>
+</svg>

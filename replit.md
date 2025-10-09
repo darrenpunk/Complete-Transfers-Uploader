@@ -14,7 +14,8 @@ Current focus: Core functionality over complex color management features.
 - Enhanced error logging for image load failures (URL, HTTP status, browser info)
 - Improved 413 error handling with user-friendly messages suggesting Dropbox File Request for large files
 - DTF templates now default to gray (#929292) background color
-- Fixed Dropbox upload link creation error (missing placeholder SVG file)
+- Fixed Dropbox placeholder system: replaced SVG with PDF placeholder for proper bounds extraction and centering
+- Dropbox placeholders now use A4 dimensions (210mm x 297mm) with correct contentBounds for proper centering
 - Fixed alignment buttons to align elements to red boundaries (3mm safety margins) instead of canvas edges
 
 ## System Architecture
