@@ -3179,6 +3179,24 @@ export async function registerRoutes(app: express.Application) {
         svgPixelHeight = parseFloat(heightMatch[1]);
       }
       
+      // Convert SVG viewBox dimensions (points) to mm for canvas
+      // 1 point = 0.352778 mm (standard conversion for PDF/SVG points to metric)
+      const svgWidthMm = Math.round(svgPixelWidth * 0.352778);
+      const svgHeightMm = Math.round(svgPixelHeight * 0.352778);
+      
+      // For placeholders, set contentBounds to match the full viewBox dimensions
+      // This ensures the placeholder uses the full A4 size (not a subset of content)
+      // Regular logos will still use actual content bounds from the bounds extraction
+      const placeholderContentBounds = {
+        xMin: 0,
+        yMin: 0,
+        xMax: svgWidthMm,
+        yMax: svgHeightMm,
+        width: svgWidthMm,
+        height: svgHeightMm,
+        units: 'mm' as const
+      };
+      
       // Create logo record with Dropbox file request info
       const logoData = {
         projectId,
@@ -3194,15 +3212,11 @@ export async function registerRoutes(app: express.Application) {
         isPlaceholder: true,
         dropboxFileRequestId: fileRequest.id,
         dropboxFilePath: fileRequest.folder,
-        svgColors: description ? { notes: description } : null
+        svgColors: description ? { notes: description } : null,
+        contentBounds: placeholderContentBounds  // Use full viewBox dimensions
       };
 
       const logo = await storage.createLogo(logoData);
-
-      // Convert SVG viewBox dimensions (points) to mm for canvas
-      // 1 point = 0.352778 mm (standard conversion for PDF/SVG points to metric)
-      const svgWidthMm = Math.round(svgPixelWidth * 0.352778);
-      const svgHeightMm = Math.round(svgPixelHeight * 0.352778);
       
       // Canvas uses center-based coordinate system where (0,0) is at template center
       // Position the placeholder at the center of the template
