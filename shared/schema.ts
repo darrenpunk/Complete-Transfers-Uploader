@@ -95,6 +95,7 @@ export const templateSizes = pgTable("template_sizes", {
   pixelHeight: integer("pixel_height").notNull(), // at 72 DPI
   group: text("group").notNull(), // template group category
   description: text("description"), // product description
+  placeholderImage: text("placeholder_image"), // Template-specific placeholder for Dropbox uploads
 });
 
 export const vectorizationRequests = pgTable("vectorization_requests", {

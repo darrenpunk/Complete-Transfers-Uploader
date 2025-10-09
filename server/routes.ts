@@ -3146,16 +3146,37 @@ export async function registerRoutes(app: express.Application) {
       
       console.log(`📤 Dropbox file request created for project ${projectId}: ${fileRequest.url}`);
 
-      // Use the branded placeholder SVG
-      const placeholderFilename = 'dropbox_placeholder.svg';
+      // Get template to determine placeholder
+      const templateSizes = await storage.getTemplateSizes();
+      const templateSize = templateSizes.find(t => t.id === project.templateSize);
+      
+      if (!templateSize) {
+        return res.status(404).json({ error: 'Template size not found' });
+      }
+
+      // Use template-specific placeholder if available, otherwise use generic
+      const placeholderFilename = templateSize.placeholderImage || 'placeholders/generic_dropbox.svg';
       const placeholderPath = path.join(process.cwd(), 'uploads', placeholderFilename);
       
       // Get placeholder file size
       const stats = fs.statSync(placeholderPath);
 
-      // SVG viewBox dimensions in pixels
-      const svgPixelWidth = 2808;
-      const svgPixelHeight = 1456;
+      // Get SVG dimensions from the actual file
+      const svgContent = fs.readFileSync(placeholderPath, 'utf-8');
+      const viewBoxMatch = svgContent.match(/viewBox="0 0 (\d+) (\d+)"/);
+      const widthMatch = svgContent.match(/width="(\d+)"/);
+      const heightMatch = svgContent.match(/height="(\d+)"/);
+      
+      let svgPixelWidth = 2808;  // Default
+      let svgPixelHeight = 1456; // Default
+      
+      if (viewBoxMatch) {
+        svgPixelWidth = parseInt(viewBoxMatch[1]);
+        svgPixelHeight = parseInt(viewBoxMatch[2]);
+      } else if (widthMatch && heightMatch) {
+        svgPixelWidth = parseInt(widthMatch[1]);
+        svgPixelHeight = parseInt(heightMatch[1]);
+      }
       
       // Create logo record with Dropbox file request info
       const logoData = {
@@ -3176,14 +3197,6 @@ export async function registerRoutes(app: express.Application) {
       };
 
       const logo = await storage.createLogo(logoData);
-
-      // Create canvas element for the placeholder
-      const templateSizes = await storage.getTemplateSizes();
-      const templateSize = templateSizes.find(t => t.id === project.templateSize);
-      
-      if (!templateSize) {
-        return res.status(404).json({ error: 'Template size not found' });
-      }
 
       // Convert SVG pixel dimensions to mm for canvas (1 pixel = 0.35mm)
       const svgWidthMm = Math.round(svgPixelWidth * 0.35);
