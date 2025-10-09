@@ -130,34 +130,41 @@ export class MixedContentDetector {
           const pathCount = (svgContent.match(/<path/g) || []).length;
           const clipPathCount = (svgContent.match(/clip-rule=/g) || []).length;
           
-          // If we only have clipping paths (rectangular boundaries), it's likely raster
-          const onlyClippingPaths = hasPath && pathCount <= clipPathCount + 1 && hasClipPath;
-          
-          // Check if this is just embedded raster content
-          const isEmbeddedRaster = (hasImage || hasUse) && hasDefs && onlyClippingPaths;
+          // Check for actual vector graphics (not just clipping paths)
+          const hasActualVectorGraphics = hasPath || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse;
           
           console.log('🔍 SVG element analysis:', {
             hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, 
-            hasImage, hasUse, hasDefs, hasClipPath, onlyClippingPaths, isEmbeddedRaster,
-            pathCount, clipPathCount
+            hasImage, hasUse, hasDefs, hasClipPath,
+            pathCount, clipPathCount,
+            hasActualVectorGraphics
           });
           
-          if (isEmbeddedRaster) {
-            console.log('❌ SVG contains only embedded raster with clipping paths - treating as raster content');
-            analysis.hasRasterContent = true;
-            analysis.rasterImages.count = 1;
-            analysis.rasterImages.formats.push('embedded');
-          } else if ((hasPath && !onlyClippingPaths) || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse) {
+          // First check for vector content
+          if (hasActualVectorGraphics) {
             analysis.hasVectorContent = true;
             console.log('✅ Vector content detected in PDF via pdf2svg');
             
-            if (hasPath && !onlyClippingPaths) analysis.vectorElements.types.push('paths');
+            if (hasPath) analysis.vectorElements.types.push('paths');
             if (hasRect) analysis.vectorElements.types.push('rectangles');
             if (hasCircle) analysis.vectorElements.types.push('circles');
             if (hasLine) analysis.vectorElements.types.push('lines');
             if (hasEllipse) analysis.vectorElements.types.push('ellipses');
             if (hasText) analysis.vectorElements.types.push('text');
-          } else {
+          }
+          
+          // Then check for embedded raster (could be mixed content)
+          if (hasImage) {
+            console.log('ℹ️ PDF contains embedded raster image(s)');
+            analysis.hasRasterContent = true;
+            if (analysis.rasterImages.count === 0) {
+              analysis.rasterImages.count = 1;
+              analysis.rasterImages.formats.push('embedded');
+            }
+          }
+          
+          // Log final determination
+          if (!analysis.hasVectorContent && !hasActualVectorGraphics) {
             console.log('❌ No actual vector elements found - only structural/clipping elements');
           }
           
