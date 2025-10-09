@@ -3333,28 +3333,26 @@ export async function registerRoutes(app: express.Application) {
     try {
       const logos = await storage.getLogosByProject(req.params.projectId);
       
-      // Apply Illustrator CMYK mapping to logo colors when retrieving
-      const { IllustratorCMYKMapper } = await import('./illustrator-cmyk-mapper');
-      const processedLogos = logos.map(logo => {
-        if (logo.svgColors && Array.isArray(logo.svgColors) && logo.svgColors.length > 0) {
-          // Check if svgColors has the new format or old format
-          const colors = (logo.svgColors as any).colors || logo.svgColors;
-          if (Array.isArray(colors)) {
-            console.log(`🎨 Applying Illustrator CMYK mapping to ${colors.length} colors for logo ${logo.id}`);
-            const mappedColors = IllustratorCMYKMapper.processSVGColors(colors);
-            return {
-              ...logo,
-              svgColors: {
-                ...(typeof logo.svgColors === 'object' ? logo.svgColors : {}),
-                colors: mappedColors
-              }
-            };
-          }
-        }
-        return logo;
-      });
+      // Check if response might be too large (rough estimate: >10 logos with colors)
+      const needsOptimization = logos.length > 10 && logos.some(l => l.svgColors);
       
-      res.json(processedLogos);
+      if (needsOptimization) {
+        // Optimize response: exclude heavy JSONB fields to prevent 413 errors from reverse proxy
+        const optimizedLogos = logos.map(logo => {
+          const { svgColors, svgFonts, contentBounds, vectorComplexityMetrics, ...essentialFields } = logo;
+          return {
+            ...essentialFields,
+            hasColors: !!svgColors, // Flag to indicate colors are available
+            hasFonts: !!svgFonts,
+            hasBounds: !!contentBounds
+          };
+        });
+        console.log(`📦 Returning ${optimizedLogos.length} logos (optimized to prevent 413 error)`);
+        res.json(optimizedLogos);
+      } else {
+        // Normal response with all fields
+        res.json(logos);
+      }
     } catch (error) {
       res.status(500).json({ error: 'Failed to get logos' });
     }

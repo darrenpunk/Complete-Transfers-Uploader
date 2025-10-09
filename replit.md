@@ -7,6 +7,15 @@ This full-stack web application streamlines logo uploads and layout creation on 
 Preferred communication style: Simple, everyday language.
 Current focus: Core functionality over complex color management features.
 
+## Recent Fixes (Oct 2025)
+- Fixed HTTP 413 "Payload Too Large" errors on published app when fetching projects with many logos
+- Optimized GET /api/projects/:id/logos endpoint to exclude heavy JSONB fields (svgColors, contentBounds, etc.) for projects with >10 logos
+- Fixed critical security vulnerability: removed unsafe innerHTML usage in image error handlers
+- Enhanced error logging for image load failures (URL, HTTP status, browser info)
+- Improved 413 error handling with user-friendly messages suggesting Dropbox File Request for large files
+- DTF templates now default to gray (#929292) background color
+- Fixed Dropbox upload link creation error (missing placeholder SVG file)
+
 ## System Architecture
 
 ### Frontend Architecture
