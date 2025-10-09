@@ -178,11 +178,17 @@ export function DropboxUploadModal({
                 Done
               </Button>
               <Button
-                onClick={handleOpenUploadLink}
+                asChild
                 data-testid="button-open-dropbox-link"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open Upload Link
+                <a
+                  href={uploadUrl || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Open Upload Link
+                </a>
               </Button>
             </div>
           </>
