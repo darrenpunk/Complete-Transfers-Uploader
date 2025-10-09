@@ -3155,7 +3155,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Use template-specific placeholder if available, otherwise use generic PDF
-      const placeholderFilename = templateSize.placeholderImage || 'placeholders/generic_dropbox.pdf';
+      const placeholderFilename = templateSize.placeholderImage || 'placeholders/generic_dropbox_CT.pdf';
       const placeholderPath = path.join(process.cwd(), 'uploads', placeholderFilename);
       
       // Get placeholder file stats
