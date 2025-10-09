@@ -3154,46 +3154,31 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Template size not found' });
       }
 
-      // Use template-specific placeholder if available, otherwise use generic
-      const placeholderFilename = templateSize.placeholderImage || 'placeholders/generic_dropbox.svg';
+      // Use template-specific placeholder if available, otherwise use generic PDF
+      const placeholderFilename = templateSize.placeholderImage || 'placeholders/generic_dropbox.pdf';
       const placeholderPath = path.join(process.cwd(), 'uploads', placeholderFilename);
       
-      // Get placeholder file size
+      // Get placeholder file stats
       const stats = fs.statSync(placeholderPath);
 
-      // Get SVG dimensions from the actual file
-      const svgContent = fs.readFileSync(placeholderPath, 'utf-8');
-      // Match decimal numbers in viewBox (e.g., "0 0 595.28 841.89")
-      const viewBoxMatch = svgContent.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
-      const widthMatch = svgContent.match(/width="([\d.]+)"/);
-      const heightMatch = svgContent.match(/height="([\d.]+)"/);
+      // A4 PDF dimensions: 595.28 x 841.89 points = 210 x 297 mm
+      const pdfPixelWidth = 595.28;  // A4 width in points
+      const pdfPixelHeight = 841.89; // A4 height in points
       
-      let svgPixelWidth = 2808;  // Default
-      let svgPixelHeight = 1456; // Default
+      // Convert PDF points to mm for canvas
+      // 1 point = 0.352778 mm (standard conversion for PDF points to metric)
+      const pdfWidthMm = Math.round(pdfPixelWidth * 0.352778);  // 210mm
+      const pdfHeightMm = Math.round(pdfPixelHeight * 0.352778); // 297mm
       
-      if (viewBoxMatch) {
-        svgPixelWidth = parseFloat(viewBoxMatch[1]);
-        svgPixelHeight = parseFloat(viewBoxMatch[2]);
-      } else if (widthMatch && heightMatch) {
-        svgPixelWidth = parseFloat(widthMatch[1]);
-        svgPixelHeight = parseFloat(heightMatch[1]);
-      }
-      
-      // Convert SVG viewBox dimensions (points) to mm for canvas
-      // 1 point = 0.352778 mm (standard conversion for PDF/SVG points to metric)
-      const svgWidthMm = Math.round(svgPixelWidth * 0.352778);
-      const svgHeightMm = Math.round(svgPixelHeight * 0.352778);
-      
-      // For placeholders, set contentBounds to match the full viewBox dimensions
-      // This ensures the placeholder uses the full A4 size (not a subset of content)
-      // Regular logos will still use actual content bounds from the bounds extraction
+      // For PDF placeholders, set contentBounds to match the full A4 page
+      // This ensures proper centering without relying on internal content detection
       const placeholderContentBounds = {
         xMin: 0,
         yMin: 0,
-        xMax: svgWidthMm,
-        yMax: svgHeightMm,
-        width: svgWidthMm,
-        height: svgHeightMm,
+        xMax: pdfWidthMm,
+        yMax: pdfHeightMm,
+        width: pdfWidthMm,
+        height: pdfHeightMm,
         units: 'mm' as const
       };
       
@@ -3202,10 +3187,10 @@ export async function registerRoutes(app: express.Application) {
         projectId,
         filename: placeholderFilename,
         originalName: fileName,
-        mimeType: 'image/svg+xml',
+        mimeType: 'application/pdf',
         size: stats.size,
-        width: svgPixelWidth,
-        height: svgPixelHeight,
+        width: pdfPixelWidth,
+        height: pdfPixelHeight,
         url: `/uploads/${placeholderFilename}`,
         externalFileUrl: fileRequest.url,
         externalFileService: 'dropbox',
@@ -3213,7 +3198,7 @@ export async function registerRoutes(app: express.Application) {
         dropboxFileRequestId: fileRequest.id,
         dropboxFilePath: fileRequest.folder,
         svgColors: description ? { notes: description } : null,
-        contentBounds: placeholderContentBounds  // Use full viewBox dimensions
+        contentBounds: placeholderContentBounds  // Use full A4 dimensions
       };
 
       const logo = await storage.createLogo(logoData);
@@ -3226,8 +3211,8 @@ export async function registerRoutes(app: express.Application) {
         elementType: 'logo' as const,
         x: 0,  // Center horizontally
         y: 0,  // Center vertically
-        width: svgWidthMm,
-        height: svgHeightMm,
+        width: pdfWidthMm,
+        height: pdfHeightMm,
         rotation: 0,
         zIndex: 0,
         isVisible: true,
