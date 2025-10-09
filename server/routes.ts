@@ -3163,19 +3163,20 @@ export async function registerRoutes(app: express.Application) {
 
       // Get SVG dimensions from the actual file
       const svgContent = fs.readFileSync(placeholderPath, 'utf-8');
-      const viewBoxMatch = svgContent.match(/viewBox="0 0 (\d+) (\d+)"/);
-      const widthMatch = svgContent.match(/width="(\d+)"/);
-      const heightMatch = svgContent.match(/height="(\d+)"/);
+      // Match decimal numbers in viewBox (e.g., "0 0 595.28 841.89")
+      const viewBoxMatch = svgContent.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+      const widthMatch = svgContent.match(/width="([\d.]+)"/);
+      const heightMatch = svgContent.match(/height="([\d.]+)"/);
       
       let svgPixelWidth = 2808;  // Default
       let svgPixelHeight = 1456; // Default
       
       if (viewBoxMatch) {
-        svgPixelWidth = parseInt(viewBoxMatch[1]);
-        svgPixelHeight = parseInt(viewBoxMatch[2]);
+        svgPixelWidth = parseFloat(viewBoxMatch[1]);
+        svgPixelHeight = parseFloat(viewBoxMatch[2]);
       } else if (widthMatch && heightMatch) {
-        svgPixelWidth = parseInt(widthMatch[1]);
-        svgPixelHeight = parseInt(heightMatch[1]);
+        svgPixelWidth = parseFloat(widthMatch[1]);
+        svgPixelHeight = parseFloat(heightMatch[1]);
       }
       
       // Create logo record with Dropbox file request info
