@@ -1,0 +1,1038 @@
+ warning: Some modules could not be started
+ Missing dependencies:     Array(34)
+ Non loaded modules:       Array(283)
+ Debug:                    Object
+ Owl is running in 'dev' mode.
+ Tour Manager is ready.  running_tour=null
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+    Element size: 292.97643232177813 × 73.89592014648375px
+ TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 Canvas updateElementDirect called: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 ✅ Canvas API update successful
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 ✅ Image loaded for preview
+injected.js:27 ✅ Image loaded for preview
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 PDF preview approved, always showing project name modal for final confirmation
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Project data for Odoo integration: Object
+injected.js:27 🔽 Opening PDF in new window: kooko_qty10_cmyk.pdf
+injected.js:27 ✅ PDF download initiated: kooko_qty10_cmyk.pdf
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Preflight CMYK Check: Object
+injected.js:27 RasterWarningModal render check: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 PDFPreviewModal render: Object
+injected.js:27 VectorizationServiceForm render: Object
+injected.js:27 TemplateSelectorModal render Object
+injected.js:27 Template A3: 842x1191px, Workspace: 1789x990, Zoom: 71%
+injected.js:27 Template A3: 842x1191px, Workspace: 1234x990, Zoom: 71%
+injected.js:27 Template A3: 842x1191px, Workspace: 400x990, Zoom: 50%
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: {dbWidth: 292.97643232177813, dbHeight: 73.89592014648375, pixelWidth: 415.2421875, pixelHeight: 104.734375, rotation: 0}
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Template A3: 842x1191px, Workspace: 400x990, Zoom: 50%
+injected.js:27 Template A3: 842x1191px, Workspace: 647x990, Zoom: 65%
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: {dbWidth: 292.97643232177813, dbHeight: 73.89592014648375, pixelWidth: 539.81484375, pixelHeight: 136.1546875, rotation: 0}
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 Template A3: 842x1191px, Workspace: 684x990, Zoom: 69%
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 Canvas element d476e050-a7f0-4e29-bf46-9915bb177909 dimensions: {dbWidth: 292.97643232177813, dbHeight: 73.89592014648375, pixelWidth: 573.0342187499999, pixelHeight: 144.5334375, rotation: 0}
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (4.5, 22.390625) to (834.984375, 231.859375)
+injected.js:27    Element size: 292.97643232177813 × 73.89592014648375px
