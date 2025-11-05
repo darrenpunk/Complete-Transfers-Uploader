@@ -1227,16 +1227,6 @@ export default function UploadTool() {
               <ShoppingCart className="w-4 h-4 mr-2" />
               {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
             </Button>
-            <Button 
-              variant="outline"
-              onClick={handleGeneratePDF}
-              disabled={generatePDFMutation.isPending}
-              size="sm"
-              data-testid="button-generate-pdf"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Generate PDF
-            </Button>
           </div>
         </div>
       </div>
