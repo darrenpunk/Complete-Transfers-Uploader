@@ -16,7 +16,7 @@ import PDFPreviewModal from "@/components/pdf-preview-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload } from "lucide-react";
+import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -170,6 +170,65 @@ export default function UploadTool() {
       toast({
         title: "PDF Generation Failed",
         description: error.message || "Unable to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add to Cart - Calls Odoo API
+  const addToCartMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentProject?.id) throw new Error("No project selected");
+      
+      // Get Odoo API base URL from environment or use default
+      const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      
+      const url = `${odooBaseUrl}/artwork/api/projects/${currentProject.id}/add-to-cart`;
+      
+      console.log('🛒 Adding to Odoo cart:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for session
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Cart error: ${errorText}`);
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('✅ Added to cart successfully:', data);
+      
+      toast({
+        title: "Added to Cart",
+        description: "Redirecting to your cart...",
+      });
+      
+      // Redirect to Odoo cart - handle iframe vs direct access
+      setTimeout(() => {
+        const isInIframe = window.self !== window.top;
+        const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+        const cartUrl = `${odooBaseUrl}/shop/cart`;
+        
+        if (isInIframe) {
+          // If in iframe, redirect parent window
+          window.parent.location.href = cartUrl;
+        } else {
+          // If standalone, redirect current window
+          window.location.href = cartUrl;
+        }
+      }, 1500);
+    },
+    onError: (error) => {
+      toast({
+        title: "Add to Cart Failed",
+        description: error.message || "Unable to add to cart. Please try again.",
         variant: "destructive",
       });
     },
@@ -1160,10 +1219,20 @@ export default function UploadTool() {
           </div>
           <div className="flex items-center space-x-3">
             <Button 
+              onClick={() => addToCartMutation.mutate()}
+              disabled={addToCartMutation.isPending || !currentProject}
+              size="sm"
+              data-testid="button-add-to-cart"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
+            </Button>
+            <Button 
               variant="outline"
               onClick={handleGeneratePDF}
               disabled={generatePDFMutation.isPending}
               size="sm"
+              data-testid="button-generate-pdf"
             >
               <Download className="w-4 h-4 mr-2" />
               Generate PDF
