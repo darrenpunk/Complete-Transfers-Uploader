@@ -5,13 +5,26 @@ Your Replit app now integrates with Odoo's e-commerce system! Users can design a
 
 ## What Was Added
 
-### 1. Add to Cart Button
-**Location:** Bottom action bar (next to "Generate PDF")
+### 1. Add to Cart Flow
+**Trigger:** "Add to Cart" button in bottom action bar
+
+**Modal Flow:**
+1. **Project Name Modal** (if project unnamed)
+   - User enters project name
+   - User adds optional comments
+   - Comments will appear on Odoo order line
+
+2. **Add to Cart Confirmation Modal**
+   - Shows project name for confirmation
+   - Two options:
+     - **Add to Cart & Start New Project** - Continues shopping workflow
+     - **Add to Cart & View Cart** - Proceeds to checkout
+   - Cancel button to abort
 
 **Features:**
 - ✅ Calls Odoo API: `POST /artwork/api/projects/{uuid}/add-to-cart`
 - ✅ Handles iframe detection (works in Odoo iframe or standalone)
-- ✅ Redirects to Odoo cart after adding
+- ✅ Offers workflow choice (new project vs checkout)
 - ✅ Shows loading state while processing
 - ✅ Error handling with user-friendly messages
 
@@ -35,15 +48,18 @@ If not set, defaults to your staging Odoo server.
 
 ### User Flow:
 1. **Design Artwork** - User uploads logos and positions them on template
-2. **Click "Add to Cart"** - New blue button in bottom bar
-3. **API Call** - Replit app calls Odoo's `/add-to-cart` endpoint
-4. **Odoo Processing:**
+2. **Click "Add to Cart"** - Blue button in bottom action bar
+3. **Name Project Modal** - User provides project name and comments (if not already named)
+4. **Add to Cart Confirmation Modal** - User chooses between:
+   - **Add to Cart & Start New Project** - Adds item and returns to home for new design
+   - **Add to Cart & View Cart** - Adds item and redirects to Odoo cart
+5. **API Call** - Replit app calls Odoo's `/add-to-cart` endpoint
+6. **Odoo Processing:**
    - Finds matching product based on template (e.g., A3 → Full Colour Transfer A3)
    - Gets price from Odoo pricelist (with quantity discounts)
    - Creates/updates sale order (cart)
    - Attaches project data with comments and garment colors
-5. **Redirect** - User is redirected to Odoo cart page
-6. **Checkout** - Standard Odoo checkout process
+7. **User Action** - Either starts new project or views cart for checkout
 
 ### Technical Details:
 
@@ -130,15 +146,26 @@ When added to cart, the order line includes:
 - **Template info** (size and type)
 - **PDF attachment** (generated artwork)
 
-## Files Modified
+## Files Created/Modified
 
+### New Files:
+1. **client/src/components/add-to-cart-modal.tsx**
+   - New confirmation modal component
+   - Two action buttons (new project / view cart)
+   - Clean, professional UI matching app design
+
+### Modified Files:
 1. **client/src/pages/upload-tool.tsx**
-   - Added `addToCartMutation` (lines 181-240)
-   - Added "Add to Cart" button (lines 1226-1234)
-   - Imported ShoppingCart icon
+   - Added `addToCartMutation` with action parameter support
+   - Added modal flow integration
+   - Added "Add to Cart" button triggering modal flow
+   - Imported ShoppingCart icon and AddToCartModal
 
 2. **replit.md**
    - Updated "Recent Fixes" section with integration note
+
+3. **ODOO_CART_INTEGRATION.md**
+   - Updated with modal flow documentation
 
 ## Testing Checklist
 

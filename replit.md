@@ -8,7 +8,7 @@ Preferred communication style: Simple, everyday language.
 Current focus: Core functionality over complex color management features.
 
 ## Recent Fixes (Oct 2025 - Nov 2025)
-- **Nov 2025: Odoo Cart Integration**: Added "Add to Cart" button that integrates Replit app with Odoo e-commerce system via API calls to `/artwork/api/projects/<uuid>/add-to-cart`. Supports iframe detection and parent window redirection.
+- **Nov 2025: Odoo Cart Integration**: Added "Add to Cart" button with modal workflow that integrates Replit app with Odoo e-commerce system via API calls to `/artwork/api/projects/<uuid>/add-to-cart`. Features project naming modal, add-to-cart confirmation modal with "Start New Project" or "View Cart" options, iframe detection, and parent window redirection.
 - Fixed HTTP 413 "Payload Too Large" errors on published app when fetching projects with many logos
 - Optimized GET /api/projects/:id/logos endpoint to exclude heavy JSONB fields (svgColors, contentBounds, etc.) for projects with >10 logos
 - Fixed critical security vulnerability: removed unsafe innerHTML usage in image error handlers

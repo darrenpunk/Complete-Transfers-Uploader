@@ -13,6 +13,7 @@ import InkColorModal from "@/components/ink-color-modal";
 import ProjectNameModal from "@/components/project-name-modal";
 import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
+import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -44,7 +45,8 @@ export default function UploadTool() {
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
   const [showPDFPreviewModal, setShowPDFPreviewModal] = useState(false);
   const [showAppliqueBadgesModal, setShowAppliqueBadgesModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | null>(null);
+  const [showAddToCartModal, setShowAddToCartModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'pdf' | 'continue' | 'cart' | null>(null);
   const [pendingTemplateData, setPendingTemplateData] = useState<{ templateId: string; garmentColor: string; inkColor?: string; quantity?: number } | null>(null);
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -175,9 +177,9 @@ export default function UploadTool() {
     },
   });
 
-  // Add to Cart - Calls Odoo API
+  // Add to Cart - Calls Odoo API (modified to accept action parameter)
   const addToCartMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (action?: 'new-project' | 'view-cart') => {
       if (!currentProject?.id) throw new Error("No project selected");
       
       // Get Odoo API base URL from environment or use default
@@ -200,30 +202,43 @@ export default function UploadTool() {
         throw new Error(`Cart error: ${errorText}`);
       }
       
-      return response.json();
+      const data = await response.json();
+      return { data, action };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, action }) => {
       console.log('✅ Added to cart successfully:', data);
       
-      toast({
-        title: "Added to Cart",
-        description: "Redirecting to your cart...",
-      });
-      
-      // Redirect to Odoo cart - handle iframe vs direct access
-      setTimeout(() => {
-        const isInIframe = window.self !== window.top;
-        const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-        const cartUrl = `${odooBaseUrl}/shop/cart`;
+      if (action === 'new-project') {
+        // Start new project - reload page
+        toast({
+          title: "Added to Cart",
+          description: "Starting a new project...",
+        });
         
-        if (isInIframe) {
-          // If in iframe, redirect parent window
-          window.parent.location.href = cartUrl;
-        } else {
-          // If standalone, redirect current window
-          window.location.href = cartUrl;
-        }
-      }, 1500);
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else if (action === 'view-cart') {
+        // Redirect to Odoo cart
+        toast({
+          title: "Added to Cart",
+          description: "Redirecting to your cart...",
+        });
+        
+        setTimeout(() => {
+          const isInIframe = window.self !== window.top;
+          const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+          const cartUrl = `${odooBaseUrl}/shop/cart`;
+          
+          if (isInIframe) {
+            window.parent.location.href = cartUrl;
+          } else {
+            window.location.href = cartUrl;
+          }
+        }, 1000);
+      }
+      
+      setShowAddToCartModal(false);
     },
     onError: (error) => {
       toast({
@@ -256,6 +271,10 @@ export default function UploadTool() {
         generatePDFMutation.mutate({ name: projectData.name, quantity: currentProject?.quantity || 1 });
       } else if (pendingAction === 'continue') {
         setCurrentStep(prev => Math.min(prev + 1, 5));
+      } else if (pendingAction === 'cart') {
+        // Show add to cart modal after project naming
+        setShowProjectNameModal(false);
+        setShowAddToCartModal(true);
       }
       
       setPendingAction(null);
@@ -266,6 +285,11 @@ export default function UploadTool() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle add to cart action from modal
+  const handleAddToCartAction = (action: 'new-project' | 'view-cart') => {
+    addToCartMutation.mutate(action);
   };
 
   // Check if project needs naming before action
@@ -1219,13 +1243,21 @@ export default function UploadTool() {
           </div>
           <div className="flex items-center space-x-3">
             <Button 
-              onClick={() => addToCartMutation.mutate()}
-              disabled={addToCartMutation.isPending || !currentProject}
+              onClick={() => {
+                if (needsProjectName(currentProject)) {
+                  setPendingAction('cart');
+                  setShowProjectNameModal(true);
+                } else {
+                  setPendingAction('cart');
+                  setShowAddToCartModal(true);
+                }
+              }}
+              disabled={!currentProject}
               size="sm"
               data-testid="button-add-to-cart"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
+              Add to Cart
             </Button>
           </div>
         </div>
@@ -1351,6 +1383,15 @@ export default function UploadTool() {
           setShowUploadGuidanceModal(false);
           fileInputRef.current?.click();
         }}
+      />
+
+      {/* Add to Cart Modal */}
+      <AddToCartModal
+        open={showAddToCartModal}
+        onOpenChange={setShowAddToCartModal}
+        projectName={currentProject?.name || 'Untitled Project'}
+        onAddToCart={handleAddToCartAction}
+        isAddingToCart={addToCartMutation.isPending}
       />
 
       {/* Hidden file input for upload guidance modal */}
