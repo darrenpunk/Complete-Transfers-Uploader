@@ -48,18 +48,20 @@ If not set, defaults to your staging Odoo server.
 
 ### User Flow:
 1. **Design Artwork** - User uploads logos and positions them on template
-2. **Click "Add to Cart"** - Blue button in bottom action bar
-3. **Name Project Modal** - User provides project name and comments (if not already named)
-4. **Add to Cart Confirmation Modal** - User chooses between:
-   - **Add to Cart & Start New Project** - Adds item and returns to home for new design
+2. **Click Continue** - When ready to finish the design
+3. **PDF Preview Modal** - User reviews the artwork preview
+4. **Name Project Modal** - User provides project name and comments
+5. **Add to Cart Modal** - User chooses between:
+   - **Add to Cart & Create Another** - Adds item and starts a new project
    - **Add to Cart & View Cart** - Adds item and redirects to Odoo cart
-5. **API Call** - Replit app calls Odoo's `/add-to-cart` endpoint
-6. **Odoo Processing:**
+   - **Go Back** - Returns to edit the design
+6. **API Call** - Replit app calls Odoo's `/add-to-cart` endpoint
+7. **Odoo Processing:**
    - Finds matching product based on template (e.g., A3 → Full Colour Transfer A3)
    - Gets price from Odoo pricelist (with quantity discounts)
    - Creates/updates sale order (cart)
    - Attaches project data with comments and garment colors
-7. **User Action** - Either starts new project or views cart for checkout
+8. **User Action** - Either starts new project or views cart for checkout
 
 ### Technical Details:
 
@@ -179,11 +181,14 @@ When added to cart, the order line includes:
 ### 🧪 To Test:
 1. Open app in Odoo iframe: `https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/artwork/upload`
 2. Design artwork (upload logo, position it)
-3. Click "Add to Cart" button
-4. Verify redirect to Odoo cart
-5. Check cart shows correct product, price, quantity
-6. Verify project comments visible on order line
-7. Complete checkout
+3. Click **"Continue"** button (progress to final step)
+4. **PDF Preview Modal** appears - review and click "Approve"
+5. **Name Your Project Modal** appears - enter name and comments, click "Continue"
+6. **Add to Cart Modal** appears with three options:
+   - "Add to Cart & Create Another" - Adds to cart and starts new project
+   - "Add to Cart & View Cart" - Adds to cart and goes to Odoo cart
+   - "Go Back" - Returns to editing
+7. Choose your action and verify cart in Odoo shows correct product, price, comments
 
 ## Why This Wasn't Done Initially
 

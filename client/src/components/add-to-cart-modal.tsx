@@ -56,7 +56,7 @@ export default function AddToCartModal({
             data-testid="button-add-cart-new-project"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            {isAddingToCart ? 'Adding...' : 'Add to Cart & Start New Project'}
+            {isAddingToCart ? 'Adding to Cart...' : 'Add to Cart & Create Another'}
             <Plus className="w-4 h-4 ml-2" />
           </Button>
           
@@ -69,7 +69,7 @@ export default function AddToCartModal({
             data-testid="button-add-cart-view-cart"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            {isAddingToCart ? 'Adding...' : 'Add to Cart & View Cart'}
+            {isAddingToCart ? 'Adding to Cart...' : 'Add to Cart & View Cart'}
             <ExternalLink className="w-4 h-4 ml-2" />
           </Button>
           
@@ -81,7 +81,7 @@ export default function AddToCartModal({
             size="sm"
             data-testid="button-cancel-add-cart"
           >
-            Cancel
+            Go Back
           </Button>
         </DialogFooter>
       </DialogContent>

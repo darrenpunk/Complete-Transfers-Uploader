@@ -266,14 +266,15 @@ export default function UploadTool() {
         quantity: currentProject?.quantity || 1
       });
 
+      // Close the project name modal
+      setShowProjectNameModal(false);
+
       // Execute the pending action
-      if (pendingAction === 'pdf') {
-        generatePDFMutation.mutate({ name: projectData.name, quantity: currentProject?.quantity || 1 });
-      } else if (pendingAction === 'continue') {
-        setCurrentStep(prev => Math.min(prev + 1, 5));
+      if (pendingAction === 'pdf' || pendingAction === 'continue') {
+        // After naming, show add to cart modal instead of generating PDF
+        setShowAddToCartModal(true);
       } else if (pendingAction === 'cart') {
         // Show add to cart modal after project naming
-        setShowProjectNameModal(false);
         setShowAddToCartModal(true);
       }
       
