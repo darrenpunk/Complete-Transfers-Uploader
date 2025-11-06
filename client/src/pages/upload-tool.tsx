@@ -293,8 +293,10 @@ export default function UploadTool() {
       setShowProjectNameModal(false);
 
       // Execute the pending action
+      console.log('🎬 Executing pending action:', pendingAction);
       if (pendingAction === 'pdf') {
         // Generate PDF immediately
+        console.log('📄 Calling generatePDFMutation.mutate()');
         generatePDFMutation.mutate();
       } else if (pendingAction === 'continue') {
         // Show add to cart modal for continue workflow
