@@ -11,8 +11,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { FileText, AlertCircle, MessageSquare } from "lucide-react";
+import { FileText, AlertCircle, MessageSquare, Palette } from "lucide-react";
+import { MultiColorSelector } from "./multi-color-selector";
+import type { GarmentColorItem } from "@shared/schema";
 
 interface ProjectNameModalProps {
   open: boolean;
@@ -36,6 +39,8 @@ export default function ProjectNameModal({
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
   const [hasError, setHasError] = useState(false);
+  const [useMultiColor, setUseMultiColor] = useState(false);
+  const [garmentColors, setGarmentColors] = useState<GarmentColorItem[]>([]);
 
   const handleConfirm = () => {
     const trimmedName = projectName.trim();
@@ -46,9 +51,21 @@ export default function ProjectNameModal({
     }
 
     setHasError(false);
+    
+    // Generate comments from garment colors if multi-color mode is enabled
+    let finalComments = comments.trim();
+    if (useMultiColor && garmentColors.length > 0) {
+      const colorComments = garmentColors
+        .map(gc => `${gc.quantity} ${gc.colorName}`)
+        .join('\n');
+      
+      // Prepend color info to existing comments
+      finalComments = colorComments + (finalComments ? '\n\n' + finalComments : '');
+    }
+    
     onConfirm({
       name: trimmedName,
-      comments: comments.trim()
+      comments: finalComments
     });
     onOpenChange(false);
   };
@@ -98,19 +115,54 @@ export default function ProjectNameModal({
 
 
 
+          {/* Multi-Color Toggle */}
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+            <div className="flex-1">
+              <Label htmlFor="multi-color-toggle" className="flex items-center gap-2 cursor-pointer">
+                <Palette className="w-4 h-4" />
+                <span className="font-medium">Multiple Garment Colors</span>
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Need the same artwork on different garment colors with specific quantities
+              </p>
+            </div>
+            <Switch
+              id="multi-color-toggle"
+              checked={useMultiColor}
+              onCheckedChange={setUseMultiColor}
+              data-testid="switch-multi-color"
+            />
+          </div>
+
+          {/* Multi-Color Selector */}
+          {useMultiColor && (
+            <MultiColorSelector
+              garmentColors={garmentColors}
+              onChange={setGarmentColors}
+              className="border rounded-lg p-4 bg-card"
+            />
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="comments" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
-              Comments
+              {useMultiColor ? "Additional Comments (Optional)" : "Comments"}
             </Label>
-            <div className="text-sm text-muted-foreground mb-2">
-              This area is for artwork related comments ONLY, and will only be seen at the time of processing artwork. All other requests must be sent by replying to the email confirmation that you will receive after the order is placed.
-            </div>
+            {useMultiColor && (
+              <div className="text-sm text-muted-foreground mb-2">
+                Garment colors will be automatically added to comments. Add any additional notes below.
+              </div>
+            )}
+            {!useMultiColor && (
+              <div className="text-sm text-muted-foreground mb-2">
+                This area is for artwork related comments ONLY, and will only be seen at the time of processing artwork. All other requests must be sent by replying to the email confirmation that you will receive after the order is placed.
+              </div>
+            )}
             <Textarea
               id="comments"
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              placeholder="Enter any special instructions or comments..."
+              placeholder={useMultiColor ? "Enter any additional instructions..." : "Enter any special instructions or comments..."}
               rows={3}
               className="resize-none"
             />

@@ -16,7 +16,8 @@ export const projects = pgTable("projects", {
   garmentColor: text("garment_color").notNull(),
   inkColor: text("ink_color"), // For single colour transfers
   appliqueBadgesForm: jsonb("applique_badges_form"), // Store embroidery form data for Applique Badges
-  quantity: integer("quantity").notNull().default(1), // Number of copies/quantity
+  quantity: integer("quantity").notNull().default(1), // Number of copies/quantity (total or default if multi-color)
+  garmentColors: jsonb("garment_colors"), // For multi-color orders: [{color, colorName, quantity}]
   status: text("status").notNull().default("draft"), // draft, in_progress, completed
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
@@ -196,4 +197,11 @@ export type ContentBounds = {
   yMax: number;
   width: number;
   height: number;
+};
+
+// Garment color with quantity type definition
+export type GarmentColorItem = {
+  color: string; // Hex color code
+  colorName: string; // Human-readable name
+  quantity: number; // Quantity for this specific color
 };
