@@ -37,10 +37,10 @@ class SaleOrderLine(models.Model):
         if project.project_comments:
             comments.append(f"Project Comments: {project.project_comments}")
         
-        # Add garment colors
+        # Add garment colors (exact format: "10 Black\n5 Gold" for multi-color)
         garment_colors = self._get_garment_colors_text(project)
         if garment_colors:
-            comments.append(f"Garment Colors: {garment_colors}")
+            comments.append(garment_colors)  # No prefix - exact format
         
         # Add ink color if available
         if project.ink_color_name:
