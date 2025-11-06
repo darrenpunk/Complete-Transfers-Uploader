@@ -22,7 +22,7 @@ class ArtworkUploaderController(http.Controller):
         
         return request.render('artwork_uploader.upload_page', values)
     
-    @http.route('/artwork/api/templates', type='json', auth='public', methods=['GET'], csrf=False)
+    @http.route('/artwork/api/templates', type='json', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
     def get_templates(self, **kwargs):
         """Get all individual template sizes - exact match with standalone app"""
         # Return all 65 individual templates from standalone app with exact structure
@@ -115,7 +115,7 @@ class ArtworkUploaderController(http.Controller):
             {"id": "sublimation-small", "name": "sublimation_small", "label": "60×60mm Sublimation", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Digital Transfers", "description": "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester"}
         ]
     
-    @http.route('/artwork/api/projects', type='json', auth='public', methods=['POST'], csrf=False)
+    @http.route('/artwork/api/projects', type='json', auth='public', methods=['POST', 'OPTIONS'], cors='*', csrf=False)
     def create_project(self, **kwargs):
         """Create a new artwork project"""
         data = request.jsonrequest
@@ -150,7 +150,7 @@ class ArtworkUploaderController(http.Controller):
             'comments': project.project_comments,
         }
     
-    @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['GET'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
     def get_project(self, project_uuid, **kwargs):
         """Get project details"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -179,7 +179,7 @@ class ArtworkUploaderController(http.Controller):
             'state': project.state,
         }
     
-    @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['PATCH'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>', type='json', auth='public', methods=['PATCH', 'OPTIONS'], cors='*', csrf=False)
     def update_project(self, project_uuid, **kwargs):
         """Update project details"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -211,7 +211,7 @@ class ArtworkUploaderController(http.Controller):
         
         return {'success': True, 'updated_fields': list(update_vals.keys())}
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/logos', type='json', auth='public', methods=['POST'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/logos', type='json', auth='public', methods=['POST', 'OPTIONS'], cors='*', csrf=False)
     def upload_logo(self, project_uuid, **kwargs):
         """Upload a logo file"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -259,7 +259,7 @@ class ArtworkUploaderController(http.Controller):
             'fileSize': logo.file_size,
         }
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/canvas-elements', type='json', auth='public', methods=['GET'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/canvas-elements', type='json', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
     def get_canvas_elements(self, project_uuid, **kwargs):
         """Get canvas elements"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -273,7 +273,7 @@ class ArtworkUploaderController(http.Controller):
         
         return elements
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/canvas-elements', type='json', auth='public', methods=['POST'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/canvas-elements', type='json', auth='public', methods=['POST', 'OPTIONS'], cors='*', csrf=False)
     def save_canvas_elements(self, project_uuid, **kwargs):
         """Save canvas elements"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -295,7 +295,7 @@ class ArtworkUploaderController(http.Controller):
         
         return {'success': True}
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/generate-pdf', type='http', auth='public', methods=['GET'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/generate-pdf', type='http', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
     def generate_pdf(self, project_uuid, **kwargs):
         """Generate PDF for the project"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
@@ -382,7 +382,7 @@ class ArtworkUploaderController(http.Controller):
             
             return request.make_response(pdf_content, headers)
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST', 'OPTIONS'], cors='*', csrf=False)
     def add_to_cart(self, project_uuid, **kwargs):
         """Add artwork project to cart"""
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
