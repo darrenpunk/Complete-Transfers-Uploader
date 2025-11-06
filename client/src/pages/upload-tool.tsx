@@ -1167,7 +1167,7 @@ export default function UploadTool() {
                 {currentStep === 1 && "Upload Logos"}
                 {currentStep === 2 && "Design Layout"}
                 {currentStep === 3 && "Pre-flight Check"}
-                {currentStep === 4 && "Generate PDF"}
+                {currentStep === 4 && "Add to Cart"}
                 {currentStep === 5 && "Attach to Order"}
               </span>
             </div>
@@ -1279,44 +1279,22 @@ export default function UploadTool() {
           
           <div className="flex items-center space-x-3">
             <Button
-              onClick={handleGeneratePDF}
-              disabled={!logos || logos.length === 0 || generatePDFMutation.isPending}
-              data-testid="button-generate-pdf"
+              onClick={() => {
+                if (needsProjectName(currentProject)) {
+                  setPendingAction('cart');
+                  setShowProjectNameModal(true);
+                } else {
+                  setShowAddToCartModal(true);
+                }
+              }}
+              disabled={!logos || logos.length === 0}
+              variant="default"
+              data-testid="button-add-to-cart"
               className="min-w-[140px]"
             >
-              {generatePDFMutation.isPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Generate PDF
-                </>
-              )}
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Add to Cart
             </Button>
-            
-            {/* Show Add to Cart button if in iframe (Odoo context) */}
-            {window.self !== window.top && (
-              <Button
-                onClick={() => {
-                  if (needsProjectName(currentProject)) {
-                    setPendingAction('cart');
-                    setShowProjectNameModal(true);
-                  } else {
-                    setShowAddToCartModal(true);
-                  }
-                }}
-                disabled={!logos || logos.length === 0}
-                variant="default"
-                data-testid="button-add-to-cart"
-                className="min-w-[140px]"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Add to Cart
-              </Button>
-            )}
           </div>
         </div>
       </div>
