@@ -1265,6 +1265,48 @@ export default function UploadTool() {
               Auto-saved <span className="font-medium">2 minutes ago</span>
             </div>
           </div>
+          
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={handleGeneratePDF}
+              disabled={!logos || logos.length === 0 || generatePDFMutation.isPending}
+              data-testid="button-generate-pdf"
+              className="min-w-[140px]"
+            >
+              {generatePDFMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate PDF
+                </>
+              )}
+            </Button>
+            
+            {/* Show Add to Cart button if in iframe (Odoo context) */}
+            {window.self !== window.top && (
+              <Button
+                onClick={() => {
+                  if (needsProjectName(currentProject)) {
+                    setPendingAction('cart');
+                    setShowProjectNameModal(true);
+                  } else {
+                    setShowAddToCartModal(true);
+                  }
+                }}
+                disabled={!logos || logos.length === 0}
+                variant="default"
+                data-testid="button-add-to-cart"
+                className="min-w-[140px]"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Add to Cart
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
