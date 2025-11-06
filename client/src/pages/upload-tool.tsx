@@ -1276,26 +1276,6 @@ export default function UploadTool() {
               Auto-saved <span className="font-medium">2 minutes ago</span>
             </div>
           </div>
-          
-          <div className="flex items-center space-x-3">
-            <Button
-              onClick={() => {
-                if (needsProjectName(currentProject)) {
-                  setPendingAction('cart');
-                  setShowProjectNameModal(true);
-                } else {
-                  setShowAddToCartModal(true);
-                }
-              }}
-              disabled={!logos || logos.length === 0}
-              variant="default"
-              data-testid="button-add-to-cart"
-              className="min-w-[140px]"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Add to Cart
-            </Button>
-          </div>
         </div>
       </div>
 
