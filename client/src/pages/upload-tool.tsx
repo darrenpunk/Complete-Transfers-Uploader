@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Project, Logo, CanvasElement, TemplateSize } from "@shared/schema";
+import type { Project, Logo, CanvasElement, TemplateSize, GarmentColorItem } from "@shared/schema";
 import ToolsSidebar from "@/components/tools-sidebar";
 import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
@@ -250,20 +250,43 @@ export default function UploadTool() {
   });
 
   // Handle project naming confirmation
-  const handleProjectNameConfirm = async (projectData: { name: string; comments: string }) => {
+  const handleProjectNameConfirm = async (projectData: { 
+    name: string; 
+    comments: string;
+    garmentColors?: GarmentColorItem[];
+    totalQuantity?: number;
+  }) => {
     try {
+      // Prepare updates object
+      const updates: any = {};
+      
       // Update project name if needed
       if (currentProject && currentProject.name !== projectData.name) {
-        const updatedProject = await updateProjectMutation.mutateAsync({ name: projectData.name });
+        updates.name = projectData.name;
+      }
+      
+      // Store garment colors if provided
+      if (projectData.garmentColors && projectData.garmentColors.length > 0) {
+        updates.garmentColors = projectData.garmentColors;
+        
+        // Update total quantity if provided
+        if (projectData.totalQuantity) {
+          updates.quantity = projectData.totalQuantity;
+        }
+      }
+      
+      // Apply updates if any
+      if (Object.keys(updates).length > 0 && currentProject) {
+        const updatedProject = await updateProjectMutation.mutateAsync(updates);
         setCurrentProject(updatedProject);
       }
 
-      // Store the project data (comments) for future use with Odoo integration
-      // For now, we'll log this data but it can be stored in project metadata later
+      // Store the project data for Odoo integration
       console.log('Project data for Odoo integration:', {
         name: projectData.name,
         comments: projectData.comments,
-        quantity: currentProject?.quantity || 1
+        garmentColors: projectData.garmentColors,
+        totalQuantity: projectData.totalQuantity || currentProject?.quantity || 1
       });
 
       // Close the project name modal
@@ -282,7 +305,7 @@ export default function UploadTool() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update project name. Please try again.",
+        description: "Failed to update project data. Please try again.",
         variant: "destructive",
       });
     }

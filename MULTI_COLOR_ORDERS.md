@@ -102,23 +102,41 @@ Each color includes:
 
 ## Odoo Integration
 
-### Comments Field
-Multi-color information is sent to Odoo via the comments field:
-```json
+### Database Persistence
+Multi-color data is stored in the Replit database:
+```typescript
+// projects table
 {
-  "name": "Welcome Inn Logo",
-  "comments": "10 Black\n4 Gold\n4 Charcoal\n5 Heather Grey\n\nRush order - needed by Friday"
+  garmentColors: jsonb("garment_colors"),  // Array of {color, colorName, quantity}
+  quantity: integer("quantity"),            // Total quantity from all colors
 }
 ```
 
-### Future Enhancement: garment_colors_json
+### Comments Field
+Multi-color information is automatically sent to Odoo via comments:
+```json
+{
+  "name": "Welcome Inn Logo",
+  "comments": "10 Black\n4 Gold\n4 Charcoal\n5 Heather Grey\n\nRush order - needed by Friday",
+  "quantity": 23
+}
+```
+
+### Data Flow
+1. **User selects colors** → MultiColorSelector component captures data
+2. **Project naming** → garmentColors array and totalQuantity returned from modal
+3. **Frontend sends** → PATCH /api/projects/:id with garmentColors and quantity
+4. **Backend stores** → Saved to PostgreSQL via Drizzle ORM
+5. **Add to cart** → garmentColors available for Odoo integration
+
+### Future Enhancement: Direct JSON Payload
 The Odoo model already supports structured color data:
 ```python
 # odoo_artwork_uploader/models/artwork_project.py
 garment_colors_json = fields.Text('Garment Colors JSON')
 ```
 
-In the future, this can be enhanced to send:
+In the future, the add-to-cart endpoint can send garmentColors directly:
 ```json
 {
   "garment_colors": [

@@ -21,7 +21,12 @@ interface ProjectNameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentName?: string;
-  onConfirm: (projectData: { name: string; comments: string }) => void;
+  onConfirm: (projectData: { 
+    name: string; 
+    comments: string; 
+    garmentColors?: GarmentColorItem[];
+    totalQuantity?: number;
+  }) => void;
   isGeneratingPDF?: boolean;
   title?: string;
   description?: string;
@@ -63,9 +68,16 @@ export default function ProjectNameModal({
       finalComments = colorComments + (finalComments ? '\n\n' + finalComments : '');
     }
     
+    // Calculate total quantity from garment colors
+    const totalQuantity = useMultiColor && garmentColors.length > 0
+      ? garmentColors.reduce((sum, gc) => sum + gc.quantity, 0)
+      : undefined;
+    
     onConfirm({
       name: trimmedName,
-      comments: finalComments
+      comments: finalComments,
+      garmentColors: useMultiColor && garmentColors.length > 0 ? garmentColors : undefined,
+      totalQuantity
     });
     onOpenChange(false);
   };
