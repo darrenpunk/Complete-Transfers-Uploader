@@ -293,8 +293,11 @@ export default function UploadTool() {
       setShowProjectNameModal(false);
 
       // Execute the pending action
-      if (pendingAction === 'pdf' || pendingAction === 'continue') {
-        // After naming, show add to cart modal instead of generating PDF
+      if (pendingAction === 'pdf') {
+        // Generate PDF immediately
+        generatePDFMutation.mutate();
+      } else if (pendingAction === 'continue') {
+        // Show add to cart modal for continue workflow
         setShowAddToCartModal(true);
       } else if (pendingAction === 'cart') {
         // Show add to cart modal after project naming
