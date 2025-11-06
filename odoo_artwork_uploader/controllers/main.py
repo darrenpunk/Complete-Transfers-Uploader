@@ -311,9 +311,18 @@ class ArtworkUploaderController(http.Controller):
                 # Fallback if PDF generator not available
                 OdooPDFGenerator = None
             
+            # Parse garment colors
+            garment_colors = []
+            if project.garment_colors_json:
+                try:
+                    garment_colors = json.loads(project.garment_colors_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            
             # Prepare project data
             project_data = {
                 'project_id': project.uuid,
+                'project_name': project.name,
                 'template_size': {
                     'name': project.template_size,
                     'width': project.template_width,
@@ -322,6 +331,10 @@ class ArtworkUploaderController(http.Controller):
                 'canvas_elements': [],
                 'logos': [],
                 'garment_color': project.garment_color,
+                'garment_color_name': project.garment_color_name,
+                'garment_colors': garment_colors,  # Multi-color support
+                'quantity': project.quantity,
+                'total_quantity': project.total_quantity,
             }
             
             # Get canvas elements
