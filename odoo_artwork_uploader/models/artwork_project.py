@@ -99,6 +99,7 @@ class ArtworkProject(models.Model):
     # Pricing
     price_unit = fields.Float('Unit Price', compute='_compute_price', store=True)
     quantity = fields.Integer('Quantity', default=10)
+    total_quantity = fields.Integer('Total Quantity', help='Sum of all garment color quantities for multi-color orders')
     price_total = fields.Float('Total Price', compute='_compute_price', store=True)
     
     # PDF

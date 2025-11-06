@@ -42,7 +42,7 @@ class OdooPDFGenerator:
         
     def generate_pdf(self, project_data):
         """
-        Generate PDF from artwork project data
+        Generate PDF from artwork project data with multi-color garment support
         
         Args:
             project_data (dict): Project data including:
@@ -50,7 +50,9 @@ class OdooPDFGenerator:
                 - template_size: dict with width, height, name
                 - canvas_elements: list of positioned elements
                 - logos: list of logo data
-                - garment_color: hex color string
+                - garment_color: hex color string (legacy single color)
+                - garment_colors: list of dicts with color, colorName, quantity (multi-color)
+                - project_name: str
                 - applique_badges_form: optional applique data
         
         Returns:
@@ -74,14 +76,21 @@ class OdooPDFGenerator:
             # Create PDF with ReportLab
             c = canvas.Canvas(pdf_path, pagesize=(width_pt, height_pt))
             
-            # Page 1: Design without background (transparent)
-            self._embed_logos_page(c, project_data, page_number=1)
+            # Parse garment colors (supports both old single-color and new multi-color)
+            garment_colors = self._parse_garment_colors(project_data)
+            
+            _logger.info(f"🎨 Generating PDF with {len(garment_colors)} garment color(s)")
+            
+            # Page 1: Design without background (transparent) - for production
+            self._embed_logos_page(c, project_data)
             c.showPage()
             
-            # Page 2: Design with garment backgrounds and color labels
-            self._draw_garment_backgrounds(c, project_data)
-            self._embed_logos_page(c, project_data, page_number=2)
-            self._add_color_labels(c, project_data)
+            # Pages 2+: One page per garment color with background and footer
+            for garment_color_data in garment_colors:
+                self._draw_full_garment_background(c, project_data, garment_color_data)
+                self._embed_logos_page(c, project_data)
+                self._add_color_footer(c, project_data, garment_color_data)
+                c.showPage()
             
             # Save PDF
             c.save()
@@ -90,7 +99,7 @@ class OdooPDFGenerator:
             with open(pdf_path, 'rb') as f:
                 pdf_content = f.read()
             
-            _logger.info(f"✅ PDF generated successfully - Size: {len(pdf_content)} bytes")
+            _logger.info(f"✅ PDF generated successfully - {1 + len(garment_colors)} pages, Size: {len(pdf_content)} bytes")
             return pdf_content
             
         except Exception as e:
@@ -99,6 +108,41 @@ class OdooPDFGenerator:
         finally:
             # Cleanup temp files
             self._cleanup_temp_files()
+    
+    def _parse_garment_colors(self, project_data):
+        """
+        Parse garment colors from project data
+        Supports both legacy single-color and new multi-color format
+        
+        Returns:
+            list: List of dicts with color, colorName, quantity
+        """
+        # Try new multi-color format first
+        garment_colors_json = project_data.get('garment_colors')
+        if garment_colors_json:
+            try:
+                if isinstance(garment_colors_json, str):
+                    garment_colors = json.loads(garment_colors_json)
+                else:
+                    garment_colors = garment_colors_json
+                
+                if garment_colors and isinstance(garment_colors, list):
+                    _logger.info(f"📋 Multi-color order: {len(garment_colors)} colors")
+                    return garment_colors
+            except (json.JSONDecodeError, TypeError) as e:
+                _logger.warning(f"⚠️ Failed to parse garment_colors JSON: {e}")
+        
+        # Fallback to legacy single color
+        garment_color = project_data.get('garment_color', '#000000')
+        garment_color_name = project_data.get('garment_color_name', 'Black')
+        quantity = project_data.get('quantity', 1)
+        
+        _logger.info(f"📋 Single-color order: {garment_color_name}")
+        return [{
+            'color': garment_color,
+            'colorName': garment_color_name,
+            'quantity': quantity
+        }]
     
     def _embed_logos_page(self, canvas_obj, project_data, page_number=1):
         """Embed logos on the current page"""
@@ -195,59 +239,55 @@ class OdooPDFGenerator:
         except Exception as e:
             _logger.warning(f"⚠️ Raster embedding failed: {e}")
     
-    def _draw_garment_backgrounds(self, canvas_obj, project_data):
-        """Draw individual garment backgrounds for each element"""
-        elements = project_data.get('canvas_elements', [])
-        default_color = project_data.get('garment_color', '#000000')
+    def _draw_full_garment_background(self, canvas_obj, project_data, garment_color_data):
+        """Draw full-page background with specified garment color"""
         template = project_data['template_size']
+        width_pt = template.get('width', 210) * 2.834
+        height_pt = template.get('height', 297) * 2.834
         
-        for element in elements:
-            garment_color = element.get('garmentColor', default_color)
-            
-            # Calculate element bounds
-            scale = self._calculate_scale(element, template)
-            x, y = self._calculate_position(element, template, canvas_obj)
-            width = element.get('width', 100) * scale
-            height = element.get('height', 100) * scale
-            
-            # Draw background rectangle
+        garment_color = garment_color_data.get('color', '#000000')
+        
+        try:
+            # Draw full-page background rectangle
             if garment_color and garment_color != 'transparent':
-                try:
-                    color = HexColor(garment_color)
-                    canvas_obj.setFillColor(color)
-                    canvas_obj.rect(x, y, width, height, fill=1, stroke=0)
-                except:
-                    _logger.warning(f"⚠️ Invalid garment color: {garment_color}")
+                color = HexColor(garment_color)
+                canvas_obj.setFillColor(color)
+                canvas_obj.rect(0, 0, width_pt, height_pt, fill=1, stroke=0)
+                _logger.info(f"🎨 Drew {garment_color_data.get('colorName', 'Unknown')} background")
+        except Exception as e:
+            _logger.warning(f"⚠️ Failed to draw garment background: {e}")
     
-    def _add_color_labels(self, canvas_obj, project_data):
-        """Add color labels to page 2"""
+    def _add_color_footer(self, canvas_obj, project_data, garment_color_data):
+        """Add footer with project name, garment color, and quantity"""
         template = project_data['template_size']
-        width_pt = template['width'] * 2.834
-        height_pt = template['height'] * 2.834
+        width_pt = template.get('width', 210) * 2.834
+        height_pt = template.get('height', 297) * 2.834
         
-        # Get unique colors from elements
-        colors = set()
-        default_color = project_data.get('garment_color', '#000000')
+        project_name = project_data.get('project_name', 'Untitled Project')
+        color_name = garment_color_data.get('colorName', 'Unknown')
+        quantity = garment_color_data.get('quantity', 1)
         
-        for element in project_data.get('canvas_elements', []):
-            garment_color = element.get('garmentColor', default_color)
-            if garment_color:
-                colors.add(garment_color)
+        # Draw footer at bottom of page
+        y_pos = 30  # 30 points from bottom
         
-        # Draw color labels at bottom of page
-        y_pos = 20  # 20 points from bottom
-        x_pos = 50  # 50 points from left
-        
-        canvas_obj.setFont("Helvetica", 10)
+        canvas_obj.setFont("Helvetica-Bold", 12)
         canvas_obj.setFillColor(black)
         
-        for i, color in enumerate(colors):
-            if color and color != 'transparent':
-                # Get color info (this would need garment color database)
-                color_info = self._get_color_info(color)
-                label = f"{color_info['name']} {color_info['cmyk']}"
-                
-                canvas_obj.drawString(x_pos, y_pos - (i * 15), label)
+        # Center the text
+        footer_text = f"Project: {project_name}  |  Garment Color: {color_name}  |  Quantity: {quantity}"
+        text_width = canvas_obj.stringWidth(footer_text, "Helvetica-Bold", 12)
+        x_pos = (width_pt - text_width) / 2
+        
+        # Draw white background for better visibility
+        padding = 10
+        canvas_obj.setFillColor(white)
+        canvas_obj.rect(x_pos - padding, y_pos - 5, text_width + (padding * 2), 20, fill=1, stroke=0)
+        
+        # Draw text
+        canvas_obj.setFillColor(black)
+        canvas_obj.drawString(x_pos, y_pos, footer_text)
+        
+        _logger.info(f"📝 Added footer: {footer_text}")
     
     def _calculate_scale(self, element, template):
         """Calculate scaling factor for element"""

@@ -56,7 +56,10 @@ class SaleOrderLine(models.Model):
             self.name = f"{base_name}\n\n" + "\n".join(comments)
     
     def _get_garment_colors_text(self, project):
-        """Extract and format garment colors text"""
+        """
+        Extract and format garment colors text with quantities
+        Returns: "10 Black, 5 Gold, 3 White" format for multi-color orders
+        """
         colors_text = []
         
         # Check for multiple colors in JSON field
@@ -64,19 +67,24 @@ class SaleOrderLine(models.Model):
             try:
                 import json
                 colors_data = json.loads(project.garment_colors_json)
-                if isinstance(colors_data, list):
+                if isinstance(colors_data, list) and len(colors_data) > 0:
+                    # Multi-color format: "quantity colorName"
                     for color_info in colors_data:
-                        if isinstance(color_info, dict) and 'name' in color_info:
-                            colors_text.append(color_info['name'])
+                        if isinstance(color_info, dict):
+                            quantity = color_info.get('quantity', 1)
+                            color_name = color_info.get('colorName', color_info.get('name', 'Unknown'))
+                            colors_text.append(f"{quantity} {color_name}")
                         elif isinstance(color_info, str):
                             colors_text.append(color_info)
+                    return "\n".join(colors_text)
             except (json.JSONDecodeError, TypeError):
                 pass
         
         # Fallback to single garment color
         if not colors_text and project.garment_color_name:
-            colors_text.append(project.garment_color_name)
+            quantity = project.total_quantity or project.quantity or 1
+            return f"{quantity} {project.garment_color_name}"
         elif not colors_text and project.garment_color:
-            colors_text.append(project.garment_color)
+            return project.garment_color
         
-        return ", ".join(colors_text) if colors_text else ""
+        return ""
