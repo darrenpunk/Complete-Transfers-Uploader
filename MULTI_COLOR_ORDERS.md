@@ -3,6 +3,18 @@
 ## Overview
 The multi-color garment order feature allows customers to order the same artwork on different garment colors with specific quantities for each color. This is a common requirement in the custom apparel industry where bulk orders often need the same design on multiple shirt colors.
 
+## Template Compatibility
+Multi-color garment orders are **only available for full-colour printing templates**:
+- ✅ **Full-Colour** - Standard screen printed heat applied transfers
+- ✅ **HD** - High-definition full-colour screen printed transfers
+- ✅ **Metallic** - Full-colour screen printed with metallic finish
+
+**Not available for:**
+- ❌ Single Colour templates
+- ❌ Zero templates
+- ❌ DTF (Direct to Film) templates
+- ❌ Other specialized template types
+
 ## Use Case Example
 **Customer Request:**
 "I need the same logo on different colored shirts:

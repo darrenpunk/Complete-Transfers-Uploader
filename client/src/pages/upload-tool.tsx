@@ -1320,6 +1320,7 @@ export default function UploadTool() {
         currentName={currentProject?.name || ""}
         onConfirm={handleProjectNameConfirm}
         isGeneratingPDF={generatePDFMutation.isPending}
+        template={currentTemplate}
         title={pendingAction === 'pdf' ? "Name Your Project for PDF" : "Name Your Project"}
         description={
           pendingAction === 'pdf' 

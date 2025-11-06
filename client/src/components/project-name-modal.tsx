@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { FileText, AlertCircle, MessageSquare, Palette } from "lucide-react";
 import { MultiColorSelector } from "./multi-color-selector";
-import type { GarmentColorItem } from "@shared/schema";
+import type { GarmentColorItem, TemplateSize } from "@shared/schema";
 
 interface ProjectNameModalProps {
   open: boolean;
@@ -28,6 +28,7 @@ interface ProjectNameModalProps {
     totalQuantity?: number;
   }) => void;
   isGeneratingPDF?: boolean;
+  template?: TemplateSize;
   title?: string;
   description?: string;
 }
@@ -38,6 +39,7 @@ export default function ProjectNameModal({
   currentName = "",
   onConfirm,
   isGeneratingPDF = false,
+  template,
   title = "Name Your Project",
   description = "Please provide project details before continuing. This information will be used for the PDF filename and Odoo integration."
 }: ProjectNameModalProps) {
@@ -46,6 +48,13 @@ export default function ProjectNameModal({
   const [hasError, setHasError] = useState(false);
   const [useMultiColor, setUseMultiColor] = useState(false);
   const [garmentColors, setGarmentColors] = useState<GarmentColorItem[]>([]);
+
+  // Check if template supports multi-color orders (Full-Colour, HD, Metallic only)
+  const supportsMultiColor = template && (
+    template.description?.includes("Full-Colour") ||
+    template.description?.includes("High-definition full-colour") ||
+    template.description?.includes("metallic finish")
+  );
 
   const handleConfirm = () => {
     const trimmedName = projectName.trim();
@@ -125,34 +134,36 @@ export default function ProjectNameModal({
             />
           </div>
 
+          {/* Multi-Color Toggle - Only for Full-Colour, HD, and Metallic templates */}
+          {supportsMultiColor && (
+            <>
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="flex-1">
+                  <Label htmlFor="multi-color-toggle" className="flex items-center gap-2 cursor-pointer">
+                    <Palette className="w-4 h-4" />
+                    <span className="font-medium">Multiple Garment Colors</span>
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Need the same artwork on different garment colors with specific quantities
+                  </p>
+                </div>
+                <Switch
+                  id="multi-color-toggle"
+                  checked={useMultiColor}
+                  onCheckedChange={setUseMultiColor}
+                  data-testid="switch-multi-color"
+                />
+              </div>
 
-
-          {/* Multi-Color Toggle */}
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-            <div className="flex-1">
-              <Label htmlFor="multi-color-toggle" className="flex items-center gap-2 cursor-pointer">
-                <Palette className="w-4 h-4" />
-                <span className="font-medium">Multiple Garment Colors</span>
-              </Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Need the same artwork on different garment colors with specific quantities
-              </p>
-            </div>
-            <Switch
-              id="multi-color-toggle"
-              checked={useMultiColor}
-              onCheckedChange={setUseMultiColor}
-              data-testid="switch-multi-color"
-            />
-          </div>
-
-          {/* Multi-Color Selector */}
-          {useMultiColor && (
-            <MultiColorSelector
-              garmentColors={garmentColors}
-              onChange={setGarmentColors}
-              className="border rounded-lg p-4 bg-card"
-            />
+              {/* Multi-Color Selector */}
+              {useMultiColor && (
+                <MultiColorSelector
+                  garmentColors={garmentColors}
+                  onChange={setGarmentColors}
+                  className="border rounded-lg p-4 bg-card"
+                />
+              )}
+            </>
           )}
 
           <div className="space-y-2">
