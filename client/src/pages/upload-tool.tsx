@@ -295,9 +295,15 @@ export default function UploadTool() {
       // Execute the pending action
       console.log('🎬 Executing pending action:', pendingAction);
       if (pendingAction === 'pdf') {
-        // Generate PDF immediately
-        console.log('📄 Calling generatePDFMutation.mutate()');
-        generatePDFMutation.mutate();
+        // Generate PDF immediately - pass project data directly
+        console.log('📄 Calling generatePDFMutation.mutate() with:', {
+          name: projectData.name,
+          quantity: projectData.totalQuantity || currentProject?.quantity || 1
+        });
+        generatePDFMutation.mutate({
+          name: projectData.name,
+          quantity: projectData.totalQuantity || currentProject?.quantity || 1
+        });
       } else if (pendingAction === 'continue') {
         // Show add to cart modal for continue workflow
         setShowAddToCartModal(true);
