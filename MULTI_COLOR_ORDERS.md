@@ -139,7 +139,8 @@ Multi-color information is automatically sent to Odoo via comments:
 2. **Project naming** → garmentColors array and totalQuantity returned from modal
 3. **Frontend sends** → PATCH /api/projects/:id with garmentColors and quantity
 4. **Backend stores** → Saved to PostgreSQL via Drizzle ORM
-5. **Add to cart** → garmentColors available for Odoo integration
+5. **PDF Generation** → Creates one page per garment color
+6. **Add to cart** → garmentColors available for Odoo integration
 
 ### Future Enhancement: Direct JSON Payload
 The Odoo model already supports structured color data:
@@ -159,6 +160,39 @@ In the future, the add-to-cart endpoint can send garmentColors directly:
   ]
 }
 ```
+
+## PDF Generation
+
+### Multi-Page Output
+When a project has multi-color garment orders, the generated PDF includes:
+
+**Page 1**: Transparent background (for production use)
+- Clean artwork without any background
+- Used for direct transfer production
+
+**Pages 2+**: One page per garment color
+- Each page shows the artwork on that specific garment color background
+- Footer displays:
+  - `Project: [Project Name]`
+  - `Garment Color: [Color Name]`
+  - `Quantity: [Quantity for this color]`
+
+### Example PDF Structure
+For an order: "10 Black, 4 Gold, 6 Charcoal"
+
+- **Page 1**: Transparent background (artwork only)
+- **Page 2**: Black background, footer "Garment Color: Black, Quantity: 10"
+- **Page 3**: Gold background, footer "Garment Color: Gold, Quantity: 4"
+- **Page 4**: Charcoal background, footer "Garment Color: Charcoal, Quantity: 6"
+
+This allows production teams to visually see how the artwork looks on each garment color and verify quantities directly from the PDF.
+
+### Backward Compatibility
+For single-color orders (or templates that don't support multi-color):
+- **Page 1**: Transparent background
+- **Page 2**: Default garment color background with total quantity
+
+The PDF generation automatically detects whether the project has multi-color data and generates the appropriate pages.
 
 ## Benefits
 

@@ -767,21 +767,64 @@ export async function registerRoutes(app: express.Application) {
           defaultGarmentBg = rgb(r, g, b);
         }
         
-        // Create pages with no backgrounds
-        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
-        const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-        
         // Page 1: COMPLETELY TRANSPARENT - just clean vectors
-        // NO background rectangle, NO white, NO viewboxes - pure transparency
+        const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
         console.log(`✅ Page 1: TRANSPARENT - clean vectors only`);
         
-        // Page 2: Default garment color background (will be overridden by individual element backgrounds)
-        page2.drawRectangle({
-          x: 0, y: 0, 
-          width: pageWidth, height: pageHeight,
-          color: defaultGarmentBg
-        });
-        console.log(`✅ Page 2: ${getColorName(defaultGarmentColor)} background for preview (${defaultGarmentColor})`);
+        // Multi-Color Orders: Create one page per garment color
+        const garmentColorPages: Array<{ page: any; color: string; colorName: string; quantity: number }> = [];
+        
+        if (project.garmentColors && Array.isArray(project.garmentColors) && project.garmentColors.length > 0) {
+          console.log(`🎨 Multi-Color Order: Creating ${project.garmentColors.length} pages for different garment colors`);
+          
+          for (const garmentColorItem of project.garmentColors) {
+            const page = pdfDoc.addPage([pageWidth, pageHeight]);
+            
+            // Parse and set background color
+            const colorHex = garmentColorItem.color;
+            let bgColor = rgb(1, 1, 1);
+            if (colorHex.startsWith('#') && colorHex.length === 7) {
+              const r = parseInt(colorHex.slice(1, 3), 16) / 255;
+              const g = parseInt(colorHex.slice(3, 5), 16) / 255;
+              const b = parseInt(colorHex.slice(5, 7), 16) / 255;
+              bgColor = rgb(r, g, b);
+            }
+            
+            page.drawRectangle({
+              x: 0, y: 0,
+              width: pageWidth, height: pageHeight,
+              color: bgColor
+            });
+            
+            garmentColorPages.push({
+              page,
+              color: colorHex,
+              colorName: garmentColorItem.colorName,
+              quantity: garmentColorItem.quantity
+            });
+            
+            console.log(`✅ Created page for ${garmentColorItem.colorName} (Qty: ${garmentColorItem.quantity})`);
+          }
+        } else {
+          // Backward compatibility: Single color mode (original behavior)
+          console.log(`📄 Single Color Mode: Creating one preview page`);
+          const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+          
+          page2.drawRectangle({
+            x: 0, y: 0, 
+            width: pageWidth, height: pageHeight,
+            color: defaultGarmentBg
+          });
+          
+          garmentColorPages.push({
+            page: page2,
+            color: defaultGarmentColor,
+            colorName: getColorName(defaultGarmentColor),
+            quantity: project.quantity || 1
+          });
+          
+          console.log(`✅ Page 2: ${getColorName(defaultGarmentColor)} background for preview (${defaultGarmentColor})`);
+        }
         
         // Process canvas elements
         for (let element of canvasElements) {
@@ -1093,34 +1136,17 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded with 90° rotation`);
               
-              // Draw individual garment color background for this element on page 2
-              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
-              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
-                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
-                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
-                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
-                const elementBg = rgb(r, g, b);
-                
-                // Draw garment background rectangle for this element
-                page2.drawRectangle({
-                  x: xPosPts,
-                  y: yPosPts,
+              // Embed with 90° rotation on all garment color pages
+              for (const garmentPageInfo of garmentColorPages) {
+                garmentPageInfo.page.drawPage(embeddedPage, {
+                  x: rotatedX,
+                  y: rotatedY,
                   width: widthPts,
                   height: heightPts,
-                  color: elementBg
+                  rotate: degrees(90)
                 });
-                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
               }
-              
-              // Embed with 90° rotation on page 2
-              page2.drawPage(embeddedPage, {
-                x: rotatedX,
-                y: rotatedY,
-                width: widthPts,
-                height: heightPts,
-                rotate: degrees(90)
-              });
-              console.log(`✅ Page 2: Artwork embedded with 90° rotation`);
+              console.log(`✅ All garment color pages: Artwork embedded with 90° rotation`);
             } else if (rotation === 180) {
               // For 180° rotation, dimensions stay the same
               const visualWidth = widthPts;
@@ -1148,34 +1174,17 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded with 180° rotation`);
               
-              // Draw individual garment color background for this element on page 2
-              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
-              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
-                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
-                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
-                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
-                const elementBg = rgb(r, g, b);
-                
-                // Draw garment background rectangle for this element
-                page2.drawRectangle({
-                  x: xPosPts,
-                  y: yPosPts,
+              // Embed with 180° rotation on all garment color pages
+              for (const garmentPageInfo of garmentColorPages) {
+                garmentPageInfo.page.drawPage(embeddedPage, {
+                  x: rotatedX,
+                  y: rotatedY,
                   width: widthPts,
                   height: heightPts,
-                  color: elementBg
+                  rotate: degrees(180)
                 });
-                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
               }
-              
-              // Embed with 180° rotation on page 2
-              page2.drawPage(embeddedPage, {
-                x: rotatedX,
-                y: rotatedY,
-                width: widthPts,
-                height: heightPts,
-                rotate: degrees(180)
-              });
-              console.log(`✅ Page 2: Artwork embedded with 180° rotation`);
+              console.log(`✅ All garment color pages: Artwork embedded with 180° rotation`);
             } else if (rotation === 270) {
               // For 270° rotation, dimensions swap visually
               const visualWidth = heightPts;
@@ -1203,34 +1212,17 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded with 270° rotation`);
               
-              // Draw individual garment color background for this element on page 2
-              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
-              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
-                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
-                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
-                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
-                const elementBg = rgb(r, g, b);
-                
-                // Draw garment background rectangle for this element
-                page2.drawRectangle({
-                  x: xPosPts,
-                  y: yPosPts,
+              // Embed with 270° rotation on all garment color pages
+              for (const garmentPageInfo of garmentColorPages) {
+                garmentPageInfo.page.drawPage(embeddedPage, {
+                  x: rotatedX,
+                  y: rotatedY,
                   width: widthPts,
                   height: heightPts,
-                  color: elementBg
+                  rotate: degrees(270)
                 });
-                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
               }
-              
-              // Embed with 270° rotation on page 2
-              page2.drawPage(embeddedPage, {
-                x: rotatedX,
-                y: rotatedY,
-                width: widthPts,
-                height: heightPts,
-                rotate: degrees(270)
-              });
-              console.log(`✅ Page 2: Artwork embedded with 270° rotation`);
+              console.log(`✅ All garment color pages: Artwork embedded with 270° rotation`);
             } else {
               // No rotation - use direct position
               console.log(`📐 No rotation: Positioning at (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})`);
@@ -1243,32 +1235,16 @@ export async function registerRoutes(app: express.Application) {
               });
               console.log(`✅ Page 1: Artwork embedded at exact canvas position`);
               
-              // Draw individual garment color background for this element on page 2
-              const elementGarmentColor = element.garmentColor || defaultGarmentColor;
-              if (elementGarmentColor.startsWith('#') && elementGarmentColor.length === 7) {
-                const r = parseInt(elementGarmentColor.slice(1, 3), 16) / 255;
-                const g = parseInt(elementGarmentColor.slice(3, 5), 16) / 255;
-                const b = parseInt(elementGarmentColor.slice(5, 7), 16) / 255;
-                const elementBg = rgb(r, g, b);
-                
-                // Draw garment background rectangle for this element
-                page2.drawRectangle({
+              // Embed on all garment color pages
+              for (const garmentPageInfo of garmentColorPages) {
+                garmentPageInfo.page.drawPage(embeddedPage, {
                   x: xPosPts,
                   y: yPosPts,
                   width: widthPts,
-                  height: heightPts,
-                  color: elementBg
+                  height: heightPts
                 });
-                console.log(`🎨 Page 2: Drew ${getColorName(elementGarmentColor)} background for element`);
               }
-              
-              page2.drawPage(embeddedPage, {
-                x: xPosPts,
-                y: yPosPts,
-                width: widthPts,
-                height: heightPts
-              });
-              console.log(`✅ Page 2: Artwork embedded at exact canvas position`);
+              console.log(`✅ All garment color pages: Artwork embedded at exact canvas position`);
             }
             
             // Cleanup handled inside each branch
@@ -1278,65 +1254,46 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // Add project info and garment colors to page 2 (same as canvas)
-        const textColor = defaultGarmentColor === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1);
+        // Add project info and garment color-specific information to each page
+        for (const garmentPageInfo of garmentColorPages) {
+          const textColor = garmentPageInfo.color === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1);
+          
+          garmentPageInfo.page.drawText(`Project: ${project.name || 'Untitled'}`, { 
+            x: 20, y: pageHeight - 40, size: 12, color: textColor 
+          });
+          garmentPageInfo.page.drawText(`Garment Color: ${garmentPageInfo.colorName}`, { 
+            x: 20, y: pageHeight - 60, size: 12, color: textColor 
+          });
+          garmentPageInfo.page.drawText(`Quantity: ${garmentPageInfo.quantity}`, { 
+            x: 20, y: pageHeight - 80, size: 12, color: textColor 
+          });
+          
+          console.log(`✅ Added footer to ${garmentPageInfo.colorName} page (Qty: ${garmentPageInfo.quantity})`);
+        }
         
-        page2.drawText(`Project: ${project.name || 'Untitled'}`, { 
-          x: 20, y: pageHeight - 40, size: 12, color: textColor 
-        });
-        page2.drawText(`Quantity: ${project.quantity || 1}`, { 
-          x: 20, y: pageHeight - 60, size: 12, color: textColor 
-        });
-        
-        // Check for external file links and add to PDF
+        // Check for external file links and add to first garment color page if exists
         const externalFileLogos = logos.filter(logo => logo.externalFileUrl);
-        if (externalFileLogos.length > 0) {
-          let yPos = pageHeight - 80;
-          page2.drawText(`External Files (download from link):`, { 
+        if (externalFileLogos.length > 0 && garmentColorPages.length > 0) {
+          const firstPage = garmentColorPages[0];
+          const textColor = firstPage.color === '#FFFFFF' ? rgb(0, 0, 0) : rgb(1, 1, 1);
+          let yPos = pageHeight - 100;
+          
+          firstPage.page.drawText(`External Files (download from link):`, { 
             x: 20, y: yPos, size: 11, color: textColor 
           });
           externalFileLogos.forEach((logo, index) => {
             yPos -= 20;
             const serviceLabel = logo.externalFileService?.toUpperCase() || 'LINK';
-            page2.drawText(`${index + 1}. ${logo.originalName} (${serviceLabel})`, { 
+            firstPage.page.drawText(`${index + 1}. ${logo.originalName} (${serviceLabel})`, { 
               x: 30, y: yPos, size: 10, color: textColor 
             });
             yPos -= 15;
-            page2.drawText(`   ${logo.externalFileUrl}`, { 
+            firstPage.page.drawText(`   ${logo.externalFileUrl}`, { 
               x: 30, y: yPos, size: 8, color: textColor 
             });
           });
+          console.log(`✅ Added external file links to first page`);
         }
-        
-        // Show all unique garment colors with CMYK values
-        const getColorCMYK = (color: string) => {
-          return color === '#FFFFFF' ? '(0, 0, 0, 0)' : 
-                 color === '#D98F17' ? '(0, 51, 93, 0)' : 
-                 color === '#171816' ? '(0, 0, 0, 100)' : 
-                 color === '#1a1a1a' ? '(0, 0, 0, 100)' :
-                 color === '#C02300' ? '(0, 99, 97, 0)' :
-                 color === '#388032' ? '(86, 16, 100, 3)' :
-                 color === '#D2E31D' ? '(20, 0, 100, 0)' :
-                 color === '#90BF33' ? '(50, 0, 99, 0)' :
-                 color === '#C42469' ? '(20, 90, 0, 0)' :
-                 color === '#FFD700' ? '(0, 13, 100, 0)' : 
-                 color === '#D9D2AB' ? '(8, 9, 30, 0)' :
-                 color === '#8B4513' ? '(20, 60, 100, 20)' :
-                 color === '#4169E1' ? '(70, 50, 0, 0)' :
-                 color === '#DC143C' ? '(0, 90, 75, 0)' :
-                 color === '#228B22' ? '(75, 0, 100, 5)' : `Custom ${color}`;
-        };
-        
-        const garmentColorNames = allGarmentColors.map(color => getColorName(color)).join(', ');
-        const garmentColorCMYK = allGarmentColors.map(color => `${getColorName(color)} ${getColorCMYK(color)}`).join(', ');
-        
-        page2.drawText(`Garment Colors: ${garmentColorNames}`, {
-          x: 20, y: 60, size: 12, color: textColor
-        });
-        page2.drawText(`${garmentColorCMYK}`, {
-          x: 20, y: 40, size: 10, color: textColor
-        });
-        console.log(`✅ Page 2 info added with garment colors: ${garmentColorNames}`);
         
         // Generate initial PDF
         const pdfBytes = await pdfDoc.save();
