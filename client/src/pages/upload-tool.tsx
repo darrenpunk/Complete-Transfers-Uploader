@@ -1411,8 +1411,8 @@ export default function UploadTool() {
         onDownloadPDF={() => {
           if (currentProject) {
             generatePDFMutation.mutate({
-              projectName: currentProject.name,
-              comments: currentProject.comments || '',
+              name: currentProject.name,
+              quantity: currentProject.quantity,
             });
           }
         }}
