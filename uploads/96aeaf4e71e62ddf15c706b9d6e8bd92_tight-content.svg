@@ -1,17 +1,11 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- CMYK_PDF_CONVERTED -->
-
-<svg
-   data-vectorized-cmyk="true"
-   data-original-cmyk-pdf="true"
-   width="841"
-   height="595.0001"
-   viewBox="0 0 841 595.0001"
-   version="1.1"
-   id="svg334"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 777.144531 610.1015628"
+                      preserveAspectRatio="xMidYMid meet"
+                      data-content-extracted="true"
+                      data-padding="10"
+                      data-original-bounds="43.15625,-0.0742188,800.300781,590.027344">
+                        <g transform="translate(-33.15625, 10.0742188)">
+                          
   <defs
      id="defs191">
     <g
@@ -1930,4 +1924,6 @@
        y="83.9022"
        id="use334" />
   </g>
-</svg>
+
+                        </g>
+                    </svg>
