@@ -336,9 +336,8 @@ export default function UploadTool() {
 
   // Handle PDF preview approval
   const handlePDFPreviewApproval = () => {
-    console.log('PDF preview approved, always showing project name modal for final confirmation');
-    // Always show project naming modal for PDF generation to allow quantity selection and final confirmation
-    setPendingAction('pdf');
+    console.log('PDF preview approved, showing project name modal. Current pendingAction:', pendingAction);
+    // Show project naming modal and preserve the pending action (either 'pdf' or 'continue')
     setShowProjectNameModal(true);
     setShowPDFPreviewModal(false); // Close the preview modal
   };
