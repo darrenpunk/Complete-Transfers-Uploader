@@ -1408,7 +1408,16 @@ export default function UploadTool() {
         onOpenChange={setShowAddToCartModal}
         projectName={currentProject?.name || 'Untitled Project'}
         onAddToCart={handleAddToCartAction}
+        onDownloadPDF={() => {
+          if (currentProject) {
+            generatePDFMutation.mutate({
+              projectName: currentProject.name,
+              comments: currentProject.comments || '',
+            });
+          }
+        }}
         isAddingToCart={addToCartMutation.isPending}
+        isGeneratingPDF={generatePDFMutation.isPending}
       />
 
       {/* Hidden file input for upload guidance modal */}
