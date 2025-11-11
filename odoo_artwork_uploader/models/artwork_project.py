@@ -190,11 +190,14 @@ class ArtworkProject(models.Model):
         }
         
         for record in self:
-            if 'A3' in record.template_size:
+            # Handle case where template_size is False or None
+            template_size = record.template_size or ''
+            
+            if 'A3' in template_size:
                 base_price = base_prices['A3']
-            elif 'A4' in record.template_size:
+            elif 'A4' in template_size:
                 base_price = base_prices['A4']
-            elif 'A5' in record.template_size:
+            elif 'A5' in template_size:
                 base_price = base_prices['A5']
             else:
                 base_price = 20.00
