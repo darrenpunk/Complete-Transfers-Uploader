@@ -1,0 +1,55 @@
+RPC_ERROR
+Odoo Server Error
+Traceback (most recent call last):
+  File "/home/odoo/src/odoo/odoo/http.py", line 1848, in _serve_db
+    return service_model.retrying(self._serve_ir_http, self.env)
+  File "/home/odoo/src/odoo/odoo/service/model.py", line 152, in retrying
+    result = func()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1876, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+  File "/home/odoo/src/odoo/odoo/http.py", line 2080, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+  File "/home/odoo/src/odoo/addons/website/models/ir_http.py", line 237, in _dispatch
+    response = super()._dispatch(endpoint)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_http.py", line 154, in _dispatch
+    result = endpoint(**request.params)
+  File "/home/odoo/src/odoo/odoo/http.py", line 763, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+  File "/home/odoo/src/odoo/addons/web/controllers/dataset.py", line 43, in call_kw
+    return self._call_kw(model, method, args, kwargs)
+  File "/home/odoo/src/user/printnode_base/controllers/main.py", line 44, in _call_kw
+    return super(DataSetProxy, self)._call_kw(model, method, args, kwargs)
+  File "/home/odoo/src/odoo/addons/web/controllers/dataset.py", line 34, in _call_kw
+    return call_kw(Model, method, args, kwargs)
+  File "/home/odoo/src/odoo/odoo/api.py", line 484, in call_kw
+    result = _call_kw_multi(method, model, args, kwargs)
+  File "/home/odoo/src/odoo/odoo/api.py", line 469, in _call_kw_multi
+    result = method(recs, *args, **kwargs)
+  File "/home/odoo/src/odoo/odoo/models.py", line 6681, in onchange
+    snapshot1 = Snapshot(record, nametree)
+  File "/home/odoo/src/odoo/odoo/models.py", line 6441, in __init__
+    self.fetch(name)
+  File "/home/odoo/src/odoo/odoo/models.py", line 6451, in fetch
+    self[name] = record[name]
+  File "/home/odoo/src/odoo/odoo/models.py", line 6007, in __getitem__
+    return self._fields[key].__get__(self, self.env.registry[self._name])
+  File "/home/odoo/src/odoo/odoo/fields.py", line 1158, in __get__
+    self.recompute(record)
+  File "/home/odoo/src/odoo/odoo/fields.py", line 1382, in recompute
+    apply_except_missing(self.compute_value, recs)
+  File "/home/odoo/src/odoo/odoo/fields.py", line 1355, in apply_except_missing
+    func(records)
+  File "/home/odoo/src/odoo/odoo/fields.py", line 1404, in compute_value
+    records._compute_field_value(self)
+  File "/home/odoo/src/odoo/addons/mail/models/mail_thread.py", line 403, in _compute_field_value
+    return super()._compute_field_value(field)
+  File "/home/odoo/src/odoo/odoo/models.py", line 4276, in _compute_field_value
+    fields.determine(field.compute, self)
+  File "/home/odoo/src/odoo/odoo/fields.py", line 98, in determine
+    return needle(*args)
+  File "/home/odoo/src/user/artwork_uploader/models/artwork_project.py", line 192, in _compute_price
+    if 'A3' in record.template_size:
+TypeError: argument of type 'bool' is not iterable
+
+The above server error caused the following client error:
+null
