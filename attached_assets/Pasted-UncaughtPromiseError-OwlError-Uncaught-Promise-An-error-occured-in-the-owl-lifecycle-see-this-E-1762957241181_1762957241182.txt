@@ -1,0 +1,22 @@
+UncaughtPromiseError > OwlError
+Uncaught Promise > An error occured in the owl lifecycle (see this Error's "cause" property)
+OwlError: An error occured in the owl lifecycle (see this Error's "cause" property)
+    Error: An error occured in the owl lifecycle (see this Error's "cause" property)
+        at handleError (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1484:101)
+        at owl.App.handleError (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:2142:29)
+        at Fiber._render (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1509:19)
+        at Fiber.render (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1507:6)
+        at ComponentNode.initiateRender (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1577:47)
+
+Caused by: InvalidDomainError: could not match domain
+    Error: could not match domain
+        at matchCondition (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179303-0b913d1/web.assets_backend.min.js:434:7)
+        at matchDomain (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179303-0b913d1/web.assets_backend.min.js:438:8)
+        at Domain.contains (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179303-0b913d1/web.assets_backend.min.js:413:62)
+        at evalDomain (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179303-0b913d1/web.assets_backend.min.js:5566:264)
+        at FormRenderer.evalDomainFromRecord (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179303-0b913d1/web.assets_backend.min.js:4039:42)
+        at FormRenderer.slot10 (eval at compile (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:2097:421), <anonymous>:93:1307)
+        at callSlot (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1678:25)
+        at OuterGroup.template (eval at compile (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:2097:421), <anonymous>:28:27)
+        at Fiber._render (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1508:96)
+        at Fiber.render (https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/web/assets/4179302-acc3240/web.assets_common.min.js:1507:6)
