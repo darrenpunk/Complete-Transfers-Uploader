@@ -237,28 +237,6 @@ class ArtworkLogo(models.Model):
                 ]
             }
             self.color_data = json.dumps(color_analysis)
-        
-    def _convert_to_svg(self, file_path):
-        """Convert AI/EPS to SVG"""
-        # This would use Inkscape or similar tool
-        # For now, just mark as vector
-        self.is_vector = True
-        pass
-                self._process_pdf(tmp_path)
-            elif self.file_type == 'svg':
-                # Analyze SVG
-                self._analyze_svg(tmp_path)
-            elif self.file_type in ['png', 'jpeg']:
-                # Process raster
-                self._process_raster(tmp_path)
-                
-            # Generate thumbnail
-            self._generate_thumbnail(tmp_path)
-            
-        finally:
-            # Clean up temp file
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
     
     def _convert_to_svg(self, file_path):
         """Convert AI/EPS files to SVG"""
@@ -300,22 +278,6 @@ class ArtworkLogo(models.Model):
             if os.path.exists(svg_path):
                 os.unlink(svg_path)
     
-    def _process_pdf(self, file_path):
-        """Process PDF file"""
-        # Check if it's vector or raster
-        # For now, mark as vector
-        self.is_vector = True
-        
-    def _analyze_svg(self, file_path):
-        """Analyze SVG file for colors and content"""
-        self.is_vector = True
-        # Color analysis would go here
-        
-    def _process_raster(self, file_path):
-        """Process raster image"""
-        self.is_raster = True
-        # Image analysis would go here
-        
     def _generate_thumbnail(self, file_path):
         """Generate thumbnail for preview"""
         # Thumbnail generation would go here

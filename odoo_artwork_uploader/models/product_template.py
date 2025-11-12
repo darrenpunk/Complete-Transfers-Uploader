@@ -17,6 +17,3 @@ class ProductTemplate(models.Model):
     
     min_quantity = fields.Integer('Minimum Quantity', default=10)
     max_upload_size_mb = fields.Integer('Max Upload Size (MB)', default=200)
-    
-    # Pricing tiers
-    price_tier_ids = fields.One2many('product.price.tier', 'product_tmpl_id', string='Price Tiers')
