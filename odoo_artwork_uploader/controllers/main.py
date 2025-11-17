@@ -489,20 +489,33 @@ class ArtworkUploaderController(http.Controller):
             # Get price from product (considering pricelists with quantity discounts)
             pricelist = request.website.get_current_pricelist() if hasattr(request, 'website') else None
             
+            _logger.info(f"🔍 Pricing debug - Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
+            
             if pricelist:
-                # Use pricelist to compute price with quantity (this applies quantity-based rules)
-                # The third parameter is the partner, fourth is quantity
-                price_per_unit = pricelist._get_product_price(
-                    product,
-                    copies,  # quantity - this triggers quantity-based pricelist rules
-                    None,    # partner
-                    date=None,
-                    uom_id=product.uom_id.id
-                )
+                # Method 1: Try get_product_price_rule which returns full rule info
+                try:
+                    price_info = pricelist.get_product_price_rule(
+                        product,
+                        copies,  # quantity for discount calculation
+                        request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                    )
+                    # Returns tuple: (price, rule_id)
+                    if isinstance(price_info, tuple):
+                        price_per_unit = price_info[0]
+                        _logger.info(f"✅ Pricelist rule applied - Price: {price_per_unit}, Rule ID: {price_info[1]}")
+                    else:
+                        price_per_unit = price_info
+                    _logger.info(f"💰 Price from pricelist for qty {copies}: {price_per_unit}")
+                except Exception as e:
+                    _logger.error(f"❌ Pricelist computation failed: {str(e)}")
+                    price_per_unit = product.list_price
             else:
                 price_per_unit = product.list_price
+                _logger.info(f"📋 No pricelist found, using list price: {price_per_unit}")
             
             total_price = price_per_unit * copies
+            
+            _logger.info(f"💵 Final pricing - Unit: {price_per_unit}, Total: {total_price} for {copies} items")
             
             return {
                 'pricePerUnit': round(price_per_unit, 2),
