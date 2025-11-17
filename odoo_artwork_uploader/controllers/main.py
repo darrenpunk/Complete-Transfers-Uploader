@@ -382,9 +382,20 @@ class ArtworkUploaderController(http.Controller):
             
             return request.make_response(pdf_content, headers)
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST', 'OPTIONS'], cors='*', csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def add_to_cart(self, project_uuid, **kwargs):
         """Add artwork project to cart"""
+        # Handle CORS manually for credentials support
+        if request.httprequest.method == 'OPTIONS':
+            headers = {
+                'Access-Control-Allow-Origin': request.httprequest.headers.get('Origin', '*'),
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Accept',
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Max-Age': '86400',
+            }
+            return request.make_response('', headers=headers.items())
+        
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
         
         if not project:
@@ -417,11 +428,20 @@ class ArtworkUploaderController(http.Controller):
             order_line.artwork_project_id = project.id
             order_line._update_artwork_comments()
         
-        return {
+        response = {
             'success': True,
             'cart_quantity': sale_order.cart_quantity,
             'website_sale_order': sale_order.id,
         }
+        
+        # Set CORS headers on the response
+        if hasattr(request, 'make_json_response'):
+            return request.make_json_response(response, headers={
+                'Access-Control-Allow-Origin': request.httprequest.headers.get('Origin', '*'),
+                'Access-Control-Allow-Credentials': 'true',
+            })
+        
+        return response
     
     @http.route('/artwork/api/pricing', type='json', auth='public', methods=['GET', 'POST', 'OPTIONS'], cors='*', csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):
