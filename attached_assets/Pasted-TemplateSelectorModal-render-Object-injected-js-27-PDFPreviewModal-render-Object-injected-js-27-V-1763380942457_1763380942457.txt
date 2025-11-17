@@ -1,0 +1,87 @@
+TemplateSelectorModal render 
+Object
+injected.js:27 PDFPreviewModal render: 
+Object
+injected.js:27 VectorizationServiceForm render: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 🛒 Adding to Odoo cart: https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/artwork/api/projects/690a5277-e777-4ce1-8a52-5a633b3e6110/add-to-cart
+injected.js:27 RasterWarningModal render check: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (14.445312, 6.246094) to (569.917969, 834.382812)
+injected.js:27    Element size: 195.95840957291796 × 292.1482311022486px
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 PDFPreviewModal render: 
+Object
+injected.js:27 VectorizationServiceForm render: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+690a5277-e777-4ce1-8a52-5a633b3e6110:1 Access to fetch at 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/artwork/api/projects/690a5277-e777-4ce1-8a52-5a633b3e6110/add-to-cart' from origin 'https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+api/projects/690a527…e6110/add-to-cart:1 
+ Failed to load resource: net::ERR_FAILED
+injected.js:27 RasterWarningModal render check: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (14.445312, 6.246094) to (569.917969, 834.382812)
+injected.js:27    Element size: 195.95840957291796 × 292.1482311022486px
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 PDFPreviewModal render: 
+Object
+injected.js:27 VectorizationServiceForm render: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 RasterWarningModal render check: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (14.445312, 6.246094) to (569.917969, 834.382812)
+injected.js:27    Element size: 195.95840957291796 × 292.1482311022486px
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 PDFPreviewModal render: 
+Object
+injected.js:27 VectorizationServiceForm render: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 RasterWarningModal render check: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:27 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:27    Content bounds: (14.445312, 6.246094) to (569.917969, 834.382812)
+injected.js:27    Element size: 195.95840957291796 × 292.1482311022486px
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 PDFPreviewModal render: 
+Object
+injected.js:27 VectorizationServiceForm render: 
+Object
+injected.js:27 TemplateSelectorModal render 
+Object
+injected.js:27 Template A3: 842x1191px, Workspace: 1020x1133, Zoom: 81%
+﻿
+
