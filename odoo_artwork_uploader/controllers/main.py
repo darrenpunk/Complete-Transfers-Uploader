@@ -382,24 +382,39 @@ class ArtworkUploaderController(http.Controller):
             
             return request.make_response(pdf_content, headers)
     
-    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='json', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
+    @http.route('/artwork/api/projects/<string:project_uuid>/add-to-cart', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def add_to_cart(self, project_uuid, **kwargs):
         """Add artwork project to cart"""
-        # Handle CORS manually for credentials support
+        # Get the origin from the request
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        # Handle CORS preflight
         if request.httprequest.method == 'OPTIONS':
-            headers = {
-                'Access-Control-Allow-Origin': request.httprequest.headers.get('Origin', '*'),
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Accept',
-                'Access-Control-Allow-Credentials': 'true',
-                'Access-Control-Max-Age': '86400',
-            }
-            return request.make_response('', headers=headers.items())
+            headers = [
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Methods', 'POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type, Accept'),
+                ('Access-Control-Allow-Credentials', 'true'),
+                ('Access-Control-Max-Age', '86400'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        # Parse JSON body
+        try:
+            data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            data = {}
         
         project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
         
         if not project:
-            return {'error': 'Project not found'}
+            response = json.dumps({'error': 'Project not found'})
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(response, headers=headers)
         
         # Get or create sale order
         sale_order = request.website.sale_get_order(force_create=True)
@@ -408,7 +423,13 @@ class ArtworkUploaderController(http.Controller):
         product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
         
         if not product:
-            return {'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'}
+            response = json.dumps({'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'})
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(response, headers=headers)
         
         # Add to cart
         sale_order.sudo()._cart_update(
@@ -428,20 +449,20 @@ class ArtworkUploaderController(http.Controller):
             order_line.artwork_project_id = project.id
             order_line._update_artwork_comments()
         
-        response = {
+        response_data = {
             'success': True,
             'cart_quantity': sale_order.cart_quantity,
             'website_sale_order': sale_order.id,
         }
         
-        # Set CORS headers on the response
-        if hasattr(request, 'make_json_response'):
-            return request.make_json_response(response, headers={
-                'Access-Control-Allow-Origin': request.httprequest.headers.get('Origin', '*'),
-                'Access-Control-Allow-Credentials': 'true',
-            })
+        response = json.dumps(response_data)
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', origin),
+            ('Access-Control-Allow-Credentials', 'true'),
+        ]
         
-        return response
+        return request.make_response(response, headers=headers)
     
     @http.route('/artwork/api/pricing', type='json', auth='public', methods=['GET', 'POST', 'OPTIONS'], cors='*', csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):
