@@ -1,0 +1,430 @@
+2025-11-17 11:06:55,436 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading 439 modules... 
+2025-11-17 11:06:55,470 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:55,470 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:55,470 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:55,472 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:55,473 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:55,477 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:55,477 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:55,477 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:55,477 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:55,477 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:55,480 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:55,486 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:06:55,489 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:55,489 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:55,489 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:55,489 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:55,489 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:55,490 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:06:55,506 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:55,506 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:55,506 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:55,506 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:55,506 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:55,507 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:06:55,523 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model website.attachment.download.line has no _description 
+2025-11-17 11:06:55,539 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description 
+2025-11-17 11:06:55,550 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Loading module artwork_uploader (330/439) 
+2025-11-17 11:06:55,710 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related 
+2025-11-17 11:06:55,742 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,745 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,745 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,745 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,745 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,745 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,746 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,748 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,748 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,748 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:55,760 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip 
+2025-11-17 11:06:55,760 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.amount_select 
+2025-11-17 11:06:55,760 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.company_id 
+2025-11-17 11:06:55,767 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,130 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related 
+2025-11-17 11:06:56,165 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,168 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,168 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,168 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,168 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,168 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,169 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,171 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,171 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,171 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,183 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip 
+2025-11-17 11:06:56,183 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.amount_select 
+2025-11-17 11:06:56,183 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.company_id 
+2025-11-17 11:06:56,190 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:56,257 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: module artwork_uploader: creating or updating database tables 
+2025-11-17 11:06:56,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_lq4iC, x_studio_product_tag) of product.template() have the same label: Product Tag. [Modules: None and None] 
+2025-11-17 11:06:56,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_Za9Ke, x_studio_field_qpO1M) of sale.order() have the same label: New File. [Modules: None and None] 
+2025-11-17 11:06:56,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_lq4iC, x_studio_product_tag) of product.product() have the same label: Product Tag. [Modules: None and None] 
+2025-11-17 11:06:56,341 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index product_template_message_main_attachment_id_index on table product_template 
+2025-11-17 11:06:56,341 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index sale_order_message_main_attachment_id_index on table sale_order 
+2025-11-17 11:06:56,341 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index sale_order_date_order_index on table sale_order 
+2025-11-17 11:06:56,341 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index product_product_message_main_attachment_id_index on table product_product 
+2025-11-17 11:06:56,416 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/security/ir.model.access.csv 
+2025-11-17 11:06:56,426 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/data/product_data.xml 
+2025-11-17 11:06:56,432 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/artwork_project_views.xml 
+2025-11-17 11:06:56,460 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/menu_views.xml 
+2025-11-17 11:06:56,468 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/artwork_template_mapping_views.xml 
+2025-11-17 11:06:56,491 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/artwork_template_mapping_wizard_views.xml 
+2025-11-17 11:06:56,502 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/website_templates.xml 
+2025-11-17 11:06:56,510 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/artwork_uploader_templates.xml 
+2025-11-17 11:06:56,519 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading artwork_uploader/views/website_snippets.xml 
+2025-11-17 11:06:56,577 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: The models ['artwork.template.mapping.wizard', 'artwork.template.mapping.wizard.line'] have no access rules in module artwork_uploader, consider adding some, like:
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+artwork_uploader.access_artwork_template_mapping_wizard,access_artwork_template_mapping_wizard,artwork_uploader.model_artwork_template_mapping_wizard,base.group_user,1,0,0,0
+artwork_uploader.access_artwork_template_mapping_wizard_line,access_artwork_template_mapping_wizard_line,artwork_uploader.model_artwork_template_mapping_wizard_line,base.group_user,1,0,0,0 
+2025-11-17 11:06:56,582 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Module artwork_uploader loaded in 1.03s, 428 queries (+428 other) 
+2025-11-17 11:06:56,583 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model product.category.collection.line has no _description 
+2025-11-17 11:06:56,586 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:06:56,596 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model delivery.warning has no _description 
+2025-11-17 11:06:56,596 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model label.details has no _description 
+2025-11-17 11:06:56,607 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:06:56,610 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:06:56,613 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:06:56,613 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:06:56,613 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:06:56,613 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:06:56,613 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:06:56,614 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:06:56,621 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model website.attachment.download.line has no _description 
+2025-11-17 11:06:56,622 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description 
+2025-11-17 11:06:56,622 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model product.category.collection.line has no _description 
+2025-11-17 11:06:56,623 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:06:56,623 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model delivery.warning has no _description 
+2025-11-17 11:06:56,623 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model label.details has no _description 
+2025-11-17 11:06:56,644 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:06:56,648 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model stock.dropbox.picking has no _description 
+2025-11-17 11:06:56,648 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: 439 modules loaded in 1.21s, 428 queries (+428 extra) 
+2025-11-17 11:06:56,654 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading 439 modules... 
+2025-11-17 11:06:56,656 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: 439 modules loaded in 0.00s, 0 queries (+0 extra) 
+2025-11-17 11:06:56,661 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading 439 modules... 
+2025-11-17 11:06:56,663 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: 439 modules loaded in 0.00s, 0 queries (+0 extra) 
+2025-11-17 11:06:56,965 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related 
+2025-11-17 11:06:56,984 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.loan.state: selection=[('draft', 'Draft'), ('waiting_approval_1', 'Submitted'), ('waiting_approval_2', 'Waiting Approval'), ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled')] overrides existing selection; use selection_add instead 
+2025-11-17 11:06:57,008 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on account.analytic.line.required_qty 
+2025-11-17 11:06:57,010 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,016 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,017 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,017 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,017 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,017 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,018 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,020 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,021 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,021 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,031 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.artwork_comment: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,031 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.orderline_description: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,031 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.stage_view_id: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,036 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip 
+2025-11-17 11:06:57,036 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.amount_select 
+2025-11-17 11:06:57,036 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.company_id 
+2025-11-17 11:06:57,042 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field sale.order.line.preorder_notify: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,043 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,046 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field salary.advance.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,048 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field logged.user.data.type: unknown parameter 'dafault', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,230 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related 
+2025-11-17 11:06:57,250 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.loan.state: selection=[('draft', 'Draft'), ('waiting_approval_1', 'Submitted'), ('waiting_approval_2', 'Waiting Approval'), ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled')] overrides existing selection; use selection_add instead 
+2025-11-17 11:06:57,274 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on account.analytic.line.required_qty 
+2025-11-17 11:06:57,279 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,283 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,283 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,284 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,284 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,284 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,285 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,287 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,287 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,287 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.artwork_comment: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.orderline_description: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,298 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.stage_view_id: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,302 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip 
+2025-11-17 11:06:57,302 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.amount_select 
+2025-11-17 11:06:57,303 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.company_id 
+2025-11-17 11:06:57,309 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field sale.order.line.preorder_notify: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,310 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,312 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field salary.advance.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,314 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field logged.user.data.type: unknown parameter 'dafault', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it 
+2025-11-17 11:06:57,404 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model account.budget.crossvered.report is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,404 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model account.budget.crossvered.summary.report is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,454 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model crm.lead.channel.interested is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,461 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model delivery.carrier.dhl.drop.off is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,461 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model delivery.carrier.dhl.service is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,489 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model hr.emergency.contact is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,519 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model ir.qweb.widget is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,519 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model ir.qweb.widget.monetary is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,554 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model mrp.production.product.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,555 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model mrp.property is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,555 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model mrp.property.group is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,559 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model multi.print.mixin is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,578 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model printnode.print.stock.move.line.reports.wizard.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,580 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model printnode.report.abstract.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,586 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model product.label.multi.print is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,587 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model product.label.multi.print.line is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,592 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model product.tabs is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.job is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.job.channel is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.job.function is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.jobs.to.cancelled is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.jobs.to.done is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model queue.requeue.job is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,629 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model sale.order.line.artworks is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,637 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model signature.request is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,637 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model signature.request.item is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,651 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model stock.move.consume is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,651 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model stock.move.scrap is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,669 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model transfer.company is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,673 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model webkul.website.addons is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,680 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Model wk.stock.picking.wizard is declared but cannot be loaded! (Perhaps a module was partially removed or renamed) 
+2025-11-17 11:06:57,962 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: verifying fields for every extended model 
+2025-11-17 11:06:58,176 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (stripe_payment_token, credit_card_strip) of sale.order() have the same label: Stripe Success. [Modules: payment_stripe_admin and payment_stripe_admin] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (order_reference, name) of sale.order() have the same label: Order Reference. [Modules: payment_website_po and sale] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (request_for_quotation, sh_request_for_quotation) of sale.order() have the same label: Request for Quotation ?. [Modules: sh_request_quote_multiple and sh_request_quote_multiple] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_ChYWL, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_TePnO, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_QXhun, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_related_field_nD1WP, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_related_field_m3BaE, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_related_field_rpC7b, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_6XIyl, x_studio_field_A6pV7) of sale.order() have the same label: New Related Field. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_Za9Ke, x_studio_field_qpO1M) of sale.order() have the same label: New File. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (project_template_use_documents, doc_attachments) of product.product() have the same label: Documents. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (guest, sh_guest) of product.product() have the same label: Guest. [Modules: None and sh_request_quote_multiple] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_lq4iC, x_studio_product_tag) of product.product() have the same label: Product Tag. [Modules: None and None] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (project_template_use_documents, doc_attachments) of product.template() have the same label: Documents. [Modules: documents_project_sale and atharva_theme_base] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (sh_guest, guest) of product.template() have the same label: Guest. [Modules: sh_request_quote_multiple and sh_request_quote_multiple] 
+2025-11-17 11:06:58,177 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Two fields (x_studio_field_lq4iC, x_studio_product_tag) of product.template() have the same label: Product Tag. [Modules: None and None] 
+2025-11-17 11:06:58,372 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index sale_order_message_main_attachment_id_index on table sale_order 
+2025-11-17 11:06:58,372 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index sale_order_date_order_index on table sale_order 
+2025-11-17 11:06:58,372 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index product_product_message_main_attachment_id_index on table product_product 
+2025-11-17 11:06:58,372 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.schema: Keep unexpected index product_template_message_main_attachment_id_index on table product_template 
+2025-11-17 11:06:58,983 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_ui_view: <img> tag must contain an alt attribute
+View error context:
+{'file': None,
+ 'line': 12,
+ 'name': 'Odoo Studio: Product.template.product.kanban customization',
+ 'view': ir.ui.view(23372,),
+ 'view.model': 'product.template',
+ 'view.parent': ir.ui.view(18349,),
+ 'xmlid': 'studio_customization.odoo_studio_product__a46cf7b1-dd1b-40ac-987c-50db0d6aa3d1'} 
+2025-11-17 11:07:00,241 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_ui_view: "<a>" tag with "btn" class must have "button" role
+View error context:
+{'file': None,
+ 'line': 15,
+ 'name': 'Odoo Studio: Default kanban view for x_procedures customization',
+ 'view': ir.ui.view(23382,),
+ 'view.model': 'x_procedures',
+ 'view.parent': ir.ui.view(23381,),
+ 'xmlid': 'studio_customization.odoo_studio_default__b05e5aff-f806-436d-8d61-1b48b096038c'} 
+2025-11-17 11:07:00,241 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_ui_view: A <span> with fa class (fa fa-bars fa-lg) must have title in its tag, parents, descendants or have text
+View error context:
+{'file': None,
+ 'line': 16,
+ 'name': 'Odoo Studio: Default kanban view for x_procedures customization',
+ 'view': ir.ui.view(23382,),
+ 'view.model': 'x_procedures',
+ 'view.parent': ir.ui.view(23381,),
+ 'xmlid': 'studio_customization.odoo_studio_default__b05e5aff-f806-436d-8d61-1b48b096038c'} 
+2025-11-17 11:07:00,242 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Modules loaded. 
+2025-11-17 11:07:00,285 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: Registry loaded in 5.872s 
+2025-11-17 11:07:00,286 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_module: getting next ir.actions.todo() 
+2025-11-17 11:07:00,291 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: Registry changed, signaling through the database 
+2025-11-17 11:07:00,292 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:00] "POST /web/dataset/call_button HTTP/1.0" 200 - 8999 3.447 3.383
+2025-11-17 11:07:00,325 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_http: Generating routing map for key 3 
+2025-11-17 11:07:01,683 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:01] "GET /web HTTP/1.0" 200 - 222 0.098 1.262
+2025-11-17 11:07:02,809 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:02] "POST /hr_reminder/all_reminder HTTP/1.0" 200 - 9 0.003 0.005
+2025-11-17 11:07:02,856 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:02] "GET /web/image?model=res.users&field=avatar_128&id=5 HTTP/1.0" 304 - 19 0.008 0.010
+2025-11-17 11:07:03,000 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:03] "POST /web/dataset/call_kw/res.users/systray_get_activities HTTP/1.0" 200 - 39 0.028 0.016
+2025-11-17 11:07:03,003 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:03] "POST /mail/init_messaging HTTP/1.0" 200 - 68 0.034 0.026
+2025-11-17 11:07:03,051 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:03] "POST /mail/load_message_failures HTTP/1.0" 200 - 12 0.006 0.006
+2025-11-17 11:07:10,783 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web HTTP/1.0" 200 - 21 0.007 0.015
+2025-11-17 11:07:10,838 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/assets/4180055-9267c6f/3/web.assets_common.min.css HTTP/1.0" 200 - 5 0.001 0.011
+2025-11-17 11:07:10,842 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 16 0.010 0.019
+2025-11-17 11:07:10,844 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/assets/4180056-fa0be1f/3/web.assets_backend.min.css HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-17 11:07:10,854 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.007
+2025-11-17 11:07:10,856 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/assets/4180057-9267c6f/3/web.assets_common.min.js HTTP/1.0" 200 - 5 0.002 0.004
+2025-11-17 11:07:10,866 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/assets/4180058-fa0be1f/3/web.assets_backend.min.js HTTP/1.0" 200 - 5 0.001 0.003
+2025-11-17 11:07:10,880 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/assets/4087528-673c771/3/web.assets_backend_prod_only.min.js HTTP/1.0" 200 - 5 0.001 0.004
+2025-11-17 11:07:10,900 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/webclient/load_menus/564508125cec6838cb2cfe29d182bcd9d3cac84bb1794bb93aba988ac35b8318 HTTP/1.0" 200 - 6 0.002 0.011
+2025-11-17 11:07:10,905 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:10] "GET /web/webclient/translations/baba15545253a4f2fec979a3432be0ec8475f8e5?lang=en_US HTTP/1.0" 200 - 4 0.001 0.004
+2025-11-17 11:07:11,455 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/webclient/translations/baba15545253a4f2fec979a3432be0ec8475f8e5?lang=en_US HTTP/1.0" 200 - 3 0.001 0.004
+2025-11-17 11:07:11,582 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/webclient/translations/baba15545253a4f2fec979a3432be0ec8475f8e5?lang=en_US HTTP/1.0" 200 - 3 0.001 0.004
+2025-11-17 11:07:11,592 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/webclient/locale/en_US HTTP/1.0" 200 - 2 0.000 0.003
+2025-11-17 11:07:11,724 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "POST /hr_reminder/all_reminder HTTP/1.0" 200 - 4 0.001 0.003
+2025-11-17 11:07:11,743 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/image?model=res.users&field=avatar_128&id=5 HTTP/1.0" 200 - 10 0.004 0.008
+2025-11-17 11:07:11,745 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0 HTTP/1.0" 200 - 0 0.000 0.001
+2025-11-17 11:07:11,758 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/static/lib/odoo_ui_icons/fonts/odoo_ui_icons.woff2 HTTP/1.0" 200 - 0 0.000 0.001
+2025-11-17 11:07:11,771 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web_enterprise/static/img/default_icon_app.png HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-17 11:07:11,782 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web_enterprise/static/img/home-menu-bg-overlay.svg HTTP/1.0" 200 - 0 0.000 0.001
+2025-11-17 11:07:11,904 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "GET /web/image/res.company/1/favicon HTTP/1.0" 200 - 6 0.010 0.007
+2025-11-17 11:07:11,905 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "POST /web/dataset/call_kw/res.users/systray_get_activities HTTP/1.0" 200 - 17 0.020 0.015
+2025-11-17 11:07:11,912 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "POST /mail/init_messaging HTTP/1.0" 200 - 42 0.030 0.022
+2025-11-17 11:07:11,955 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:11] "POST /mail/load_message_failures HTTP/1.0" 200 - 11 0.004 0.006
+2025-11-17 11:07:13,291 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:13] "POST /web/action/load HTTP/1.0" 200 - 14 0.003 0.007
+2025-11-17 11:07:13,353 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:13] "POST /web/dataset/call_kw/artwork.project/get_views HTTP/1.0" 200 - 41 0.014 0.022
+2025-11-17 11:07:13,391 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:13] "POST /web/dataset/call_kw/artwork.project/web_search_read HTTP/1.0" 200 - 7 0.002 0.004
+2025-11-17 11:07:13,403 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:13] "POST /web/dataset/call_kw/res.users/has_group HTTP/1.0" 200 - 6 0.002 0.004
+2025-11-17 11:07:15,904 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:15] "POST /web/dataset/call_kw/artwork.project/web_search_read HTTP/1.0" 200 - 6 0.002 0.007
+2025-11-17 11:07:17,107 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:17] "POST /web/dataset/call_kw/artwork.project/onchange HTTP/1.0" 200 - 6 0.002 0.006
+2025-11-17 11:07:17,193 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:17] "GET /web/image/res.partner/11/avatar_128 HTTP/1.0" 304 - 8 0.003 0.007
+2025-11-17 11:07:20,200 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:20] "POST /web/action/load HTTP/1.0" 200 - 13 0.004 0.007
+2025-11-17 11:07:20,240 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:20] "POST /web/dataset/call_kw/artwork.template.mapping/get_views HTTP/1.0" 200 - 19 0.006 0.010
+2025-11-17 11:07:20,279 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:20] "POST /web/dataset/call_kw/artwork.template.mapping/web_search_read HTTP/1.0" 200 - 11 0.006 0.007
+2025-11-17 11:07:21,410 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:21] "POST /web/dataset/call_kw/artwork.template.mapping/read HTTP/1.0" 200 - 9 0.005 0.007
+2025-11-17 11:07:51,393 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /artwork/upload HTTP/1.0" 200 - 234 0.075 0.471
+2025-11-17 11:07:51,436 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0 HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-17 11:07:51,455 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.008 0.023
+2025-11-17 11:07:51,457 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /web/assets/4180053-5b8ff6e/3/web.assets_frontend.min.css HTTP/1.0" 200 - 5 0.002 0.008
+2025-11-17 11:07:51,467 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.006
+2025-11-17 11:07:51,509 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /web/assets/4074345-265d88f/3/web.assets_frontend_minimal.min.js HTTP/1.0" 200 - 5 0.001 0.005
+2025-11-17 11:07:51,544 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /web/image/website/3/logo/Complete%20Transfers?unique=136bde0 HTTP/1.0" 200 - 6 0.002 0.006
+2025-11-17 11:07:51,558 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /web_editor/shape/web_editor/Wavy/24.svg?c1=%23991A76&c2=%23000814 HTTP/1.0" 200 - 8 0.002 0.006
+2025-11-17 11:07:51,564 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /website/static/description/icon.png HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-17 11:07:51,578 4 INFO ? werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:51] "GET /base/static/img/country_flags/us.png?height=25 HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-17 11:07:54,482 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:54] "GET /artwork/upload HTTP/1.0" 200 - 22 0.006 0.024
+2025-11-17 11:07:59,354 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:59] "GET /web/image/website/3/favicon?unique=136bde0 HTTP/1.0" 200 - 6 0.002 0.005
+2025-11-17 11:07:59,457 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:59] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.003 0.006
+2025-11-17 11:07:59,466 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:07:59] "POST /shop/get_product_data HTTP/1.0" 200 - 34 0.017 0.012
+2025-11-17 11:08:22,068 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Starting job `Base: Auto-vacuum internal data`. 
+2025-11-17 11:08:22,092 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_attachment: filestore gc 8 checked, 0 removed 
+2025-11-17 11:08:22,145 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.res_users: GC'd 0 user log entries 
+2025-11-17 11:08:22,165 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.auth_totp.models.auth_totp: GC'd 0 totp devices entries 
+2025-11-17 11:08:22,179 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.models.unlink: User #1 deleted bus.bus records with IDs: [1155655, 1155656, 1155657, 1155658, 1155659, 1155660, 1155661, 1155662, 1155663, 1155664, 1155665, 1155666, 1155667, 1155668, 1155669, 1155670, 1155671, 1155672, 1155673, 1155674, 1155675, 1155676, 1155677] 
+2025-11-17 11:08:22,764 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Job `Base: Auto-vacuum internal data` done. 
+2025-11-17 11:08:52,108 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:08:52] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.007 0.023
+2025-11-17 11:08:52,118 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:08:52] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.005
+2025-11-17 11:10:55,501 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.service.server: Initiating shutdown 
+2025-11-17 11:10:55,502 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2025-11-17 11:10:55,739 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.sql_db: ConnectionPool(used=0/count=0/max=10): Closed 6 connections  
+2025-11-17 11:13:26,368 4 INFO ? odoo: Odoo version 16.0 
+2025-11-17 11:13:26,368 4 INFO ? odoo: Using configuration file at /home/odoo/.config/odoo/odoo.conf 
+2025-11-17 11:13:26,368 4 INFO ? odoo: addons paths: ['/home/odoo/src/odoo/odoo/addons', '/home/odoo/data/addons/16.0', '/home/odoo/src/user', '/home/odoo/src/odoo/addons', '/home/odoo/src/enterprise', '/home/odoo/src/themes'] 
+2025-11-17 11:13:26,369 4 INFO ? odoo: database: p_support_atharva_serigraf_16_stage_0410_23999211@192.168.1.1:5432 
+2025-11-17 11:13:26,381 4 INFO ? odoo: Could not determine if database support-atharva-serigraf-16-stage-0410-23999211 exists, skipping auto-creation: permission denied for table pg_database
+ 
+2025-11-17 11:13:26,445 4 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /opt/odoo.sh/odoosh/bin/wkhtmltopdf 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/src/odoo/odoo/addons 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/data/addons/16.0 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/src/user 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/src/odoo/addons 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/src/enterprise 
+2025-11-17 11:13:26,570 4 INFO ? odoo.service.server: Watching addons folder /home/odoo/src/themes 
+2025-11-17 11:13:27,452 4 INFO ? odoo.service.server: AutoReload watcher running with inotify 
+2025-11-17 11:13:27,453 4 INFO ? odoo.service.server: HTTP service (werkzeug) running through socket activation 
+2025-11-17 11:13:27,468 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading 1 modules... 
+2025-11-17 11:13:27,473 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra) 
+2025-11-17 11:13:27,527 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'mailersend_webhook_secure', defaulting to LGPL-3 
+2025-11-17 11:13:27,532 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'project_task_autocreate', defaulting to LGPL-3 
+2025-11-17 11:13:27,586 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'transfer_ganging', defaulting to LGPL-3 
+2025-11-17 11:13:27,610 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: loading 439 modules... 
+2025-11-17 11:13:28,008 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.employee_orientation.models.employee_orientation is not overriding the create method in batch 
+2025-11-17 11:13:28,011 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:28,011 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:28,011 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:28,103 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:28,105 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.hr_reward_warning.models.hr_warning is not overriding the create method in batch 
+2025-11-17 11:13:28,117 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:28,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:28,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:28,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:28,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:28,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:28,163 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:13:28,174 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.oh_appraisal.models.hr_appraisal_survey is not overriding the create method in batch 
+2025-11-17 11:13:28,206 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:28,206 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:28,206 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:28,207 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:28,207 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:28,207 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:13:28,210 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:28,210 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:28,210 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:28,210 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:28,210 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:28,211 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:13:28,285 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.hr_employee_transfer.models.employee_transfer is not overriding the create method in batch 
+2025-11-17 11:13:28,285 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.hr_employee_transfer.models.hr_contract is not overriding the create method in batch 
+2025-11-17 11:13:28,365 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:28,365 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:28,365 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:28,365 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:28,366 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:28,366 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:13:28,610 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model website.attachment.download.line has no _description 
+2025-11-17 11:13:28,677 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead 
+2025-11-17 11:13:28,678 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead 
+2025-11-17 11:13:28,678 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead 
+2025-11-17 11:13:28,678 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead 
+2025-11-17 11:13:28,771 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description 
+2025-11-17 11:13:28,788 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.ohrms_loan.models.hr_loan is not overriding the create method in batch 
+2025-11-17 11:13:28,880 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.artwork_uploader.models.artwork_logo is not overriding the create method in batch 
+2025-11-17 11:13:28,892 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model product.category.collection.line has no _description 
+2025-11-17 11:13:28,910 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.ohrms_salary_advance.models.salary_advance is not overriding the create method in batch 
+2025-11-17 11:13:28,911 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:13:29,029 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.product_bundle_all.models.product_template is not overriding the create method in batch 
+2025-11-17 11:13:29,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model delivery.warning has no _description 
+2025-11-17 11:13:29,139 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model label.details has no _description 
+2025-11-17 11:13:29,194 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:13:29,196 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description 
+2025-11-17 11:13:29,198 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model checklist.line has no _description 
+2025-11-17 11:13:29,198 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.employee_orientation.print_pack_template has no _description 
+2025-11-17 11:13:29,198 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model orientation.force.complete has no _description 
+2025-11-17 11:13:29,198 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.reminder has no _description 
+2025-11-17 11:13:29,199 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model document.type has no _description 
+2025-11-17 11:13:29,199 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model hr.employee.relation has no _description 
+2025-11-17 11:13:29,204 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model website.attachment.download.line has no _description
+2025-11-17 11:13:29,205 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description
+2025-11-17 11:13:29,205 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model product.category.collection.line has no _description
+2025-11-17 11:13:29,205 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description
+2025-11-17 11:13:29,205 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model delivery.warning has no _description
+2025-11-17 11:13:29,205 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model label.details has no _description
+2025-11-17 11:13:29,227 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.website_stock.models.models is not overriding the create method in batch
+2025-11-17 11:13:29,252 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.website_preorder.models.res_config is not overriding the create method in batch
+2025-11-17 11:13:29,255 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.website_preorder.models.inherit_product is not overriding the create method in batch
+2025-11-17 11:13:29,255 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.api.create: The model odoo.addons.website_preorder.models.inherit_product is not overriding the create method in batch
+2025-11-17 11:13:29,295 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model salary.advance has no _description
+2025-11-17 11:13:29,488 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.models: The model stock.dropbox.picking has no _description
+2025-11-17 11:13:29,490 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: 439 modules loaded in 1.88s, 0 queries (+0 extra)
+2025-11-17 11:13:29,682 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related
+2025-11-17 11:13:29,702 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: hr.loan.state: selection=[('draft', 'Draft'), ('waiting_approval_1', 'Submitted'), ('waiting_approval_2', 'Waiting Approval'), ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled')] overrides existing selection; use selection_add instead
+2025-11-17 11:13:29,725 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on account.analytic.line.required_qty
+2025-11-17 11:13:29,728 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,732 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,732 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,732 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,732 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,733 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,734 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,736 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,736 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,736 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,747 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.artwork_comment: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,747 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.orderline_description: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,747 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field project.task.stage_view_id: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,752 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip
+2025-11-17 11:13:29,753 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.amount_select
+2025-11-17 11:13:29,753 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Redundant default on hr.payslip.line.company_id
+2025-11-17 11:13:29,760 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field sale.order.line.preorder_notify: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,761 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,764 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field salary.advance.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,766 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.fields: Field logged.user.data.type: unknown parameter 'dafault', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-17 11:13:29,863 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.loading: Modules loaded.
+2025-11-17 11:13:29,900 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: Registry loaded in 2.447s
+2025-11-17 11:13:29,922 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_http: Generating routing map for key 3
+2025-11-17 11:13:30,555 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'mailersend_webhook_secure', defaulting to LGPL-3
+2025-11-17 11:13:30,556 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'project_task_autocreate', defaulting to LGPL-3
+2025-11-17 11:13:30,571 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.module: Missing `license` key in manifest for 'transfer_ganging', defaulting to LGPL-3
+2025-11-17 11:13:31,202 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:13:31] "GET /artwork/upload HTTP/1.0" 200 - 252 0.096 3.653
+2025-11-17 11:13:34,602 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:13:34] "POST /shop/get_product_data HTTP/1.0" 200 - 35 0.018 0.011
+2025-11-17 11:13:34,608 4 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'mail_mailersend_api', defaulting to LGPL-3
+2025-11-17 11:13:34,820 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 11:13:34] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 16 0.006 0.230
