@@ -486,11 +486,19 @@ class ArtworkUploaderController(http.Controller):
                     'currency': 'EUR'
                 }
             
-            # Get price from product (considering pricelists if applicable)
+            # Get price from product (considering pricelists with quantity discounts)
             pricelist = request.website.get_current_pricelist() if hasattr(request, 'website') else None
             
             if pricelist:
-                price_per_unit = pricelist.get_product_price(product, copies, None)
+                # Use pricelist to compute price with quantity (this applies quantity-based rules)
+                # The third parameter is the partner, fourth is quantity
+                price_per_unit = pricelist._get_product_price(
+                    product,
+                    copies,  # quantity - this triggers quantity-based pricelist rules
+                    None,    # partner
+                    date=None,
+                    uom_id=product.uom_id.id
+                )
             else:
                 price_per_unit = product.list_price
             
