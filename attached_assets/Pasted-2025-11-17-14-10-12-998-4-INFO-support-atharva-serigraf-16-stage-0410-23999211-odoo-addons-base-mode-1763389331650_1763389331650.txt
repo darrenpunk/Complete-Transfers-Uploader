@@ -1,0 +1,68 @@
+2025-11-17 14:10:12,998 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2025-11-17 14:10:13,322 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2025-11-17 14:10:13,422 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:13] "POST /artwork/api/pricing HTTP/1.0" 200 - 8 0.029 0.398
+2025-11-17 14:10:13,731 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:13] "POST /artwork/api/pricing HTTP/1.0" 200 - 3 0.012 0.424
+2025-11-17 14:10:19,767 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:19] "POST /artwork/api/pricing HTTP/1.0" 200 - 2 0.001 0.003
+2025-11-17 14:10:21,046 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:21] "POST /artwork/api/pricing HTTP/1.0" 200 - 2 0.001 0.003
+2025-11-17 14:10:22,191 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:22] "POST /artwork/api/pricing HTTP/1.0" 200 - 2 0.001 0.003
+2025-11-17 14:10:23,072 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:10:23] "POST /artwork/api/pricing HTTP/1.0" 200 - 2 0.001 0.002
+2025-11-17 14:10:30,556 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:30] "POST /web/action/load HTTP/1.0" 200 - 14 0.005 0.007
+2025-11-17 14:10:30,624 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:30] "POST /web/dataset/call_kw/artwork.project/get_views HTTP/1.0" 200 - 52 0.019 0.022
+2025-11-17 14:10:30,666 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:30] "POST /web/dataset/call_kw/artwork.project/web_search_read HTTP/1.0" 200 - 7 0.002 0.005
+2025-11-17 14:10:30,678 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:30] "POST /web/dataset/call_kw/res.users/has_group HTTP/1.0" 200 - 6 0.002 0.004
+2025-11-17 14:10:32,364 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:32] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 22 0.009 0.022
+2025-11-17 14:10:32,376 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:32] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.006
+2025-11-17 14:10:32,580 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:32] "POST /web/action/load HTTP/1.0" 200 - 13 0.005 0.007
+2025-11-17 14:10:32,630 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:32] "POST /web/dataset/call_kw/artwork.template.mapping/get_views HTTP/1.0" 200 - 19 0.009 0.015
+2025-11-17 14:10:32,666 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:32] "POST /web/dataset/call_kw/artwork.template.mapping/web_search_read HTTP/1.0" 200 - 7 0.003 0.006
+2025-11-17 14:10:33,750 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:33] "POST /web/dataset/call_kw/artwork.template.mapping/onchange HTTP/1.0" 200 - 6 0.003 0.007
+2025-11-17 14:10:34,667 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:34] "POST /web/dataset/call_kw/product.product/name_search HTTP/1.0" 200 - 15 0.024 0.010
+2025-11-17 14:10:35,940 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:35] "POST /web/dataset/call_kw/product.product/name_search HTTP/1.0" 200 - 12 0.032 0.009
+2025-11-17 14:10:37,421 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:37] "POST /web/dataset/call_kw/product.product/name_search HTTP/1.0" 200 - 12 0.016 0.007
+2025-11-17 14:10:41,439 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:41] "POST /web/dataset/call_kw/artwork.template.mapping/create HTTP/1.0" 200 - 8 0.004 0.007
+2025-11-17 14:10:41,477 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:10:41] "POST /web/dataset/call_kw/artwork.template.mapping/read HTTP/1.0" 200 - 9 0.005 0.007
+2025-11-17 14:11:31,475 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:11:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.006 0.017
+2025-11-17 14:11:31,483 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:11:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.005
+2025-11-17 14:12:31,592 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:12:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.005 0.017
+2025-11-17 14:12:31,600 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:12:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.004
+2025-11-17 14:13:31,704 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:13:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.005 0.016
+2025-11-17 14:13:31,712 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:13:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.004
+2025-11-17 14:14:31,836 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:14:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.006 0.019
+2025-11-17 14:14:31,846 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:14:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.005
+2025-11-17 14:15:31,928 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:15:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.005 0.018
+2025-11-17 14:15:31,939 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:15:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.005
+2025-11-17 14:16:32,021 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:16:32] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.005 0.017
+2025-11-17 14:16:32,029 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:16:32] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.004
+2025-11-17 14:17:32,134 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:17:32] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.006 0.017
+2025-11-17 14:17:32,143 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:17:32] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.005
+2025-11-17 14:18:32,226 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:18:32] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.006 0.018
+2025-11-17 14:18:32,236 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:18:32] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.005
+2025-11-17 14:19:31,487 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:19:31] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.007 0.021
+2025-11-17 14:19:31,499 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:19:31] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.007
+2025-11-17 14:20:00,517 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:00] "GET /artwork/upload HTTP/1.0" 200 - 22 0.006 0.020
+2025-11-17 14:20:05,060 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:05] "POST /shop/get_product_data HTTP/1.0" 200 - 20 0.008 0.009
+2025-11-17 14:20:05,090 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:05] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.002 0.004
+2025-11-17 14:20:07,256 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Pricelist: None, Product: Full Colour  A3, Qty: 1
+2025-11-17 14:20:07,257 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📋 No pricelist found, using list price: 8.57
+2025-11-17 14:20:07,257 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 8.57 for 1 items
+2025-11-17 14:20:07,260 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:20:07] "POST /artwork/api/pricing HTTP/1.0" 200 - 11 0.005 0.006
+2025-11-17 14:20:07,559 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Pricelist: None, Product: Full Colour  A3, Qty: 10
+2025-11-17 14:20:07,559 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📋 No pricelist found, using list price: 8.57
+2025-11-17 14:20:07,560 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 85.7 for 10 items
+2025-11-17 14:20:07,563 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:20:07] "POST /artwork/api/pricing HTTP/1.0" 200 - 8 0.003 0.005
+2025-11-17 14:20:10,640 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Pricelist: None, Product: Full Colour  A3, Qty: 100
+2025-11-17 14:20:10,641 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📋 No pricelist found, using list price: 8.57
+2025-11-17 14:20:10,641 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 857.0 for 100 items
+2025-11-17 14:20:10,644 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.118.9.2 - - [17/Nov/2025 14:20:10] "POST /artwork/api/pricing HTTP/1.0" 200 - 8 0.003 0.006
+2025-11-17 14:20:32,102 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:32] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.006 0.019
+2025-11-17 14:20:32,112 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:32] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.005
+2025-11-17 14:20:47,823 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:47] "OPTIONS /artwork/api/projects/6e10b6e3-d565-4c3a-a190-fc88e0341797/add-to-cart HTTP/1.0" 200 - 1 0.000 0.003
+2025-11-17 14:20:47,900 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:47] "POST /artwork/api/projects/6e10b6e3-d565-4c3a-a190-fc88e0341797/add-to-cart HTTP/1.0" 200 - 2 0.001 0.003
+2025-11-17 14:20:48,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider()
+2025-11-17 14:20:48,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(81969,)
+2025-11-17 14:20:48,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(3,)
+2025-11-17 14:20:48,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider()
+2025-11-17 14:20:48,972 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:48] "GET /shop/cart HTTP/1.0" 200 - 58 0.012 0.027
+2025-11-17 14:20:49,370 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:49] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 9 0.003 0.005
+2025-11-17 14:20:49,390 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:49] "POST /shop/get_product_data HTTP/1.0" 200 - 20 0.008 0.009
+2025-11-17 14:20:49,395 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [17/Nov/2025 14:20:49] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.002 0.007

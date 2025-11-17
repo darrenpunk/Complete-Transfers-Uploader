@@ -487,7 +487,21 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            pricelist = request.website.get_current_pricelist() if hasattr(request, 'website') else None
+            # For API endpoints, we need to explicitly get the website and its pricelist
+            website = request.env['website'].get_current_website()
+            pricelist = website.get_current_pricelist() if website else None
+            
+            # Fallback: try to get default public pricelist if website method fails
+            if not pricelist:
+                pricelist = request.env['product.pricelist'].sudo().search([
+                    ('website_id', '=', website.id if website else False),
+                ], limit=1)
+            
+            # Last resort: get any active pricelist
+            if not pricelist:
+                pricelist = request.env['product.pricelist'].sudo().search([
+                    ('active', '=', True)
+                ], limit=1)
             
             _logger.info(f"🔍 Pricing debug - Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
             
