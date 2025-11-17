@@ -4041,53 +4041,37 @@ export async function registerRoutes(app: express.Application) {
       
       // Handle Odoo JSON-RPC response format
       if (data.error) {
-        console.error('Odoo pricing error:', data.error);
-        // Fallback to local calculation
-        const templateSizes = await storage.getTemplateSizes();
-        const template = templateSizes.find(t => t.id === templateId);
-        if (template) {
-          const pricePerUnit = calculateTemplatePrice(template, copiesNum);
-          const totalPrice = pricePerUnit * copiesNum;
-          return res.json({
-            pricePerUnit: Math.round(pricePerUnit * 100) / 100,
-            totalPrice: Math.round(totalPrice * 100) / 100,
-            currency: 'EUR'
-          });
-        }
-        return res.status(500).json({ error: 'Failed to get pricing' });
+        console.error('❌ Odoo pricing error:', data.error);
+        return res.status(500).json({ 
+          error: 'No product mapped for this template. Please configure template mappings in Odoo.',
+          details: data.error 
+        });
       }
 
       // Return Odoo pricing
       const result = data.result || data;
-      console.log(`💰 Odoo pricing response:`, result);
+      console.log(`✅ Odoo pricing response:`, result);
+      
+      // Validate we got valid pricing data
+      if (!result.pricePerUnit || result.pricePerUnit === 0) {
+        console.error('❌ Invalid pricing data from Odoo:', result);
+        return res.status(404).json({ 
+          error: 'No pricing available for this template. Please check your Odoo template mappings and product prices.' 
+        });
+      }
       
       res.json({
-        pricePerUnit: result.pricePerUnit || 0,
-        totalPrice: result.totalPrice || 0,
+        pricePerUnit: result.pricePerUnit,
+        totalPrice: result.totalPrice,
         currency: result.currency || 'EUR',
         productName: result.productName,
       });
     } catch (error) {
-      console.error('Pricing API error:', error);
-      // Fallback to local calculation
-      try {
-        const { templateId, copies } = req.query;
-        const copiesNum = parseInt(copies as string);
-        const templateSizes = await storage.getTemplateSizes();
-        const template = templateSizes.find(t => t.id === templateId);
-        if (template) {
-          const pricePerUnit = calculateTemplatePrice(template, copiesNum);
-          const totalPrice = pricePerUnit * copiesNum;
-          return res.json({
-            pricePerUnit: Math.round(pricePerUnit * 100) / 100,
-            totalPrice: Math.round(totalPrice * 100) / 100,
-            currency: 'EUR'
-          });
-        }
-      } catch (fallbackError) {
-        console.error('Fallback pricing error:', fallbackError);
-      }
-      res.status(500).json({ error: 'Failed to calculate pricing' });
+      console.error('❌ Pricing API error:', error);
+      res.status(500).json({ 
+        error: 'Failed to connect to Odoo pricing system. Please ensure Odoo is accessible and template mappings are configured.',
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
