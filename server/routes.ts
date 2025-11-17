@@ -3997,6 +3997,17 @@ export async function registerRoutes(app: express.Application) {
     }
   }
 
+  // Debug endpoint to check Odoo configuration
+  app.get('/api/odoo-config', async (req, res) => {
+    const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+    res.json({
+      odooUrl: odooBaseUrl,
+      pricingEndpoint: `${odooBaseUrl}/artwork/api/pricing`,
+      addToCartEndpoint: `${odooBaseUrl}/artwork/api/projects/{uuid}/add-to-cart`,
+      hasViteOdooUrl: !!process.env.VITE_ODOO_URL,
+    });
+  });
+
   // Pricing endpoint - fetch from Odoo
   app.get('/api/pricing', async (req, res) => {
     try {

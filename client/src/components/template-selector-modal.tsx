@@ -101,11 +101,25 @@ export default function TemplateSelectorModal({
     return () => clearTimeout(timer);
   }, [copies]);
   
-  const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
+  const { data: pricingData, isLoading: isPricingLoading, error: pricingError } = useQuery<PricingData>({
     queryKey: [`/api/pricing?templateId=${selectedTemplate}&copies=${debouncedCopies}`],
     enabled: !!selectedTemplate && debouncedCopies > 0,
     staleTime: 30000, // Cache for 30 seconds
   });
+
+  // Debug pricing query
+  useEffect(() => {
+    if (selectedTemplate && debouncedCopies > 0) {
+      console.log('🔍 Pricing query:', {
+        templateId: selectedTemplate,
+        copies: debouncedCopies,
+        isLoading: isPricingLoading,
+        hasData: !!pricingData,
+        hasError: !!pricingError,
+        error: pricingError,
+      });
+    }
+  }, [selectedTemplate, debouncedCopies, isPricingLoading, pricingData, pricingError]);
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
