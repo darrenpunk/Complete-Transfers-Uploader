@@ -102,7 +102,7 @@ export default function TemplateSelectorModal({
   }, [copies]);
   
   const { data: pricingData, isLoading: isPricingLoading } = useQuery<PricingData>({
-    queryKey: ['/api/pricing', selectedTemplate, debouncedCopies],
+    queryKey: [`/api/pricing?templateId=${selectedTemplate}&copies=${debouncedCopies}`],
     enabled: !!selectedTemplate && debouncedCopies > 0,
     staleTime: 30000, // Cache for 30 seconds
   });
