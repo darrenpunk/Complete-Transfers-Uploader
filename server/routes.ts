@@ -4010,15 +4010,19 @@ export async function registerRoutes(app: express.Application) {
 
   // Pricing endpoint - fetch from Odoo
   app.get('/api/pricing', async (req, res) => {
+    console.log('💰 PRICING ENDPOINT CALLED:', { query: req.query });
+    
     try {
       const { templateId, copies } = req.query;
       
       if (!templateId || !copies) {
+        console.error('❌ Missing params:', { templateId, copies });
         return res.status(400).json({ error: 'Template ID and copies are required' });
       }
 
       const copiesNum = parseInt(copies as string);
       if (isNaN(copiesNum) || copiesNum < 1) {
+        console.error('❌ Invalid copies:', copies);
         return res.status(400).json({ error: 'Invalid copies quantity' });
       }
 
@@ -4026,7 +4030,7 @@ export async function registerRoutes(app: express.Application) {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
       const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing`;
 
-      console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`);
+      console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`, { templateId, copies: copiesNum });
 
       // Call Odoo pricing API
       const response = await fetch(odooApiUrl, {
