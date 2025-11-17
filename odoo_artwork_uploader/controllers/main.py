@@ -423,6 +423,54 @@ class ArtworkUploaderController(http.Controller):
             'website_sale_order': sale_order.id,
         }
     
+    @http.route('/artwork/api/pricing', type='json', auth='public', methods=['GET', 'POST', 'OPTIONS'], cors='*', csrf=False)
+    def get_pricing(self, templateId=None, copies=None, **kwargs):
+        """Get pricing for a template from Odoo product mappings"""
+        try:
+            if not templateId or not copies:
+                return {'error': 'templateId and copies are required'}
+            
+            copies = int(copies)
+            if copies < 1:
+                return {'error': 'Invalid copies quantity'}
+            
+            # Find mapped product for the template
+            product = request.env['artwork.template.mapping'].sudo().get_product_for_template(templateId)
+            
+            if not product:
+                return {
+                    'error': 'No product mapped for this template',
+                    'pricePerUnit': 0,
+                    'totalPrice': 0,
+                    'currency': 'EUR'
+                }
+            
+            # Get price from product (considering pricelists if applicable)
+            pricelist = request.website.get_current_pricelist() if hasattr(request, 'website') else None
+            
+            if pricelist:
+                price_per_unit = pricelist.get_product_price(product, copies, None)
+            else:
+                price_per_unit = product.list_price
+            
+            total_price = price_per_unit * copies
+            
+            return {
+                'pricePerUnit': round(price_per_unit, 2),
+                'totalPrice': round(total_price, 2),
+                'currency': product.currency_id.name if product.currency_id else 'EUR',
+                'productName': product.name,
+            }
+            
+        except Exception as e:
+            _logger.error(f"Pricing error: {str(e)}")
+            return {
+                'error': f'Failed to calculate pricing: {str(e)}',
+                'pricePerUnit': 0,
+                'totalPrice': 0,
+                'currency': 'EUR'
+            }
+    
     def _get_garment_colors(self):
         """Get available garment colors"""
         try:

@@ -3997,7 +3997,7 @@ export async function registerRoutes(app: express.Application) {
     }
   }
 
-  // Pricing endpoint for Odoo integration
+  // Pricing endpoint - fetch from Odoo
   app.get('/api/pricing', async (req, res) => {
     try {
       const { templateId, copies } = req.query;
@@ -4011,25 +4011,82 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'Invalid copies quantity' });
       }
 
-      // Get template data to determine pricing tier
-      const templateSizes = await storage.getTemplateSizes();
-      const template = templateSizes.find(t => t.id === templateId);
-      
-      if (!template) {
-        return res.status(404).json({ error: 'Template not found' });
+      // Get Odoo base URL from environment
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing`;
+
+      console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`);
+
+      // Call Odoo pricing API
+      const response = await fetch(odooApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'call',
+          params: {
+            templateId: templateId,
+            copies: copiesNum,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Odoo API error: ${response.statusText}`);
       }
 
-      // Calculate pricing based on template size and quantity
-      const pricePerUnit = calculateTemplatePrice(template, copiesNum);
-      const totalPrice = pricePerUnit * copiesNum;
+      const data = await response.json();
+      
+      // Handle Odoo JSON-RPC response format
+      if (data.error) {
+        console.error('Odoo pricing error:', data.error);
+        // Fallback to local calculation
+        const templateSizes = await storage.getTemplateSizes();
+        const template = templateSizes.find(t => t.id === templateId);
+        if (template) {
+          const pricePerUnit = calculateTemplatePrice(template, copiesNum);
+          const totalPrice = pricePerUnit * copiesNum;
+          return res.json({
+            pricePerUnit: Math.round(pricePerUnit * 100) / 100,
+            totalPrice: Math.round(totalPrice * 100) / 100,
+            currency: 'EUR'
+          });
+        }
+        return res.status(500).json({ error: 'Failed to get pricing' });
+      }
 
+      // Return Odoo pricing
+      const result = data.result || data;
+      console.log(`💰 Odoo pricing response:`, result);
+      
       res.json({
-        pricePerUnit: Math.round(pricePerUnit * 100) / 100, // Round to 2 decimals
-        totalPrice: Math.round(totalPrice * 100) / 100,
-        currency: 'EUR'
+        pricePerUnit: result.pricePerUnit || 0,
+        totalPrice: result.totalPrice || 0,
+        currency: result.currency || 'EUR',
+        productName: result.productName,
       });
     } catch (error) {
-      console.error('Pricing calculation error:', error);
+      console.error('Pricing API error:', error);
+      // Fallback to local calculation
+      try {
+        const { templateId, copies } = req.query;
+        const copiesNum = parseInt(copies as string);
+        const templateSizes = await storage.getTemplateSizes();
+        const template = templateSizes.find(t => t.id === templateId);
+        if (template) {
+          const pricePerUnit = calculateTemplatePrice(template, copiesNum);
+          const totalPrice = pricePerUnit * copiesNum;
+          return res.json({
+            pricePerUnit: Math.round(pricePerUnit * 100) / 100,
+            totalPrice: Math.round(totalPrice * 100) / 100,
+            currency: 'EUR'
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Fallback pricing error:', fallbackError);
+      }
       res.status(500).json({ error: 'Failed to calculate pricing' });
     }
   });
