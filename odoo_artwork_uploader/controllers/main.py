@@ -399,70 +399,100 @@ class ArtworkUploaderController(http.Controller):
             ]
             return request.make_response('', headers=headers)
         
-        # Parse JSON body
         try:
-            data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            data = {}
-        
-        project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
-        
-        if not project:
-            response = json.dumps({'error': 'Project not found'})
+            _logger.info(f"🛒 ADD TO CART START - Project UUID: {project_uuid}")
+            
+            # Parse JSON body
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                data = {}
+            
+            project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
+            
+            if not project:
+                _logger.error(f"❌ Project not found: {project_uuid}")
+                response = json.dumps({'error': 'Project not found'})
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(response, headers=headers)
+            
+            _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
+            
+            # Get or create sale order
+            sale_order = request.website.sale_get_order(force_create=True)
+            _logger.info(f"✅ Sale order: #{sale_order.id}, Current lines: {len(sale_order.order_line)}")
+            
+            # Find mapped product for the template
+            product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
+            
+            if not product:
+                _logger.error(f"❌ No product mapped for template: {project.template_size}")
+                response = json.dumps({'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'})
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(response, headers=headers)
+            
+            _logger.info(f"✅ Found product: {product.name} (ID: {product.id})")
+            
+            # Add to cart
+            _logger.info(f"🛒 Calling _cart_update with qty={project.quantity}")
+            cart_result = sale_order.sudo()._cart_update(
+                product_id=product.id,
+                add_qty=project.quantity,
+                set_qty=0,
+                attributes={},
+                no_variant_attribute_values={}
+            )
+            _logger.info(f"✅ Cart updated: {cart_result}")
+            
+            # Link project to order
+            project.sale_order_id = sale_order.id
+            _logger.info(f"✅ Linked project to sale order #{sale_order.id}")
+            
+            # Find the created order line and link it to the project
+            order_line = sale_order.order_line.filtered(lambda l: l.product_id.id == product.id)[-1]
+            if order_line:
+                order_line.artwork_project_id = project.id
+                order_line._update_artwork_comments()
+                _logger.info(f"✅ Linked order line #{order_line.id} to project")
+            else:
+                _logger.warning(f"⚠️ Could not find order line for product {product.id}")
+            
+            _logger.info(f"✅ ADD TO CART SUCCESS - Cart now has {sale_order.cart_quantity} items")
+            
+            response_data = {
+                'success': True,
+                'cart_quantity': sale_order.cart_quantity,
+                'website_sale_order': sale_order.id,
+            }
+            
+            response = json.dumps(response_data)
             headers = [
                 ('Content-Type', 'application/json'),
                 ('Access-Control-Allow-Origin', origin),
                 ('Access-Control-Allow-Credentials', 'true'),
             ]
+            
             return request.make_response(response, headers=headers)
-        
-        # Get or create sale order
-        sale_order = request.website.sale_get_order(force_create=True)
-        
-        # Find mapped product for the template
-        product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
-        
-        if not product:
-            response = json.dumps({'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'})
+            
+        except Exception as e:
+            _logger.error(f"❌ ADD TO CART FAILED: {str(e)}")
+            _logger.exception("Full traceback:")
+            
+            response = json.dumps({'error': f'Failed to add to cart: {str(e)}'})
             headers = [
                 ('Content-Type', 'application/json'),
                 ('Access-Control-Allow-Origin', origin),
                 ('Access-Control-Allow-Credentials', 'true'),
             ]
-            return request.make_response(response, headers=headers)
-        
-        # Add to cart
-        sale_order.sudo()._cart_update(
-            product_id=product.id,
-            add_qty=project.quantity,
-            set_qty=0,
-            attributes={},
-            no_variant_attribute_values={}
-        )
-        
-        # Link project to order
-        project.sale_order_id = sale_order.id
-        
-        # Find the created order line and link it to the project
-        order_line = sale_order.order_line.filtered(lambda l: l.product_id.id == product.id)[-1]
-        if order_line:
-            order_line.artwork_project_id = project.id
-            order_line._update_artwork_comments()
-        
-        response_data = {
-            'success': True,
-            'cart_quantity': sale_order.cart_quantity,
-            'website_sale_order': sale_order.id,
-        }
-        
-        response = json.dumps(response_data)
-        headers = [
-            ('Content-Type', 'application/json'),
-            ('Access-Control-Allow-Origin', origin),
-            ('Access-Control-Allow-Credentials', 'true'),
-        ]
-        
-        return request.make_response(response, headers=headers)
+            return request.make_response(response, headers=headers, status=500)
     
     @http.route('/artwork/api/pricing', type='json', auth='public', methods=['GET', 'POST', 'OPTIONS'], cors='*', csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):
