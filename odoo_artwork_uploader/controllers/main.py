@@ -408,17 +408,54 @@ class ArtworkUploaderController(http.Controller):
             except (json.JSONDecodeError, UnicodeDecodeError):
                 data = {}
             
+            _logger.info(f"📦 Received project data: {data}")
+            
+            # Find or create project in Odoo database
             project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
             
             if not project:
-                _logger.error(f"❌ Project not found: {project_uuid}")
-                response = json.dumps({'error': 'Project not found'})
-                headers = [
-                    ('Content-Type', 'application/json'),
-                    ('Access-Control-Allow-Origin', origin),
-                    ('Access-Control-Allow-Credentials', 'true'),
-                ]
-                return request.make_response(response, headers=headers)
+                _logger.info(f"🆕 Project not found in Odoo, creating new project")
+                
+                # Create project in Odoo database with data from Replit
+                project_vals = {
+                    'uuid': project_uuid,
+                    'name': data.get('name', 'Untitled Project'),
+                    'template_size': data.get('templateSize', ''),
+                    'garment_color': data.get('garmentColor', ''),
+                    'garment_color_name': data.get('garmentColorName', ''),
+                    'ink_color': data.get('inkColor', ''),
+                    'ink_color_name': data.get('inkColorName', ''),
+                    'quantity': data.get('quantity', 1),
+                    'total_quantity': data.get('totalQuantity', data.get('quantity', 1)),
+                    'project_comments': data.get('comments', ''),
+                    'state': 'draft',
+                }
+                
+                # Handle garment colors for multi-color orders
+                if data.get('garmentColors'):
+                    project_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
+                
+                project = request.env['artwork.project'].sudo().create(project_vals)
+                _logger.info(f"✅ Created project in Odoo: {project.name} (ID: {project.id})")
+            else:
+                _logger.info(f"✅ Found existing project in Odoo: {project.name} (ID: {project.id})")
+                
+                # Update project with latest data
+                update_vals = {}
+                if data.get('name'):
+                    update_vals['name'] = data['name']
+                if data.get('quantity'):
+                    update_vals['quantity'] = data['quantity']
+                if data.get('totalQuantity'):
+                    update_vals['total_quantity'] = data['totalQuantity']
+                if data.get('comments'):
+                    update_vals['project_comments'] = data['comments']
+                if data.get('garmentColors'):
+                    update_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
+                
+                if update_vals:
+                    project.sudo().write(update_vals)
+                    _logger.info(f"✅ Updated project with latest data")
             
             _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
             

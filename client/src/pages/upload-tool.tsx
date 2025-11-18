@@ -189,12 +189,29 @@ export default function UploadTool() {
       
       console.log('🛒 Adding to Odoo cart:', url);
       
+      // Send full project data to Odoo so it can create/update the project in its database
+      const projectData = {
+        name: currentProject.name,
+        templateSize: currentProject.templateSize,
+        garmentColor: currentProject.garmentColor,
+        garmentColorName: currentProject.garmentColor, // Use color hex as fallback for name
+        garmentColors: currentProject.garmentColors || [],
+        inkColor: currentProject.inkColor || '',
+        inkColorName: currentProject.inkColor || '', // Use color hex as fallback for name
+        quantity: currentProject.quantity,
+        totalQuantity: currentProject.quantity, // Use regular quantity as fallback
+        comments: '', // No comments field in current schema
+      };
+      
+      console.log('📦 Sending project data to Odoo:', projectData);
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies for session
+        body: JSON.stringify(projectData),
       });
       
       if (!response.ok) {
