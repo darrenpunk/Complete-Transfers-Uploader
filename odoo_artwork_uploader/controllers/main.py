@@ -506,23 +506,24 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"🔍 Pricing debug - Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
             
             if pricelist:
-                # Method 1: Try get_product_price_rule which returns full rule info
+                # Use Odoo 16's _get_product_price method (applies quantity-based pricelist rules)
                 try:
-                    price_info = pricelist.get_product_price_rule(
+                    partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                    
+                    # _get_product_price(product, quantity, partner=False, date=False, uom=False)
+                    price_per_unit = pricelist._get_product_price(
                         product,
-                        copies,  # quantity for discount calculation
-                        request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                        copies,  # quantity parameter triggers quantity-based pricelist rules
+                        partner=partner,
+                        date=False,
+                        uom=product.uom_id
                     )
-                    # Returns tuple: (price, rule_id)
-                    if isinstance(price_info, tuple):
-                        price_per_unit = price_info[0]
-                        _logger.info(f"✅ Pricelist rule applied - Price: {price_per_unit}, Rule ID: {price_info[1]}")
-                    else:
-                        price_per_unit = price_info
-                    _logger.info(f"💰 Price from pricelist for qty {copies}: {price_per_unit}")
+                    
+                    _logger.info(f"✅ Pricelist price for qty {copies}: €{price_per_unit}")
                 except Exception as e:
                     _logger.error(f"❌ Pricelist computation failed: {str(e)}")
                     price_per_unit = product.list_price
+                    _logger.info(f"⚠️ Using list price as fallback: €{price_per_unit}")
             else:
                 price_per_unit = product.list_price
                 _logger.info(f"📋 No pricelist found, using list price: {price_per_unit}")
