@@ -574,24 +574,37 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"🔍 Pricing debug - Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
             
             if pricelist:
-                # Use Odoo 16's _get_product_price method (applies quantity-based pricelist rules)
+                # Get partner for pricelist computation
+                partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                
+                # Try method 1: get_product_price_rule (returns price + rule info)
                 try:
-                    partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
-                    
-                    # _get_product_price(product, quantity, partner=False, date=False, uom=False)
-                    price_per_unit = pricelist._get_product_price(
+                    rule_result = pricelist.get_product_price_rule(
                         product,
-                        copies,  # quantity parameter triggers quantity-based pricelist rules
+                        copies,
                         partner=partner,
                         date=False,
-                        uom=product.uom_id
+                        uom_id=product.uom_id.id
                     )
+                    price_per_unit = rule_result[0] if isinstance(rule_result, tuple) else rule_result
+                    _logger.info(f"✅ Method 1 (get_product_price_rule) - Qty {copies}: €{price_per_unit}, Rule: {rule_result}")
+                except Exception as e1:
+                    _logger.warning(f"⚠️ Method 1 failed: {str(e1)}")
                     
-                    _logger.info(f"✅ Pricelist price for qty {copies}: €{price_per_unit}")
-                except Exception as e:
-                    _logger.error(f"❌ Pricelist computation failed: {str(e)}")
-                    price_per_unit = product.list_price
-                    _logger.info(f"⚠️ Using list price as fallback: €{price_per_unit}")
+                    # Try method 2: _get_product_price (direct price)
+                    try:
+                        price_per_unit = pricelist._get_product_price(
+                            product,
+                            copies,
+                            partner=partner,
+                            date=False,
+                            uom=product.uom_id
+                        )
+                        _logger.info(f"✅ Method 2 (_get_product_price) - Qty {copies}: €{price_per_unit}")
+                    except Exception as e2:
+                        _logger.error(f"❌ Both methods failed: Method 1: {str(e1)}, Method 2: {str(e2)}")
+                        price_per_unit = product.list_price
+                        _logger.info(f"⚠️ Using list price as fallback: €{price_per_unit}")
             else:
                 price_per_unit = product.list_price
                 _logger.info(f"📋 No pricelist found, using list price: {price_per_unit}")
