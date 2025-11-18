@@ -459,8 +459,9 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
             
-            # Get or create sale order
-            sale_order = request.website.sale_get_order(force_create=True)
+            # Get or create sale order (using env since this is http type controller)
+            website = request.env['website'].get_current_website()
+            sale_order = website.sale_get_order(force_create=True)
             _logger.info(f"✅ Sale order: #{sale_order.id}, Current lines: {len(sale_order.order_line)}")
             
             # Find mapped product for the template
