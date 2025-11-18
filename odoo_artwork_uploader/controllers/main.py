@@ -555,28 +555,38 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            # For API endpoints, we need to explicitly get the website and its pricelist
-            website = request.env['website'].get_current_website()
-            pricelist = website.get_current_pricelist() if website else None
+            # For API endpoints, we need to get the pricelist properly
+            website = request.env['website'].sudo().get_current_website()
             
-            # Fallback: try to get default public pricelist if website method fails
-            if not pricelist:
+            # Try to get pricelist from current user's partner (respects their assigned pricelist)
+            partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+            pricelist = partner.property_product_pricelist if partner and partner.property_product_pricelist else None
+            
+            # Fallback 1: Get website's pricelist
+            if not pricelist and website:
+                try:
+                    pricelist = website.get_current_pricelist()
+                except:
+                    pass
+            
+            # Fallback 2: Search for website-specific pricelist
+            if not pricelist and website:
                 pricelist = request.env['product.pricelist'].sudo().search([
-                    ('website_id', '=', website.id if website else False),
+                    ('website_id', '=', website.id),
+                    ('active', '=', True)
                 ], limit=1)
             
-            # Last resort: get any active pricelist
+            # Fallback 3: Get any active pricelist
             if not pricelist:
                 pricelist = request.env['product.pricelist'].sudo().search([
                     ('active', '=', True)
                 ], limit=1)
             
-            _logger.info(f"🔍 Pricing debug - Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
+            _logger.info(f"🔍 Pricing debug - Website: {website.name if website else 'None'}, Pricelist: {pricelist.name if pricelist else 'None'}, Product: {product.name}, Qty: {copies}")
+            if pricelist:
+                _logger.info(f"🔍 Pricelist details - ID: {pricelist.id}, Website: {pricelist.website_id.name if pricelist.website_id else 'Not linked'}, Company: {pricelist.company_id.name if pricelist.company_id else 'None'}")
             
             if pricelist:
-                # Get partner for pricelist computation
-                partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
-                
                 # Try method 1: get_product_price_rule (returns price + rule info)
                 try:
                     rule_result = pricelist.get_product_price_rule(
