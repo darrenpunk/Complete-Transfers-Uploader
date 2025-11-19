@@ -459,8 +459,10 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
             
-            # Get or create sale order (using env since this is http type controller)
+            # Get or create sale order
             website = request.env['website'].get_current_website()
+            # CRITICAL: Bind website to request for JSON controllers (sale_get_order expects request.website)
+            request.website = website
             sale_order = website.sale_get_order(force_create=True)
             _logger.info(f"✅ Sale order: #{sale_order.id}, Current lines: {len(sale_order.order_line)}")
             
