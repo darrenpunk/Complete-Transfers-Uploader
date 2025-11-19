@@ -607,37 +607,74 @@ class ArtworkUploaderController(http.Controller):
             if pricelist:
                 _logger.info(f"🔍 Pricelist details - ID: {pricelist.id}, Website: {pricelist.website_id.name if pricelist.website_id else 'Not linked'}, Company: {pricelist.company_id.name if pricelist.company_id else 'None'}")
             
+            # Get base list price for comparison
+            base_list_price = product.list_price
+            
             if pricelist:
-                # Try method 1: get_product_price_rule (returns price + rule info)
+                # Try to get price from pricelist
                 try:
-                    rule_result = pricelist.get_product_price_rule(
+                    price_per_unit = pricelist._get_product_price(
                         product,
                         copies,
                         partner=partner,
                         date=False,
-                        uom_id=product.uom_id.id
+                        uom=product.uom_id
                     )
-                    price_per_unit = rule_result[0] if isinstance(rule_result, tuple) else rule_result
-                    _logger.info(f"✅ Method 1 (get_product_price_rule) - Qty {copies}: €{price_per_unit}, Rule: {rule_result}")
-                except Exception as e1:
-                    _logger.warning(f"⚠️ Method 1 failed: {str(e1)}")
+                    _logger.info(f"✅ {pricelist.name} - Qty {copies}: €{price_per_unit}")
                     
-                    # Try method 2: _get_product_price (direct price)
-                    try:
-                        price_per_unit = pricelist._get_product_price(
-                            product,
-                            copies,
-                            partner=partner,
-                            date=False,
-                            uom=product.uom_id
-                        )
-                        _logger.info(f"✅ Method 2 (_get_product_price) - Qty {copies}: €{price_per_unit}")
-                    except Exception as e2:
-                        _logger.error(f"❌ Both methods failed: Method 1: {str(e1)}, Method 2: {str(e2)}")
-                        price_per_unit = product.list_price
-                        _logger.info(f"⚠️ Using list price as fallback: €{price_per_unit}")
+                    # SMART FALLBACK: If customer's pricelist returns base price (no discount rule),
+                    # try region-specific CT pricelist for quantity discounts
+                    if abs(price_per_unit - base_list_price) < 0.01:  # Same as list price (no rule)
+                        _logger.info(f"⚠️ {pricelist.name} has no specific rule (price = list price)")
+                        
+                        # Detect customer's region from country
+                        fallback_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
+                        customer_country = partner.country_id.code if partner and partner.country_id else None
+                        
+                        if customer_country:
+                            _logger.info(f"🌍 Customer country: {partner.country_id.name} ({customer_country})")
+                            if customer_country == 'GB':
+                                fallback_pricelist_name = 'CT Public Pricelist GBP'
+                                _logger.info(f"🇬🇧 UK customer detected, using GBP pricelist")
+                            else:
+                                _logger.info(f"🇪🇺 Non-UK customer, using Euro pricelist")
+                        else:
+                            _logger.info(f"⚠️ No country detected, defaulting to Euro pricelist")
+                        
+                        # Try region-specific CT pricelist as fallback
+                        ct_pricelist = request.env['product.pricelist'].sudo().search([
+                            ('name', '=', fallback_pricelist_name),
+                            ('active', '=', True)
+                        ], limit=1)
+                        
+                        if ct_pricelist:
+                            try:
+                                ct_price = ct_pricelist._get_product_price(
+                                    product,
+                                    copies,
+                                    partner=partner,
+                                    date=False,
+                                    uom=product.uom_id
+                                )
+                                _logger.info(f"🔄 {fallback_pricelist_name} - Qty {copies}: {ct_price}")
+                                
+                                # Use CT pricelist price if it's better
+                                if ct_price < price_per_unit:
+                                    price_per_unit = ct_price
+                                    _logger.info(f"✅ Using {fallback_pricelist_name} (better discount)")
+                                else:
+                                    _logger.info(f"ℹ️ Keeping {pricelist.name} price (same or better)")
+                            except Exception as e_ct:
+                                _logger.warning(f"⚠️ {fallback_pricelist_name} lookup failed: {str(e_ct)}")
+                        else:
+                            _logger.warning(f"⚠️ {fallback_pricelist_name} not found")
+                    
+                except Exception as e:
+                    _logger.error(f"❌ Pricing failed: {str(e)}")
+                    price_per_unit = base_list_price
+                    _logger.info(f"⚠️ Using list price as fallback: €{price_per_unit}")
             else:
-                price_per_unit = product.list_price
+                price_per_unit = base_list_price
                 _logger.info(f"📋 No pricelist found, using list price: {price_per_unit}")
             
             total_price = price_per_unit * copies
