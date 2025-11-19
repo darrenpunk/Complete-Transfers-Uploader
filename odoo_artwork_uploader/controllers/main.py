@@ -565,7 +565,10 @@ class ArtworkUploaderController(http.Controller):
             
             # Strategy 1: Try to get pricelist from current user's partner (most reliable)
             partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+            _logger.info(f"👤 Current user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
             pricelist = partner.property_product_pricelist if partner and partner.property_product_pricelist else None
+            if pricelist:
+                _logger.info(f"✅ Using partner's pricelist: {pricelist.name}")
             
             # Strategy 2: Search for "CT Euro Pricelist" by name (your discount pricelist)
             if not pricelist:
