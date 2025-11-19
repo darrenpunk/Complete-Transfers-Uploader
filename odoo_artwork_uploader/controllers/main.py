@@ -555,8 +555,17 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            # For API endpoints, we need to get the pricelist properly
-            website = request.env['website'].sudo().get_current_website()
+            # CRITICAL: We need to get the "Complete Transfers" website to get the correct pricelist
+            # First try to find the Complete Transfers website explicitly
+            website = request.env['website'].sudo().search([
+                ('name', '=', 'Complete Transfers')
+            ], limit=1)
+            
+            # Fallback: use current website
+            if not website:
+                website = request.env['website'].sudo().get_current_website()
+            
+            _logger.info(f"🌐 Using website: {website.name} (ID: {website.id})")
             
             # Try to get pricelist from current user's partner (respects their assigned pricelist)
             partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None

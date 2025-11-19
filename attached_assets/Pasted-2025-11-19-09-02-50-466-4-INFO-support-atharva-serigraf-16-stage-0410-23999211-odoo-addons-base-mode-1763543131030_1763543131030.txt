@@ -1,0 +1,128 @@
+2025-11-19 09:02:50,466 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.assetsbundle: Deleting ir.attachment [4180262] (from bundle website.assets_wysiwyg_inside) 
+2025-11-19 09:02:50,494 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.modules.registry: At least one model cache has been invalidated, signaling through the database. 
+2025-11-19 09:02:50,495 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:50] "GET /web/bundle/website.assets_wysiwyg_inside?lang=en_US&website_id=3 HTTP/1.0" 200 - 48 0.824 0.551
+2025-11-19 09:02:51,170 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:51] "POST /shop/get_product_data HTTP/1.0" 200 - 48 0.026 0.014
+2025-11-19 09:02:51,172 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:51] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 16 0.008 0.008
+2025-11-19 09:02:51,215 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:51] "GET /web/bundle/web_editor.assets_wysiwyg?lang=en_US&website_id=3 HTTP/1.0" 200 - 34 0.013 0.059
+2025-11-19 09:02:51,263 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:51] "GET /web/bundle/website.assets_wysiwyg_inside?lang=en_US&website_id=3 HTTP/1.0" 200 - 3 0.001 0.003
+2025-11-19 09:02:51,292 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:51] "GET /web/assets/4180400-daabcfd/3/website.assets_wysiwyg_inside.min.js HTTP/1.0" 200 - 5 0.001 0.004
+2025-11-19 09:02:57,027 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /artwork/upload HTTP/1.0" 200 - 232 0.077 0.550
+2025-11-19 09:02:57,074 4 INFO ? werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web/static/src/libs/fontawesome/fonts/fontawesome-webfont.woff2?v=4.7.0 HTTP/1.0" 200 - 0 0.000 0.001
+2025-11-19 09:02:57,091 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web/assets/4180395-f1cf5ca/3/web.assets_frontend.min.css HTTP/1.0" 200 - 5 0.001 0.005
+2025-11-19 09:02:57,146 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web/assets/4074345-265d88f/3/web.assets_frontend_minimal.min.js HTTP/1.0" 200 - 5 0.001 0.004
+2025-11-19 09:02:57,203 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web/image/website/3/logo/Complete%20Transfers?unique=136bde0 HTTP/1.0" 200 - 6 0.002 0.005
+2025-11-19 09:02:57,223 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web_editor/shape/web_editor/Wavy/24.svg?c1=%23991A76&c2=%23000814 HTTP/1.0" 200 - 8 0.002 0.006
+2025-11-19 09:02:57,229 4 INFO ? werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /base/static/img/country_flags/us.png?height=25 HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-19 09:02:57,330 4 INFO ? werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /website/static/description/icon.png HTTP/1.0" 200 - 0 0.000 0.002
+2025-11-19 09:02:57,526 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "GET /web/image/website/3/favicon?unique=136bde0 HTTP/1.0" 200 - 6 0.002 0.006
+2025-11-19 09:02:57,629 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "POST /shop/get_product_data HTTP/1.0" 200 - 16 0.007 0.010
+2025-11-19 09:02:57,633 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:02:57] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.004 0.006
+2025-11-19 09:03:17,061 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:17] "GET /artwork/upload HTTP/1.0" 200 - 22 0.005 0.017
+2025-11-19 09:03:17,534 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:17] "POST /shop/get_product_data HTTP/1.0" 200 - 16 0.007 0.008
+2025-11-19 09:03:17,539 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:17] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.002 0.005
+2025-11-19 09:03:37,829 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:37] "GET /artwork/upload HTTP/1.0" 200 - 22 0.005 0.017
+2025-11-19 09:03:41,507 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:41] "POST /shop/get_product_data HTTP/1.0" 200 - 16 0.006 0.008
+2025-11-19 09:03:41,511 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:03:41] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 7 0.002 0.005
+2025-11-19 09:03:44,580 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Cambus Medical, Product: Full Colour  A3, Qty: 1 
+2025-11-19 09:03:44,582 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 580, Website: Serigraf, Company: Serigraf Ltd. 
+2025-11-19 09:03:44,582 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ Method 1 failed: 'product.pricelist' object has no attribute 'get_product_price_rule' 
+2025-11-19 09:03:44,587 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Method 2 (_get_product_price) - Qty 1: €8.57 
+2025-11-19 09:03:44,587 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 8.57 for 1 items 
+2025-11-19 09:03:44,588 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.117.132.93 - - [19/Nov/2025 09:03:44] "POST /artwork/api/pricing HTTP/1.0" 200 - 27 0.010 0.010
+2025-11-19 09:03:44,708 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Cambus Medical, Product: Full Colour  A3, Qty: 10 
+2025-11-19 09:03:44,711 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 580, Website: Serigraf, Company: Serigraf Ltd. 
+2025-11-19 09:03:44,711 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ Method 1 failed: 'product.pricelist' object has no attribute 'get_product_price_rule' 
+2025-11-19 09:03:44,716 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Method 2 (_get_product_price) - Qty 10: €8.57 
+2025-11-19 09:03:44,716 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 85.7 for 10 items 
+2025-11-19 09:03:44,718 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.117.132.93 - - [19/Nov/2025 09:03:44] "POST /artwork/api/pricing HTTP/1.0" 200 - 20 0.011 0.009
+2025-11-19 09:03:46,904 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Cambus Medical, Product: Full Colour  A3, Qty: 11 
+2025-11-19 09:03:46,906 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 580, Website: Serigraf, Company: Serigraf Ltd. 
+2025-11-19 09:03:46,906 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ Method 1 failed: 'product.pricelist' object has no attribute 'get_product_price_rule' 
+2025-11-19 09:03:46,909 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Method 2 (_get_product_price) - Qty 11: €8.57 
+2025-11-19 09:03:46,909 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 94.27000000000001 for 11 items 
+2025-11-19 09:03:46,910 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.117.132.93 - - [19/Nov/2025 09:03:46] "POST /artwork/api/pricing HTTP/1.0" 200 - 19 0.006 0.009
+2025-11-19 09:03:51,880 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Cambus Medical, Product: Full Colour  A3, Qty: 100 
+2025-11-19 09:03:51,883 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 580, Website: Serigraf, Company: Serigraf Ltd. 
+2025-11-19 09:03:51,883 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ Method 1 failed: 'product.pricelist' object has no attribute 'get_product_price_rule' 
+2025-11-19 09:03:51,886 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Method 2 (_get_product_price) - Qty 100: €8.57 
+2025-11-19 09:03:51,886 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 857.0 for 100 items 
+2025-11-19 09:03:51,887 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.117.132.93 - - [19/Nov/2025 09:03:51] "POST /artwork/api/pricing HTTP/1.0" 200 - 19 0.007 0.010
+2025-11-19 09:04:25,188 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 23 0.012 0.021
+2025-11-19 09:04:25,198 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.005
+2025-11-19 09:04:25,220 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 13 0.005 0.015
+2025-11-19 09:04:25,228 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.004
+2025-11-19 09:04:25,247 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.004 0.014
+2025-11-19 09:04:25,254 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:25] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.004
+2025-11-19 09:04:34,389 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:34] "OPTIONS /artwork/api/projects/add537cd-9fa8-4e6c-b20a-620e1547185c/add-to-cart HTTP/1.0" 200 - 1 0.000 0.003
+2025-11-19 09:04:34,455 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: add537cd-9fa8-4e6c-b20a-620e1547185c
+2025-11-19 09:04:34,455 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data: {'name': 'e', 'templateSize': 'template-A3', 'garmentColor': '#171816', 'garmentColorName': '#171816', 'garmentColors': [], 'inkColor': '', 'inkColorName': '', 'quantity': 100, 'totalQuantity': 100, 'comments': ''}
+2025-11-19 09:04:34,456 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Project not found in Odoo, creating new project
+2025-11-19 09:04:34,470 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created project in Odoo: e (ID: 1)
+2025-11-19 09:04:34,470 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: e, Template: template-A3, Qty: 100
+2025-11-19 09:04:34,474 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ ADD TO CART FAILED: 'Request' object has no attribute 'website'
+2025-11-19 09:04:34,474 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: Full traceback: 
+Traceback (most recent call last):
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 464, in add_to_cart
+    sale_order = website.sale_get_order(force_create=True)
+  File "/home/odoo/src/user/website_product_artworks/models/models.py", line 61, in sale_get_order
+    return super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 28, in sale_get_order
+    so = super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 357, in sale_get_order
+    so_data = self._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/user/serigraf_customize/models/models.py", line 94, in _prepare_sale_order_values
+    values = super(Website, self)._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 11, in _prepare_sale_order_values
+    values = super()._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 414, in _prepare_sale_order_values
+    if not request.website.is_public_user():
+AttributeError: 'Request' object has no attribute 'website'
+2025-11-19 09:04:34,479 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:34] "POST /artwork/api/projects/add537cd-9fa8-4e6c-b20a-620e1547185c/add-to-cart HTTP/1.0" 500 - 24 0.010 0.016
+2025-11-19 09:04:40,301 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: add537cd-9fa8-4e6c-b20a-620e1547185c
+2025-11-19 09:04:40,302 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data: {'name': 'e', 'templateSize': 'template-A3', 'garmentColor': '#171816', 'garmentColorName': '#171816', 'garmentColors': [], 'inkColor': '', 'inkColorName': '', 'quantity': 100, 'totalQuantity': 100, 'comments': ''}
+2025-11-19 09:04:40,303 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: e (ID: 1)
+2025-11-19 09:04:40,303 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Updated project with latest data
+2025-11-19 09:04:40,303 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: e, Template: template-A3, Qty: 100
+2025-11-19 09:04:40,307 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ ADD TO CART FAILED: 'Request' object has no attribute 'website'
+2025-11-19 09:04:40,307 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: Full traceback: 
+Traceback (most recent call last):
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 464, in add_to_cart
+    sale_order = website.sale_get_order(force_create=True)
+  File "/home/odoo/src/user/website_product_artworks/models/models.py", line 61, in sale_get_order
+    return super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 28, in sale_get_order
+    so = super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 357, in sale_get_order
+    so_data = self._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/user/serigraf_customize/models/models.py", line 94, in _prepare_sale_order_values
+    values = super(Website, self)._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 11, in _prepare_sale_order_values
+    values = super()._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 414, in _prepare_sale_order_values
+    if not request.website.is_public_user():
+AttributeError: 'Request' object has no attribute 'website'
+2025-11-19 09:04:40,312 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:40] "POST /artwork/api/projects/add537cd-9fa8-4e6c-b20a-620e1547185c/add-to-cart HTTP/1.0" 500 - 14 0.004 0.009
+2025-11-19 09:04:41,235 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: add537cd-9fa8-4e6c-b20a-620e1547185c
+2025-11-19 09:04:41,236 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data: {'name': 'e', 'templateSize': 'template-A3', 'garmentColor': '#171816', 'garmentColorName': '#171816', 'garmentColors': [], 'inkColor': '', 'inkColorName': '', 'quantity': 100, 'totalQuantity': 100, 'comments': ''}
+2025-11-19 09:04:41,237 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: e (ID: 1)
+2025-11-19 09:04:41,237 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Updated project with latest data
+2025-11-19 09:04:41,237 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: e, Template: template-A3, Qty: 100
+2025-11-19 09:04:41,241 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ ADD TO CART FAILED: 'Request' object has no attribute 'website'
+2025-11-19 09:04:41,241 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: Full traceback: 
+Traceback (most recent call last):
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 464, in add_to_cart
+    sale_order = website.sale_get_order(force_create=True)
+  File "/home/odoo/src/user/website_product_artworks/models/models.py", line 61, in sale_get_order
+    return super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 28, in sale_get_order
+    so = super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 357, in sale_get_order
+    so_data = self._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/user/serigraf_customize/models/models.py", line 94, in _prepare_sale_order_values
+    values = super(Website, self)._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 11, in _prepare_sale_order_values
+    values = super()._prepare_sale_order_values(partner_sudo)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 414, in _prepare_sale_order_values
+    if not request.website.is_public_user():
+AttributeError: 'Request' object has no attribute 'website'
+2025-11-19 09:04:41,243 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [19/Nov/2025 09:04:41] "POST /artwork/api/projects/add537cd-9fa8-4e6c-b20a-620e1547185c/add-to-cart HTTP/1.0" 500 - 9 0.002 0.007
