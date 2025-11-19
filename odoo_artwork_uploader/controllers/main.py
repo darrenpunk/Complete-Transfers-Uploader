@@ -459,12 +459,17 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
             
+            # Detect current user (even with auth='public', session might have logged-in user)
+            current_user = request.env.user
+            is_public = current_user._is_public()
+            _logger.info(f"👤 Current user: {current_user.name} (ID: {current_user.id}), Is Public: {is_public}")
+            
             # Get or create sale order
             website = request.env['website'].get_current_website()
             # CRITICAL: Bind website to request for JSON controllers (sale_get_order expects request.website)
             request.website = website
             sale_order = website.sale_get_order(force_create=True)
-            _logger.info(f"✅ Sale order: #{sale_order.id}, Current lines: {len(sale_order.order_line)}")
+            _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {sale_order.partner_id.name}, Current lines: {len(sale_order.order_line)}")
             
             # Find mapped product for the template
             product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
