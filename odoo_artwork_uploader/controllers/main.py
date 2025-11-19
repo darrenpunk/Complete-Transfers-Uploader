@@ -555,37 +555,44 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            # CRITICAL: We need to get the "Complete Transfers" website to get the correct pricelist
-            # First try to find the Complete Transfers website explicitly
-            website = request.env['website'].sudo().search([
-                ('name', '=', 'Complete Transfers')
-            ], limit=1)
+            # CRITICAL: On staging, domain isn't configured, so we need to find pricelist reliably
             
-            # Fallback: use current website
-            if not website:
-                website = request.env['website'].sudo().get_current_website()
+            # Get current website for context
+            website = request.env['website'].sudo().get_current_website()
+            _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
             
-            _logger.info(f"🌐 Using website: {website.name} (ID: {website.id})")
-            
-            # Try to get pricelist from current user's partner (respects their assigned pricelist)
+            # Strategy 1: Try to get pricelist from current user's partner (most reliable)
             partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
             pricelist = partner.property_product_pricelist if partner and partner.property_product_pricelist else None
             
-            # Fallback 1: Get website's pricelist
+            # Strategy 2: Search for "CT Euro Pricelist" by name (your discount pricelist)
+            if not pricelist:
+                pricelist = request.env['product.pricelist'].sudo().search([
+                    ('name', '=', 'CT Euro Pricelist'),
+                    ('active', '=', True)
+                ], limit=1)
+                if pricelist:
+                    _logger.info(f"✅ Found CT Euro Pricelist by name")
+            
+            # Strategy 3: Get website's default pricelist
             if not pricelist and website:
                 try:
                     pricelist = website.get_current_pricelist()
                 except:
                     pass
             
-            # Fallback 2: Search for website-specific pricelist
-            if not pricelist and website:
-                pricelist = request.env['product.pricelist'].sudo().search([
-                    ('website_id', '=', website.id),
-                    ('active', '=', True)
+            # Strategy 4: Search for any pricelist linked to Complete Transfers website
+            if not pricelist:
+                ct_website = request.env['website'].sudo().search([
+                    ('name', '=', 'Complete Transfers')
                 ], limit=1)
+                if ct_website:
+                    pricelist = request.env['product.pricelist'].sudo().search([
+                        ('website_id', '=', ct_website.id),
+                        ('active', '=', True)
+                    ], limit=1)
             
-            # Fallback 3: Get any active pricelist
+            # Strategy 5: Get any active pricelist
             if not pricelist:
                 pricelist = request.env['product.pricelist'].sudo().search([
                     ('active', '=', True)
