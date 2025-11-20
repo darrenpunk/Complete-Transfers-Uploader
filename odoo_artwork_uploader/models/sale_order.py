@@ -17,6 +17,21 @@ class SaleOrderLine(models.Model):
     
     artwork_project_id = fields.Many2one('artwork.project', string='Artwork Project')
     
+    # Related fields for easy access to artwork PDF and details
+    artwork_pdf_file = fields.Binary('Artwork PDF', related='artwork_project_id.pdf_file', readonly=True)
+    artwork_pdf_filename = fields.Char('Artwork PDF Filename', related='artwork_project_id.pdf_filename', readonly=True)
+    artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
+    artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
+    
+    @api.depends('artwork_project_id', 'artwork_project_id.garment_colors_json', 'artwork_project_id.garment_color_name')
+    def _compute_artwork_garment_colors(self):
+        """Compute formatted garment colors text for display"""
+        for line in self:
+            if line.artwork_project_id:
+                line.artwork_garment_colors = line._get_garment_colors_text(line.artwork_project_id)
+            else:
+                line.artwork_garment_colors = ''
+    
     @api.onchange('artwork_project_id')
     def _onchange_artwork_project_id(self):
         if self.artwork_project_id:
