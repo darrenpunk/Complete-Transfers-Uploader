@@ -79,10 +79,6 @@ class ArtworkProject(models.Model):
     # Canvas data
     canvas_data = fields.Text('Canvas Data', help='JSON data containing canvas state')
     
-    # PDF Artwork
-    pdf_file = fields.Binary('Artwork PDF', attachment=True, help='Generated PDF artwork file')
-    pdf_filename = fields.Char('PDF Filename')
-    
     # Related records
     logo_ids = fields.One2many('artwork.logo', 'project_id', string='Logos')
     canvas_element_ids = fields.One2many('artwork.canvas.element', 'project_id', string='Canvas Elements')
@@ -105,10 +101,6 @@ class ArtworkProject(models.Model):
     quantity = fields.Integer('Quantity', default=10)
     total_quantity = fields.Integer('Total Quantity', help='Sum of all garment color quantities for multi-color orders')
     price_total = fields.Float('Total Price', compute='_compute_price', store=True)
-    
-    # PDF
-    pdf_file = fields.Binary('Generated PDF')
-    pdf_filename = fields.Char('PDF Filename')
     
     def write(self, vals):
         """Override write to update sale order line comments when project is modified"""
