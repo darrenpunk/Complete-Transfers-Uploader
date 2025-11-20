@@ -70,6 +70,30 @@ export default function UploadTool() {
     convertedFileSizeMB?: string;
     originalFileName?: string;
   } | null>(null);
+  const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
+
+  // Detect if in iframe and get logged-in user's email from parent Odoo window
+  useEffect(() => {
+    const isInIframe = window !== window.parent;
+    if (isInIframe) {
+      console.log('🔍 App running in iframe - requesting user data from parent window');
+      
+      // Listen for user data from parent window
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data.type === 'odoo-user-data' && event.data.email) {
+          console.log('✅ Received user email from Odoo:', event.data.email);
+          setPartnerEmail(event.data.email);
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      
+      // Request user data from parent
+      window.parent.postMessage({ type: 'request-user-data' }, '*');
+      
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, []);
 
   // Fetch template sizes
   const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
@@ -201,9 +225,13 @@ export default function UploadTool() {
         quantity: currentProject.quantity,
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
         comments: '', // No comments field in current schema
+        partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
       };
       
       console.log('📦 Sending project data to Odoo:', projectData);
+      if (partnerEmail) {
+        console.log('✅ Including partner email for cart assignment:', partnerEmail);
+      }
       
       const response = await fetch(url, {
         method: 'POST',

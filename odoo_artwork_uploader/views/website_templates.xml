@@ -7,12 +7,66 @@
                 <div id="wrap" class="oe_structure">
                     <div class="container-fluid artwork-uploader-container" style="padding: 0; margin: 0; height: calc(100vh - 100px);">
                         <iframe 
+                            id="artwork-iframe"
                             src="https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev"
                             style="width: 100%; height: 100%; border: none; display: block;"
                             title="Proof Designer - Artwork Uploader"
                             allow="clipboard-write">
                         </iframe>
                     </div>
+                    
+                    <!-- Send logged-in user data to iframe (workaround for third-party cookie blocking) -->
+                    <script type="text/javascript">
+                        (function() {
+                            // Get iframe element
+                            var iframe = document.getElementById('artwork-iframe');
+                            if (!iframe) return;
+                            
+                            // Listen for user data requests from iframe
+                            window.addEventListener('message', function(event) {
+                                if (event.data &amp;&amp; event.data.type === 'request-user-data') {
+                                    console.log('📨 Iframe requested user data');
+                                    
+                                    // Get logged-in user's email from Odoo session
+                                    var userEmail = '<t t-esc="request.env.user.partner_id.email or \'\'"/>';
+                                    var userName = '<t t-esc="request.env.user.name or \'\'"/>';
+                                    var userId = '<t t-esc="request.env.user.id or 0"/>';
+                                    var isPublic = '<t t-esc="request.env.user._is_public()"/>';
+                                    
+                                    console.log('👤 Sending user data to iframe:', {
+                                        email: userEmail,
+                                        name: userName,
+                                        userId: userId,
+                                        isPublic: isPublic
+                                    });
+                                    
+                                    // Send user data to iframe
+                                    iframe.contentWindow.postMessage({
+                                        type: 'odoo-user-data',
+                                        email: userEmail,
+                                        name: userName,
+                                        userId: parseInt(userId),
+                                        isPublic: isPublic === 'True'
+                                    }, '*');
+                                }
+                            });
+                            
+                            // Send user data automatically when iframe loads (in case it loads before this script)
+                            iframe.addEventListener('load', function() {
+                                setTimeout(function() {
+                                    var userEmail = '<t t-esc="request.env.user.partner_id.email or \'\'"/>';
+                                    console.log('🔄 Iframe loaded - auto-sending user data:', userEmail);
+                                    iframe.contentWindow.postMessage({
+                                        type: 'odoo-user-data',
+                                        email: userEmail,
+                                        name: '<t t-esc="request.env.user.name or \'\'"/>',
+                                        userId: parseInt('<t t-esc="request.env.user.id or 0"/>'),
+                                        isPublic: '<t t-esc="request.env.user._is_public()"/>' === 'True'
+                                    }, '*');
+                                }, 500); // Small delay to ensure iframe is ready
+                            });
+                        })();
+                    </script>
                 </div>
             </t>
         </template>

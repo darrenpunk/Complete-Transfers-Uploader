@@ -1,0 +1,70 @@
+2025-11-20 08:27:22,328 4 INFO ? werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:22] "GET /web/static/fonts/twitter_x_only.woff HTTP/1.0" 304 - 0 0.000 0.001
+2025-11-20 08:27:22,341 4 INFO ? werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:22] "GET /web/static/lib/odoo_ui_icons/fonts/odoo_ui_icons.woff2 HTTP/1.0" 304 - 0 0.000 0.001
+2025-11-20 08:27:23,161 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:23] "GET /web/assets/4180827-b0b4faf/1/web.assets_frontend_lazy.min.js HTTP/1.0" 200 - 4 0.001 0.004
+2025-11-20 08:27:23,438 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:23] "POST /web_unsplash/get_app_id HTTP/1.0" 200 - 2 0.001 0.003
+2025-11-20 08:27:23,473 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:23] "POST /shop/get_product_data HTTP/1.0" 200 - 32 0.015 0.012
+2025-11-20 08:27:23,474 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:23] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 14 0.008 0.007
+2025-11-20 08:27:38,508 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:38] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 22 0.013 0.025
+2025-11-20 08:27:38,521 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:27:38] "POST /websocket/peek_notifications HTTP/1.1" 200 - 8 0.004 0.007
+2025-11-20 08:28:00,205 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:28:00] "GET /artwork/upload HTTP/1.0" 200 - 177 0.065 0.453
+2025-11-20 08:28:05,452 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:28:05] "POST /shop/get_product_data HTTP/1.0" 200 - 29 0.012 0.015
+2025-11-20 08:28:08,511 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Current website: Serigraf (ID: 1)
+2025-11-20 08:28:08,513 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Partner: Public user
+2025-11-20 08:28:08,520 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Using partner's pricelist: StitchnPrint (STIT)
+2025-11-20 08:28:08,530 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: StitchnPrint (STIT), Product: Full Colour  A3, Qty: 1
+2025-11-20 08:28:08,533 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 12, Website: Serigraf, Company: Serigraf Ltd.
+2025-11-20 08:28:08,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ StitchnPrint (STIT) - Qty 1: €8.57
+2025-11-20 08:28:08,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ StitchnPrint (STIT) has no specific rule (price = list price)
+2025-11-20 08:28:08,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ No country detected, defaulting to Euro pricelist
+2025-11-20 08:28:08,549 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔄 CT Euro Pricelist - Qty 1: 58.83
+2025-11-20 08:28:08,549 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ℹ️ Keeping StitchnPrint (STIT) price (same or better)
+2025-11-20 08:28:08,549 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 8.57 for 1 items
+2025-11-20 08:28:08,551 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.230.74.174 - - [20/Nov/2025 08:28:08] "POST /artwork/api/pricing HTTP/1.0" 200 - 30 0.028 0.018
+2025-11-20 08:28:09,059 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Current website: Serigraf (ID: 1)
+2025-11-20 08:28:09,061 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Partner: Public user
+2025-11-20 08:28:09,065 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Using partner's pricelist: StitchnPrint (STIT)
+2025-11-20 08:28:09,069 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: StitchnPrint (STIT), Product: Full Colour  A3, Qty: 10
+2025-11-20 08:28:09,071 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 12, Website: Serigraf, Company: Serigraf Ltd.
+2025-11-20 08:28:09,076 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ StitchnPrint (STIT) - Qty 10: €8.57
+2025-11-20 08:28:09,076 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ StitchnPrint (STIT) has no specific rule (price = list price)
+2025-11-20 08:28:09,076 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ No country detected, defaulting to Euro pricelist
+2025-11-20 08:28:09,080 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔄 CT Euro Pricelist - Qty 10: 5.83
+2025-11-20 08:28:09,080 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Using CT Euro Pricelist (better discount)
+2025-11-20 08:28:09,080 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 5.83, Total: 58.3 for 10 items
+2025-11-20 08:28:09,082 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.230.74.174 - - [20/Nov/2025 08:28:09] "POST /artwork/api/pricing HTTP/1.0" 200 - 24 0.014 0.014
+2025-11-20 08:28:13,524 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Current website: Serigraf (ID: 1)
+2025-11-20 08:28:13,527 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Partner: Public user
+2025-11-20 08:28:13,531 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Using partner's pricelist: StitchnPrint (STIT)
+2025-11-20 08:28:13,534 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: StitchnPrint (STIT), Product: Full Colour  A3, Qty: 200
+2025-11-20 08:28:13,537 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 12, Website: Serigraf, Company: Serigraf Ltd.
+2025-11-20 08:28:13,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ StitchnPrint (STIT) - Qty 200: €8.57
+2025-11-20 08:28:13,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ StitchnPrint (STIT) has no specific rule (price = list price)
+2025-11-20 08:28:13,542 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⚠️ No country detected, defaulting to Euro pricelist
+2025-11-20 08:28:13,546 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔄 CT Euro Pricelist - Qty 200: 2.16
+2025-11-20 08:28:13,547 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Using CT Euro Pricelist (better discount)
+2025-11-20 08:28:13,547 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 2.16, Total: 432.0 for 200 items
+2025-11-20 08:28:13,549 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.230.74.174 - - [20/Nov/2025 08:28:13] "POST /artwork/api/pricing HTTP/1.0" 200 - 24 0.013 0.018
+2025-11-20 08:28:39,422 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:28:39] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.006 0.022
+2025-11-20 08:28:39,432 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:28:39] "POST /websocket/peek_notifications HTTP/1.1" 200 - 8 0.002 0.005
+2025-11-20 08:29:00,891 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:00] "OPTIONS /artwork/api/projects/7f3de683-91c8-43f0-81f4-3ab8447c0726/add-to-cart HTTP/1.0" 200 - 1 0.000 0.003
+2025-11-20 08:29:00,968 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: 7f3de683-91c8-43f0-81f4-3ab8447c0726
+2025-11-20 08:29:00,969 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data: {'name': 'TEST 1', 'templateSize': 'template-A3', 'garmentColor': '#171816', 'garmentColorName': '#171816', 'garmentColors': [], 'inkColor': '', 'inkColorName': '', 'quantity': 200, 'totalQuantity': 200, 'comments': ''}
+2025-11-20 08:29:00,970 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Project not found in Odoo, creating new project
+2025-11-20 08:29:00,992 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created project in Odoo: TEST 1 (ID: 2)
+2025-11-20 08:29:00,992 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: TEST 1, Template: template-A3, Qty: 200
+2025-11-20 08:29:00,993 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True
+2025-11-20 08:29:01,084 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #81975, Partner: Public user, Current lines: 0
+2025-11-20 08:29:01,087 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Full Colour  A3 (ID: 35457)
+2025-11-20 08:29:01,087 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=200
+2025-11-20 08:29:01,234 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2025-11-20 08:29:01,235 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313275, 'quantity': 200, 'option_ids': [], 'warning': ''}
+2025-11-20 08:29:01,235 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #81975
+2025-11-20 08:29:01,270 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313275 to project
+2025-11-20 08:29:01,271 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 200 items
+2025-11-20 08:29:01,321 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:01] "POST /artwork/api/projects/7f3de683-91c8-43f0-81f4-3ab8447c0726/add-to-cart HTTP/1.0" 200 - 207 0.239 0.117
+2025-11-20 08:29:02,803 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:02] "GET /shop/cart HTTP/1.0" 200 - 75 0.045 0.349
+2025-11-20 08:29:03,708 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:03] "POST /shop/cart/quantity HTTP/1.0" 200 - 1 0.000 0.003
+2025-11-20 08:29:03,719 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:03] "POST /web_unsplash/get_app_id HTTP/1.0" 200 - 1 0.000 0.002
+2025-11-20 08:29:03,736 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:03] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-20 08:29:03,760 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:03] "POST /shop/get_product_data HTTP/1.0" 200 - 15 0.007 0.012
+2025-11-20 08:29:03,765 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [20/Nov/2025 08:29:03] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 5 0.003 0.007
