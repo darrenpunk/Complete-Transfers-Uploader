@@ -79,6 +79,10 @@ class ArtworkProject(models.Model):
     # Canvas data
     canvas_data = fields.Text('Canvas Data', help='JSON data containing canvas state')
     
+    # PDF Artwork
+    pdf_file = fields.Binary('Artwork PDF', attachment=True, help='Generated PDF artwork file')
+    pdf_filename = fields.Char('PDF Filename')
+    
     # Related records
     logo_ids = fields.One2many('artwork.logo', 'project_id', string='Logos')
     canvas_element_ids = fields.One2many('artwork.canvas.element', 'project_id', string='Canvas Elements')

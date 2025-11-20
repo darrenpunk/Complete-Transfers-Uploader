@@ -213,6 +213,32 @@ export default function UploadTool() {
       
       console.log('🛒 Adding to Odoo cart:', url);
       
+      // Generate PDF and convert to base64
+      console.log('📄 Generating PDF for Odoo attachment...');
+      let pdfBase64: string | undefined;
+      try {
+        const pdfUrl = `/api/projects/${currentProject.id}/generate-pdf?colorSpace=cmyk`;
+        const pdfResponse = await fetch(pdfUrl);
+        if (pdfResponse.ok) {
+          const pdfBlob = await pdfResponse.blob();
+          const reader = new FileReader();
+          pdfBase64 = await new Promise<string>((resolve, reject) => {
+            reader.onloadend = () => {
+              const base64 = (reader.result as string).split(',')[1]; // Remove data:application/pdf;base64, prefix
+              resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(pdfBlob);
+          });
+          console.log('✅ PDF generated and converted to base64');
+        } else {
+          console.warn('⚠️ PDF generation failed, continuing without PDF');
+        }
+      } catch (error) {
+        console.error('❌ Failed to generate PDF:', error);
+        // Continue without PDF
+      }
+      
       // Send full project data to Odoo so it can create/update the project in its database
       const projectData = {
         name: currentProject.name,
@@ -226,9 +252,10 @@ export default function UploadTool() {
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
         comments: '', // No comments field in current schema
         partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
+        pdfBase64: pdfBase64, // Send PDF if generated
       };
       
-      console.log('📦 Sending project data to Odoo:', projectData);
+      console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
       if (partnerEmail) {
         console.log('✅ Including partner email for cart assignment:', partnerEmail);
       }

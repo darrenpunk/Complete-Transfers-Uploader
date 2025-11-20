@@ -435,6 +435,13 @@ class ArtworkUploaderController(http.Controller):
                 if data.get('garmentColors'):
                     project_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
                 
+                # Handle PDF file if provided (base64 encoded)
+                if data.get('pdfBase64'):
+                    import base64
+                    project_vals['pdf_file'] = base64.b64decode(data['pdfBase64'])
+                    project_vals['pdf_filename'] = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                    _logger.info(f"📄 PDF file attached: {project_vals['pdf_filename']}")
+                
                 project = request.env['artwork.project'].sudo().create(project_vals)
                 _logger.info(f"✅ Created project in Odoo: {project.name} (ID: {project.id})")
             else:
@@ -452,6 +459,13 @@ class ArtworkUploaderController(http.Controller):
                     update_vals['project_comments'] = data['comments']
                 if data.get('garmentColors'):
                     update_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
+                
+                # Update PDF if provided
+                if data.get('pdfBase64'):
+                    import base64
+                    update_vals['pdf_file'] = base64.b64decode(data['pdfBase64'])
+                    update_vals['pdf_filename'] = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                    _logger.info(f"📄 Updated PDF file: {update_vals['pdf_filename']}")
                 
                 if update_vals:
                     project.sudo().write(update_vals)
