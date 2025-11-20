@@ -17,9 +17,9 @@ class SaleOrderLine(models.Model):
     
     artwork_project_id = fields.Many2one('artwork.project', string='Artwork Project')
     
-    # Related fields for easy access to artwork PDF and details
-    artwork_pdf_file = fields.Binary('Artwork PDF', related='artwork_project_id.pdf_file', readonly=True)
-    artwork_pdf_filename = fields.Char('Artwork PDF Filename', related='artwork_project_id.pdf_filename', readonly=True)
+    # Direct PDF storage on order line (optimized - no duplicate in artwork.project)
+    artwork_pdf_file = fields.Binary('Artwork PDF', attachment=True, help='Production-ready PDF attached directly to order line')
+    artwork_pdf_filename = fields.Char('Artwork PDF Filename', help='Filename for the artwork PDF')
     artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
