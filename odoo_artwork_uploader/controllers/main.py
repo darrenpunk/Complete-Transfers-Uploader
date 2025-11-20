@@ -435,12 +435,8 @@ class ArtworkUploaderController(http.Controller):
                 if data.get('garmentColors'):
                     project_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
                 
-                # Handle PDF file if provided (base64 encoded)
-                if data.get('pdfBase64'):
-                    import base64
-                    project_vals['pdf_file'] = base64.b64decode(data['pdfBase64'])
-                    project_vals['pdf_filename'] = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
-                    _logger.info(f"📄 PDF file attached: {project_vals['pdf_filename']}")
+                # Note: PDF is NOT stored in artwork.project - it goes directly to sale.order.line
+                # to avoid duplicate storage (Dropbox is primary storage, order line is for production)
                 
                 project = request.env['artwork.project'].sudo().create(project_vals)
                 _logger.info(f"✅ Created project in Odoo: {project.name} (ID: {project.id})")
@@ -460,12 +456,7 @@ class ArtworkUploaderController(http.Controller):
                 if data.get('garmentColors'):
                     update_vals['garment_colors_json'] = json.dumps(data['garmentColors'])
                 
-                # Update PDF if provided
-                if data.get('pdfBase64'):
-                    import base64
-                    update_vals['pdf_file'] = base64.b64decode(data['pdfBase64'])
-                    update_vals['pdf_filename'] = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
-                    _logger.info(f"📄 Updated PDF file: {update_vals['pdf_filename']}")
+                # Note: PDF is NOT stored in artwork.project - it goes directly to sale.order.line
                 
                 if update_vals:
                     project.sudo().write(update_vals)
@@ -555,6 +546,14 @@ class ArtworkUploaderController(http.Controller):
             if order_line:
                 order_line.artwork_project_id = project.id
                 order_line._update_artwork_comments()
+                
+                # Attach PDF directly to order line (optimized - no duplicate storage)
+                if data.get('pdfBase64'):
+                    import base64
+                    order_line.artwork_pdf_file = base64.b64decode(data['pdfBase64'])
+                    order_line.artwork_pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                    _logger.info(f"📄 PDF attached to order line: {order_line.artwork_pdf_filename}")
+                
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
                 _logger.warning(f"⚠️ Could not find order line for product {product.id}")
