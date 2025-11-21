@@ -464,58 +464,19 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"✅ Found project: {project.name}, Template: {project.template_size}, Qty: {project.quantity}")
             
-            # Detect current user (even with auth='public', session might have logged-in user)
+            # Get current user (parent window calls this API as logged-in customer)
             current_user = request.env.user
             is_public = current_user._is_public()
             _logger.info(f"👤 Current user: {current_user.name} (ID: {current_user.id}), Is Public: {is_public}")
             
-            # Check if partner email was provided (for iframe session detection workaround)
-            partner = None
-            if data.get('partnerEmail'):
-                partner = request.env['res.partner'].sudo().search([
-                    ('email', '=', data['partnerEmail']),
-                    ('type', '!=', 'private')  # Exclude delivery/invoice addresses
-                ], limit=1)
-                if partner:
-                    _logger.info(f"✅ Found partner by email: {partner.name} (ID: {partner.id})")
-                else:
-                    _logger.warning(f"⚠️ Partner not found for email: {data.get('partnerEmail')}")
-            
-            # Get or create sale order
+            # Get or create sale order using Odoo's standard website cart system
             website = request.env['website'].get_current_website()
             # CRITICAL: Bind website to request for JSON controllers (sale_get_order expects request.website)
             request.website = website
             
-            # If partner was found via email, create cart for that partner
-            if partner:
-                # Find or create sale order for this specific partner
-                sale_order = request.env['sale.order'].sudo().search([
-                    ('partner_id', '=', partner.id),
-                    ('state', '=', 'draft'),
-                    ('website_id', '=', website.id),
-                ], limit=1)
-                
-                if not sale_order:
-                    _logger.info(f"🆕 Creating new sale order for {partner.name}")
-                    sale_order = request.env['sale.order'].sudo().create({
-                        'partner_id': partner.id,
-                        'website_id': website.id,
-                        'pricelist_id': partner.property_product_pricelist.id if partner.property_product_pricelist else website.pricelist_id.id,
-                    })
-                    _logger.info(f"✅ Created sale order #{sale_order.id}")
-                else:
-                    _logger.info(f"✅ Found existing sale order #{sale_order.id} for {partner.name}")
-                
-                # CRITICAL: Set this sale order as the website session cart
-                # Without this, Odoo creates a separate cart and customer sees wrong items
-                request.session['sale_order_id'] = sale_order.id
-                request.session['sale_last_order_id'] = sale_order.id
-                # Force session save (required for iframe → parent window redirect)
-                request.session.modified = True
-                _logger.info(f"🛒 Set sale order #{sale_order.id} as website session cart and forced save")
-            else:
-                # Fallback to default behavior (Public user's cart)
-                sale_order = website.sale_get_order(force_create=True)
+            # Use Odoo's standard website cart (automatically uses customer's session and pricelist)
+            sale_order = website.sale_get_order(force_create=True)
+            _logger.info(f"🛒 Using website cart: #{sale_order.id} for {sale_order.partner_id.name}, Pricelist: {sale_order.pricelist_id.name}")
             
             _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {sale_order.partner_id.name}, Current lines: {len(sale_order.order_line)}")
             

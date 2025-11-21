@@ -22,9 +22,12 @@
                             var iframe = document.getElementById('artwork-iframe');
                             if (!iframe) return;
                             
-                            // Listen for user data requests from iframe
+                            // Listen for messages from iframe
                             window.addEventListener('message', function(event) {
-                                if (event.data &amp;&amp; event.data.type === 'request-user-data') {
+                                if (!event.data) return;
+                                
+                                // Handle user data requests
+                                if (event.data.type === 'request-user-data') {
                                     console.log('📨 Iframe requested user data');
                                     
                                     // Get logged-in user's email from Odoo session
@@ -48,6 +51,52 @@
                                         userId: parseInt(userId),
                                         isPublic: isPublic === 'True'
                                     }, '*');
+                                }
+                                
+                                // Handle add-to-cart requests from iframe
+                                if (event.data.type === 'add-to-cart') {
+                                    console.log('🛒 Parent window received add-to-cart request:', event.data.projectUuid);
+                                    
+                                    // Call Odoo API from parent window (uses customer's session and pricelist)
+                                    fetch('/artwork/api/projects/' + event.data.projectUuid + '/add-to-cart', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        credentials: 'include', // Use parent window's logged-in session
+                                        body: JSON.stringify(event.data.projectData)
+                                    })
+                                    .then(function(response) {
+                                        if (!response.ok) {
+                                            return response.text().then(function(text) {
+                                                throw new Error('Cart API failed: ' + text);
+                                            });
+                                        }
+                                        return response.json();
+                                    })
+                                    .then(function(data) {
+                                        console.log('✅ Cart created successfully in customer session:', data);
+                                        
+                                        // Notify iframe of success
+                                        iframe.contentWindow.postMessage({
+                                            type: 'add-to-cart-success',
+                                            result: data
+                                        }, '*');
+                                        
+                                        // Redirect to cart if requested
+                                        if (event.data.action === 'view-cart') {
+                                            setTimeout(function() {
+                                                window.location.href = '/shop/cart';
+                                            }, 500);
+                                        }
+                                    })
+                                    .catch(function(error) {
+                                        console.error('❌ Add to cart failed:', error);
+                                        
+                                        // Notify iframe of error
+                                        iframe.contentWindow.postMessage({
+                                            type: 'add-to-cart-error',
+                                            error: error.message
+                                        }, '*');
+                                    });
                                 }
                             });
                             

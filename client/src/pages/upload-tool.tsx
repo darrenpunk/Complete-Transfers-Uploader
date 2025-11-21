@@ -260,22 +260,65 @@ export default function UploadTool() {
         console.log('✅ Including partner email for cart assignment:', partnerEmail);
       }
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for session
-        body: JSON.stringify(projectData),
-      });
+      // Check if running in iframe
+      const isInIframe = window.self !== window.top;
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cart error: ${errorText}`);
+      if (isInIframe) {
+        // IFRAME MODE: Send postMessage to parent window to create cart
+        // This ensures cart is created in customer's session with correct pricelist
+        console.log('🔄 Running in iframe - delegating cart creation to parent window');
+        
+        return new Promise((resolve, reject) => {
+          // Listen for response from parent
+          const messageHandler = (event: MessageEvent) => {
+            if (event.data?.type === 'add-to-cart-success') {
+              window.removeEventListener('message', messageHandler);
+              console.log('✅ Parent window confirmed cart creation');
+              resolve({ data: event.data.result, action });
+            } else if (event.data?.type === 'add-to-cart-error') {
+              window.removeEventListener('message', messageHandler);
+              console.error('❌ Parent window cart creation failed:', event.data.error);
+              reject(new Error(event.data.error || 'Failed to add to cart'));
+            }
+          };
+          
+          window.addEventListener('message', messageHandler);
+          
+          // Send add-to-cart request to parent
+          window.parent.postMessage({
+            type: 'add-to-cart',
+            projectUuid: currentProject.id,
+            projectData: projectData,
+            action: action
+          }, '*');
+          
+          // Timeout after 30 seconds
+          setTimeout(() => {
+            window.removeEventListener('message', messageHandler);
+            reject(new Error('Cart creation timed out'));
+          }, 30000);
+        });
+      } else {
+        // STANDALONE MODE: Call API directly
+        console.log('🔗 Running standalone - calling API directly');
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(projectData),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Cart error: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        return { data, action };
       }
-      
-      const data = await response.json();
-      return { data, action };
     },
     onSuccess: ({ data, action }) => {
       console.log('✅ Added to cart successfully:', data);
