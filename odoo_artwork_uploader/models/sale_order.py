@@ -23,6 +23,34 @@ class SaleOrderLine(models.Model):
     artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
+    def write(self, vals):
+        """Override write to sync PDF to manufacturing task when PDF is added"""
+        import logging
+        _logger = logging.getLogger(__name__)
+        
+        result = super().write(vals)
+        
+        # If PDF is being added/updated, sync it to any related manufacturing task
+        if 'artwork_pdf_file' in vals and vals['artwork_pdf_file']:
+            for line in self:
+                if line.artwork_pdf_file:
+                    # Find related manufacturing task
+                    task = self.env['project.task'].sudo().search([
+                        ('sale_line_id', '=', line.id),
+                    ], limit=1)
+                    
+                    if task:
+                        if not task.artwork_image:
+                            # Attach PDF to task's artwork_image field (production workflow)
+                            task.write({'artwork_image': line.artwork_pdf_file})
+                            _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
+                        else:
+                            _logger.info(f"ℹ️ Task #{task.id} already has artwork, skipping sync")
+                    else:
+                        _logger.warning(f"⚠️ No manufacturing task found for order line #{line.id} - will sync when task is created")
+        
+        return result
+    
     @api.depends('artwork_project_id', 'artwork_project_id.garment_colors_json', 'artwork_project_id.garment_color_name')
     def _compute_artwork_garment_colors(self):
         """Compute formatted garment colors text for display"""

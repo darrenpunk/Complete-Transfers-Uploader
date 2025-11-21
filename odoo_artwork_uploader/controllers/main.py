@@ -516,12 +516,19 @@ class ArtworkUploaderController(http.Controller):
                 order_line.artwork_project_id = project.id
                 order_line._update_artwork_comments()
                 
-                # Attach PDF directly to order line (optimized - no duplicate storage)
+                # Attach PDF to both order line AND manufacturing task (production workflow)
                 if data.get('pdfBase64'):
                     import base64
-                    order_line.artwork_pdf_file = base64.b64decode(data['pdfBase64'])
-                    order_line.artwork_pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
-                    _logger.info(f"📄 PDF attached to order line: {order_line.artwork_pdf_filename}")
+                    pdf_binary = base64.b64decode(data['pdfBase64'])
+                    pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                    
+                    # CRITICAL: Use write() instead of direct assignment to trigger sync hooks
+                    order_line.write({
+                        'artwork_pdf_file': pdf_binary,
+                        'artwork_pdf_filename': pdf_filename
+                    })
+                    _logger.info(f"📄 PDF attached to order line: {pdf_filename}")
+                    _logger.info(f"✅ PDF sync to manufacturing task will be handled by sale.order.line.write() hook")
                 
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
