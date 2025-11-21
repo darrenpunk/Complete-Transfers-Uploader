@@ -505,6 +505,11 @@ class ArtworkUploaderController(http.Controller):
                     _logger.info(f"✅ Created sale order #{sale_order.id}")
                 else:
                     _logger.info(f"✅ Found existing sale order #{sale_order.id} for {partner.name}")
+                
+                # CRITICAL: Set this sale order as the website session cart
+                # Without this, Odoo creates a separate cart and customer sees wrong items
+                request.session['sale_order_id'] = sale_order.id
+                _logger.info(f"🛒 Set sale order #{sale_order.id} as website session cart")
             else:
                 # Fallback to default behavior (Public user's cart)
                 sale_order = website.sale_get_order(force_create=True)
