@@ -1,0 +1,242 @@
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+upload:487 📨 Iframe requested user data
+upload:495 👤 Sending user data to iframe: Object
+injected.js:37 ✅ Received user email from Odoo: info@ihconsultants.ie
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Showing product launcher modal Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+web.assets_frontend_lazy.min.js:8393 Tour Manager is ready.  running_tour=null
+upload:517 🔄 Iframe loaded - auto-sending user data: info@ihconsultants.ie
+injected.js:37 ✅ Received user email from Odoo: info@ihconsultants.ie
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 Pricing query: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 Pricing query: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 Pricing query: Object
+injected.js:37 Template selected: Object
+injected.js:37 Template checks: Object
+injected.js:37 Non-Custom Badges template, creating project directly
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas state update: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Template A3: 842x1191px, Workspace: 1089x990, Zoom: 71%
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 handleFilesUpload called with files: Array(1)
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Upload completed, checking for PDFs with raster content: Array(1)
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Image loaded for preview
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 PDF preview approved, showing project name modal. Current pendingAction: continue
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Project data for Odoo integration: Object
+injected.js:37 🎬 Executing pending action: continue
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Template A3: 842x1191px, Workspace: 400x990, Zoom: 50%
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (7.085938, 35.039062) to (588.1875, 803.503906)
+injected.js:37    Element size: 204.99971772662497 × 271.09731999452947px
