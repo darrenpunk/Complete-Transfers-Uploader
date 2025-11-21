@@ -509,7 +509,10 @@ class ArtworkUploaderController(http.Controller):
                 # CRITICAL: Set this sale order as the website session cart
                 # Without this, Odoo creates a separate cart and customer sees wrong items
                 request.session['sale_order_id'] = sale_order.id
-                _logger.info(f"🛒 Set sale order #{sale_order.id} as website session cart")
+                request.session['sale_last_order_id'] = sale_order.id
+                # Force session save (required for iframe → parent window redirect)
+                request.session.modified = True
+                _logger.info(f"🛒 Set sale order #{sale_order.id} as website session cart and forced save")
             else:
                 # Fallback to default behavior (Public user's cart)
                 sale_order = website.sale_get_order(force_create=True)
