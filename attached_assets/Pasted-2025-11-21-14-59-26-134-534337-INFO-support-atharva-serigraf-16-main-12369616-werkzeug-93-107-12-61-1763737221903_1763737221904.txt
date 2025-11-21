@@ -1,0 +1,240 @@
+2025-11-21 14:59:26,134 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 28 0.012 0.021
+2025-11-21 14:59:26,139 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /mail/load_message_failures HTTP/1.0" 200 - 3 0.059 0.004
+2025-11-21 14:59:26,146 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.015 0.016
+2025-11-21 14:59:26,157 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.013 0.018
+2025-11-21 14:59:26,165 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.012 0.013
+2025-11-21 14:59:26,188 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.009 0.013
+2025-11-21 14:59:26,207 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.014 0.015
+2025-11-21 14:59:26,221 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.015 0.016
+2025-11-21 14:59:26,229 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.013 0.014
+2025-11-21 14:59:26,243 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.014 0.015
+2025-11-21 14:59:26,257 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.015 0.015
+2025-11-21 14:59:26,262 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task.type/read HTTP/1.0" 200 - 4 0.003 0.007
+2025-11-21 14:59:26,266 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.task/web_search_read HTTP/1.0" 200 - 20 0.011 0.014
+2025-11-21 14:59:26,291 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 52.167.144.228 - - [21/Nov/2025 14:59:26] "GET /shop/ri910-1054-classic-40-5000m-beige-1054-21937?category=287&search=1 HTTP/1.0" 200 - 106 0.063 0.076
+2025-11-21 14:59:26,320 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/res.users/read HTTP/1.0" 200 - 7 0.004 0.009
+2025-11-21 14:59:26,325 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.tags/read HTTP/1.0" 200 - 4 0.002 0.005
+2025-11-21 14:59:26,364 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/project.project/get_last_update_or_default HTTP/1.0" 200 - 4 0.002 0.005
+2025-11-21 14:59:26,375 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "POST /web/dataset/call_kw/res.users/has_group HTTP/1.0" 200 - 3 0.002 0.004
+2025-11-21 14:59:26,486 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/1701819 HTTP/1.0" 304 - 14 0.004 0.007
+2025-11-21 14:59:26,491 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/398038 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,512 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2/avatar_128 HTTP/1.0" 304 - 9 0.004 0.009
+2025-11-21 14:59:26,526 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/1748/avatar_128 HTTP/1.0" 304 - 15 0.005 0.010
+2025-11-21 14:59:26,538 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/4332622 HTTP/1.0" 304 - 14 0.004 0.009
+2025-11-21 14:59:26,547 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/7562/avatar_128 HTTP/1.0" 304 - 8 0.003 0.008
+2025-11-21 14:59:26,555 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/398036 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,574 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/7976/avatar_128 HTTP/1.0" 304 - 8 0.004 0.009
+2025-11-21 14:59:26,588 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/7534/avatar_128 HTTP/1.0" 304 - 8 0.003 0.009
+2025-11-21 14:59:26,591 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/504689 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,611 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/8033/avatar_128 HTTP/1.0" 304 - 8 0.003 0.009
+2025-11-21 14:59:26,623 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2551/avatar_128 HTTP/1.0" 304 - 9 0.004 0.009
+2025-11-21 14:59:26,630 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/504687 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,648 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2082/avatar_128 HTTP/1.0" 304 - 8 0.004 0.008
+2025-11-21 14:59:26,654 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/188976 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,676 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2664/avatar_128 HTTP/1.0" 304 - 9 0.004 0.010
+2025-11-21 14:59:26,680 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/398012 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,697 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/3152/avatar_128 HTTP/1.0" 304 - 9 0.004 0.008
+2025-11-21 14:59:26,711 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/3341/avatar_128 HTTP/1.0" 304 - 9 0.004 0.008
+2025-11-21 14:59:26,725 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2568/avatar_128 HTTP/1.0" 304 - 9 0.004 0.009
+2025-11-21 14:59:26,739 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/7169/avatar_128 HTTP/1.0" 304 - 9 0.004 0.010
+2025-11-21 14:59:26,754 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/259206 HTTP/1.0" 304 - 4 0.001 0.004
+2025-11-21 14:59:26,774 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 52.167.144.228 - - [21/Nov/2025 14:59:26] "GET /shop/ri910-1054-classic-40-5000m-beige-1054-21937?category=287&search=1 HTTP/1.0" 200 - 24 0.013 0.020
+2025-11-21 14:59:26,805 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/396117 HTTP/1.0" 304 - 4 0.001 0.007
+2025-11-21 14:59:26,819 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/5778/avatar_128 HTTP/1.0" 304 - 9 0.005 0.015
+2025-11-21 14:59:26,819 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/6681/avatar_128 HTTP/1.0" 304 - 9 0.007 0.015
+2025-11-21 14:59:26,823 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/2997/avatar_128 HTTP/1.0" 304 - 7 0.004 0.008
+2025-11-21 14:59:26,842 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/208/avatar_128 HTTP/1.0" 304 - 9 0.007 0.010
+2025-11-21 14:59:26,842 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/274215 HTTP/1.0" 304 - 4 0.001 0.005
+2025-11-21 14:59:26,863 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/1096/avatar_128 HTTP/1.0" 304 - 9 0.004 0.010
+2025-11-21 14:59:26,880 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/596/avatar_128 HTTP/1.0" 304 - 9 0.009 0.010
+2025-11-21 14:59:26,889 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/93/avatar_128 HTTP/1.0" 304 - 9 0.004 0.010
+2025-11-21 14:59:26,903 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/4587/avatar_128 HTTP/1.0" 304 - 9 0.006 0.010
+2025-11-21 14:59:26,913 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/1187/avatar_128 HTTP/1.0" 304 - 8 0.004 0.010
+2025-11-21 14:59:26,937 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/8440/avatar_128 HTTP/1.0" 304 - 8 0.007 0.018
+2025-11-21 14:59:26,938 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/1193085 HTTP/1.0" 304 - 14 0.005 0.009
+2025-11-21 14:59:26,948 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:26] "GET /web/image/res.users/1760/avatar_128 HTTP/1.0" 304 - 8 0.003 0.008
+2025-11-21 14:59:26,973 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 216.244.66.196 - - [21/Nov/2025 14:59:26] "GET /shop/tpp-17001-tpp-polypro-gelretarder-31123?category=325&product=product.template%2831123%2C%29 HTTP/1.0" 200 - 106 0.070 0.107
+2025-11-21 14:59:27,854 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:27] "POST /mail/thread/messages HTTP/1.0" 200 - 4 0.001 0.004
+2025-11-21 14:59:27,876 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:27] "POST /mail/thread/data HTTP/1.0" 200 - 22 0.006 0.010
+2025-11-21 14:59:27,894 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:27] "POST /web/dataset/call_button HTTP/1.0" 200 - 23 0.007 0.013
+2025-11-21 14:59:27,900 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:27] "POST /mail/thread/data HTTP/1.0" 200 - 22 0.005 0.010
+2025-11-21 14:59:28,052 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:28] "POST /web/dataset/call_kw/sale.order/web_search_read HTTP/1.0" 200 - 28 0.046 0.018
+2025-11-21 14:59:29,087 534337 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.registry: At least one model cache has been invalidated, signaling through the database.
+2025-11-21 14:59:29,089 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 217.113.194.202 - - [21/Nov/2025 14:59:29] "GET /shop/category/embroidery-madeira-thread-viscose-classic-40-5000m-colours-grey-277/page/3?post=%7B%27post%27%3A+%27%7B%5C%27post%5C%27%3A+%5C%27%7B%5C%5C%5C%27post%5C%5C%5C%27%3A+%5C%5C%5C%27%7B%5C%5C%5C%5C%5C%5C%5C%27post%5C%5C%5C%5C%5C%5C%5C%27%3A+%22%7B%5C%5C%5C%5C%5C%5C%5C%27order%5C%5C%5C%5C%5C%5C%5C%27%3A+%5C%5C%5C%5C%5C%5C%5C%27create_date+desc%5C%5C%5C%5C%5C%5C%5C%27%7D%22%7D%5C%5C%5C%27%7D%5C%27%7D%27%7D HTTP/1.0" 200 - 391 0.132 1.000
+2025-11-21 14:59:29,115 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 8.217.188.66 - - [21/Nov/2025 14:59:29] "GET /shop/ri910-2029-classic-40-5000m-ombre-green-2029-22000?category=172&page=12 HTTP/1.0" 200 - 202 0.060 0.230
+2025-11-21 14:59:34,600 544411 INFO ? odoo.modules.registry: Invalidating all model caches after database signaling.
+2025-11-21 14:59:34,608 544411 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_http: Generating routing map for key 1
+2025-11-21 14:59:34,642 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:34] "POST /web/dataset/resequence HTTP/1.0" 200 - 75 0.029 0.054
+2025-11-21 14:59:34,678 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:34] "POST /web/dataset/call_kw/project.task/read HTTP/1.0" 200 - 9 0.004 0.006
+2025-11-21 14:59:34,981 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:34] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 36 0.016 0.367
+2025-11-21 14:59:34,993 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:34] "POST /websocket/peek_notifications HTTP/1.1" 200 - 12 0.003 0.006
+2025-11-21 14:59:36,244 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 51.161.37.44 - - [21/Nov/2025 14:59:36] "GET /shop/yc20505-blue-filler-yc205-7604 HTTP/1.0" 200 - 206 0.059 0.235
+2025-11-21 14:59:37,830 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:37] "POST /web/dataset/call_kw/stock.picking/web_search_read HTTP/1.0" 200 - 63 0.026 0.029
+2025-11-21 14:59:37,967 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 8.217.212.167 - - [21/Nov/2025 14:59:37] "GET /web/image/product.template/40699/image_128?unique=59c974d HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-21 14:59:39,258 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 216.244.66.196 - - [21/Nov/2025 14:59:39] "GET /shop/tpp-3105-tpp-polypro-green-31-31344?category=325&product=product.template%2831344%2C%29 HTTP/1.0" 200 - 111 0.038 0.072
+2025-11-21 14:59:40,804 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:40] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 29 0.018 0.025
+2025-11-21 14:59:40,816 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:40] "POST /websocket/peek_notifications HTTP/1.1" 200 - 10 0.003 0.006
+2025-11-21 14:59:40,985 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:40] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 21 0.008 0.019
+2025-11-21 14:59:40,995 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:40] "POST /websocket/peek_notifications HTTP/1.1" 200 - 8 0.003 0.005
+2025-11-21 14:59:41,979 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 78.16.179.17 - - [21/Nov/2025 14:59:41] "POST /websocket/peek_notifications HTTP/1.1" 200 - 12 0.004 0.006
+2025-11-21 14:59:42,013 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/stock.picking/read HTTP/1.0" 200 - 70 0.030 0.029
+2025-11-21 14:59:42,110 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/stock.move.line/read HTTP/1.0" 200 - 21 0.009 0.012
+2025-11-21 14:59:42,144 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/stock.move/read HTTP/1.0" 200 - 63 0.021 0.021
+2025-11-21 14:59:42,244 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/project.task/read HTTP/1.0" 200 - 61 0.033 0.028
+2025-11-21 14:59:42,281 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/res.users/read HTTP/1.0" 200 - 6 0.003 0.007
+2025-11-21 14:59:42,308 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/account.analytic.line/read HTTP/1.0" 200 - 27 0.013 0.013
+2025-11-21 14:59:42,321 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /mail/thread/messages HTTP/1.0" 200 - 36 0.014 0.012
+2025-11-21 14:59:42,326 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /mail/thread/data HTTP/1.0" 200 - 22 0.010 0.009
+2025-11-21 14:59:42,344 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.003 0.006
+2025-11-21 14:59:42,359 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 9 0.005 0.008
+2025-11-21 14:59:42,371 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 9 0.004 0.007
+2025-11-21 14:59:42,379 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/task.checklist/name_search HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-21 14:59:42,421 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/timer.timer/get_server_time HTTP/1.0" 200 - 3 0.002 0.006
+2025-11-21 14:59:42,429 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /web/dataset/call_kw/project.project/check_access_rights HTTP/1.0" 200 - 3 0.002 0.005
+2025-11-21 14:59:42,460 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /mail/thread/messages HTTP/1.0" 200 - 31 0.012 0.013
+2025-11-21 14:59:42,473 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "POST /mail/thread/data HTTP/1.0" 200 - 29 0.012 0.013
+2025-11-21 14:59:42,534 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "GET /web/image/res.partner/85612/avatar_128 HTTP/1.0" 304 - 12 0.004 0.008
+2025-11-21 14:59:42,848 534337 INFO support-atharva-serigraf-16-main-12369616 dropbox: Refreshing access token.
+2025-11-21 14:59:42,866 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:42] "GET /web/content?model=project.task&field=artwork_image&id=94508 HTTP/1.0" 304 - 13 0.004 0.008
+2025-11-21 14:59:43,132 534337 INFO support-atharva-serigraf-16-main-12369616 dropbox: Request to files/download 
+2025-11-21 14:59:43,538 550679 INFO ? odoo.addons.base.models.ir_actions_report: Will use the Wkhtmltopdf binary at /opt/odoo.sh/odoosh/bin/wkhtmltopdf
+2025-11-21 14:59:43,674 550679 INFO ? odoo.service.server: HTTP service (werkzeug) running through socket activation
+2025-11-21 14:59:43,691 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.loading: loading 1 modules...
+2025-11-21 14:59:43,696 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.loading: 1 modules loaded in 0.00s, 0 queries (+0 extra)
+2025-11-21 14:59:43,698 550679 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'mail_mailersend_gateway_v2', defaulting to LGPL-3
+2025-11-21 14:59:43,700 550679 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'mailersend_webhook_secure', defaulting to LGPL-3
+2025-11-21 14:59:43,715 550679 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'project_task_autocreate', defaulting to LGPL-3
+2025-11-21 14:59:43,796 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:43] "POST /web/dataset/call_kw/project.task/onchange HTTP/1.0" 200 - 22 0.010 0.016
+2025-11-21 14:59:43,831 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:43] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 5 0.002 0.007
+2025-11-21 14:59:43,842 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:43] "GET /artwork/download_document_stream/321662 HTTP/1.0" 200 - 5 0.002 0.998
+2025-11-21 14:59:43,867 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:43] "POST /mail/thread/messages HTTP/1.0" 200 - 4 0.002 0.004
+2025-11-21 14:59:43,902 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:43] "POST /mail/thread/data HTTP/1.0" 200 - 32 0.013 0.018
+2025-11-21 14:59:43,937 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.loading: loading 436 modules...
+2025-11-21 14:59:44,280 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/project.task/write HTTP/1.0" 200 - 79 0.098 0.296
+2025-11-21 14:59:44,374 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/project.task/read HTTP/1.0" 200 - 43 0.039 0.028
+2025-11-21 14:59:44,411 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/res.users/read HTTP/1.0" 200 - 6 0.003 0.007
+2025-11-21 14:59:44,424 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/account.analytic.line/read HTTP/1.0" 200 - 9 0.004 0.008
+2025-11-21 14:59:44,458 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.002 0.006
+2025-11-21 14:59:44,501 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /mail/thread/messages HTTP/1.0" 200 - 22 0.007 0.008
+2025-11-21 14:59:44,516 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /mail/thread/data HTTP/1.0" 200 - 21 0.007 0.011
+2025-11-21 14:59:44,554 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.employee_orientation.models.employee_orientation is not overriding the create method in batch
+2025-11-21 14:59:44,556 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:44,556 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:44,556 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:44,559 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/project.task/read HTTP/1.0" 200 - 43 0.025 0.023
+2025-11-21 14:59:44,586 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:44,587 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.hr_reward_warning.models.hr_warning is not overriding the create method in batch
+2025-11-21 14:59:44,598 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:44,610 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/res.users/read HTTP/1.0" 200 - 6 0.004 0.009
+2025-11-21 14:59:44,612 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/account.analytic.line/read HTTP/1.0" 200 - 9 0.004 0.009
+2025-11-21 14:59:44,616 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:44,616 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:44,616 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:44,616 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:44,616 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:44,640 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.employee.relation has no _description
+2025-11-21 14:59:44,648 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.002 0.007
+2025-11-21 14:59:44,651 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.oh_appraisal.models.hr_appraisal_survey is not overriding the create method in batch
+2025-11-21 14:59:44,657 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 5 0.002 0.006
+2025-11-21 14:59:44,669 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-21 14:59:44,679 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:44,679 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:44,679 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:44,679 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:44,679 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:44,680 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.employee.relation has no _description
+2025-11-21 14:59:44,681 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /web/dataset/call_kw/task.checklist/name_search HTTP/1.0" 200 - 5 0.002 0.005
+2025-11-21 14:59:44,683 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:44,683 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:44,683 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:44,683 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:44,683 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:44,684 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.employee.relation has no _description
+2025-11-21 14:59:44,738 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /mail/thread/messages HTTP/1.0" 200 - 26 0.011 0.015
+2025-11-21 14:59:44,744 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "POST /mail/thread/data HTTP/1.0" 200 - 21 0.008 0.012
+2025-11-21 14:59:44,751 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.hr_employee_transfer.models.employee_transfer is not overriding the create method in batch
+2025-11-21 14:59:44,752 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.hr_employee_transfer.models.hr_contract is not overriding the create method in batch
+2025-11-21 14:59:44,903 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:44,903 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:44,903 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:44,904 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:44,904 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:44,904 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.employee.relation has no _description
+2025-11-21 14:59:44,945 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:44] "GET /web/image/res.partner/126147/avatar_128 HTTP/1.0" 304 - 7 0.003 0.007
+2025-11-21 14:59:45,028 534337 INFO support-atharva-serigraf-16-main-12369616 dropbox: Refreshing access token.
+2025-11-21 14:59:45,046 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model website.attachment.download.line has no _description
+2025-11-21 14:59:45,048 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "GET /web/content?model=project.task&field=artwork_image&id=94519 HTTP/1.0" 304 - 12 0.004 0.010
+2025-11-21 14:59:45,109 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead
+2025-11-21 14:59:45,109 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead
+2025-11-21 14:59:45,109 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead
+2025-11-21 14:59:45,109 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.decimal_precision: Deprecated call to decimal_precision.get_precision(<application>), use digits=<application> instead
+2025-11-21 14:59:45,204 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description
+2025-11-21 14:59:45,220 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.ohrms_loan.models.hr_loan is not overriding the create method in batch
+2025-11-21 14:59:45,315 534337 INFO support-atharva-serigraf-16-main-12369616 dropbox: Request to files/download
+2025-11-21 14:59:45,340 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/project.task/onchange HTTP/1.0" 200 - 18 0.007 0.018
+2025-11-21 14:59:45,378 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/project.task.type/search_read HTTP/1.0" 200 - 5 0.003 0.008
+2025-11-21 14:59:45,408 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model product.category.collection.line has no _description
+2025-11-21 14:59:45,413 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /mail/thread/messages HTTP/1.0" 200 - 7 0.002 0.004
+2025-11-21 14:59:45,432 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.ohrms_salary_advance.models.salary_advance is not overriding the create method in batch
+2025-11-21 14:59:45,433 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model salary.advance has no _description
+2025-11-21 14:59:45,438 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /mail/thread/data HTTP/1.0" 200 - 21 0.007 0.012
+2025-11-21 14:59:45,445 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.product_bundle_all.models.product_template is not overriding the create method in batch
+2025-11-21 14:59:45,561 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/project.task/write HTTP/1.0" 200 - 62 0.084 0.045
+2025-11-21 14:59:45,569 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model delivery.warning has no _description
+2025-11-21 14:59:45,569 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model label.details has no _description
+2025-11-21 14:59:45,604 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model salary.advance has no _description
+2025-11-21 14:59:45,606 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model salary.advance has no _description
+2025-11-21 14:59:45,609 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model checklist.line has no _description
+2025-11-21 14:59:45,609 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.employee_orientation.print_pack_template has no _description
+2025-11-21 14:59:45,609 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model orientation.force.complete has no _description
+2025-11-21 14:59:45,610 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.reminder has no _description
+2025-11-21 14:59:45,610 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model document.type has no _description
+2025-11-21 14:59:45,611 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model hr.employee.relation has no _description
+2025-11-21 14:59:45,617 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model website.attachment.download.line has no _description
+2025-11-21 14:59:45,619 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model report.dev_customer_account_statement.cust_statement_template has no _description
+2025-11-21 14:59:45,619 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model product.category.collection.line has no _description
+2025-11-21 14:59:45,620 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model salary.advance has no _description
+2025-11-21 14:59:45,620 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model delivery.warning has no _description
+2025-11-21 14:59:45,620 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model label.details has no _description
+2025-11-21 14:59:45,640 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.website_stock.models.models is not overriding the create method in batch
+2025-11-21 14:59:45,656 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/project.task/read HTTP/1.0" 200 - 58 0.039 0.029
+2025-11-21 14:59:45,658 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.website_preorder.models.res_config is not overriding the create method in batch
+2025-11-21 14:59:45,659 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.website_preorder.models.inherit_product is not overriding the create method in batch
+2025-11-21 14:59:45,659 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.api.create: The model odoo.addons.website_preorder.models.inherit_product is not overriding the create method in batch
+2025-11-21 14:59:45,689 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model salary.advance has no _description
+2025-11-21 14:59:45,693 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/res.users/read HTTP/1.0" 200 - 6 0.003 0.007
+2025-11-21 14:59:45,710 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/account.analytic.line/read HTTP/1.0" 200 - 9 0.005 0.012
+2025-11-21 14:59:45,746 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.002 0.006
+2025-11-21 14:59:45,794 544411 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /mail/thread/messages HTTP/1.0" 200 - 26 0.009 0.010
+2025-11-21 14:59:45,806 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:45] "POST /mail/thread/data HTTP/1.0" 200 - 21 0.007 0.013
+2025-11-21 14:59:45,909 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.models: The model stock.dropbox.picking has no _description
+2025-11-21 14:59:45,911 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.loading: 436 modules loaded in 1.97s, 0 queries (+0 extra)
+2025-11-21 14:59:46,091 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: hr.payslip.line.amount_select: selection attribute will be ignored as the field is related
+2025-11-21 14:59:46,109 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: hr.loan.state: selection=[('draft', 'Draft'), ('waiting_approval_1', 'Submitted'), ('waiting_approval_2', 'Waiting Approval'), ('approve', 'Approved'), ('refuse', 'Refused'), ('cancel', 'Canceled')] overrides existing selection; use selection_add instead
+2025-11-21 14:59:46,134 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Redundant default on account.analytic.line.required_qty
+2025-11-21 14:59:46,135 534337 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [21/Nov/2025 14:59:46] "GET /artwork/download_document_stream/321690 HTTP/1.0" 200 - 5 0.002 1.112
+2025-11-21 14:59:46,137 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field link.tracker.mailchimp_id: unknown parameter 'ondelete', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,141 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field orientation.checklist.checklist_line_ids: unknown parameter 'String', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,141 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field employee.orientation.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,141 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field orientation.request.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,141 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field employee.training.program_convener_id: unknown parameter 'size', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,141 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field employee.training.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,142 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field hr.announcement.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,144 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field hr.employee.family.birth_date: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,145 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field hr.appraisal.response_id: unknown parameter 'oldname', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,145 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field hr.appraisal.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,156 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field project.task.artwork_comment: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,156 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field project.task.orderline_description: unknown parameter 'stirng', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,156 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field project.task.stage_view_id: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,161 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Redundant default on hr.payslip.line.appears_on_payslip
+2025-11-21 14:59:46,161 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Redundant default on hr.payslip.line.amount_select
+2025-11-21 14:59:46,161 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Redundant default on hr.payslip.line.company_id
+2025-11-21 14:59:46,168 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field sale.order.line.preorder_notify: unknown parameter 'tracking', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,169 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field hr.loan.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,172 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field salary.advance.state: unknown parameter 'track_visibility', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,174 550679 WARNING support-atharva-serigraf-16-main-12369616 odoo.fields: Field logged.user.data.type: unknown parameter 'dafault', if this is an actual parameter you may want to override the method _valid_field_parameter on the relevant model in order to allow it
+2025-11-21 14:59:46,258 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.loading: Modules loaded.
+2025-11-21 14:59:46,295 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.registry: Registry loaded in 2.622s
+2025-11-21 14:59:46,299 550679 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_http: Generating routing map for key 1 
+Filter:
+ERROR
