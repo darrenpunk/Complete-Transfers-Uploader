@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Cron job to sync PDFs from order lines to manufacturing tasks -->
+        <!-- Ensures eventual consistency regardless of timing issues -->
+        <record id="ir_cron_sync_artwork_pdfs" model="ir.cron">
+            <field name="name">Sync Artwork PDFs to Manufacturing Tasks</field>
+            <field name="model_id" ref="model_sale_order_line"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sync_artwork_pdfs_to_tasks()</field>
+            <field name="interval_number">15</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>

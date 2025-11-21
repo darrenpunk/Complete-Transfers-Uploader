@@ -1,6 +1,6 @@
 {
     'name': 'Artwork Uploader',
-    'version': '16.0.32.0',
+    'version': '16.0.34.0',
     'category': 'Sales/Sales',
     'summary': 'Upload and design artwork on garment templates',
     'description': """
@@ -34,6 +34,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/product_data.xml',
+        'data/cron_jobs.xml',
         'views/artwork_project_views.xml',
         'views/sale_order_views.xml',
         'views/menu_views.xml',

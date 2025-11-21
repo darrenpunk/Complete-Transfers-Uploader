@@ -51,6 +51,46 @@ class SaleOrderLine(models.Model):
         
         return result
     
+    @api.model
+    def _cron_sync_artwork_pdfs_to_tasks(self):
+        """Scheduled cron job to ensure eventual consistency of PDFs on manufacturing tasks
+        
+        Scans all order lines with PDFs and syncs them to related tasks if missing.
+        This handles edge cases where timing issues prevent immediate sync.
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+        
+        # Find all order lines with PDFs that have related tasks
+        lines_with_pdfs = self.search([
+            ('artwork_pdf_file', '!=', False),
+        ])
+        
+        synced_count = 0
+        skipped_count = 0
+        error_count = 0
+        
+        for line in lines_with_pdfs:
+            # Find related manufacturing task
+            task = self.env['project.task'].sudo().search([
+                ('sale_line_id', '=', line.id),
+            ], limit=1)
+            
+            if task:
+                # Only sync if task doesn't already have artwork
+                if not task.artwork_image:
+                    try:
+                        task.write({'artwork_image': line.artwork_pdf_file})
+                        synced_count += 1
+                        _logger.info(f"🔄 Cron synced PDF to task #{task.id} from order line #{line.id}")
+                    except Exception as e:
+                        error_count += 1
+                        _logger.error(f"❌ Cron failed to sync PDF to task #{task.id}: {str(e)}")
+                else:
+                    skipped_count += 1
+        
+        _logger.info(f"✅ Cron PDF sync complete: {synced_count} synced, {skipped_count} skipped (already had PDF), {error_count} errors")
+    
     @api.depends('artwork_project_id', 'artwork_project_id.garment_colors_json', 'artwork_project_id.garment_color_name')
     def _compute_artwork_garment_colors(self):
         """Compute formatted garment colors text for display"""
