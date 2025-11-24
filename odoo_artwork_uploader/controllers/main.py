@@ -476,7 +476,33 @@ class ArtworkUploaderController(http.Controller):
             
             # Use Odoo's standard website cart (automatically uses customer's session and pricelist)
             sale_order = website.sale_get_order(force_create=True)
-            _logger.info(f"🛒 Using website cart: #{sale_order.id} for {sale_order.partner_id.name}, Pricelist: {sale_order.pricelist_id.name}")
+            _logger.info(f"🛒 Website cart: #{sale_order.id} for {sale_order.partner_id.name}, Original Pricelist: {sale_order.pricelist_id.name}")
+            
+            # CRITICAL FIX: Force CT Euro/GBP pricelist on the cart to match pricing API
+            # This ensures cart prices match what the Replit app displays
+            partner = sale_order.partner_id
+            customer_country = partner.country_id.code if partner and partner.country_id else None
+            correct_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
+            
+            if customer_country == 'GB':
+                correct_pricelist_name = 'CT Public Pricelist GBP'
+                _logger.info(f"🇬🇧 UK customer, forcing cart to use GBP pricelist")
+            else:
+                _logger.info(f"🇪🇺 Non-UK customer (or unknown), forcing cart to use Euro pricelist")
+            
+            # Find and set correct pricelist on cart
+            correct_pricelist = request.env['product.pricelist'].sudo().search([
+                ('name', '=', correct_pricelist_name),
+                ('active', '=', True)
+            ], limit=1)
+            
+            if correct_pricelist and sale_order.pricelist_id.id != correct_pricelist.id:
+                sale_order.sudo().write({'pricelist_id': correct_pricelist.id})
+                _logger.info(f"✅ Cart pricelist updated from '{sale_order.pricelist_id.name}' to '{correct_pricelist.name}'")
+            elif correct_pricelist:
+                _logger.info(f"✅ Cart already using correct pricelist: {correct_pricelist.name}")
+            else:
+                _logger.warning(f"⚠️ Could not find {correct_pricelist_name}, cart will use original pricelist")
             
             _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {sale_order.partner_id.name}, Current lines: {len(sale_order.order_line)}")
             
@@ -586,27 +612,48 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            # CRITICAL: On staging, domain isn't configured, so we need to find pricelist reliably
+            # CRITICAL FIX: Force CT Euro/GBP pricelists for logged-in customers (not their assigned pricelist)
+            # This ensures pricing in Replit app matches Odoo cart
             
-            # Get current website for context
+            # Get current website and partner for context
             website = request.env['website'].sudo().get_current_website()
-            _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
-            
-            # Strategy 1: Try to get pricelist from current user's partner (most reliable)
             partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+            _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
             _logger.info(f"👤 Current user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
-            pricelist = partner.property_product_pricelist if partner and partner.property_product_pricelist else None
-            if pricelist:
-                _logger.info(f"✅ Using partner's pricelist: {pricelist.name}")
             
-            # Strategy 2: Search for "CT Euro Pricelist" by name (your discount pricelist)
+            # CRITICAL: Force CT Euro/GBP pricelist based on customer's country
+            # Do NOT use partner's assigned pricelist (property_product_pricelist) as it may differ from cart
+            pricelist = None
+            fallback_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
+            customer_country = partner.country_id.code if partner and partner.country_id else None
+            
+            if customer_country:
+                _logger.info(f"🌍 Customer country: {partner.country_id.name} ({customer_country})")
+                if customer_country == 'GB':
+                    fallback_pricelist_name = 'CT Public Pricelist GBP'
+                    _logger.info(f"🇬🇧 UK customer detected, forcing GBP pricelist")
+                else:
+                    _logger.info(f"🇪🇺 Non-UK customer, forcing Euro pricelist")
+            else:
+                _logger.info(f"⚠️ No country detected, defaulting to Euro pricelist")
+            
+            # Strategy 1: Search for region-specific CT pricelist (Euro or GBP)
+            pricelist = request.env['product.pricelist'].sudo().search([
+                ('name', '=', fallback_pricelist_name),
+                ('active', '=', True)
+            ], limit=1)
+            if pricelist:
+                _logger.info(f"✅ Using {fallback_pricelist_name}")
+            
+            # Strategy 2: Fallback to opposite region pricelist if primary not found
             if not pricelist:
+                alt_pricelist_name = 'CT Public Pricelist GBP' if fallback_pricelist_name == 'CT Euro Pricelist' else 'CT Euro Pricelist'
                 pricelist = request.env['product.pricelist'].sudo().search([
-                    ('name', '=', 'CT Euro Pricelist'),
+                    ('name', '=', alt_pricelist_name),
                     ('active', '=', True)
                 ], limit=1)
                 if pricelist:
-                    _logger.info(f"✅ Found CT Euro Pricelist by name")
+                    _logger.info(f"✅ Fallback to {alt_pricelist_name}")
             
             # Strategy 3: Get website's default pricelist
             if not pricelist and website:
@@ -636,11 +683,11 @@ class ArtworkUploaderController(http.Controller):
             if pricelist:
                 _logger.info(f"🔍 Pricelist details - ID: {pricelist.id}, Website: {pricelist.website_id.name if pricelist.website_id else 'Not linked'}, Company: {pricelist.company_id.name if pricelist.company_id else 'None'}")
             
-            # Get base list price for comparison
+            # Get base list price for fallback
             base_list_price = product.list_price
             
             if pricelist:
-                # Try to get price from pricelist
+                # Get price from CT Euro/GBP pricelist (no more fallback logic needed)
                 try:
                     price_per_unit = pricelist._get_product_price(
                         product,
@@ -650,54 +697,6 @@ class ArtworkUploaderController(http.Controller):
                         uom=product.uom_id
                     )
                     _logger.info(f"✅ {pricelist.name} - Qty {copies}: €{price_per_unit}")
-                    
-                    # SMART FALLBACK: If customer's pricelist returns base price (no discount rule),
-                    # try region-specific CT pricelist for quantity discounts
-                    if abs(price_per_unit - base_list_price) < 0.01:  # Same as list price (no rule)
-                        _logger.info(f"⚠️ {pricelist.name} has no specific rule (price = list price)")
-                        
-                        # Detect customer's region from country
-                        fallback_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
-                        customer_country = partner.country_id.code if partner and partner.country_id else None
-                        
-                        if customer_country:
-                            _logger.info(f"🌍 Customer country: {partner.country_id.name} ({customer_country})")
-                            if customer_country == 'GB':
-                                fallback_pricelist_name = 'CT Public Pricelist GBP'
-                                _logger.info(f"🇬🇧 UK customer detected, using GBP pricelist")
-                            else:
-                                _logger.info(f"🇪🇺 Non-UK customer, using Euro pricelist")
-                        else:
-                            _logger.info(f"⚠️ No country detected, defaulting to Euro pricelist")
-                        
-                        # Try region-specific CT pricelist as fallback
-                        ct_pricelist = request.env['product.pricelist'].sudo().search([
-                            ('name', '=', fallback_pricelist_name),
-                            ('active', '=', True)
-                        ], limit=1)
-                        
-                        if ct_pricelist:
-                            try:
-                                ct_price = ct_pricelist._get_product_price(
-                                    product,
-                                    copies,
-                                    partner=partner,
-                                    date=False,
-                                    uom=product.uom_id
-                                )
-                                _logger.info(f"🔄 {fallback_pricelist_name} - Qty {copies}: {ct_price}")
-                                
-                                # Use CT pricelist price if it's better
-                                if ct_price < price_per_unit:
-                                    price_per_unit = ct_price
-                                    _logger.info(f"✅ Using {fallback_pricelist_name} (better discount)")
-                                else:
-                                    _logger.info(f"ℹ️ Keeping {pricelist.name} price (same or better)")
-                            except Exception as e_ct:
-                                _logger.warning(f"⚠️ {fallback_pricelist_name} lookup failed: {str(e_ct)}")
-                        else:
-                            _logger.warning(f"⚠️ {fallback_pricelist_name} not found")
-                    
                 except Exception as e:
                     _logger.error(f"❌ Pricing failed: {str(e)}")
                     price_per_unit = base_list_price

@@ -24,7 +24,10 @@ class SaleOrderLine(models.Model):
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
     def write(self, vals):
-        """Override write to sync PDF to manufacturing task when PDF is added"""
+        """Override write to sync PDF to manufacturing task when PDF is added or updated
+        
+        REMOVED check for existing artwork_image to allow PDF updates/overwrites.
+        """
         import logging
         _logger = logging.getLogger(__name__)
         
@@ -40,12 +43,9 @@ class SaleOrderLine(models.Model):
                     ], limit=1)
                     
                     if task:
-                        if not task.artwork_image:
-                            # Attach PDF to task's artwork_image field (production workflow)
-                            task.write({'artwork_image': line.artwork_pdf_file})
-                            _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
-                        else:
-                            _logger.info(f"ℹ️ Task #{task.id} already has artwork, skipping sync")
+                        # REMOVED early return - always sync to allow PDF updates
+                        task.write({'artwork_image': line.artwork_pdf_file})
+                        _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
                     else:
                         _logger.warning(f"⚠️ No manufacturing task found for order line #{line.id} - will sync when task is created")
         
@@ -55,41 +55,41 @@ class SaleOrderLine(models.Model):
     def _cron_sync_artwork_pdfs_to_tasks(self):
         """Scheduled cron job to ensure eventual consistency of PDFs on manufacturing tasks
         
-        Scans all order lines with PDFs and syncs them to related tasks if missing.
-        This handles edge cases where timing issues prevent immediate sync.
+        STRATEGY: Scan project.tasks (not order lines) to catch tasks created after PDF upload.
+        This handles the race condition where tasks are created asynchronously by external modules.
         """
         import logging
         _logger = logging.getLogger(__name__)
         
-        # Find all order lines with PDFs that have related tasks
-        lines_with_pdfs = self.search([
-            ('artwork_pdf_file', '!=', False),
+        # CRITICAL FIX: Search for tasks that need PDFs (not order lines)
+        # This catches tasks created AFTER the PDF was uploaded to the order line
+        tasks_needing_sync = self.env['project.task'].sudo().search([
+            ('sale_line_id', '!=', False),  # Task is linked to order line
+            ('artwork_image', '=', False),   # Task doesn't have PDF yet
         ])
         
         synced_count = 0
         skipped_count = 0
         error_count = 0
         
-        for line in lines_with_pdfs:
-            # Find related manufacturing task
-            task = self.env['project.task'].sudo().search([
-                ('sale_line_id', '=', line.id),
-            ], limit=1)
+        for task in tasks_needing_sync:
+            order_line = task.sale_line_id
             
-            if task:
-                # Only sync if task doesn't already have artwork
-                if not task.artwork_image:
-                    try:
-                        task.write({'artwork_image': line.artwork_pdf_file})
-                        synced_count += 1
-                        _logger.info(f"🔄 Cron synced PDF to task #{task.id} from order line #{line.id}")
-                    except Exception as e:
-                        error_count += 1
-                        _logger.error(f"❌ Cron failed to sync PDF to task #{task.id}: {str(e)}")
-                else:
-                    skipped_count += 1
+            # Check if order line has artwork PDF
+            if order_line and order_line.artwork_pdf_file:
+                try:
+                    # REMOVED early return - always sync PDFs to allow updates
+                    task.write({'artwork_image': order_line.artwork_pdf_file})
+                    synced_count += 1
+                    _logger.info(f"🔄 Cron synced PDF to task #{task.id} ({task.name}) from order line #{order_line.id}")
+                except Exception as e:
+                    error_count += 1
+                    _logger.error(f"❌ Cron failed to sync PDF to task #{task.id}: {str(e)}")
+            else:
+                skipped_count += 1
+                _logger.debug(f"⏭️ Task #{task.id} has no PDF on order line, skipping")
         
-        _logger.info(f"✅ Cron PDF sync complete: {synced_count} synced, {skipped_count} skipped (already had PDF), {error_count} errors")
+        _logger.info(f"✅ Cron PDF sync complete: {synced_count} synced, {skipped_count} skipped (no PDF on line), {error_count} errors")
     
     @api.depends('artwork_project_id', 'artwork_project_id.garment_colors_json', 'artwork_project_id.garment_color_name')
     def _compute_artwork_garment_colors(self):

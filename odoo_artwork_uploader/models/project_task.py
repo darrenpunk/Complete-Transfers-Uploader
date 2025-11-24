@@ -30,17 +30,22 @@ class ProjectTask(models.Model):
         return result
     
     def _sync_artwork_pdf_from_order_line(self, task):
-        """Helper method to sync artwork PDF from sale order line to task"""
+        """Helper method to sync artwork PDF from sale order line to task
+        
+        REMOVED early return (not task.artwork_image) to allow PDF updates/overwrites.
+        This ensures operators can upload corrected PDFs that replace outdated artwork.
+        """
         if not task.sale_line_id:
             return
         
         order_line = task.sale_line_id
         
-        # Check if order line has artwork PDF
-        if order_line.artwork_pdf_file and not task.artwork_image:
+        # Sync PDF from order line (removed check for existing artwork_image to allow updates)
+        if order_line.artwork_pdf_file:
             try:
                 # CRITICAL: Must use write() to persist binary data in Odoo
                 task.write({'artwork_image': order_line.artwork_pdf_file})
-                _logger.info(f"✅ PDF synced to manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
+                action = "updated" if task.artwork_image else "synced"
+                _logger.info(f"✅ PDF {action} on manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
             except Exception as e:
                 _logger.error(f"❌ Failed to sync PDF to task #{task.id}: {str(e)}")
