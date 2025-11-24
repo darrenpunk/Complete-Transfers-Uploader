@@ -560,19 +560,21 @@ class ArtworkUploaderController(http.Controller):
                 order_line.artwork_project_id = project.id
                 order_line._update_artwork_comments()
                 
-                # Attach PDF to both order line AND manufacturing task (production workflow)
+                # Attach PDF to order line (production workflow via artwork_file and artwork_file_name)
+                # CRITICAL: Must use production's exact field names to trigger Dropbox workflow
                 if data.get('pdfBase64'):
                     import base64
                     pdf_binary = base64.b64decode(data['pdfBase64'])
                     pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
                     
-                    # CRITICAL: Use write() instead of direct assignment to trigger sync hooks
+                    # CRITICAL: Upload to PRODUCTION fields (artwork_file + artwork_file_name)
+                    # This triggers existing Dropbox workflow and task naming in shipping_dropbox_customization module
                     order_line.write({
-                        'artwork_pdf_file': pdf_binary,
-                        'artwork_pdf_filename': pdf_filename
+                        'artwork_file': pdf_binary,           # Production field (not artwork_pdf_file)
+                        'artwork_file_name': pdf_filename     # Production field (not artwork_pdf_filename)
                     })
-                    _logger.info(f"📄 PDF attached to order line: {pdf_filename}")
-                    _logger.info(f"✅ PDF sync to manufacturing task will be handled by sale.order.line.write() hook")
+                    _logger.info(f"📄 PDF uploaded to PRODUCTION fields (artwork_file + artwork_file_name): {pdf_filename}")
+                    _logger.info(f"✅ Dropbox workflow and task naming will be triggered automatically by shipping_dropbox_customization module")
                 
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
