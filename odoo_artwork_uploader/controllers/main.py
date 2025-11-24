@@ -476,35 +476,53 @@ class ArtworkUploaderController(http.Controller):
             
             # Use Odoo's standard website cart (automatically uses customer's session and pricelist)
             sale_order = website.sale_get_order(force_create=True)
-            _logger.info(f"🛒 Website cart: #{sale_order.id} for {sale_order.partner_id.name}, Original Pricelist: {sale_order.pricelist_id.name}")
-            
-            # CRITICAL FIX: Force CT Euro/GBP pricelist on the cart to match pricing API
-            # This ensures cart prices match what the Replit app displays
             partner = sale_order.partner_id
-            customer_country = partner.country_id.code if partner and partner.country_id else None
-            correct_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
+            _logger.info(f"🛒 Website cart: #{sale_order.id} for {partner.name}, Original Pricelist: {sale_order.pricelist_id.name}")
             
-            if customer_country == 'GB':
-                correct_pricelist_name = 'CT Public Pricelist GBP'
-                _logger.info(f"🇬🇧 UK customer, forcing cart to use GBP pricelist")
+            # PRICELIST CORRECTION LOGIC (must match pricing API):
+            # 1. If customer has special pricelist (e.g., Galaxy Crystal) → Keep it
+            # 2. If on completetransfers.com AND no special pricelist → Force CT Euro/GBP
+            # 3. Else → Use cart's current pricelist (serigraf.com default)
+            
+            # Define standard/public pricelists (NOT special customer pricelists)
+            standard_pricelists = [
+                'Public Pricelist',
+                'Euro Pricelist',
+                'CT Euro Pricelist',
+                'CT Public Pricelist GBP',
+                'CT T1 Pricelist T1',
+                'CT Public Pricelist T1',
+                'Serigraf STD Pricelist',
+            ]
+            
+            # Check if customer has a special/custom pricelist
+            has_special_pricelist = sale_order.pricelist_id.name not in standard_pricelists
+            
+            if has_special_pricelist:
+                # Customer has special pricing - DO NOT override
+                _logger.info(f"⭐ Customer has SPECIAL pricelist: {sale_order.pricelist_id.name} - keeping it")
+            elif website and website.name == 'Complete Transfers':
+                # On Complete Transfers website - force CT Euro/GBP pricelist
+                customer_country = partner.country_id.code if partner and partner.country_id else None
+                ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
+                
+                ct_pricelist = request.env['product.pricelist'].sudo().search([
+                    ('name', '=', ct_pricelist_name),
+                    ('active', '=', True)
+                ], limit=1)
+                
+                if ct_pricelist and sale_order.pricelist_id.id != ct_pricelist.id:
+                    sale_order.sudo().write({'pricelist_id': ct_pricelist.id})
+                    _logger.info(f"🌐 Complete Transfers website → Updated cart from '{sale_order.pricelist_id.name}' to '{ct_pricelist.name}'")
+                elif ct_pricelist:
+                    _logger.info(f"✅ Cart already using correct CT pricelist: {ct_pricelist.name}")
+                else:
+                    _logger.warning(f"⚠️ Could not find {ct_pricelist_name}, keeping original pricelist")
             else:
-                _logger.info(f"🇪🇺 Non-UK customer (or unknown), forcing cart to use Euro pricelist")
+                # On serigraf.com or other - keep cart's current pricelist
+                _logger.info(f"📋 Using cart's assigned pricelist: {sale_order.pricelist_id.name}")
             
-            # Find and set correct pricelist on cart
-            correct_pricelist = request.env['product.pricelist'].sudo().search([
-                ('name', '=', correct_pricelist_name),
-                ('active', '=', True)
-            ], limit=1)
-            
-            if correct_pricelist and sale_order.pricelist_id.id != correct_pricelist.id:
-                sale_order.sudo().write({'pricelist_id': correct_pricelist.id})
-                _logger.info(f"✅ Cart pricelist updated from '{sale_order.pricelist_id.name}' to '{correct_pricelist.name}'")
-            elif correct_pricelist:
-                _logger.info(f"✅ Cart already using correct pricelist: {correct_pricelist.name}")
-            else:
-                _logger.warning(f"⚠️ Could not find {correct_pricelist_name}, cart will use original pricelist")
-            
-            _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {sale_order.partner_id.name}, Current lines: {len(sale_order.order_line)}")
+            _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {partner.name}, Current lines: {len(sale_order.order_line)}")
             
             # Find mapped product for the template
             product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
@@ -612,8 +630,10 @@ class ArtworkUploaderController(http.Controller):
                 }
             
             # Get price from product (considering pricelists with quantity discounts)
-            # CRITICAL FIX: Force CT Euro/GBP pricelists for logged-in customers (not their assigned pricelist)
-            # This ensures pricing in Replit app matches Odoo cart
+            # PRICELIST PRIORITY LOGIC:
+            # 1. Special/custom customer pricelist (highest priority)
+            # 2. If on completetransfers.com: Force CT Euro/GBP pricelist
+            # 3. Else: Use partner's assigned pricelist (serigraf.com default)
             
             # Get current website and partner for context
             website = request.env['website'].sudo().get_current_website()
@@ -621,39 +641,46 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
             _logger.info(f"👤 Current user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
             
-            # CRITICAL: Force CT Euro/GBP pricelist based on customer's country
-            # Do NOT use partner's assigned pricelist (property_product_pricelist) as it may differ from cart
+            # Define standard/public pricelists (NOT special customer pricelists)
+            standard_pricelists = [
+                'Public Pricelist',
+                'Euro Pricelist',
+                'CT Euro Pricelist',
+                'CT Public Pricelist GBP',
+                'CT T1 Pricelist T1',
+                'CT Public Pricelist T1',
+                'Serigraf STD Pricelist',
+            ]
+            
             pricelist = None
-            fallback_pricelist_name = 'CT Euro Pricelist'  # Default for EU/Other
-            customer_country = partner.country_id.code if partner and partner.country_id else None
             
-            if customer_country:
-                _logger.info(f"🌍 Customer country: {partner.country_id.name} ({customer_country})")
-                if customer_country == 'GB':
-                    fallback_pricelist_name = 'CT Public Pricelist GBP'
-                    _logger.info(f"🇬🇧 UK customer detected, forcing GBP pricelist")
-                else:
-                    _logger.info(f"🇪🇺 Non-UK customer, forcing Euro pricelist")
-            else:
-                _logger.info(f"⚠️ No country detected, defaulting to Euro pricelist")
+            # PRIORITY 1: Check if customer has a SPECIAL/CUSTOM pricelist (e.g., Galaxy Crystal, Visual Vinyl)
+            if partner and partner.property_product_pricelist:
+                customer_pricelist = partner.property_product_pricelist
+                # Only use it if it's a special pricelist (not a standard one)
+                if customer_pricelist.name not in standard_pricelists:
+                    pricelist = customer_pricelist
+                    _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name}")
             
-            # Strategy 1: Search for region-specific CT pricelist (Euro or GBP)
-            pricelist = request.env['product.pricelist'].sudo().search([
-                ('name', '=', fallback_pricelist_name),
-                ('active', '=', True)
-            ], limit=1)
-            if pricelist:
-                _logger.info(f"✅ Using {fallback_pricelist_name}")
-            
-            # Strategy 2: Fallback to opposite region pricelist if primary not found
-            if not pricelist:
-                alt_pricelist_name = 'CT Public Pricelist GBP' if fallback_pricelist_name == 'CT Euro Pricelist' else 'CT Euro Pricelist'
+            # PRIORITY 2: If no special pricelist AND on Complete Transfers website, force CT Euro/GBP
+            if not pricelist and website and website.name == 'Complete Transfers':
+                customer_country = partner.country_id.code if partner and partner.country_id else None
+                ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
+                
                 pricelist = request.env['product.pricelist'].sudo().search([
-                    ('name', '=', alt_pricelist_name),
+                    ('name', '=', ct_pricelist_name),
                     ('active', '=', True)
                 ], limit=1)
+                
                 if pricelist:
-                    _logger.info(f"✅ Fallback to {alt_pricelist_name}")
+                    _logger.info(f"🌐 Complete Transfers website → Forcing {ct_pricelist_name}")
+                else:
+                    _logger.warning(f"⚠️ {ct_pricelist_name} not found!")
+            
+            # PRIORITY 3: Use partner's assigned pricelist (serigraf.com default)
+            if not pricelist and partner and partner.property_product_pricelist:
+                pricelist = partner.property_product_pricelist
+                _logger.info(f"📋 Using partner's assigned pricelist: {pricelist.name}")
             
             # Strategy 3: Get website's default pricelist
             if not pricelist and website:
