@@ -23,15 +23,38 @@ class SaleOrderLine(models.Model):
     artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
-    def write(self, vals):
-        """Override write to sync PDF to manufacturing task when PDF is added or updated
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Override create to populate comments from artwork project"""
+        import logging
+        _logger = logging.getLogger(__name__)
         
-        REMOVED check for existing artwork_image to allow PDF updates/overwrites.
+        lines = super().create(vals_list)
+        
+        # Update comments for lines with artwork projects
+        for line in lines:
+            if line.artwork_project_id:
+                line._update_artwork_comments()
+                _logger.info(f"✅ Comments populated for new order line #{line.id} from project #{line.artwork_project_id.id}")
+        
+        return lines
+    
+    def write(self, vals):
+        """Override write to:
+        1. Populate comments when artwork project is linked/updated
+        2. Sync PDF to manufacturing task when PDF is added or updated
         """
         import logging
         _logger = logging.getLogger(__name__)
         
         result = super().write(vals)
+        
+        # If artwork project is being linked/updated, populate comments
+        if 'artwork_project_id' in vals:
+            for line in self:
+                if line.artwork_project_id:
+                    line._update_artwork_comments()
+                    _logger.info(f"✅ Comments updated for order line #{line.id} from project #{line.artwork_project_id.id}")
         
         # If PDF is being added/updated, sync it to any related manufacturing task
         if 'artwork_pdf_file' in vals and vals['artwork_pdf_file']:
