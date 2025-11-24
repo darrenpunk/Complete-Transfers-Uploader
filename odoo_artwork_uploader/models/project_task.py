@@ -30,21 +30,32 @@ class ProjectTask(models.Model):
         return result
     
     def _sync_artwork_pdf_from_order_line(self, task):
-        """Helper method to sync artwork PDF from sale order line to task
+        """Helper method to sync artwork PDF and filename from sale order line to task
         
-        REMOVED early return (not task.artwork_image) to allow PDF updates/overwrites.
-        This ensures operators can upload corrected PDFs that replace outdated artwork.
+        Syncs both artwork_image (PDF binary) AND task name (includes PDF filename).
+        This matches production workflow where task title includes PDF filename.
         """
         if not task.sale_line_id:
             return
         
         order_line = task.sale_line_id
         
-        # Sync PDF from order line (removed check for existing artwork_image to allow updates)
+        # Sync PDF and filename from order line
         if order_line.artwork_pdf_file:
             try:
+                vals = {'artwork_image': order_line.artwork_pdf_file}
+                
+                # Add PDF filename to task name (matches production workflow)
+                if order_line.artwork_pdf_filename:
+                    # Format: "SO12345 - [Product] Product Name filename.pdf"
+                    sale_order_ref = order_line.order_id.name if order_line.order_id else ''
+                    product_name = order_line.product_id.name if order_line.product_id else ''
+                    task_name_with_filename = f"{sale_order_ref} - {product_name} {order_line.artwork_pdf_filename}"
+                    vals['name'] = task_name_with_filename
+                    _logger.info(f"✅ Task name updated to include PDF filename: {task_name_with_filename}")
+                
                 # CRITICAL: Must use write() to persist binary data in Odoo
-                task.write({'artwork_image': order_line.artwork_pdf_file})
+                task.write(vals)
                 action = "updated" if task.artwork_image else "synced"
                 _logger.info(f"✅ PDF {action} on manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
             except Exception as e:
