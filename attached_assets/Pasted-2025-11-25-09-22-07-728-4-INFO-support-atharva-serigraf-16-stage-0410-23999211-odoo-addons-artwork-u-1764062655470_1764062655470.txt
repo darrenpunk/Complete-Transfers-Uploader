@@ -1,0 +1,40 @@
+2025-11-25 09:22:07,728 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Project not found in Odoo, creating new project
+2025-11-25 09:22:07,763 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created project in Odoo: test 3 (ID: 3)
+2025-11-25 09:22:07,763 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: test 3, Template: template-A3, Qty: 200
+2025-11-25 09:22:07,763 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: IH Consultants (ID: 1029), Is Public: False
+2025-11-25 09:22:07,770 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #81983 for IH Consultants, Original Pricelist: CT Euro Pricelist
+2025-11-25 09:22:07,771 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart already using correct CT pricelist: CT Euro Pricelist
+2025-11-25 09:22:07,773 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #81983, Partner: IH Consultants, Current lines: 4
+2025-11-25 09:22:07,776 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Full Colour  A3 (ID: 35457)
+2025-11-25 09:22:07,776 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=200
+2025-11-25 09:22:07,939 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2025-11-25 09:22:07,939 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313298, 'quantity': 200, 'option_ids': [], 'warning': ''}
+2025-11-25 09:22:07,939 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #81983
+2025-11-25 09:22:07,968 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313298 from project #3
+2025-11-25 09:22:08,000 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ ADD TO CART FAILED: Invalid field 'artwork_file' on model 'sale.order.line'
+2025-11-25 09:22:08,000 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: Full traceback: 
+Traceback (most recent call last):
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 572, in add_to_cart
+    order_line.write({
+  File "/home/odoo/src/user/artwork_uploader/models/sale_order.py", line 50, in write
+    result = super().write(vals)
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 391, in write
+    res = super(SaleOrderLine, self).write(vals)
+  File "/home/odoo/src/odoo/addons/sale_project/models/sale_order_line.py", line 119, in write
+    result = super().write(values)
+  File "/home/odoo/src/enterprise/sale_planning/models/sale_order_line.py", line 66, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale_stock/models/sale_order_line.py", line 203, in write
+    res = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_purchase/models/sale_order_line.py", line 63, in write
+    result = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_loyalty/models/sale_order_line.py", line 83, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale/models/sale_order_line.py", line 1037, in write
+    result = super().write(values)
+  File "/home/odoo/src/odoo/addons/analytic/models/analytic_mixin.py", line 82, in write
+    return super().write(vals)
+  File "/home/odoo/src/odoo/odoo/models.py", line 3754, in write
+    raise ValueError("Invalid field %r on model %r" % (fname, self._name))
+ValueError: Invalid field 'artwork_file' on model 'sale.order.line'
+2025-11-25 09:22:08,046 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [25/Nov/2025 09:22:08] "POST /artwork/api/projects/917d3bf3-6404-4a9a-866c-eb4e3bc7f412/add-to-cart HTTP/1.0" 500 - 146 0.230 0.115
