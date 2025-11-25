@@ -30,6 +30,7 @@
         'website_sale',
         'sale',
         'product',
+        'website_artwork_dropbox',  # Provides artwork_file and artwork_file_name fields
     ],
     'data': [
         'security/ir.model.access.csv',

@@ -17,9 +17,9 @@ class SaleOrderLine(models.Model):
     
     artwork_project_id = fields.Many2one('artwork.project', string='Artwork Project')
     
-    # Direct PDF storage on order line (optimized - no duplicate in artwork.project)
-    artwork_pdf_file = fields.Binary('Artwork PDF', attachment=True, help='Production-ready PDF attached directly to order line')
-    artwork_pdf_filename = fields.Char('Artwork PDF Filename', help='Filename for the artwork PDF')
+    # NOTE: artwork_file and artwork_file_name fields are provided by website_artwork_dropbox module
+    # We rely on those fields being present via the module dependency
+    
     artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
@@ -57,17 +57,17 @@ class SaleOrderLine(models.Model):
                     _logger.info(f"✅ Comments updated for order line #{line.id} from project #{line.artwork_project_id.id}")
         
         # If PDF is being added/updated, sync it to any related manufacturing task
-        if 'artwork_pdf_file' in vals and vals['artwork_pdf_file']:
+        # artwork_file field is provided by website_artwork_dropbox module
+        if 'artwork_file' in vals and vals['artwork_file']:
             for line in self:
-                if line.artwork_pdf_file:
+                if line.artwork_file:
                     # Find related manufacturing task
                     task = self.env['project.task'].sudo().search([
                         ('sale_line_id', '=', line.id),
                     ], limit=1)
                     
                     if task:
-                        # REMOVED early return - always sync to allow PDF updates
-                        task.write({'artwork_image': line.artwork_pdf_file})
+                        task.write({'artwork_image': line.artwork_file})
                         _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
                     else:
                         _logger.warning(f"⚠️ No manufacturing task found for order line #{line.id} - will sync when task is created")
@@ -98,11 +98,10 @@ class SaleOrderLine(models.Model):
         for task in tasks_needing_sync:
             order_line = task.sale_line_id
             
-            # Check if order line has artwork PDF
-            if order_line and order_line.artwork_pdf_file:
+            # Check if order line has artwork PDF (artwork_file from website_artwork_dropbox)
+            if order_line and order_line.artwork_file:
                 try:
-                    # REMOVED early return - always sync PDFs to allow updates
-                    task.write({'artwork_image': order_line.artwork_pdf_file})
+                    task.write({'artwork_image': order_line.artwork_file})
                     synced_count += 1
                     _logger.info(f"🔄 Cron synced PDF to task #{task.id} ({task.name}) from order line #{order_line.id}")
                 except Exception as e:
