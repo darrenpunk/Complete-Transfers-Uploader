@@ -8,20 +8,30 @@
 
 ## Critical Fixes
 
-### 1. **Pricelist Logic Fixed** ✅
-**Problem:** "Hollister" pricelist was not in the standard pricelists list, causing it to be treated as a special customer pricelist. This blocked the CT Euro/GBP override on completetransfers.com.
+### 1. **Pricelist Logic Fixed - Partner Context Issue** ✅
+**Problem:** Pricing endpoint was using wrong partner context, causing incorrect pricelist selection:
+- Pricing API used `request.env.user.partner_id` → Got "Public User" 
+- Add-to-cart used `cart.partner_id` → Got actual customer "IH Consultants"
+- Public User's pricelist was "Hollister", which blocked CT Euro override
+
+**Root Cause Analysis:**
+When users browse the site without logging in, Odoo creates a cart for them with their actual partner (e.g., "IH Consultants") but the session user remains "Public User". The pricing endpoint was checking the session user instead of the cart's partner, causing pricelist mismatch.
 
 **Solution:**
-- Added "Hollister" to `standard_pricelists` array in both `add_to_cart` and `get_pricing` endpoints
-- Now customers with Hollister pricelist will correctly get CT Euro Pricelist when on completetransfers.com
-- On serigraf.com, they keep their Hollister pricelist
+1. **Use cart partner context**: Pricing endpoint now checks `website.sale_get_order(force_create=False).partner_id` first
+2. **Added "Hollister" to standard pricelists**: Prevents it from blocking CT Euro override
+3. **Fallback to session user**: If no cart exists, use session user's partner
 
-**Behavior:**
-- **completetransfers.com**: Hollister → CT Euro Pricelist (or CT Public Pricelist GBP for UK)
-- **serigraf.com**: Hollister → Hollister (unchanged)
+**Behavior After Fix:**
+- ✅ Pricing API sees actual customer (from cart), not Public User
+- ✅ **completetransfers.com**: All standard pricelists → CT Euro Pricelist (or CT Public Pricelist GBP for UK)
+- ✅ **serigraf.com**: Partner's assigned pricelist (unchanged)
+- ✅ **Special pricelists**: Galaxy Crystal, Visual Vinyl, etc. → Kept (highest priority)
 
 **Files Changed:**
-- `controllers/main.py`: Added 'Hollister' to standard_pricelists (lines 499, 655)
+- `controllers/main.py`: 
+  - Lines 649-658: Use cart partner instead of session user
+  - Lines 499, 666: Added 'Hollister' to standard_pricelists
 
 ---
 
@@ -76,8 +86,9 @@ To add volume discounts:
 
 ## Fixed Issues (from v36-v40)
 
-✅ Correct pricelist priority logic  
+✅ **Partner context fix - pricing API now uses cart partner** (v40 critical fix)  
 ✅ **Hollister pricelist now treated as standard** (v40 fix)  
+✅ Correct pricelist priority logic  
 ✅ Comments sync to sales order lines  
 ✅ PDF sync to manufacturing tasks  
 ✅ Multi-color garment order support  

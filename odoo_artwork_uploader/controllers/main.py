@@ -639,10 +639,20 @@ class ArtworkUploaderController(http.Controller):
             # 3. Else: Use partner's assigned pricelist (serigraf.com default)
             
             # Get current website and partner for context
+            # CRITICAL: Use cart's partner (actual customer) instead of session user to avoid Public User context
             website = request.env['website'].sudo().get_current_website()
-            partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+            
+            # Try to get partner from cart first (actual customer), fallback to session user
+            cart = website.sale_get_order(force_create=False) if website else None
+            if cart and cart.partner_id:
+                partner = cart.partner_id
+                _logger.info(f"👤 Using CART partner: {partner.name} (ID: {partner.id})")
+            else:
+                partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                _logger.info(f"👤 Using SESSION user partner: {partner.name if partner else 'None'}")
+            
             _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
-            _logger.info(f"👤 Current user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
+            _logger.info(f"🔑 Session user: {request.env.user.name} (ID: {request.env.user.id}), Effective partner: {partner.name if partner else 'None'}")
             
             # Define standard/public pricelists (NOT special customer pricelists)
             standard_pricelists = [
