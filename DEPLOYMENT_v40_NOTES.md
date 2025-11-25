@@ -8,7 +8,24 @@
 
 ## Critical Fixes
 
-### 1. **Field Conflict Resolution** ✅
+### 1. **Pricelist Logic Fixed** ✅
+**Problem:** "Hollister" pricelist was not in the standard pricelists list, causing it to be treated as a special customer pricelist. This blocked the CT Euro/GBP override on completetransfers.com.
+
+**Solution:**
+- Added "Hollister" to `standard_pricelists` array in both `add_to_cart` and `get_pricing` endpoints
+- Now customers with Hollister pricelist will correctly get CT Euro Pricelist when on completetransfers.com
+- On serigraf.com, they keep their Hollister pricelist
+
+**Behavior:**
+- **completetransfers.com**: Hollister → CT Euro Pricelist (or CT Public Pricelist GBP for UK)
+- **serigraf.com**: Hollister → Hollister (unchanged)
+
+**Files Changed:**
+- `controllers/main.py`: Added 'Hollister' to standard_pricelists (lines 499, 655)
+
+---
+
+### 2. **Field Conflict Resolution** ✅
 **Problem:** Module was re-defining `artwork_file` and `artwork_file_name` fields that already exist in production's `website_artwork_dropbox` module, causing:
 ```
 ValueError: Invalid field 'artwork_file' on model 'sale.order.line'
@@ -25,7 +42,7 @@ ValueError: Invalid field 'artwork_file' on model 'sale.order.line'
 
 ---
 
-### 2. **Production Workflow Integration** ✅
+### 3. **Production Workflow Integration** ✅
 **How it Works:**
 1. Add-to-cart uploads PDF to `sale.order.line.artwork_file` and `artwork_file_name`
 2. Production's `shipping_dropbox_customization` module automatically:
@@ -57,9 +74,10 @@ To add volume discounts:
 
 ---
 
-## Fixed Issues (from v36-v39)
+## Fixed Issues (from v36-v40)
 
 ✅ Correct pricelist priority logic  
+✅ **Hollister pricelist now treated as standard** (v40 fix)  
 ✅ Comments sync to sales order lines  
 ✅ PDF sync to manufacturing tasks  
 ✅ Multi-color garment order support  
