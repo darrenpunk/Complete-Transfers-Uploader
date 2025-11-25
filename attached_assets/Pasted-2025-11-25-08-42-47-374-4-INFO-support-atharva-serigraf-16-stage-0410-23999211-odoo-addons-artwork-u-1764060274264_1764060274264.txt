@@ -1,0 +1,58 @@
+2025-11-25 08:42:47,374 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: TEst 2 (ID: 2)
+2025-11-25 08:42:47,375 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Updated project with latest data
+2025-11-25 08:42:47,375 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: TEst 2, Template: template-A3, Qty: 100
+2025-11-25 08:42:47,377 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: IH Consultants (ID: 1029), Is Public: False
+2025-11-25 08:42:47,381 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #81983 for IH Consultants, Original Pricelist: CT Euro Pricelist
+2025-11-25 08:42:47,382 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart already using correct CT pricelist: CT Euro Pricelist
+2025-11-25 08:42:47,384 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #81983, Partner: IH Consultants, Current lines: 3
+2025-11-25 08:42:47,386 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Full Colour  A3 (ID: 35457)
+2025-11-25 08:42:47,387 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=100
+2025-11-25 08:42:47,537 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2025-11-25 08:42:47,538 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313297, 'quantity': 100, 'option_ids': [], 'warning': ''}
+2025-11-25 08:42:47,538 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #81983
+2025-11-25 08:42:47,575 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313297 from project #2
+2025-11-25 08:42:47,611 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ ADD TO CART FAILED: Invalid field 'artwork_file' on model 'sale.order.line'
+2025-11-25 08:42:47,612 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: Full traceback: 
+Traceback (most recent call last):
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 572, in add_to_cart
+    order_line.write({
+  File "/home/odoo/src/user/artwork_uploader/models/sale_order.py", line 50, in write
+    result = super().write(vals)
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 391, in write
+    res = super(SaleOrderLine, self).write(vals)
+  File "/home/odoo/src/odoo/addons/sale_project/models/sale_order_line.py", line 119, in write
+    result = super().write(values)
+  File "/home/odoo/src/enterprise/sale_planning/models/sale_order_line.py", line 66, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale_stock/models/sale_order_line.py", line 203, in write
+    res = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_purchase/models/sale_order_line.py", line 63, in write
+    result = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_loyalty/models/sale_order_line.py", line 83, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale/models/sale_order_line.py", line 1037, in write
+    result = super().write(values)
+  File "/home/odoo/src/odoo/addons/analytic/models/analytic_mixin.py", line 82, in write
+    return super().write(vals)
+  File "/home/odoo/src/odoo/odoo/models.py", line 3754, in write
+    raise ValueError("Invalid field %r on model %r" % (fname, self._name))
+ValueError: Invalid field 'artwork_file' on model 'sale.order.line'
+2025-11-25 08:42:47,644 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [25/Nov/2025 08:42:47] "POST /artwork/api/projects/bd6f9fa7-ad39-4c0a-b653-08fe223c2f1f/add-to-cart HTTP/1.0" 500 - 110 0.211 0.064
+2025-11-25 08:43:42,286 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Current website: Serigraf (ID: 1)
+2025-11-25 08:43:42,287 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Partner: Public user
+2025-11-25 08:43:42,291 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Using customer's SPECIAL pricelist: Hollister
+2025-11-25 08:43:42,294 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Hollister, Product: Full Colour  A3, Qty: 1
+2025-11-25 08:43:42,296 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 101, Website: Serigraf, Company: Serigraf Ltd.
+2025-11-25 08:43:42,311 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Hollister - Qty 1: €8.57
+2025-11-25 08:43:42,311 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 8.57 for 1 items
+2025-11-25 08:43:42,313 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.182.72.60 - - [25/Nov/2025 08:43:42] "POST /artwork/api/pricing HTTP/1.0" 200 - 21 0.020 0.011
+2025-11-25 08:43:42,585 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Current website: Serigraf (ID: 1)
+2025-11-25 08:43:42,587 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Partner: Public user
+2025-11-25 08:43:42,590 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Using customer's SPECIAL pricelist: Hollister
+2025-11-25 08:43:42,592 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Serigraf, Pricelist: Hollister, Product: Full Colour  A3, Qty: 10
+2025-11-25 08:43:42,594 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 101, Website: Serigraf, Company: Serigraf Ltd.
+2025-11-25 08:43:42,598 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Hollister - Qty 10: €8.57
+2025-11-25 08:43:42,598 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 85.7 for 10 items
+2025-11-25 08:43:42,599 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.182.72.60 - - [25/Nov/2025 08:43:42] "POST /artwork/api/pricing HTTP/1.0" 200 - 21 0.008 0.011
+2025-11-25 08:43:57,696 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [25/Nov/2025 08:43:57] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.005 0.017
+2025-11-25 08:43:57,706 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [25/Nov/2025 08:43:57] "POST /websocket/peek_notifications HTTP/1.1" 200 - 8 0.002 0.005
