@@ -1,6 +1,6 @@
 {
     'name': 'Artwork Uploader',
-    'version': '16.0.41.0',
+    'version': '16.0.42.0',
     'category': 'Sales/Sales',
     'summary': 'Upload and design artwork on garment templates',
     'description': """
@@ -30,7 +30,7 @@
         'website_sale',
         'sale',
         'product',
-        'website_artwork_dropbox',  # Provides artwork_files_datas and artwork_file_name fields
+        'website_artwork_dropbox',  # Provides artwork_files_datas, artwork_file_name, artwork_comment fields
     ],
     'data': [
         'security/ir.model.access.csv',

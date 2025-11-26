@@ -17,13 +17,12 @@ class SaleOrderLine(models.Model):
     
     artwork_project_id = fields.Many2one('artwork.project', string='Artwork Project')
     
-    # NOTE: artwork_files_datas and artwork_file_name fields are provided by website_artwork_dropbox module
-    # artwork_files_datas: Binary field storing PDF in Odoo filestore (before Dropbox sync)
-    # artwork_file_name: String field storing the filename
-    # dropbox_path_pdf: String field storing Dropbox URL (after automatic sync)
+    # NOTE: The following fields are provided by website_artwork_dropbox module:
+    # - artwork_files_datas: Binary field storing PDF in Odoo filestore (before Dropbox sync)
+    # - artwork_file_name: String field storing the filename
+    # - dropbox_path_pdf: String field storing Dropbox URL (after automatic sync)
+    # - artwork_comment: Text field for comments shown in sales order view
     # We rely on those fields being present via the module dependency
-    
-    artwork_comments = fields.Text('Artwork Comments', related='artwork_project_id.project_comments', readonly=True)
     artwork_garment_colors = fields.Text('Garment Colors', compute='_compute_artwork_garment_colors', store=True)
     
     @api.model_create_multi
@@ -134,34 +133,39 @@ class SaleOrderLine(models.Model):
             self._update_artwork_comments()
     
     def _update_artwork_comments(self):
-        """Update the order line comments with artwork project details"""
+        """Update the order line comments with artwork project details
+        
+        CRITICAL: Comments go to 'artwork_comment' field (provided by website_artwork_dropbox)
+        NOT to 'name' field (that's just the product description)
+        """
         if not self.artwork_project_id:
             return
             
         project = self.artwork_project_id
         comments = []
         
-        # Add project comments if available
-        if project.project_comments:
-            comments.append(f"Project Comments: {project.project_comments}")
-        
-        # Add garment colors (exact format: "10 Black\n5 Gold" for multi-color)
+        # Add garment colors FIRST (exact format: "10 Black\n5 Gold" for multi-color)
+        # This is the most important info for production
         garment_colors = self._get_garment_colors_text(project)
         if garment_colors:
             comments.append(garment_colors)  # No prefix - exact format
-        
-        # Add ink color if available
-        if project.ink_color_name:
-            comments.append(f"Ink Color: {project.ink_color_name}")
         
         # Add template information
         template_display = dict(project._fields['template_size'].selection).get(project.template_size, project.template_size)
         comments.append(f"Template: {template_display}")
         
-        # Update the name field (which serves as comments in order lines)
+        # Add ink color if available
+        if project.ink_color_name:
+            comments.append(f"Ink Color: {project.ink_color_name}")
+        
+        # Add project comments if available (at the end)
+        if project.project_comments:
+            comments.append(f"Notes: {project.project_comments}")
+        
+        # CRITICAL: Use artwork_comment field (production's actual field)
+        # NOT the 'name' field (which is just product description)
         if comments:
-            base_name = self.product_id.name if self.product_id else self.name or ''
-            self.name = f"{base_name}\n\n" + "\n".join(comments)
+            self.artwork_comment = "\n".join(comments)
     
     def _get_garment_colors_text(self, project):
         """
