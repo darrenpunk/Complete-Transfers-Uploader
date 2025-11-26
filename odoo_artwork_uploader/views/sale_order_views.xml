@@ -11,6 +11,7 @@
                 <xpath expr="//field[@name='order_line']/tree/field[@name='name']" position="after">
                     <field name="artwork_pdf_filename" string="Artwork" optional="show"/>
                     <field name="artwork_garment_colors" string="Garment Colors" optional="show"/>
+                    <field name="artwork_comment" string="Comments" optional="show"/>
                 </xpath>
                 
                 <!-- Add artwork fields to order line form view -->
@@ -20,7 +21,7 @@
                         <field name="artwork_pdf_file" filename="artwork_pdf_filename" widget="binary"/>
                         <field name="artwork_pdf_filename" invisible="1"/>
                         <field name="artwork_garment_colors" readonly="1"/>
-                        <field name="artwork_comments" readonly="1"/>
+                        <field name="artwork_comment" readonly="1"/>
                     </group>
                 </xpath>
             </field>
@@ -35,6 +36,7 @@
                 <field name="name" position="after">
                     <field name="artwork_pdf_filename" string="Artwork PDF" optional="show"/>
                     <field name="artwork_garment_colors" string="Garment Colors" optional="show"/>
+                    <field name="artwork_comment" string="Comments" optional="show"/>
                 </field>
             </field>
         </record>
@@ -51,7 +53,7 @@
                         <field name="artwork_pdf_file" filename="artwork_pdf_filename" widget="binary"/>
                         <field name="artwork_pdf_filename" invisible="1"/>
                         <field name="artwork_garment_colors" readonly="1" widget="text"/>
-                        <field name="artwork_comments" readonly="1" widget="text"/>
+                        <field name="artwork_comment" readonly="1" widget="text"/>
                     </group>
                 </group>
             </field>
