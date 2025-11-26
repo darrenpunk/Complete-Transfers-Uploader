@@ -137,6 +137,12 @@ class SaleOrderLine(models.Model):
         
         CRITICAL: Comments go to 'artwork_comment' field (provided by website_artwork_dropbox)
         NOT to 'name' field (that's just the product description)
+        
+        IMPORTANT: Garment colors go to separate 'artwork_garment_colors' field
+        The 'artwork_comment' field should contain:
+        1. User's special instructions (from modal Comments textarea) - MAIN CONTENT
+        2. Template info
+        3. Ink color (if set)
         """
         if not self.artwork_project_id:
             return
@@ -144,11 +150,10 @@ class SaleOrderLine(models.Model):
         project = self.artwork_project_id
         comments = []
         
-        # Add garment colors FIRST (exact format: "10 Black\n5 Gold" for multi-color)
-        # This is the most important info for production
-        garment_colors = self._get_garment_colors_text(project)
-        if garment_colors:
-            comments.append(garment_colors)  # No prefix - exact format
+        # Add project comments FIRST (special instructions from modal)
+        # This is the user's input from the Comments textarea
+        if project.project_comments:
+            comments.append(project.project_comments)
         
         # Add template information
         template_display = dict(project._fields['template_size'].selection).get(project.template_size, project.template_size)
@@ -158,9 +163,8 @@ class SaleOrderLine(models.Model):
         if project.ink_color_name:
             comments.append(f"Ink Color: {project.ink_color_name}")
         
-        # Add project comments if available (at the end)
-        if project.project_comments:
-            comments.append(f"Notes: {project.project_comments}")
+        # NOTE: Garment colors are NOT added here - they go to 'artwork_garment_colors' field
+        # which is displayed in a separate column
         
         # CRITICAL: Use artwork_comment field (production's actual field)
         # NOT the 'name' field (which is just product description)
