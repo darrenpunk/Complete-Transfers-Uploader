@@ -250,7 +250,7 @@ export default function UploadTool() {
         inkColorName: currentProject.inkColor || '', // Use color hex as fallback for name
         quantity: currentProject.quantity,
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
-        comments: '', // No comments field in current schema
+        comments: currentProject.comments || '', // Send user comments from modal
         partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
         pdfBase64: pdfBase64, // Send PDF if generated
       };
@@ -324,13 +324,17 @@ export default function UploadTool() {
       console.log('✅ Added to cart successfully:', data);
       
       if (action === 'new-project') {
-        // Start new project - reload page
+        // Start new project - clear current project and reload
         toast({
           title: "Added to Cart",
           description: "Starting a new project...",
         });
         
         setTimeout(() => {
+          // Clear project state before reloading
+          setCurrentProject(null);
+          setPendingAction(null);
+          setCurrentStep(1);
           window.location.href = '/';
         }, 1000);
       } else if (action === 'view-cart') {
