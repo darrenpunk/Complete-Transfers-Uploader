@@ -564,14 +564,15 @@ class ArtworkUploaderController(http.Controller):
                 # Attach PDF to order line (production workflow via artwork_files_datas and artwork_file_name)
                 # CRITICAL: Must use production's exact field names to trigger Dropbox workflow
                 if data.get('pdfBase64'):
-                    import base64
-                    pdf_binary = base64.b64decode(data['pdfBase64'])
+                    # IMPORTANT: Odoo Binary fields expect base64-encoded STRING, not raw bytes!
+                    # The pdfBase64 from frontend is already base64, so pass it directly
+                    pdf_base64_string = data['pdfBase64']
                     pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
                     
                     # CRITICAL: Upload to PRODUCTION fields (artwork_files_datas + artwork_file_name)
-                    # This triggers existing Dropbox workflow and task naming in shipping_dropbox_customization module
+                    # artwork_files_datas expects base64-encoded string, NOT decoded bytes
                     order_line.write({
-                        'artwork_files_datas': pdf_binary,           # Production field (binary data stored in Odoo filestore)
+                        'artwork_files_datas': pdf_base64_string,    # Production field - must be base64 STRING
                         'artwork_file_name': pdf_filename            # Production field (filename)
                     })
                     _logger.info(f"📄 PDF uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {pdf_filename}")
