@@ -201,17 +201,15 @@ export default function UploadTool() {
     },
   });
 
-  // Add to Cart - Calls Odoo API (modified to accept action parameter)
+  // Add to Cart - Calls Replit backend which proxies to Odoo
   const addToCartMutation = useMutation({
     mutationFn: async (action?: 'new-project' | 'view-cart') => {
       if (!currentProject?.id) throw new Error("No project selected");
       
-      // Get Odoo API base URL from environment or use default
-      const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      // Use Replit backend endpoint which proxies to Odoo (avoids CORS issues)
+      const url = `/api/projects/${currentProject.id}/add-to-cart`;
       
-      const url = `${odooBaseUrl}/artwork/api/projects/${currentProject.id}/add-to-cart`;
-      
-      console.log('🛒 Adding to Odoo cart:', url);
+      console.log('🛒 Adding to cart via Replit backend:', url);
       
       // Generate PDF and convert to base64
       console.log('📄 Generating PDF for Odoo attachment...');
@@ -239,7 +237,7 @@ export default function UploadTool() {
         // Continue without PDF
       }
       
-      // Send full project data to Odoo so it can create/update the project in its database
+      // Send full project data - Replit backend will proxy to Odoo
       const projectData = {
         name: currentProject.name,
         templateSize: currentProject.templateSize,
@@ -255,70 +253,32 @@ export default function UploadTool() {
         pdfBase64: pdfBase64, // Send PDF if generated
       };
       
-      console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
+      console.log('📦 Sending project data:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
       if (partnerEmail) {
         console.log('✅ Including partner email for cart assignment:', partnerEmail);
       }
       
-      // Check if running in iframe
-      const isInIframe = window.self !== window.top;
+      // Call Replit backend endpoint (works in both standalone and iframe modes)
+      console.log('🔗 Calling Replit backend add-to-cart endpoint');
       
-      if (isInIframe) {
-        // IFRAME MODE: Send postMessage to parent window to create cart
-        // This ensures cart is created in customer's session with correct pricelist
-        console.log('🔄 Running in iframe - delegating cart creation to parent window');
-        
-        return new Promise((resolve, reject) => {
-          // Listen for response from parent
-          const messageHandler = (event: MessageEvent) => {
-            if (event.data?.type === 'add-to-cart-success') {
-              window.removeEventListener('message', messageHandler);
-              console.log('✅ Parent window confirmed cart creation');
-              resolve({ data: event.data.result, action });
-            } else if (event.data?.type === 'add-to-cart-error') {
-              window.removeEventListener('message', messageHandler);
-              console.error('❌ Parent window cart creation failed:', event.data.error);
-              reject(new Error(event.data.error || 'Failed to add to cart'));
-            }
-          };
-          
-          window.addEventListener('message', messageHandler);
-          
-          // Send add-to-cart request to parent
-          window.parent.postMessage({
-            type: 'add-to-cart',
-            projectUuid: currentProject.id,
-            projectData: projectData,
-            action: action
-          }, '*');
-          
-          // Timeout after 30 seconds
-          setTimeout(() => {
-            window.removeEventListener('message', messageHandler);
-            reject(new Error('Cart creation timed out'));
-          }, 30000);
-        });
-      } else {
-        // STANDALONE MODE: Call API directly
-        console.log('🔗 Running standalone - calling API directly');
-        
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(projectData),
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Cart error: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        return { data, action };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(projectData),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Add to cart failed:', response.status, errorText);
+        throw new Error(`Cart error: ${errorText}`);
       }
+      
+      const data = await response.json();
+      console.log('✅ Cart response:', data);
+      return { data, action };
     },
     onSuccess: ({ data, action }) => {
       console.log('✅ Added to cart successfully:', data);

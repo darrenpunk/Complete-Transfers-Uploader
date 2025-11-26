@@ -4093,6 +4093,75 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Add to Cart endpoint - proxy to Odoo
+  app.post('/api/projects/:id/add-to-cart', async (req, res) => {
+    const projectId = req.params.id;
+    console.log('🛒 ADD TO CART ENDPOINT CALLED:', { projectId, body: req.body });
+    
+    try {
+      const projectData = req.body;
+      
+      if (!projectId) {
+        console.error('❌ Missing project ID');
+        return res.status(400).json({ error: 'Project ID is required' });
+      }
+
+      // Get Odoo base URL from environment
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
+
+      console.log(`🛒 Proxying add-to-cart to Odoo: ${odooApiUrl}`);
+      console.log(`📦 Project data:`, { 
+        ...projectData, 
+        pdfBase64: projectData.pdfBase64 ? `<${projectData.pdfBase64.length} chars>` : undefined 
+      });
+
+      // Add source parameter to indicate request is from Complete Transfers
+      const requestBody = {
+        ...projectData,
+        source: 'completetransfers',  // Identifies request as from Complete Transfers for proper pricelist
+      };
+
+      // Call Odoo add-to-cart API
+      const response = await fetch(odooApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseText = await response.text();
+      console.log(`📨 Odoo response status: ${response.status}`);
+      console.log(`📨 Odoo response body: ${responseText.substring(0, 500)}`);
+
+      if (!response.ok) {
+        console.error('❌ Odoo add-to-cart error:', response.status, responseText);
+        return res.status(response.status).json({ 
+          error: 'Failed to add to Odoo cart',
+          details: responseText 
+        });
+      }
+
+      // Parse and return Odoo response
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        data = { message: responseText };
+      }
+      
+      console.log(`✅ Successfully added to cart:`, data);
+      res.json(data);
+    } catch (error) {
+      console.error('❌ Add to cart API error:', error);
+      res.status(500).json({ 
+        error: 'Failed to connect to Odoo. Please ensure Odoo is accessible.',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Mark logo as photographic endpoint
   app.patch('/api/logos/:id/photographic', async (req, res) => {
     try {
