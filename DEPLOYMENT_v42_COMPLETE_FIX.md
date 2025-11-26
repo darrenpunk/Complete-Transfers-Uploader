@@ -1,12 +1,12 @@
-# v42.1 - Complete Fix: PDF, Comments, and Discounts
+# v42.3 - Complete Fix: PDF, Comments, and Discounts
 
-**Version:** 16.0.42.1  
+**Version:** 16.0.42.3  
 **Date:** November 26, 2025  
 **Status:** READY FOR DEPLOYMENT
 
 ---
 
-## 🎯 Issues Fixed in v42.1
+## 🎯 Issues Fixed in v42.3
 
 ### ✅ Issue #1: Corrupt PDF Files
 **Symptom:** PDF files could not be opened ("file is damaged")
@@ -47,7 +47,28 @@ self.artwork_comment = "\n".join(comments)  # ✅ Correct field
 
 ---
 
-### ✅ Issue #3: Discounts Not Working in Product Selector
+### ✅ Issue #3: User Comments Not Saving
+**Symptom:** Comments from the modal textarea don't appear in sales order Comments field
+
+**Root Cause:**
+- `_update_artwork_comments()` was setting the field in memory only
+- Missing `write()` call to persist changes to database
+- Only template info was saved, user's special instructions were lost
+
+**Fix (models/sale_order.py):**
+```python
+# BEFORE (v42.2) - WRONG
+if comments:
+    self.artwork_comment = "\n".join(comments)  # ❌ Only in memory
+
+# AFTER (v42.3) - CORRECT  
+if comments:
+    self.sudo().write({'artwork_comment': "\n".join(comments)})  # ✅ Saved to DB
+```
+
+---
+
+### ✅ Issue #4: Discounts Not Working in Product Selector
 **Symptom:** Price stays at €8.57 regardless of quantity (1, 10, 200)
 
 **Root Cause:**
@@ -55,7 +76,7 @@ self.artwork_comment = "\n".join(comments)  # ✅ Correct field
 - Uses "Public User" partner → assigned to "Hollister" pricelist
 - Hollister pricelist has NO quantity discounts → fixed €8.57
 
-**v42.1 Fix - Two Parts:**
+**v42.3 Fix - Two Parts:**
 
 **Part A: Replit Backend (server/routes.ts)**
 ```javascript
@@ -192,8 +213,10 @@ See testing checklist below.
 | v39 | ❌ Broken | Wrong field name `artwork_file` |
 | v40 | ❌ Broken | Fixed deps, still wrong field name |
 | v41 | ⚠️ Partial | Correct field `artwork_files_datas`, but PDF corrupt & wrong comment field |
-| v42 | ⚠️ Partial | PDF & comments fixed, but discounts still broken (wrong pricelist detection) |
-| **v42.1** | ✅ **FIXED** | All issues resolved - added `source='completetransfers'` for correct pricelist |
+| v42 | ⚠️ Partial | PDF fixed, but comments & discounts broken |
+| v42.1 | ⚠️ Partial | Comments still not persisting, discounts fixed |
+| v42.2 | ⚠️ Partial | Comments field logic wrong (showed garment colors) |
+| **v42.3** | ✅ **FIXED** | All issues resolved - added write() to persist comments |
 
 ---
 
@@ -202,16 +225,16 @@ See testing checklist below.
 **Issues?** transferhelp@serigraf.com
 
 **Files:**
-- Module: `odoo_artwork_uploader_v42_all_fixes.zip`
+- Module: `odoo_artwork_uploader_v42.2.zip` (v42.3 code)
 - This Document: `DEPLOYMENT_v42_COMPLETE_FIX.md`
 
 ---
 
 ## ⚠️ IMPORTANT: Two-Part Deployment
 
-**v42.1 requires BOTH:**
+**v42.3 requires BOTH:**
 
-1. **Odoo Module** → Upload and upgrade `odoo_artwork_uploader_v42_all_fixes.zip` in Odoo
+1. **Odoo Module** → Upload and upgrade `odoo_artwork_uploader_v42.2.zip` in Odoo
 2. **Replit App** → The `source='completetransfers'` parameter is already deployed (auto-restarts)
 
-Without both parts, discounts won't work correctly.
+Without both parts, discounts and comments won't work correctly.

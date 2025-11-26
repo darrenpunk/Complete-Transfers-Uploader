@@ -169,7 +169,9 @@ class SaleOrderLine(models.Model):
         # CRITICAL: Use artwork_comment field (production's actual field)
         # NOT the 'name' field (which is just product description)
         if comments:
-            self.artwork_comment = "\n".join(comments)
+            # IMPORTANT: Must call write() to persist the change to database!
+            self.sudo().write({'artwork_comment': "\n".join(comments)})
+            _logger.info(f"✅ Updated order line #{self.id} comments to artwork_comment field")
     
     def _get_garment_colors_text(self, project):
         """
