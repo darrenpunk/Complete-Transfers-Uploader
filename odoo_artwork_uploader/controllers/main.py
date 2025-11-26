@@ -474,9 +474,54 @@ class ArtworkUploaderController(http.Controller):
             # CRITICAL: Bind website to request for JSON controllers (sale_get_order expects request.website)
             request.website = website
             
-            # Use Odoo's standard website cart (automatically uses customer's session and pricelist)
-            sale_order = website.sale_get_order(force_create=True)
-            partner = sale_order.partner_id
+            # CRITICAL FIX: If partnerEmail is provided, look up that customer and use their cart
+            # This handles the case where Replit backend proxies request without session cookies
+            partner_email = data.get('partnerEmail')
+            partner = None
+            sale_order = None
+            
+            if partner_email and is_public:
+                # Request comes from Replit backend without session - use partnerEmail to find customer
+                _logger.info(f"📧 Looking up customer by email: {partner_email}")
+                partner = request.env['res.partner'].sudo().search([
+                    ('email', '=ilike', partner_email),
+                    ('customer_rank', '>', 0)  # Ensure it's a customer
+                ], limit=1)
+                
+                if not partner:
+                    # Try without customer_rank filter (new customer may not have rank yet)
+                    partner = request.env['res.partner'].sudo().search([
+                        ('email', '=ilike', partner_email)
+                    ], limit=1)
+                
+                if partner:
+                    _logger.info(f"✅ Found customer: {partner.name} (ID: {partner.id}) for email {partner_email}")
+                    
+                    # Find or create draft sale order for this customer
+                    sale_order = request.env['sale.order'].sudo().search([
+                        ('partner_id', '=', partner.id),
+                        ('website_id', '=', website.id),
+                        ('state', '=', 'draft'),
+                    ], order='create_date desc', limit=1)
+                    
+                    if sale_order:
+                        _logger.info(f"🛒 Found existing cart #{sale_order.id} for customer {partner.name}")
+                    else:
+                        # Create new cart for this customer
+                        _logger.info(f"🆕 Creating new cart for customer {partner.name}")
+                        sale_order = request.env['sale.order'].sudo().create({
+                            'partner_id': partner.id,
+                            'website_id': website.id,
+                            'pricelist_id': partner.property_product_pricelist.id or website.pricelist_id.id,
+                        })
+                        _logger.info(f"✅ Created cart #{sale_order.id} for customer {partner.name}")
+                else:
+                    _logger.warning(f"⚠️ Customer not found for email: {partner_email}, will use session cart")
+            
+            # Fallback to standard website cart if no partner found
+            if not sale_order:
+                sale_order = website.sale_get_order(force_create=True)
+                partner = sale_order.partner_id
             _logger.info(f"🛒 Website cart: #{sale_order.id} for {partner.name}, Original Pricelist: {sale_order.pricelist_id.name}")
             
             # PRICELIST CORRECTION LOGIC (must match pricing API):
