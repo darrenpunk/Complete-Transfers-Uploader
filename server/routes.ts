@@ -4033,6 +4033,8 @@ export async function registerRoutes(app: express.Application) {
       console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`, { templateId, copies: copiesNum });
 
       // Call Odoo pricing API
+      // CRITICAL: Pass source=completetransfers to indicate this request is from CT website
+      // This ensures CT Euro/GBP pricelist is used (with quantity discounts)
       const response = await fetch(odooApiUrl, {
         method: 'POST',
         headers: {
@@ -4044,6 +4046,7 @@ export async function registerRoutes(app: express.Application) {
           params: {
             templateId: templateId,
             copies: copiesNum,
+            source: 'completetransfers',  // Identifies request as from Complete Transfers
           },
         }),
       });

@@ -1,12 +1,12 @@
-# v42 - Complete Fix: PDF, Comments, and Discounts
+# v42.1 - Complete Fix: PDF, Comments, and Discounts
 
-**Version:** 16.0.42.0  
+**Version:** 16.0.42.1  
 **Date:** November 26, 2025  
 **Status:** READY FOR DEPLOYMENT
 
 ---
 
-## 🎯 Issues Fixed in v42
+## 🎯 Issues Fixed in v42.1
 
 ### ✅ Issue #1: Corrupt PDF Files
 **Symptom:** PDF files could not be opened ("file is damaged")
@@ -47,15 +47,45 @@ self.artwork_comment = "\n".join(comments)  # ✅ Correct field
 
 ---
 
-### ✅ Issue #3: Discounts in Product Selector
-**Status:** Already fixed in v40/v41 - needs verification
+### ✅ Issue #3: Discounts Not Working in Product Selector
+**Symptom:** Price stays at €8.57 regardless of quantity (1, 10, 200)
 
-**The fix uses cart partner for pricing context:**
+**Root Cause:**
+- Odoo detects website as "Serigraf" (not "Complete Transfers")
+- Uses "Public User" partner → assigned to "Hollister" pricelist
+- Hollister pricelist has NO quantity discounts → fixed €8.57
+
+**v42.1 Fix - Two Parts:**
+
+**Part A: Replit Backend (server/routes.ts)**
+```javascript
+// Now passes source='completetransfers' to Odoo
+body: JSON.stringify({
+  jsonrpc: '2.0',
+  method: 'call',
+  params: {
+    templateId: templateId,
+    copies: copiesNum,
+    source: 'completetransfers',  // ✅ Identifies request origin
+  },
+}),
+```
+
+**Part B: Odoo Controller (controllers/main.py)**
 ```python
-# Get partner from cart first (actual customer), fallback to session user
-cart = website.sale_get_order(force_create=False)
-if cart and cart.partner_id:
-    partner = cart.partner_id  # ✅ Use actual customer
+# PRIMARY CHECK: source parameter from Replit backend (most reliable)
+source_param = kwargs.get('source', '')
+if source_param and 'completetransfers' in source_param.lower():
+    is_complete_transfers = True
+    _logger.info(f"🎯 source='completetransfers' → CT mode")
+
+# Then forces CT Euro/GBP pricelist with quantity discounts
+if is_complete_transfers:
+    ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
+    pricelist = request.env['product.pricelist'].sudo().search([
+        ('name', '=', ct_pricelist_name),
+        ('active', '=', True)
+    ], limit=1)
 ```
 
 ---
@@ -162,7 +192,8 @@ See testing checklist below.
 | v39 | ❌ Broken | Wrong field name `artwork_file` |
 | v40 | ❌ Broken | Fixed deps, still wrong field name |
 | v41 | ⚠️ Partial | Correct field `artwork_files_datas`, but PDF corrupt & wrong comment field |
-| **v42** | ✅ **FIXED** | All issues resolved |
+| v42 | ⚠️ Partial | PDF & comments fixed, but discounts still broken (wrong pricelist detection) |
+| **v42.1** | ✅ **FIXED** | All issues resolved - added `source='completetransfers'` for correct pricelist |
 
 ---
 
@@ -173,3 +204,14 @@ See testing checklist below.
 **Files:**
 - Module: `odoo_artwork_uploader_v42_all_fixes.zip`
 - This Document: `DEPLOYMENT_v42_COMPLETE_FIX.md`
+
+---
+
+## ⚠️ IMPORTANT: Two-Part Deployment
+
+**v42.1 requires BOTH:**
+
+1. **Odoo Module** → Upload and upgrade `odoo_artwork_uploader_v42_all_fixes.zip` in Odoo
+2. **Replit App** → The `source='completetransfers'` parameter is already deployed (auto-restarts)
+
+Without both parts, discounts won't work correctly.

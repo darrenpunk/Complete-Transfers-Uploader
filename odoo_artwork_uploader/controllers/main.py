@@ -636,11 +636,10 @@ class ArtworkUploaderController(http.Controller):
             # Get price from product (considering pricelists with quantity discounts)
             # PRICELIST PRIORITY LOGIC:
             # 1. Special/custom customer pricelist (highest priority)
-            # 2. If on completetransfers.com: Force CT Euro/GBP pricelist
+            # 2. If request is from completetransfers.com: Force CT Euro/GBP pricelist
             # 3. Else: Use partner's assigned pricelist (serigraf.com default)
             
             # Get current website and partner for context
-            # CRITICAL: Use cart's partner (actual customer) instead of session user to avoid Public User context
             website = request.env['website'].sudo().get_current_website()
             
             # Try to get partner from cart first (actual customer), fallback to session user
@@ -652,8 +651,45 @@ class ArtworkUploaderController(http.Controller):
                 partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
                 _logger.info(f"👤 Using SESSION user partner: {partner.name if partner else 'None'}")
             
-            _logger.info(f"🌐 Current website: {website.name} (ID: {website.id})")
-            _logger.info(f"🔑 Session user: {request.env.user.name} (ID: {request.env.user.id}), Effective partner: {partner.name if partner else 'None'}")
+            # CRITICAL FIX: Detect if request originates from Complete Transfers website
+            # When loaded in iframe on completetransfers.com, Odoo may see wrong website
+            # Check source parameter (passed by Replit backend), referrer, or website name
+            is_complete_transfers = False
+            
+            # PRIMARY CHECK: source parameter from Replit backend (most reliable)
+            source_param = kwargs.get('source', '')
+            if source_param and 'completetransfers' in source_param.lower():
+                is_complete_transfers = True
+                _logger.info(f"🎯 source='completetransfers' → CT mode (from Replit backend)")
+            
+            # SECONDARY CHECK: explicit website_id parameter
+            if not is_complete_transfers:
+                website_id_param = kwargs.get('website_id')
+                if website_id_param:
+                    ct_website = request.env['website'].sudo().search([
+                        ('id', '=', int(website_id_param)),
+                        ('name', 'ilike', 'complete')
+                    ], limit=1)
+                    if ct_website:
+                        is_complete_transfers = True
+                        website = ct_website
+                        _logger.info(f"🎯 Explicit website_id={website_id_param} → Complete Transfers detected")
+            
+            # TERTIARY CHECK: referrer header for completetransfers.com
+            if not is_complete_transfers:
+                referrer = request.httprequest.headers.get('Referer', '')
+                origin = request.httprequest.headers.get('Origin', '')
+                if 'completetransfers' in referrer.lower() or 'completetransfers' in origin.lower():
+                    is_complete_transfers = True
+                    _logger.info(f"🎯 Referrer/Origin contains completetransfers → CT mode")
+            
+            # FALLBACK CHECK: website name (standard detection)
+            if not is_complete_transfers and website and 'complete' in website.name.lower():
+                is_complete_transfers = True
+                _logger.info(f"🎯 Website name '{website.name}' → Complete Transfers detected")
+            
+            _logger.info(f"🌐 Website: {website.name if website else 'None'} (ID: {website.id if website else 'None'}), Is CT: {is_complete_transfers}")
+            _logger.info(f"🔑 Session user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
             
             # Define standard/public pricelists (NOT special customer pricelists)
             standard_pricelists = [
@@ -677,8 +713,8 @@ class ArtworkUploaderController(http.Controller):
                     pricelist = customer_pricelist
                     _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name}")
             
-            # PRIORITY 2: If no special pricelist AND on Complete Transfers website, force CT Euro/GBP
-            if not pricelist and website and website.name == 'Complete Transfers':
+            # PRIORITY 2: If request is from Complete Transfers (detected via referrer, origin, or website), force CT Euro/GBP
+            if not pricelist and is_complete_transfers:
                 customer_country = partner.country_id.code if partner and partner.country_id else None
                 ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
                 
@@ -688,11 +724,18 @@ class ArtworkUploaderController(http.Controller):
                 ], limit=1)
                 
                 if pricelist:
-                    _logger.info(f"🌐 Complete Transfers website → Forcing {ct_pricelist_name}")
+                    _logger.info(f"🌐 Complete Transfers request → Using {ct_pricelist_name}")
                 else:
-                    _logger.warning(f"⚠️ {ct_pricelist_name} not found!")
+                    _logger.warning(f"⚠️ {ct_pricelist_name} not found, trying fallback...")
+                    # Fallback: Try CT Euro Pricelist if GBP not found
+                    pricelist = request.env['product.pricelist'].sudo().search([
+                        ('name', '=', 'CT Euro Pricelist'),
+                        ('active', '=', True)
+                    ], limit=1)
+                    if pricelist:
+                        _logger.info(f"🔄 Fallback to CT Euro Pricelist")
             
-            # PRIORITY 3: Use partner's assigned pricelist (serigraf.com default)
+            # PRIORITY 3: Use partner's assigned pricelist (for serigraf.com or other sites)
             if not pricelist and partner and partner.property_product_pricelist:
                 pricelist = partner.property_product_pricelist
                 _logger.info(f"📋 Using partner's assigned pricelist: {pricelist.name}")
@@ -704,16 +747,14 @@ class ArtworkUploaderController(http.Controller):
                 except:
                     pass
             
-            # Strategy 4: Search for any pricelist linked to Complete Transfers website
+            # Strategy 4: Search for CT Euro Pricelist as last resort (best default with discounts)
             if not pricelist:
-                ct_website = request.env['website'].sudo().search([
-                    ('name', '=', 'Complete Transfers')
+                pricelist = request.env['product.pricelist'].sudo().search([
+                    ('name', '=', 'CT Euro Pricelist'),
+                    ('active', '=', True)
                 ], limit=1)
-                if ct_website:
-                    pricelist = request.env['product.pricelist'].sudo().search([
-                        ('website_id', '=', ct_website.id),
-                        ('active', '=', True)
-                    ], limit=1)
+                if pricelist:
+                    _logger.info(f"🔄 Last resort: Using CT Euro Pricelist")
             
             # Strategy 5: Get any active pricelist
             if not pricelist:
