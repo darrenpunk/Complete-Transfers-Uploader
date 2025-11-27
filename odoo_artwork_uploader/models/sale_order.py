@@ -141,7 +141,8 @@ class SaleOrderLine(models.Model):
         IMPORTANT: Garment colors go to separate 'artwork_garment_colors' field
         The 'artwork_comment' field should contain:
         1. User's special instructions (from modal Comments textarea) - MAIN CONTENT
-        2. Ink color (if set)
+        2. Template info
+        3. Ink color (if set)
         """
         if not self.artwork_project_id:
             return
@@ -149,10 +150,14 @@ class SaleOrderLine(models.Model):
         project = self.artwork_project_id
         comments = []
         
-        # Add project comments (special instructions from modal)
+        # Add project comments FIRST (special instructions from modal)
         # This is the user's input from the Comments textarea
         if project.project_comments:
             comments.append(project.project_comments)
+        
+        # Add template information
+        template_display = dict(project._fields['template_size'].selection).get(project.template_size, project.template_size)
+        comments.append(f"Template: {template_display}")
         
         # Add ink color if available
         if project.ink_color_name:
