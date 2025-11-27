@@ -385,6 +385,12 @@ export default function UploadTool() {
         updates.name = projectData.name;
       }
       
+      // CRITICAL: Always include comments in updates so they're saved before add-to-cart
+      // This ensures currentProject.comments has the user's input when addToCartMutation runs
+      if (projectData.comments !== undefined) {
+        updates.comments = projectData.comments;
+      }
+      
       // Store garment colors if provided
       if (projectData.garmentColors && projectData.garmentColors.length > 0) {
         updates.garmentColors = projectData.garmentColors;
@@ -395,7 +401,7 @@ export default function UploadTool() {
         }
       }
       
-      // Apply updates if any
+      // Apply updates if any (always update if we have comments or name)
       if (Object.keys(updates).length > 0 && currentProject) {
         const updatedProject = await updateProjectMutation.mutateAsync(updates);
         setCurrentProject(updatedProject);
