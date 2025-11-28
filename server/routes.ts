@@ -1327,9 +1327,70 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
-        // SKIP ALL COLOR CONVERSION - RETURN ORIGINAL PDF DIRECTLY
-        console.log(`🎯 BYPASSING ALL COLOR CONVERSION - RETURNING ORIGINAL PDF WITH EXACT COLORS`);
+        // CRITICAL: Convert PDF to proper CMYK colorspace with ICC profile for Illustrator
+        console.log(`🎨 Converting PDF to CMYK with OutputIntent for Illustrator compatibility...`);
         
+        try {
+          const { execSync } = await import('child_process');
+          const tempRgbPath = path.join('/tmp', `rgb_${Date.now()}.pdf`);
+          const tempCmykPath = path.join('/tmp', `cmyk_${Date.now()}.pdf`);
+          const iccProfilePath = path.join(process.cwd(), 'server', 'fogra51.icc');
+          
+          fs.writeFileSync(tempRgbPath, Buffer.from(pdfBytes));
+          
+          // Use Ghostscript to convert to proper CMYK with OutputIntent
+          // The -sOutputICCProfile parameter embeds the ICC profile as OutputIntent
+          // -dPDFSETTINGS=/prepress ensures print-ready output
+          const gsCommand = [
+            'gs',
+            '-dNOPAUSE',
+            '-dBATCH',
+            '-dSAFER',
+            '-sDEVICE=pdfwrite',
+            '-dPDFSETTINGS=/prepress',
+            '-dCompatibilityLevel=1.4',
+            '-dProcessColorModel=/DeviceCMYK',
+            '-dColorConversionStrategy=/CMYK',
+            '-dConvertCMYKImagesToRGB=false',
+            '-dDownsampleColorImages=false',
+            '-dDownsampleGrayImages=false',
+            '-dDownsampleMonoImages=false',
+            '-dAutoFilterColorImages=false',
+            '-dAutoFilterGrayImages=false',
+            '-dColorImageFilter=/FlateEncode',
+            '-dGrayImageFilter=/FlateEncode',
+            '-dEmbedAllFonts=true',
+            '-dSubsetFonts=true',
+            fs.existsSync(iccProfilePath) ? `-sOutputICCProfile="${iccProfilePath}"` : '',
+            `-sOutputFile="${tempCmykPath}"`,
+            `"${tempRgbPath}"`
+          ].filter(Boolean).join(' ');
+          
+          console.log('🔧 Executing Ghostscript CMYK conversion...');
+          execSync(gsCommand, { encoding: 'utf8', timeout: 60000 });
+          
+          if (fs.existsSync(tempCmykPath)) {
+            const cmykPdfBytes = fs.readFileSync(tempCmykPath);
+            console.log(`✅ CMYK PDF with OutputIntent generated: ${cmykPdfBytes.length} bytes`);
+            
+            // Cleanup temp files
+            fs.unlinkSync(tempRgbPath);
+            fs.unlinkSync(tempCmykPath);
+            
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
+            res.send(cmykPdfBytes);
+            return;
+          } else {
+            console.warn('⚠️ CMYK conversion failed, returning RGB PDF');
+            fs.unlinkSync(tempRgbPath);
+          }
+        } catch (cmykError) {
+          console.error('⚠️ CMYK conversion error:', cmykError);
+          console.log('Returning RGB PDF as fallback');
+        }
+        
+        // Fallback: return original RGB PDF if CMYK conversion failed
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
         res.send(Buffer.from(pdfBytes));

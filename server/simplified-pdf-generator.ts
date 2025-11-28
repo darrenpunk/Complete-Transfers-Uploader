@@ -143,8 +143,58 @@ export class SimplifiedPDFGenerator {
     await this.embedLogos(pdfDoc, page2, data.canvasElements, data.logos, data.templateSize);
 
     const pdfBytes = await pdfDoc.save();
-    console.log('✅ Simplified PDF generated successfully');
-    return Buffer.from(pdfBytes);
+    console.log('✅ Simplified PDF generated (RGB colorspace)');
+    
+    // Post-process: Convert RGB PDF to CMYK using Ghostscript
+    console.log('🎨 Converting PDF to CMYK colorspace for print production...');
+    try {
+      const tempRgbPath = path.join('/tmp', `rgb_${Date.now()}.pdf`);
+      const tempCmykPath = path.join('/tmp', `cmyk_${Date.now()}.pdf`);
+      
+      fs.writeFileSync(tempRgbPath, Buffer.from(pdfBytes));
+      
+      // Convert to CMYK using Ghostscript with color preservation
+      const gsCommand = [
+        'gs',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-dSAFER',
+        '-sDEVICE=pdfwrite',
+        '-dColorConversionStrategy=/CMYK',
+        '-dProcessColorModel=/DeviceCMYK',
+        '-dConvertCMYKImagesToRGB=false',
+        '-dDownsampleColorImages=false',
+        '-dDownsampleGrayImages=false',
+        '-dDownsampleMonoImages=false',
+        '-dAutoFilterColorImages=false',
+        '-dAutoFilterGrayImages=false',
+        '-dColorImageFilter=/FlateEncode',
+        '-dGrayImageFilter=/FlateEncode',
+        '-sOutputFile=' + tempCmykPath,
+        tempRgbPath
+      ].join(' ');
+      
+      await execAsync(gsCommand);
+      
+      if (fs.existsSync(tempCmykPath)) {
+        const cmykBytes = fs.readFileSync(tempCmykPath);
+        console.log('✅ PDF converted to CMYK colorspace successfully');
+        
+        // Cleanup temp files
+        fs.unlinkSync(tempRgbPath);
+        fs.unlinkSync(tempCmykPath);
+        
+        return cmykBytes;
+      } else {
+        console.warn('⚠️ CMYK conversion failed, returning RGB PDF');
+        fs.unlinkSync(tempRgbPath);
+        return Buffer.from(pdfBytes);
+      }
+    } catch (cmykError) {
+      console.error('⚠️ CMYK conversion error:', cmykError);
+      console.log('Returning RGB PDF as fallback');
+      return Buffer.from(pdfBytes);
+    }
   }
 
   private drawBackground(page: PDFPage, color: string) {
