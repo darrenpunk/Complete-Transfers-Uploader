@@ -742,8 +742,11 @@ grestore`;
       
       // Target visual center (where the element should appear centered)
       // element.x and element.y are offsets from template center in mm
-      const targetCenterX = templateCenterXPts + element.x * MM_TO_PTS;
-      const targetCenterY = templateCenterYPts - element.y * MM_TO_PTS; // Flip Y for PDF (canvas Y increases down, PDF Y increases up)
+      // Include viewBox offset compensation for tight-content SVGs
+      const targetCenterX = templateCenterXPts + element.x * MM_TO_PTS + viewBoxOffsetX;
+      const targetCenterY = templateCenterYPts - element.y * MM_TO_PTS + viewBoxOffsetY; // Flip Y for PDF (canvas Y increases down, PDF Y increases up)
+      
+      console.log(`🔧 ViewBox offset compensation: X=${viewBoxOffsetX.toFixed(1)}pt, Y=${viewBoxOffsetY.toFixed(1)}pt`);
       
       let drawX: number;
       let drawY: number;
