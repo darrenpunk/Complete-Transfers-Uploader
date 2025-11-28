@@ -2939,6 +2939,32 @@ export async function registerRoutes(app: express.Application) {
           throw new Error('Template size not found');
         }
 
+        // Calculate usable area (template minus 3mm safety margins on each side)
+        const safetyMargin = 3; // 3mm safety margin
+        const usableWidth = templateSize.width - (safetyMargin * 2);
+        const usableHeight = templateSize.height - (safetyMargin * 2);
+
+        // AUTO-SCALE: Check if content exceeds template bounds and scale to fit
+        let finalDisplayWidth = displayWidth;
+        let finalDisplayHeight = displayHeight;
+        let wasAutoScaled = false;
+        
+        // Check if content is larger than usable area
+        if (displayWidth > usableWidth || displayHeight > usableHeight) {
+          // Calculate scale factors to fit within usable area
+          const scaleX = usableWidth / displayWidth;
+          const scaleY = usableHeight / displayHeight;
+          const scaleFactor = Math.min(scaleX, scaleY);
+          
+          // Apply uniform scaling to maintain aspect ratio
+          finalDisplayWidth = displayWidth * scaleFactor;
+          finalDisplayHeight = displayHeight * scaleFactor;
+          wasAutoScaled = true;
+          
+          console.log(`⚠️ AUTO-SCALE: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds usable area ${usableWidth.toFixed(1)}×${usableHeight.toFixed(1)}mm`);
+          console.log(`📐 Scaling by ${(scaleFactor * 100).toFixed(1)}% to ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm`);
+        }
+
         // Use center-based coordinate system
         // Origin (0,0) is at the center of the template
         // Content is positioned by its center point
@@ -2946,7 +2972,7 @@ export async function registerRoutes(app: express.Application) {
         let centerY = 0;  // Center of template
         
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
-        console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm${wasAutoScaled ? ' (auto-scaled)' : ''}`);
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
@@ -2965,8 +2991,8 @@ export async function registerRoutes(app: express.Application) {
           logoId: updatedLogo.id, // Use the updated logo ID to ensure consistency
           x: centerX,
           y: centerY,
-          width: displayWidth,
-          height: displayHeight,
+          width: finalDisplayWidth,  // Use scaled dimensions if auto-scaled
+          height: finalDisplayHeight, // Use scaled dimensions if auto-scaled
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
