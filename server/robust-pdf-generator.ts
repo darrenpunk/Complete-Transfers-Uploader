@@ -219,8 +219,8 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
     // Calculate exact position in points
     // Convert center-based coordinates to PDF bottom-left coordinates
     const MM_TO_POINTS = 2.834645669;
-    const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
-    const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
+    const templateWidthMM = 297; // Default A4 width
+    const templateHeightMM = 420; // Default A4 height
     const templateCenterX = templateWidthMM / 2;
     const templateCenterY = templateHeightMM / 2;
     
@@ -691,8 +691,8 @@ grestore`;
         // For all other templates (A3, etc.) - convert canvas coordinates to PDF coordinates
         // Convert center-based Y to PDF bottom-left Y
         // Template center Y = 0 in our coordinate system
-        const templateHeightPts = (data.templateSize?.height || 420) * MM_TO_POINTS; // Exact template height in points
-        const templateHeightMM = data.templateSize?.height || 420; // Template height in mm
+        const templateHeightPts = (templateSize?.height || 420) * MM_TO_POINTS; // Exact template height in points
+        const templateHeightMM2 = templateSize?.height || 420; // Template height in mm
         const templateCenterYMM = templateHeightMM / 2;
         
         // Convert element center position to absolute position
