@@ -642,8 +642,8 @@ grestore`;
       
       // Position calculation needs to account for visual dimensions when rotated
       // Convert center-based coordinates to PDF bottom-left coordinates
-      const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
-      const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
+      const templateWidthMM = templateSize?.width || 297; // Use actual template width
+      const templateHeightMM = templateSize?.height || 420; // Use actual template height
       const templateCenterX = templateWidthMM / 2;
       const templateCenterY = templateHeightMM / 2;
       
