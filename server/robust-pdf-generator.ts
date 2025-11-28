@@ -503,7 +503,7 @@ grestore`;
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
       
-      // PRIORITY 1: Use preserved original PDF if available (BUT NOT for ink color overrides OR dimension mismatches)
+      // PRIORITY 1: Use preserved original PDF if available to maintain exact CMYK colors and vectors
       if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
         const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
         console.log(`🎯 Checking for preserved original PDF: ${originalPdfPath}`);
@@ -514,19 +514,14 @@ grestore`;
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
-        // FORCE SVG-BASED ADOBE COLOR CONVERSION - Skip original PDF to ensure color processing
-        else if (logo.filename && logo.filename.includes('_tight-content.svg')) {
-          console.log(`🎯 FORCING SVG-BASED ADOBE COLOR CONVERSION: Processing tight content SVG through Adobe pipeline`);
-          console.log(`📐 DIMENSION PRECISION: Tight content SVG has exact target dimensions: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
-          console.log(`🎨 ADOBE CONVERSION: Colors will be processed through Adobe CMYK conversion`);
-          
-          // Force SVG-to-PDF conversion with Adobe color processing
-          logoPdfPath = null; // This will trigger SVG conversion with Adobe color processing
-          console.log(`✅ ADOBE PROCESSING: Using SVG path to ensure Adobe color conversion is applied`);
+        // USE ORIGINAL PDF to preserve exact CMYK colors and vectors (no conversion)
+        else if (fs.existsSync(originalPdfPath)) {
+          console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
+          logoPdfPath = originalPdfPath;
+          console.log(`📄 Original PDF will be embedded directly - no color conversion`);
         }
         else {
-          console.log(`⚠️ SKIPPING ORIGINAL PDF: Forcing SVG conversion for Adobe color processing`);
-          // Skip original PDF to force color conversion through SVG path
+          console.log(`⚠️ Original PDF not found at: ${originalPdfPath} - will fall back to SVG`);
           logoPdfPath = null;
         }
       }

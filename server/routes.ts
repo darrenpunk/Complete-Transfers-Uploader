@@ -708,13 +708,43 @@ export async function registerRoutes(app: express.Application) {
       console.log(`  - LogosObject keys:`, Object.keys(logosObject));
       console.log(`  - Canvas element logoIds:`, canvasElements.map(e => e.logoId));
 
-      // Check if any logos have CMYK colors that need native preservation
-      const hasCMYKLogos = Object.values(logosObject).some(logo => 
-        logo.svgColors && logo.svgColors.colors.some((c: any) => c.isCMYK)
+      // Check if any logos have original PDFs that should be embedded directly
+      const hasOriginalPDFs = Object.values(logosObject).some(logo => 
+        logo.originalFilename && logo.originalMimeType === 'application/pdf'
       );
 
-      // FORCE SVG-BASED ADOBE COLOR CONVERSION - Skip direct PDF embedding 
-      console.log('📄 FORCING SVG CONVERSION: Skipping direct PDF embedding for Adobe color processing');
+      // USE ROBUST PDF GENERATOR - Embeds original PDFs to preserve CMYK colors and vectors
+      if (hasOriginalPDFs) {
+        console.log('📄 USING ORIGINAL PDFs: Preserving exact CMYK colors and vectors');
+        try {
+          const { RobustPDFGenerator } = await import('./robust-pdf-generator');
+          const generator = new RobustPDFGenerator();
+          
+          const pdfBuffer = await generator.generatePDF({
+            projectId: project.id,
+            projectName: project.name || 'Untitled',
+            templateSize,
+            canvasElements,
+            logos,
+            garmentColor: project.garmentColor,
+            garmentColors: project.garmentColors,
+            quantity: project.quantity || 1
+          });
+          
+          console.log(`✅ Robust PDF generated with original CMYK colors: ${pdfBuffer.length} bytes`);
+          
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
+          res.send(pdfBuffer);
+          return;
+        } catch (robustError) {
+          console.error('❌ Robust PDF generation failed:', robustError);
+          console.log('🔄 Falling back to standard PDF generation');
+        }
+      }
+
+      // FALLBACK: Standard pdf-lib generation for non-PDF uploads
+      console.log('📄 Standard PDF generation (no original PDFs to preserve)');
       
       try {
         const { PDFDocument, rgb, degrees } = await import('pdf-lib');
