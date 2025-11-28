@@ -730,31 +730,46 @@ grestore`;
       }
       console.log(`✅ EXACT ELEMENT SIZE: Using ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from element dimensions`);
       
-      // Use element dimensions and position exactly as specified
-      // Adjust for rotation around center (pdf-lib rotates around bottom-left)
-      let drawX = finalX;
-      let drawY = yPts;
+      // CORRECT ROTATION HANDLING:
+      // pdf-lib rotates around the drawing position (x, y) which is the bottom-left corner
+      // For centered placement with rotation, we need to calculate where to place the
+      // unrotated content so that after rotation, the visual center is at the target position
       
-      if (element.rotation) {
-        // Calculate center point
-        const centerX = finalX + contentWidthPts / 2;
-        const centerY = yPts + contentHeightPts / 2;
-        
-        // Adjust position based on rotation to maintain center
-        if (element.rotation === 90) {
-          // For 90° rotation, adjust position
-          drawX = centerX + contentHeightPts / 2;
-          drawY = centerY - contentWidthPts / 2;
-        } else if (element.rotation === 180) {
-          // For 180° rotation
-          drawX = centerX + contentWidthPts / 2;
-          drawY = centerY + contentHeightPts / 2;
-        } else if (element.rotation === 270) {
-          // For 270° rotation
-          drawX = centerX - contentHeightPts / 2;
-          drawY = centerY + contentWidthPts / 2;
-        }
+      // Template center in PDF coordinates (bottom-left origin)
+      const MM_TO_PTS = 2.834645669;
+      const templateCenterXPts = (templateSize?.width || 297) / 2 * MM_TO_PTS;
+      const templateCenterYPts = (templateSize?.height || 420) / 2 * MM_TO_PTS;
+      
+      // Target visual center (where the element should appear centered)
+      // element.x and element.y are offsets from template center in mm
+      const targetCenterX = templateCenterXPts + element.x * MM_TO_PTS;
+      const targetCenterY = templateCenterYPts - element.y * MM_TO_PTS; // Flip Y for PDF (canvas Y increases down, PDF Y increases up)
+      
+      let drawX: number;
+      let drawY: number;
+      
+      if (element.rotation === 90) {
+        // 90° CCW rotation: content rotates so width becomes height
+        // After rotation, visual size is height×width
+        // Drawing position for pdf-lib to center visually:
+        drawX = targetCenterX + contentHeightPts / 2;
+        drawY = targetCenterY - contentWidthPts / 2;
+      } else if (element.rotation === 180) {
+        // 180° rotation: content is upside down
+        drawX = targetCenterX + contentWidthPts / 2;
+        drawY = targetCenterY + contentHeightPts / 2;
+      } else if (element.rotation === 270) {
+        // 270° CCW (or 90° CW): content rotates other direction
+        drawX = targetCenterX - contentHeightPts / 2;
+        drawY = targetCenterY + contentWidthPts / 2;
+      } else {
+        // No rotation - standard bottom-left positioning
+        drawX = targetCenterX - contentWidthPts / 2;
+        drawY = targetCenterY - contentHeightPts / 2;
       }
+      
+      console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), rotation=${element.rotation || 0}°`);
+      console.log(`📍 DRAW POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) with size ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
       const drawOptions = {
         x: drawX,
