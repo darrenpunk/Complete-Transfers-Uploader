@@ -2384,8 +2384,46 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                   
-                  // SKIP Ghostscript painted bbox - will use SVG analyzer to detect ALL vector data instead
-                  console.log(`🎯 SKIPPING Ghostscript painted bbox - will use SVG analyzer to detect ALL vector geometry`)
+                  // USE Ghostscript painted bbox for accurate content bounds
+                  console.log(`🎯 USING Ghostscript bbox for accurate content detection`);
+                  
+                  try {
+                    const { execSync } = await import('child_process');
+                    const gsResult = execSync(`gs -dNOPAUSE -dBATCH -dQUIET -sDEVICE=bbox "${(file as any).originalPdfPath}" 2>&1`, { encoding: 'utf8' });
+                    
+                    // Parse HiResBoundingBox for precise dimensions
+                    const hiResMatch = gsResult.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                    if (hiResMatch) {
+                      const [, llx, lly, urx, ury] = hiResMatch.map(Number);
+                      const contentWidthPts = urx - llx;
+                      const contentHeightPts = ury - lly;
+                      const pxToMm = 1 / 2.834645669;
+                      
+                      console.log(`✅ Ghostscript bbox: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
+                      
+                      // Use Ghostscript bounds as the authoritative content bounds
+                      boundsResult = {
+                        success: true,
+                        method: 'ghostscript-bbox',
+                        contentBounds: {
+                          xMin: llx,
+                          yMin: lly,
+                          xMax: urx,
+                          yMax: ury,
+                          width: contentWidthPts,
+                          height: contentHeightPts,
+                          units: 'pt'
+                        }
+                      };
+                      
+                      // Set display dimensions from Ghostscript
+                      displayWidth = contentWidthPts * pxToMm;
+                      displayHeight = contentHeightPts * pxToMm;
+                      console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                    }
+                  } catch (gsError) {
+                    console.log(`⚠️ Ghostscript bbox failed, falling back to SVG analyzer`);
+                  }
                 } catch (pdfLibError) {
                   console.error('Failed to extract PDF MediaBox:', pdfLibError);
                   // Fall through to SVG bounds analyzer
