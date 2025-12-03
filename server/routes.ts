@@ -2872,33 +2872,29 @@ export async function registerRoutes(app: express.Application) {
                     const boundsForCrop = unclampedContentBounds;
                     console.log(`🎯 USING UNCLAMPED CONTENT BOUNDS FOR TIGHT CROP: ${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}px (unclamped, with clipping)`);
                     
-                    // CRITICAL FIX: Add equal padding on ALL sides to properly center content
-                    // This fixes asymmetric PDFs where content is off-center (e.g., 226pt top margin vs 8pt bottom)
-                    const padding = 10;  // Equal padding on all sides for perfect centering
-                    const expandedWidth = boundsForCrop.width + (padding * 2);
-                    const expandedHeight = boundsForCrop.height + (padding * 2);
-                    
-                    // Center both horizontally and vertically with equal padding
-                    const xOffset = padding;
-                    const yOffset = padding;
+                    // CRITICAL FIX: NO PADDING - viewBox must exactly match content bounds
+                    // Adding padding causes content to be scaled down within the bounds
+                    const exactWidth = boundsForCrop.width;
+                    const exactHeight = boundsForCrop.height;
                     
                     // CRITICAL FIX: Normalize viewBox to (0, 0) and translate content
-                    console.log(`🎯 VIEWBOX NORMALIZATION: Normalizing viewBox to (0,0) and translating content`);
+                    console.log(`🎯 VIEWBOX NORMALIZATION: viewBox exactly matches content (NO PADDING)`);
                     console.log(`📐 Original content bounds: (${boundsForCrop.xMin}, ${boundsForCrop.yMin}) to (${boundsForCrop.xMax}, ${boundsForCrop.yMax})`);
                     
                     // Calculate the translation needed to move content to (0, 0) origin
-                    const translateX = -(boundsForCrop.xMin - xOffset);
-                    const translateY = -(boundsForCrop.yMin - yOffset);
+                    // Content at (xMin, yMin) should move to (0, 0)
+                    const translateX = -boundsForCrop.xMin;
+                    const translateY = -boundsForCrop.yMin;
                     
                     console.log(`🔄 Translation: (${translateX.toFixed(1)}, ${translateY.toFixed(1)}) to normalize content position`);
+                    console.log(`📐 viewBox: 0 0 ${exactWidth.toFixed(1)} ${exactHeight.toFixed(1)} (EXACT content size, no padding)`);
                     
-                    // Create minimal SVG wrapper with NORMALIZED viewBox starting at (0, 0)
-                    // Apply transform to translate the content into the normalized coordinate system
+                    // Create minimal SVG wrapper with EXACT viewBox matching content bounds
+                    // NO padding - content fills the viewBox completely for tight bounds
                     const tightSvg = `<svg xmlns="http://www.w3.org/2000/svg" 
-                      viewBox="0 0 ${expandedWidth} ${expandedHeight}"
+                      viewBox="0 0 ${exactWidth} ${exactHeight}"
                       preserveAspectRatio="xMidYMid meet"
                       data-content-extracted="true"
-                      data-padding="${padding}"
                       data-original-bounds="${boundsForCrop.xMin},${boundsForCrop.yMin},${boundsForCrop.xMax},${boundsForCrop.yMax}">
                         <g transform="translate(${translateX}, ${translateY})">
                           ${innerContent}
@@ -2920,19 +2916,19 @@ export async function registerRoutes(app: express.Application) {
                     console.log(`🔄 UPDATED FILE TO USE TIGHT CONTENT: ${finalFilename}`);
                     
                     // CRITICAL FIX: Update contentBounds to reflect the NORMALIZED coordinates
-                    // After translation, content now starts at (xOffset, yOffset) instead of (xMin, yMin)
+                    // After translation, content now starts at (0, 0) - NO PADDING
                     const normalizedContentBounds = {
-                      xMin: xOffset,
-                      yMin: yOffset,
-                      xMax: xOffset + (boundsForCrop?.width || 0),
-                      yMax: yOffset + (boundsForCrop?.height || 0),
+                      xMin: 0,
+                      yMin: 0,
+                      xMax: boundsForCrop?.width || 0,
+                      yMax: boundsForCrop?.height || 0,
                       width: boundsForCrop?.width || 0,
                       height: boundsForCrop?.height || 0,
                       units: (boundsForCrop?.units || 'px') as 'px' | 'mm' | 'pt'
                     };
                     
-                    console.log(`🎯 NORMALIZED CONTENT BOUNDS: (${normalizedContentBounds.xMin}, ${normalizedContentBounds.yMin}) to (${normalizedContentBounds.xMax}, ${normalizedContentBounds.yMax})`);
-                    console.log(`✅ Content is now centered in viewBox - frontend will render correctly`);
+                    console.log(`🎯 NORMALIZED CONTENT BOUNDS: (0, 0) to (${normalizedContentBounds.xMax.toFixed(1)}, ${normalizedContentBounds.yMax.toFixed(1)})`);
+                    console.log(`✅ Content fills viewBox exactly - NO PADDING, tight bounds`);
                     
                     // Replace the original bounds with normalized bounds for correct frontend rendering
                     contentBounds = normalizedContentBounds;
