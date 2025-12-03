@@ -2511,6 +2511,44 @@ export async function registerRoutes(app: express.Application) {
                       displayWidth = contentWidthPts * pxToMm;
                       displayHeight = contentHeightPts * pxToMm;
                       console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                      
+                      // CRITICAL FIX: Crop SVG viewBox to match GS bbox content area
+                      // This removes the A4 page padding and shows only the actual artwork
+                      if (fs.existsSync(svgPath)) {
+                        try {
+                          let svgContent = fs.readFileSync(svgPath, 'utf8');
+                          
+                          // PDF coordinates: origin at BOTTOM-LEFT (lly=bottom, ury=top)
+                          // SVG coordinates: origin at TOP-LEFT
+                          // pdf2svg uses pageHeight to flip Y-axis
+                          // New SVG viewBox: x=llx, y=(pageHeight-ury), width, height
+                          const svgViewBoxX = llx;
+                          const svgViewBoxY = pdfPageDimensions.heightPts - ury;  // Flip Y-axis
+                          const svgViewBoxWidth = contentWidthPts;
+                          const svgViewBoxHeight = contentHeightPts;
+                          
+                          console.log(`🎯 CROPPING SVG to GS bbox:`);
+                          console.log(`   PDF bbox: llx=${llx.toFixed(1)}, lly=${lly.toFixed(1)}, urx=${urx.toFixed(1)}, ury=${ury.toFixed(1)}`);
+                          console.log(`   Page height: ${pdfPageDimensions.heightPts.toFixed(1)}pts`);
+                          console.log(`   SVG viewBox: ${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}`);
+                          
+                          // Update SVG viewBox and dimensions to match content
+                          const newViewBox = `viewBox="${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}"`;
+                          svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                          
+                          // Also update width/height attributes to match content
+                          svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
+                          svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
+                          
+                          // Add marker to indicate GS-cropped SVG
+                          svgContent = svgContent.replace(/<svg\s/, '<svg data-gs-cropped="true" ');
+                          
+                          fs.writeFileSync(svgPath, svgContent);
+                          console.log(`✅ SVG viewBox cropped to GS bbox - no padding`);
+                        } catch (svgCropError) {
+                          console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
+                        }
+                      }
                     }
                   } catch (gsError) {
                     console.log(`⚠️ Ghostscript bbox failed, falling back to SVG analyzer`);
