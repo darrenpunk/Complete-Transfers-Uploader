@@ -2800,9 +2800,12 @@ export async function registerRoutes(app: express.Application) {
                 // For standard sizes, use artboard dimensions (decorative elements are extending beyond)
                 const shouldUseArtboard = isStandardCutSize && originalWidthDiff < 100 && originalHeightDiff < 50;
                 
-                // Enable tight crop when ORIGINAL content bounds differ significantly from viewBox
-                // This gives us tight bounds for all uploaded files (PDFs, SVGs from any application)
-                const needsTightCrop = !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5); // Use tight bounds when diff > 5mm
+                // CRITICAL FIX: When Ghostscript bbox succeeds, use its dimensions directly 
+                // WITHOUT creating a tight-content SVG (GS coords are in PDF space, not SVG space)
+                const isGhostscriptSource = boundsResult.method === 'ghostscript-bbox';
+                
+                // Enable tight crop ONLY for non-Ghostscript sources where coords match SVG space
+                const needsTightCrop = !isGhostscriptSource && !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5);
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
@@ -2811,13 +2814,18 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`🚨 CONTENT EXTENDS BEYOND VIEWBOX: Content (${contentBounds.xMax.toFixed(1)}, ${contentBounds.yMax.toFixed(1)}) > viewBox (${viewBoxWidthPx.toFixed(1)}, ${viewBoxHeightPx.toFixed(1)})`);
                 }
                 
-                if (needsTightCrop) {
+                if (isGhostscriptSource) {
+                  // CRITICAL: Ghostscript gives us accurate dimensions - use them directly
+                  // DON'T modify the SVG (GS coords are PDF-space, not SVG-space)
+                  console.log(`✅ GHOSTSCRIPT BBOX: Using exact dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm - NO tight-content SVG needed`);
+                  console.log(`📐 Canvas element will use GS bbox dimensions, original SVG preserved`);
+                } else if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${originalContentWidthMm.toFixed(1)}×${originalContentHeightMm.toFixed(1)}mm (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 } else {
                   console.log(`✅ CONTENT MATCHES VIEWBOX: No tight crop needed (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 }
                 
-                if (needsTightCrop) {
+                if (needsTightCrop && !isGhostscriptSource) {
                   console.log(`🔄 CREATING TIGHT CONTENT SVG: Content is oversized, cropping to actual bounds`);
                   
                   const svgContent = fs.readFileSync(svgPath, 'utf8');
@@ -2946,16 +2954,17 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // CRITICAL FIX: Use actual content bounds, not the full artboard/viewBox dimensions
-                // The canvas element size should match the actual content size, not the template size
-                console.log(`✅ TIGHT CONTENT SVG CREATED: Shows all content including overflow`);
-                console.log(`📐 USING ACTUAL CONTENT BOUNDS: ${contentWidthMm.toFixed(1)}×${contentHeightMm.toFixed(1)}mm`);
-                console.log(`📐 (NOT using artboard dimensions: ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm)`);
-                
-                // Use actual content bounds for canvas display
-                displayWidth = contentWidthMm;
-                displayHeight = contentHeightMm;
-                console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (matches actual artwork size)`);
+                // CRITICAL: Only update dimensions if NOT using Ghostscript bbox
+                // Ghostscript already set accurate displayWidth/displayHeight at extraction time
+                if (!isGhostscriptSource) {
+                  // Use actual content bounds for canvas display (for SVG analyzer source)
+                  displayWidth = contentWidthMm;
+                  displayHeight = contentHeightMm;
+                  console.log(`🎯 CANVAS DISPLAY: Using SVG analyzer bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+                } else {
+                  // Ghostscript source: displayWidth/displayHeight already set from GS bbox
+                  console.log(`✅ GHOSTSCRIPT SOURCE: Keeping GS bbox dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                }
               } else {
                 console.log(`⚠️ Bounds extraction failed, falling back to viewBox dimensions`);
                 
