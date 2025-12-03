@@ -3044,7 +3044,11 @@ export async function registerRoutes(app: express.Application) {
           ...((file as any).extractedRasterPath && { extractedRasterPath: (file as any).extractedRasterPath }),
           ...(analysisData && { svgColors: analysisData }),
           // CRITICAL FIX: ALWAYS save contentBounds - use extracted or fallback
-          contentBounds: contentBoundsToSave
+          contentBounds: contentBoundsToSave,
+          // CRITICAL: Store ORIGINAL dimensions for PDF output (before any auto-scaling)
+          // These are used by PDF generator to preserve exact original size
+          originalWidth: displayWidth,
+          originalHeight: displayHeight
         });
         
         console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(contentBoundsToSave)} to logo ${logo.id}`);

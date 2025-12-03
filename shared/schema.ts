@@ -55,6 +55,8 @@ export const logos = pgTable("logos", {
   dropboxFileRequestId: text("dropbox_file_request_id"), // Dropbox file request ID for tracking uploads
   dropboxFilePath: text("dropbox_file_path"), // Path to uploaded file in Dropbox
   dropboxUploadedAt: text("dropbox_uploaded_at"), // Timestamp when file was uploaded to Dropbox
+  originalWidth: real("original_width"), // Original PDF/artwork width in mm (before auto-scaling)
+  originalHeight: real("original_height"), // Original PDF/artwork height in mm (before auto-scaling)
 });
 
 export const canvasElements = pgTable("canvas_elements", {
