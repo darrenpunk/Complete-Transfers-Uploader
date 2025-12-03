@@ -2516,31 +2516,46 @@ export async function registerRoutes(app: express.Application) {
                     displayHeight = contentHeightPts * pxToMm;
                     console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                     
-                    // Crop SVG viewBox to content bounds (removes page padding)
+                    // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
                       try {
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
                         const bounds = svgGeometryResult.contentBounds;
                         
-                        console.log(`🎯 CROPPING SVG to geometry bounds:`);
-                        console.log(`   Content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
+                        console.log(`🎯 NORMALIZING SVG to zero-origin:`);
+                        console.log(`   Original content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
                         console.log(`   Size: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
+                        console.log(`   Translation: (-${bounds.xMin.toFixed(2)}, -${bounds.yMin.toFixed(2)})`);
                         
-                        // Update SVG viewBox to content bounds
-                        const newViewBox = `viewBox="${bounds.xMin.toFixed(2)} ${bounds.yMin.toFixed(2)} ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
+                        // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
+                        // This matches the normalized contentBounds the frontend expects
+                        const newViewBox = `viewBox="0 0 ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
                         svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
                         
                         // Update width/height to match content
                         svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
                         svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
                         
-                        // Mark as geometry-cropped
-                        svgContent = svgContent.replace(/<svg\s/, '<svg data-geometry-cropped="true" ');
+                        // CRITICAL: Wrap ALL SVG content in a <g> with translation to move content to (0,0)
+                        // This compensates for the zero-origin viewBox
+                        const translateX = -bounds.xMin;
+                        const translateY = -bounds.yMin;
+                        
+                        // Find the opening <svg> tag and wrap all content after it
+                        svgContent = svgContent.replace(
+                          /(<svg[^>]*>)/,
+                          `$1\n<g transform="translate(${translateX.toFixed(2)}, ${translateY.toFixed(2)})">`
+                        );
+                        // Add closing </g> before </svg>
+                        svgContent = svgContent.replace(/<\/svg>/, '</g>\n</svg>');
+                        
+                        // Mark as geometry-cropped and normalized
+                        svgContent = svgContent.replace(/<svg\s/, '<svg data-geometry-cropped="true" data-normalized="true" ');
                         
                         fs.writeFileSync(svgPath, svgContent);
-                        console.log(`✅ SVG viewBox cropped to geometry bounds - works for all colors including white`);
+                        console.log(`✅ SVG normalized to zero-origin with content translation - centered correctly`);
                       } catch (svgCropError) {
-                        console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
+                        console.error('⚠️ Failed to normalize SVG:', svgCropError);
                       }
                     }
                   } else {
