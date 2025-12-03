@@ -2518,19 +2518,20 @@ export async function registerRoutes(app: express.Application) {
                         try {
                           let svgContent = fs.readFileSync(svgPath, 'utf8');
                           
-                          // PDF coordinates: origin at BOTTOM-LEFT (lly=bottom, ury=top)
-                          // SVG coordinates: origin at TOP-LEFT
-                          // pdf2svg uses pageHeight to flip Y-axis
-                          // New SVG viewBox: x=llx, y=(pageHeight-ury), width, height
+                          // pdf2svg already handles the PDF→SVG coordinate transformation
+                          // It embeds a matrix transform that flips Y-axis internally
+                          // We should NOT apply another Y-flip - just use PDF bbox coords directly
+                          // viewBox: x=llx, y=lly, width, height (NO additional flip)
                           const svgViewBoxX = llx;
-                          const svgViewBoxY = pdfPageDimensions.heightPts - ury;  // Flip Y-axis
+                          const svgViewBoxY = lly;  // Use lly directly - pdf2svg handles Y-flip
                           const svgViewBoxWidth = contentWidthPts;
                           const svgViewBoxHeight = contentHeightPts;
                           
                           console.log(`🎯 CROPPING SVG to GS bbox:`);
                           console.log(`   PDF bbox: llx=${llx.toFixed(1)}, lly=${lly.toFixed(1)}, urx=${urx.toFixed(1)}, ury=${ury.toFixed(1)}`);
-                          console.log(`   Page height: ${pdfPageDimensions.heightPts.toFixed(1)}pts`);
+                          console.log(`   Page size: ${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pts`);
                           console.log(`   SVG viewBox: ${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}`);
+                          console.log(`   NOTE: Using PDF bbox coords directly - pdf2svg handles Y-flip internally`);
                           
                           // Update SVG viewBox and dimensions to match content
                           const newViewBox = `viewBox="${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}"`;
@@ -2544,7 +2545,7 @@ export async function registerRoutes(app: express.Application) {
                           svgContent = svgContent.replace(/<svg\s/, '<svg data-gs-cropped="true" ');
                           
                           fs.writeFileSync(svgPath, svgContent);
-                          console.log(`✅ SVG viewBox cropped to GS bbox - no padding`);
+                          console.log(`✅ SVG viewBox cropped to GS bbox - no padding, no extra Y-flip`);
                         } catch (svgCropError) {
                           console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
                         }
