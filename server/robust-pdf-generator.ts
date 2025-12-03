@@ -839,16 +839,16 @@ grestore`;
       console.log(`📐 Content size: ${bounds.width.toFixed(2)}×${bounds.height.toFixed(2)}pts`);
       
       // Use Ghostscript to crop the PDF to content bounds
-      // -dUseCropBox uses the CropBox we set, -dPDFFitPage fits content to new page size
+      // CRITICAL: -sOutputFile must come BEFORE -c and -f options
       const gsCmd = `gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dQUIET ` +
         `-dColorConversionStrategy=/LeaveColorUnchanged ` +
         `-dPreserveColorProfiles=true ` +
         `-dPDFSETTINGS=/prepress ` +
         `-dAutoRotatePages=/None ` +
         `-dPreserveOverprint=true ` +
+        `-sOutputFile="${croppedPath}" ` +
         `-c "<</CropBox${cropBox}/TrimBox${cropBox}>> setpagedevice" ` +
-        `-f "${pdfPath}" ` +
-        `-sOutputFile="${croppedPath}"`;
+        `-f "${pdfPath}"`;
       
       await execAsync(gsCmd);
       
