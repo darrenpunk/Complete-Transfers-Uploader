@@ -2478,106 +2478,73 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                   
-                  // USE Ghostscript painted bbox for accurate content bounds
-                  console.log(`🎯 USING Ghostscript bbox for accurate content detection`);
+                  // PRIMARY METHOD: Use SVG geometry analysis for accurate content bounds
+                  // This detects ALL vector elements regardless of color (including white)
+                  console.log(`🎯 USING SVG geometry analysis for accurate content detection (color-independent)`);
                   
-                  try {
-                    const { execSync } = await import('child_process');
-                    const gsResult = execSync(`gs -dNOPAUSE -dBATCH -dQUIET -sDEVICE=bbox "${(file as any).originalPdfPath}" 2>&1`, { encoding: 'utf8' });
+                  const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+                  const svgAnalyzer = new SVGBoundsAnalyzer();
+                  const svgGeometryResult = await svgAnalyzer.extractSVGBounds(svgPath);
+                  
+                  if (svgGeometryResult.success && svgGeometryResult.contentBounds && 
+                      svgGeometryResult.contentBounds.width > 0 && svgGeometryResult.contentBounds.height > 0) {
+                    // SVG geometry analysis succeeded - use these bounds (works for any color including white)
+                    const contentWidthPts = svgGeometryResult.contentBounds.width;
+                    const contentHeightPts = svgGeometryResult.contentBounds.height;
+                    const pxToMm = 1 / 2.834645669;
                     
-                    // Parse HiResBoundingBox for precise dimensions
-                    const hiResMatch = gsResult.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-                    if (hiResMatch) {
-                      let [, llx, lly, urx, ury] = hiResMatch.map(Number);
-                      let contentWidthPts = urx - llx;
-                      let contentHeightPts = ury - lly;
-                      const pxToMm = 1 / 2.834645669;
-                      
-                      console.log(`✅ Ghostscript bbox: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
-                      
-                      // CRITICAL FIX: If Ghostscript returns 0×0 dimensions (white/invisible artwork),
-                      // fall back to PDF page dimensions (MediaBox)
-                      let useMediaBoxFallback = false;
-                      if (contentWidthPts === 0 && contentHeightPts === 0 && pdfPageDimensions) {
-                        console.log(`⚠️ Ghostscript returned 0×0 (white/invisible artwork) - using MediaBox fallback`);
-                        console.log(`📐 MediaBox fallback: ${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pts = ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
-                        contentWidthPts = pdfPageDimensions.widthPts;
-                        contentHeightPts = pdfPageDimensions.heightPts;
-                        llx = 0;
-                        lly = 0;
-                        urx = contentWidthPts;
-                        ury = contentHeightPts;
-                        useMediaBoxFallback = true;
+                    console.log(`✅ SVG geometry bounds: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
+                    console.log(`📍 Geometry bounds: (${svgGeometryResult.contentBounds.xMin.toFixed(1)}, ${svgGeometryResult.contentBounds.yMin.toFixed(1)}) to (${svgGeometryResult.contentBounds.xMax.toFixed(1)}, ${svgGeometryResult.contentBounds.yMax.toFixed(1)})`);
+                    
+                    // Use SVG geometry bounds - normalize to zero-origin
+                    boundsResult = {
+                      success: true,
+                      method: 'svg-geometry',
+                      contentBounds: {
+                        xMin: 0,  // Zero-origin for consistent positioning
+                        yMin: 0,
+                        xMax: contentWidthPts,
+                        yMax: contentHeightPts,
+                        width: contentWidthPts,
+                        height: contentHeightPts,
+                        units: 'pt'
                       }
-                      
-                      // Use Ghostscript bounds as the authoritative content bounds
-                      // CRITICAL: Normalize to zero-origin to match the cropped SVG viewBox
-                      // The SVG viewBox is cropped to the bbox area, so its coordinate system
-                      // starts at (0,0), not (llx, lly). Store bounds in the cropped coordinate system.
-                      boundsResult = {
-                        success: true,
-                        method: useMediaBoxFallback ? 'mediabox-fallback' : 'ghostscript-bbox',
-                        contentBounds: {
-                          xMin: 0,  // Zero-origin after SVG cropping
-                          yMin: 0,  // Zero-origin after SVG cropping
-                          xMax: contentWidthPts,
-                          yMax: contentHeightPts,
-                          width: contentWidthPts,
-                          height: contentHeightPts,
-                          units: 'pt'
-                        }
-                      };
-                      console.log(`📐 Bounds normalized to zero-origin: 0,0 → ${contentWidthPts.toFixed(1)},${contentHeightPts.toFixed(1)}pts`);
-                      
-                      // Set display dimensions from Ghostscript or MediaBox fallback
-                      displayWidth = contentWidthPts * pxToMm;
-                      displayHeight = contentHeightPts * pxToMm;
-                      console.log(`📐 Using ${useMediaBoxFallback ? 'MediaBox fallback' : 'Ghostscript'} dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
-                      
-                      // CRITICAL FIX: Crop SVG viewBox to match GS bbox content area
-                      // This removes the A4 page padding and shows only the actual artwork
-                      // SKIP cropping for MediaBox fallback (white artwork) - keep original SVG viewBox
-                      if (fs.existsSync(svgPath) && !useMediaBoxFallback) {
-                        try {
-                          let svgContent = fs.readFileSync(svgPath, 'utf8');
-                          
-                          // pdf2svg already handles the PDF→SVG coordinate transformation
-                          // It embeds a matrix transform that flips Y-axis internally
-                          // We should NOT apply another Y-flip - just use PDF bbox coords directly
-                          // viewBox: x=llx, y=lly, width, height (NO additional flip)
-                          const svgViewBoxX = llx;
-                          const svgViewBoxY = lly;  // Use lly directly - pdf2svg handles Y-flip
-                          const svgViewBoxWidth = contentWidthPts;
-                          const svgViewBoxHeight = contentHeightPts;
-                          
-                          console.log(`🎯 CROPPING SVG to GS bbox:`);
-                          console.log(`   PDF bbox: llx=${llx.toFixed(1)}, lly=${lly.toFixed(1)}, urx=${urx.toFixed(1)}, ury=${ury.toFixed(1)}`);
-                          console.log(`   Page size: ${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pts`);
-                          console.log(`   SVG viewBox: ${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}`);
-                          console.log(`   NOTE: Using PDF bbox coords directly - pdf2svg handles Y-flip internally`);
-                          
-                          // Update SVG viewBox and dimensions to match content
-                          const newViewBox = `viewBox="${svgViewBoxX.toFixed(2)} ${svgViewBoxY.toFixed(2)} ${svgViewBoxWidth.toFixed(2)} ${svgViewBoxHeight.toFixed(2)}"`;
-                          svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
-                          
-                          // Also update width/height attributes to match content
-                          svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
-                          svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
-                          
-                          // Add marker to indicate GS-cropped SVG
-                          svgContent = svgContent.replace(/<svg\s/, '<svg data-gs-cropped="true" ');
-                          
-                          fs.writeFileSync(svgPath, svgContent);
-                          console.log(`✅ SVG viewBox cropped to GS bbox - no padding, no extra Y-flip`);
-                        } catch (svgCropError) {
-                          console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
-                        }
-                      } else if (useMediaBoxFallback) {
-                        console.log(`📐 SKIP SVG cropping for white/invisible artwork - keeping original SVG viewBox`);
+                    };
+                    
+                    // Set display dimensions from SVG geometry
+                    displayWidth = contentWidthPts * pxToMm;
+                    displayHeight = contentHeightPts * pxToMm;
+                    console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                    
+                    // Crop SVG viewBox to content bounds (removes page padding)
+                    if (fs.existsSync(svgPath)) {
+                      try {
+                        let svgContent = fs.readFileSync(svgPath, 'utf8');
+                        const bounds = svgGeometryResult.contentBounds;
+                        
+                        console.log(`🎯 CROPPING SVG to geometry bounds:`);
+                        console.log(`   Content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
+                        console.log(`   Size: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
+                        
+                        // Update SVG viewBox to content bounds
+                        const newViewBox = `viewBox="${bounds.xMin.toFixed(2)} ${bounds.yMin.toFixed(2)} ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
+                        svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                        
+                        // Update width/height to match content
+                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
+                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
+                        
+                        // Mark as geometry-cropped
+                        svgContent = svgContent.replace(/<svg\s/, '<svg data-geometry-cropped="true" ');
+                        
+                        fs.writeFileSync(svgPath, svgContent);
+                        console.log(`✅ SVG viewBox cropped to geometry bounds - works for all colors including white`);
+                      } catch (svgCropError) {
+                        console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
                       }
                     }
-                  } catch (gsError) {
-                    console.log(`⚠️ Ghostscript bbox failed, falling back to SVG analyzer`);
+                  } else {
+                    console.log(`⚠️ SVG geometry analysis returned no content - file may be empty or corrupted`);
                   }
                 } catch (pdfLibError) {
                   console.error('Failed to extract PDF MediaBox:', pdfLibError);
