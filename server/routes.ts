@@ -1837,6 +1837,9 @@ export async function registerRoutes(app: express.Application) {
             console.log('🎨 DEBUG: Taking MIXED-CONTENT path - PDF will preserve vector');
           } else {
             console.log('📝 DEBUG: Taking VECTOR-ONLY path - PDF will be treated as vector');
+            // CRITICAL FIX: Set originalPdfPath for ALL PDFs so Ghostscript bbox can work
+            (file as any).originalPdfPath = originalPdfPath;
+            console.log(`📐 Set originalPdfPath for vector PDF: ${originalPdfPath}`);
           }
           
           // Override file type based on content analysis
