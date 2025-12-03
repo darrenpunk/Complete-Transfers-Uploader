@@ -2965,28 +2965,15 @@ export async function registerRoutes(app: express.Application) {
                   // Ghostscript source: displayWidth/displayHeight already set from GS bbox
                   console.log(`✅ GHOSTSCRIPT SOURCE: Keeping GS bbox dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                 }
-              } else {
-                console.log(`⚠️ Bounds extraction failed, falling back to viewBox dimensions`);
-                
-                // CRITICAL FIX: If we have PDF page dimensions, use them instead of generic fallback
-                if (pdfPageDimensions) {
-                  displayWidth = pdfPageDimensions.widthMm;
-                  displayHeight = pdfPageDimensions.heightMm;
-                  console.log(`✅ USING PDF PAGE DIMENSIONS AS FALLBACK: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm (from MediaBox)`);
-                  console.log(`🎯 This preserves the original PDF page size - NO scaling to painted pixels`);
-                } else {
-                  // Fallback to the original robust dimension system
-                  const { detectDimensionsFromSVG } = await import('./dimension-utils');
-                  const updatedSvgContent2 = fs.readFileSync(svgPath, 'utf8');
-                  const dimensionResult = await detectDimensionsFromSVG(updatedSvgContent2, null, svgPath);
-                  displayWidth = dimensionResult.widthMm;
-                  displayHeight = dimensionResult.heightMm;
-                  
-                  console.log(`🔄 FALLBACK DIMENSIONS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${dimensionResult.source})`);
-                }
               }
               
-            } // End of if (!useCropDimensions) block
+            } // End of if (needsTightCrop && !isGhostscriptSource) block
+            
+            // CRITICAL: When Ghostscript bbox succeeded, preserve those dimensions
+            // This runs AFTER the tight-content block (whether it executed or was skipped)
+            if (boundsResult?.method === 'ghostscript-bbox') {
+              console.log(`✅ GHOSTSCRIPT FINAL: displayWidth=${displayWidth.toFixed(2)}mm, displayHeight=${displayHeight.toFixed(2)}mm preserved from GS bbox`);
+            }
               
             } catch (boundsError) {
               console.error('❌ Bounds extraction error:', boundsError);
