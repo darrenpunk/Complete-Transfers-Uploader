@@ -3107,25 +3107,17 @@ export async function registerRoutes(app: express.Application) {
         const usableWidth = templateSize.width - (safetyMargin * 2);
         const usableHeight = templateSize.height - (safetyMargin * 2);
 
-        // AUTO-SCALE: Check if content exceeds template bounds and scale to fit
+        // DISABLED AUTO-SCALE: Per user requirement, artwork must retain exact original dimensions
+        // Content that exceeds template bounds will extend beyond but retain true size
         let finalDisplayWidth = displayWidth;
         let finalDisplayHeight = displayHeight;
         let wasAutoScaled = false;
         
-        // Check if content is larger than usable area
+        // Log if content exceeds bounds (but do NOT scale)
         if (displayWidth > usableWidth || displayHeight > usableHeight) {
-          // Calculate scale factors to fit within usable area
-          const scaleX = usableWidth / displayWidth;
-          const scaleY = usableHeight / displayHeight;
-          const scaleFactor = Math.min(scaleX, scaleY);
-          
-          // Apply uniform scaling to maintain aspect ratio
-          finalDisplayWidth = displayWidth * scaleFactor;
-          finalDisplayHeight = displayHeight * scaleFactor;
-          wasAutoScaled = true;
-          
-          console.log(`⚠️ AUTO-SCALE: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds usable area ${usableWidth.toFixed(1)}×${usableHeight.toFixed(1)}mm`);
-          console.log(`📐 Scaling by ${(scaleFactor * 100).toFixed(1)}% to ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm`);
+          console.log(`📐 ORIGINAL SIZE PRESERVED: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds usable area ${usableWidth.toFixed(1)}×${usableHeight.toFixed(1)}mm`);
+          console.log(`   ⚠️ Content will extend beyond template bounds - this is expected behavior`);
+          console.log(`   ℹ️ User can manually scale via "Fit to Bounds" if needed`);
         }
 
         // Use center-based coordinate system
