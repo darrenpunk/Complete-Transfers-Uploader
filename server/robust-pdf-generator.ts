@@ -520,7 +520,27 @@ grestore`;
         // USE ORIGINAL PDF to preserve exact CMYK colors and vectors (no conversion)
         else if (fs.existsSync(originalPdfPath)) {
           console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
-          logoPdfPath = originalPdfPath;
+          
+          // CRITICAL: Check if we have original PDF bounds - need to crop before embedding
+          // Otherwise the full page gets scaled down, shrinking the content
+          const originalPdfBounds = logo.originalPdfBounds as any;
+          if (originalPdfBounds && originalPdfBounds.xMin !== undefined) {
+            console.log(`📋 Original PDF bounds available: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+            
+            // Crop the original PDF to content bounds using Ghostscript
+            const croppedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
+            if (croppedPdfPath) {
+              console.log(`✅ PDF cropped to content bounds: ${croppedPdfPath}`);
+              logoPdfPath = croppedPdfPath;
+              shouldCleanup = true; // Clean up cropped PDF after embedding
+            } else {
+              console.log(`⚠️ PDF cropping failed, using full page (may scale incorrectly)`);
+              logoPdfPath = originalPdfPath;
+            }
+          } else {
+            console.log(`📄 No original bounds - using full PDF page directly`);
+            logoPdfPath = originalPdfPath;
+          }
           console.log(`📄 Original PDF will be embedded directly - no color conversion`);
         }
         else {
@@ -799,6 +819,78 @@ grestore`;
     }
   }
   
+  /**
+   * Crop PDF to content bounds using Ghostscript
+   * This ensures the embedded page only contains the actual artwork, not the full page
+   */
+  private async cropPdfToContentBounds(
+    pdfPath: string, 
+    bounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number }
+  ): Promise<string | null> {
+    try {
+      const timestamp = Date.now();
+      const croppedPath = path.join(process.cwd(), 'uploads', `cropped_${timestamp}.pdf`);
+      
+      // Ghostscript uses bottom-left origin, and bounds are in points
+      // We need to set the CropBox to the content area
+      const cropBox = `[${bounds.xMin.toFixed(2)} ${bounds.yMin.toFixed(2)} ${bounds.xMax.toFixed(2)} ${bounds.yMax.toFixed(2)}]`;
+      
+      console.log(`🔪 Cropping PDF to bounds: ${cropBox}`);
+      console.log(`📐 Content size: ${bounds.width.toFixed(2)}×${bounds.height.toFixed(2)}pts`);
+      
+      // Use Ghostscript to crop the PDF to content bounds
+      // -dUseCropBox uses the CropBox we set, -dPDFFitPage fits content to new page size
+      const gsCmd = `gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dQUIET ` +
+        `-dColorConversionStrategy=/LeaveColorUnchanged ` +
+        `-dPreserveColorProfiles=true ` +
+        `-dPDFSETTINGS=/prepress ` +
+        `-dAutoRotatePages=/None ` +
+        `-dPreserveOverprint=true ` +
+        `-c "<</CropBox${cropBox}/TrimBox${cropBox}>> setpagedevice" ` +
+        `-f "${pdfPath}" ` +
+        `-sOutputFile="${croppedPath}"`;
+      
+      await execAsync(gsCmd);
+      
+      if (fs.existsSync(croppedPath)) {
+        const stats = fs.statSync(croppedPath);
+        console.log(`✅ PDF cropped successfully: ${stats.size} bytes`);
+        
+        // Verify the cropped PDF has the correct dimensions
+        try {
+          const { PDFDocument } = await import('pdf-lib');
+          const croppedBytes = fs.readFileSync(croppedPath);
+          const croppedDoc = await PDFDocument.load(croppedBytes);
+          const [page] = croppedDoc.getPages();
+          const { width, height } = page.getSize();
+          console.log(`📐 Cropped PDF page size: ${width.toFixed(1)}×${height.toFixed(1)}pts`);
+          
+          // Check if cropping worked - page should be close to content size
+          const expectedWidth = bounds.width;
+          const expectedHeight = bounds.height;
+          const widthDiff = Math.abs(width - expectedWidth);
+          const heightDiff = Math.abs(height - expectedHeight);
+          
+          if (widthDiff < 5 && heightDiff < 5) {
+            console.log(`✅ Cropped PDF dimensions match expected content size`);
+          } else {
+            console.log(`⚠️ Cropped PDF size differs from expected: got ${width.toFixed(1)}×${height.toFixed(1)}, expected ${expectedWidth.toFixed(1)}×${expectedHeight.toFixed(1)}`);
+          }
+        } catch (verifyError) {
+          console.log(`⚠️ Could not verify cropped PDF dimensions: ${verifyError}`);
+        }
+        
+        return croppedPath;
+      }
+      
+      console.log(`⚠️ Cropped PDF not created`);
+      return null;
+    } catch (error) {
+      console.error(`❌ PDF cropping failed:`, error);
+      return null;
+    }
+  }
+
   /**
    * Convert SVG to PDF preserving colors
    */

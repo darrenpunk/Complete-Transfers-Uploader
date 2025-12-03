@@ -57,6 +57,7 @@ export const logos = pgTable("logos", {
   dropboxUploadedAt: text("dropbox_uploaded_at"), // Timestamp when file was uploaded to Dropbox
   originalWidth: real("original_width"), // Original PDF/artwork width in mm (before auto-scaling)
   originalHeight: real("original_height"), // Original PDF/artwork height in mm (before auto-scaling)
+  originalPdfBounds: jsonb("original_pdf_bounds"), // Original PDF content bounds BEFORE normalization (for cropping during PDF generation)
 });
 
 export const canvasElements = pgTable("canvas_elements", {

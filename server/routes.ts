@@ -2374,6 +2374,10 @@ export async function registerRoutes(app: express.Application) {
         // Create canvas element with proper sizing
         let displayWidth = 283.5; // User override: exact target dimensions
         let displayHeight = 285.2; // User override: exact target dimensions
+        
+        // Store original PDF content bounds for cropping during PDF generation
+        // These are the ORIGINAL coordinates BEFORE normalization - needed to crop original PDF
+        let originalPdfBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
 
         // Use actual extracted PNG dimensions if available
         console.log('🔍 DEBUG: Checking for extracted PNG dimensions:', {
@@ -2526,6 +2530,19 @@ export async function registerRoutes(app: express.Application) {
                         console.log(`   Original content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
                         console.log(`   Size: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
                         console.log(`   Translation: (-${bounds.xMin.toFixed(2)}, -${bounds.yMin.toFixed(2)})`);
+                        
+                        // CRITICAL: Store original PDF content bounds for cropping during PDF generation
+                        // These are the coordinates BEFORE normalization - needed to crop original PDF
+                        originalPdfBounds = {
+                          xMin: bounds.xMin,
+                          yMin: bounds.yMin,
+                          xMax: bounds.xMax,
+                          yMax: bounds.yMax,
+                          width: contentWidthPts,
+                          height: contentHeightPts,
+                          units: 'pt'
+                        };
+                        console.log(`📋 Stored original PDF bounds for cropping: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
                         
                         // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
                         // This matches the normalized contentBounds the frontend expects
@@ -3086,10 +3103,16 @@ export async function registerRoutes(app: express.Application) {
           // CRITICAL: Store ORIGINAL dimensions for PDF output (before any auto-scaling)
           // These are used by PDF generator to preserve exact original size
           originalWidth: displayWidth,
-          originalHeight: displayHeight
+          originalHeight: displayHeight,
+          // CRITICAL: Store original PDF content bounds (before normalization) for cropping
+          // These are the coordinates in the ORIGINAL PDF that need to be cropped for proper embedding
+          ...(originalPdfBounds && { originalPdfBounds })
         });
         
         console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(contentBoundsToSave)} to logo ${logo.id}`);
+        if (originalPdfBounds) {
+          console.log(`✅ SAVED ORIGINAL PDF BOUNDS for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+        }
         
         if (!updatedLogo) {
           throw new Error(`Failed to update logo ${logo.id}`);
