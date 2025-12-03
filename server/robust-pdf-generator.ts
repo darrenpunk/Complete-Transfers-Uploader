@@ -518,30 +518,41 @@ grestore`;
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
         // USE ORIGINAL PDF to preserve exact CMYK colors and vectors (no conversion)
+        // BUT: If the PDF has content bounds that differ from page size, use tight-content SVG instead
+        // This is because pdf-lib embeds based on MediaBox, causing content to scale incorrectly
         else if (fs.existsSync(originalPdfPath)) {
-          console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
-          
-          // CRITICAL: Check if we have original PDF bounds - need to crop before embedding
-          // Otherwise the full page gets scaled down, shrinking the content
           const originalPdfBounds = logo.originalPdfBounds as any;
+          
+          // Check if content bounds differ significantly from canvas element dimensions
+          // If so, the original PDF has whitespace and embedding it will cause scaling issues
           if (originalPdfBounds && originalPdfBounds.xMin !== undefined) {
-            console.log(`📋 Original PDF bounds available: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+            const contentWidthPts = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
+            const contentHeightPts = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
+            const MM_TO_POINTS = 2.834645669;
+            const canvasWidthPts = element.width * MM_TO_POINTS;
+            const canvasHeightPts = element.height * MM_TO_POINTS;
             
-            // Crop the original PDF to content bounds using Ghostscript
-            const croppedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
-            if (croppedPdfPath) {
-              console.log(`✅ PDF cropped to content bounds: ${croppedPdfPath}`);
-              logoPdfPath = croppedPdfPath;
-              shouldCleanup = true; // Clean up cropped PDF after embedding
+            console.log(`📋 Original PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+            console.log(`📐 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
+            console.log(`📐 Canvas size: ${canvasWidthPts.toFixed(1)}×${canvasHeightPts.toFixed(1)}pts`);
+            
+            // If bounds offset is non-zero, PDF has whitespace that will cause scaling issues
+            // Use tight-content SVG instead which has correct viewBox
+            if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
+              console.log(`⚠️ PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - using tight-content SVG instead`);
+              console.log(`🎯 DIMENSION FIX: SVG viewBox matches content exactly, avoiding MediaBox scaling issue`);
+              logoPdfPath = null; // Force fallback to SVG conversion
             } else {
-              console.log(`⚠️ PDF cropping failed, using full page (may scale incorrectly)`);
+              console.log(`✅ PDF content starts at origin - safe to use original PDF`);
+              console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
               logoPdfPath = originalPdfPath;
+              console.log(`📄 Original PDF will be embedded directly - no color conversion`);
             }
           } else {
             console.log(`📄 No original bounds - using full PDF page directly`);
             logoPdfPath = originalPdfPath;
+            console.log(`📄 Original PDF will be embedded directly - no color conversion`);
           }
-          console.log(`📄 Original PDF will be embedded directly - no color conversion`);
         }
         else {
           console.log(`⚠️ Original PDF not found at: ${originalPdfPath} - will fall back to SVG`);

@@ -56,10 +56,6 @@ localPort = 36733
 externalPort = 5000
 
 [[ports]]
-localPort = 36869
-externalPort = 6000
-
-[[ports]]
 localPort = 37891
 externalPort = 3002
 
@@ -70,6 +66,10 @@ externalPort = 4200
 [[ports]]
 localPort = 44325
 externalPort = 3003
+
+[[ports]]
+localPort = 44749
+externalPort = 6000
 
 [agent]
 integrations = ["dropbox:1.0.0", "github:1.0.0"]
