@@ -471,31 +471,29 @@ grestore`;
     console.log(`🔍 DEBUG: Starting embedLogoInPages for logo: ${logo.filename}`);
     console.log(`🔍 DEBUG: Element position: (${element.x}, ${element.y}) size: ${element.width}x${element.height}`);
     console.log(`🔍 DEBUG: Original filename: ${logo.originalFilename}, original mime: ${logo.originalMimeType}`);
-    console.log(`🔍 DEBUG: Logo original dimensions: ${logo.originalWidth}×${logo.originalHeight}mm`);
     
-    // Use ORIGINAL dimensions from logo (before auto-scaling) for PDF output
-    // This ensures the output PDF matches the original artwork exactly
+    // CRITICAL: Use CANVAS element dimensions for BOTH placement AND drawing
+    // This ensures the PDF output exactly matches what the user sees on canvas
+    // The canvas dimensions ARE the correct final dimensions (already include any bounds extraction)
     const MM_TO_POINTS = 2.834645669;
     
-    // CRITICAL: Use original dimensions stored in logo record (not scaled canvas dimensions)
-    // Fall back to element dimensions if original not stored (for backwards compatibility)
-    const originalWidthMM = logo.originalWidth || element.width;
-    const originalHeightMM = logo.originalHeight || element.height;
+    // Use element dimensions - these match what's displayed on canvas
+    const elementWidthMM = element.width;
+    const elementHeightMM = element.height;
     
     let finalDimensions = { 
-      widthPts: originalWidthMM * MM_TO_POINTS, 
-      heightPts: originalHeightMM * MM_TO_POINTS 
+      widthPts: elementWidthMM * MM_TO_POINTS, 
+      heightPts: elementHeightMM * MM_TO_POINTS 
     };
     
-    console.log(`🎯 USING ORIGINAL DIMENSIONS: ${originalWidthMM.toFixed(2)}×${originalHeightMM.toFixed(2)}mm (from logo record)`);
-    console.log(`📐 Canvas display dimensions: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm (may be auto-scaled)`);
+    console.log(`🎯 USING CANVAS DIMENSIONS: ${elementWidthMM.toFixed(2)}×${elementHeightMM.toFixed(2)}mm`);
     console.log(`📐 Converting to points: ${finalDimensions.widthPts.toFixed(1)}×${finalDimensions.heightPts.toFixed(1)}pts`);
-    console.log(`✅ PRESERVING ORIGINAL SIZE: Output will match original artwork exactly`);
+    console.log(`✅ PDF OUTPUT WILL MATCH CANVAS EXACTLY`);
     
-    // Store target dimensions (original artwork dimensions for PDF output)
+    // Store target dimensions (canvas element dimensions for consistent sizing)
     const targetDimensions = {
-      widthMm: originalWidthMM,
-      heightMm: originalHeightMM,  
+      widthMm: elementWidthMM,
+      heightMm: elementHeightMM,  
       widthPts: finalDimensions.widthPts,
       heightPts: finalDimensions.heightPts,
       isCanvasTarget: true
@@ -624,27 +622,19 @@ grestore`;
         }
       }
       
-      // CRITICAL: Use ORIGINAL dimensions from logo (not auto-scaled canvas dimensions)
-      // This ensures PDF output matches original artwork exactly
-      const originalWidthMM = logo.originalWidth || element.width;
-      const originalHeightMM = logo.originalHeight || element.height;
-      
-      // When rotated 90° or 270°, visual dimensions are swapped on canvas
+      // Use CANVAS element dimensions for consistent sizing
+      // This ensures PDF output exactly matches what user sees on canvas
       const isRotated = element.rotation === 90 || element.rotation === 270;
-      const visualWidthMM = isRotated ? originalHeightMM : originalWidthMM;
-      const visualHeightMM = isRotated ? originalWidthMM : originalHeightMM;
+      const visualWidthMM = isRotated ? element.height : element.width;
+      const visualHeightMM = isRotated ? element.width : element.height;
       
-      // For PDF embedding, use original dimensions (not scaled canvas dimensions)
-      let contentWidthMM = originalWidthMM;
-      let contentHeightMM = originalHeightMM;
+      // For PDF embedding, use element dimensions (matches canvas display)
+      let contentWidthMM = element.width;
+      let contentHeightMM = element.height;
       
-      console.log(`🔍 ORIGINAL DIMENSIONS: ${originalWidthMM.toFixed(2)}×${originalHeightMM.toFixed(2)}mm (from logo record)`);
-      console.log(`📐 Canvas dimensions: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm (may be auto-scaled)`);
+      console.log(`🔍 CANVAS DIMENSIONS: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
       console.log(`🔄 Rotation: ${element.rotation || 0}° (isRotated: ${isRotated})`);
-      console.log(`✅ PRESERVING ORIGINAL SIZE: Content will be embedded at exact original dimensions`);
-      
-      // Verify dimensions - should match original, NOT canvas
-      console.log(`🎯 PDF OUTPUT SIZE: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (matches original artwork)`);
+      console.log(`✅ PDF OUTPUT WILL MATCH CANVAS: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
       
       
       const contentWidthPts = contentWidthMM * MM_TO_POINTS;
