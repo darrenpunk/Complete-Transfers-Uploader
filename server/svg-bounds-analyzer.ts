@@ -524,21 +524,20 @@ export class SVGBoundsAnalyzer {
 
   /**
    * Parse path data for bounds calculation
-   * CRITICAL: Applies transform matrix to get actual positioned bounds
+   * CRITICAL: Only includes actual path endpoints, NOT Bezier control points
+   * Control points can extend beyond the visible curve and cause incorrect bounds
    */
   private parsePathData(pathData: string, element?: Element): SVGBounds | null {
     try {
-      // Enhanced path parsing for better bounds detection
-      const coords = pathData.match(/([-+]?\d*\.?\d+)/g);
-      if (!coords || coords.length < 2) return null;
-
-      const numbers = coords.map(Number);
       let minX = Infinity, minY = Infinity;
       let maxX = -Infinity, maxY = -Infinity;
-
-      // CRITICAL: Check for transform matrix ONCE before processing coordinates
-      let transform = null;
-      let hasTransform = false;
+      
+      // Current position tracking
+      let currentX = 0, currentY = 0;
+      let startX = 0, startY = 0;  // For 'Z' command
+      
+      // CRITICAL: Check for transform matrix
+      let transform: { a: number; b: number; c: number; d: number; e: number; f: number } | null = null;
       if (element) {
         const transformAttr = element.getAttribute('transform');
         if (transformAttr) {
@@ -546,31 +545,142 @@ export class SVGBoundsAnalyzer {
           if (matrixMatch) {
             const [, a, b, c, d, e, f] = matrixMatch.map(Number);
             transform = { a, b, c, d, e, f };
-            hasTransform = true;
-            console.log(`🔧 Found transform matrix: translate(${e.toFixed(1)}, ${f.toFixed(1)}) scale(${a}, ${d})`);
           }
         }
       }
-
-      // Process coordinates in pairs to find actual content bounds
-      for (let i = 0; i < numbers.length - 1; i += 2) {
-        let x = numbers[i];
-        let y = numbers[i + 1];
+      
+      // Helper to apply transform and update bounds
+      const addPoint = (x: number, y: number) => {
+        if (transform) {
+          const tx = transform.a * x + transform.c * y + transform.e;
+          const ty = transform.b * x + transform.d * y + transform.f;
+          x = tx;
+          y = ty;
+        }
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      };
+      
+      // Parse path commands properly - only include endpoints, not control points
+      // Regex to match SVG path commands with their parameters
+      const commandRegex = /([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g;
+      let match;
+      
+      while ((match = commandRegex.exec(pathData)) !== null) {
+        const command = match[1];
+        const params = match[2].trim();
+        const numbers = params.match(/-?\d*\.?\d+/g)?.map(Number) || [];
         
-        if (!isNaN(x) && !isNaN(y)) {
-          // CRITICAL: Apply transform matrix if present
-          if (hasTransform && transform) {
-            // Apply matrix transformation: [x', y'] = [a*x + c*y + e, b*x + d*y + f]
-            const transformedX = transform.a * x + transform.c * y + transform.e;
-            const transformedY = transform.b * x + transform.d * y + transform.f;
-            x = transformedX;
-            y = transformedY;
-          }
-          
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
+        let i = 0;
+        const isRelative = command === command.toLowerCase();
+        
+        switch (command.toUpperCase()) {
+          case 'M': // MoveTo
+            while (i < numbers.length - 1) {
+              const x = isRelative ? currentX + numbers[i] : numbers[i];
+              const y = isRelative ? currentY + numbers[i + 1] : numbers[i + 1];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              if (i === 0) { startX = x; startY = y; }
+              i += 2;
+            }
+            break;
+            
+          case 'L': // LineTo
+            while (i < numbers.length - 1) {
+              const x = isRelative ? currentX + numbers[i] : numbers[i];
+              const y = isRelative ? currentY + numbers[i + 1] : numbers[i + 1];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 2;
+            }
+            break;
+            
+          case 'H': // Horizontal LineTo
+            while (i < numbers.length) {
+              const x = isRelative ? currentX + numbers[i] : numbers[i];
+              addPoint(x, currentY);
+              currentX = x;
+              i += 1;
+            }
+            break;
+            
+          case 'V': // Vertical LineTo
+            while (i < numbers.length) {
+              const y = isRelative ? currentY + numbers[i] : numbers[i];
+              addPoint(currentX, y);
+              currentY = y;
+              i += 1;
+            }
+            break;
+            
+          case 'C': // Cubic Bezier - ONLY include endpoint, not control points
+            while (i < numbers.length - 5) {
+              // Skip control points (cp1x, cp1y, cp2x, cp2y), only use endpoint (x, y)
+              const x = isRelative ? currentX + numbers[i + 4] : numbers[i + 4];
+              const y = isRelative ? currentY + numbers[i + 5] : numbers[i + 5];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 6;
+            }
+            break;
+            
+          case 'S': // Smooth Cubic Bezier - ONLY include endpoint
+            while (i < numbers.length - 3) {
+              // Skip control point (cp2x, cp2y), only use endpoint (x, y)
+              const x = isRelative ? currentX + numbers[i + 2] : numbers[i + 2];
+              const y = isRelative ? currentY + numbers[i + 3] : numbers[i + 3];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 4;
+            }
+            break;
+            
+          case 'Q': // Quadratic Bezier - ONLY include endpoint
+            while (i < numbers.length - 3) {
+              // Skip control point (cpx, cpy), only use endpoint (x, y)
+              const x = isRelative ? currentX + numbers[i + 2] : numbers[i + 2];
+              const y = isRelative ? currentY + numbers[i + 3] : numbers[i + 3];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 4;
+            }
+            break;
+            
+          case 'T': // Smooth Quadratic Bezier - endpoint only
+            while (i < numbers.length - 1) {
+              const x = isRelative ? currentX + numbers[i] : numbers[i];
+              const y = isRelative ? currentY + numbers[i + 1] : numbers[i + 1];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 2;
+            }
+            break;
+            
+          case 'A': // Arc - ONLY include endpoint, skip radii and flags
+            while (i < numbers.length - 6) {
+              // Skip rx, ry, angle, largeArc, sweep - only use endpoint (x, y)
+              const x = isRelative ? currentX + numbers[i + 5] : numbers[i + 5];
+              const y = isRelative ? currentY + numbers[i + 6] : numbers[i + 6];
+              addPoint(x, y);
+              currentX = x;
+              currentY = y;
+              i += 7;
+            }
+            break;
+            
+          case 'Z': // ClosePath
+            currentX = startX;
+            currentY = startY;
+            break;
         }
       }
 
@@ -578,9 +688,6 @@ export class SVGBoundsAnalyzer {
 
       const width = maxX - minX;
       const height = maxY - minY;
-      
-      // Add debug logging for path bounds
-      console.log(`🛤️  Path bounds: (${minX.toFixed(1)}, ${minY.toFixed(1)}) to (${maxX.toFixed(1)}, ${maxY.toFixed(1)}) = ${width.toFixed(1)}×${height.toFixed(1)}`);
 
       return {
         xMin: minX,
