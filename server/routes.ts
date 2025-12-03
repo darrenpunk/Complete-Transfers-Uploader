@@ -2493,19 +2493,23 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`✅ Ghostscript bbox: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
                       
                       // Use Ghostscript bounds as the authoritative content bounds
+                      // CRITICAL: Normalize to zero-origin to match the cropped SVG viewBox
+                      // The SVG viewBox is cropped to the bbox area, so its coordinate system
+                      // starts at (0,0), not (llx, lly). Store bounds in the cropped coordinate system.
                       boundsResult = {
                         success: true,
                         method: 'ghostscript-bbox',
                         contentBounds: {
-                          xMin: llx,
-                          yMin: lly,
-                          xMax: urx,
-                          yMax: ury,
+                          xMin: 0,  // Zero-origin after SVG cropping
+                          yMin: 0,  // Zero-origin after SVG cropping
+                          xMax: contentWidthPts,
+                          yMax: contentHeightPts,
                           width: contentWidthPts,
                           height: contentHeightPts,
                           units: 'pt'
                         }
                       };
+                      console.log(`📐 Bounds normalized to zero-origin: 0,0 → ${contentWidthPts.toFixed(1)},${contentHeightPts.toFixed(1)}pts`);
                       
                       // Set display dimensions from Ghostscript
                       displayWidth = contentWidthPts * pxToMm;
