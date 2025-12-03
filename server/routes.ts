@@ -2488,12 +2488,27 @@ export async function registerRoutes(app: express.Application) {
                     // Parse HiResBoundingBox for precise dimensions
                     const hiResMatch = gsResult.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
                     if (hiResMatch) {
-                      const [, llx, lly, urx, ury] = hiResMatch.map(Number);
-                      const contentWidthPts = urx - llx;
-                      const contentHeightPts = ury - lly;
+                      let [, llx, lly, urx, ury] = hiResMatch.map(Number);
+                      let contentWidthPts = urx - llx;
+                      let contentHeightPts = ury - lly;
                       const pxToMm = 1 / 2.834645669;
                       
                       console.log(`✅ Ghostscript bbox: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
+                      
+                      // CRITICAL FIX: If Ghostscript returns 0×0 dimensions (white/invisible artwork),
+                      // fall back to PDF page dimensions (MediaBox)
+                      let useMediaBoxFallback = false;
+                      if (contentWidthPts === 0 && contentHeightPts === 0 && pdfPageDimensions) {
+                        console.log(`⚠️ Ghostscript returned 0×0 (white/invisible artwork) - using MediaBox fallback`);
+                        console.log(`📐 MediaBox fallback: ${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pts = ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
+                        contentWidthPts = pdfPageDimensions.widthPts;
+                        contentHeightPts = pdfPageDimensions.heightPts;
+                        llx = 0;
+                        lly = 0;
+                        urx = contentWidthPts;
+                        ury = contentHeightPts;
+                        useMediaBoxFallback = true;
+                      }
                       
                       // Use Ghostscript bounds as the authoritative content bounds
                       // CRITICAL: Normalize to zero-origin to match the cropped SVG viewBox
@@ -2501,7 +2516,7 @@ export async function registerRoutes(app: express.Application) {
                       // starts at (0,0), not (llx, lly). Store bounds in the cropped coordinate system.
                       boundsResult = {
                         success: true,
-                        method: 'ghostscript-bbox',
+                        method: useMediaBoxFallback ? 'mediabox-fallback' : 'ghostscript-bbox',
                         contentBounds: {
                           xMin: 0,  // Zero-origin after SVG cropping
                           yMin: 0,  // Zero-origin after SVG cropping
@@ -2514,14 +2529,15 @@ export async function registerRoutes(app: express.Application) {
                       };
                       console.log(`📐 Bounds normalized to zero-origin: 0,0 → ${contentWidthPts.toFixed(1)},${contentHeightPts.toFixed(1)}pts`);
                       
-                      // Set display dimensions from Ghostscript
+                      // Set display dimensions from Ghostscript or MediaBox fallback
                       displayWidth = contentWidthPts * pxToMm;
                       displayHeight = contentHeightPts * pxToMm;
-                      console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                      console.log(`📐 Using ${useMediaBoxFallback ? 'MediaBox fallback' : 'Ghostscript'} dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                       
                       // CRITICAL FIX: Crop SVG viewBox to match GS bbox content area
                       // This removes the A4 page padding and shows only the actual artwork
-                      if (fs.existsSync(svgPath)) {
+                      // SKIP cropping for MediaBox fallback (white artwork) - keep original SVG viewBox
+                      if (fs.existsSync(svgPath) && !useMediaBoxFallback) {
                         try {
                           let svgContent = fs.readFileSync(svgPath, 'utf8');
                           
@@ -2556,6 +2572,8 @@ export async function registerRoutes(app: express.Application) {
                         } catch (svgCropError) {
                           console.error('⚠️ Failed to crop SVG viewBox:', svgCropError);
                         }
+                      } else if (useMediaBoxFallback) {
+                        console.log(`📐 SKIP SVG cropping for white/invisible artwork - keeping original SVG viewBox`);
                       }
                     }
                   } catch (gsError) {
