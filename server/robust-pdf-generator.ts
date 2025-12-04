@@ -518,36 +518,39 @@ grestore`;
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
         // USE ORIGINAL PDF to preserve exact CMYK colors and vectors (no conversion)
-        // BUT: If the PDF has content bounds that differ from page size, use tight-content SVG instead
-        // This is because pdf-lib embeds based on MediaBox, causing content to scale incorrectly
+        // If PDF has content offset, resize the page to content bounds using Ghostscript
         else if (fs.existsSync(originalPdfPath)) {
           const originalPdfBounds = logo.originalPdfBounds as any;
           
-          // Check if content bounds differ significantly from canvas element dimensions
-          // If so, the original PDF has whitespace and embedding it will cause scaling issues
+          // Check if content bounds differ from page origin - if so, need to resize
           if (originalPdfBounds && originalPdfBounds.xMin !== undefined) {
             const contentWidthPts = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
             const contentHeightPts = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
-            const MM_TO_POINTS = 2.834645669;
-            const canvasWidthPts = element.width * MM_TO_POINTS;
-            const canvasHeightPts = element.height * MM_TO_POINTS;
             
             console.log(`📋 Original PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
             console.log(`📐 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
-            console.log(`📐 Canvas size: ${canvasWidthPts.toFixed(1)}×${canvasHeightPts.toFixed(1)}pts`);
             
-            // If bounds offset is non-zero, PDF has whitespace that will cause scaling issues
-            // Use tight-content SVG instead which has correct viewBox
+            // If bounds offset is non-zero, resize PDF page to content bounds
+            // This preserves CMYK colors while fixing dimensions
             if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
-              console.log(`⚠️ PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - using tight-content SVG instead`);
-              console.log(`🎯 DIMENSION FIX: SVG viewBox matches content exactly, avoiding MediaBox scaling issue`);
-              logoPdfPath = null; // Force fallback to SVG conversion
+              console.log(`📐 PDF has content offset - resizing page to content bounds while preserving CMYK`);
+              
+              // Resize the original PDF to content bounds using Ghostscript
+              const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
+              if (resizedPdfPath) {
+                console.log(`✅ PDF resized to content bounds: ${resizedPdfPath}`);
+                logoPdfPath = resizedPdfPath;
+                shouldCleanup = true; // Clean up resized PDF after embedding
+              } else {
+                console.log(`⚠️ PDF resizing failed, using original (may have dimension issues)`);
+                logoPdfPath = originalPdfPath;
+              }
             } else {
               console.log(`✅ PDF content starts at origin - safe to use original PDF`);
               console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
               logoPdfPath = originalPdfPath;
-              console.log(`📄 Original PDF will be embedded directly - no color conversion`);
             }
+            console.log(`📄 Original PDF will be embedded directly - no color conversion`);
           } else {
             console.log(`📄 No original bounds - using full PDF page directly`);
             logoPdfPath = originalPdfPath;
@@ -832,7 +835,8 @@ grestore`;
   
   /**
    * Crop PDF to content bounds using Ghostscript
-   * This ensures the embedded page only contains the actual artwork, not the full page
+   * This physically resizes the PDF page to content dimensions while preserving CMYK colors
+   * Uses -dFIXEDMEDIA with device dimensions and BeginPage translate to shift content to origin
    */
   private async cropPdfToContentBounds(
     pdfPath: string, 
@@ -842,30 +846,39 @@ grestore`;
       const timestamp = Date.now();
       const croppedPath = path.join(process.cwd(), 'uploads', `cropped_${timestamp}.pdf`);
       
-      // Ghostscript uses bottom-left origin, and bounds are in points
-      // We need to set the CropBox to the content area
-      const cropBox = `[${bounds.xMin.toFixed(2)} ${bounds.yMin.toFixed(2)} ${bounds.xMax.toFixed(2)} ${bounds.yMax.toFixed(2)}]`;
+      // Calculate content dimensions
+      const contentWidth = bounds.width || (bounds.xMax - bounds.xMin);
+      const contentHeight = bounds.height || (bounds.yMax - bounds.yMin);
       
-      console.log(`🔪 Cropping PDF to bounds: ${cropBox}`);
-      console.log(`📐 Content size: ${bounds.width.toFixed(2)}×${bounds.height.toFixed(2)}pts`);
+      // Calculate translation to move content to origin (negative of min bounds)
+      const translateX = -bounds.xMin;
+      const translateY = -bounds.yMin;
       
-      // Use Ghostscript to crop the PDF to content bounds
-      // CRITICAL: -sOutputFile must come BEFORE -c and -f options
-      const gsCmd = `gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dQUIET ` +
+      console.log(`🔪 Resizing PDF page to content bounds`);
+      console.log(`📐 Content size: ${contentWidth.toFixed(2)}×${contentHeight.toFixed(2)}pts`);
+      console.log(`📍 Translating content by: (${translateX.toFixed(2)}, ${translateY.toFixed(2)})pts`);
+      
+      // Use Ghostscript to:
+      // 1. Set fixed media size to content dimensions (-dFIXEDMEDIA -dDEVICEWIDTHPOINTS -dDEVICEHEIGHTPOINTS)
+      // 2. Translate content to origin using BeginPage procedure
+      // 3. Preserve CMYK colors (-dColorConversionStrategy=/LeaveColorUnchanged)
+      const gsCmd = `gs -o "${croppedPath}" -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER ` +
+        `-dAutoRotatePages=/None ` +
         `-dColorConversionStrategy=/LeaveColorUnchanged ` +
         `-dPreserveColorProfiles=true ` +
-        `-dPDFSETTINGS=/prepress ` +
-        `-dAutoRotatePages=/None ` +
-        `-dPreserveOverprint=true ` +
-        `-sOutputFile="${croppedPath}" ` +
-        `-c "<</CropBox${cropBox}/TrimBox${cropBox}>> setpagedevice" ` +
+        `-dFIXEDMEDIA ` +
+        `-dDEVICEWIDTHPOINTS=${contentWidth.toFixed(2)} ` +
+        `-dDEVICEHEIGHTPOINTS=${contentHeight.toFixed(2)} ` +
+        `-c "<</BeginPage{${translateX.toFixed(2)} ${translateY.toFixed(2)} translate}>> setpagedevice" ` +
         `-f "${pdfPath}"`;
+      
+      console.log(`🔧 Ghostscript command: ${gsCmd.substring(0, 200)}...`);
       
       await execAsync(gsCmd);
       
       if (fs.existsSync(croppedPath)) {
         const stats = fs.statSync(croppedPath);
-        console.log(`✅ PDF cropped successfully: ${stats.size} bytes`);
+        console.log(`✅ PDF resized successfully: ${stats.size} bytes`);
         
         // Verify the cropped PDF has the correct dimensions
         try {
@@ -874,30 +887,28 @@ grestore`;
           const croppedDoc = await PDFDocument.load(croppedBytes);
           const [page] = croppedDoc.getPages();
           const { width, height } = page.getSize();
-          console.log(`📐 Cropped PDF page size: ${width.toFixed(1)}×${height.toFixed(1)}pts`);
+          console.log(`📐 Resized PDF page size: ${width.toFixed(1)}×${height.toFixed(1)}pts`);
           
-          // Check if cropping worked - page should be close to content size
-          const expectedWidth = bounds.width;
-          const expectedHeight = bounds.height;
-          const widthDiff = Math.abs(width - expectedWidth);
-          const heightDiff = Math.abs(height - expectedHeight);
+          // Check if resizing worked - page should match content size
+          const widthDiff = Math.abs(width - contentWidth);
+          const heightDiff = Math.abs(height - contentHeight);
           
-          if (widthDiff < 5 && heightDiff < 5) {
-            console.log(`✅ Cropped PDF dimensions match expected content size`);
+          if (widthDiff < 2 && heightDiff < 2) {
+            console.log(`✅ Resized PDF dimensions match content size exactly!`);
           } else {
-            console.log(`⚠️ Cropped PDF size differs from expected: got ${width.toFixed(1)}×${height.toFixed(1)}, expected ${expectedWidth.toFixed(1)}×${expectedHeight.toFixed(1)}`);
+            console.log(`⚠️ Resized PDF size differs: got ${width.toFixed(1)}×${height.toFixed(1)}, expected ${contentWidth.toFixed(1)}×${contentHeight.toFixed(1)}`);
           }
         } catch (verifyError) {
-          console.log(`⚠️ Could not verify cropped PDF dimensions: ${verifyError}`);
+          console.log(`⚠️ Could not verify resized PDF dimensions: ${verifyError}`);
         }
         
         return croppedPath;
       }
       
-      console.log(`⚠️ Cropped PDF not created`);
+      console.log(`⚠️ Resized PDF not created`);
       return null;
     } catch (error) {
-      console.error(`❌ PDF cropping failed:`, error);
+      console.error(`❌ PDF resizing failed:`, error);
       return null;
     }
   }
