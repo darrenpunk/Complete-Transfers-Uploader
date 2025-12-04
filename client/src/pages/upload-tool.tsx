@@ -255,6 +255,8 @@ export default function UploadTool() {
       };
       
       console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
+      console.log('🎯 TEMPLATE SIZE FOR ADD-TO-CART:', currentProject.templateSize);
+      console.log('🎯 IS SINGLE COLOUR:', currentProject.templateSize?.includes('single') || currentProject.inkColor);
       if (partnerEmail) {
         console.log('✅ Including partner email for cart assignment:', partnerEmail);
       }
@@ -314,7 +316,20 @@ export default function UploadTool() {
           const cartUrl = `${odooBaseUrl}/shop/cart`;
           
           if (isInIframe) {
-            window.parent.location.href = cartUrl;
+            // Use postMessage to have parent handle navigation
+            // This ensures the customer's Odoo session is maintained
+            console.log('🔗 Sending navigate-to-cart message to parent');
+            window.parent.postMessage({
+              type: 'navigate-to-cart',
+              url: cartUrl
+            }, '*');
+            
+            // Fallback: direct navigation after a short delay
+            // in case parent doesn't handle the message
+            setTimeout(() => {
+              console.log('🔗 Fallback: direct parent navigation');
+              window.parent.location.href = cartUrl;
+            }, 500);
           } else {
             window.location.href = cartUrl;
           }
