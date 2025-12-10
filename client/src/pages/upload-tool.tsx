@@ -35,7 +35,7 @@ export default function UploadTool() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
-  const [selectedElement, setSelectedElement] = useState<CanvasElement | null>(null);
+  const [selectedElements, setSelectedElements] = useState<CanvasElement[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showProductLauncher, setShowProductLauncher] = useState(false);
@@ -868,7 +868,7 @@ export default function UploadTool() {
   const handleStartOver = () => {
     // Reset state
     setCurrentProject(null);
-    setSelectedElement(null);
+    setSelectedElements([]);
     setCurrentStep(1);
     setHasInitialized(false);
     setSelectedProductGroup("");
@@ -1326,7 +1326,7 @@ export default function UploadTool() {
             logos={logos}
             templateSizes={templateSizes}
             canvasElements={canvasElements}
-            selectedElement={selectedElement}
+            selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
             onTemplateChange={handleTemplateChange}
             onGarmentColorChange={handleGarmentColorChange}
             onInkColorChange={handleInkColorChange}
@@ -1343,8 +1343,8 @@ export default function UploadTool() {
             template={currentTemplate}
             logos={logos}
             canvasElements={canvasElements}
-            selectedElement={selectedElement}
-            onElementSelect={setSelectedElement}
+            selectedElements={selectedElements}
+            onElementsSelect={setSelectedElements}
             onLogoUpload={handleFilesUpload}
             isUploading={isUploading}
             uploadProgress={uploadProgress}
@@ -1357,7 +1357,7 @@ export default function UploadTool() {
         {/* Right Properties Panel */}
         <div className="flex-shrink-0" style={{ width: '320px' }}>
           <PropertiesPanel
-            selectedElement={selectedElement}
+            selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
             canvasElements={canvasElements}
             logos={logos}
             project={currentProject}

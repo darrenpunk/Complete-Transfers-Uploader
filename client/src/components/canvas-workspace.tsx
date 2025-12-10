@@ -116,8 +116,8 @@ interface CanvasWorkspaceProps {
   template?: TemplateSize;
   logos: Logo[];
   canvasElements: CanvasElement[];
-  selectedElement: CanvasElement | null;
-  onElementSelect: (element: CanvasElement | null) => void;
+  selectedElements: CanvasElement[];
+  onElementsSelect: (elements: CanvasElement[]) => void;
   onLogoUpload?: (files: File[]) => void;
   isUploading?: boolean;
   uploadProgress?: number;
@@ -145,8 +145,8 @@ export default function CanvasWorkspace({
   template,
   logos,
   canvasElements,
-  selectedElement,
-  onElementSelect,
+  selectedElements,
+  onElementsSelect,
   onLogoUpload,
   isUploading = false,
   uploadProgress = 0,
@@ -154,6 +154,16 @@ export default function CanvasWorkspace({
   onContinue,
   currentStep = 1
 }: CanvasWorkspaceProps) {
+  // Helper to get first selected element (for backwards compatibility with single-select operations)
+  const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
+  
+  // Helper to check if an element is selected
+  const isElementSelected = (elementId: string) => selectedElements.some(el => el.id === elementId);
+  
+  // Helper to select all elements
+  const selectAllElements = () => {
+    onElementsSelect([...canvasElements]);
+  };
   const canvasRef = useRef<HTMLDivElement>(null);
   
   // Core UI state
@@ -253,7 +263,7 @@ export default function CanvasWorkspace({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
-      onElementSelect(null); // Deselect the deleted element
+      onElementsSelect([]); // Deselect the deleted element
     },
   });
 
@@ -598,11 +608,24 @@ export default function CanvasWorkspace({
 
   const handleElementClick = (element: CanvasElement, event: React.MouseEvent) => {
     event.stopPropagation();
-    onElementSelect(element);
+    
+    // Shift+click for multi-select
+    if (event.shiftKey) {
+      if (isElementSelected(element.id)) {
+        // Deselect if already selected
+        onElementsSelect(selectedElements.filter(el => el.id !== element.id));
+      } else {
+        // Add to selection
+        onElementsSelect([...selectedElements, element]);
+      }
+    } else {
+      // Regular click - single select
+      onElementsSelect([element]);
+    }
   };
 
   const handleCanvasClick = () => {
-    onElementSelect(null);
+    onElementsSelect([]);
   };
 
   const handleResizeStart = (event: React.MouseEvent, element: CanvasElement, handle: string) => {
@@ -630,7 +653,9 @@ export default function CanvasWorkspace({
     setInitialSize({ width: element.width, height: element.height });
     setInitialPosition({ x: element.x, y: element.y });
     setInitialMousePos({ x: mouseX, y: mouseY });
-    onElementSelect(element);
+    if (!isElementSelected(element.id)) {
+      onElementsSelect([element]);
+    }
   };
 
   const handleMouseDown = (element: CanvasElement, event: React.MouseEvent) => {
@@ -640,7 +665,11 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(true);
-    onElementSelect(element);
+    
+    // If element is not already selected, select it (unless shift is held for multi-select)
+    if (!isElementSelected(element.id)) {
+      onElementsSelect([element]);
+    }
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
@@ -684,12 +713,15 @@ export default function CanvasWorkspace({
 
       // Use requestAnimationFrame for smoother updates instead of setTimeout
       requestAnimationFrame(() => {
-        if (isDragging && selectedElement && template) {
+        if (isDragging && selectedElements.length > 0 && template) {
+          // Use the first selected element as the reference for drag calculations
+          const primaryElement = selectedElements[0];
+          
           // Convert pixels back to mm for storage
           let mmToPixelRatio = template.pixelWidth / template.width;
           
           // Use proper DPI for PDF-derived elements
-          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
+          const isPdfDerived = primaryElement.width > 200 || primaryElement.height > 200;
           if (isPdfDerived) {
             mmToPixelRatio = 2.834645669; // 72 DPI conversion
           }
@@ -705,25 +737,20 @@ export default function CanvasWorkspace({
           const newCenterX = mouseX - templateCenterX - (dragOffset.x / scaleFactor / mmToPixelRatio);
           const newCenterY = mouseY - templateCenterY - (dragOffset.y / scaleFactor / mmToPixelRatio);
           
-          // No constraints - allow free movement in center-based coordinate system
-          // The preflight checks will warn if position is out of bounds
-          const halfWidth = selectedElement.width / 2;
-          const halfHeight = selectedElement.height / 2;
+          // Calculate the delta movement from the primary element's original position
+          const deltaX = newCenterX - primaryElement.x;
+          const deltaY = newCenterY - primaryElement.y;
           
-          // Calculate reasonable bounds for warning (not enforced)
-          const minX = -templateCenterX + halfWidth;
-          const maxX = templateCenterX - halfWidth;
-          const minY = -templateCenterY + halfHeight;
-          const maxY = templateCenterY - halfHeight;
-          
-          // Use the new position without constraints
-          const constrainedX = newCenterX;
-          const constrainedY = newCenterY;
-
-          // Use more precise rounding for smoother dragging
-          updateElementDirect(selectedElement.id, { 
-            x: Math.round(constrainedX * 10) / 10, 
-            y: Math.round(constrainedY * 10) / 10
+          // Move ALL selected elements by the same delta (group movement)
+          selectedElements.forEach(element => {
+            const constrainedX = element.x + deltaX;
+            const constrainedY = element.y + deltaY;
+            
+            // Use more precise rounding for smoother dragging
+            updateElementDirect(element.id, { 
+              x: Math.round(constrainedX * 10) / 10, 
+              y: Math.round(constrainedY * 10) / 10
+            });
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -895,7 +922,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElement, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, zoom, template]);
+  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
@@ -1540,7 +1567,7 @@ export default function CanvasWorkspace({
               // For logo elements, find the associated logo
               const logo = element.logoId ? logos.find(l => l.id === element.logoId) : null;
 
-              const isSelected = selectedElement?.id === element.id;
+              const isSelected = isElementSelected(element.id);
               
               // Check if this is a Single Colour Transfer template requiring ink color recoloring
               const isSingleColourTemplate = template?.group === "Screen Printed Transfers" && 
@@ -1599,7 +1626,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
-                  className={`canvas-element absolute ${isDragging && selectedElement?.id === element.id ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  className={`canvas-element absolute ${isDragging && isSelected ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: elementX,
                     top: elementY,
