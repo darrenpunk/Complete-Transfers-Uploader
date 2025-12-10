@@ -176,6 +176,10 @@ export default function CanvasWorkspace({
       await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { groupId });
     }
     
+    // Optimistically update selected elements with new groupId
+    const updatedSelection = selectedElements.map(el => ({ ...el, groupId }));
+    onElementsSelect(updatedSelection);
+    
     // Invalidate cache to refresh
     queryClient.invalidateQueries({ queryKey: ['/api/projects', project?.id, 'canvas-elements'] });
     toast({
@@ -199,6 +203,13 @@ export default function CanvasWorkspace({
     for (const element of elementsToUngroup) {
       await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { groupId: null });
     }
+    
+    // Optimistically update selected elements to clear groupId
+    const ungroupedIds = new Set(elementsToUngroup.map(e => e.id));
+    const updatedSelection = selectedElements.map(el => 
+      ungroupedIds.has(el.id) ? { ...el, groupId: null } : el
+    );
+    onElementsSelect(updatedSelection);
     
     // Invalidate cache to refresh
     queryClient.invalidateQueries({ queryKey: ['/api/projects', project?.id, 'canvas-elements'] });
