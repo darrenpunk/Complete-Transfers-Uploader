@@ -177,7 +177,7 @@ export default function CanvasWorkspace({
     }
     
     // Invalidate cache to refresh
-    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'elements'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', project?.id, 'canvas-elements'] });
     toast({
       title: "Elements grouped",
       description: `${selectedElements.length} elements have been grouped together`,
@@ -201,7 +201,7 @@ export default function CanvasWorkspace({
     }
     
     // Invalidate cache to refresh
-    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'elements'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', project?.id, 'canvas-elements'] });
     toast({
       title: "Elements ungrouped",
       description: `${elementsToUngroup.length} elements have been ungrouped`,
@@ -661,18 +661,31 @@ export default function CanvasWorkspace({
   const handleElementClick = (element: CanvasElement, event: React.MouseEvent) => {
     event.stopPropagation();
     
+    // If element is in a group, get all elements in that group
+    const getGroupElements = (el: CanvasElement): CanvasElement[] => {
+      if (el.groupId) {
+        return canvasElements.filter(ce => ce.groupId === el.groupId);
+      }
+      return [el];
+    };
+    
+    const elementsToSelect = getGroupElements(element);
+    
     // Shift+click for multi-select
     if (event.shiftKey) {
       if (isElementSelected(element.id)) {
-        // Deselect if already selected
-        onElementsSelect(selectedElements.filter(el => el.id !== element.id));
+        // Deselect entire group if already selected
+        const groupIds = new Set(elementsToSelect.map(e => e.id));
+        onElementsSelect(selectedElements.filter(el => !groupIds.has(el.id)));
       } else {
-        // Add to selection
-        onElementsSelect([...selectedElements, element]);
+        // Add entire group to selection
+        const existingIds = new Set(selectedElements.map(e => e.id));
+        const newElements = elementsToSelect.filter(e => !existingIds.has(e.id));
+        onElementsSelect([...selectedElements, ...newElements]);
       }
     } else {
-      // Regular click - single select
-      onElementsSelect([element]);
+      // Regular click - select entire group
+      onElementsSelect(elementsToSelect);
     }
   };
 
@@ -721,19 +734,32 @@ export default function CanvasWorkspace({
     event.stopPropagation();
     setIsDragging(true);
     
+    // Helper to get all elements in same group
+    const getGroupElements = (el: CanvasElement): CanvasElement[] => {
+      if (el.groupId) {
+        return canvasElements.filter(ce => ce.groupId === el.groupId);
+      }
+      return [el];
+    };
+    
+    const elementsToSelect = getGroupElements(element);
+    
     // Handle selection based on shift key
     if (event.shiftKey) {
-      // Shift+click: toggle selection
+      // Shift+click: toggle selection of entire group
       if (isElementSelected(element.id)) {
-        // Already selected - remove from selection
-        onElementsSelect(selectedElements.filter(el => el.id !== element.id));
+        // Already selected - remove entire group from selection
+        const groupIds = new Set(elementsToSelect.map(e => e.id));
+        onElementsSelect(selectedElements.filter(el => !groupIds.has(el.id)));
       } else {
-        // Add to selection
-        onElementsSelect([...selectedElements, element]);
+        // Add entire group to selection
+        const existingIds = new Set(selectedElements.map(e => e.id));
+        const newElements = elementsToSelect.filter(e => !existingIds.has(e.id));
+        onElementsSelect([...selectedElements, ...newElements]);
       }
     } else if (!isElementSelected(element.id)) {
-      // Regular click on unselected element - single select
-      onElementsSelect([element]);
+      // Regular click on unselected element - select entire group
+      onElementsSelect(elementsToSelect);
     }
     // If element is already selected (without shift), keep current selection for group drag
     
@@ -769,12 +795,26 @@ export default function CanvasWorkspace({
       initialDragMousePosRef.current = { x: mouseXmm, y: mouseYmm };
       dragMmToPixelRatioRef.current = mmToPixelRatio;
       
-      // Determine which elements are being dragged
-      const currentSelectionIds = event.shiftKey 
-        ? (isElementSelected(element.id) 
-            ? selectedElements.filter(el => el.id !== element.id).map(el => el.id)
-            : [...selectedElements.map(el => el.id), element.id])
-        : (isElementSelected(element.id) ? selectedElements.map(el => el.id) : [element.id]);
+      // Determine which elements are being dragged (including all grouped elements)
+      const groupElementIds = elementsToSelect.map(e => e.id);
+      let currentSelectionIds: string[];
+      
+      if (event.shiftKey) {
+        if (isElementSelected(element.id)) {
+          // Remove entire group from selection
+          const groupIdSet = new Set(groupElementIds);
+          currentSelectionIds = selectedElements.filter(el => !groupIdSet.has(el.id)).map(el => el.id);
+        } else {
+          // Add entire group to selection
+          const existingIds = new Set(selectedElements.map(e => e.id));
+          const newIds = groupElementIds.filter(id => !existingIds.has(id));
+          currentSelectionIds = [...selectedElements.map(el => el.id), ...newIds];
+        }
+      } else {
+        currentSelectionIds = isElementSelected(element.id) 
+          ? selectedElements.map(el => el.id) 
+          : groupElementIds;
+      }
       
       // Save history ONCE at drag start for undo capability
       if (canvasElements) {
