@@ -192,10 +192,11 @@ export default function CanvasWorkspace({
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
-  // Store initial positions of ALL selected elements for group dragging
-  const [initialElementPositions, setInitialElementPositions] = useState<Map<string, {x: number, y: number}>>(new Map());
-  const [initialDragMousePos, setInitialDragMousePos] = useState({ x: 0, y: 0 });
-  const [dragMmToPixelRatio, setDragMmToPixelRatio] = useState(1); // Store ratio used at drag start
+  // Store initial positions of ALL selected elements for group dragging - use REFS for synchronous access
+  const initialElementPositionsRef = useRef<Map<string, {x: number, y: number}>>(new Map());
+  const initialDragMousePosRef = useRef({ x: 0, y: 0 });
+  const dragMmToPixelRatioRef = useRef(1);
+  const dragSelectedElementIdsRef = useRef<string[]>([]); // Store IDs of elements being dragged
   
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
@@ -715,30 +716,35 @@ export default function CanvasWorkspace({
         y: dragOffsetY
       });
       
-      // Store initial mouse position in mm for group dragging
+      // Store initial mouse position in mm for group dragging - use REFS for synchronous access
       const mouseXmm = (event.clientX - rect.left) / (zoom / 100) / mmToPixelRatio;
       const mouseYmm = (event.clientY - rect.top) / (zoom / 100) / mmToPixelRatio;
-      setInitialDragMousePos({ x: mouseXmm, y: mouseYmm });
-      setDragMmToPixelRatio(mmToPixelRatio); // Store the ratio for consistent delta calculation
+      initialDragMousePosRef.current = { x: mouseXmm, y: mouseYmm };
+      dragMmToPixelRatioRef.current = mmToPixelRatio;
       
-      // Store initial positions of ALL currently selected elements (including newly selected one)
-      const currentSelection = event.shiftKey 
+      // Determine which elements are being dragged
+      const currentSelectionIds = event.shiftKey 
         ? (isElementSelected(element.id) 
-            ? selectedElements.filter(el => el.id !== element.id) 
-            : [...selectedElements, element])
-        : (isElementSelected(element.id) ? selectedElements : [element]);
+            ? selectedElements.filter(el => el.id !== element.id).map(el => el.id)
+            : [...selectedElements.map(el => el.id), element.id])
+        : (isElementSelected(element.id) ? selectedElements.map(el => el.id) : [element.id]);
       
       // Save history ONCE at drag start for undo capability
       if (canvasElements) {
         saveToHistory(canvasElements);
       }
       
+      // Get positions from canvasElements (source of truth), not from selectedElements
       const positions = new Map<string, {x: number, y: number}>();
-      currentSelection.forEach(el => {
-        positions.set(el.id, { x: el.x, y: el.y });
+      currentSelectionIds.forEach(id => {
+        const el = canvasElements?.find(ce => ce.id === id);
+        if (el) {
+          positions.set(id, { x: el.x, y: el.y });
+        }
       });
-      setInitialElementPositions(positions);
-      console.log(`🎯 Stored initial positions for ${positions.size} elements`);
+      initialElementPositionsRef.current = positions;
+      dragSelectedElementIdsRef.current = currentSelectionIds;
+      console.log(`🎯 Stored initial positions for ${positions.size} elements:`, Array.from(positions.entries()));
     }
   };
 
@@ -756,29 +762,29 @@ export default function CanvasWorkspace({
 
       // Use requestAnimationFrame for smoother updates instead of setTimeout
       requestAnimationFrame(() => {
-        if (isDragging && selectedElements.length > 0 && template && initialElementPositions.size > 0) {
+        if (isDragging && template && initialElementPositionsRef.current.size > 0) {
           // Use the SAME mmToPixelRatio that was stored at drag start for consistent delta calculation
-          const mmToPixelRatio = dragMmToPixelRatio;
+          const mmToPixelRatio = dragMmToPixelRatioRef.current;
           
           // Convert current mouse position to mm coordinates using same ratio as initial
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
           
           // Calculate displacement from initial mouse position (in mm)
-          const deltaX = mouseX - initialDragMousePos.x;
-          const deltaY = mouseY - initialDragMousePos.y;
+          const deltaX = mouseX - initialDragMousePosRef.current.x;
+          const deltaY = mouseY - initialDragMousePosRef.current.y;
           
           // Move ALL selected elements by adding delta to their INITIAL positions
-          // Pass saveHistory=false to avoid React re-renders mid-loop that cause position drift
-          selectedElements.forEach(element => {
-            const initialPos = initialElementPositions.get(element.id);
+          // Use the element IDs stored at drag start, not from React state (which may be stale)
+          dragSelectedElementIdsRef.current.forEach(elementId => {
+            const initialPos = initialElementPositionsRef.current.get(elementId);
             if (initialPos) {
               const newX = initialPos.x + deltaX;
               const newY = initialPos.y + deltaY;
               
               // Use more precise rounding for smoother dragging
               // Don't save history during drag - only at drag start/end
-              updateElementDirect(element.id, { 
+              updateElementDirect(elementId, { 
                 x: Math.round(newX * 10) / 10, 
                 y: Math.round(newY * 10) / 10
               }, false);
@@ -954,7 +960,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, initialElementPositions, initialDragMousePos, dragMmToPixelRatio, zoom, template]);
+  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
