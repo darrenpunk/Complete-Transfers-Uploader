@@ -1085,22 +1085,65 @@ export default function CanvasWorkspace({
             const groupState = groupResizeStateRef.current;
             const initialGroupWidth = groupState.groupBounds.width;
             const initialGroupHeight = groupState.groupBounds.height;
-            const initialGroupCenterX = groupState.groupBounds.centerX;
-            const initialGroupCenterY = groupState.groupBounds.centerY;
+            const { minX, minY, maxX, maxY } = groupState.groupBounds;
             
             // Calculate scale factors from initial group size
             const scaleX = newWidth / (initialGroupWidth || 1);
             const scaleY = newHeight / (initialGroupHeight || 1);
             
+            // Determine anchor point based on which handle is being dragged
+            // The anchor is the opposite corner/edge that stays fixed
+            let anchorX = minX; // Default: anchor at left
+            let anchorY = minY; // Default: anchor at top
+            
+            switch (resizeHandle) {
+              case 'se': // Southeast - anchor at northwest
+                anchorX = minX;
+                anchorY = minY;
+                break;
+              case 'sw': // Southwest - anchor at northeast
+                anchorX = maxX;
+                anchorY = minY;
+                break;
+              case 'ne': // Northeast - anchor at southwest
+                anchorX = minX;
+                anchorY = maxY;
+                break;
+              case 'nw': // Northwest - anchor at southeast
+                anchorX = maxX;
+                anchorY = maxY;
+                break;
+              case 'e': // East - anchor at west edge center
+                anchorX = minX;
+                anchorY = (minY + maxY) / 2;
+                break;
+              case 'w': // West - anchor at east edge center
+                anchorX = maxX;
+                anchorY = (minY + maxY) / 2;
+                break;
+              case 'n': // North - anchor at south edge center
+                anchorX = (minX + maxX) / 2;
+                anchorY = maxY;
+                break;
+              case 's': // South - anchor at north edge center
+                anchorX = (minX + maxX) / 2;
+                anchorY = minY;
+                break;
+            }
+            
             // Update each element using its IMMUTABLE initial state
             groupState.elements.forEach((initial, elementId) => {
-              // Scale the offset from group center by the scale factor
-              const scaledOffsetX = initial.offsetX * scaleX;
-              const scaledOffsetY = initial.offsetY * scaleY;
+              // Calculate element's offset from the anchor point (not center)
+              const offsetFromAnchorX = initial.x - anchorX;
+              const offsetFromAnchorY = initial.y - anchorY;
               
-              // New position = new group center + scaled offset
-              const newElX = newCenterX + scaledOffsetX;
-              const newElY = newCenterY + scaledOffsetY;
+              // Scale the offset from anchor by the scale factor
+              const scaledOffsetX = offsetFromAnchorX * scaleX;
+              const scaledOffsetY = offsetFromAnchorY * scaleY;
+              
+              // New position = anchor + scaled offset
+              const newElX = anchorX + scaledOffsetX;
+              const newElY = anchorY + scaledOffsetY;
               
               // Scale element dimensions proportionally
               const newElWidth = Math.max(10, initial.width * scaleX);
