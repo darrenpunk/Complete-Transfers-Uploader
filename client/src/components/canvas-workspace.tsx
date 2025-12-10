@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1320,6 +1320,25 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Scale and center all content within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {/* Select All Button - show when multiple elements exist on canvas */}
+              {canvasElements && canvasElements.length > 1 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={selectedElements.length === canvasElements.length ? "default" : "outline"}
+                      size="sm"
+                      onClick={selectAllElements}
+                      data-testid="button-select-all"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-1" />
+                      Select All
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Select all elements on canvas to move them together</p>
                   </TooltipContent>
                 </Tooltip>
               )}
