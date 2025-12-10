@@ -256,6 +256,13 @@ export default function CanvasWorkspace({
   const dragMmToPixelRatioRef = useRef(1);
   const dragSelectedElementIdsRef = useRef<string[]>([]); // Store IDs of elements being dragged
   
+  // Group resize/rotate state - store initial state of all group elements
+  const groupResizeStateRef = useRef<{
+    groupBounds: { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number; centerX: number; centerY: number };
+    elements: Map<string, { x: number; y: number; width: number; height: number; rotation: number; relX: number; relY: number; relWidth: number; relHeight: number }>;
+  } | null>(null);
+  const isGroupResize = useRef(false);
+  
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -729,9 +736,67 @@ export default function CanvasWorkspace({
     
     setIsResizing(true);
     setResizeHandle(handle);
-    setInitialSize({ width: element.width, height: element.height });
-    setInitialPosition({ x: element.x, y: element.y });
     setInitialMousePos({ x: mouseX, y: mouseY });
+    
+    // Check if we're resizing multiple selected elements (group resize)
+    if (selectedElements.length > 1) {
+      isGroupResize.current = true;
+      
+      // Save history once at start
+      if (canvasElements) {
+        saveToHistory(canvasElements);
+      }
+      
+      // Calculate group bounding box
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      selectedElements.forEach(el => {
+        const left = el.x - el.width / 2;
+        const right = el.x + el.width / 2;
+        const top = el.y - el.height / 2;
+        const bottom = el.y + el.height / 2;
+        minX = Math.min(minX, left);
+        minY = Math.min(minY, top);
+        maxX = Math.max(maxX, right);
+        maxY = Math.max(maxY, bottom);
+      });
+      
+      const groupWidth = maxX - minX;
+      const groupHeight = maxY - minY;
+      const groupCenterX = (minX + maxX) / 2;
+      const groupCenterY = (minY + maxY) / 2;
+      
+      // Store each element's relative position and size within the group
+      const elements = new Map<string, { x: number; y: number; width: number; height: number; rotation: number; relX: number; relY: number; relWidth: number; relHeight: number }>();
+      selectedElements.forEach(el => {
+        elements.set(el.id, {
+          x: el.x,
+          y: el.y,
+          width: el.width,
+          height: el.height,
+          rotation: el.rotation || 0,
+          relX: (el.x - groupCenterX) / (groupWidth || 1),
+          relY: (el.y - groupCenterY) / (groupHeight || 1),
+          relWidth: el.width / (groupWidth || 1),
+          relHeight: el.height / (groupHeight || 1),
+        });
+      });
+      
+      groupResizeStateRef.current = {
+        groupBounds: { minX, minY, maxX, maxY, width: groupWidth, height: groupHeight, centerX: groupCenterX, centerY: groupCenterY },
+        elements
+      };
+      
+      // Use group bounds as initial size
+      setInitialSize({ width: groupWidth, height: groupHeight });
+      setInitialPosition({ x: groupCenterX, y: groupCenterY });
+    } else {
+      // Single element resize
+      isGroupResize.current = false;
+      groupResizeStateRef.current = null;
+      setInitialSize({ width: element.width, height: element.height });
+      setInitialPosition({ x: element.x, y: element.y });
+    }
+    
     if (!isElementSelected(element.id)) {
       onElementsSelect([element]);
     }
@@ -888,14 +953,17 @@ export default function CanvasWorkspace({
               }, false);
             }
           });
-        } else if (isResizing && selectedElement && resizeHandle && template) {
+        } else if (isResizing && resizeHandle && template) {
           // Convert pixels back to mm for storage
           let mmToPixelRatio = template.pixelWidth / template.width;
           
-          // Use proper DPI for PDF-derived elements
-          const isPdfDerived = selectedElement.width > 200 || selectedElement.height > 200;
-          if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          // Use proper DPI for PDF-derived elements (check first selected element)
+          const refElement = selectedElement || selectedElements[0];
+          if (refElement) {
+            const isPdfDerived = refElement.width > 200 || refElement.height > 200;
+            if (isPdfDerived) {
+              mmToPixelRatio = 2.834645669; // 72 DPI conversion
+            }
           }
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
@@ -904,22 +972,11 @@ export default function CanvasWorkspace({
           let deltaX = mouseX - initialMousePos.x;
           let deltaY = mouseY - initialMousePos.y;
 
-          // Transform deltas to account for rotation
-          const rotation = selectedElement.rotation || 0;
-          if (rotation !== 0) {
-            const rotationRad = (rotation * Math.PI) / 180;
-            const cosR = Math.cos(-rotationRad); // Negative because we're rotating back to local space
-            const sinR = Math.sin(-rotationRad);
-            const rotatedDeltaX = deltaX * cosR - deltaY * sinR;
-            const rotatedDeltaY = deltaX * sinR + deltaY * cosR;
-            deltaX = rotatedDeltaX;
-            deltaY = rotatedDeltaY;
-          }
-
+          // Calculate new group/element dimensions based on resize handle
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
-          let newX = initialPosition.x;
-          let newY = initialPosition.y;
+          let newCenterX = initialPosition.x;
+          let newCenterY = initialPosition.y;
 
           // Calculate aspect ratio from initial size
           const aspectRatio = initialSize.width / initialSize.height;
@@ -929,74 +986,66 @@ export default function CanvasWorkspace({
             case 'se': // Southeast
               newWidth = Math.max(20, initialSize.width + deltaX);
               newHeight = Math.max(20, initialSize.height + deltaY);
-              
               if (maintainAspectRatio) {
-                // Use the dimension that changed the most
                 const widthChange = Math.abs(deltaX);
                 const heightChange = Math.abs(deltaY);
-                
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
                 } else {
                   newWidth = newHeight * aspectRatio;
                 }
               }
+              // Center moves by half the size change
+              newCenterX = initialPosition.x + (newWidth - initialSize.width) / 2;
+              newCenterY = initialPosition.y + (newHeight - initialSize.height) / 2;
               break;
               
             case 'sw': // Southwest
               newWidth = Math.max(20, initialSize.width - deltaX);
               newHeight = Math.max(20, initialSize.height + deltaY);
-              newX = initialPosition.x + deltaX;
-              
               if (maintainAspectRatio) {
                 const widthChange = Math.abs(deltaX);
                 const heightChange = Math.abs(deltaY);
-                
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
                 } else {
                   newWidth = newHeight * aspectRatio;
-                  newX = initialPosition.x + initialSize.width - newWidth;
                 }
               }
+              newCenterX = initialPosition.x - (newWidth - initialSize.width) / 2;
+              newCenterY = initialPosition.y + (newHeight - initialSize.height) / 2;
               break;
               
             case 'ne': // Northeast
               newWidth = Math.max(20, initialSize.width + deltaX);
               newHeight = Math.max(20, initialSize.height - deltaY);
-              newY = initialPosition.y + deltaY;
-              
               if (maintainAspectRatio) {
                 const widthChange = Math.abs(deltaX);
                 const heightChange = Math.abs(deltaY);
-                
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
-                  newY = initialPosition.y + initialSize.height - newHeight;
                 } else {
                   newWidth = newHeight * aspectRatio;
                 }
               }
+              newCenterX = initialPosition.x + (newWidth - initialSize.width) / 2;
+              newCenterY = initialPosition.y - (newHeight - initialSize.height) / 2;
               break;
               
             case 'nw': // Northwest
               newWidth = Math.max(20, initialSize.width - deltaX);
               newHeight = Math.max(20, initialSize.height - deltaY);
-              newX = initialPosition.x + deltaX;
-              newY = initialPosition.y + deltaY;
-              
               if (maintainAspectRatio) {
                 const widthChange = Math.abs(deltaX);
                 const heightChange = Math.abs(deltaY);
-                
                 if (widthChange > heightChange) {
                   newHeight = newWidth / aspectRatio;
-                  newY = initialPosition.y + initialSize.height - newHeight;
                 } else {
                   newWidth = newHeight * aspectRatio;
-                  newX = initialPosition.x + initialSize.width - newWidth;
                 }
               }
+              newCenterX = initialPosition.x - (newWidth - initialSize.width) / 2;
+              newCenterY = initialPosition.y - (newHeight - initialSize.height) / 2;
               break;
               
             case 'e': // East
@@ -1004,22 +1053,23 @@ export default function CanvasWorkspace({
               if (maintainAspectRatio) {
                 newHeight = newWidth / aspectRatio;
               }
+              newCenterX = initialPosition.x + (newWidth - initialSize.width) / 2;
               break;
               
             case 'w': // West
               newWidth = Math.max(20, initialSize.width - deltaX);
-              newX = initialPosition.x + deltaX;
               if (maintainAspectRatio) {
                 newHeight = newWidth / aspectRatio;
               }
+              newCenterX = initialPosition.x - (newWidth - initialSize.width) / 2;
               break;
               
             case 'n': // North
               newHeight = Math.max(20, initialSize.height - deltaY);
-              newY = initialPosition.y + deltaY;
               if (maintainAspectRatio) {
                 newWidth = newHeight * aspectRatio;
               }
+              newCenterY = initialPosition.y - (newHeight - initialSize.height) / 2;
               break;
               
             case 's': // South
@@ -1027,16 +1077,132 @@ export default function CanvasWorkspace({
               if (maintainAspectRatio) {
                 newWidth = newHeight * aspectRatio;
               }
+              newCenterY = initialPosition.y + (newHeight - initialSize.height) / 2;
               break;
           }
 
-          // Use more precise rounding to reduce jumpiness
-          updateElementDirect(selectedElement.id, { 
-            width: Math.round(newWidth * 10) / 10, 
-            height: Math.round(newHeight * 10) / 10,
-            x: Math.round(newX * 10) / 10,
-            y: Math.round(newY * 10) / 10
-          });
+          // GROUP RESIZE: Scale all elements proportionally
+          if (isGroupResize.current && groupResizeStateRef.current) {
+            const groupState = groupResizeStateRef.current;
+            const scaleX = newWidth / groupState.groupBounds.width;
+            const scaleY = newHeight / groupState.groupBounds.height;
+            
+            // Update each element in the group
+            groupState.elements.forEach((initialState, elementId) => {
+              // Scale position relative to new group center
+              const newElX = newCenterX + initialState.relX * newWidth;
+              const newElY = newCenterY + initialState.relY * newHeight;
+              // Scale dimensions
+              const newElWidth = Math.max(10, initialState.width * scaleX);
+              const newElHeight = Math.max(10, initialState.height * scaleY);
+              
+              updateElementDirect(elementId, { 
+                x: Math.round(newElX * 10) / 10,
+                y: Math.round(newElY * 10) / 10,
+                width: Math.round(newElWidth * 10) / 10, 
+                height: Math.round(newElHeight * 10) / 10
+              }, false);
+            });
+          } else if (selectedElement) {
+            // SINGLE ELEMENT RESIZE (original behavior)
+            // Transform deltas to account for rotation for single elements
+            const rotation = selectedElement.rotation || 0;
+            if (rotation !== 0) {
+              const rotationRad = (rotation * Math.PI) / 180;
+              const cosR = Math.cos(-rotationRad);
+              const sinR = Math.sin(-rotationRad);
+              const rotatedDeltaX = deltaX * cosR - deltaY * sinR;
+              const rotatedDeltaY = deltaX * sinR + deltaY * cosR;
+              deltaX = rotatedDeltaX;
+              deltaY = rotatedDeltaY;
+            }
+            
+            // Recalculate for single element with rotation-adjusted deltas
+            let singleNewWidth = initialSize.width;
+            let singleNewHeight = initialSize.height;
+            let singleNewX = initialPosition.x;
+            let singleNewY = initialPosition.y;
+            
+            switch (resizeHandle) {
+              case 'se':
+                singleNewWidth = Math.max(20, initialSize.width + deltaX);
+                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                if (maintainAspectRatio) {
+                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    singleNewHeight = singleNewWidth / aspectRatio;
+                  } else {
+                    singleNewWidth = singleNewHeight * aspectRatio;
+                  }
+                }
+                break;
+              case 'sw':
+                singleNewWidth = Math.max(20, initialSize.width - deltaX);
+                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                singleNewX = initialPosition.x + deltaX;
+                if (maintainAspectRatio) {
+                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    singleNewHeight = singleNewWidth / aspectRatio;
+                  } else {
+                    singleNewWidth = singleNewHeight * aspectRatio;
+                    singleNewX = initialPosition.x + initialSize.width - singleNewWidth;
+                  }
+                }
+                break;
+              case 'ne':
+                singleNewWidth = Math.max(20, initialSize.width + deltaX);
+                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewY = initialPosition.y + deltaY;
+                if (maintainAspectRatio) {
+                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    singleNewHeight = singleNewWidth / aspectRatio;
+                    singleNewY = initialPosition.y + initialSize.height - singleNewHeight;
+                  } else {
+                    singleNewWidth = singleNewHeight * aspectRatio;
+                  }
+                }
+                break;
+              case 'nw':
+                singleNewWidth = Math.max(20, initialSize.width - deltaX);
+                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewX = initialPosition.x + deltaX;
+                singleNewY = initialPosition.y + deltaY;
+                if (maintainAspectRatio) {
+                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    singleNewHeight = singleNewWidth / aspectRatio;
+                    singleNewY = initialPosition.y + initialSize.height - singleNewHeight;
+                  } else {
+                    singleNewWidth = singleNewHeight * aspectRatio;
+                    singleNewX = initialPosition.x + initialSize.width - singleNewWidth;
+                  }
+                }
+                break;
+              case 'e':
+                singleNewWidth = Math.max(20, initialSize.width + deltaX);
+                if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
+                break;
+              case 'w':
+                singleNewWidth = Math.max(20, initialSize.width - deltaX);
+                singleNewX = initialPosition.x + deltaX;
+                if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
+                break;
+              case 'n':
+                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewY = initialPosition.y + deltaY;
+                if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
+                break;
+              case 's':
+                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
+                break;
+            }
+
+            updateElementDirect(selectedElement.id, { 
+              width: Math.round(singleNewWidth * 10) / 10, 
+              height: Math.round(singleNewHeight * 10) / 10,
+              x: Math.round(singleNewX * 10) / 10,
+              y: Math.round(singleNewY * 10) / 10
+            });
+          }
         }
       }); // Use requestAnimationFrame for smooth 60fps updates
     };
@@ -1045,6 +1211,9 @@ export default function CanvasWorkspace({
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
+      // Clear group resize state
+      isGroupResize.current = false;
+      groupResizeStateRef.current = null;
       clearTimeout(updateTimeout);
     };
 
