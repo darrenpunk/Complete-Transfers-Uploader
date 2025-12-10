@@ -661,15 +661,26 @@ export default function CanvasWorkspace({
   const handleMouseDown = (element: CanvasElement, event: React.MouseEvent) => {
     if (!element) return;
     
-    console.log(`🎯 Mouse down on element ${element.id}, starting drag`);
+    console.log(`🎯 Mouse down on element ${element.id}, starting drag, shiftKey=${event.shiftKey}`);
     event.preventDefault();
     event.stopPropagation();
     setIsDragging(true);
     
-    // If element is not already selected, select it (unless shift is held for multi-select)
-    if (!isElementSelected(element.id)) {
+    // Handle selection based on shift key
+    if (event.shiftKey) {
+      // Shift+click: toggle selection
+      if (isElementSelected(element.id)) {
+        // Already selected - remove from selection
+        onElementsSelect(selectedElements.filter(el => el.id !== element.id));
+      } else {
+        // Add to selection
+        onElementsSelect([...selectedElements, element]);
+      }
+    } else if (!isElementSelected(element.id)) {
+      // Regular click on unselected element - single select
       onElementsSelect([element]);
     }
+    // If element is already selected (without shift), keep current selection for group drag
     
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect && template) {
