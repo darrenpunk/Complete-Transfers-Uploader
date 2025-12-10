@@ -192,6 +192,9 @@ export default function CanvasWorkspace({
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
+  // Store initial positions of ALL selected elements for group dragging
+  const [initialElementPositions, setInitialElementPositions] = useState<Map<string, {x: number, y: number}>>(new Map());
+  const [initialDragMousePos, setInitialDragMousePos] = useState({ x: 0, y: 0 });
   
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
@@ -710,6 +713,25 @@ export default function CanvasWorkspace({
         x: dragOffsetX,
         y: dragOffsetY
       });
+      
+      // Store initial mouse position in mm for group dragging
+      const mouseXmm = (event.clientX - rect.left) / (zoom / 100) / mmToPixelRatio;
+      const mouseYmm = (event.clientY - rect.top) / (zoom / 100) / mmToPixelRatio;
+      setInitialDragMousePos({ x: mouseXmm, y: mouseYmm });
+      
+      // Store initial positions of ALL currently selected elements (including newly selected one)
+      const currentSelection = event.shiftKey 
+        ? (isElementSelected(element.id) 
+            ? selectedElements.filter(el => el.id !== element.id) 
+            : [...selectedElements, element])
+        : (isElementSelected(element.id) ? selectedElements : [element]);
+      
+      const positions = new Map<string, {x: number, y: number}>();
+      currentSelection.forEach(el => {
+        positions.set(el.id, { x: el.x, y: el.y });
+      });
+      setInitialElementPositions(positions);
+      console.log(`🎯 Stored initial positions for ${positions.size} elements`);
     }
   };
 
@@ -727,8 +749,8 @@ export default function CanvasWorkspace({
 
       // Use requestAnimationFrame for smoother updates instead of setTimeout
       requestAnimationFrame(() => {
-        if (isDragging && selectedElements.length > 0 && template) {
-          // Use the first selected element as the reference for drag calculations
+        if (isDragging && selectedElements.length > 0 && template && initialElementPositions.size > 0) {
+          // Use the first selected element as the reference for DPI calculation
           const primaryElement = selectedElements[0];
           
           // Convert pixels back to mm for storage
@@ -739,32 +761,28 @@ export default function CanvasWorkspace({
           if (isPdfDerived) {
             mmToPixelRatio = 2.834645669; // 72 DPI conversion
           }
-          // Convert mouse position to center-based coordinates
+          
+          // Convert current mouse position to mm coordinates
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
           
-          // Convert to center-based coordinates (relative to template center)
-          const templateCenterX = template.width / 2;
-          const templateCenterY = template.height / 2;
+          // Calculate displacement from initial mouse position (in mm)
+          const deltaX = mouseX - initialDragMousePos.x;
+          const deltaY = mouseY - initialDragMousePos.y;
           
-          // Calculate new center position (accounting for drag offset)
-          const newCenterX = mouseX - templateCenterX - (dragOffset.x / scaleFactor / mmToPixelRatio);
-          const newCenterY = mouseY - templateCenterY - (dragOffset.y / scaleFactor / mmToPixelRatio);
-          
-          // Calculate the delta movement from the primary element's original position
-          const deltaX = newCenterX - primaryElement.x;
-          const deltaY = newCenterY - primaryElement.y;
-          
-          // Move ALL selected elements by the same delta (group movement)
+          // Move ALL selected elements by adding delta to their INITIAL positions
           selectedElements.forEach(element => {
-            const constrainedX = element.x + deltaX;
-            const constrainedY = element.y + deltaY;
-            
-            // Use more precise rounding for smoother dragging
-            updateElementDirect(element.id, { 
-              x: Math.round(constrainedX * 10) / 10, 
-              y: Math.round(constrainedY * 10) / 10
-            });
+            const initialPos = initialElementPositions.get(element.id);
+            if (initialPos) {
+              const newX = initialPos.x + deltaX;
+              const newY = initialPos.y + deltaY;
+              
+              // Use more precise rounding for smoother dragging
+              updateElementDirect(element.id, { 
+                x: Math.round(newX * 10) / 10, 
+                y: Math.round(newY * 10) / 10
+              });
+            }
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
           // Convert pixels back to mm for storage
@@ -936,7 +954,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, zoom, template]);
+  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, initialElementPositions, initialDragMousePos, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
