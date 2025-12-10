@@ -2221,6 +2221,54 @@ export default function CanvasWorkspace({
                           e.stopPropagation();
                           let rotationTimeout: NodeJS.Timeout;
                           
+                          // Store initial state for group rotation
+                          const isGroupRotation = selectedElements.length > 1;
+                          let groupCenter = { x: 0, y: 0 };
+                          let initialGroupState: Map<string, { x: number; y: number; rotation: number; angleFromCenter: number; distanceFromCenter: number }> | null = null;
+                          let initialMouseAngle = 0;
+                          
+                          if (isGroupRotation && canvasRef.current) {
+                            // Calculate group center
+                            let sumX = 0, sumY = 0;
+                            selectedElements.forEach(el => {
+                              sumX += el.x;
+                              sumY += el.y;
+                            });
+                            groupCenter = { x: sumX / selectedElements.length, y: sumY / selectedElements.length };
+                            
+                            // Store initial state of each element
+                            initialGroupState = new Map();
+                            selectedElements.forEach(el => {
+                              const dx = el.x - groupCenter.x;
+                              const dy = el.y - groupCenter.y;
+                              const distance = Math.sqrt(dx * dx + dy * dy);
+                              const angle = Math.atan2(dy, dx);
+                              initialGroupState!.set(el.id, {
+                                x: el.x,
+                                y: el.y,
+                                rotation: el.rotation || 0,
+                                angleFromCenter: angle,
+                                distanceFromCenter: distance
+                              });
+                            });
+                            
+                            // Calculate initial mouse angle from group center
+                            const rect = canvasRef.current.getBoundingClientRect();
+                            const scaleFactor = zoom / 100;
+                            const mmToPixelRatio = template ? template.pixelWidth / template.width : 1;
+                            const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
+                            const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
+                            initialMouseAngle = Math.atan2(
+                              e.clientY - rect.top - groupCenterPixelY,
+                              e.clientX - rect.left - groupCenterPixelX
+                            );
+                            
+                            // Save history at start
+                            if (canvasElements) {
+                              saveToHistory(canvasElements);
+                            }
+                          }
+                          
                           const handleRotationMouseMove = (moveEvent: MouseEvent) => {
                             if (!canvasRef.current) return;
                             
@@ -2228,24 +2276,61 @@ export default function CanvasWorkspace({
                             
                             rotationTimeout = setTimeout(async () => {
                               const rect = canvasRef.current!.getBoundingClientRect();
-                              const centerX = elementX + elementWidth / 2;
-                              const centerY = elementY + elementHeight / 2;
+                              const scaleFactor = zoom / 100;
+                              const mmToPixelRatio = template ? template.pixelWidth / template.width : 1;
                               
-                              // Calculate angle from center to mouse position
-                              const angle = Math.atan2(
-                                moveEvent.clientY - rect.top - centerY,
-                                moveEvent.clientX - rect.left - centerX
-                              ) * (180 / Math.PI);
-                              
-                              // Normalize angle to 0-360 degrees
-                              const normalizedAngle = ((angle % 360) + 360) % 360;
-                              
-                              console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
-                              
-                              // Use same direct update function as other operations
-                              updateElementDirect(element.id, { 
-                                rotation: Math.round(normalizedAngle) 
-                              });
+                              if (isGroupRotation && initialGroupState) {
+                                // GROUP ROTATION: Rotate all elements around group center
+                                const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
+                                const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
+                                
+                                // Calculate current mouse angle from group center
+                                const currentMouseAngle = Math.atan2(
+                                  moveEvent.clientY - rect.top - groupCenterPixelY,
+                                  moveEvent.clientX - rect.left - groupCenterPixelX
+                                );
+                                
+                                // Delta rotation in radians
+                                const deltaRotation = currentMouseAngle - initialMouseAngle;
+                                const deltaRotationDeg = deltaRotation * (180 / Math.PI);
+                                
+                                // Update each element
+                                initialGroupState.forEach((initialState, elementId) => {
+                                  // Rotate position around group center
+                                  const newAngle = initialState.angleFromCenter + deltaRotation;
+                                  const newX = groupCenter.x + Math.cos(newAngle) * initialState.distanceFromCenter;
+                                  const newY = groupCenter.y + Math.sin(newAngle) * initialState.distanceFromCenter;
+                                  
+                                  // Add delta rotation to element's own rotation
+                                  const newElementRotation = ((initialState.rotation + deltaRotationDeg) % 360 + 360) % 360;
+                                  
+                                  updateElementDirect(elementId, { 
+                                    x: Math.round(newX * 10) / 10,
+                                    y: Math.round(newY * 10) / 10,
+                                    rotation: Math.round(newElementRotation) 
+                                  }, false);
+                                });
+                              } else {
+                                // SINGLE ELEMENT ROTATION (original behavior)
+                                const centerX = elementX + elementWidth / 2;
+                                const centerY = elementY + elementHeight / 2;
+                                
+                                // Calculate angle from center to mouse position
+                                const angle = Math.atan2(
+                                  moveEvent.clientY - rect.top - centerY,
+                                  moveEvent.clientX - rect.left - centerX
+                                ) * (180 / Math.PI);
+                                
+                                // Normalize angle to 0-360 degrees
+                                const normalizedAngle = ((angle % 360) + 360) % 360;
+                                
+                                console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
+                                
+                                // Use same direct update function as other operations
+                                updateElementDirect(element.id, { 
+                                  rotation: Math.round(normalizedAngle) 
+                                });
+                              }
                             }, 50);
                           };
                           
