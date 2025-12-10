@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -164,6 +164,53 @@ export default function CanvasWorkspace({
   const selectAllElements = () => {
     onElementsSelect([...canvasElements]);
   };
+  
+  // Helper to group selected elements
+  const groupSelectedElements = async () => {
+    if (selectedElements.length < 2) return;
+    
+    const groupId = `group-${Date.now()}`;
+    
+    // Update all selected elements with the same groupId
+    for (const element of selectedElements) {
+      await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { groupId });
+    }
+    
+    // Invalidate cache to refresh
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'elements'] });
+    toast({
+      title: "Elements grouped",
+      description: `${selectedElements.length} elements have been grouped together`,
+    });
+  };
+  
+  // Helper to ungroup selected elements
+  const ungroupSelectedElements = async () => {
+    const groupedElements = selectedElements.filter(el => el.groupId);
+    if (groupedElements.length === 0) return;
+    
+    // Get all unique groupIds from selected elements
+    const groupIds = new Set(groupedElements.map(el => el.groupId));
+    
+    // Find all elements with those groupIds (to ungroup entire groups)
+    const elementsToUngroup = canvasElements.filter(el => el.groupId && groupIds.has(el.groupId));
+    
+    // Remove groupId from all elements in those groups
+    for (const element of elementsToUngroup) {
+      await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { groupId: null });
+    }
+    
+    // Invalidate cache to refresh
+    queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'elements'] });
+    toast({
+      title: "Elements ungrouped",
+      description: `${elementsToUngroup.length} elements have been ungrouped`,
+    });
+  };
+  
+  // Check if any selected elements are in a group
+  const hasGroupedElements = selectedElements.some(el => el.groupId);
+  
   const canvasRef = useRef<HTMLDivElement>(null);
   
   // Core UI state
@@ -1377,6 +1424,46 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Select all elements on canvas to move them together</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Group Button - show when 2+ elements are selected */}
+              {selectedElements.length >= 2 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={groupSelectedElements}
+                      data-testid="button-group"
+                    >
+                      <Group className="w-4 h-4 mr-1" />
+                      Group
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Group selected elements so they move together</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {/* Ungroup Button - show when grouped elements are selected */}
+              {hasGroupedElements && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={ungroupSelectedElements}
+                      data-testid="button-ungroup"
+                    >
+                      <Ungroup className="w-4 h-4 mr-1" />
+                      Ungroup
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Ungroup elements so they can be moved individually</p>
                   </TooltipContent>
                 </Tooltip>
               )}
