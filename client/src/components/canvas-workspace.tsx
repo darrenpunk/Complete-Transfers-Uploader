@@ -624,8 +624,11 @@ export default function CanvasWorkspace({
     }
   };
 
-  const handleCanvasClick = () => {
-    onElementsSelect([]);
+  const handleCanvasClick = (event: React.MouseEvent) => {
+    // Only deselect if clicking on the canvas itself, not on child elements
+    if (event.target === event.currentTarget) {
+      onElementsSelect([]);
+    }
   };
 
   const handleResizeStart = (event: React.MouseEvent, element: CanvasElement, handle: string) => {
