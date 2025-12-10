@@ -1671,7 +1671,6 @@ export default function CanvasWorkspace({
                     outlineOffset: '-2px',
                     boxSizing: 'border-box'
                   }}
-                  onClick={(e) => handleElementClick(element, e)}
                   onMouseDown={(e) => handleMouseDown(element, e)}
                 >
                   {/* Element Content with Garment Background */}
