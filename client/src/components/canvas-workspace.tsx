@@ -256,6 +256,12 @@ export default function CanvasWorkspace({
   const dragMmToPixelRatioRef = useRef(1);
   const dragSelectedElementIdsRef = useRef<string[]>([]); // Store IDs of elements being dragged
   
+  // Keep a ref to the latest selectedElements to avoid stale closures
+  const selectedElementsRef = useRef(selectedElements);
+  useEffect(() => {
+    selectedElementsRef.current = selectedElements;
+  }, [selectedElements]);
+  
   // Group resize/rotate state - store initial state of all group elements (IMMUTABLE during operation)
   const groupResizeStateRef = useRef<{
     groupBounds: { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number; centerX: number; centerY: number };
@@ -2274,8 +2280,12 @@ export default function CanvasWorkspace({
                           e.stopPropagation();
                           let rotationTimeout: NodeJS.Timeout;
                           
+                          // Use ref to get the LATEST selectedElements to avoid stale closures
+                          const currentSelectedElements = selectedElementsRef.current;
+                          
                           // Store initial state for group rotation
-                          const isGroupRotation = selectedElements.length > 1;
+                          const isGroupRotation = currentSelectedElements.length > 1;
+                          console.log('Rotation mousedown - isGroupRotation:', isGroupRotation, 'selectedElements count:', currentSelectedElements.length, 'element ids:', currentSelectedElements.map(el => el.id));
                           let groupCenter = { x: 0, y: 0 };
                           let initialGroupState: Map<string, { x: number; y: number; rotation: number; angleFromCenter: number; distanceFromCenter: number }> | null = null;
                           let initialMouseAngle = 0;
@@ -2283,15 +2293,15 @@ export default function CanvasWorkspace({
                           if (isGroupRotation && canvasRef.current) {
                             // Calculate group center
                             let sumX = 0, sumY = 0;
-                            selectedElements.forEach(el => {
+                            currentSelectedElements.forEach(el => {
                               sumX += el.x;
                               sumY += el.y;
                             });
-                            groupCenter = { x: sumX / selectedElements.length, y: sumY / selectedElements.length };
+                            groupCenter = { x: sumX / currentSelectedElements.length, y: sumY / currentSelectedElements.length };
                             
                             // Store initial state of each element
                             initialGroupState = new Map();
-                            selectedElements.forEach(el => {
+                            currentSelectedElements.forEach(el => {
                               const dx = el.x - groupCenter.x;
                               const dy = el.y - groupCenter.y;
                               const distance = Math.sqrt(dx * dx + dy * dy);
@@ -2334,6 +2344,7 @@ export default function CanvasWorkspace({
                               
                               if (isGroupRotation && initialGroupState) {
                                 // GROUP ROTATION: Rotate all elements around group center
+                                console.log('Group rotation update - elements to rotate:', initialGroupState.size);
                                 const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
                                 const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
                                 
