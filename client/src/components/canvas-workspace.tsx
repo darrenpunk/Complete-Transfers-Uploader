@@ -195,6 +195,7 @@ export default function CanvasWorkspace({
   // Store initial positions of ALL selected elements for group dragging
   const [initialElementPositions, setInitialElementPositions] = useState<Map<string, {x: number, y: number}>>(new Map());
   const [initialDragMousePos, setInitialDragMousePos] = useState({ x: 0, y: 0 });
+  const [dragMmToPixelRatio, setDragMmToPixelRatio] = useState(1); // Store ratio used at drag start
   
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
@@ -718,6 +719,7 @@ export default function CanvasWorkspace({
       const mouseXmm = (event.clientX - rect.left) / (zoom / 100) / mmToPixelRatio;
       const mouseYmm = (event.clientY - rect.top) / (zoom / 100) / mmToPixelRatio;
       setInitialDragMousePos({ x: mouseXmm, y: mouseYmm });
+      setDragMmToPixelRatio(mmToPixelRatio); // Store the ratio for consistent delta calculation
       
       // Store initial positions of ALL currently selected elements (including newly selected one)
       const currentSelection = event.shiftKey 
@@ -750,19 +752,10 @@ export default function CanvasWorkspace({
       // Use requestAnimationFrame for smoother updates instead of setTimeout
       requestAnimationFrame(() => {
         if (isDragging && selectedElements.length > 0 && template && initialElementPositions.size > 0) {
-          // Use the first selected element as the reference for DPI calculation
-          const primaryElement = selectedElements[0];
+          // Use the SAME mmToPixelRatio that was stored at drag start for consistent delta calculation
+          const mmToPixelRatio = dragMmToPixelRatio;
           
-          // Convert pixels back to mm for storage
-          let mmToPixelRatio = template.pixelWidth / template.width;
-          
-          // Use proper DPI for PDF-derived elements
-          const isPdfDerived = primaryElement.width > 200 || primaryElement.height > 200;
-          if (isPdfDerived) {
-            mmToPixelRatio = 2.834645669; // 72 DPI conversion
-          }
-          
-          // Convert current mouse position to mm coordinates
+          // Convert current mouse position to mm coordinates using same ratio as initial
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
           
@@ -954,7 +947,7 @@ export default function CanvasWorkspace({
       document.removeEventListener('mouseup', handleMouseUp);
       clearTimeout(updateTimeout);
     };
-  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, initialElementPositions, initialDragMousePos, zoom, template]);
+  }, [isDragging, isResizing, selectedElements, dragOffset, resizeHandle, initialSize, initialPosition, initialMousePos, initialElementPositions, initialDragMousePos, dragMmToPixelRatio, zoom, template]);
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
