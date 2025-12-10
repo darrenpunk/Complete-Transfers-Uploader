@@ -728,6 +728,11 @@ export default function CanvasWorkspace({
             : [...selectedElements, element])
         : (isElementSelected(element.id) ? selectedElements : [element]);
       
+      // Save history ONCE at drag start for undo capability
+      if (canvasElements) {
+        saveToHistory(canvasElements);
+      }
+      
       const positions = new Map<string, {x: number, y: number}>();
       currentSelection.forEach(el => {
         positions.set(el.id, { x: el.x, y: el.y });
@@ -764,6 +769,7 @@ export default function CanvasWorkspace({
           const deltaY = mouseY - initialDragMousePos.y;
           
           // Move ALL selected elements by adding delta to their INITIAL positions
+          // Pass saveHistory=false to avoid React re-renders mid-loop that cause position drift
           selectedElements.forEach(element => {
             const initialPos = initialElementPositions.get(element.id);
             if (initialPos) {
@@ -771,10 +777,11 @@ export default function CanvasWorkspace({
               const newY = initialPos.y + deltaY;
               
               // Use more precise rounding for smoother dragging
+              // Don't save history during drag - only at drag start/end
               updateElementDirect(element.id, { 
                 x: Math.round(newX * 10) / 10, 
                 y: Math.round(newY * 10) / 10
-              });
+              }, false);
             }
           });
         } else if (isResizing && selectedElement && resizeHandle && template) {
