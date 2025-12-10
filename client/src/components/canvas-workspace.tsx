@@ -256,10 +256,10 @@ export default function CanvasWorkspace({
   const dragMmToPixelRatioRef = useRef(1);
   const dragSelectedElementIdsRef = useRef<string[]>([]); // Store IDs of elements being dragged
   
-  // Group resize/rotate state - store initial state of all group elements
+  // Group resize/rotate state - store initial state of all group elements (IMMUTABLE during operation)
   const groupResizeStateRef = useRef<{
     groupBounds: { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number; centerX: number; centerY: number };
-    elements: Map<string, { x: number; y: number; width: number; height: number; rotation: number; relX: number; relY: number; relWidth: number; relHeight: number }>;
+    elements: Map<string, { x: number; y: number; width: number; height: number; rotation: number; offsetX: number; offsetY: number }>;
   } | null>(null);
   const isGroupResize = useRef(false);
   
@@ -747,7 +747,7 @@ export default function CanvasWorkspace({
         saveToHistory(canvasElements);
       }
       
-      // Calculate group bounding box
+      // Calculate group bounding box using center positions
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       selectedElements.forEach(el => {
         const left = el.x - el.width / 2;
@@ -765,8 +765,9 @@ export default function CanvasWorkspace({
       const groupCenterX = (minX + maxX) / 2;
       const groupCenterY = (minY + maxY) / 2;
       
-      // Store each element's relative position and size within the group
-      const elements = new Map<string, { x: number; y: number; width: number; height: number; rotation: number; relX: number; relY: number; relWidth: number; relHeight: number }>();
+      // Store each element's ABSOLUTE initial position, size, and offset from group center
+      // This is immutable - we never modify these values during the resize
+      const elements = new Map<string, { x: number; y: number; width: number; height: number; rotation: number; offsetX: number; offsetY: number }>();
       selectedElements.forEach(el => {
         elements.set(el.id, {
           x: el.x,
@@ -774,10 +775,8 @@ export default function CanvasWorkspace({
           width: el.width,
           height: el.height,
           rotation: el.rotation || 0,
-          relX: (el.x - groupCenterX) / (groupWidth || 1),
-          relY: (el.y - groupCenterY) / (groupHeight || 1),
-          relWidth: el.width / (groupWidth || 1),
-          relHeight: el.height / (groupHeight || 1),
+          offsetX: el.x - groupCenterX,  // Distance from group center (signed)
+          offsetY: el.y - groupCenterY,  // Distance from group center (signed)
         });
       });
       
@@ -790,7 +789,7 @@ export default function CanvasWorkspace({
       setInitialSize({ width: groupWidth, height: groupHeight });
       setInitialPosition({ x: groupCenterX, y: groupCenterY });
     } else {
-      // Single element resize
+      // Single element resize - clear group state explicitly
       isGroupResize.current = false;
       groupResizeStateRef.current = null;
       setInitialSize({ width: element.width, height: element.height });
@@ -1081,20 +1080,31 @@ export default function CanvasWorkspace({
               break;
           }
 
-          // GROUP RESIZE: Scale all elements proportionally
+          // GROUP RESIZE: Scale all elements proportionally using IMMUTABLE initial state
           if (isGroupResize.current && groupResizeStateRef.current) {
             const groupState = groupResizeStateRef.current;
-            const scaleX = newWidth / groupState.groupBounds.width;
-            const scaleY = newHeight / groupState.groupBounds.height;
+            const initialGroupWidth = groupState.groupBounds.width;
+            const initialGroupHeight = groupState.groupBounds.height;
+            const initialGroupCenterX = groupState.groupBounds.centerX;
+            const initialGroupCenterY = groupState.groupBounds.centerY;
             
-            // Update each element in the group
-            groupState.elements.forEach((initialState, elementId) => {
-              // Scale position relative to new group center
-              const newElX = newCenterX + initialState.relX * newWidth;
-              const newElY = newCenterY + initialState.relY * newHeight;
-              // Scale dimensions
-              const newElWidth = Math.max(10, initialState.width * scaleX);
-              const newElHeight = Math.max(10, initialState.height * scaleY);
+            // Calculate scale factors from initial group size
+            const scaleX = newWidth / (initialGroupWidth || 1);
+            const scaleY = newHeight / (initialGroupHeight || 1);
+            
+            // Update each element using its IMMUTABLE initial state
+            groupState.elements.forEach((initial, elementId) => {
+              // Scale the offset from group center by the scale factor
+              const scaledOffsetX = initial.offsetX * scaleX;
+              const scaledOffsetY = initial.offsetY * scaleY;
+              
+              // New position = new group center + scaled offset
+              const newElX = newCenterX + scaledOffsetX;
+              const newElY = newCenterY + scaledOffsetY;
+              
+              // Scale element dimensions proportionally
+              const newElWidth = Math.max(10, initial.width * scaleX);
+              const newElHeight = Math.max(10, initial.height * scaleY);
               
               updateElementDirect(elementId, { 
                 x: Math.round(newElX * 10) / 10,
