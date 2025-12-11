@@ -106,6 +106,7 @@ function getColorName(hex: string): string {
 
 interface PropertiesPanelProps {
   selectedElement: CanvasElement | null;
+  selectedElements?: CanvasElement[]; // All selected elements for group operations
   canvasElements: CanvasElement[];
   logos: Logo[];
   project: Project;
@@ -119,6 +120,7 @@ interface PropertiesPanelProps {
 
 export default function PropertiesPanel({
   selectedElement,
+  selectedElements = [],
   canvasElements,
   logos,
   project,
@@ -443,6 +445,15 @@ export default function PropertiesPanel({
         console.log('Invalid number input, ignoring');
         return;
       }
+    }
+    
+    // For rotation changes, apply to ALL selected elements
+    if (property === 'rotation' && selectedElements.length > 1) {
+      console.log('Applying rotation to all selected elements:', selectedElements.length);
+      selectedElements.forEach(element => {
+        updateElementDirect(element.id, { rotation: processedValue });
+      });
+      return;
     }
 
     // Handle opacity as percentage

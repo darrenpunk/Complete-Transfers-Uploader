@@ -1358,6 +1358,7 @@ export default function UploadTool() {
         <div className="flex-shrink-0" style={{ width: '320px' }}>
           <PropertiesPanel
             selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
+            selectedElements={selectedElements}
             canvasElements={canvasElements}
             logos={logos}
             project={currentProject}
