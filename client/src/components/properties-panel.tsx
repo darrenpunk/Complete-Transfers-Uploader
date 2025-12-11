@@ -827,7 +827,16 @@ export default function PropertiesPanel({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handlePropertyChange('rotation', 0)}
+                  onClick={() => {
+                    // Reset rotation for all selected elements
+                    if (selectedElements.length > 1) {
+                      selectedElements.forEach(element => {
+                        updateElementDirect(element.id, { rotation: 0 });
+                      });
+                    } else {
+                      handlePropertyChange('rotation', 0);
+                    }
+                  }}
                   className="h-8"
                   data-testid="button-reset-rotation"
                 >
@@ -837,9 +846,18 @@ export default function PropertiesPanel({
                   variant="default"
                   size="sm"
                   onClick={() => {
-                    const currentRotation = currentElement.rotation || 0;
-                    const newRotation = (currentRotation + 90) % 360;
-                    handlePropertyChange('rotation', newRotation);
+                    // Rotate each selected element by 90° from its own current rotation
+                    if (selectedElements.length > 1) {
+                      selectedElements.forEach(element => {
+                        const currentRotation = element.rotation || 0;
+                        const newRotation = (currentRotation + 90) % 360;
+                        updateElementDirect(element.id, { rotation: newRotation });
+                      });
+                    } else {
+                      const currentRotation = currentElement.rotation || 0;
+                      const newRotation = (currentRotation + 90) % 360;
+                      handlePropertyChange('rotation', newRotation);
+                    }
                   }}
                   className="h-8"
                   data-testid="button-rotate-90"
