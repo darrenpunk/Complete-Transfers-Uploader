@@ -745,8 +745,10 @@ export default function CanvasWorkspace({
     setInitialMousePos({ x: mouseX, y: mouseY });
     
     // Check if we're resizing multiple selected elements (group resize)
+    console.log('🔍 handleResizeStart - selectedElements.length:', selectedElements.length, 'ids:', selectedElements.map(e => e.id));
     if (selectedElements.length > 1) {
       isGroupResize.current = true;
+      console.log('✅ Group resize detected');
       
       // Save history once at start
       if (canvasElements) {
@@ -1089,6 +1091,7 @@ export default function CanvasWorkspace({
           // GROUP RESIZE: Scale all elements proportionally using IMMUTABLE initial state
           if (isGroupResize.current && groupResizeStateRef.current) {
             const groupState = groupResizeStateRef.current;
+            console.log('🔄 Group resize mousemove - elements in state:', groupState.elements.size, 'ids:', Array.from(groupState.elements.keys()));
             const initialGroupWidth = groupState.groupBounds.width;
             const initialGroupHeight = groupState.groupBounds.height;
             const { minX, minY, maxX, maxY } = groupState.groupBounds;
@@ -1154,6 +1157,8 @@ export default function CanvasWorkspace({
               // Scale element dimensions proportionally
               const newElWidth = Math.max(10, initial.width * scaleX);
               const newElHeight = Math.max(10, initial.height * scaleY);
+              
+              console.log(`📐 Resizing element ${elementId}: initial(${initial.x.toFixed(1)}, ${initial.y.toFixed(1)}) anchor(${anchorX.toFixed(1)}, ${anchorY.toFixed(1)}) -> new(${newElX.toFixed(1)}, ${newElY.toFixed(1)})`);
               
               updateElementDirect(elementId, { 
                 x: Math.round(newElX * 10) / 10,
@@ -2344,7 +2349,7 @@ export default function CanvasWorkspace({
                               
                               if (isGroupRotation && initialGroupState) {
                                 // GROUP ROTATION: Rotate all elements around group center
-                                console.log('Group rotation update - elements to rotate:', initialGroupState.size);
+                                console.log('🔄 Group rotation update - elements to rotate:', initialGroupState.size, 'ids:', Array.from(initialGroupState.keys()));
                                 const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
                                 const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
                                 
@@ -2367,6 +2372,8 @@ export default function CanvasWorkspace({
                                   
                                   // Add delta rotation to element's own rotation
                                   const newElementRotation = ((initialState.rotation + deltaRotationDeg) % 360 + 360) % 360;
+                                  
+                                  console.log(`🔃 Rotating element ${elementId}: initial(${initialState.x.toFixed(1)}, ${initialState.y.toFixed(1)}) -> new(${newX.toFixed(1)}, ${newY.toFixed(1)}) rot: ${initialState.rotation} -> ${Math.round(newElementRotation)}`);
                                   
                                   updateElementDirect(elementId, { 
                                     x: Math.round(newX * 10) / 10,
