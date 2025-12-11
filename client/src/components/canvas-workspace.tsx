@@ -1091,7 +1091,6 @@ export default function CanvasWorkspace({
           // GROUP RESIZE: Scale all elements proportionally using IMMUTABLE initial state
           if (isGroupResize.current && groupResizeStateRef.current) {
             const groupState = groupResizeStateRef.current;
-            console.log('🔄 Group resize mousemove - elements in state:', groupState.elements.size, 'ids:', Array.from(groupState.elements.keys()));
             const initialGroupWidth = groupState.groupBounds.width;
             const initialGroupHeight = groupState.groupBounds.height;
             const { minX, minY, maxX, maxY } = groupState.groupBounds;
@@ -1099,6 +1098,9 @@ export default function CanvasWorkspace({
             // Calculate scale factors from initial group size
             const scaleX = newWidth / (initialGroupWidth || 1);
             const scaleY = newHeight / (initialGroupHeight || 1);
+            
+            console.log('🔄 Group resize - initialSize:', initialSize, 'groupBounds:', groupState.groupBounds);
+            console.log('🔄 Group resize - newWidth:', newWidth, 'newHeight:', newHeight, 'scaleX:', scaleX.toFixed(3), 'scaleY:', scaleY.toFixed(3));
             
             // Determine anchor point based on which handle is being dragged
             // The anchor is the opposite corner/edge that stays fixed
@@ -2342,6 +2344,7 @@ export default function CanvasWorkspace({
                             
                             clearTimeout(rotationTimeout);
                             
+                            // Reduced timeout for smoother rotation (was 50ms)
                             rotationTimeout = setTimeout(async () => {
                               const rect = canvasRef.current!.getBoundingClientRect();
                               const scaleFactor = zoom / 100;
@@ -2402,7 +2405,7 @@ export default function CanvasWorkspace({
                                   rotation: Math.round(normalizedAngle) 
                                 });
                               }
-                            }, 50);
+                            }, 16); // Reduced from 50ms for smoother rotation (~60fps)
                           };
                           
                           const handleRotationMouseUp = () => {

@@ -1,0 +1,1261 @@
+ [Coframe] Replit Enterprise watcher loaded
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+ [LaunchDarkly] LaunchDarkly client initialized
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ Unrecognized feature: 'ambient-light-sensor'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'battery'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'execution-while-not-rendered'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'layout-animations'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'legacy-image-formats'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'navigation-override'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'oversized-images'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'publickey-credentials'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'speaker-selection'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'unoptimized-images'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'unsized-media'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'pointer-lock'.
+z @ ed1e693c96a75807.js:2
+ Allow attribute will take precedence over 'allowfullscreen'.
+z @ ed1e693c96a75807.js:2
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+z @ ed1e693c96a75807.js:2
+[Violation] Potential permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Potential permissions policy violation: fullscreen is not allowed in this document.
+
+
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+ProofDesigner:1 Uncaught (in promise) 
+ProofDesigner:1 Uncaught (in promise) 
+ProofDesigner:1 Uncaught (in promise) 
+ProofDesigner:1 Uncaught (in promise) 
+ stallwart: failed ping 1
+ stallwart: failed ping 2
+ stallwart: failed ping 1
+ stallwart: failed ping 2
+ stallwart: failed ping 1
+ stallwart: failed ping 2
+ stallwart: failed ping 1
+ stallwart: failed ping 2
+ stallwart: failed ping 3
+ stallwart: failed ping 4
+ stallwart: failed ping 5
+ stallwart: session stalled
+ProofDesigner:1 Uncaught (in promise) 
+ WebSocket is already in CLOSING or CLOSED state.
+value @ 4121e3c91538b833.js:2
+ WebSocket is already in CLOSING or CLOSED state.
+value @ 4121e3c91538b833.js:2
+ WebSocket is already in CLOSING or CLOSED state.
+value @ 4121e3c91538b833.js:2
+ WebSocket is already in CLOSING or CLOSED state.
+value @ 4121e3c91538b833.js:2
+ WebSocket connection to 'wss://eval.spock.platform.replit.com/wsv2/v2.public.Q2dZSSsvN3B5UVlTQmdpYW0rckpCaUlGYzNCdlkyc3dBRHI0QVFva09XVTJOVFl3TldNdE1tRTRPUzAwWkRreUxUZzNaVGN0WWpBME56TTJNRGswTXpKakVnTnVhWGdhRjNKbGNHeHBkQzF5WlhCc0xXWnBiR1Z6TFhOd2IyTnJJZzFRY205dlprUmxjMmxuYm1WeUtnbGtZWEp5Wlc0eE9UQkNVUW9ZY21Wd2JHbDBMWEpsY0d3dFlteHZZMnR6TFhOd2IyTnJFaFp5WlhCc2FYUXRjbVZ3YkMxdFpYUmhMWE53YjJOckdoMXlaWEJzYVhRdGJXRnlaMkZ5YVc1bExXSnNiMk5yY3kxemNHOWphMG9IQ05pMjJoVVFBVkFBV2c5cGJuUmxiblJmWW5WemFXNWxjM05hRVc5dVltOWhjbVJwYm1kZmFtOWlYM0J0V2hSdmJtSnZ...CVm1KS1IxaHVPU1V5UW5WTlJEWndSRFE1Y21ZNGNteDNNa2RLUmlVeVJqRkxhbVJtVlZsdFMxWnFOWFpzVVRGQmEwRjVTbE52U0ZaeFZGUkVPRTlDUlRrMmNIcHVKVEpHYlNVeVJsbHlPSEJYWmxoQ1YxbzNUalpZZWlVeVFqSkpNelZUWjJ4V1lsQlpURGh1TTNnMlFsZDRkbk5IVlhCR01tNDVUVTVtWm5KT1QwMUpWakoyVjBJeGFtb3pjazFMV1hoSVUzVklUVGRCUXpGVlQyVWxNa0p5UkVWNGRGUnJkRWRsTkdoNk4zZHlZMUZMZG1FNVRWaFFkWGxNWWxWb1pVUlBVblpIU1hGaFZVNWFObVIxWnlVelJDVXpSQT092goP5TaL8zQnvL8-U4ukOQWJB-WbIbywWSUZQaeUhk1aW5NWdUGwMxtRS-ZUz915kwphAaSdc8w9JKTCoB26AQ.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: WebSocket is closed before the connection is established.
+cleanupSocket @ 1716575e9107c3e0.js:2
+ WebSocket connection to 'wss://eval.spock.platform.replit.com/wsv2/v2.public.Q2dZSSsvN3B5UVlTQmdpYW0rckpCaUlGYzNCdlkyc3dBRHI0QVFva09XVTJOVFl3TldNdE1tRTRPUzAwWkRreUxUZzNaVGN0WWpBME56TTJNRGswTXpKakVnTnVhWGdhRjNKbGNHeHBkQzF5WlhCc0xXWnBiR1Z6TFhOd2IyTnJJZzFRY205dlprUmxjMmxuYm1WeUtnbGtZWEp5Wlc0eE9UQkNVUW9ZY21Wd2JHbDBMWEpsY0d3dFlteHZZMnR6TFhOd2IyTnJFaFp5WlhCc2FYUXRjbVZ3YkMxdFpYUmhMWE53YjJOckdoMXlaWEJzYVhRdGJXRnlaMkZ5YVc1bExXSnNiMk5yY3kxemNHOWphMG9IQ05pMjJoVVFBVkFBV2c5cGJuUmxiblJmWW5WemFXNWxjM05hRVc5dVltOWhjbVJwYm1kZmFtOWlYM0J0V2hSdmJtSnZ...CVm1KS1IxaHVPU1V5UW5WTlJEWndSRFE1Y21ZNGNteDNNa2RLUmlVeVJqRkxhbVJtVlZsdFMxWnFOWFpzVVRGQmEwRjVTbE52U0ZaeFZGUkVPRTlDUlRrMmNIcHVKVEpHYlNVeVJsbHlPSEJYWmxoQ1YxbzNUalpZZWlVeVFqSkpNelZUWjJ4V1lsQlpURGh1TTNnMlFsZDRkbk5IVlhCR01tNDVUVTVtWm5KT1QwMUpWakoyVjBJeGFtb3pjazFMV1hoSVUzVklUVGRCUXpGVlQyVWxNa0p5UkVWNGRGUnJkRWRsTkdoNk4zZHlZMUZMZG1FNVRWaFFkWGxNWWxWb1pVUlBVblpIU1hGaFZVNWFObVIxWnlVelJDVXpSQT092goP5TaL8zQnvL8-U4ukOQWJB-WbIbywWSUZQaeUhk1aW5NWdUGwMxtRS-ZUz915kwphAaSdc8w9JKTCoB26AQ.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: WebSocket is closed before the connection is established.
+cleanupSocket @ 1716575e9107c3e0.js:2
+ WebSocket connection to 'wss://eval.spock.platform.replit.com/wsv2/v2.public.Q2dZSSsvN3B5UVlTQmdpYW0rckpCaUlGYzNCdlkyc3dBRHI0QVFva09XVTJOVFl3TldNdE1tRTRPUzAwWkRreUxUZzNaVGN0WWpBME56TTJNRGswTXpKakVnTnVhWGdhRjNKbGNHeHBkQzF5WlhCc0xXWnBiR1Z6TFhOd2IyTnJJZzFRY205dlprUmxjMmxuYm1WeUtnbGtZWEp5Wlc0eE9UQkNVUW9ZY21Wd2JHbDBMWEpsY0d3dFlteHZZMnR6TFhOd2IyTnJFaFp5WlhCc2FYUXRjbVZ3YkMxdFpYUmhMWE53YjJOckdoMXlaWEJzYVhRdGJXRnlaMkZ5YVc1bExXSnNiMk5yY3kxemNHOWphMG9IQ05pMjJoVVFBVkFBV2c5cGJuUmxiblJmWW5WemFXNWxjM05hRVc5dVltOWhjbVJwYm1kZmFtOWlYM0J0V2hSdmJtSnZ...CVm1KS1IxaHVPU1V5UW5WTlJEWndSRFE1Y21ZNGNteDNNa2RLUmlVeVJqRkxhbVJtVlZsdFMxWnFOWFpzVVRGQmEwRjVTbE52U0ZaeFZGUkVPRTlDUlRrMmNIcHVKVEpHYlNVeVJsbHlPSEJYWmxoQ1YxbzNUalpZZWlVeVFqSkpNelZUWjJ4V1lsQlpURGh1TTNnMlFsZDRkbk5IVlhCR01tNDVUVTVtWm5KT1QwMUpWakoyVjBJeGFtb3pjazFMV1hoSVUzVklUVGRCUXpGVlQyVWxNa0p5UkVWNGRGUnJkRWRsTkdoNk4zZHlZMUZMZG1FNVRWaFFkWGxNWWxWb1pVUlBVblpIU1hGaFZVNWFObVIxWnlVelJDVXpSQT092goP5TaL8zQnvL8-U4ukOQWJB-WbIbywWSUZQaeUhk1aW5NWdUGwMxtRS-ZUz915kwphAaSdc8w9JKTCoB26AQ.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: WebSocket is closed before the connection is established.
+cleanupSocket @ 1716575e9107c3e0.js:2
+graphql:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+/data/repls/9e65605c-2a89-4d92-87e7-b0473609432c/get_connection_metadata:1  Failed to load resource: net::ERR_CONNECTION_TIMED_OUT
+ WebSocket connection to 'wss://eval.spock.platform.replit.com/wsv2/v2.public.Q2dZSSsvN3B5UVlTQmdpYW0rckpCaUlGYzNCdlkyc3dBRHI0QVFva09XVTJOVFl3TldNdE1tRTRPUzAwWkRreUxUZzNaVGN0WWpBME56TTJNRGswTXpKakVnTnVhWGdhRjNKbGNHeHBkQzF5WlhCc0xXWnBiR1Z6TFhOd2IyTnJJZzFRY205dlprUmxjMmxuYm1WeUtnbGtZWEp5Wlc0eE9UQkNVUW9ZY21Wd2JHbDBMWEpsY0d3dFlteHZZMnR6TFhOd2IyTnJFaFp5WlhCc2FYUXRjbVZ3YkMxdFpYUmhMWE53YjJOckdoMXlaWEJzYVhRdGJXRnlaMkZ5YVc1bExXSnNiMk5yY3kxemNHOWphMG9IQ05pMjJoVVFBVkFBV2c5cGJuUmxiblJmWW5WemFXNWxjM05hRVc5dVltOWhjbVJwYm1kZmFtOWlYM0J0V2hSdmJtSnZ...CVm1KS1IxaHVPU1V5UW5WTlJEWndSRFE1Y21ZNGNteDNNa2RLUmlVeVJqRkxhbVJtVlZsdFMxWnFOWFpzVVRGQmEwRjVTbE52U0ZaeFZGUkVPRTlDUlRrMmNIcHVKVEpHYlNVeVJsbHlPSEJYWmxoQ1YxbzNUalpZZWlVeVFqSkpNelZUWjJ4V1lsQlpURGh1TTNnMlFsZDRkbk5IVlhCR01tNDVUVTVtWm5KT1QwMUpWakoyVjBJeGFtb3pjazFMV1hoSVUzVklUVGRCUXpGVlQyVWxNa0p5UkVWNGRGUnJkRWRsTkdoNk4zZHlZMUZMZG1FNVRWaFFkWGxNWWxWb1pVUlBVblpIU1hGaFZVNWFObVIxWnlVelJDVXpSQT092goP5TaL8zQnvL8-U4ukOQWJB-WbIbywWSUZQaeUhk1aW5NWdUGwMxtRS-ZUz915kwphAaSdc8w9JKTCoB26AQ.Q2dad2NtOWtPak1pQ25KbGNHeHBkQzVqYjIwPQ' failed: 
+(anonymous) @ 1716575e9107c3e0.js:2
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar17m%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ProofDesigner:1 Uncaught (in promise) 
+ [Violation] Permissions policy violation: unload is not allowed in this document.
+(anonymous) @ Grammarly-check.js:1
+ [Coframe] Mutation callback infinite loop protection triggered, disconnecting mutation observer Object
+(anonymous) @ 8b431bd192f180d4.js:2
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.5 × 54.9px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.5 × 54.9px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.5 × 54.9px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔄 Group resize mousemove - elements in state: 3 ids: Array(3)
+ 📐 Resizing element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-62.8, -112.5) anchor(-123.1, -190.4) -> new(-23.2, -61.4)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-82.8, -132.5) anchor(-123.1, -190.4) -> new(-56.4, -94.5)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-84.6, -173.8) anchor(-123.1, -190.4) -> new(-59.3, -162.9)
+ Canvas updateElementDirect called: Object
+ 🔄 Group resize mousemove - elements in state: 3 ids: Array(3)
+ 📐 Resizing element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-62.8, -112.5) anchor(-123.1, -190.4) -> new(-22.9, -61.0)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-82.8, -132.5) anchor(-123.1, -190.4) -> new(-56.1, -94.2)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-84.6, -173.8) anchor(-123.1, -190.4) -> new(-59.1, -162.8)
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.9 × 55.1px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.9 × 55.1px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 127.9 × 55.1px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔄 Group resize mousemove - elements in state: 3 ids: Array(3)
+ 📐 Resizing element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-62.8, -112.5) anchor(-123.1, -190.4) -> new(-22.9, -61.0)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-82.8, -132.5) anchor(-123.1, -190.4) -> new(-56.1, -94.2)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-84.6, -173.8) anchor(-123.1, -190.4) -> new(-59.1, -162.8)
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group resize mousemove - elements in state: 3 ids: Array(3)
+ 📐 Resizing element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-62.8, -112.5) anchor(-123.1, -190.4) -> new(-22.9, -61.0)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-82.8, -132.5) anchor(-123.1, -190.4) -> new(-56.1, -94.2)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-84.6, -173.8) anchor(-123.1, -190.4) -> new(-59.1, -162.8)
+ Canvas updateElementDirect called: Object
+ 🔄 Group resize mousemove - elements in state: 3 ids: Array(3)
+ 📐 Resizing element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-62.8, -112.5) anchor(-123.1, -190.4) -> new(-22.6, -60.6)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-82.8, -132.5) anchor(-123.1, -190.4) -> new(-55.9, -93.9)
+ Canvas updateElementDirect called: Object
+ 📐 Resizing element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-84.6, -173.8) anchor(-123.1, -190.4) -> new(-58.9, -162.7)
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+ 🎯 Mouse down on element be79b8e3-0bcf-4b96-be01-b22f5511e26d, starting drag, shiftKey=false
+ 🎯 Drag offset calculated: (62.0, -9.3)
+ 🎯 Stored initial positions for 3 elements: Array(3)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Rotation mousedown - isGroupRotation: true selectedElements count: 3 element ids: Array(3)
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-22.6, -60.6) -> new(-30.6, -57.3) rot: 0 -> 10
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-55.9, -93.9) -> new(-57.8, -95.8) rot: 0 -> 10
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-58.9, -162.7) -> new(-49.1, -164.1) rot: 0 -> 10
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Rotation mousedown - isGroupRotation: true selectedElements count: 3 element ids: Array(3)
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-22.6, -60.6) -> new(-29.2, -57.8) rot: 0 -> 8
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-55.9, -93.9) -> new(-57.5, -95.4) rot: 0 -> 8
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-58.9, -162.7) -> new(-50.7, -164.0) rot: 0 -> 8
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🎯 Mouse down on element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8, starting drag, shiftKey=false
+ 🎯 Drag offset calculated: (18.2, -34.0)
+ 🎯 Stored initial positions for 3 elements: Array(3)
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ Rotation mousedown - isGroupRotation: true selectedElements count: 3 element ids: Array(3)
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-68.8, -60.5) rot: 8 -> 54
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-61.4, -107.0) rot: 8 -> 54
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-7.2, -149.7) rot: 8 -> 54
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Property change: rotation from 54 to 144
+ Sending updates: Object
+ Properties updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Properties API update successful
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Rotation mousedown - isGroupRotation: true selectedElements count: 3 element ids: Array(3)
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-27.8, -58.3) rot: 8 -> 6
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-57.2, -95.0) rot: 8 -> 6
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-52.5, -163.8) rot: 8 -> 6
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-35.5, -56.1) rot: 8 -> 15
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-58.7, -97.0) rot: 8 -> 15
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-43.2, -164.1) rot: 8 -> 15
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-39.1, -55.5) rot: 8 -> 20
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-59.3, -97.9) rot: 8 -> 20
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-39.0, -163.8) rot: 8 -> 20
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-28.0, -58.2) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-57.2, -95.1) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-52.1, -163.9) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-43.7, -55.1) rot: 8 -> 25
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-60.0, -99.2) rot: 8 -> 25
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-33.7, -162.9) rot: 8 -> 25
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-52.3, -55.4) rot: 8 -> 34
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-60.9, -101.7) rot: 8 -> 34
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-24.3, -160.1) rot: 8 -> 34
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-28.0, -58.2) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-57.2, -95.1) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-52.1, -163.9) rot: 8 -> 7
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+ 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-48.6, -55.1) rot: 8 -> 30
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-60.5, -100.6) rot: 8 -> 30
+ Canvas updateElementDirect called: Object
+ 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-28.3, -161.5) rot: 8 -> 30
+ Canvas updateElementDirect called: Object
+ Preflight CMYK Check: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+ Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+ Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+    Content bounds: (0, 0) to (218.265626, 93.984375)
+    Element size: 128.3 × 55.3px
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+injected.js:37 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-49.3, -55.1) rot: 8 -> 31
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-60.6, -100.8) rot: 8 -> 31
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-27.5, -161.3) rot: 8 -> 31
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+injected.js:37 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-34.6, -56.3) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-58.6, -96.8) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-44.2, -164.2) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+injected.js:37 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-34.5, -56.3) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-58.6, -96.7) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-44.3, -164.2) rot: 8 -> 14
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 🔄 Group rotation update - elements to rotate: 3 ids: Array(3)
+injected.js:37 🔃 Rotating element be79b8e3-0bcf-4b96-be01-b22f5511e26d: initial(-29.2, -57.8) -> new(-32.2, -56.9) rot: 8 -> 12
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90: initial(-57.5, -95.4) -> new(-58.1, -96.1) rot: 8 -> 12
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 🔃 Rotating element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8: initial(-50.7, -164.0) -> new(-47.1, -164.2) rot: 8 -> 12
+injected.js:37 Canvas updateElementDirect called: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Canvas element be79b8e3-0bcf-4b96-be01-b22f5511e26d dimensions: Object
+injected.js:37 Canvas element 775c24e0-c95a-4ce4-b3fd-1b8ce6ba5f90 dimensions: Object
+injected.js:37 Canvas element 661c86ad-20e9-4389-86fa-2c1d4b91e9d8 dimensions: Object
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 🎯 Content extends beyond bounds: Using simplified rendering for proper display
+injected.js:37    Content bounds: (0, 0) to (218.265626, 93.984375)
+injected.js:37    Element size: 128.3 × 55.3px
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
+injected.js:37 ✅ Canvas API update successful
