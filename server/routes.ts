@@ -1631,6 +1631,21 @@ export async function registerRoutes(app: express.Application) {
             console.log(`💾 Original PDF preserved as: ${originalPdfFilename} with exact original colors`);
             // Mark for later embedding
             (file as any).originalPdfFilename = originalPdfFilename;
+            
+            // PASS-THROUGH MODE: Detect page count for multi-page PDFs
+            try {
+              const { PDFDocument } = await import('pdf-lib');
+              const pdfBytes = fs.readFileSync(sourcePdfPath);
+              const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+              const pageCount = pdfDoc.getPageCount();
+              (file as any).pageCount = pageCount;
+              (file as any).hasGarmentPages = pageCount > 1;
+              console.log(`📄 PDF page count detected: ${pageCount} pages (hasGarmentPages: ${pageCount > 1})`);
+            } catch (pageCountError) {
+              console.log('⚠️ Could not detect PDF page count:', pageCountError);
+              (file as any).pageCount = 1;
+              (file as any).hasGarmentPages = false;
+            }
           }
           try {
             const pdfPath = path.join(uploadDir, file.filename);
@@ -2307,6 +2322,13 @@ export async function registerRoutes(app: express.Application) {
             pathCount: logoData.vectorComplexityMetrics.pathCount,
             elementCount: logoData.vectorComplexityMetrics.elementCount
           });
+        }
+        
+        // PASS-THROUGH MODE: Add page count and hasGarmentPages for multi-page PDFs
+        if ((file as any).pageCount !== undefined) {
+          logoData.pageCount = (file as any).pageCount;
+          logoData.hasGarmentPages = (file as any).hasGarmentPages;
+          console.log(`💾 PDF page info: pageCount=${logoData.pageCount}, hasGarmentPages=${logoData.hasGarmentPages}`);
         }
         
         const logo = await storage.createLogo(logoData);

@@ -21,6 +21,7 @@ export const projects = pgTable("projects", {
   comments: text("comments"), // User comments/special instructions for production
   status: text("status").notNull().default("draft"), // draft, in_progress, completed
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  useOriginalGarmentPages: boolean("use_original_garment_pages").default(false), // Pass-through mode: use customer's original PDF pages 2+ for garment info
 });
 
 export const logos = pgTable("logos", {
