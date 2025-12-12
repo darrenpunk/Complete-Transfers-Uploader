@@ -71,6 +71,8 @@ export default function UploadTool() {
     originalFileName?: string;
   } | null>(null);
   const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
+  const [showPassThroughModal, setShowPassThroughModal] = useState(false);
+  const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
 
   // Detect if in iframe and get logged-in user's email from parent Odoo window
   useEffect(() => {
@@ -1104,10 +1106,23 @@ export default function UploadTool() {
               }
             })();
           } else {
-            toast({
-              title: "Success",
-              description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
-            });
+            // Check for multi-page PDFs that might have garment color pages
+            const multiPagePdf = newLogos.find((logo: any) => logo.hasGarmentPages === true && logo.pageCount > 1);
+            if (multiPagePdf && currentProject && !(currentProject as any).useOriginalGarmentPages) {
+              console.log('Multi-page PDF detected:', multiPagePdf.originalName, 'with', multiPagePdf.pageCount, 'pages');
+              // Show pass-through modal to ask user what to do
+              setPendingPassThroughLogo({
+                logoId: multiPagePdf.id,
+                pageCount: multiPagePdf.pageCount,
+                fileName: multiPagePdf.originalName
+              });
+              setShowPassThroughModal(true);
+            } else {
+              toast({
+                title: "Success",
+                description: `${files.length} logo${files.length !== 1 ? 's' : ''} uploaded successfully!`,
+              });
+            }
           }
         } catch (error) {
           console.error('Upload response parsing error:', error);
@@ -1523,6 +1538,84 @@ export default function UploadTool() {
         isAddingToCart={addToCartMutation.isPending}
         isGeneratingPDF={generatePDFMutation.isPending}
       />
+
+      {/* Pass-Through Mode Modal for Multi-Page PDFs */}
+      {pendingPassThroughLogo && (
+        <Dialog open={showPassThroughModal} onOpenChange={(open) => {
+          if (!open) {
+            setShowPassThroughModal(false);
+            setPendingPassThroughLogo(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-500" />
+                Multi-Page PDF Detected
+              </DialogTitle>
+              <DialogDescription>
+                Your uploaded PDF "{pendingPassThroughLogo.fileName}" has {pendingPassThroughLogo.pageCount} pages.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Does this PDF already contain garment color preview pages (pages 2 and beyond)?
+              </p>
+              
+              <div className="space-y-3">
+                <Button
+                  className="w-full justify-start"
+                  variant="outline"
+                  onClick={() => {
+                    // Enable pass-through mode
+                    updateProjectMutation.mutate({ useOriginalGarmentPages: true } as any, {
+                      onSuccess: () => {
+                        toast({
+                          title: "Pass-Through Mode Enabled",
+                          description: "Your original garment color pages will be preserved in the final PDF.",
+                        });
+                        setShowPassThroughModal(false);
+                        setPendingPassThroughLogo(null);
+                      }
+                    });
+                  }}
+                  data-testid="button-use-original-pages"
+                >
+                  <FileText className="h-4 w-4 mr-2 text-blue-500" />
+                  Yes, use my original pages
+                </Button>
+                
+                <Button
+                  className="w-full justify-start"
+                  variant="outline"
+                  onClick={() => {
+                    // Disable pass-through mode (generate new garment pages)
+                    updateProjectMutation.mutate({ useOriginalGarmentPages: false } as any, {
+                      onSuccess: () => {
+                        toast({
+                          title: "Standard Mode",
+                          description: "New garment color pages will be generated for you.",
+                        });
+                        setShowPassThroughModal(false);
+                        setPendingPassThroughLogo(null);
+                      }
+                    });
+                  }}
+                  data-testid="button-generate-new-pages"
+                >
+                  <Palette className="h-4 w-4 mr-2 text-green-500" />
+                  No, generate new garment pages for me
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Note: Only page 1 of your PDF will be used on the design canvas. Your choice affects the final output PDF only.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Hidden file input for upload guidance modal */}
       <input
