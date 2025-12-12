@@ -728,7 +728,8 @@ export async function registerRoutes(app: express.Application) {
             logos,
             garmentColor: project.garmentColor,
             garmentColors: project.garmentColors,
-            quantity: project.quantity || 1
+            quantity: project.quantity || 1,
+            useOriginalGarmentPages: project.useOriginalGarmentPages || false
           });
           
           console.log(`✅ Robust PDF generated with original CMYK colors: ${pdfBuffer.length} bytes`);

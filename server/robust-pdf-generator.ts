@@ -16,13 +16,16 @@ import { exec } from 'child_process';
 const execAsync = promisify(exec);
 
 interface ProjectData {
+  projectId?: string;
   canvasElements: any[];
   logos: any[];
   templateSize: any;
   garmentColor?: string;
+  garmentColors?: any[];
   projectName: string;
   quantity: number;
   comments?: string;
+  useOriginalGarmentPages?: boolean; // Pass-through mode: use customer's original PDF pages 2+ instead of generating garment color pages
 }
 
 // Garment color mapping for labels
@@ -343,27 +346,37 @@ grestore`;
     const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
     console.log(`📄 Created page 1: Artwork layout (transparent) - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
     
-    // Create page 2 (combined garment colors view) with correct dimensions
-    const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-    console.log(`📄 Created page 2: Combined garment colors view - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    // Check for pass-through mode: use customer's original garment color pages
+    const usePassThrough = data.useOriginalGarmentPages === true;
     
-    // Add project labels
-    const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
-    const garmentText = `Garment Colors: Combined View`;
+    // Create page 2 only if NOT using pass-through mode
+    let page2: typeof page1 | null = null;
+    if (!usePassThrough) {
+      page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+      console.log(`📄 Created page 2: Combined garment colors view - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    } else {
+      console.log(`📄 PASS-THROUGH MODE: Skipping generated page 2 - will append customer's original garment pages`);
+    }
     
-    page2.drawText(labelText, {
-      x: 20,
-      y: 40,
-      size: 12,
-      color: rgb(0, 0, 0),
-    });
-    
-    page2.drawText(garmentText, {
-      x: 20,
-      y: 20,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
+    // Add project labels (only on generated page 2, not for pass-through mode)
+    if (page2) {
+      const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
+      const garmentText = `Garment Colors: Combined View`;
+      
+      page2.drawText(labelText, {
+        x: 20,
+        y: 40,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      
+      page2.drawText(garmentText, {
+        x: 20,
+        y: 20,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
+    }
     
     // Process each canvas element and embed logos with individual garment backgrounds
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
@@ -376,50 +389,162 @@ grestore`;
       if (logo) {
         console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
         
-        // Add individual garment background for this logo on page 2
-        const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
-        console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
+        // Add individual garment background for this logo on page 2 (only if not pass-through mode)
+        if (page2) {
+          const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
+          console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
+          
+          // Calculate logo bounds in points using PDF coordinate system
+          // Convert center-based coordinates to PDF bottom-left coordinates
+          const contentWidthPts = element.width * MM_TO_POINTS;
+          const contentHeightPts = element.height * MM_TO_POINTS;
+          const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
+          const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
+          const templateCenterX = templateWidthMM / 2;
+          const templateCenterY = templateHeightMM / 2;
+          
+          // Convert center position to bottom-left corner for PDF
+          const elementCenterX = templateCenterX + element.x;
+          const elementCenterY = templateCenterY + element.y;
+          const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
+          const yPts = pageHeight - ((elementCenterY + element.height / 2) * MM_TO_POINTS); // PDF coordinate system (bottom-left origin)
+          
+          // Draw garment color background behind this logo
+          const parsedColor = await this.parseGarmentColor(garmentColor);
+          page2.drawRectangle({
+            x: xPts,
+            y: yPts,
+            width: contentWidthPts,
+            height: contentHeightPts,
+            color: parsedColor
+          });
+          
+          // Add garment color label above the logo (in PDF coordinate system)
+          const labelY = yPts + contentHeightPts + 5; // Position label above the logo
+          const garmentName = getGarmentColorName(garmentColor);
+          page2.drawText(garmentName, {
+            x: xPts + 5,
+            y: labelY,
+            size: 10,
+            color: rgb(0, 0, 0),
+          });
+        }
         
-        // Calculate logo bounds in points using PDF coordinate system
-        // Convert center-based coordinates to PDF bottom-left coordinates
-        const contentWidthPts = element.width * MM_TO_POINTS;
-        const contentHeightPts = element.height * MM_TO_POINTS;
-        const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
-        const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
-        const templateCenterX = templateWidthMM / 2;
-        const templateCenterY = templateHeightMM / 2;
-        
-        // Convert center position to bottom-left corner for PDF
-        const elementCenterX = templateCenterX + element.x;
-        const elementCenterY = templateCenterY + element.y;
-        const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
-        const yPts = pageHeight - ((elementCenterY + element.height / 2) * MM_TO_POINTS); // PDF coordinate system (bottom-left origin)
-        
-        // Draw garment color background behind this logo
-        const parsedColor = await this.parseGarmentColor(garmentColor);
-        page2.drawRectangle({
-          x: xPts,
-          y: yPts,
-          width: contentWidthPts,
-          height: contentHeightPts,
-          color: parsedColor
-        });
-        
-        // Add garment color label above the logo (in PDF coordinate system)
-        const labelY = yPts + contentHeightPts + 5; // Position label above the logo
-        const garmentName = getGarmentColorName(garmentColor);
-        page2.drawText(garmentName, {
-          x: xPts + 5,
-          y: labelY,
-          size: 10,
-          color: rgb(0, 0, 0),
-        });
-        
-        // Embed logo on both pages
+        // Embed logo on page 1 (and page 2 if not pass-through mode)
         console.log(`🎯 About to call embedLogoInPages for logo: ${logo.filename}`);
         await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, data.templateSize);
         console.log(`✅ Completed embedLogoInPages for logo: ${logo.filename}`);
       }
+    }
+    
+    // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
+    let passThroughSucceeded = false;
+    if (usePassThrough) {
+      console.log(`📄 PASS-THROUGH MODE: Looking for multi-page PDF to append pages 2+`);
+      
+      // Find a logo with hasGarmentPages=true that has original PDF
+      const multiPageLogo = data.logos.find((logo: any) => 
+        logo.hasGarmentPages === true && 
+        logo.pageCount > 1 && 
+        logo.originalFilename && 
+        logo.originalMimeType === 'application/pdf'
+      );
+      
+      if (multiPageLogo) {
+        const originalPdfPath = path.join(process.cwd(), 'uploads', multiPageLogo.originalFilename);
+        console.log(`📄 Found multi-page PDF: ${multiPageLogo.originalFilename} with ${multiPageLogo.pageCount} pages`);
+        
+        if (fs.existsSync(originalPdfPath)) {
+          try {
+            const { PDFDocument } = await import('pdf-lib');
+            const originalPdfBytes = fs.readFileSync(originalPdfPath);
+            const originalPdf = await PDFDocument.load(originalPdfBytes, { ignoreEncryption: true });
+            const originalPageCount = originalPdf.getPageCount();
+            
+            console.log(`📄 Original PDF has ${originalPageCount} pages - appending pages 2 to ${originalPageCount}`);
+            
+            if (originalPageCount > 1) {
+              // Copy pages 2+ (indices 1 to end) from original PDF
+              const pageIndicesToCopy = Array.from({ length: originalPageCount - 1 }, (_, i) => i + 1);
+              const copiedPages = await pdfDoc.copyPages(originalPdf, pageIndicesToCopy);
+              
+              for (const copiedPage of copiedPages) {
+                pdfDoc.addPage(copiedPage);
+              }
+              
+              console.log(`✅ PASS-THROUGH: Appended ${copiedPages.length} original garment color pages`);
+              passThroughSucceeded = true;
+            }
+          } catch (passThroughError) {
+            console.error(`❌ Failed to append original PDF pages:`, passThroughError);
+          }
+        } else {
+          console.warn(`⚠️ Original PDF file not found: ${originalPdfPath}`);
+        }
+      } else {
+        console.warn(`⚠️ No multi-page PDF found in logos - cannot append garment pages`);
+      }
+    }
+    
+    // FALLBACK: If pass-through was enabled but failed, generate standard garment page
+    if (usePassThrough && !passThroughSucceeded) {
+      console.log(`⚠️ PASS-THROUGH FAILED: Generating fallback garment color page`);
+      
+      // Create fallback page 2 with garment color background
+      const fallbackPage2 = pdfDoc.addPage([pageWidth, pageHeight]);
+      
+      // Add project labels
+      const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
+      const garmentText = `Garment Colors: Combined View (Fallback)`;
+      
+      fallbackPage2.drawText(labelText, {
+        x: 20,
+        y: 40,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      
+      fallbackPage2.drawText(garmentText, {
+        x: 20,
+        y: 20,
+        size: 10,
+        color: rgb(0, 0, 0),
+      });
+      
+      // Draw garment color background and embed logos on fallback page
+      for (let i = 0; i < data.canvasElements.length; i++) {
+        const element = data.canvasElements[i];
+        const logo = data.logos.find(l => l.id === element.logoId);
+        
+        if (logo) {
+          const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
+          const contentWidthPts = element.width * MM_TO_POINTS;
+          const contentHeightPts = element.height * MM_TO_POINTS;
+          const templateWidthMM = data.templateSize?.width || 297;
+          const templateHeightMM = data.templateSize?.height || 420;
+          const templateCenterX = templateWidthMM / 2;
+          const templateCenterY = templateHeightMM / 2;
+          
+          const elementCenterX = templateCenterX + element.x;
+          const elementCenterY = templateCenterY + element.y;
+          const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
+          const yPts = pageHeight - ((elementCenterY + element.height / 2) * MM_TO_POINTS);
+          
+          const parsedColor = await this.parseGarmentColor(garmentColor);
+          fallbackPage2.drawRectangle({
+            x: xPts,
+            y: yPts,
+            width: contentWidthPts,
+            height: contentHeightPts,
+            color: parsedColor
+          });
+          
+          // Re-embed logo on fallback page only (page1 is already done)
+          await this.embedLogoInPages(pdfDoc, null, fallbackPage2, logo, element, data.templateSize);
+        }
+      }
+      
+      console.log(`✅ Fallback garment color page generated`);
     }
     
     // Save PDF
@@ -458,12 +583,13 @@ grestore`;
   }
   
   /**
-   * Embed logo in both pages with exact positioning - CRITICAL: Use original PDF when available
+   * Embed logo in page 1 and/or page 2 with exact positioning - CRITICAL: Use original PDF when available
+   * page1 and page2 are nullable for flexible embedding (e.g., pass-through mode or fallback scenarios)
    */
   private async embedLogoInPages(
     pdfDoc: any, 
-    page1: any, 
-    page2: any, 
+    page1: any | null, 
+    page2: any | null, 
     logo: any, 
     element: any,
     templateSize: any
@@ -818,8 +944,12 @@ grestore`;
       
       console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${element.rotation || 0}°`);
       
-      page1.drawPage(logoPage, drawOptions);
-      page2.drawPage(logoPage, drawOptions);
+      if (page1) {
+        page1.drawPage(logoPage, drawOptions);
+      }
+      if (page2) {
+        page2.drawPage(logoPage, drawOptions);
+      }
       
       console.log(`✅ Logo embedded successfully with exact dimensions`);
       
