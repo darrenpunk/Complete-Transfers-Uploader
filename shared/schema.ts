@@ -58,6 +58,8 @@ export const logos = pgTable("logos", {
   originalWidth: real("original_width"), // Original PDF/artwork width in mm (before auto-scaling)
   originalHeight: real("original_height"), // Original PDF/artwork height in mm (before auto-scaling)
   originalPdfBounds: jsonb("original_pdf_bounds"), // Original PDF content bounds BEFORE normalization (for cropping during PDF generation)
+  pageCount: integer("page_count").default(1), // Number of pages in PDF (for multi-page pass-through detection)
+  hasGarmentPages: boolean("has_garment_pages").default(false), // True if PDF already has garment color pages (pages 2+)
 });
 
 export const canvasElements = pgTable("canvas_elements", {
