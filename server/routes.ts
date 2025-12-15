@@ -4535,6 +4535,81 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Render specific PDF page as preview image (for pass-through mode)
+  app.get('/api/logos/:id/pdf-page/:pageNum', async (req, res) => {
+    console.log('📄 PDF page preview requested:', req.params.id, 'page:', req.params.pageNum);
+    
+    try {
+      const logo = await storage.getLogo(req.params.id);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+
+      const pageNum = parseInt(req.params.pageNum);
+      if (isNaN(pageNum) || pageNum < 1) {
+        return res.status(400).json({ error: 'Invalid page number' });
+      }
+
+      // Verify it's a PDF with multiple pages
+      if (!logo.originalFilename || logo.originalMimeType !== 'application/pdf') {
+        return res.status(400).json({ error: 'Logo is not a PDF' });
+      }
+
+      const pageCount = (logo as any).pageCount || 1;
+      if (pageNum > pageCount) {
+        return res.status(400).json({ error: `Page ${pageNum} does not exist (PDF has ${pageCount} pages)` });
+      }
+
+      const pdfPath = path.join(uploadDir, logo.originalFilename);
+      if (!fs.existsSync(pdfPath)) {
+        return res.status(404).json({ error: 'PDF file not found' });
+      }
+
+      // Generate preview image using Ghostscript (render specific page)
+      const outputPath = path.join(os.tmpdir(), `pdf_page_${logo.id}_${pageNum}_${Date.now()}.png`);
+      
+      try {
+        // Use Ghostscript to render specific page at 150 DPI for preview
+        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -dFirstPage=${pageNum} -dLastPage=${pageNum} -sOutputFile="${outputPath}" "${pdfPath}"`;
+        console.log('📋 Ghostscript page render command:', gsCommand);
+        
+        await execAsync(gsCommand, { timeout: 30000 });
+        
+        if (!fs.existsSync(outputPath)) {
+          return res.status(500).json({ error: 'Failed to render PDF page' });
+        }
+
+        const stats = fs.statSync(outputPath);
+        console.log(`✅ PDF page ${pageNum} rendered: ${stats.size} bytes`);
+
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Length', stats.size);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+
+        res.sendFile(outputPath, (err) => {
+          // Cleanup after sending
+          if (fs.existsSync(outputPath)) {
+            fs.unlinkSync(outputPath);
+          }
+          if (err) {
+            console.error('Error sending PDF page preview:', err);
+          }
+        });
+
+      } catch (gsError) {
+        console.error('Ghostscript error:', gsError);
+        if (fs.existsSync(outputPath)) {
+          fs.unlinkSync(outputPath);
+        }
+        return res.status(500).json({ error: 'Failed to render PDF page' });
+      }
+
+    } catch (error) {
+      console.error('Error processing PDF page preview request:', error);
+      res.status(500).json({ error: 'Failed to process request' });
+    }
+  });
+
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {
     try {

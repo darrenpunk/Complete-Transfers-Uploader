@@ -1,9 +1,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Layers, Palette, Type } from "lucide-react";
+import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -26,10 +26,30 @@ export default function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [designApproved, setDesignApproved] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
+  const [currentPassThroughPage, setCurrentPassThroughPage] = useState(2);
   
   console.log('PDFPreviewModal render:', { open, project: project?.name });
 
   const canProceed = designApproved && rightsConfirmed;
+
+  // Check if pass-through mode is enabled and find the multi-page PDF logo
+  const passThroughInfo = useMemo(() => {
+    if (!project?.useOriginalGarmentPages) return null;
+    
+    const multiPageLogo = logos.find((logo: any) => 
+      logo.hasGarmentPages === true && 
+      (logo.pageCount || 1) > 1 &&
+      logo.originalMimeType === 'application/pdf'
+    );
+    
+    if (!multiPageLogo) return null;
+    
+    return {
+      logoId: multiPageLogo.id,
+      pageCount: multiPageLogo.pageCount || 1,
+      originalFilename: multiPageLogo.originalFilename
+    };
+  }, [project, logos]);
 
   const handleApprove = () => {
     if (canProceed) {
@@ -185,74 +205,129 @@ export default function PDFPreviewModal({
                 </div>
               </div>
 
-              {/* Page 2 Preview - Garment Background */}
+              {/* Page 2 Preview - Garment Background OR Pass-Through Pages */}
               <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                  {/* Template container with individual garment color areas */}
-                  <div 
-                    className="relative border border-dashed border-gray-300 bg-gray-100"
-                    style={{
-                      aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                      width: '90%',
-                      maxWidth: '280px'
-                    }}
-                  >
-                    {/* Render individual garment color backgrounds for each logo */}
-                    {canvasElements.map((element) => {
-                      const logo = logos.find(l => l.id === element.logoId);
-                      if (!logo) return null;
-                      
-                      // Use element's individual garment color or fall back to project color
-                      const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
-                      
-                      // Convert center-based coordinates to top-left for CSS positioning
-                      const templateWidth = template?.width || 297;
-                      const templateHeight = template?.height || 420;
-                      const centerX = templateWidth / 2;
-                      const centerY = templateHeight / 2;
-                      
-                      // Convert element center position to top-left corner
-                      const elementCenterX = centerX + element.x;
-                      const elementCenterY = centerY + element.y;
-                      const leftPos = elementCenterX - element.width / 2;
-                      const topPos = elementCenterY - element.height / 2;
-                      
-                      // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
-                      const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
-                      const imageUrl = hasComplexVectorFallback 
-                        ? `/uploads/${(logo as any).canvasFallbackFilename}`
-                        : `/uploads/${logo.filename}`;
-                      
-                      return (
-                        <div
-                          key={element.id}
-                          className="absolute"
-                          style={{
-                            left: `${(leftPos / templateWidth) * 100}%`,
-                            top: `${(topPos / templateHeight) * 100}%`,
-                            width: `${(element.width / templateWidth) * 100}%`,
-                            height: `${(element.height / templateHeight) * 100}%`,
-                            transform: `rotate(${element.rotation || 0}deg)`,
-                            transformOrigin: 'center',
-                            opacity: element.opacity || 1,
-                            backgroundColor: garmentColor,
-                            border: '1px solid rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          <img
-                            src={imageUrl}
-                            alt={logo.originalName}
-                            className="w-full h-full object-contain relative z-10"
-                            style={{ 
-                              filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
-                            }}
-                          />
+                {passThroughInfo ? (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                        <FileText className="w-4 h-4" />
+                        Original Pages ({passThroughInfo.pageCount - 1} pages from your PDF)
+                      </h4>
+                      {passThroughInfo.pageCount > 2 && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setCurrentPassThroughPage(p => Math.max(2, p - 1))}
+                            disabled={currentPassThroughPage <= 2}
+                            data-testid="button-prev-page"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            Page {currentPassThroughPage} of {passThroughInfo.pageCount}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setCurrentPassThroughPage(p => Math.min(passThroughInfo.pageCount, p + 1))}
+                            disabled={currentPassThroughPage >= passThroughInfo.pageCount}
+                            data-testid="button-next-page"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                      )}
+                    </div>
+                    <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                      <img
+                        src={`/api/logos/${passThroughInfo.logoId}/pdf-page/${currentPassThroughPage}`}
+                        alt={`Original PDF Page ${currentPassThroughPage}`}
+                        className="max-w-full max-h-full object-contain"
+                        data-testid="img-passthrough-page"
+                        onError={(e) => {
+                          console.error('Failed to load pass-through page preview');
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute bottom-2 right-2 text-xs text-gray-500 bg-white/80 px-2 py-1 rounded">
+                        Your original garment pages will be used
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                    <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
+                      {/* Template container with individual garment color areas */}
+                      <div 
+                        className="relative border border-dashed border-gray-300 bg-gray-100"
+                        style={{
+                          aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                          width: '90%',
+                          maxWidth: '280px'
+                        }}
+                      >
+                        {/* Render individual garment color backgrounds for each logo */}
+                        {canvasElements.map((element) => {
+                          const logo = logos.find(l => l.id === element.logoId);
+                          if (!logo) return null;
+                          
+                          // Use element's individual garment color or fall back to project color
+                          const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
+                          
+                          // Convert center-based coordinates to top-left for CSS positioning
+                          const templateWidth = template?.width || 297;
+                          const templateHeight = template?.height || 420;
+                          const centerX = templateWidth / 2;
+                          const centerY = templateHeight / 2;
+                          
+                          // Convert element center position to top-left corner
+                          const elementCenterX = centerX + element.x;
+                          const elementCenterY = centerY + element.y;
+                          const leftPos = elementCenterX - element.width / 2;
+                          const topPos = elementCenterY - element.height / 2;
+                          
+                          // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
+                          const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
+                          const imageUrl = hasComplexVectorFallback 
+                            ? `/uploads/${(logo as any).canvasFallbackFilename}`
+                            : `/uploads/${logo.filename}`;
+                          
+                          return (
+                            <div
+                              key={element.id}
+                              className="absolute"
+                              style={{
+                                left: `${(leftPos / templateWidth) * 100}%`,
+                                top: `${(topPos / templateHeight) * 100}%`,
+                                width: `${(element.width / templateWidth) * 100}%`,
+                                height: `${(element.height / templateHeight) * 100}%`,
+                                transform: `rotate(${element.rotation || 0}deg)`,
+                                transformOrigin: 'center',
+                                opacity: element.opacity || 1,
+                                backgroundColor: garmentColor,
+                                border: '1px solid rgba(0,0,0,0.1)'
+                              }}
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={logo.originalName}
+                                className="w-full h-full object-contain relative z-10"
+                                style={{ 
+                                  filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
