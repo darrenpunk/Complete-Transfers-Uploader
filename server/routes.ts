@@ -58,10 +58,10 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      // Use Ghostscript to render PDF directly as PNG without extraction
-      // CRITICAL: NO ANTI-ALIASING for vectorization - sharp edges are essential for Vector.AI
-      // Using 300 DPI for maximum detail and NO anti-aliasing to preserve crisp edges
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r300 -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      // Use Ghostscript to render PDF directly as PNG with TRANSPARENCY
+      // CRITICAL: Use pngalpha device to preserve transparent backgrounds
+      // Using 300 DPI for maximum detail
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       const { stdout, stderr } = await execAsync(gsCommand);
