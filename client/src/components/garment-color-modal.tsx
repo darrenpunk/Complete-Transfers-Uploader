@@ -287,11 +287,11 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
               </span>
             </div>
             
-            {/* Custom Color CMYK Picker */}
+            {/* Custom Color CMYK Picker - uses onColorChange directly without closing parent modal */}
             <CMYKColorModal
               initialColor="#FFFFFF"
               currentColor={currentColor || ""}
-              onChange={(newColor) => handleColorSelect(newColor)}
+              onChange={(newColor) => onColorChange(newColor)}
               label="Custom Garment Color"
               trigger={
                 <Button variant="outline" className="w-full">
