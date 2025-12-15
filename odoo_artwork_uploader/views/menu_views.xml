@@ -19,5 +19,19 @@
                   parent="menu_artwork_root"
                   sequence="100"/>
 
+        <!-- Template Definitions submenu -->
+        <menuitem id="menu_artwork_template_definitions"
+                  name="Template Definitions"
+                  parent="menu_artwork_config"
+                  action="action_artwork_template_definition"
+                  sequence="10"/>
+
+        <!-- Template Mappings submenu -->
+        <menuitem id="menu_artwork_template_mappings"
+                  name="Template Mappings"
+                  parent="menu_artwork_config"
+                  action="action_artwork_template_mapping"
+                  sequence="20"/>
+
     </data>
 </odoo>

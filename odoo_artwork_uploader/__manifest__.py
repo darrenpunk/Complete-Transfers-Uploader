@@ -1,6 +1,6 @@
 {
     'name': 'Artwork Uploader',
-    'version': '16.0.42.6',
+    'version': '16.0.43.0',
     'category': 'Sales/Sales',
     'summary': 'Upload and design artwork on garment templates',
     'description': """
@@ -38,9 +38,10 @@
         'data/cron_jobs.xml',
         'views/artwork_project_views.xml',
         'views/sale_order_views.xml',
-        'views/menu_views.xml',
+        'views/artwork_template_definition_views.xml',
         'views/artwork_template_mapping_views.xml',
         'views/artwork_template_mapping_wizard_views.xml',
+        'views/menu_views.xml',
         'views/website_templates.xml',
         'views/artwork_uploader_templates.xml',
         'views/website_snippets.xml',
