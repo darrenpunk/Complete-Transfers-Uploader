@@ -173,7 +173,14 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
           </div>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md" aria-describedby="cmyk-editor-description">
+      <DialogContent 
+        className="max-w-md" 
+        aria-describedby="cmyk-editor-description"
+        onDragEnter={(e) => { e.stopPropagation(); e.preventDefault(); }}
+        onDragOver={(e) => { e.stopPropagation(); e.preventDefault(); }}
+        onDragLeave={(e) => { e.stopPropagation(); e.preventDefault(); }}
+        onDrop={(e) => { e.stopPropagation(); e.preventDefault(); }}
+      >
         <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-center">CMYK Color Editor</DialogTitle>
