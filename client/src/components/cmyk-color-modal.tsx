@@ -139,15 +139,16 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
   const handleCMYKChange = (channel: keyof CMYKColor, value: number) => {
     const newCMYK = { ...cmyk, [channel]: Math.max(0, Math.min(100, value)) };
     setCmyk(newCMYK);
-    
-    // Convert CMYK back to RGB hex for the onChange callback
-    const rgb = cmykToRgb(newCMYK);
-    const hex = rgbToHex(rgb);
-    console.log('CMYK changed:', { newCMYK, rgb, hex, channel, value });
-    onChange(hex);
+    // Don't call onChange here - only on Apply to prevent triggering other modals
   };
 
   const handleApply = () => {
+    // Only call onChange when user clicks Apply - this prevents the upload guidance modal
+    // from being triggered while the user is still adjusting the CMYK sliders
+    const rgb = cmykToRgb(cmyk);
+    const hex = rgbToHex(rgb);
+    console.log('CMYK applied:', { cmyk, rgb, hex });
+    onChange(hex);
     setIsOpen(false);
   };
 
