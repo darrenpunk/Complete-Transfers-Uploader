@@ -2414,42 +2414,99 @@ export async function registerRoutes(app: express.Application) {
           finalMimeType: finalMimeType
         });
         
-        // Try to get dimensions from extracted PNG file directly
-        if (finalMimeType === 'image/png' && (finalFilename.includes('_raster-gs.png') || finalFilename.includes('_raster-') && finalFilename.includes('.png'))) {
-          console.log('🔍 Detected extracted PNG file, querying dimensions directly');
-          const pngPath = path.join(uploadDir, finalFilename);
-          const directDimensions = await getPNGDimensions(pngPath);
-          if (directDimensions) {
-            // For PDF-extracted PNGs, assume original was much smaller and scale down
-            // Common embedded logos are around 200-400px, not 809px
-            let scaledWidth = directDimensions.width;
-            let scaledHeight = directDimensions.height;
+        // CRITICAL FIX: For raster-only PDFs, use the ORIGINAL PDF MediaBox dimensions
+        // The PNG is rendered at 300 DPI, so using PNG pixel dimensions with 72 DPI conversion gives wrong results
+        // Instead, read the PDF MediaBox directly which gives us the correct dimensions in pts (72 pts/inch)
+        if ((file as any).isPdfWithRasterOnly && (file as any).originalPdfPath) {
+          console.log('📐 RASTER PDF: Using original PDF MediaBox dimensions (not PNG pixels)');
+          try {
+            const { PDFDocument } = await import('pdf-lib');
+            const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
+            const originalPdf = await PDFDocument.load(originalPdfBytes);
+            const firstPage = originalPdf.getPages()[0];
+            const mediaBox = firstPage.getMediaBox();
             
-            // If dimensions are large (>600px), likely a rasterized version - scale down
-            if (directDimensions.width > 600 || directDimensions.height > 600) {
-              const scaleFactor = 0.35; // Scale down to approximate original size
-              scaledWidth = Math.round(directDimensions.width * scaleFactor);
-              scaledHeight = Math.round(directDimensions.height * scaleFactor);
-              console.log(`📐 Large PNG detected (${directDimensions.width}×${directDimensions.height}px), scaling down by ${scaleFactor}: ${scaledWidth}×${scaledHeight}px`);
+            // Convert pts to mm: 1 pt = 1/72 inch = 25.4/72 mm
+            const ptsToMm = 25.4 / 72;
+            displayWidth = mediaBox.width * ptsToMm;
+            displayHeight = mediaBox.height * ptsToMm;
+            
+            console.log(`✅ PDF MediaBox: ${mediaBox.width.toFixed(2)}×${mediaBox.height.toFixed(2)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+          } catch (pdfError) {
+            console.log('⚠️ Failed to read PDF MediaBox, falling back to PNG dimensions:', pdfError);
+            // Fallback to PNG dimensions with correct 300 DPI conversion
+            if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
+              const pngWidth = (file as any).extractedPngWidth;
+              const pngHeight = (file as any).extractedPngHeight;
+              // PNG was rendered at 300 DPI, convert to mm: pixels / 300 DPI * 25.4 mm/inch
+              displayWidth = pngWidth / 300 * 25.4;
+              displayHeight = pngHeight / 300 * 25.4;
+              console.log(`📐 Fallback: Using PNG dimensions with 300 DPI: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
             }
-            
-            const { calculatePreciseDimensions } = await import('./dimension-utils');
-            const dimensionResult = calculatePreciseDimensions(scaledWidth, scaledHeight, 'scaled_extraction');
-            displayWidth = dimensionResult.widthMm;
-            displayHeight = dimensionResult.heightMm;
-            console.log(`📐 Using SCALED extracted dimensions: ${scaledWidth}×${scaledHeight}px = ${displayWidth.toFixed(3)}×${displayHeight.toFixed(3)}mm (scaled native)`);
+          }
+        } else if (finalMimeType === 'image/png' && (finalFilename.includes('_raster-gs.png') || finalFilename.includes('_raster-') && finalFilename.includes('.png'))) {
+          // For other extracted PNGs (not from raster-only PDFs), try to get original PDF dimensions
+          console.log('🔍 Detected extracted PNG file, checking for original PDF path');
+          
+          if ((file as any).originalPdfPath) {
+            // Use original PDF dimensions
+            try {
+              const { PDFDocument } = await import('pdf-lib');
+              const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
+              const originalPdf = await PDFDocument.load(originalPdfBytes);
+              const firstPage = originalPdf.getPages()[0];
+              const mediaBox = firstPage.getMediaBox();
+              
+              const ptsToMm = 25.4 / 72;
+              displayWidth = mediaBox.width * ptsToMm;
+              displayHeight = mediaBox.height * ptsToMm;
+              
+              console.log(`✅ PDF MediaBox: ${mediaBox.width.toFixed(2)}×${mediaBox.height.toFixed(2)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+            } catch (pdfError) {
+              console.log('⚠️ Failed to read PDF MediaBox:', pdfError);
+            }
+          } else {
+            // No original PDF, use PNG dimensions with 300 DPI (the render DPI)
+            const pngPath = path.join(uploadDir, finalFilename);
+            const directDimensions = await getPNGDimensions(pngPath);
+            if (directDimensions) {
+              // PNG was rendered at 300 DPI, convert to mm: pixels / 300 DPI * 25.4 mm/inch
+              displayWidth = directDimensions.width / 300 * 25.4;
+              displayHeight = directDimensions.height / 300 * 25.4;
+              console.log(`📐 Using PNG dimensions with 300 DPI: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+            }
           }
         } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
-          const { calculatePreciseDimensions } = await import('./dimension-utils');
-          const pngWidth = (file as any).extractedPngWidth;
-          const pngHeight = (file as any).extractedPngHeight;
-          
-          // Calculate dimensions using standard conversion factor
-          const dimensionResult = calculatePreciseDimensions(pngWidth, pngHeight, 'extracted_png');
-          displayWidth = dimensionResult.widthMm;
-          displayHeight = dimensionResult.heightMm;
-          
-          console.log(`📐 Using extracted PNG dimensions: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+          // For extracted PNGs with stored dimensions, check if we have original PDF path
+          if ((file as any).originalPdfPath) {
+            try {
+              const { PDFDocument } = await import('pdf-lib');
+              const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
+              const originalPdf = await PDFDocument.load(originalPdfBytes);
+              const firstPage = originalPdf.getPages()[0];
+              const mediaBox = firstPage.getMediaBox();
+              
+              const ptsToMm = 25.4 / 72;
+              displayWidth = mediaBox.width * ptsToMm;
+              displayHeight = mediaBox.height * ptsToMm;
+              
+              console.log(`✅ PDF MediaBox: ${mediaBox.width.toFixed(2)}×${mediaBox.height.toFixed(2)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+            } catch (pdfError) {
+              console.log('⚠️ Failed to read PDF MediaBox, using PNG with 300 DPI:', pdfError);
+              const pngWidth = (file as any).extractedPngWidth;
+              const pngHeight = (file as any).extractedPngHeight;
+              displayWidth = pngWidth / 300 * 25.4;
+              displayHeight = pngHeight / 300 * 25.4;
+              console.log(`📐 Using PNG dimensions with 300 DPI: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+            }
+          } else {
+            // No PDF path, assume PNG was rendered at 300 DPI
+            const pngWidth = (file as any).extractedPngWidth;
+            const pngHeight = (file as any).extractedPngHeight;
+            displayWidth = pngWidth / 300 * 25.4;
+            displayHeight = pngHeight / 300 * 25.4;
+            console.log(`📐 Using PNG dimensions with 300 DPI: ${pngWidth}×${pngHeight}px = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+          }
         } else {
           console.log('⚠️ DEBUG: No extracted PNG dimensions found, using defaults:', displayWidth + 'x' + displayHeight);
         }
