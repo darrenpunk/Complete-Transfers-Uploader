@@ -6,53 +6,59 @@ class ArtworkTemplateMapping(models.Model):
     _rec_name = 'template_id'
     
     template_id = fields.Selection([
-        # Screen Printed Transfers - Full Colour (8 templates)
+        # Screen Printed Transfers - Full Colour (10 templates)
         ('template-A3', 'A3'),
         ('template-A4', 'A4'),
         ('template-A5', 'A5'),
         ('template-A6', 'A6'),
         ('template-transfer-size', '295×100mm'),
+        ('template-295x300', '295×300mm'),
         ('template-square', '95×95mm'),
         ('template-badge', '100×70mm'),
         ('template-small', '60×60mm'),
         
-        # Screen Printed Transfers - Full Colour Metallic (8 templates)
+        # Screen Printed Transfers - Full Colour Metallic (9 templates)
         ('metallic-A3', 'A3 Metallic'),
         ('metallic-A4', 'A4 Metallic'),
         ('metallic-A5', 'A5 Metallic'),
         ('metallic-A6', 'A6 Metallic'),
         ('metallic-transfer-size', '295×100mm Metallic'),
+        ('metallic-295x300', '295×300mm Metallic'),
         ('metallic-square', '95×95mm Metallic'),
         ('metallic-badge', '100×70mm Metallic'),
         ('metallic-small', '60×60mm Metallic'),
         
-        # Screen Printed Transfers - Full Colour HD (2 templates)
+        # Screen Printed Transfers - Full Colour HD (3 templates)
         ('hd-A3', 'A3 HD'),
         ('hd-A4', 'A4 HD'),
+        ('hd-295x300', '295×300mm HD'),
         
-        # Screen Printed Transfers - Single Colour (8 templates)
+        # Screen Printed Transfers - Single Colour (9 templates)
         ('single-A3', 'A3 Single Colour'),
         ('single-A4', 'A4 Single Colour'),
         ('single-A5', 'A5 Single Colour'),
         ('single-A6', 'A6 Single Colour'),
         ('single-transfer-size', '295×100mm Single Colour'),
+        ('single-295x300', '295×300mm Single Colour'),
         ('single-square', '95×95mm Single Colour'),
         ('single-badge', '100×70mm Single Colour'),
         ('single-small', '60×60mm Single Colour'),
         
-        # Screen Printed Transfers - Zero (8 templates)
+        # Screen Printed Transfers - Zero (9 templates)
         ('zero-A3', 'A3 Zero'),
         ('zero-A4', 'A4 Zero'),
         ('zero-A5', 'A5 Zero'),
         ('zero-A6', 'A6 Zero'),
         ('zero-transfer-size', '295×100mm Zero'),
+        ('zero-295x300', '295×300mm Zero'),
         ('zero-square', '95×95mm Zero'),
         ('zero-badge', '100×70mm Zero'),
         ('zero-small', '60×60mm Zero'),
         
-        # Digital Transfers - DTF (2 templates)
+        # Digital Transfers - DTF (3 templates)
         ('dtf-SRA3', 'SRA3'),
         ('dtf-large', '1000×550mm DTF'),
+        ('dtf-295x300', '295×300mm DTF'),
         
         # Digital Transfers - UV DTF (1 template)
         ('uvdtf-A3', 'A3 UV DTF'),
@@ -69,17 +75,18 @@ class ArtworkTemplateMapping(models.Model):
         ('applique-badge', '100×70mm Applique'),
         ('applique-small', '60×60mm Applique'),
         
-        # Screen Printed Transfers - Reflective (8 templates)
+        # Screen Printed Transfers - Reflective (9 templates)
         ('reflective-A3', 'A3 Reflective'),
         ('reflective-A4', 'A4 Reflective'),
         ('reflective-A5', 'A5 Reflective'),
         ('reflective-A6', 'A6 Reflective'),
         ('reflective-transfer-size', '295×100mm Reflective'),
+        ('reflective-295x300', '295×300mm Reflective'),
         ('reflective-square', '95×95mm Reflective'),
         ('reflective-badge', '100×70mm Reflective'),
         ('reflective-small', '60×60mm Reflective'),
         
-        # Digital Transfers - Sublimation (12 templates)
+        # Digital Transfers - Sublimation (13 templates)
         ('sublimation-A2-fabric', 'A2 Fabric'),
         ('sublimation-A3-fabric', 'A3 Fabric'),
         ('sublimation-A4-fabric', 'A4 Fabric'),
@@ -89,6 +96,7 @@ class ArtworkTemplateMapping(models.Model):
         ('sublimation-A5', 'A5 Sublimation'),
         ('sublimation-A6', 'A6 Sublimation'),
         ('sublimation-transfer-size', '295×100mm Sublimation'),
+        ('sublimation-295x300', '295×300mm Sublimation'),
         ('sublimation-square', '95×95mm Sublimation'),
         ('sublimation-badge', '100×70mm Sublimation'),
         ('sublimation-small', '60×60mm Sublimation'),
