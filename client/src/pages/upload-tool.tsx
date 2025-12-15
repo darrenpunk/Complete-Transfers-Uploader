@@ -578,21 +578,33 @@ export default function UploadTool() {
   }, [currentProject, logos.length]);
 
   // Track previous garment/ink color to detect when they're first set
-  const [prevGarmentColor, setPrevGarmentColor] = useState<string | undefined>();
-  const [prevInkColor, setPrevInkColor] = useState<string | undefined>();
+  // Use empty string as sentinel to detect "not yet initialized" vs "was empty"
+  const [prevGarmentColor, setPrevGarmentColor] = useState<string | null>(null);
+  const [prevInkColor, setPrevInkColor] = useState<string | null>(null);
+  const [uploadGuidanceTriggered, setUploadGuidanceTriggered] = useState(false);
 
-  // Show upload guidance modal after garment or ink color is selected
+  // Show upload guidance modal after garment or ink color is selected (FIRST TIME ONLY)
+  // This should only trigger once when transitioning from empty to having a color
   useEffect(() => {
-    if (currentProject && logos.length === 0 && hasInitialized) {
+    if (currentProject && logos.length === 0 && hasInitialized && !uploadGuidanceTriggered) {
       const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
       const isFullColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
         !currentTemplate?.label?.includes("Single Colour") && !currentTemplate?.label?.includes("Zero");
       const isSingleColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
         (currentTemplate?.label?.includes("Single Colour") || currentTemplate?.label?.includes("Zero"));
       
+      // Initialize prev values if this is first run (prevGarmentColor === null means not initialized)
+      if (prevGarmentColor === null) {
+        setPrevGarmentColor(currentProject.garmentColor || "");
+        setPrevInkColor(currentProject.inkColor || "");
+        return; // Wait for next render with initialized values
+      }
+      
       // Check if garment color was just set (for Full Colour templates)
-      if (isFullColourTemplate && currentProject.garmentColor && prevGarmentColor === undefined) {
+      // Only trigger if transitioning from empty ("") to having a color
+      if (isFullColourTemplate && currentProject.garmentColor && prevGarmentColor === "") {
         setPrevGarmentColor(currentProject.garmentColor);
+        setUploadGuidanceTriggered(true);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
           setShowUploadGuidanceModal(true);
@@ -601,8 +613,9 @@ export default function UploadTool() {
       }
       
       // Check if ink color was just set (for Single Colour templates)
-      else if (isSingleColourTemplate && currentProject.inkColor && prevInkColor === undefined) {
+      else if (isSingleColourTemplate && currentProject.inkColor && prevInkColor === "") {
         setPrevInkColor(currentProject.inkColor);
+        setUploadGuidanceTriggered(true);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
           setShowUploadGuidanceModal(true);
@@ -611,16 +624,24 @@ export default function UploadTool() {
       }
       
       // For other templates (DTF, etc.) that don't need color selection, show immediately
-      else if (!isFullColourTemplate && !isSingleColourTemplate && currentProject && !prevGarmentColor && !prevInkColor) {
-        setPrevGarmentColor(currentProject.garmentColor);
+      else if (!isFullColourTemplate && !isSingleColourTemplate && currentProject) {
+        setUploadGuidanceTriggered(true);
         const hasSeenGuidance = sessionStorage.getItem('hasSeenUploadGuidance');
         if (!hasSeenGuidance) {
           setShowUploadGuidanceModal(true);
           sessionStorage.setItem('hasSeenUploadGuidance', 'true');
         }
       }
+      
+      // Always update prev values to track changes (but don't re-trigger modal)
+      if (prevGarmentColor !== currentProject.garmentColor) {
+        setPrevGarmentColor(currentProject.garmentColor || "");
+      }
+      if (prevInkColor !== currentProject.inkColor) {
+        setPrevInkColor(currentProject.inkColor || "");
+      }
     }
-  }, [currentProject?.garmentColor, currentProject?.inkColor, logos.length, hasInitialized, templateSizes, prevGarmentColor, prevInkColor]);
+  }, [currentProject?.garmentColor, currentProject?.inkColor, logos.length, hasInitialized, templateSizes, prevGarmentColor, prevInkColor, uploadGuidanceTriggered]);
 
   // Handle applique badges modal trigger
   useEffect(() => {
@@ -874,8 +895,9 @@ export default function UploadTool() {
     setCurrentStep(1);
     setHasInitialized(false);
     setSelectedProductGroup("");
-    setPrevGarmentColor(undefined);
-    setPrevInkColor(undefined);
+    setPrevGarmentColor(null);
+    setPrevInkColor(null);
+    setUploadGuidanceTriggered(false);
     
     // Navigate to home to start fresh
     navigate("/");
