@@ -209,6 +209,10 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
                   max="100"
                   value={cmyk.c}
                   onChange={(e) => handleCMYKChange('c', parseInt(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.stopPropagation()}
+                  onDrag={(e) => e.stopPropagation()}
                   className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
                   style={{
                     background: `linear-gradient(to right, white, cyan)`
@@ -234,6 +238,10 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
                   max="100"
                   value={cmyk.m}
                   onChange={(e) => handleCMYKChange('m', parseInt(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.stopPropagation()}
+                  onDrag={(e) => e.stopPropagation()}
                   className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
                   style={{
                     background: `linear-gradient(to right, white, magenta)`
@@ -259,6 +267,10 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
                   max="100"
                   value={cmyk.y}
                   onChange={(e) => handleCMYKChange('y', parseInt(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.stopPropagation()}
+                  onDrag={(e) => e.stopPropagation()}
                   className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
                   style={{
                     background: `linear-gradient(to right, white, yellow)`
@@ -284,6 +296,10 @@ export default function CMYKColorModal({ initialColor, onChange, label, currentC
                   max="100"
                   value={cmyk.k}
                   onChange={(e) => handleCMYKChange('k', parseInt(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onDragStart={(e) => e.stopPropagation()}
+                  onDrag={(e) => e.stopPropagation()}
                   className="flex-1 h-2 rounded-lg appearance-none cursor-pointer"
                   style={{
                     background: `linear-gradient(to right, white, black)`
