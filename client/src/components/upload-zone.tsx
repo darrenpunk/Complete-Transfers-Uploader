@@ -70,6 +70,7 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
     },
     multiple: true,
     maxSize: 200 * 1024 * 1024, // 200MB for large artwork files
+    noDragEventsBubbling: true, // Prevent drag events from bubbling - fixes slider triggering upload modal
     onDropRejected: (rejectedFiles) => {
       console.log('Files rejected:', rejectedFiles.map(f => ({ 
         name: f.file.name, 
@@ -367,8 +368,8 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
           onClose={handleCloseRasterWarning}
           fileName={pendingRasterFile.fileName}
           onPhotographicApprove={handlePhotographicApprove}
-          onVectorizeWithAI={handleVectorizeWithAI}
           onVectorizeWithService={handleVectorizeWithService}
+          onOpenVectorizationForm={handleVectorizeWithAI}
         />
       )}
 
