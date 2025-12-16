@@ -56,6 +56,12 @@ interface PricingData {
   currency: string;
 }
 
+// Detect if running in iframe (for Odoo integration)
+const isInIframe = typeof window !== 'undefined' && window !== window.parent;
+
+// Get Odoo base URL for direct API calls when in iframe
+const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+
 export default function TemplateSelectorModal({
   open,
   templates,
@@ -102,7 +108,60 @@ export default function TemplateSelectorModal({
   }, [copies]);
   
   const { data: pricingData, isLoading: isPricingLoading, error: pricingError } = useQuery<PricingData>({
-    queryKey: [`/api/pricing?templateId=${selectedTemplate}&copies=${debouncedCopies}`],
+    queryKey: ['pricing', selectedTemplate, debouncedCopies, isInIframe],
+    queryFn: async () => {
+      if (!selectedTemplate || debouncedCopies <= 0) {
+        throw new Error('Invalid parameters');
+      }
+      
+      // When in iframe (Odoo integration), call Odoo pricing API directly
+      // This ensures the Odoo session cookie is sent for customer-specific pricing
+      if (isInIframe) {
+        console.log('🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing');
+        const response = await fetch(`${odooBaseUrl}/artwork/api/pricing`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Send Odoo session cookies
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'call',
+            params: {
+              templateId: selectedTemplate,
+              copies: debouncedCopies,
+              source: 'completetransfers',
+            },
+            id: Date.now(),
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Odoo pricing failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('📦 Odoo pricing response:', data);
+        
+        // Odoo JSON-RPC wraps result in { jsonrpc, result, id }
+        if (data.error) {
+          throw new Error(data.error.message || 'Odoo pricing error');
+        }
+        
+        return data.result || data;
+      }
+      
+      // Standalone mode: use Replit backend proxy (default pricing)
+      const response = await fetch(`/api/pricing?templateId=${selectedTemplate}&copies=${debouncedCopies}`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Pricing failed: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     enabled: !!selectedTemplate && debouncedCopies > 0,
     staleTime: 30000, // Cache for 30 seconds
   });
