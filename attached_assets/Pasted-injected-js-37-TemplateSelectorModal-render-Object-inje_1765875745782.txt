@@ -1,0 +1,43 @@
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+upload:490 📨 Iframe requested user data
+upload:498 👤 Sending user data to iframe: Object
+injected.js:37 ✅ Received user email from Odoo: info@apollosigns.ie
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Showing product launcher modal Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+web.assets_frontend_lazy.min.js:8393 Tour Manager is ready.  running_tour=null
+upload:566 🔄 Iframe loaded - auto-sending user data: info@apollosigns.ie
+injected.js:37 ✅ Received user email from Odoo: info@apollosigns.ie
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 AppliqueBadgesModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+injected.js:37 🔍 Pricing query: Object
+(index):1 Access to fetch at 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/artwork/api/pricing' from origin 'https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
+support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com/artwork/api/pricing:1  Failed to load resource: net::ERR_FAILED
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 Pricing query: Object
+(index):1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
