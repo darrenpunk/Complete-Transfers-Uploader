@@ -4322,15 +4322,23 @@ export async function registerRoutes(app: express.Application) {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
       const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing`;
 
-      console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`, { templateId, copies: copiesNum });
+      // Forward cookies from client request to Odoo for customer-specific pricing
+      const clientCookies = req.headers.cookie || '';
+      console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`, { 
+        templateId, 
+        copies: copiesNum,
+        hasCookies: !!clientCookies 
+      });
 
       // Call Odoo pricing API
       // CRITICAL: Pass source=completetransfers to indicate this request is from CT website
       // This ensures CT Euro/GBP pricelist is used (with quantity discounts)
+      // Forward cookies so Odoo can identify customer and apply customer-specific pricelist
       const response = await fetch(odooApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cookie': clientCookies,  // Forward Odoo session for customer-specific pricing
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
@@ -4402,10 +4410,13 @@ export async function registerRoutes(app: express.Application) {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
       const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
 
+      // Forward cookies from client request to Odoo for customer-specific pricing
+      const clientCookies = req.headers.cookie || '';
       console.log(`🛒 Proxying add-to-cart to Odoo: ${odooApiUrl}`);
       console.log(`📦 Project data:`, { 
         ...projectData, 
-        pdfBase64: projectData.pdfBase64 ? `<${projectData.pdfBase64.length} chars>` : undefined 
+        pdfBase64: projectData.pdfBase64 ? `<${projectData.pdfBase64.length} chars>` : undefined,
+        hasCookies: !!clientCookies
       });
 
       // Add source parameter to indicate request is from Complete Transfers
@@ -4415,10 +4426,12 @@ export async function registerRoutes(app: express.Application) {
       };
 
       // Call Odoo add-to-cart API
+      // Forward cookies so Odoo can identify customer and apply customer-specific pricelist
       const response = await fetch(odooApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cookie': clientCookies,  // Forward Odoo session for customer identification
         },
         body: JSON.stringify(requestBody),
       });
