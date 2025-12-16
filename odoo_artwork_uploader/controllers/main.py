@@ -469,8 +469,25 @@ class ArtworkUploaderController(http.Controller):
             is_public = current_user._is_public()
             _logger.info(f"👤 Current user: {current_user.name} (ID: {current_user.id}), Is Public: {is_public}")
             
-            # Get or create sale order using Odoo's standard website cart system
-            website = request.env['website'].get_current_website()
+            # CRITICAL: Use explicit website_id if provided (from iframe context)
+            # This ensures correct pricelist even when called from Replit iframe
+            website_id_param = data.get('website_id')
+            website = None
+            
+            if website_id_param:
+                try:
+                    explicit_website = request.env['website'].sudo().browse(int(website_id_param))
+                    if explicit_website.exists():
+                        website = explicit_website
+                        _logger.info(f"🌐 Using EXPLICIT website from parameter: {website.name} (ID: {website.id})")
+                except (ValueError, TypeError) as e:
+                    _logger.warning(f"⚠️ Invalid website_id parameter: {e}")
+            
+            # Fallback to current website detection
+            if not website:
+                website = request.env['website'].get_current_website()
+                _logger.info(f"🌐 Using detected website: {website.name if website else 'None'}")
+            
             # CRITICAL: Bind website to request for JSON controllers (sale_get_order expects request.website)
             request.website = website
             
@@ -734,11 +751,33 @@ class ArtworkUploaderController(http.Controller):
             # 2. If request is from completetransfers.com: Force CT Euro/GBP pricelist
             # 3. Else: Use partner's assigned pricelist (serigraf.com default)
             
-            # Get current website and partner for context
-            website = request.env['website'].sudo().get_current_website()
+            # CRITICAL: Use explicit website_id if provided (from iframe context)
+            # This ensures correct pricelist even when called from Replit iframe
+            website_id_param = kwargs.get('website_id')
+            if website_id_param:
+                try:
+                    explicit_website = request.env['website'].sudo().browse(int(website_id_param))
+                    if explicit_website.exists():
+                        website = explicit_website
+                        _logger.info(f"🌐 Using EXPLICIT website from parameter: {website.name} (ID: {website.id})")
+                except (ValueError, TypeError):
+                    pass
+            
+            # Fallback to current website detection
+            if not website_id_param:
+                website = request.env['website'].sudo().get_current_website()
+                _logger.info(f"🌐 Using detected website: {website.name if website else 'None'}")
             
             # Try to get partner from cart first (actual customer), fallback to session user
-            cart = website.sale_get_order(force_create=False) if website else None
+            # IMPORTANT: Use the correct website context for cart lookup
+            cart = None
+            if website:
+                try:
+                    # Use with_context to ensure cart lookup uses the correct website
+                    cart = website.with_context(website_id=website.id).sale_get_order(force_create=False)
+                except Exception as e:
+                    _logger.warning(f"⚠️ Could not get cart: {e}")
+            
             if cart and cart.partner_id:
                 partner = cart.partner_id
                 _logger.info(f"👤 Using CART partner: {partner.name} (ID: {partner.id})")
@@ -751,24 +790,18 @@ class ArtworkUploaderController(http.Controller):
             # Check source parameter (passed by Replit backend), referrer, or website name
             is_complete_transfers = False
             
-            # PRIMARY CHECK: source parameter from Replit backend (most reliable)
+            # PRIMARY CHECK: explicit website_id parameter (most reliable for iframe)
+            if website_id_param:
+                # If website_id is passed, check if it's a Complete Transfers website
+                if website and 'complete' in website.name.lower():
+                    is_complete_transfers = True
+                    _logger.info(f"🎯 Explicit website_id={website_id_param} → Complete Transfers detected")
+            
+            # SECONDARY CHECK: source parameter from Replit backend
             source_param = kwargs.get('source', '')
-            if source_param and 'completetransfers' in source_param.lower():
+            if not is_complete_transfers and source_param and 'completetransfers' in source_param.lower():
                 is_complete_transfers = True
                 _logger.info(f"🎯 source='completetransfers' → CT mode (from Replit backend)")
-            
-            # SECONDARY CHECK: explicit website_id parameter
-            if not is_complete_transfers:
-                website_id_param = kwargs.get('website_id')
-                if website_id_param:
-                    ct_website = request.env['website'].sudo().search([
-                        ('id', '=', int(website_id_param)),
-                        ('name', 'ilike', 'complete')
-                    ], limit=1)
-                    if ct_website:
-                        is_complete_transfers = True
-                        website = ct_website
-                        _logger.info(f"🎯 Explicit website_id={website_id_param} → Complete Transfers detected")
             
             # TERTIARY CHECK: referrer header for completetransfers.com
             if not is_complete_transfers:

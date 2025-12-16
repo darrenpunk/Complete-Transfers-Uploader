@@ -4318,56 +4318,46 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'Invalid copies quantity' });
       }
 
-      // Get Odoo base URL from environment
+      // Get Odoo base URL and Complete Transfers website ID from environment
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-      const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing`;
+      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default to Complete Transfers website ID
+      
+      // Build URL with query parameters (Odoo endpoint now uses type='http', not JSON-RPC)
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(templateId as string)}&copies=${copiesNum}&source=completetransfers&website_id=${ctWebsiteId}`;
 
       // Forward cookies from client request to Odoo for customer-specific pricing
       const clientCookies = req.headers.cookie || '';
       console.log(`💰 Fetching Odoo pricing from: ${odooApiUrl}`, { 
         templateId, 
         copies: copiesNum,
+        website_id: ctWebsiteId,
         hasCookies: !!clientCookies 
       });
 
       // Call Odoo pricing API
-      // CRITICAL: Pass source=completetransfers to indicate this request is from CT website
-      // This ensures CT Euro/GBP pricelist is used (with quantity discounts)
+      // CRITICAL: Pass source=completetransfers and website_id to ensure correct pricelist
       // Forward cookies so Odoo can identify customer and apply customer-specific pricelist
       const response = await fetch(odooApiUrl, {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Cookie': clientCookies,  // Forward Odoo session for customer-specific pricing
         },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'call',
-          params: {
-            templateId: templateId,
-            copies: copiesNum,
-            source: 'completetransfers',  // Identifies request as from Complete Transfers
-          },
-        }),
       });
 
       if (!response.ok) {
         throw new Error(`Odoo API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
       
-      // Handle Odoo JSON-RPC response format
-      if (data.error) {
-        console.error('❌ Odoo pricing error:', data.error);
+      // Handle error response (now direct JSON, not JSON-RPC wrapped)
+      if (result.error) {
+        console.error('❌ Odoo pricing error:', result.error);
         return res.status(500).json({ 
           error: 'No product mapped for this template. Please configure template mappings in Odoo.',
-          details: data.error 
+          details: result.error 
         });
       }
-
-      // Return Odoo pricing
-      const result = data.result || data;
       console.log(`✅ Odoo pricing response:`, result);
       
       // Validate we got valid pricing data
@@ -4419,10 +4409,13 @@ export async function registerRoutes(app: express.Application) {
         hasCookies: !!clientCookies
       });
 
-      // Add source parameter to indicate request is from Complete Transfers
+      // Add source and website_id parameters to indicate request is from Complete Transfers
+      // The website_id is critical for Odoo to use the correct pricelist in iframe context
+      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default to Complete Transfers website ID
       const requestBody = {
         ...projectData,
         source: 'completetransfers',  // Identifies request as from Complete Transfers for proper pricelist
+        website_id: parseInt(ctWebsiteId, 10),  // Explicit website ID for correct pricelist selection
       };
 
       // Call Odoo add-to-cart API

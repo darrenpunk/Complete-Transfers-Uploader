@@ -118,7 +118,9 @@ export default function TemplateSelectorModal({
       // This ensures the Odoo session cookie is sent for customer-specific pricing
       if (isInIframe) {
         console.log('🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing');
-        const url = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(selectedTemplate)}&copies=${debouncedCopies}&source=completetransfers`;
+        // Include website_id to ensure Odoo uses Complete Transfers pricelist context
+        const ctWebsiteId = import.meta.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default CT website ID
+        const url = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(selectedTemplate)}&copies=${debouncedCopies}&source=completetransfers&website_id=${ctWebsiteId}`;
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include', // Send Odoo session cookies
