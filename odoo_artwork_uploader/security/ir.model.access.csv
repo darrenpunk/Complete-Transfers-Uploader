@@ -9,3 +9,5 @@ access_artwork_template_definition_user,artwork.template.definition.user,model_a
 access_artwork_template_definition_public,artwork.template.definition.public,model_artwork_template_definition,,1,0,0,0
 access_artwork_template_mapping_user,artwork.template.mapping.user,model_artwork_template_mapping,base.group_user,1,1,1,1
 access_artwork_template_mapping_public,artwork.template.mapping.public,model_artwork_template_mapping,,1,0,0,0
+access_artwork_template_mapping_wizard_user,artwork.template.mapping.wizard.user,model_artwork_template_mapping_wizard,base.group_user,1,1,1,1
+access_artwork_template_mapping_wizard_line_user,artwork.template.mapping.wizard.line.user,model_artwork_template_mapping_wizard_line,base.group_user,1,1,1,1
