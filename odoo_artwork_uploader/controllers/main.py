@@ -656,27 +656,77 @@ class ArtworkUploaderController(http.Controller):
             ]
             return request.make_response(response, headers=headers, status=500)
     
-    @http.route('/artwork/api/pricing', type='json', auth='public', methods=['GET', 'POST', 'OPTIONS'], cors='*', csrf=False)
+    @http.route('/artwork/api/pricing', type='http', auth='public', methods=['GET', 'POST', 'OPTIONS'], csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):
-        """Get pricing for a template from Odoo product mappings"""
+        """Get pricing for a template from Odoo product mappings
+        
+        Supports cross-origin requests with credentials for customer-specific pricing.
+        When called from iframe with session cookie, identifies logged-in customer and
+        applies their assigned pricelist (including special customer pricelists).
+        """
+        # Handle CORS preflight for credentials mode
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        # For OPTIONS preflight request
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+                ('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With'),
+            ]
+            return request.make_response('', headers=headers)
+        
         try:
+            # Parse JSON body for POST requests (JSON-RPC format from frontend)
+            if request.httprequest.method == 'POST':
+                try:
+                    body = json.loads(request.httprequest.data.decode('utf-8'))
+                    # Handle JSON-RPC format
+                    if 'params' in body:
+                        params = body.get('params', {})
+                        templateId = params.get('templateId', templateId)
+                        copies = params.get('copies', copies)
+                        kwargs.update(params)
+                except:
+                    pass
+            
             if not templateId or not copies:
-                return {'error': 'templateId and copies are required'}
+                response_data = {'error': 'templateId and copies are required'}
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers)
             
             copies = int(copies)
             if copies < 1:
-                return {'error': 'Invalid copies quantity'}
+                response_data = {'error': 'Invalid copies quantity'}
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers)
             
             # Find mapped product for the template
             product = request.env['artwork.template.mapping'].sudo().get_product_for_template(templateId)
             
             if not product:
-                return {
+                response_data = {
                     'error': 'No product mapped for this template',
                     'pricePerUnit': 0,
                     'totalPrice': 0,
                     'currency': 'EUR'
                 }
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers)
             
             # Get price from product (considering pricelists with quantity discounts)
             # PRICELIST PRIORITY LOGIC:
@@ -837,21 +887,33 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"💵 Final pricing - Unit: {price_per_unit}, Total: {total_price} for {copies} items")
             
-            return {
+            response_data = {
                 'pricePerUnit': round(price_per_unit, 2),
                 'totalPrice': round(total_price, 2),
                 'currency': product.currency_id.name if product.currency_id else 'EUR',
                 'productName': product.name,
             }
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers)
             
         except Exception as e:
             _logger.error(f"Pricing error: {str(e)}")
-            return {
+            response_data = {
                 'error': f'Failed to calculate pricing: {str(e)}',
                 'pricePerUnit': 0,
                 'totalPrice': 0,
                 'currency': 'EUR'
             }
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers)
     
     def _get_garment_colors(self):
         """Get available garment colors"""

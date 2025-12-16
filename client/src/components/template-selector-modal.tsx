@@ -118,22 +118,10 @@ export default function TemplateSelectorModal({
       // This ensures the Odoo session cookie is sent for customer-specific pricing
       if (isInIframe) {
         console.log('🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing');
-        const response = await fetch(`${odooBaseUrl}/artwork/api/pricing`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const url = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(selectedTemplate)}&copies=${debouncedCopies}&source=completetransfers`;
+        const response = await fetch(url, {
+          method: 'GET',
           credentials: 'include', // Send Odoo session cookies
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'call',
-            params: {
-              templateId: selectedTemplate,
-              copies: debouncedCopies,
-              source: 'completetransfers',
-            },
-            id: Date.now(),
-          }),
         });
         
         if (!response.ok) {
@@ -143,12 +131,11 @@ export default function TemplateSelectorModal({
         const data = await response.json();
         console.log('📦 Odoo pricing response:', data);
         
-        // Odoo JSON-RPC wraps result in { jsonrpc, result, id }
         if (data.error) {
-          throw new Error(data.error.message || 'Odoo pricing error');
+          throw new Error(data.error);
         }
         
-        return data.result || data;
+        return data;
       }
       
       // Standalone mode: use Replit backend proxy (default pricing)
