@@ -12,52 +12,9 @@ class ArtworkProject(models.Model):
     name = fields.Char('Project Name', required=True, tracking=True)
     uuid = fields.Char('UUID', default=lambda self: str(uuid.uuid4()), readonly=True, copy=False)
     
-    # Template information
-    template_size = fields.Selection([
-        ('template-A3', 'A3 (297×420mm)'),
-        ('template-A4', 'A4 (210×297mm)'),
-        ('template-A5', 'A5 (148×210mm)'),
-        ('template-dtf-a3', 'DTF A3'),
-        ('template-dtf-a4', 'DTF A4'),
-        ('template-uv-dtf-a3', 'UV DTF A3'),
-        ('template-uv-dtf-a4', 'UV DTF A4'),
-        ('template-FOTLA3', 'Fruit of the Loom A3'),
-        ('template-FOTLA4', 'Fruit of the Loom A4'),
-        ('template-sublimation-a3', 'Sublimation A3'),
-        ('template-sublimation-a4', 'Sublimation A4'),
-        ('template-vinyl-a3', 'Vinyl Flex A3'),
-        ('template-vinyl-a4', 'Vinyl Flex A4'),
-        ('template-vinyl-flock-a3', 'Vinyl Flock A3'),
-        ('template-vinyl-flock-a4', 'Vinyl Flock A4'),
-        ('template-soft-shell-a3', 'Soft Shell A3'),
-        ('template-soft-shell-a4', 'Soft Shell A4'),
-        ('template-reflective-a3', 'Reflective A3'),
-        ('template-reflective-a4', 'Reflective A4'),
-        ('template-hi-viz-a3', 'Hi-Viz A3'),
-        ('template-hi-viz-a4', 'Hi-Viz A4'),
-        ('template-glitter-a3', 'Glitter A3'),
-        ('template-glitter-a4', 'Glitter A4'),
-        ('template-metallic-a3', 'Metallic A3'),
-        ('template-metallic-a4', 'Metallic A4'),
-        ('template-holographic-a3', 'Holographic A3'),
-        ('template-holographic-a4', 'Holographic A4'),
-        ('template-glow-in-dark-a3', 'Glow in the Dark A3'),
-        ('template-glow-in-dark-a4', 'Glow in the Dark A4'),
-        ('template-puff-a3', 'Puff A3'),
-        ('template-puff-a4', 'Puff A4'),
-        ('template-foil-a3', 'Foil A3'),
-        ('template-foil-a4', 'Foil A4'),
-        ('template-photographic-a3', 'Photographic A3'),
-        ('template-photographic-a4', 'Photographic A4'),
-        ('template-embroidery-badges-a3', 'Embroidery Badges A3'),
-        ('template-embroidery-badges-a4', 'Embroidery Badges A4'),
-        ('template-applique-badges-a3', 'Applique Badges & Embroidery A3'),
-        ('template-applique-badges-a4', 'Applique Badges & Embroidery A4'),
-        ('template-laser-cut-badges-a3', 'Laser Cut Badges A3'),
-        ('template-laser-cut-badges-a4', 'Laser Cut Badges A4'),
-        ('template-woven-badges-a3', 'Woven Badges A3'),
-        ('template-woven-badges-a4', 'Woven Badges A4'),
-    ], string='Template Size', required=True)
+    # Template information - accepts any template ID from Replit app
+    # Using Char field instead of Selection to accept all template IDs dynamically
+    template_size = fields.Char('Template Size', required=True, help='Template ID from artwork uploader')
     
     template_width = fields.Float('Template Width (mm)', compute='_compute_template_dimensions', store=True)
     template_height = fields.Float('Template Height (mm)', compute='_compute_template_dimensions', store=True)
@@ -122,58 +79,51 @@ class ArtworkProject(models.Model):
     
     @api.depends('template_size')
     def _compute_template_dimensions(self):
-        dimensions = {
-            'template-A3': (297, 420),
-            'template-A4': (210, 297),
-            'template-A5': (148, 210),
-            'template-dtf-a3': (297, 420),
-            'template-dtf-a4': (210, 297),
-            'template-uv-dtf-a3': (297, 420),
-            'template-uv-dtf-a4': (210, 297),
-            'template-FOTLA3': (297, 420),
-            'template-FOTLA4': (210, 297),
-            'template-sublimation-a3': (297, 420),
-            'template-sublimation-a4': (210, 297),
-            'template-vinyl-a3': (297, 420),
-            'template-vinyl-a4': (210, 297),
-            'template-vinyl-flock-a3': (297, 420),
-            'template-vinyl-flock-a4': (210, 297),
-            'template-soft-shell-a3': (297, 420),
-            'template-soft-shell-a4': (210, 297),
-            'template-reflective-a3': (297, 420),
-            'template-reflective-a4': (210, 297),
-            'template-hi-viz-a3': (297, 420),
-            'template-hi-viz-a4': (210, 297),
-            'template-glitter-a3': (297, 420),
-            'template-glitter-a4': (210, 297),
-            'template-metallic-a3': (297, 420),
-            'template-metallic-a4': (210, 297),
-            'template-holographic-a3': (297, 420),
-            'template-holographic-a4': (210, 297),
-            'template-glow-in-dark-a3': (297, 420),
-            'template-glow-in-dark-a4': (210, 297),
-            'template-puff-a3': (297, 420),
-            'template-puff-a4': (210, 297),
-            'template-foil-a3': (297, 420),
-            'template-foil-a4': (210, 297),
-            'template-photographic-a3': (297, 420),
-            'template-photographic-a4': (210, 297),
-            'template-embroidery-badges-a3': (297, 420),
-            'template-embroidery-badges-a4': (210, 297),
-            'template-applique-badges-a3': (297, 420),
-            'template-applique-badges-a4': (210, 297),
-            'template-laser-cut-badges-a3': (297, 420),
-            'template-laser-cut-badges-a4': (210, 297),
-            'template-woven-badges-a3': (297, 420),
-            'template-woven-badges-a4': (210, 297),
-        }
-        
+        """Compute template dimensions from template definition or known patterns"""
         for record in self:
-            if record.template_size in dimensions:
-                record.template_width, record.template_height = dimensions[record.template_size]
-            else:
+            if not record.template_size:
                 record.template_width = 297
                 record.template_height = 420
+                continue
+            
+            # Try to get dimensions from template definition
+            template_def = self.env['artwork.template.definition'].sudo().search([
+                ('template_id', '=', record.template_size)
+            ], limit=1)
+            
+            if template_def:
+                record.template_width = template_def.width_mm
+                record.template_height = template_def.height_mm
+            else:
+                # Fallback: Parse dimensions from template ID patterns
+                template = record.template_size.lower()
+                if 'a2' in template:
+                    record.template_width, record.template_height = 420, 594
+                elif 'a3' in template or 'sra3' in template:
+                    record.template_width, record.template_height = 297, 420
+                elif 'a4' in template:
+                    record.template_width, record.template_height = 210, 297
+                elif 'a5' in template:
+                    record.template_width, record.template_height = 148, 210
+                elif 'a6' in template:
+                    record.template_width, record.template_height = 105, 148
+                elif 'large' in template or '1000' in template:
+                    record.template_width, record.template_height = 1000, 550
+                elif '295x300' in template:
+                    record.template_width, record.template_height = 295, 300
+                elif 'transfer-size' in template or '295x100' in template:
+                    record.template_width, record.template_height = 295, 100
+                elif 'square' in template or '95x95' in template:
+                    record.template_width, record.template_height = 95, 95
+                elif 'badge' in template or '100x70' in template:
+                    record.template_width, record.template_height = 100, 70
+                elif 'small' in template or '60x60' in template:
+                    record.template_width, record.template_height = 60, 60
+                elif 'mug' in template:
+                    record.template_width, record.template_height = 230, 95
+                else:
+                    # Default to A3
+                    record.template_width, record.template_height = 297, 420
     
     @api.depends('template_size', 'quantity')
     def _compute_price(self):
