@@ -547,9 +547,11 @@ class ArtworkUploaderController(http.Controller):
             # 3. Else → Use cart's current pricelist (serigraf.com default)
             
             # Define standard/public pricelists (NOT special customer pricelists)
+            # These are DEFAULT pricelists that should be overridden by CT pricelist
             standard_pricelists = [
                 'Public Pricelist',
                 'Euro Pricelist',
+                'Euro Prices',  # Standard Euro pricelist - NOT a special customer pricelist
                 'CT Euro Pricelist',
                 'CT Public Pricelist GBP',
                 'CT T1 Pricelist T1',
@@ -820,9 +822,11 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"🔑 Session user: {request.env.user.name} (ID: {request.env.user.id}), Partner: {partner.name if partner else 'None'}")
             
             # Define standard/public pricelists (NOT special customer pricelists)
+            # These are DEFAULT pricelists that should be overridden by CT pricelist
             standard_pricelists = [
                 'Public Pricelist',
                 'Euro Pricelist',
+                'Euro Prices',  # Standard Euro pricelist - NOT a special customer pricelist
                 'CT Euro Pricelist',
                 'CT Public Pricelist GBP',
                 'CT T1 Pricelist T1',
