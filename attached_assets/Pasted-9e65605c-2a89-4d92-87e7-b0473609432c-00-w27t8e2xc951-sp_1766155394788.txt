@@ -1,0 +1,384 @@
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 503 (Service Unavailable)
+ Tour Manager is ready.  running_tour=null
+ 🔄 Iframe loaded - auto-sending user data: enda@tees.ie
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+ 🔄 Iframe loaded - auto-sending user data: enda@tees.ie
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) 
+upload:1 Uncaught (in promise) 
+upload:1 Uncaught (in promise) 
+upload:1 Uncaught (in promise) 
+upload:1 Uncaught (in promise) 
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal open state changed: false
+ 🔍 App running in iframe - requesting user data from parent window
+ showAppliqueBadgesModal state changed to: false
+ 📨 Iframe requested user data
+ 👤 Sending user data to iframe: Object
+ ✅ Received user email from Odoo: enda@tees.ie
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ 🔄 Iframe loaded - auto-sending user data: enda@tees.ie
+ ✅ Received user email from Odoo: enda@tees.ie
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ 📦 Odoo pricing response: Object
+ 📦 Odoo pricing response: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ 📦 Odoo pricing response: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Template large_dtf: 2834x1559px, Workspace: 1659x968, Zoom: 50%
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ handleFilesUpload called with files: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Upload completed, checking for PDFs with raster content: Array(1)
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ⚠️ Large SVG detected (5.2MB), using simplified rendering
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Mouse down on element 44160de4-c44f-4b3c-a84c-a35aa2271a11, starting drag, shiftKey=false
+injected.js:37 🎯 Drag offset calculated: (-184.7, -212.8)
+injected.js:37 🎯 Stored initial positions for 1 elements: Array(1)
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 Property change: rotation from 0 to 90
+injected.js:37 Sending updates: Object
+injected.js:37 Properties updateElementDirect called: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ Image loaded for preview
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 PDF preview approved, showing project name modal. Current pendingAction: continue
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Project data for Odoo integration: Object
+injected.js:37 🎬 Executing pending action: continue
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🛒 Adding to Odoo cart via backend proxy: /api/projects/67bced08-543c-4e6b-ab94-8454740cc1be/add-to-cart
+injected.js:37 📄 Generating PDF for Odoo attachment...
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ✅ PDF generated and converted to base64
+injected.js:37 📦 Sending project data to Odoo: Object
+injected.js:37 🎯 TEMPLATE SIZE FOR ADD-TO-CART: dtf-large
+injected.js:37 🎯 IS SINGLE COLOUR: null
+injected.js:37 ✅ Including partner email for cart assignment: enda@tees.ie
+injected.js:37 🔗 Running in iframe mode - calling backend proxy
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/api/projects/67bced08-543c-4e6b-ab94-8454740cc1be/add-to-cart:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 44160de4-c44f-4b3c-a84c-a35aa2271a11 dimensions: Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Template large_dtf: 2834x1559px, Workspace: 707x968, Zoom: 50%

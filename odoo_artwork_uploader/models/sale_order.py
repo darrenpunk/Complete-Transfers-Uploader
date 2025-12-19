@@ -156,7 +156,14 @@ class SaleOrderLine(models.Model):
             comments.append(project.project_comments)
         
         # Add template information
-        template_display = dict(project._fields['template_size'].selection).get(project.template_size, project.template_size)
+        # template_size is now a Char field, look up display name from template definitions
+        template_display = project.template_size
+        if project.template_size:
+            template_def = self.env['artwork.template.definition'].sudo().search([
+                ('template_id', '=', project.template_size)
+            ], limit=1)
+            if template_def:
+                template_display = template_def.name
         comments.append(f"Template: {template_display}")
         
         # Add ink color if available
