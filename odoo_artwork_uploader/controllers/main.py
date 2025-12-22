@@ -408,7 +408,8 @@ class ArtworkUploaderController(http.Controller):
             except (json.JSONDecodeError, UnicodeDecodeError):
                 data = {}
             
-            _logger.info(f"📦 Received project data: {data}")
+            _logger.info(f"📦 Received project data keys: {list(data.keys())}")
+            _logger.info(f"📦 website_id from data: {data.get('website_id')}, source: {data.get('source')}")
             
             # Find or create project in Odoo database
             project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
