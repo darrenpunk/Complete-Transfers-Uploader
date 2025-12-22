@@ -755,6 +755,7 @@ class ArtworkUploaderController(http.Controller):
             
             # CRITICAL: Use explicit website_id if provided (from iframe context)
             # This ensures correct pricelist even when called from Replit iframe
+            website = None  # Initialize to avoid "referenced before assignment" error
             website_id_param = kwargs.get('website_id')
             if website_id_param:
                 try:
@@ -765,8 +766,8 @@ class ArtworkUploaderController(http.Controller):
                 except (ValueError, TypeError):
                     pass
             
-            # Fallback to current website detection
-            if not website_id_param:
+            # Fallback to current website detection if no explicit website found
+            if not website:
                 website = request.env['website'].sudo().get_current_website()
                 _logger.info(f"🌐 Using detected website: {website.name if website else 'None'}")
             
