@@ -411,6 +411,11 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"📦 Received project data keys: {list(data.keys())}")
             _logger.info(f"📦 website_id from data: {data.get('website_id')}, source: {data.get('source')}")
             
+            # DEBUG: List all websites to help identify correct Complete Transfers website ID
+            all_websites = request.env['website'].sudo().search([])
+            for ws in all_websites:
+                _logger.info(f"🌐 AVAILABLE WEBSITE: ID={ws.id}, Name='{ws.name}', Domain='{ws.domain}'")
+            
             # Find or create project in Odoo database
             project = request.env['artwork.project'].sudo().search([('uuid', '=', project_uuid)], limit=1)
             
