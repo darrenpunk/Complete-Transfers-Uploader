@@ -45,3 +45,8 @@ externalPort = 3000
 
 [agent]
 integrations = ["dropbox:1.0.0", "github:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_ODOO_CT_WEBSITE_ID = "3"
