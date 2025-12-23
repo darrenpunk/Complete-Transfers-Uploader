@@ -777,22 +777,53 @@ class ArtworkUploaderController(http.Controller):
                 website = request.env['website'].sudo().get_current_website()
                 _logger.info(f"🌐 Using detected website: {website.name if website else 'None'}")
             
-            # Try to get partner from cart first (actual customer), fallback to session user
-            # IMPORTANT: Use the correct website context for cart lookup
+            # CRITICAL FIX: If partnerEmail is provided, look up that customer directly
+            # This handles the case where iframe session cookies aren't passed correctly
+            partner_email = kwargs.get('partnerEmail')
+            partner = None
             cart = None
-            if website:
-                try:
-                    # Use with_context to ensure cart lookup uses the correct website
-                    cart = website.with_context(website_id=website.id).sale_get_order(force_create=False)
-                except Exception as e:
-                    _logger.warning(f"⚠️ Could not get cart: {e}")
             
-            if cart and cart.partner_id:
-                partner = cart.partner_id
-                _logger.info(f"👤 Using CART partner: {partner.name} (ID: {partner.id})")
-            else:
-                partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
-                _logger.info(f"👤 Using SESSION user partner: {partner.name if partner else 'None'}")
+            if partner_email:
+                _logger.info(f"📧 Looking up customer by email for pricing: {partner_email}")
+                partner = request.env['res.partner'].sudo().search([
+                    ('email', '=ilike', partner_email),
+                    ('customer_rank', '>', 0)
+                ], limit=1)
+                
+                if not partner:
+                    # Try without customer_rank filter
+                    partner = request.env['res.partner'].sudo().search([
+                        ('email', '=ilike', partner_email)
+                    ], limit=1)
+                
+                if partner:
+                    _logger.info(f"✅ Found customer for pricing: {partner.name} (ID: {partner.id})")
+                    # Also try to find their cart on this website
+                    if website:
+                        cart = request.env['sale.order'].sudo().search([
+                            ('partner_id', '=', partner.id),
+                            ('website_id', '=', website.id),
+                            ('state', '=', 'draft'),
+                        ], order='create_date desc', limit=1)
+                else:
+                    _logger.warning(f"⚠️ Customer not found for email: {partner_email}")
+            
+            # Fallback: Try to get partner from cart (actual customer), then session user
+            if not partner:
+                # IMPORTANT: Use the correct website context for cart lookup
+                if website:
+                    try:
+                        # Use with_context to ensure cart lookup uses the correct website
+                        cart = website.with_context(website_id=website.id).sale_get_order(force_create=False)
+                    except Exception as e:
+                        _logger.warning(f"⚠️ Could not get cart: {e}")
+                
+                if cart and cart.partner_id:
+                    partner = cart.partner_id
+                    _logger.info(f"👤 Using CART partner: {partner.name} (ID: {partner.id})")
+                else:
+                    partner = request.env.user.partner_id if hasattr(request.env.user, 'partner_id') else None
+                    _logger.info(f"👤 Using SESSION user partner: {partner.name if partner else 'None'}")
             
             # CRITICAL FIX: Detect if request originates from Complete Transfers website
             # When loaded in iframe on completetransfers.com, Odoo may see wrong website

@@ -1273,6 +1273,7 @@ export default function UploadTool() {
             setShowProductLauncher(true);
           }}
           selectedGroup={selectedProductGroup}
+          partnerEmail={partnerEmail}
         />
         
         {/* Applique Badges Modal - Must be here since it appears before project creation */}
@@ -1452,6 +1453,7 @@ export default function UploadTool() {
           setHasInitialized(false); // Reset initialization to allow proper flow
         }}
         selectedGroup={selectedProductGroup}
+        partnerEmail={partnerEmail}
       />
 
       {/* PDF Preview Modal */}

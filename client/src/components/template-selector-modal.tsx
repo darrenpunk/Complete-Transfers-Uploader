@@ -48,6 +48,7 @@ interface TemplateSelectorModalProps {
   onClose: () => void;
   onBack?: () => void;
   selectedGroup?: string;
+  partnerEmail?: string | null;  // Customer email for pricing lookup
 }
 
 interface PricingData {
@@ -68,7 +69,8 @@ export default function TemplateSelectorModal({
   onSelectTemplate,
   onClose,
   onBack,
-  selectedGroup
+  selectedGroup,
+  partnerEmail
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [copies, setCopies] = useState<number>(1); // Start at 1, will be adjusted based on template
@@ -108,7 +110,7 @@ export default function TemplateSelectorModal({
   }, [copies]);
   
   const { data: pricingData, isLoading: isPricingLoading, error: pricingError } = useQuery<PricingData>({
-    queryKey: ['pricing', selectedTemplate, debouncedCopies, isInIframe],
+    queryKey: ['pricing', selectedTemplate, debouncedCopies, isInIframe, partnerEmail],
     queryFn: async () => {
       if (!selectedTemplate || debouncedCopies <= 0) {
         throw new Error('Invalid parameters');
@@ -119,8 +121,12 @@ export default function TemplateSelectorModal({
       if (isInIframe) {
         console.log('🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing');
         // Include website_id to ensure Odoo uses Complete Transfers pricelist context
-        const ctWebsiteId = import.meta.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default CT website ID
-        const url = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(selectedTemplate)}&copies=${debouncedCopies}&source=completetransfers&website_id=${ctWebsiteId}`;
+        const ctWebsiteId = import.meta.env.VITE_ODOO_CT_WEBSITE_ID || '3';  // Complete Transfers website ID
+        // Include partnerEmail for customer-specific pricing lookup when session cookies don't work
+        let url = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(selectedTemplate)}&copies=${debouncedCopies}&source=completetransfers&website_id=${ctWebsiteId}`;
+        if (partnerEmail) {
+          url += `&partnerEmail=${encodeURIComponent(partnerEmail)}`;
+        }
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include', // Send Odoo session cookies
