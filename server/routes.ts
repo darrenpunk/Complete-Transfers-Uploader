@@ -2704,39 +2704,54 @@ export async function registerRoutes(app: express.Application) {
                     }
                   }
                   
-                  // ARCHITECT GUIDANCE: Trust Ghostscript PDF bbox as authoritative
-                  // SVG path coordinates don't account for transforms/masks/clipping and are unreliable
-                  // The Ghostscript bbox (652×241 pt for OASIS) matches Illustrator exactly
-                  console.log(`📍 Using authoritative PDF bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
+                  // ARCHITECT GUIDANCE: PDF bbox gives correct dimensions, but Inkscape rebases coordinates
+                  // We need to query the actual SVG content bounds AFTER Inkscape conversion
+                  console.log(`📍 PDF bounds (authoritative size): (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
                   
                   const contentWidthPts = contentBoundsForNormalization.width;
                   const contentHeightPts = contentBoundsForNormalization.height;
+                  
+                  // Store original PDF bounds for PDF cropping during generation
+                  originalPdfBounds = {
+                    xMin: contentBoundsForNormalization.xMin,
+                    yMin: contentBoundsForNormalization.yMin,
+                    xMax: contentBoundsForNormalization.xMax,
+                    yMax: contentBoundsForNormalization.yMax,
+                    width: contentWidthPts,
+                    height: contentHeightPts,
+                    units: 'pt'
+                  };
+                  console.log(`📋 Stored original PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
                   
                   console.log(`📐 Content dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                     
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
                       try {
+                        // CRITICAL FIX: Query actual SVG content bounds AFTER Inkscape conversion
+                        // Inkscape rebases coordinates during PDF→SVG, so PDF bounds don't match SVG coordinates
+                        let svgBoundsX = 0, svgBoundsY = 0;
+                        
+                        try {
+                          const { execSync } = await import('child_process');
+                          const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
+                          // Format: element_id,x,y,width,height
+                          const parts = queryResult.trim().split(',');
+                          if (parts.length >= 5) {
+                            svgBoundsX = parseFloat(parts[1]) || 0;
+                            svgBoundsY = parseFloat(parts[2]) || 0;
+                            console.log(`🔍 Inkscape query-all: SVG content at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                          }
+                        } catch (queryError) {
+                          console.log(`⚠️ Inkscape query failed, assuming content at origin:`, queryError);
+                        }
+                        
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
-                        const bounds = contentBoundsForNormalization;
                         
                         console.log(`🎯 NORMALIZING SVG to zero-origin:`);
-                        console.log(`   Original content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
+                        console.log(`   SVG content starts at: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
                         console.log(`   Size: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
-                        console.log(`   Translation: (-${bounds.xMin.toFixed(2)}, -${bounds.yMin.toFixed(2)})`);
-                        
-                        // CRITICAL: Store original PDF content bounds for cropping during PDF generation
-                        // These are the coordinates BEFORE normalization - needed to crop original PDF
-                        originalPdfBounds = {
-                          xMin: bounds.xMin,
-                          yMin: bounds.yMin,
-                          xMax: bounds.xMax,
-                          yMax: bounds.yMax,
-                          width: contentWidthPts,
-                          height: contentHeightPts,
-                          units: 'pt'
-                        };
-                        console.log(`📋 Stored original PDF bounds for cropping: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
+                        console.log(`   Translation needed: (-${svgBoundsX.toFixed(2)}, -${svgBoundsY.toFixed(2)})`);
                         
                         // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
                         // This matches the normalized contentBounds the frontend expects
@@ -2748,10 +2763,10 @@ export async function registerRoutes(app: express.Application) {
                         svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}"`);
                         svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}"`);
                         
-                        // CRITICAL: Wrap ALL SVG content in a <g> with translation to move content to (0,0)
-                        // This compensates for the zero-origin viewBox
-                        const translateX = -bounds.xMin;
-                        const translateY = -bounds.yMin;
+                        // CRITICAL: Use ACTUAL SVG content bounds for translation, not PDF bounds
+                        // This is the key fix - Inkscape rebases coordinates during conversion
+                        const translateX = -svgBoundsX;
+                        const translateY = -svgBoundsY;
                         
                         // Find the opening <svg> tag and wrap all content after it
                         svgContent = svgContent.replace(
