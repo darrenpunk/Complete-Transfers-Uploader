@@ -175,7 +175,7 @@ export default function SvgInlineRenderer({
             justifyContent: 'center',
             padding: 0,
             margin: 0,
-            overflow: 'hidden'
+            overflow: 'visible'
           }}
         >
           <img 
@@ -206,7 +206,7 @@ export default function SvgInlineRenderer({
           justifyContent: 'center',
           padding: 0,
           margin: 0,
-          overflow: 'hidden'
+          overflow: 'visible'
         }}
         dangerouslySetInnerHTML={{ __html: svgContent }}
       />
@@ -234,7 +234,7 @@ export default function SvgInlineRenderer({
             justifyContent: 'center',
             padding: 0,
             margin: 0,
-            overflow: 'hidden'
+            overflow: 'visible'
           }}
           dangerouslySetInnerHTML={{ __html: svgContent }}
         />

@@ -2075,14 +2075,15 @@ export default function CanvasWorkspace({
                 >
                   {/* Element Content with Garment Background */}
                   <div 
-                    className="absolute inset-0 overflow-hidden" 
+                    className="absolute inset-0" 
                     style={{ 
                       backgroundColor: element.garmentColor || 'transparent',
                       padding: 0,
                       margin: 0,
                       display: 'block',
                       lineHeight: 0,
-                      fontSize: 0
+                      fontSize: 0,
+                      overflow: 'visible'
                     }}
                   >
                     {/* Logo Elements */}
