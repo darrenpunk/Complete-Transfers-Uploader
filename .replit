@@ -39,10 +39,6 @@ waitForPort = 5000
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 24678
-externalPort = 3000
-
 [agent]
 integrations = ["dropbox:1.0.0", "github:1.0.0"]
 
