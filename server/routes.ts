@@ -3236,15 +3236,25 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`🔍 OUTLINED BOUNDS CHECK: Inkscape=${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm vs GS=${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
               
-              // ALWAYS use Inkscape bounds - they are the most accurate (verified against Illustrator)
-              // Inkscape bounds minX/minY are already 0, so no translation adjustment needed
-              if (outlinedBounds.minX === 0 && outlinedBounds.minY === 0) {
-                console.log(`📐 USING INKSCAPE BOUNDS: ${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm (accurate, zero-origin)`);
+              // CRITICAL: Check if GS bbox has offset origin (content is offset from page origin)
+              // If GS bbox has offset (xMin > 5 or yMin > 5), GS correctly measured offset content - trust it
+              // If GS bbox is at origin (xMin ~= 0, yMin ~= 0), GS might miss content - use Inkscape if larger
+              const gsHasOffsetOrigin = originalPdfBounds && (originalPdfBounds.xMin > 5 || originalPdfBounds.yMin > 5);
+              const inkscapeIsLarger = outlinedWidthMm > displayWidth * 1.01 || outlinedHeightMm > displayHeight * 1.01;
+              
+              console.log(`🔍 GS ORIGIN CHECK: xMin=${originalPdfBounds?.xMin?.toFixed(1) || 'N/A'}, yMin=${originalPdfBounds?.yMin?.toFixed(1) || 'N/A'}, hasOffset=${gsHasOffsetOrigin}`);
+              
+              if (gsHasOffsetOrigin) {
+                // GS bbox has offset origin - it correctly measured offset content, trust it
+                console.log(`✅ KEEPING GS BOUNDS: GS bbox has offset origin (${originalPdfBounds!.xMin.toFixed(1)}, ${originalPdfBounds!.yMin.toFixed(1)}) - trusted measurement ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                // Don't override with Inkscape - it returns page size for offset content
+              } else if (inkscapeIsLarger && outlinedBounds.minX === 0 && outlinedBounds.minY === 0) {
+                // GS bbox at origin but Inkscape gives larger bounds - use Inkscape to catch missed content
+                console.log(`📐 USING INKSCAPE BOUNDS (GS at origin, Inkscape larger): ${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm (was GS: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                 displayWidth = outlinedWidthMm;
                 displayHeight = outlinedHeightMm;
                 
                 // Update content bounds to match Inkscape's accurate measurement
-                // Inkscape returns pts directly, use as-is
                 if (boundsResult?.contentBounds) {
                   boundsResult.contentBounds.width = outlinedBounds.width;
                   boundsResult.contentBounds.height = outlinedBounds.height;
@@ -3254,7 +3264,7 @@ export async function registerRoutes(app: express.Application) {
                   boundsResult.contentBounds.yMax = outlinedBounds.height;
                   console.log(`📐 UPDATED CONTENT BOUNDS from Inkscape: ${boundsResult.contentBounds.width.toFixed(2)}×${boundsResult.contentBounds.height.toFixed(2)}pts`);
                 }
-              } else if (outlinedWidthMm > displayWidth || outlinedHeightMm > displayHeight) {
+              } else if (inkscapeIsLarger && !gsHasOffsetOrigin) {
                 const newWidth = Math.max(displayWidth, outlinedWidthMm);
                 const newHeight = Math.max(displayHeight, outlinedHeightMm);
                 console.log(`📐 EXPANDING BOUNDS: Using larger outlined bounds ${newWidth.toFixed(2)}×${newHeight.toFixed(2)}mm to prevent clipping`);
