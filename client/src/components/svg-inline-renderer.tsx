@@ -264,8 +264,8 @@ export default function SvgInlineRenderer({
       // Ensure SVG has proper namespace declarations and overflow visible
       let processedSvg = svgContent;
       
-      // Add xmlns:xlink if missing and set overflow visible, width/height to 100%
-      // This ensures SVG fills the container and strokes aren't clipped
+      // Add xmlns:xlink if missing, set overflow visible, width/height to 100%
+      // Also add preserveAspectRatio="none" to fill container completely without aspect ratio constraint
       processedSvg = processedSvg.replace(
         /<svg([^>]*)>/i,
         (match, attrs) => {
@@ -273,8 +273,9 @@ export default function SvgInlineRenderer({
           if (!attrs.includes('xmlns:xlink')) {
             newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
           }
-          // Override width/height to fill container, keep viewBox for aspect ratio
-          return `<svg${newAttrs} style="width:100%;height:100%;overflow:visible">`;
+          // Override width/height to fill container exactly, use preserveAspectRatio="none" 
+          // since element dimensions already match content aspect ratio
+          return `<svg${newAttrs} preserveAspectRatio="none" style="width:100%;height:100%;overflow:visible">`;
         }
       );
       
