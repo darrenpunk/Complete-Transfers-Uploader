@@ -245,8 +245,14 @@ export default function SvgInlineRenderer({
     
     // CRITICAL FIX: For content extending beyond viewBox, use simplified rendering
     // This lets the browser's native SVG overflow handling work correctly
+    // Convert bounds from pts to mm for comparison (1mm = 2.834645669pts)
+    const ptsToMm = 1 / 2.834645669;
+    const boundsWidthMm = bounds.width * ptsToMm;
+    const boundsHeightMm = bounds.height * ptsToMm;
+    
+    // Only detect overflow if bounds extend beyond element by more than 1mm tolerance
     const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        bounds.xMax > element.width || bounds.xMax > element.height;
+                        boundsWidthMm > element.width + 1 || boundsHeightMm > element.height + 1;
     
     if (hasOverflow) {
       console.log('🎯 Content extends beyond bounds: Using simplified rendering for proper display');
