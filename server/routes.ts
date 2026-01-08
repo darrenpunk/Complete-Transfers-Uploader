@@ -2652,7 +2652,6 @@ export async function registerRoutes(app: express.Application) {
                   
                   const contentWidthPts = contentBoundsForNormalization.width;
                   const contentHeightPts = contentBoundsForNormalization.height;
-                  const pxToMm = 1 / 2.834645669;
                   
                   console.log(`📍 Using bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
                     
@@ -2711,9 +2710,6 @@ export async function registerRoutes(app: express.Application) {
                         console.error('⚠️ Failed to normalize SVG:', svgCropError);
                       }
                     }
-                  } else {
-                    console.log(`⚠️ SVG geometry analysis returned no content - file may be empty or corrupted`);
-                  }
                 } catch (pdfLibError) {
                   console.error('Failed to extract PDF MediaBox:', pdfLibError);
                   // Fall through to SVG bounds analyzer
