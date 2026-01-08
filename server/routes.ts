@@ -3221,11 +3221,26 @@ export async function registerRoutes(app: express.Application) {
                     svgContent = svgContent.replace(/height="[^"]*"/, `height="${newViewBoxHeight.toFixed(2)}"`);
                     
                     // Update the existing translate transform to account for expanded bounds
-                    // The outlined bounds have negative minX/minY, so we need to shift content right/down
-                    svgContent = svgContent.replace(
-                      /<g transform="translate\([^)]+\)">/,
-                      `<g transform="translate(${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)})">`
-                    );
+                    // The outlined bounds have negative minX/minY, so we need to ADD the shift to existing translate
+                    const existingTranslateMatch = svgContent.match(/<g transform="translate\(([^,]+),\s*([^)]+)\)">/);
+                    if (existingTranslateMatch) {
+                      const existingX = parseFloat(existingTranslateMatch[1]);
+                      const existingY = parseFloat(existingTranslateMatch[2]);
+                      const combinedX = existingX + additionalTranslateX;
+                      const combinedY = existingY + additionalTranslateY;
+                      svgContent = svgContent.replace(
+                        /<g transform="translate\([^)]+\)">/,
+                        `<g transform="translate(${combinedX.toFixed(2)}, ${combinedY.toFixed(2)})">`
+                      );
+                      console.log(`   Combined translate: (${existingX.toFixed(2)}, ${existingY.toFixed(2)}) + (${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)}) = (${combinedX.toFixed(2)}, ${combinedY.toFixed(2)})`);
+                    } else {
+                      // No existing translate, add new one
+                      svgContent = svgContent.replace(
+                        /<svg([^>]*)>/,
+                        `<svg$1>\n<g transform="translate(${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)})">`
+                      );
+                      svgContent = svgContent.replace(/<\/svg>/, '</g>\n</svg>');
+                    }
                     
                     fs.writeFileSync(svgPath, svgContent);
                     console.log(`✅ EXPANDED SVG VIEWBOX to 0 0 ${newViewBoxWidth.toFixed(2)} ${newViewBoxHeight.toFixed(2)} with translate(${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)})`);
