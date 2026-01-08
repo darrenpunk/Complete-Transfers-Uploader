@@ -3200,23 +3200,35 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 // CRITICAL: Update the SVG viewBox to match the expanded bounds
+                // MUST normalize to zero-origin for proper rendering
                 if (fs.existsSync(svgPath)) {
                   try {
                     let svgContent = fs.readFileSync(svgPath, 'utf8');
-                    const newViewBoxWidth = outlinedBounds.maxX - (outlinedBounds.minX || 0);
-                    const newViewBoxHeight = outlinedBounds.maxY - (outlinedBounds.minY || 0);
+                    const newViewBoxWidth = outlinedBounds.width;
+                    const newViewBoxHeight = outlinedBounds.height;
                     
-                    // Update viewBox to include full outlined content
+                    // Calculate the additional translation needed for negative coords
+                    const additionalTranslateX = -(outlinedBounds.minX || 0);
+                    const additionalTranslateY = -(outlinedBounds.minY || 0);
+                    
+                    // Update viewBox to zero-origin (always start at 0,0)
                     svgContent = svgContent.replace(
                       /viewBox="[^"]*"/,
-                      `viewBox="${outlinedBounds.minX || 0} ${outlinedBounds.minY || 0} ${newViewBoxWidth.toFixed(2)} ${newViewBoxHeight.toFixed(2)}"`
+                      `viewBox="0 0 ${newViewBoxWidth.toFixed(2)} ${newViewBoxHeight.toFixed(2)}"`
                     );
                     // Update width/height attributes
                     svgContent = svgContent.replace(/width="[^"]*"/, `width="${newViewBoxWidth.toFixed(2)}"`);
                     svgContent = svgContent.replace(/height="[^"]*"/, `height="${newViewBoxHeight.toFixed(2)}"`);
                     
+                    // Update the existing translate transform to account for expanded bounds
+                    // The outlined bounds have negative minX/minY, so we need to shift content right/down
+                    svgContent = svgContent.replace(
+                      /<g transform="translate\([^)]+\)">/,
+                      `<g transform="translate(${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)})">`
+                    );
+                    
                     fs.writeFileSync(svgPath, svgContent);
-                    console.log(`✅ EXPANDED SVG VIEWBOX to ${newViewBoxWidth.toFixed(2)}×${newViewBoxHeight.toFixed(2)} to include outlined content`);
+                    console.log(`✅ EXPANDED SVG VIEWBOX to 0 0 ${newViewBoxWidth.toFixed(2)} ${newViewBoxHeight.toFixed(2)} with translate(${additionalTranslateX.toFixed(2)}, ${additionalTranslateY.toFixed(2)})`);
                   } catch (svgError) {
                     console.error('⚠️ Failed to update SVG viewBox for expanded bounds:', svgError);
                   }
