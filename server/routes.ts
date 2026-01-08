@@ -2624,14 +2624,20 @@ export async function registerRoutes(app: express.Application) {
                         };
                         console.log(`📋 Stored original PDF bounds for cropping: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
                         
-                        // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
-                        // This matches the normalized contentBounds the frontend expects
-                        const newViewBox = `viewBox="0 0 ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
-                        svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                        // CRITICAL: Set viewBox to ZERO-ORIGIN with small safety padding
+                        // This prevents clipping if bounds detection missed any content (e.g. thin strokes, subtle details)
+                        const SAFETY_PADDING_PTS = 4; // ~1.4mm safety margin on each side
+                        const paddedWidth = contentWidthPts + (SAFETY_PADDING_PTS * 2);
+                        const paddedHeight = contentHeightPts + (SAFETY_PADDING_PTS * 2);
                         
-                        // Update width/height to match content
-                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
-                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
+                        // Start viewBox at negative padding to account for content that may extend beyond detected bounds
+                        const newViewBox = `viewBox="-${SAFETY_PADDING_PTS} -${SAFETY_PADDING_PTS} ${paddedWidth.toFixed(2)} ${paddedHeight.toFixed(2)}"`;
+                        svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
+                        console.log(`📐 ViewBox with safety padding: -${SAFETY_PADDING_PTS} -${SAFETY_PADDING_PTS} ${paddedWidth.toFixed(2)} ${paddedHeight.toFixed(2)}`);
+                        
+                        // Update width/height to match padded viewBox
+                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${paddedWidth.toFixed(2)}pt"`);
+                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${paddedHeight.toFixed(2)}pt"`);
                         
                         // CRITICAL: Wrap ALL SVG content in a <g> with translation to move content to (0,0)
                         // This compensates for the zero-origin viewBox
