@@ -3170,6 +3170,61 @@ export async function registerRoutes(app: express.Application) {
             if (boundsResult?.method === 'ghostscript-bbox') {
               console.log(`✅ GHOSTSCRIPT FINAL: displayWidth=${displayWidth.toFixed(2)}mm, displayHeight=${displayHeight.toFixed(2)}mm preserved from GS bbox`);
             }
+            
+            // CRITICAL FIX: After font outlining, the content may extend beyond Ghostscript bbox
+            // If outlined bounds are larger, use the MAX of both to prevent clipping
+            if ((file as any).outlinedContentBounds && (file as any).forceContentBounds) {
+              const outlinedBounds = (file as any).outlinedContentBounds;
+              const ptsToMm = 25.4 / 72;
+              const outlinedWidthMm = outlinedBounds.width * ptsToMm;
+              const outlinedHeightMm = outlinedBounds.height * ptsToMm;
+              
+              console.log(`🔍 OUTLINED BOUNDS CHECK: Outlined=${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm vs GS=${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+              
+              // Use the larger of the two bounds to prevent clipping
+              if (outlinedWidthMm > displayWidth || outlinedHeightMm > displayHeight) {
+                const newWidth = Math.max(displayWidth, outlinedWidthMm);
+                const newHeight = Math.max(displayHeight, outlinedHeightMm);
+                console.log(`📐 EXPANDING BOUNDS: Using larger outlined bounds ${newWidth.toFixed(2)}×${newHeight.toFixed(2)}mm to prevent clipping`);
+                displayWidth = newWidth;
+                displayHeight = newHeight;
+                
+                // Also update the content bounds to match
+                if (boundsResult?.contentBounds) {
+                  const mmToPts = 72 / 25.4;
+                  boundsResult.contentBounds.width = Math.max(boundsResult.contentBounds.width, outlinedBounds.width);
+                  boundsResult.contentBounds.height = Math.max(boundsResult.contentBounds.height, outlinedBounds.height);
+                  boundsResult.contentBounds.xMax = boundsResult.contentBounds.xMin + boundsResult.contentBounds.width;
+                  boundsResult.contentBounds.yMax = boundsResult.contentBounds.yMin + boundsResult.contentBounds.height;
+                  console.log(`📐 UPDATED CONTENT BOUNDS: ${boundsResult.contentBounds.width.toFixed(2)}×${boundsResult.contentBounds.height.toFixed(2)}pts`);
+                }
+                
+                // CRITICAL: Update the SVG viewBox to match the expanded bounds
+                if (fs.existsSync(svgPath)) {
+                  try {
+                    let svgContent = fs.readFileSync(svgPath, 'utf8');
+                    const newViewBoxWidth = outlinedBounds.maxX - (outlinedBounds.minX || 0);
+                    const newViewBoxHeight = outlinedBounds.maxY - (outlinedBounds.minY || 0);
+                    
+                    // Update viewBox to include full outlined content
+                    svgContent = svgContent.replace(
+                      /viewBox="[^"]*"/,
+                      `viewBox="${outlinedBounds.minX || 0} ${outlinedBounds.minY || 0} ${newViewBoxWidth.toFixed(2)} ${newViewBoxHeight.toFixed(2)}"`
+                    );
+                    // Update width/height attributes
+                    svgContent = svgContent.replace(/width="[^"]*"/, `width="${newViewBoxWidth.toFixed(2)}"`);
+                    svgContent = svgContent.replace(/height="[^"]*"/, `height="${newViewBoxHeight.toFixed(2)}"`);
+                    
+                    fs.writeFileSync(svgPath, svgContent);
+                    console.log(`✅ EXPANDED SVG VIEWBOX to ${newViewBoxWidth.toFixed(2)}×${newViewBoxHeight.toFixed(2)} to include outlined content`);
+                  } catch (svgError) {
+                    console.error('⚠️ Failed to update SVG viewBox for expanded bounds:', svgError);
+                  }
+                }
+              } else {
+                console.log(`✅ GS bounds are adequate - no expansion needed`);
+              }
+            }
               
             } catch (boundsError) {
               console.error('❌ Bounds extraction error:', boundsError);
