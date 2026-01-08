@@ -2562,49 +2562,105 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                   
-                  // PRIMARY METHOD: Use SVG geometry analysis for accurate content bounds
-                  // This detects ALL vector elements regardless of color (including white)
-                  console.log(`🎯 USING SVG geometry analysis for accurate content detection (color-independent)`);
+                  // PRIMARY METHOD: Use Ghostscript bbox for accurate content bounds
+                  // This is more reliable than SVG geometry analysis as it detects ALL visible content
+                  console.log(`🎯 USING Ghostscript bbox for accurate content detection (most reliable)`);
                   
-                  const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-                  const svgAnalyzer = new SVGBoundsAnalyzer();
-                  const svgGeometryResult = await svgAnalyzer.extractSVGBounds(svgPath);
+                  const { execSync } = await import('child_process');
+                  let gsBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
                   
-                  if (svgGeometryResult.success && svgGeometryResult.contentBounds && 
-                      svgGeometryResult.contentBounds.width > 0 && svgGeometryResult.contentBounds.height > 0) {
-                    // SVG geometry analysis succeeded - use these bounds (works for any color including white)
-                    const contentWidthPts = svgGeometryResult.contentBounds.width;
-                    const contentHeightPts = svgGeometryResult.contentBounds.height;
+                  try {
+                    const originalPdfPath = (file as any).originalPdfPath;
+                    const gsOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${originalPdfPath}" 2>&1`, { encoding: 'utf8' });
+                    
+                    // Parse HiResBoundingBox for precise bounds
+                    const hiResMatch = gsOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                    if (hiResMatch) {
+                      const [, x1, y1, x2, y2] = hiResMatch.map(Number);
+                      gsBounds = {
+                        xMin: x1,
+                        yMin: y1,
+                        xMax: x2,
+                        yMax: y2,
+                        width: x2 - x1,
+                        height: y2 - y1
+                      };
+                      console.log(`✅ Ghostscript bbox: (${x1.toFixed(1)}, ${y1.toFixed(1)}) to (${x2.toFixed(1)}, ${y2.toFixed(1)})`);
+                      console.log(`📐 Content size: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                    }
+                  } catch (gsError) {
+                    console.log(`⚠️ Ghostscript bbox failed, falling back to SVG geometry:`, gsError);
+                  }
+                  
+                  // Use Ghostscript bounds if available, otherwise fall back to SVG geometry
+                  let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
+                  
+                  if (gsBounds) {
+                    contentBoundsForNormalization = gsBounds;
                     const pxToMm = 1 / 2.834645669;
                     
-                    console.log(`✅ SVG geometry bounds: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts = ${(contentWidthPts * pxToMm).toFixed(1)}×${(contentHeightPts * pxToMm).toFixed(1)}mm`);
-                    console.log(`📍 Geometry bounds: (${svgGeometryResult.contentBounds.xMin.toFixed(1)}, ${svgGeometryResult.contentBounds.yMin.toFixed(1)}) to (${svgGeometryResult.contentBounds.xMax.toFixed(1)}, ${svgGeometryResult.contentBounds.yMax.toFixed(1)})`);
-                    
-                    // Use SVG geometry bounds - normalize to zero-origin
                     boundsResult = {
                       success: true,
-                      method: 'svg-geometry',
+                      method: 'ghostscript-bbox',
                       contentBounds: {
-                        xMin: 0,  // Zero-origin for consistent positioning
+                        xMin: 0,
                         yMin: 0,
-                        xMax: contentWidthPts,
-                        yMax: contentHeightPts,
-                        width: contentWidthPts,
-                        height: contentHeightPts,
+                        xMax: gsBounds.width,
+                        yMax: gsBounds.height,
+                        width: gsBounds.width,
+                        height: gsBounds.height,
                         units: 'pt'
                       }
                     };
                     
-                    // Set display dimensions from SVG geometry
-                    displayWidth = contentWidthPts * pxToMm;
-                    displayHeight = contentHeightPts * pxToMm;
-                    console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                    displayWidth = gsBounds.width * pxToMm;
+                    displayHeight = gsBounds.height * pxToMm;
+                    console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                  } else {
+                    // Fallback to SVG geometry analysis
+                    console.log(`🔄 Falling back to SVG geometry analysis`);
+                    const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+                    const svgAnalyzer = new SVGBoundsAnalyzer();
+                    const svgGeometryResult = await svgAnalyzer.extractSVGBounds(svgPath);
+                    
+                    if (svgGeometryResult.success && svgGeometryResult.contentBounds && 
+                        svgGeometryResult.contentBounds.width > 0 && svgGeometryResult.contentBounds.height > 0) {
+                      contentBoundsForNormalization = svgGeometryResult.contentBounds;
+                      const pxToMm = 1 / 2.834645669;
+                      
+                      boundsResult = {
+                        success: true,
+                        method: 'svg-geometry',
+                        contentBounds: {
+                          xMin: 0,
+                          yMin: 0,
+                          xMax: svgGeometryResult.contentBounds.width,
+                          yMax: svgGeometryResult.contentBounds.height,
+                          width: svgGeometryResult.contentBounds.width,
+                          height: svgGeometryResult.contentBounds.height,
+                          units: 'pt'
+                        }
+                      };
+                      
+                      displayWidth = svgGeometryResult.contentBounds.width * pxToMm;
+                      displayHeight = svgGeometryResult.contentBounds.height * pxToMm;
+                      console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                    } else {
+                      throw new Error('Both Ghostscript and SVG geometry analysis failed');
+                    }
+                  }
+                  
+                  const contentWidthPts = contentBoundsForNormalization.width;
+                  const contentHeightPts = contentBoundsForNormalization.height;
+                  const pxToMm = 1 / 2.834645669;
+                  
+                  console.log(`📍 Using bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
                     
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
                       try {
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
-                        const bounds = svgGeometryResult.contentBounds;
+                        const bounds = contentBoundsForNormalization;
                         
                         console.log(`🎯 NORMALIZING SVG to zero-origin:`);
                         console.log(`   Original content: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
@@ -2624,20 +2680,14 @@ export async function registerRoutes(app: express.Application) {
                         };
                         console.log(`📋 Stored original PDF bounds for cropping: (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) to (${bounds.xMax.toFixed(1)}, ${bounds.yMax.toFixed(1)})`);
                         
-                        // CRITICAL: Set viewBox to ZERO-ORIGIN with small safety padding
-                        // This prevents clipping if bounds detection missed any content (e.g. thin strokes, subtle details)
-                        const SAFETY_PADDING_PTS = 4; // ~1.4mm safety margin on each side
-                        const paddedWidth = contentWidthPts + (SAFETY_PADDING_PTS * 2);
-                        const paddedHeight = contentHeightPts + (SAFETY_PADDING_PTS * 2);
-                        
-                        // Start viewBox at negative padding to account for content that may extend beyond detected bounds
-                        const newViewBox = `viewBox="-${SAFETY_PADDING_PTS} -${SAFETY_PADDING_PTS} ${paddedWidth.toFixed(2)} ${paddedHeight.toFixed(2)}"`;
+                        // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
+                        // This matches the normalized contentBounds the frontend expects
+                        const newViewBox = `viewBox="0 0 ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
                         svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
-                        console.log(`📐 ViewBox with safety padding: -${SAFETY_PADDING_PTS} -${SAFETY_PADDING_PTS} ${paddedWidth.toFixed(2)} ${paddedHeight.toFixed(2)}`);
                         
-                        // Update width/height to match padded viewBox
-                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${paddedWidth.toFixed(2)}pt"`);
-                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${paddedHeight.toFixed(2)}pt"`);
+                        // Update width/height to match content
+                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
+                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
                         
                         // CRITICAL: Wrap ALL SVG content in a <g> with translation to move content to (0,0)
                         // This compensates for the zero-origin viewBox

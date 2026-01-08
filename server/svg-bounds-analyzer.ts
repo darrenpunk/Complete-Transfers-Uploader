@@ -425,13 +425,9 @@ export class SVGBoundsAnalyzer {
           return; // Skip - this is a definition, not visible content
         }
         
-        // CRITICAL USER REQUIREMENT: Skip elements that are BEING CLIPPED (have clip-path attribute)
-        // These elements are masked/hidden - only the clipping path shape itself should be included
-        const hasClipPathReference = element.getAttribute('clip-path') || element.getAttribute('style')?.includes('clip-path');
-        
-        if (hasClipPathReference) {
-          return; // Skip - this element is being clipped/masked, so it's not fully visible
-        }
+        // NOTE: Elements with clip-path ARE visible (just masked to a shape)
+        // They must be included in bounds to prevent content clipping in tight-crop SVG
+        // Previously we skipped them, but this caused visible content to be cut off
         
         const bounds = this.getElementBounds(element);
         if (bounds) {
