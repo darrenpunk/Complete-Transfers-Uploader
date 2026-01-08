@@ -2704,83 +2704,15 @@ export async function registerRoutes(app: express.Application) {
                     }
                   }
                   
-                  // CRITICAL FIX: Validate that PDF bounds actually match SVG content
-                  // The PDF→SVG conversion may produce content with different coordinates
-                  console.log(`📍 PDF bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
-                  
-                  // Read SVG and extract actual content coordinate ranges
-                  if (fs.existsSync(svgPath)) {
-                    try {
-                      const svgContent = fs.readFileSync(svgPath, 'utf8');
-                      
-                      // Extract all numeric coordinates from path data and elements
-                      const coordMatches = svgContent.match(/(?:d="[^"]*"|x="[\d.]+"|y="[\d.]+"|x1="[\d.]+"|y1="[\d.]+"|x2="[\d.]+"|y2="[\d.]+"|cx="[\d.]+"|cy="[\d.]+"|points="[^"]*")/g) || [];
-                      let svgMaxX = 0, svgMaxY = 0, svgMinX = Infinity, svgMinY = Infinity;
-                      
-                      for (const match of coordMatches) {
-                        // Extract numbers from path d= attributes
-                        if (match.startsWith('d="')) {
-                          const pathNumbers = match.match(/[-\d.]+/g) || [];
-                          for (let i = 0; i < pathNumbers.length - 1; i += 2) {
-                            const x = parseFloat(pathNumbers[i]);
-                            const y = parseFloat(pathNumbers[i + 1]);
-                            if (!isNaN(x) && !isNaN(y)) {
-                              svgMinX = Math.min(svgMinX, x);
-                              svgMaxX = Math.max(svgMaxX, x);
-                              svgMinY = Math.min(svgMinY, y);
-                              svgMaxY = Math.max(svgMaxY, y);
-                            }
-                          }
-                        } else {
-                          const num = parseFloat(match.match(/[\d.]+/)?.[0] || '0');
-                          if (match.includes('x')) { svgMinX = Math.min(svgMinX, num); svgMaxX = Math.max(svgMaxX, num); }
-                          if (match.includes('y')) { svgMinY = Math.min(svgMinY, num); svgMaxY = Math.max(svgMaxY, num); }
-                        }
-                      }
-                      
-                      if (svgMaxX > 0 && svgMaxY > 0) {
-                        const svgContentWidth = svgMaxX - (svgMinX === Infinity ? 0 : svgMinX);
-                        const svgContentHeight = svgMaxY - (svgMinY === Infinity ? 0 : svgMinY);
-                        
-                        console.log(`🔍 SVG content scan: min=(${svgMinX.toFixed(1)}, ${svgMinY.toFixed(1)}) max=(${svgMaxX.toFixed(1)}, ${svgMaxY.toFixed(1)})`);
-                        console.log(`📐 SVG content size: ${svgContentWidth.toFixed(1)}×${svgContentHeight.toFixed(1)}pts`);
-                        
-                        // If SVG content extends significantly beyond PDF bounds, use SVG bounds instead
-                        const pdfBoundsWidth = contentBoundsForNormalization.width;
-                        const pdfBoundsHeight = contentBoundsForNormalization.height;
-                        
-                        if (svgContentWidth > pdfBoundsWidth * 1.1 || svgContentHeight > pdfBoundsHeight * 1.1) {
-                          console.log(`⚠️ SVG CONTENT EXCEEDS PDF BOUNDS!`);
-                          console.log(`   PDF bounds: ${pdfBoundsWidth.toFixed(1)}×${pdfBoundsHeight.toFixed(1)}pts`);
-                          console.log(`   SVG content: ${svgContentWidth.toFixed(1)}×${svgContentHeight.toFixed(1)}pts`);
-                          console.log(`🔧 CORRECTING: Using actual SVG content bounds for normalization`);
-                          
-                          // Update contentBoundsForNormalization to use SVG content bounds
-                          contentBoundsForNormalization = {
-                            xMin: svgMinX === Infinity ? 0 : svgMinX,
-                            yMin: svgMinY === Infinity ? 0 : svgMinY,
-                            xMax: svgMaxX,
-                            yMax: svgMaxY,
-                            width: svgContentWidth,
-                            height: svgContentHeight
-                          };
-                          
-                          // Update display dimensions
-                          const pxToMm = 1 / 2.834645669;
-                          displayWidth = svgContentWidth * pxToMm;
-                          displayHeight = svgContentHeight * pxToMm;
-                          console.log(`✅ Corrected dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
-                        }
-                      }
-                    } catch (svgScanError) {
-                      console.log(`⚠️ SVG content scan failed, using PDF bounds:`, svgScanError);
-                    }
-                  }
+                  // ARCHITECT GUIDANCE: Trust Ghostscript PDF bbox as authoritative
+                  // SVG path coordinates don't account for transforms/masks/clipping and are unreliable
+                  // The Ghostscript bbox (652×241 pt for OASIS) matches Illustrator exactly
+                  console.log(`📍 Using authoritative PDF bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
                   
                   const contentWidthPts = contentBoundsForNormalization.width;
                   const contentHeightPts = contentBoundsForNormalization.height;
                   
-                  console.log(`📍 Using bounds for normalization: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
+                  console.log(`📐 Content dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                     
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
