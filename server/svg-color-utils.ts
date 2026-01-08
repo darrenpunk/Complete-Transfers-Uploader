@@ -706,8 +706,8 @@ export function checkFileComplexityEarly(
   originalFileSizeMB?: string;
   convertedFileSizeMB?: string;
 } {
-  const EARLY_PATH_THRESHOLD = 5000;
-  const EARLY_ELEMENT_THRESHOLD = 5000;
+  const EARLY_PATH_THRESHOLD = 7500;
+  const EARLY_ELEMENT_THRESHOLD = 7500;
   const CHUNK_SIZE = 65536; // 64KB chunks for streaming
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB hard limit for converted SVG
   
@@ -847,9 +847,9 @@ function analyzeVectorComplexity(svgContent: string): {
                        lineMatches.length + polygonMatches.length + 
                        polylineMatches.length + ellipseMatches.length;
   
-  // Threshold: >5000 paths OR >5000 total elements
-  const PATH_THRESHOLD = 5000;
-  const ELEMENT_THRESHOLD = 5000;
+  // Threshold: >7500 paths OR >7500 total elements
+  const PATH_THRESHOLD = 7500;
+  const ELEMENT_THRESHOLD = 7500;
   const isComplex = pathCount > PATH_THRESHOLD || elementCount > ELEMENT_THRESHOLD;
   
   if (isComplex) {
