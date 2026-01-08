@@ -2704,12 +2704,12 @@ export async function registerRoutes(app: express.Application) {
                     }
                   }
                   
-                  // ARCHITECT GUIDANCE: PDF bbox gives correct dimensions, but Inkscape rebases coordinates
-                  // We need to query the actual SVG content bounds AFTER Inkscape conversion
-                  console.log(`📍 PDF bounds (authoritative size): (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
+                  // ARCHITECT GUIDANCE: PDF bbox gives initial dimensions, but Inkscape may report larger bounds
+                  // Ghostscript can miss masked strokes/effects that Inkscape's renderer correctly measures
+                  console.log(`📍 PDF/Ghostscript bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) to (${contentBoundsForNormalization.xMax.toFixed(1)}, ${contentBoundsForNormalization.yMax.toFixed(1)})`);
                   
-                  const contentWidthPts = contentBoundsForNormalization.width;
-                  const contentHeightPts = contentBoundsForNormalization.height;
+                  let contentWidthPts = contentBoundsForNormalization.width;
+                  let contentHeightPts = contentBoundsForNormalization.height;
                   
                   // Store original PDF bounds for PDF cropping during generation
                   originalPdfBounds = {
@@ -2722,15 +2722,15 @@ export async function registerRoutes(app: express.Application) {
                     units: 'pt'
                   };
                   console.log(`📋 Stored original PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
-                  
-                  console.log(`📐 Content dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                     
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
                       try {
                         // CRITICAL FIX: Query actual SVG content bounds AFTER Inkscape conversion
-                        // Inkscape rebases coordinates during PDF→SVG, so PDF bounds don't match SVG coordinates
+                        // Inkscape rebases coordinates and may report LARGER dimensions than Ghostscript
+                        // (Ghostscript can miss masked strokes/effects that the renderer sees)
                         let svgBoundsX = 0, svgBoundsY = 0;
+                        let svgBoundsWidth = contentWidthPts, svgBoundsHeight = contentHeightPts;
                         
                         try {
                           const { execSync } = await import('child_process');
@@ -2740,11 +2740,37 @@ export async function registerRoutes(app: express.Application) {
                           if (parts.length >= 5) {
                             svgBoundsX = parseFloat(parts[1]) || 0;
                             svgBoundsY = parseFloat(parts[2]) || 0;
-                            console.log(`🔍 Inkscape query-all: SVG content at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                            const inkscapeWidth = parseFloat(parts[3]) || 0;
+                            const inkscapeHeight = parseFloat(parts[4]) || 0;
+                            console.log(`🔍 Inkscape query-all: SVG at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)}) size ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
+                            
+                            // CRITICAL: Use Inkscape dimensions if they're larger than Ghostscript
+                            // This prevents clipping when Ghostscript misses masked content
+                            const TOLERANCE = 1.0; // 1pt tolerance
+                            if (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE) {
+                              console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
+                              console.log(`   Ghostscript: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
+                              console.log(`   Inkscape: ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
+                              console.log(`🔧 Using Inkscape dimensions to prevent clipping`);
+                              
+                              // Use the larger of the two for each dimension
+                              svgBoundsWidth = Math.max(contentWidthPts, inkscapeWidth);
+                              svgBoundsHeight = Math.max(contentHeightPts, inkscapeHeight);
+                              contentWidthPts = svgBoundsWidth;
+                              contentHeightPts = svgBoundsHeight;
+                              
+                              // Update display dimensions
+                              const pxToMm = 1 / 2.834645669;
+                              displayWidth = contentWidthPts * pxToMm;
+                              displayHeight = contentHeightPts * pxToMm;
+                              console.log(`✅ Updated dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
+                            }
                           }
                         } catch (queryError) {
-                          console.log(`⚠️ Inkscape query failed, assuming content at origin:`, queryError);
+                          console.log(`⚠️ Inkscape query failed, using Ghostscript bounds:`, queryError);
                         }
+                        
+                        console.log(`📐 Final content dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                         
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
                         
