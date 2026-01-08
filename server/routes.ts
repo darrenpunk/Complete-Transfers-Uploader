@@ -2684,9 +2684,10 @@ export async function registerRoutes(app: express.Application) {
                         const newViewBox = `viewBox="0 0 ${contentWidthPts.toFixed(2)} ${contentHeightPts.toFixed(2)}"`;
                         svgContent = svgContent.replace(/viewBox="[^"]*"/, newViewBox);
                         
-                        // Update width/height to match content
-                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}pt"`);
-                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}pt"`);
+                        // Update width/height to match content (unitless to match viewBox)
+                        // Using unitless values ensures CSS width:100% works correctly
+                        svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}"`);
+                        svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}"`);
                         
                         // CRITICAL: Wrap ALL SVG content in a <g> with translation to move content to (0,0)
                         // This compensates for the zero-origin viewBox

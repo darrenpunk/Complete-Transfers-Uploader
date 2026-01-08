@@ -2027,16 +2027,15 @@ export default function CanvasWorkspace({
               const elementWidth = element.width * mmToPixelRatio * (zoom / 100);
               const elementHeight = element.height * mmToPixelRatio * (zoom / 100);
               
-              // Position element using center-based coordinates with translate(-50%, -50%)
+              // Convert center-based coordinates to top-left for rendering
               // element.x/y is the center position relative to template center
               // Template center in pixels
               const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
               const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
               
-              // Position at center point, then use transform to offset by half width/height
-              // This ensures SVG content aligns properly with the center-based coordinate system
-              const elementX = templateCenterX + (element.x * mmToPixelRatio * (zoom / 100));
-              const elementY = templateCenterY + (element.y * mmToPixelRatio * (zoom / 100));
+              // Convert center position to top-left corner for CSS positioning
+              const elementX = templateCenterX + (element.x * mmToPixelRatio * (zoom / 100)) - elementWidth / 2;
+              const elementY = templateCenterY + (element.y * mmToPixelRatio * (zoom / 100)) - elementHeight / 2;
               
               // For the bounding box, we need the exact content size without extra padding
               // The element dimensions from the database should already be cropped to content
@@ -2064,7 +2063,7 @@ export default function CanvasWorkspace({
                     width: elementWidth,
                     height: elementHeight,
                     zIndex: element.zIndex,
-                    transform: `translate(-50%, -50%) rotate(${element.rotation || 0}deg)`,
+                    transform: `rotate(${element.rotation || 0}deg)`,
                     transformOrigin: 'center',
                     outline: isSelected 
                       ? `2px solid #961E75` 
