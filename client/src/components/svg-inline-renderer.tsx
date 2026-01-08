@@ -254,47 +254,40 @@ export default function SvgInlineRenderer({
     // Normalized SVGs have content translated to origin and viewBox starting at 0,0
     const isNormalized = bounds.xMin === 0 && bounds.yMin === 0;
     
-    // For normalized SVGs (most PDF-converted files), use simple rendering
-    // The SVG viewBox and content are already aligned - just let browser scale it
+    // For normalized SVGs (most PDF-converted files), simply render at full size
+    // The SVG viewBox matches the element dimensions, so it should fill naturally
     if (isNormalized) {
-      console.log('✅ Normalized SVG detected - using simple centered rendering');
-      console.log(`   Bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts`);
+      console.log('✅ Normalized SVG detected - rendering at full container size');
+      console.log(`   Bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts (${boundsWidthMm.toFixed(1)}×${boundsHeightMm.toFixed(1)}mm)`);
       console.log(`   Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
       
-      // Ensure SVG has proper namespace declarations
+      // Ensure SVG has proper namespace declarations and overflow visible
       let processedSvg = svgContent;
-      if (!svgContent.includes('xmlns:xlink')) {
-        processedSvg = svgContent.replace(
-          /<svg([^>]*)>/i,
-          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
-        );
-      }
       
-      // For normalized SVGs, render with 100% width/height to fill container
-      // The SVG's preserveAspectRatio will handle centering
+      // Add xmlns:xlink if missing and set overflow visible, width/height to 100%
+      // This ensures SVG fills the container and strokes aren't clipped
+      processedSvg = processedSvg.replace(
+        /<svg([^>]*)>/i,
+        (match, attrs) => {
+          let newAttrs = attrs;
+          if (!attrs.includes('xmlns:xlink')) {
+            newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
+          }
+          // Override width/height to fill container, keep viewBox for aspect ratio
+          return `<svg${newAttrs} style="width:100%;height:100%;overflow:visible">`;
+        }
+      );
+      
+      // The SVG will fill the container (100% x 100%) and the viewBox ensures
+      // the content scales correctly. No translation needed.
       return (
         <div 
           className="w-full h-full"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
             overflow: 'visible'
           }}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            dangerouslySetInnerHTML={{ __html: processedSvg }}
-          />
-        </div>
+          dangerouslySetInnerHTML={{ __html: processedSvg }}
+        />
       );
     }
     
