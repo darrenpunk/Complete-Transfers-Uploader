@@ -2203,31 +2203,55 @@ export async function registerRoutes(app: express.Application) {
                     hasText: analysis.hasText
                   };
                   
-                  console.log(`🔄 Font outlining completed, recalculating content bounds for outlined paths`);
+                  console.log(`🔄 Font outlining completed, getting accurate bounds from Inkscape`);
                   
-                  // Force recalculation of content bounds after outlining
+                  // Use Inkscape to query accurate bounds - much more reliable than path parsing
                   try {
-                    const { calculateSVGContentBounds } = await import('./dimension-utils');
-                    const outlinedSvgContent = fs.readFileSync(svgPath, 'utf8');
-                    console.log(`🔍 DEBUG: Attempting to calculate content bounds for outlined SVG (${outlinedSvgContent.length} chars)`);
+                    const { execSync } = await import('child_process');
                     
-                    const newContentBounds = calculateSVGContentBounds(outlinedSvgContent);
-                    console.log(`🔍 DEBUG: Content bounds result:`, newContentBounds);
+                    // Query actual rendered dimensions from Inkscape
+                    const inkscapeWidth = execSync(`timeout 10 inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8' }).trim();
+                    const inkscapeHeight = execSync(`timeout 10 inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8' }).trim();
                     
-                    if (newContentBounds && newContentBounds.width > 0 && newContentBounds.height > 0) {
-                      console.log(`📐 Recalculated content bounds after outlining: ${newContentBounds.width.toFixed(1)}×${newContentBounds.height.toFixed(1)}px`);
+                    const widthPx = parseFloat(inkscapeWidth);
+                    const heightPx = parseFloat(inkscapeHeight);
+                    
+                    console.log(`📏 Inkscape query: ${widthPx.toFixed(2)}×${heightPx.toFixed(2)}px`);
+                    
+                    if (widthPx > 0 && heightPx > 0) {
+                      const newContentBounds = {
+                        width: widthPx,
+                        height: heightPx,
+                        minX: 0,
+                        minY: 0,
+                        maxX: widthPx,
+                        maxY: heightPx
+                      };
+                      
+                      const pxToMm = 1 / 2.834645669;
+                      console.log(`📐 Accurate content bounds from Inkscape: ${(widthPx * pxToMm).toFixed(2)}×${(heightPx * pxToMm).toFixed(2)}mm`);
                       
                       // Store the updated bounds for dimension calculation
                       (file as any).outlinedContentBounds = newContentBounds;
-                      
-                      // Force the outlined content bounds to bypass large format detection
                       (file as any).forceContentBounds = true;
-                      console.log(`✅ Stored outlined content bounds and force flag`);
+                      console.log(`✅ Stored Inkscape-verified content bounds`);
                     } else {
-                      console.log(`⚠️ Invalid content bounds after outlining:`, newContentBounds);
+                      console.log(`⚠️ Invalid Inkscape bounds: ${inkscapeWidth}×${inkscapeHeight}`);
                     }
                   } catch (boundsError) {
-                    console.warn('⚠️ Failed to recalculate content bounds after outlining:', boundsError);
+                    console.warn('⚠️ Inkscape bounds query failed, falling back to path analysis:', boundsError);
+                    // Fallback to path analysis if Inkscape fails
+                    try {
+                      const { calculateSVGContentBounds } = await import('./dimension-utils');
+                      const outlinedSvgContent = fs.readFileSync(svgPath, 'utf8');
+                      const newContentBounds = calculateSVGContentBounds(outlinedSvgContent);
+                      if (newContentBounds && newContentBounds.width > 0 && newContentBounds.height > 0) {
+                        (file as any).outlinedContentBounds = newContentBounds;
+                        (file as any).forceContentBounds = true;
+                      }
+                    } catch (fallbackError) {
+                      console.warn('⚠️ Fallback bounds calculation also failed:', fallbackError);
+                    }
                   }
                 } else {
                   console.log(`⚠️ Font outlining returned same path or failed for: ${finalFilename}`);
@@ -3205,14 +3229,32 @@ export async function registerRoutes(app: express.Application) {
             // If outlined bounds are larger, use the MAX of both to prevent clipping
             if ((file as any).outlinedContentBounds && (file as any).forceContentBounds) {
               const outlinedBounds = (file as any).outlinedContentBounds;
+              // Inkscape returns SVG native units (points at 72dpi), convert to mm: mm = pts * 25.4 / 72
               const ptsToMm = 25.4 / 72;
               const outlinedWidthMm = outlinedBounds.width * ptsToMm;
               const outlinedHeightMm = outlinedBounds.height * ptsToMm;
               
-              console.log(`🔍 OUTLINED BOUNDS CHECK: Outlined=${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm vs GS=${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+              console.log(`🔍 OUTLINED BOUNDS CHECK: Inkscape=${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm vs GS=${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
               
-              // Use the larger of the two bounds to prevent clipping
-              if (outlinedWidthMm > displayWidth || outlinedHeightMm > displayHeight) {
+              // ALWAYS use Inkscape bounds - they are the most accurate (verified against Illustrator)
+              // Inkscape bounds minX/minY are already 0, so no translation adjustment needed
+              if (outlinedBounds.minX === 0 && outlinedBounds.minY === 0) {
+                console.log(`📐 USING INKSCAPE BOUNDS: ${outlinedWidthMm.toFixed(2)}×${outlinedHeightMm.toFixed(2)}mm (accurate, zero-origin)`);
+                displayWidth = outlinedWidthMm;
+                displayHeight = outlinedHeightMm;
+                
+                // Update content bounds to match Inkscape's accurate measurement
+                // Inkscape returns pts directly, use as-is
+                if (boundsResult?.contentBounds) {
+                  boundsResult.contentBounds.width = outlinedBounds.width;
+                  boundsResult.contentBounds.height = outlinedBounds.height;
+                  boundsResult.contentBounds.xMin = 0;
+                  boundsResult.contentBounds.yMin = 0;
+                  boundsResult.contentBounds.xMax = outlinedBounds.width;
+                  boundsResult.contentBounds.yMax = outlinedBounds.height;
+                  console.log(`📐 UPDATED CONTENT BOUNDS from Inkscape: ${boundsResult.contentBounds.width.toFixed(2)}×${boundsResult.contentBounds.height.toFixed(2)}pts`);
+                }
+              } else if (outlinedWidthMm > displayWidth || outlinedHeightMm > displayHeight) {
                 const newWidth = Math.max(displayWidth, outlinedWidthMm);
                 const newHeight = Math.max(displayHeight, outlinedHeightMm);
                 console.log(`📐 EXPANDING BOUNDS: Using larger outlined bounds ${newWidth.toFixed(2)}×${newHeight.toFixed(2)}mm to prevent clipping`);
