@@ -250,6 +250,54 @@ export default function SvgInlineRenderer({
     const boundsWidthMm = bounds.width * ptsToMm;
     const boundsHeightMm = bounds.height * ptsToMm;
     
+    // Check if SVG is already normalized (bounds start at 0,0)
+    // Normalized SVGs have content translated to origin and viewBox starting at 0,0
+    const isNormalized = bounds.xMin === 0 && bounds.yMin === 0;
+    
+    // For normalized SVGs (most PDF-converted files), use simple rendering
+    // The SVG viewBox and content are already aligned - just let browser scale it
+    if (isNormalized) {
+      console.log('✅ Normalized SVG detected - using simple centered rendering');
+      console.log(`   Bounds: ${bounds.width.toFixed(1)}×${bounds.height.toFixed(1)}pts`);
+      console.log(`   Element: ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm`);
+      
+      // Ensure SVG has proper namespace declarations
+      let processedSvg = svgContent;
+      if (!svgContent.includes('xmlns:xlink')) {
+        processedSvg = svgContent.replace(
+          /<svg([^>]*)>/i,
+          '<svg$1 xmlns:xlink="http://www.w3.org/1999/xlink">'
+        );
+      }
+      
+      // For normalized SVGs, render with 100% width/height to fill container
+      // The SVG's preserveAspectRatio will handle centering
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'visible'
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            dangerouslySetInnerHTML={{ __html: processedSvg }}
+          />
+        </div>
+      );
+    }
+    
     // Only detect overflow if bounds extend beyond element by more than 1mm tolerance
     const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
                         boundsWidthMm > element.width + 1 || boundsHeightMm > element.height + 1;
@@ -286,7 +334,7 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // No negative coordinates - use standard centering
+    // Non-normalized SVG with non-zero origin - apply transform to center
     const contentCenterX = (bounds.xMin + bounds.xMax) / 2;
     const contentCenterY = (bounds.yMin + bounds.yMax) / 2;
     
