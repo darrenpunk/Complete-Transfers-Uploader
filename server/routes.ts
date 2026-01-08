@@ -2596,6 +2596,36 @@ export async function registerRoutes(app: express.Application) {
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   
                   if (gsBounds) {
+                    // CRITICAL: Check if Ghostscript bbox is suspiciously small compared to page dimensions
+                    // For nearly-square pages, if GS height is much less than page height, GS is likely missing content
+                    const pageAspectRatio = pageWidth / pageHeight;
+                    const gsAspectRatio = gsBounds.width / gsBounds.height;
+                    const heightRatio = gsBounds.height / pageHeight;
+                    const widthRatio = gsBounds.width / pageWidth;
+                    
+                    // If page is nearly square (aspect ratio 0.9-1.1) but GS bbox is not, GS is wrong
+                    const pageIsSquare = pageAspectRatio >= 0.9 && pageAspectRatio <= 1.1;
+                    const gsIsNotSquare = gsAspectRatio < 0.8 || gsAspectRatio > 1.25;
+                    const gsMissingContent = heightRatio < 0.85 || widthRatio < 0.85;
+                    
+                    if (pageIsSquare && (gsIsNotSquare || gsMissingContent)) {
+                      console.log(`⚠️ GS BBOX SUSPICIOUS: Page is square (${pageAspectRatio.toFixed(2)}) but GS is ${gsAspectRatio.toFixed(2)}`);
+                      console.log(`   Height ratio: ${(heightRatio * 100).toFixed(0)}%, Width ratio: ${(widthRatio * 100).toFixed(0)}%`);
+                      console.log(`🔄 Using PDF PAGE DIMENSIONS instead of unreliable GS bbox`);
+                      
+                      // Use page dimensions with small margin (1pt on each side)
+                      const margin = 1;
+                      gsBounds = {
+                        xMin: margin,
+                        yMin: margin,
+                        xMax: pageWidth - margin,
+                        yMax: pageHeight - margin,
+                        width: pageWidth - 2 * margin,
+                        height: pageHeight - 2 * margin
+                      };
+                      console.log(`✅ Corrected bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                    }
+                    
                     contentBoundsForNormalization = gsBounds;
                     const pxToMm = 1 / 2.834645669;
                     
