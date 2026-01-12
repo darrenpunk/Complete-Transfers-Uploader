@@ -145,6 +145,31 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       form.reset();
       setUploadedFile(null);
       setSelectedProduct(null);
+      
+      // Auto-trigger add-to-cart for vectorization-only requests
+      if (serviceType === "vectorization-only") {
+        console.log('🛒 Auto-adding vectorization service to cart');
+        fetch(`/api/projects/vector-service/add-to-cart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceType: 'vectorization-only',
+            requestId: response.id,
+            comments: data.comments,
+            printSize: data.printSize
+          })
+        })
+        .then(async r => {
+          if (!r.ok) {
+            const text = await r.text();
+            console.error('❌ Auto-add to cart failed:', r.status, text);
+          } else {
+            console.log('✅ Auto-add to cart successful');
+          }
+        })
+        .catch(err => console.error('Error auto-adding to cart:', err));
+      }
+
       toast({
         title: "Request Submitted & Added to Cart",
         description: serviceType === "vectorization-only" 

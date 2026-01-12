@@ -4648,24 +4648,28 @@ export async function registerRoutes(app: express.Application) {
 
   // Add to Cart endpoint - proxy to Odoo
   app.post('/api/projects/:id/add-to-cart', async (req, res) => {
-    const projectId = req.params.id;
-    console.log('🛒 ADD TO CART ENDPOINT CALLED:', { projectId, body: req.body });
+    let projectId = req.params.id;
+    console.log('🛒 ADD TO CART ENDPOINT CALLED:', { projectId, body: { ...req.body, pdfBase64: req.body.pdfBase64 ? '...' : undefined } });
     
     try {
+      // Map to Odoo vectorization product if it's a vectorization-only request
+      // This handles cases where projectId is passed as 'vector-service' in the URL
+      const isVectorizationOnly = req.body.serviceType === 'vectorization-only' || projectId === 'vector-service';
+      
       const projectData = req.body;
       
-      if (!projectId) {
+      if (isVectorizationOnly) {
+        projectId = 'vector-service';
+      }
+      
+      if (!projectId || projectId === 'undefined') {
         console.error('❌ Missing project ID');
         return res.status(400).json({ error: 'Project ID is required' });
       }
 
       // Get Odoo base URL from environment
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-      // Map to Odoo vectorization product if it's a vectorization-only request
-      const isVectorizationOnly = req.body.serviceType === 'vectorization-only';
-      // ARCHITECT GUIDANCE: Vectorization service uses a specific product ID 'vector-service' in Odoo
-      const odooProjectId = isVectorizationOnly ? 'vector-service' : projectId;
-      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${odooProjectId}/add-to-cart`;
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
 
       // Forward cookies from client request to Odoo for customer-specific pricing
       const clientCookies = req.headers.cookie || '';
