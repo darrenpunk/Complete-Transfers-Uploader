@@ -4670,10 +4670,9 @@ export async function registerRoutes(app: express.Application) {
       // Get Odoo base URL from environment
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
       
-      // Use template-mapping endpoint for vectorization service, regular projects endpoint otherwise
-      const odooApiUrl = isVectorizationOnly 
-        ? `${odooBaseUrl}/artwork/api/templates/${projectId}/add-to-cart`
-        : `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
+      // Use the projects add-to-cart endpoint for all requests
+      // For vectorization-only, we pass template_id in the body to override project template lookup
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
 
       // Forward cookies from client request to Odoo for customer-specific pricing
       const clientCookies = req.headers.cookie || '';
@@ -4691,6 +4690,9 @@ export async function registerRoutes(app: express.Application) {
         ...projectData,
         source: 'completetransfers',  // Identifies request as from Complete Transfers for proper pricelist
         website_id: parseInt(ctWebsiteId, 10),  // Explicit website ID for correct pricelist selection
+        // For vectorization-only requests, pass template_id so Odoo uses template mapping
+        // instead of looking up a project's template field
+        ...(isVectorizationOnly && { template_id: 'vector-service' }),
       };
 
       // Call Odoo add-to-cart API
