@@ -4661,7 +4661,11 @@ export async function registerRoutes(app: express.Application) {
 
       // Get Odoo base URL from environment
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${projectId}/add-to-cart`;
+      // Map to Odoo vectorization product if it's a vectorization-only request
+      const isVectorizationOnly = req.body.serviceType === 'vectorization-only';
+      // ARCHITECT GUIDANCE: Vectorization service uses a specific product ID 'vector-service' in Odoo
+      const odooProjectId = isVectorizationOnly ? 'vector-service' : projectId;
+      const odooApiUrl = `${odooBaseUrl}/artwork/api/projects/${odooProjectId}/add-to-cart`;
 
       // Forward cookies from client request to Odoo for customer-specific pricing
       const clientCookies = req.headers.cookie || '';
