@@ -136,7 +136,12 @@ export class IllustratorCMYKMapper {
     { rgb: "rgb(100%, 100%, 100%)", cmyk: "C:0 M:0 Y:0 K:0", description: "Color 47 - Pure White" },
     { rgb: "rgb(255, 255, 255)", cmyk: "C:0 M:0 Y:0 K:0", description: "Color 47 converted" },
     { rgb: "rgb(0%, 0%, 0%)", cmyk: "C:0 M:0 Y:0 K:100", description: "Color 48 - Pure Black" },
-    { rgb: "rgb(0, 0, 0)", cmyk: "C:0 M:0 Y:0 K:100", description: "Color 48 converted" }
+    { rgb: "rgb(0, 0, 0)", cmyk: "C:0 M:0 Y:0 K:100", description: "Color 48 converted" },
+    
+    // NEW VECTORIZE SERVICE MAPPINGS
+    { rgb: "rgb(0.0015259%, 0.0015259%, 0.0015259%)", cmyk: "C:0 M:0 Y:0 K:100", description: "Vectorizer Black" },
+    { rgb: "rgb(255, 255, 255)", cmyk: "C:0 M:0 Y:0 K:0", description: "Vectorizer White" },
+    { rgb: "rgb(100%, 100%, 100%)", cmyk: "C:0 M:0 Y:0 K:0", description: "Vectorizer White %" }
   ];
   
   /**
