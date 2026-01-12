@@ -48,6 +48,7 @@ interface TemplateSize {
   pixelHeight: number;
   group: string;
   description: string | null;
+  placeholderImage: string | null;
 }
 
 export function VectorizationServiceForm({ open, onOpenChange }: VectorizationServiceFormProps) {
@@ -154,9 +155,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             serviceType: 'vectorization-only',
-            requestId: response.id,
-            comments: data.comments,
-            printSize: data.printSize
+            requestId: response.id
           })
         })
         .then(async r => {
