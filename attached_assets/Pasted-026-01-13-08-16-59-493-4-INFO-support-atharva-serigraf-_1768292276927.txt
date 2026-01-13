@@ -1,0 +1,130 @@
+026-01-13 08:16:59,493 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2026-01-13 08:16:59,878 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: vector-service 
+2026-01-13 08:16:59,878 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['serviceType', 'requestId', 'source', 'website_id', 'template_id'] 
+2026-01-13 08:16:59,878 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers 
+2026-01-13 08:16:59,879 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com' 
+2026-01-13 08:16:59,881 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com' 
+2026-01-13 08:16:59,881 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False' 
+2026-01-13 08:16:59,886 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: Untitled Project (ID: 3) 
+2026-01-13 08:16:59,886 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: Untitled Project, Template: , Qty: 1
+2026-01-13 08:16:59,890 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True
+2026-01-13 08:16:59,891 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3)
+2026-01-13 08:17:00,021 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 py.warnings: /home/odoo/src/odoo/odoo/fields.py:809: UserWarning: Field 'res.partner.self' in dependency of res.partner.x_studio_field_qSXJq should be searchable. This is necessary to determine which records to recompute when res.partner.child_ids is modified. You should either make the field searchable, or simplify the field dependency.
+  File "/usr/lib/python3.10/threading.py", line 973, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.10/socketserver.py", line 360, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 342, in handle
+    BaseHTTPRequestHandler.handle(self)
+  File "/usr/lib/python3.10/http/server.py", line 433, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 374, in handle_one_request
+    self.run_wsgi()
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 319, in run_wsgi
+    execute(self.server.app)
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 308, in execute
+    application_iter = app(environ, start_response)
+  File "/home/odoo/src/odoo/odoo/http.py", line 2261, in __call__
+    response = request._serve_db()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1848, in _serve_db
+    return service_model.retrying(self._serve_ir_http, self.env)
+  File "/home/odoo/src/odoo/odoo/service/model.py", line 152, in retrying
+    result = func()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1876, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+  File "/home/odoo/src/odoo/odoo/http.py", line 1990, in dispatch
+    return self.request.registry['ir.http']._dispatch(endpoint)
+  File "/home/odoo/src/odoo/addons/website/models/ir_http.py", line 237, in _dispatch
+    response = super()._dispatch(endpoint)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_http.py", line 154, in _dispatch
+    result = endpoint(**request.params)
+  File "/home/odoo/src/odoo/odoo/http.py", line 763, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+  File "/home/odoo/src/user/artwork_uploader/controllers/main.py", line 546, in add_to_cart
+    sale_order = website.sale_get_order(force_create=True)
+  File "/home/odoo/src/user/website_product_artworks/models/models.py", line 61, in sale_get_order
+    return super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale_stock/models/website.py", line 28, in sale_get_order
+    so = super().sale_get_order(*args, **kwargs)
+  File "/home/odoo/src/odoo/addons/website_sale/models/website.py", line 358, in sale_get_order
+    sale_order_sudo = SaleOrder.with_user(SUPERUSER_ID).create(so_data)
+  File "<decorator-gen-1225>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 430, in _model_create_multi
+    return create(self, [arg])
+  File "/home/odoo/src/odoo/addons/base_automation/models/base_automation.py", line 387, in create
+    records = create.origin(self.with_env(actions.env), vals_list, **kw)
+  File "<decorator-gen-1184>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 410, in _model_create_single
+    return self.browse().concat(*(create(self, vals) for vals in arg))
+  File "/home/odoo/src/odoo/odoo/api.py", line 410, in <genexpr>
+    return self.browse().concat(*(create(self, vals) for vals in arg))
+  File "/home/odoo/src/user/website_stock/models/models.py", line 199, in create
+    return super(SaleOrder, self).create(vals)
+  File "<decorator-gen-434>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 430, in _model_create_multi
+    return create(self, [arg])
+  File "/home/odoo/src/enterprise/sale_subscription/models/sale_order.py", line 514, in create
+    orders = super().create(vals_list)
+  File "<decorator-gen-417>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 431, in _model_create_multi
+    return create(self, arg)
+  File "/home/odoo/src/odoo/addons/website_sale/models/sale_order.py", line 42, in create
+    return super().create(vals_list)
+  File "<decorator-gen-391>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 431, in _model_create_multi
+    return create(self, arg)
+  File "/home/odoo/src/odoo/addons/sale/models/sale_order.py", line 706, in create
+    return super().create(vals_list)
+  File "<decorator-gen-139>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 431, in _model_create_multi
+    return create(self, arg)
+  File "/home/odoo/src/odoo/addons/mail/models/mail_thread.py", line 258, in create
+    threads = super(MailThread, self).create(vals_list)
+  File "<decorator-gen-68>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 431, in _model_create_multi
+    return create(self, arg)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_fields.py", line 670, in create
+    recs = super().create(vals_list)
+  File "<decorator-gen-15>", line 2, in create
+  File "/home/odoo/src/odoo/odoo/api.py", line 431, in _model_create_multi
+    return create(self, arg)
+  File "/home/odoo/src/odoo/odoo/models.py", line 4019, in create
+    records = self._create(data_list)
+  File "/home/odoo/src/odoo/odoo/models.py", line 4250, in _create
+    records.modified(self._fields, create=True)
+  File "/home/odoo/src/odoo/odoo/models.py", line 6165, in modified
+    todo = [self._modified([self._fields[fname] for fname in fnames], create)]
+  File "/home/odoo/src/odoo/odoo/models.py", line 6216, in _modified
+    tree = self.pool.get_trigger_tree(fields, select=select)
+  File "/home/odoo/src/odoo/odoo/modules/registry.py", line 342, in get_trigger_tree
+    trees = [
+  File "/home/odoo/src/odoo/odoo/modules/registry.py", line 345, in <listcomp>
+    if field in self._field_triggers
+  File "/home/odoo/src/odoo/odoo/tools/func.py", line 28, in __get__
+    value = self.fget(obj)
+  File "/home/odoo/src/odoo/odoo/modules/registry.py", line 439, in _field_triggers
+    dependencies = list(field.resolve_depends(self))
+  File "/home/odoo/src/odoo/odoo/fields.py", line 809, in resolve_depends
+    warnings.warn(
+2026-01-13 08:17:00,185 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82033 for Public user, Original Pricelist: DTF
+2026-01-13 08:17:00,185 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it
+2026-01-13 08:17:00,185 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82033, Partner: Public user, Current lines: 0
+2026-01-13 08:17:00,189 4 ERROR support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ❌ No product mapped for template:
+2026-01-13 08:17:00,260 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 136.117.123.118 - - [13/Jan/2026 08:17:00] "POST /artwork/api/projects/vector-service/add-to-cart HTTP/1.0" 200 - 156 0.231 0.757
+2026-01-13 08:17:16,085 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Starting job `Sync Artwork PDFs to Manufacturing Tasks`.
+2026-01-13 08:17:17,116 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Starting job `Base: Auto-vacuum internal data`.
+2026-01-13 08:17:17,282 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_attachment: filestore gc 2 checked, 0 removed
+2026-01-13 08:17:17,288 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Cron PDF sync complete: 0 synced, 23932 skipped (no PDF on line), 0 errors
+2026-01-13 08:17:17,289 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Job `Sync Artwork PDFs to Manufacturing Tasks` done.
+2026-01-13 08:17:17,379 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.res_users: GC'd 1 user log entries
+2026-01-13 08:17:17,421 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.auth_totp.models.auth_totp: GC'd 0 totp devices entries
+2026-01-13 08:17:17,456 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.models.unlink: User #1 deleted bus.bus records with IDs: [1159414, 1159415, 1159416, 1159417, 1159418, 1159419, 1159420, 1159421, 1159422, 1159423, 1159424, 1159425, 1159426, 1159427, 1159428, 1159429, 1159430, 1159431, 1159432, 1159433, 1159434, 1159435, 1159436, 1159437, 1159438, 1159439, 1159440, 1159441, 1159442, 1159443, 1159444, 1159445, 1159446, 1159447, 1159448, 1159449, 1159450, 1159451, 1159452, 1159453, 1159454, 1159455, 1159456, 1159457, 1159458, 1159459, 1159460, 1159461, 1159462, 1159463, 1159464, 1159465, 1159466, 1159467, 1159468, 1159469, 1159470, 1159471, 1159472, 1159473, 1159474]
+2026-01-13 08:17:18,411 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_cron: Job `Base: Auto-vacuum internal data` done. 
