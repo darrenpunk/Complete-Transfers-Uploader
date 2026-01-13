@@ -176,6 +176,86 @@ odoo.define('artwork_uploader.website_frontend', function (require) {
 
     publicWidget.registry.ArtworkUploaderWebsite = ArtworkUploaderWebsite;
     
+    // Global message listener for iframe communication
+    // This handles messages from embedded artwork uploader iframes
+    window.addEventListener('message', function(event) {
+        // Security: only accept messages from trusted origins
+        // In production, you should validate event.origin against your domain
+        
+        if (!event.data || !event.data.type) {
+            return;
+        }
+        
+        console.log('📨 Received postMessage:', event.data.type, event.data);
+        
+        switch (event.data.type) {
+            case 'request-user-data':
+                // Iframe is requesting user data (email, etc.)
+                // Get current user's email from Odoo session
+                var userEmail = '';
+                if (odoo.session_info && odoo.session_info.partner_email) {
+                    userEmail = odoo.session_info.partner_email;
+                } else if (document.querySelector('[data-user-email]')) {
+                    userEmail = document.querySelector('[data-user-email]').dataset.userEmail;
+                }
+                
+                // Send user data back to iframe
+                if (event.source) {
+                    event.source.postMessage({
+                        type: 'odoo-user-data',
+                        email: userEmail
+                    }, '*');
+                    console.log('📤 Sent user email to iframe:', userEmail);
+                }
+                break;
+                
+            case 'claim-cart':
+                // Iframe is requesting to claim a cart into the current session
+                var orderId = event.data.orderId;
+                var accessToken = event.data.accessToken || '';
+                var cartUrl = event.data.cartUrl || '/shop/cart';
+                
+                if (!orderId) {
+                    console.error('❌ claim-cart message missing orderId');
+                    break;
+                }
+                
+                console.log('🛒 Claiming cart:', orderId, 'with token:', accessToken ? 'yes' : 'no');
+                
+                // Call the claim-cart endpoint to sync session
+                fetch('/artwork/claim-cart?order_id=' + orderId + '&access_token=' + encodeURIComponent(accessToken), {
+                    method: 'GET',
+                    credentials: 'include',
+                }).then(function(response) {
+                    return response.json();
+                }).then(function(data) {
+                    if (data.success) {
+                        console.log('✅ Cart claimed successfully:', data);
+                        // Navigate to cart
+                        window.location.href = cartUrl;
+                    } else {
+                        console.error('❌ Failed to claim cart:', data.error);
+                        // Navigate anyway
+                        window.location.href = cartUrl;
+                    }
+                }).catch(function(error) {
+                    console.error('❌ Error claiming cart:', error);
+                    // Navigate to cart anyway
+                    window.location.href = cartUrl;
+                });
+                break;
+                
+            case 'navigate-to-cart':
+                // Simple redirect to cart (legacy)
+                var url = event.data.url || '/shop/cart';
+                console.log('🔗 Navigating to cart:', url);
+                window.location.href = url;
+                break;
+        }
+    });
+    
+    console.log('📡 Artwork Uploader iframe message listener initialized');
+    
     return {
         ArtworkUploaderWebsite: ArtworkUploaderWebsite
     };

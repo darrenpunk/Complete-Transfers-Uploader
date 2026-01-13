@@ -661,6 +661,8 @@ class ArtworkUploaderController(http.Controller):
                 'success': True,
                 'cart_quantity': sale_order.cart_quantity,
                 'website_sale_order': sale_order.id,
+                'access_token': sale_order.access_token or '',
+                'partner_id': sale_order.partner_id.id,
             }
             
             response = json.dumps(response_data)
@@ -683,6 +685,115 @@ class ArtworkUploaderController(http.Controller):
                 ('Access-Control-Allow-Credentials', 'true'),
             ]
             return request.make_response(response, headers=headers, status=500)
+    
+    @http.route('/artwork/claim-cart', type='http', auth='public', website=True, methods=['GET', 'POST', 'OPTIONS'], csrf=False)
+    def claim_cart(self, order_id=None, access_token=None, **kwargs):
+        """Claim a cart into the current browser session.
+        
+        This endpoint allows the parent window to sync the browser session with
+        a cart that was created/updated via the API. It validates that the order
+        belongs to the current logged-in customer before setting it in the session.
+        
+        Called by parent window after receiving add-to-cart success from iframe.
+        """
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        # Handle CORS preflight
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+                ('Access-Control-Allow-Methods', 'GET, POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        try:
+            if not order_id:
+                response_data = {'error': 'order_id is required'}
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers, status=400)
+            
+            order_id = int(order_id)
+            sale_order = request.env['sale.order'].sudo().browse(order_id)
+            
+            if not sale_order.exists():
+                _logger.warning(f"❌ Claim cart failed: Order {order_id} not found")
+                response_data = {'error': 'Order not found'}
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers, status=404)
+            
+            # Get current user's partner
+            current_partner = request.env.user.partner_id
+            is_public = request.env.user._is_public()
+            
+            _logger.info(f"🔑 Claim cart request: Order #{order_id}, Current user: {request.env.user.name}, Is public: {is_public}")
+            
+            # Security validation: order must belong to the current user's partner OR match access token
+            can_claim = False
+            
+            if not is_public and sale_order.partner_id.id == current_partner.id:
+                # Logged-in user claiming their own order
+                can_claim = True
+                _logger.info(f"✅ Order belongs to logged-in user {current_partner.name}")
+            elif access_token and sale_order.access_token == access_token:
+                # Valid access token provided
+                can_claim = True
+                _logger.info(f"✅ Valid access token provided for order #{order_id}")
+            elif is_public:
+                # Public user - allow claiming if order belongs to public user or has no partner
+                public_partner = request.env.ref('base.public_partner', raise_if_not_found=False)
+                if public_partner and sale_order.partner_id.id == public_partner.id:
+                    can_claim = True
+                    _logger.info(f"✅ Public user claiming public cart #{order_id}")
+            
+            if not can_claim:
+                _logger.warning(f"❌ Claim cart denied: Order #{order_id} belongs to {sale_order.partner_id.name}, not {current_partner.name}")
+                response_data = {'error': 'You are not authorized to claim this cart'}
+                headers = [
+                    ('Content-Type', 'application/json'),
+                    ('Access-Control-Allow-Origin', origin),
+                    ('Access-Control-Allow-Credentials', 'true'),
+                ]
+                return request.make_response(json.dumps(response_data), headers=headers, status=403)
+            
+            # Set the session's sale_order_id to this order
+            request.session['sale_order_id'] = order_id
+            _logger.info(f"✅ Session cart set to order #{order_id} for user {request.env.user.name}")
+            
+            response_data = {
+                'success': True,
+                'message': f'Cart #{order_id} claimed successfully',
+                'cart_quantity': sale_order.cart_quantity,
+            }
+            
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers)
+            
+        except Exception as e:
+            _logger.error(f"❌ Claim cart failed: {str(e)}")
+            _logger.exception("Full traceback:")
+            
+            response_data = {'error': str(e)}
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers, status=500)
     
     @http.route('/artwork/api/pricing', type='http', auth='public', methods=['GET', 'POST', 'OPTIONS'], csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):

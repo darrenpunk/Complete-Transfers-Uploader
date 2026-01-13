@@ -317,21 +317,27 @@ export default function UploadTool() {
           const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
           const cartUrl = `${odooBaseUrl}/shop/cart`;
           
+          // Extract cart details for session claiming
+          const orderId = data?.website_sale_order;
+          const accessToken = data?.access_token;
+          
           if (isInIframe) {
-            // Use postMessage to have parent handle navigation
-            // This ensures the customer's Odoo session is maintained
-            console.log('🔗 Sending navigate-to-cart message to parent');
+            // Send cart details to parent window so it can claim the cart
+            // This syncs the browser session with the cart updated via API
+            console.log('🔗 Sending claim-cart message to parent:', { orderId, accessToken });
             window.parent.postMessage({
-              type: 'navigate-to-cart',
-              url: cartUrl
+              type: 'claim-cart',
+              orderId: orderId,
+              accessToken: accessToken,
+              cartUrl: cartUrl
             }, '*');
             
-            // Fallback: direct navigation after a short delay
-            // in case parent doesn't handle the message
+            // Fallback: direct navigation after a longer delay
+            // This gives the parent time to claim the cart first
             setTimeout(() => {
               console.log('🔗 Fallback: direct parent navigation');
               window.parent.location.href = cartUrl;
-            }, 500);
+            }, 1500);
           } else {
             window.location.href = cartUrl;
           }
