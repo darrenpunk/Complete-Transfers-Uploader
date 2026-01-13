@@ -993,6 +993,122 @@ class ArtworkUploaderController(http.Controller):
             ]
             return request.make_response(json.dumps(response_data), headers=headers)
     
+    @http.route('/artwork/api/helpdesk/create', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
+    def create_helpdesk_ticket(self, **kwargs):
+        """Create a helpdesk ticket for the logged-in customer"""
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        # Handle CORS preflight
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Methods', 'POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type, Accept'),
+                ('Access-Control-Allow-Credentials', 'true'),
+                ('Access-Control-Max-Age', '86400'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        try:
+            _logger.info("🎫 CREATE HELPDESK TICKET START")
+            
+            # Parse JSON body
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                data = {}
+            
+            subject = data.get('subject', 'Support Request')
+            description = data.get('description', '')
+            customer_name = data.get('name', '')
+            customer_email = data.get('email', '')
+            
+            _logger.info(f"📧 Ticket data: subject='{subject}', email='{customer_email}'")
+            
+            # Get current user
+            current_user = request.env.user
+            is_public = current_user._is_public()
+            partner = None
+            
+            if not is_public:
+                # Logged-in user - use their partner
+                partner = current_user.partner_id
+                _logger.info(f"👤 Logged-in user: {partner.name} (ID: {partner.id})")
+            else:
+                # Public user - try to find by email
+                if customer_email:
+                    partner = request.env['res.partner'].sudo().search([
+                        ('email', '=ilike', customer_email)
+                    ], limit=1)
+                    
+                    if not partner:
+                        # Create a new partner for this customer
+                        partner = request.env['res.partner'].sudo().create({
+                            'name': customer_name or customer_email,
+                            'email': customer_email,
+                        })
+                        _logger.info(f"✅ Created new partner: {partner.name} (ID: {partner.id})")
+                    else:
+                        _logger.info(f"✅ Found existing partner: {partner.name} (ID: {partner.id})")
+            
+            # Find the Artwork Uploader helpdesk team
+            helpdesk_team = request.env['helpdesk.team'].sudo().search([
+                ('name', 'ilike', 'Artwork Uploader')
+            ], limit=1)
+            
+            if not helpdesk_team:
+                # Try to find any helpdesk team
+                helpdesk_team = request.env['helpdesk.team'].sudo().search([], limit=1)
+                _logger.warning(f"⚠️ 'Artwork Uploader' team not found, using: {helpdesk_team.name if helpdesk_team else 'None'}")
+            
+            if not helpdesk_team:
+                raise ValueError("No helpdesk team found in Odoo")
+            
+            _logger.info(f"🎫 Using helpdesk team: {helpdesk_team.name} (ID: {helpdesk_team.id})")
+            
+            # Create the helpdesk ticket
+            ticket_vals = {
+                'name': subject,
+                'description': description,
+                'team_id': helpdesk_team.id,
+            }
+            
+            if partner:
+                ticket_vals['partner_id'] = partner.id
+                ticket_vals['partner_email'] = partner.email or customer_email
+            elif customer_email:
+                ticket_vals['partner_email'] = customer_email
+            
+            ticket = request.env['helpdesk.ticket'].sudo().create(ticket_vals)
+            _logger.info(f"✅ Created helpdesk ticket: {ticket.name} (ID: {ticket.id})")
+            
+            response_data = {
+                'success': True,
+                'ticket_id': ticket.id,
+                'ticket_name': ticket.name,
+                'message': 'Support ticket created successfully'
+            }
+            
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers)
+            
+        except Exception as e:
+            _logger.error(f"❌ Helpdesk ticket creation failed: {str(e)}")
+            response_data = {
+                'success': False,
+                'error': str(e)
+            }
+            headers = [
+                ('Content-Type', 'application/json'),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response(json.dumps(response_data), headers=headers, status=500)
+    
     def _get_garment_colors(self):
         """Get available garment colors"""
         try:

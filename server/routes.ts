@@ -5790,70 +5790,73 @@ ${svgClose}`;
     }
   });
 
-  // Support ticket endpoint
+  // Support ticket endpoint - creates Odoo Helpdesk ticket for logged-in customers
   app.post('/api/support-tickets', async (req, res) => {
     try {
       const validatedData = insertSupportTicketSchema.parse(req.body);
       const ticket = await storage.createSupportTicket(validatedData);
       
-      console.log('📧 Support ticket created:', {
+      console.log('🎫 Support ticket created in database:', {
         id: ticket.id,
         subject: ticket.subject,
         email: ticket.email
       });
       
-      // Send email notification to support team using MailerSend
-      const mailerSendApiKey = process.env.MAILERSEND_API_KEY;
-      if (mailerSendApiKey) {
-        try {
-          const emailResponse = await fetch('https://api.mailersend.com/v1/email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${mailerSendApiKey}`,
-            },
-            body: JSON.stringify({
-              from: {
-                email: 'noreply@completetransfers.com',
-                name: 'Complete Transfers Support'
-              },
-              to: [{
-                email: 'uploader@serigraf.com',
-                name: 'Artwork Support'
-              }],
-              subject: `Support Request: ${ticket.subject}`,
-              text: `New support request received:\n\nFrom: ${ticket.name}\nEmail: ${ticket.email}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}\n\nTicket ID: ${ticket.id}\nSubmitted: ${new Date().toISOString()}`,
-              html: `<h2>New Support Request</h2>
-                <p><strong>From:</strong> ${ticket.name}</p>
-                <p><strong>Email:</strong> <a href="mailto:${ticket.email}">${ticket.email}</a></p>
-                <p><strong>Subject:</strong> ${ticket.subject}</p>
-                <hr>
-                <p><strong>Message:</strong></p>
-                <p>${ticket.message.replace(/\n/g, '<br>')}</p>
-                <hr>
-                <p><small>Ticket ID: ${ticket.id} | Submitted: ${new Date().toISOString()}</small></p>`
-            }),
-          });
-          
-          if (emailResponse.ok) {
-            console.log('✅ Support email sent to uploader@serigraf.com');
-          } else {
-            const errorText = await emailResponse.text();
-            console.error('⚠️ Failed to send support email:', errorText);
-          }
-        } catch (emailError) {
-          console.error('⚠️ Email sending error:', emailError);
-          // Continue - ticket is saved even if email fails
-        }
-      } else {
-        console.warn('⚠️ MAILERSEND_API_KEY not set - email notification skipped');
-      }
+      // Create Odoo Helpdesk ticket via API
+      const odooBaseUrl = req.body.odooBaseUrl || 'https://completetransfers.odoo.com';
+      const helpdeskEndpoint = `${odooBaseUrl}/artwork/api/helpdesk/create`;
       
-      res.json({ 
-        success: true,
-        message: 'Support ticket submitted successfully',
-        ticketId: ticket.id
-      });
+      try {
+        console.log(`🎫 Creating Odoo Helpdesk ticket at ${helpdeskEndpoint}`);
+        
+        const odooResponse = await fetch(helpdeskEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': req.headers.cookie || '',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            subject: ticket.subject,
+            description: ticket.message,
+            name: ticket.name,
+            email: ticket.email,
+          }),
+        });
+        
+        if (odooResponse.ok) {
+          const odooData = await odooResponse.json();
+          console.log('✅ Odoo Helpdesk ticket created:', odooData);
+          
+          res.json({ 
+            success: true,
+            message: 'Support ticket created in Odoo Helpdesk',
+            ticketId: ticket.id,
+            odooTicketId: odooData.ticket_id
+          });
+        } else {
+          const errorText = await odooResponse.text();
+          console.error('⚠️ Odoo Helpdesk API error:', errorText);
+          
+          // Still return success since we saved to local DB
+          res.json({ 
+            success: true,
+            message: 'Support ticket saved (Odoo sync pending)',
+            ticketId: ticket.id,
+            warning: 'Could not sync to Odoo Helpdesk'
+          });
+        }
+      } catch (odooError) {
+        console.error('⚠️ Odoo Helpdesk connection error:', odooError);
+        
+        // Still return success since we saved to local DB
+        res.json({ 
+          success: true,
+          message: 'Support ticket saved (Odoo sync pending)',
+          ticketId: ticket.id,
+          warning: 'Could not connect to Odoo Helpdesk'
+        });
+      }
     } catch (error) {
       console.error('Support ticket error:', error);
       res.status(500).json({ 
