@@ -596,10 +596,13 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {partner.name}, Current lines: {len(sale_order.order_line)}")
             
             # Find mapped product for the template
-            product = request.env['artwork.template.mapping'].sudo().get_product_for_template(project.template_size)
+            # Use template_id from request data if provided (for vectorization service), otherwise use project's template
+            template_for_lookup = data.get('template_id') or project.template_size
+            _logger.info(f"🔍 Looking up product for template: '{template_for_lookup}' (from request: {bool(data.get('template_id'))}, project: '{project.template_size}')")
+            product = request.env['artwork.template.mapping'].sudo().get_product_for_template(template_for_lookup)
             
             if not product:
-                _logger.error(f"❌ No product mapped for template: {project.template_size}")
+                _logger.error(f"❌ No product mapped for template: {template_for_lookup}")
                 response = json.dumps({'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'})
                 headers = [
                     ('Content-Type', 'application/json'),
