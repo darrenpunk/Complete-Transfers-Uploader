@@ -5802,6 +5802,53 @@ ${svgClose}`;
         email: ticket.email
       });
       
+      // Send email notification to support team using MailerSend
+      const mailerSendApiKey = process.env.MAILERSEND_API_KEY;
+      if (mailerSendApiKey) {
+        try {
+          const emailResponse = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${mailerSendApiKey}`,
+            },
+            body: JSON.stringify({
+              from: {
+                email: 'noreply@completetransfers.com',
+                name: 'Complete Transfers Support'
+              },
+              to: [{
+                email: 'uploader@serigraf.com',
+                name: 'Artwork Support'
+              }],
+              subject: `Support Request: ${ticket.subject}`,
+              text: `New support request received:\n\nFrom: ${ticket.name}\nEmail: ${ticket.email}\nSubject: ${ticket.subject}\n\nMessage:\n${ticket.message}\n\nTicket ID: ${ticket.id}\nSubmitted: ${new Date().toISOString()}`,
+              html: `<h2>New Support Request</h2>
+                <p><strong>From:</strong> ${ticket.name}</p>
+                <p><strong>Email:</strong> <a href="mailto:${ticket.email}">${ticket.email}</a></p>
+                <p><strong>Subject:</strong> ${ticket.subject}</p>
+                <hr>
+                <p><strong>Message:</strong></p>
+                <p>${ticket.message.replace(/\n/g, '<br>')}</p>
+                <hr>
+                <p><small>Ticket ID: ${ticket.id} | Submitted: ${new Date().toISOString()}</small></p>`
+            }),
+          });
+          
+          if (emailResponse.ok) {
+            console.log('✅ Support email sent to uploader@serigraf.com');
+          } else {
+            const errorText = await emailResponse.text();
+            console.error('⚠️ Failed to send support email:', errorText);
+          }
+        } catch (emailError) {
+          console.error('⚠️ Email sending error:', emailError);
+          // Continue - ticket is saved even if email fails
+        }
+      } else {
+        console.warn('⚠️ MAILERSEND_API_KEY not set - email notification skipped');
+      }
+      
       res.json({ 
         success: true,
         message: 'Support ticket submitted successfully',
@@ -5978,7 +6025,7 @@ ${svgClose}`;
     // See: odoo_artwork_uploader/MIGRATION_NOTES_2025.md
     res.status(501).json({ 
       error: 'Support form will be available after Odoo migration',
-      details: 'Please contact us directly at transferhelp@serigraf.com'
+      details: 'Please contact us directly at uploader@serigraf.com'
     });
   });
 
