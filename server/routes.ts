@@ -5663,23 +5663,78 @@ ${svgClose}`;
       };
 
       try {
-        // This would integrate with Odoo's cart API
+        const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+        const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '3';
+        const clientCookies = req.headers.cookie || '';
+        
         console.log('📦 Cart Integration - Items to add:');
         console.log('  1. Vectorization Service - €15.00');
         
-        // Only add transfer product if service type includes product
+        // 1. Add vectorization service product to cart
+        const vectorServiceResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/vector-service/add-to-cart`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': clientCookies,
+          },
+          body: JSON.stringify({
+            serviceType: 'vectorization-only',
+            requestId: vectorizationRequest.id,
+            source: 'completetransfers',
+            website_id: parseInt(ctWebsiteId, 10),
+            template_id: 'vector-service',
+          }),
+        });
+        
+        const vectorResult = await vectorServiceResponse.text();
+        console.log('📨 Vectorization service cart response:', vectorResult.substring(0, 200));
+        cartResults.vectorizationAdded = vectorServiceResponse.ok;
+        
+        // 2. If vectorization-with-product, also add the transfer product with placeholder PDF
         if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
           console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
-          // In production: await addToOdooCart(req.body.transferProduct, req.body.quantity);
-          cartResults.transferAdded = true;
+          
+          // Read the placeholder PDF and convert to base64
+          const placeholderPdfPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
+          let pdfBase64 = '';
+          
+          if (fs.existsSync(placeholderPdfPath)) {
+            const pdfBuffer = fs.readFileSync(placeholderPdfPath);
+            pdfBase64 = pdfBuffer.toString('base64');
+            console.log(`📄 Placeholder PDF loaded: ${pdfBase64.length} chars base64`);
+          } else {
+            console.warn('⚠️ Placeholder PDF not found at:', placeholderPdfPath);
+          }
+          
+          // Create a project UUID for this transfer order
+          const transferProjectUuid = `vector-transfer-${vectorizationRequest.id}`;
+          
+          // Add transfer product to cart with placeholder PDF
+          const transferResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/${transferProjectUuid}/add-to-cart`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': clientCookies,
+            },
+            body: JSON.stringify({
+              name: `Vectorization Order - ${vectorizationRequest.originalName}`,
+              templateSize: req.body.transferProduct,
+              quantity: parseInt(req.body.quantity) || 1,
+              garmentColor: req.body.garmentColor || '',
+              inkColor: req.body.inkColor || '',
+              comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}\nRequirements: ${req.body.comments}`,
+              source: 'completetransfers',
+              website_id: parseInt(ctWebsiteId, 10),
+              pdfBase64: pdfBase64,
+            }),
+          });
+          
+          const transferResult = await transferResponse.text();
+          console.log('📨 Transfer product cart response:', transferResult.substring(0, 200));
+          cartResults.transferAdded = transferResponse.ok;
         } else {
           console.log('  (Vectorization-only service - no transfer product)');
         }
-        
-        // Placeholder for actual Odoo integration
-        // In production: await addToOdooCart('vectorization-service', 1, 15);
-        
-        cartResults.vectorizationAdded = true;
       } catch (cartError) {
         console.error('Cart integration error:', cartError);
         // Continue even if cart fails - request is still saved
