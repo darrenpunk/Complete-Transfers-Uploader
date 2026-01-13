@@ -5663,12 +5663,16 @@ ${svgClose}`;
       };
 
       try {
-        const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+        // Use odooBaseUrl from request if provided, otherwise fall back to env var
+        const odooBaseUrl = req.body.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
         const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '3';
         const clientCookies = req.headers.cookie || '';
+        const partnerEmail = req.body.partnerEmail || '';
         
         console.log('📦 Cart Integration - Items to add:');
         console.log('  1. Vectorization Service - €15.00');
+        console.log(`  📧 Partner email: ${partnerEmail || '(not provided)'}`);
+        console.log(`  🌐 Odoo URL: ${odooBaseUrl}`);
         
         // 1. Add vectorization service product to cart
         const vectorServiceResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/vector-service/add-to-cart`, {
@@ -5683,6 +5687,7 @@ ${svgClose}`;
             source: 'completetransfers',
             website_id: parseInt(ctWebsiteId, 10),
             template_id: 'vector-service',
+            partnerEmail: partnerEmail,  // Pass customer email for cart linking
           }),
         });
         
@@ -5726,6 +5731,7 @@ ${svgClose}`;
               source: 'completetransfers',
               website_id: parseInt(ctWebsiteId, 10),
               pdfBase64: pdfBase64,
+              partnerEmail: partnerEmail,  // Pass customer email for cart linking
             }),
           });
           

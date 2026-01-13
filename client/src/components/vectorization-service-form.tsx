@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -62,6 +62,7 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [selectedProduct, setSelectedProduct] = useState<TemplateSize | null>(null);
   const [garmentColor, setGarmentColor] = useState<string | null>(null);
   const [inkColor, setInkColor] = useState<string | null>(null);
+  const [partnerEmail, setPartnerEmail] = useState<string>("");
   const { toast } = useToast();
   
   const isInIframe = window.self !== window.top;
@@ -78,6 +79,20 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   };
   const odooBaseUrl = getOdooBaseUrl();
   const cartUrl = isInIframe ? `${odooBaseUrl}/shop/cart` : '/shop/cart';
+  
+  useEffect(() => {
+    if (isInIframe) {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data.type === 'odoo-user-data' && event.data.email) {
+          console.log('✅ VectorizationForm received user email:', event.data.email);
+          setPartnerEmail(event.data.email);
+        }
+      };
+      window.addEventListener('message', handleMessage);
+      window.parent.postMessage({ type: 'request-user-data' }, '*');
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, [isInIframe]);
 
   // Fetch available templates
   const { data: templates = [] } = useQuery<TemplateSize[]>({
@@ -138,6 +153,12 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
           formData.append('inkColor', data.inkColor);
         }
       }
+      
+      // Pass customer info for proper cart linking
+      if (partnerEmail) {
+        formData.append('partnerEmail', partnerEmail);
+      }
+      formData.append('odooBaseUrl', odooBaseUrl);
 
       const response = await fetch('/api/vectorization-requests', {
         method: 'POST',
