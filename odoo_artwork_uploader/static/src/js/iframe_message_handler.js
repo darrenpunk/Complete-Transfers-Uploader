@@ -1,0 +1,174 @@
+/**
+ * Global Iframe Message Handler for Artwork Uploader
+ * 
+ * This script runs on ALL Odoo website pages to handle postMessage
+ * communication from the artwork uploader iframe. It must be loaded
+ * globally via website.assets_frontend to work on any page where
+ * the artwork uploader iframe might be embedded.
+ */
+
+(function() {
+    'use strict';
+
+    // Only run on website frontend (not backend)
+    if (typeof odoo === 'undefined') {
+        console.log('📡 Artwork iframe handler: Not in Odoo context, skipping');
+        return;
+    }
+
+    function initMessageHandler() {
+        console.log('📡 Initializing global artwork uploader iframe message handler');
+        
+        window.addEventListener('message', function(event) {
+            // Only process our specific message types
+            if (!event.data || !event.data.type) {
+                return;
+            }
+            
+            var messageType = event.data.type;
+            
+            // Filter to only our message types
+            if (['request-user-data', 'claim-cart', 'navigate-to-cart'].indexOf(messageType) === -1) {
+                return;
+            }
+            
+            console.log('📨 Artwork iframe message received:', messageType, event.data);
+            
+            switch (messageType) {
+                case 'request-user-data':
+                    handleUserDataRequest(event);
+                    break;
+                    
+                case 'claim-cart':
+                    handleClaimCart(event);
+                    break;
+                    
+                case 'navigate-to-cart':
+                    handleNavigateToCart(event);
+                    break;
+            }
+        });
+        
+        console.log('✅ Artwork uploader iframe message handler ready');
+    }
+    
+    function handleUserDataRequest(event) {
+        // Get current user's email from Odoo session
+        var userEmail = '';
+        
+        // Try multiple sources for user email
+        if (window.odoo && odoo.session_info) {
+            userEmail = odoo.session_info.partner_email || 
+                        odoo.session_info.email || 
+                        '';
+        }
+        
+        // Fallback: check if there's a data attribute on the page
+        if (!userEmail) {
+            var emailEl = document.querySelector('[data-user-email]');
+            if (emailEl) {
+                userEmail = emailEl.dataset.userEmail;
+            }
+        }
+        
+        // Fallback: try to get from session endpoint
+        if (!userEmail && window.odoo && odoo.csrf_token) {
+            // We already have a logged-in session, try fetching user info
+            fetch('/web/session/get_session_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'call',
+                    params: {},
+                    id: Math.floor(Math.random() * 1000000)
+                }),
+                credentials: 'include'
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var email = '';
+                if (data.result) {
+                    email = data.result.partner_email || data.result.username || '';
+                }
+                if (event.source) {
+                    event.source.postMessage({
+                        type: 'odoo-user-data',
+                        email: email
+                    }, '*');
+                    console.log('📤 Sent user email to iframe (async):', email);
+                }
+            })
+            .catch(function(err) {
+                console.error('Failed to fetch session info:', err);
+            });
+            return; // Response will be sent async
+        }
+        
+        // Send user data back to iframe
+        if (event.source) {
+            event.source.postMessage({
+                type: 'odoo-user-data',
+                email: userEmail
+            }, '*');
+            console.log('📤 Sent user email to iframe:', userEmail);
+        }
+    }
+    
+    function handleClaimCart(event) {
+        var orderId = event.data.orderId;
+        var accessToken = event.data.accessToken || '';
+        var cartUrl = event.data.cartUrl || '/shop/cart';
+        
+        if (!orderId) {
+            console.error('❌ claim-cart message missing orderId');
+            return;
+        }
+        
+        console.log('🛒 Claiming cart:', orderId, 'token:', accessToken ? 'present' : 'none');
+        
+        // Call the claim-cart endpoint to sync session
+        var url = '/artwork/claim-cart?order_id=' + orderId;
+        if (accessToken) {
+            url += '&access_token=' + encodeURIComponent(accessToken);
+        }
+        
+        fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                console.log('✅ Cart claimed successfully:', data);
+            } else {
+                console.error('❌ Failed to claim cart:', data.error);
+            }
+            // Navigate to cart regardless of outcome
+            window.location.href = cartUrl;
+        })
+        .catch(function(error) {
+            console.error('❌ Error claiming cart:', error);
+            // Navigate to cart anyway
+            window.location.href = cartUrl;
+        });
+    }
+    
+    function handleNavigateToCart(event) {
+        var url = event.data.url || '/shop/cart';
+        console.log('🔗 Navigating to cart:', url);
+        window.location.href = url;
+    }
+    
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initMessageHandler);
+    } else {
+        initMessageHandler();
+    }
+    
+})();

@@ -1,6 +1,6 @@
 {
     'name': 'Artwork Uploader',
-    'version': '16.0.46.8',
+    'version': '16.0.46.9',
     'category': 'Sales/Sales',
     'summary': 'Upload and design artwork on garment templates',
     'description': """
@@ -50,6 +50,8 @@
         'web.assets_frontend': [
             'artwork_uploader/static/src/scss/artwork_uploader.scss',
             'artwork_uploader/static/src/scss/snippets.scss',
+            'artwork_uploader/static/src/js/iframe_message_handler.js',
+            'artwork_uploader/static/src/js/embed_button.js',
             'artwork_uploader/static/src/js/artwork_uploader.js',
             'artwork_uploader/static/src/js/website_artwork_uploader.js',
             'artwork_uploader/static/src/js/canvas_editor.js',
