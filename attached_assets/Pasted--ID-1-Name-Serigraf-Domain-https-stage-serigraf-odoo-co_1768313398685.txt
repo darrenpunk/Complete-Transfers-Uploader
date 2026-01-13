@@ -1,0 +1,54 @@
+: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com'
+2026-01-13 14:09:09,390 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com'
+2026-01-13 14:09:09,390 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False'
+2026-01-13 14:09:09,391 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: Untitled Project (ID: 3)
+2026-01-13 14:09:09,391 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: Untitled Project, Template: , Qty: 1
+2026-01-13 14:09:09,394 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True
+2026-01-13 14:09:09,394 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3)
+2026-01-13 14:09:09,448 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82040 for Public user, Original Pricelist: DTF
+2026-01-13 14:09:09,449 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it
+2026-01-13 14:09:09,449 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82040, Partner: Public user, Current lines: 0
+2026-01-13 14:09:09,449 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'vector-service' (from request: True, project: '')
+2026-01-13 14:09:09,452 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Artwork / Proof (ID: 36831)
+2026-01-13 14:09:09,452 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=1
+2026-01-13 14:09:09,562 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2026-01-13 14:09:09,562 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313369, 'quantity': 1, 'option_ids': [], 'warning': ''}
+2026-01-13 14:09:09,563 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82040
+2026-01-13 14:09:09,593 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313369 comments to artwork_comment field
+2026-01-13 14:09:09,593 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313369 from project #3
+2026-01-13 14:09:09,622 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313369 comments to artwork_comment field
+2026-01-13 14:09:09,623 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313369 to project
+2026-01-13 14:09:09,623 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 1 items
+2026-01-13 14:09:09,667 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.127.88.114 - - [13/Jan/2026 14:09:09] "POST /artwork/api/projects/vector-service/add-to-cart HTTP/1.0" 200 - 181 0.184 0.099
+2026-01-13 14:09:09,981 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: vector-service
+2026-01-13 14:09:09,981 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['serviceType', 'requestId', 'source', 'website_id', 'template_id']
+2026-01-13 14:09:09,981 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers
+2026-01-13 14:09:09,983 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com'
+2026-01-13 14:09:09,983 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com'
+2026-01-13 14:09:09,983 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False'
+2026-01-13 14:09:09,984 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: Untitled Project (ID: 3)
+2026-01-13 14:09:09,984 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: Untitled Project, Template: , Qty: 1
+2026-01-13 14:09:09,987 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True
+2026-01-13 14:09:09,987 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3)
+2026-01-13 14:09:10,033 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82041 for Public user, Original Pricelist: DTF
+2026-01-13 14:09:10,033 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it
+2026-01-13 14:09:10,033 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82041, Partner: Public user, Current lines: 0
+2026-01-13 14:09:10,033 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'vector-service' (from request: True, project: '')
+2026-01-13 14:09:10,036 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Artwork / Proof (ID: 36831)
+2026-01-13 14:09:10,036 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=1
+2026-01-13 14:09:10,105 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2026-01-13 14:09:10,105 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313370, 'quantity': 1, 'option_ids': [], 'warning': ''}
+2026-01-13 14:09:10,105 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82041
+2026-01-13 14:09:10,136 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313370 comments to artwork_comment field
+2026-01-13 14:09:10,136 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313370 from project #3
+2026-01-13 14:09:10,168 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313370 comments to artwork_comment field
+2026-01-13 14:09:10,168 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313370 to project
+2026-01-13 14:09:10,169 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 1 items
+2026-01-13 14:09:10,219 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.127.88.114 - - [13/Jan/2026 14:09:10] "POST /artwork/api/projects/vector-service/add-to-cart HTTP/1.0" 200 - 181 0.156 0.085
+2026-01-13 14:09:15,961 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider()
+2026-01-13 14:09:15,961 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(82034,)
+2026-01-13 14:09:15,961 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(3,)
+2026-01-13 14:09:15,961 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider()
+2026-01-13 14:09:15,981 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [13/Jan/2026 14:09:15] "GET /shop/cart?type=popover HTTP/1.0" 200 - 49 0.015 0.028
+2026-01-13 14:09:20,602 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [13/Jan/2026 14:09:20] "GET /artwork/upload HTTP/1.0" 200 - 10 0.005 0.020
+2026-01-13 14:09:25,081 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [13/Jan/2026 14:09:25] "POST /shop/get_product_data HTTP/1.0" 200 - 12 0.005 0.009
