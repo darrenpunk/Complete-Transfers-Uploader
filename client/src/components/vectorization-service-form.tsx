@@ -56,7 +56,6 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string>("");
-  const [cartUrl, setCartUrl] = useState<string>("/shop/cart");
   const [showProductLauncher, setShowProductLauncher] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
@@ -64,6 +63,21 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [garmentColor, setGarmentColor] = useState<string | null>(null);
   const [inkColor, setInkColor] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const isInIframe = window.self !== window.top;
+  const getOdooBaseUrl = () => {
+    try {
+      if (isInIframe && document.referrer) {
+        const referrerUrl = new URL(document.referrer);
+        return referrerUrl.origin;
+      }
+    } catch (e) {
+      console.warn('Could not parse referrer URL:', e);
+    }
+    return 'https://completetransfers.odoo.com';
+  };
+  const odooBaseUrl = getOdooBaseUrl();
+  const cartUrl = isInIframe ? `${odooBaseUrl}/shop/cart` : '/shop/cart';
 
   // Fetch available templates
   const { data: templates = [] } = useQuery<TemplateSize[]>({
@@ -138,10 +152,6 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
     },
     onSuccess: (response) => {
       setRequestId(response.id);
-      // Set cart URL from response, fallback to default
-      if (response.cart?.cartUrl) {
-        setCartUrl(response.cart.cartUrl);
-      }
       setShowSuccess(true);
       form.reset();
       setUploadedFile(null);
@@ -315,7 +325,11 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
               </Button>
               <Button 
                 onClick={() => {
-                  window.location.href = cartUrl;
+                  if (isInIframe) {
+                    window.parent.location.href = cartUrl;
+                  } else {
+                    window.location.href = cartUrl;
+                  }
                 }}
                 className="flex-1"
                 data-testid="button-view-cart"
