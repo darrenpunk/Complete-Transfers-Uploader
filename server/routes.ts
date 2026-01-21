@@ -5695,6 +5695,18 @@ ${svgClose}`;
         console.log('📨 Vectorization service cart response:', vectorResult.substring(0, 200));
         cartResults.vectorizationAdded = vectorServiceResponse.ok;
         
+        // Parse Odoo response to extract order_id and access_token for claim-cart flow
+        try {
+          const odooResponse = JSON.parse(vectorResult);
+          if (odooResponse.website_sale_order) {
+            (cartResults as any).order_id = odooResponse.website_sale_order;
+            (cartResults as any).access_token = odooResponse.access_token || '';
+            console.log(`🔑 Cart claim data: order_id=${odooResponse.website_sale_order}, has_token=${!!odooResponse.access_token}`);
+          }
+        } catch (parseErr) {
+          console.warn('⚠️ Could not parse Odoo cart response for claim data');
+        }
+        
         // 2. If vectorization-with-product, also add the transfer product with placeholder PDF
         if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
           console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);

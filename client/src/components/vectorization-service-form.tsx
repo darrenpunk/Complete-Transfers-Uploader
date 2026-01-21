@@ -182,7 +182,21 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
             const text = await r.text();
             console.error('❌ Auto-add to cart failed:', r.status, text);
           } else {
-            console.log('✅ Auto-add to cart successful');
+            const result = await r.json();
+            console.log('✅ Auto-add to cart successful:', result);
+            
+            // Trigger claim-cart flow to sync browser session with the cart
+            // Odoo returns website_sale_order (the order ID) and access_token
+            const orderId = result.website_sale_order;
+            const accessToken = result.access_token;
+            if (isInIframe && orderId && accessToken) {
+              console.log('📨 Sending claim-cart message to parent window:', { orderId });
+              window.parent.postMessage({
+                type: 'claim-cart',
+                order_id: orderId,
+                access_token: accessToken
+              }, '*');
+            }
           }
         })
         .catch(err => console.error('Error auto-adding to cart:', err));
