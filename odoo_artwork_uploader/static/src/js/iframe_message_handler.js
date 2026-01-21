@@ -121,13 +121,14 @@
         var orderId = event.data.orderId;
         var accessToken = event.data.accessToken || '';
         var cartUrl = event.data.cartUrl || '/shop/cart';
+        var skipNavigation = event.data.skipNavigation || false;
         
         if (!orderId) {
             console.error('❌ claim-cart message missing orderId');
             return;
         }
         
-        console.log('🛒 Claiming cart:', orderId, 'token:', accessToken ? 'present' : 'none');
+        console.log('🛒 Claiming cart:', orderId, 'token:', accessToken ? 'present' : 'none', 'skipNav:', skipNavigation);
         
         // Call the claim-cart endpoint to sync session
         var url = '/artwork/claim-cart?order_id=' + orderId;
@@ -148,13 +149,39 @@
             } else {
                 console.error('❌ Failed to claim cart:', data.error);
             }
-            // Navigate to cart regardless of outcome
-            window.location.href = cartUrl;
+            
+            // Send confirmation back to iframe
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'cart-claimed',
+                    success: data.success || false,
+                    orderId: orderId
+                }, '*');
+                console.log('📤 Sent cart-claimed confirmation to iframe');
+            }
+            
+            // Navigate to cart unless skipNavigation is set
+            if (!skipNavigation) {
+                window.location.href = cartUrl;
+            }
         })
         .catch(function(error) {
             console.error('❌ Error claiming cart:', error);
-            // Navigate to cart anyway
-            window.location.href = cartUrl;
+            
+            // Send error confirmation back to iframe
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'cart-claimed',
+                    success: false,
+                    orderId: orderId,
+                    error: error.message
+                }, '*');
+            }
+            
+            // Navigate to cart anyway unless skipNavigation is set
+            if (!skipNavigation) {
+                window.location.href = cartUrl;
+            }
         });
     }
     

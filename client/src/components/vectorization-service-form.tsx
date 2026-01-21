@@ -57,6 +57,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string>("");
+  const [cartReady, setCartReady] = useState(false);
   const [showProductLauncher, setShowProductLauncher] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
@@ -194,8 +195,28 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
               window.parent.postMessage({
                 type: 'claim-cart',
                 orderId: orderId,
-                accessToken: accessToken
+                accessToken: accessToken,
+                skipNavigation: true // Don't auto-navigate, let user click View Cart
               }, '*');
+              
+              // Listen for cart-claimed response from parent
+              const handleCartClaimed = (event: MessageEvent) => {
+                if (event.data.type === 'cart-claimed') {
+                  console.log('✅ Cart claimed confirmed by parent');
+                  setCartReady(true);
+                  window.removeEventListener('message', handleCartClaimed);
+                }
+              };
+              window.addEventListener('message', handleCartClaimed);
+              
+              // Fallback: set cart ready after 2 seconds if no response
+              setTimeout(() => {
+                console.log('⏰ Cart ready timeout - assuming claim completed');
+                setCartReady(true);
+              }, 2000);
+            } else {
+              // No iframe or no claim needed - cart is ready
+              setCartReady(true);
             }
           }
         })
@@ -355,10 +376,11 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                   }
                 }}
                 className="flex-1"
+                disabled={!cartReady}
                 data-testid="button-view-cart"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                View Cart
+                {cartReady ? 'View Cart' : 'Syncing Cart...'}
               </Button>
             </div>
           </div>
