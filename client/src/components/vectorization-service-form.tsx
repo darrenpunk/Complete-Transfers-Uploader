@@ -36,6 +36,7 @@ type VectorizationFormData = z.infer<typeof vectorizationFormSchema>;
 interface VectorizationServiceFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  partnerEmail?: string | null;
 }
 
 interface TemplateSize {
@@ -51,7 +52,7 @@ interface TemplateSize {
   placeholderImage: string | null;
 }
 
-export function VectorizationServiceForm({ open, onOpenChange }: VectorizationServiceFormProps) {
+export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: VectorizationServiceFormProps) {
   console.log('VectorizationServiceForm render:', { open });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -62,7 +63,6 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const [selectedProduct, setSelectedProduct] = useState<TemplateSize | null>(null);
   const [garmentColor, setGarmentColor] = useState<string | null>(null);
   const [inkColor, setInkColor] = useState<string | null>(null);
-  const [partnerEmail, setPartnerEmail] = useState<string>("");
   const { toast } = useToast();
   
   const isInIframe = window.self !== window.top;
@@ -80,19 +80,6 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
   const odooBaseUrl = getOdooBaseUrl();
   const cartUrl = isInIframe ? `${odooBaseUrl}/shop/cart` : '/shop/cart';
   
-  useEffect(() => {
-    if (isInIframe) {
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === 'odoo-user-data' && event.data.email) {
-          console.log('✅ VectorizationForm received user email:', event.data.email);
-          setPartnerEmail(event.data.email);
-        }
-      };
-      window.addEventListener('message', handleMessage);
-      window.parent.postMessage({ type: 'request-user-data' }, '*');
-      return () => window.removeEventListener('message', handleMessage);
-    }
-  }, [isInIframe]);
 
   // Fetch available templates
   const { data: templates = [] } = useQuery<TemplateSize[]>({
@@ -180,13 +167,14 @@ export function VectorizationServiceForm({ open, onOpenChange }: VectorizationSe
       
       // Auto-trigger add-to-cart for vectorization-only requests
       if (serviceType === "vectorization-only") {
-        console.log('🛒 Auto-adding vectorization service to cart');
+        console.log('🛒 Auto-adding vectorization service to cart', { partnerEmail });
         fetch(`/api/projects/vector-service/add-to-cart`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             serviceType: 'vectorization-only',
-            requestId: response.id
+            requestId: response.id,
+            partnerEmail: partnerEmail || undefined
           })
         })
         .then(async r => {

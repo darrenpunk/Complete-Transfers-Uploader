@@ -1294,6 +1294,7 @@ export default function UploadTool() {
         <VectorizationServiceForm
           open={showVectorizationForm}
           onOpenChange={setShowVectorizationForm}
+          partnerEmail={partnerEmail}
         />
       </div>
     );
@@ -1507,6 +1508,7 @@ export default function UploadTool() {
       <VectorizationServiceForm
         open={showVectorizationForm}
         onOpenChange={setShowVectorizationForm}
+        partnerEmail={partnerEmail}
       />
 
       {/* Onboarding Tutorial */}
