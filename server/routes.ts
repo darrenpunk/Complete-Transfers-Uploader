@@ -5707,26 +5707,36 @@ ${svgClose}`;
           console.warn('⚠️ Could not parse Odoo cart response for claim data');
         }
         
-        // 2. If vectorization-with-product, also add the transfer product with placeholder PDF
+        // 2. If vectorization-with-product, also add the transfer product with customer's uploaded file
         if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
           console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
           
-          // Read the placeholder PDF and convert to base64
-          const placeholderPdfPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
-          let pdfBase64 = '';
+          // Read the customer's uploaded file and convert to base64
+          // The uploaded file is stored in the vectorization-uploads folder
+          const uploadedFilePath = req.file?.path;
+          let fileBase64 = '';
+          let fileName = req.file?.originalname || 'artwork';
           
-          if (fs.existsSync(placeholderPdfPath)) {
-            const pdfBuffer = fs.readFileSync(placeholderPdfPath);
-            pdfBase64 = pdfBuffer.toString('base64');
-            console.log(`📄 Placeholder PDF loaded: ${pdfBase64.length} chars base64`);
+          if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
+            const fileBuffer = fs.readFileSync(uploadedFilePath);
+            fileBase64 = fileBuffer.toString('base64');
+            console.log(`📄 Customer uploaded file loaded: ${fileName}, ${fileBase64.length} chars base64`);
           } else {
-            console.warn('⚠️ Placeholder PDF not found at:', placeholderPdfPath);
+            console.warn('⚠️ Customer uploaded file not found at:', uploadedFilePath);
+            // Fallback to placeholder if customer file is missing
+            const placeholderPdfPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
+            if (fs.existsSync(placeholderPdfPath)) {
+              const pdfBuffer = fs.readFileSync(placeholderPdfPath);
+              fileBase64 = pdfBuffer.toString('base64');
+              fileName = 'Vector_Service_Placeholder.pdf';
+              console.log(`📄 Using placeholder PDF: ${fileBase64.length} chars base64`);
+            }
           }
           
           // Create a project UUID for this transfer order
           const transferProjectUuid = `vector-transfer-${vectorizationRequest.id}`;
           
-          // Add transfer product to cart with placeholder PDF
+          // Add transfer product to cart with customer's uploaded file
           const transferResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/${transferProjectUuid}/add-to-cart`, {
             method: 'POST',
             headers: {
@@ -5742,7 +5752,8 @@ ${svgClose}`;
               comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}\nRequirements: ${req.body.comments}`,
               source: 'completetransfers',
               website_id: parseInt(ctWebsiteId, 10),
-              pdfBase64: pdfBase64,
+              pdfBase64: fileBase64,  // Customer's uploaded file (not placeholder)
+              artworkFilename: fileName,  // Include original filename
               partnerEmail: partnerEmail,  // Pass customer email for cart linking
             }),
           });
