@@ -193,8 +193,8 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
               console.log('📨 Sending claim-cart message to parent window:', { orderId });
               window.parent.postMessage({
                 type: 'claim-cart',
-                order_id: orderId,
-                access_token: accessToken
+                orderId: orderId,
+                accessToken: accessToken
               }, '*');
             }
           }
