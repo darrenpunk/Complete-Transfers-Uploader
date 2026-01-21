@@ -166,8 +166,53 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
       setUploadedFile(null);
       setSelectedProduct(null);
       
+      // Helper function to trigger claim-cart flow
+      const triggerClaimCart = (orderId: number, accessToken: string) => {
+        if (isInIframe && orderId && accessToken) {
+          console.log('📨 Sending claim-cart message to parent window:', { orderId });
+          window.parent.postMessage({
+            type: 'claim-cart',
+            orderId: orderId,
+            accessToken: accessToken,
+            skipNavigation: true // Don't auto-navigate, let user click View Cart
+          }, '*');
+          
+          // Listen for cart-claimed response from parent
+          const handleCartClaimed = (event: MessageEvent) => {
+            if (event.data.type === 'cart-claimed') {
+              console.log('✅ Cart claimed confirmed by parent');
+              setCartReady(true);
+              window.removeEventListener('message', handleCartClaimed);
+            }
+          };
+          window.addEventListener('message', handleCartClaimed);
+          
+          // Fallback: set cart ready after 2 seconds if no response
+          setTimeout(() => {
+            console.log('⏰ Cart ready timeout - assuming claim completed');
+            setCartReady(true);
+          }, 2000);
+        } else {
+          // No iframe or no claim needed - cart is ready
+          setCartReady(true);
+        }
+      };
+      
+      // For vectorization-with-product, the backend already added to cart
+      // Check if response.cart has order_id and access_token
+      if (serviceType === "vectorization-with-product" && response.cart) {
+        console.log('🛒 Vectorization with product - cart data:', response.cart);
+        const orderId = response.cart.order_id;
+        const accessToken = response.cart.access_token;
+        if (orderId && accessToken) {
+          triggerClaimCart(orderId, accessToken);
+        } else {
+          // No claim data, but cart was updated - fallback to ready after delay
+          setTimeout(() => setCartReady(true), 2000);
+        }
+      }
       // Auto-trigger add-to-cart for vectorization-only requests
-      if (serviceType === "vectorization-only") {
+      else if (serviceType === "vectorization-only") {
         console.log('🛒 Auto-adding vectorization service to cart', { partnerEmail });
         fetch(`/api/projects/vector-service/add-to-cart`, {
           method: 'POST',
@@ -182,45 +227,24 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
           if (!r.ok) {
             const text = await r.text();
             console.error('❌ Auto-add to cart failed:', r.status, text);
+            setCartReady(true); // Allow navigation even on error
           } else {
             const result = await r.json();
             console.log('✅ Auto-add to cart successful:', result);
             
             // Trigger claim-cart flow to sync browser session with the cart
-            // Odoo returns website_sale_order (the order ID) and access_token
             const orderId = result.website_sale_order;
             const accessToken = result.access_token;
-            if (isInIframe && orderId && accessToken) {
-              console.log('📨 Sending claim-cart message to parent window:', { orderId });
-              window.parent.postMessage({
-                type: 'claim-cart',
-                orderId: orderId,
-                accessToken: accessToken,
-                skipNavigation: true // Don't auto-navigate, let user click View Cart
-              }, '*');
-              
-              // Listen for cart-claimed response from parent
-              const handleCartClaimed = (event: MessageEvent) => {
-                if (event.data.type === 'cart-claimed') {
-                  console.log('✅ Cart claimed confirmed by parent');
-                  setCartReady(true);
-                  window.removeEventListener('message', handleCartClaimed);
-                }
-              };
-              window.addEventListener('message', handleCartClaimed);
-              
-              // Fallback: set cart ready after 2 seconds if no response
-              setTimeout(() => {
-                console.log('⏰ Cart ready timeout - assuming claim completed');
-                setCartReady(true);
-              }, 2000);
-            } else {
-              // No iframe or no claim needed - cart is ready
-              setCartReady(true);
-            }
+            triggerClaimCart(orderId, accessToken);
           }
         })
-        .catch(err => console.error('Error auto-adding to cart:', err));
+        .catch(err => {
+          console.error('Error auto-adding to cart:', err);
+          setCartReady(true); // Allow navigation even on error
+        });
+      } else {
+        // Unknown service type - just enable the button
+        setCartReady(true);
       }
 
       toast({
