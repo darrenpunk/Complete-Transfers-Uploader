@@ -211,39 +211,20 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
           setTimeout(() => setCartReady(true), 2000);
         }
       }
-      // Auto-trigger add-to-cart for vectorization-only requests
-      else if (serviceType === "vectorization-only") {
-        console.log('🛒 Auto-adding vectorization service to cart', { partnerEmail });
-        fetch(`/api/projects/vector-service/add-to-cart`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            serviceType: 'vectorization-only',
-            requestId: response.id,
-            partnerEmail: partnerEmail || undefined
-          })
-        })
-        .then(async r => {
-          if (!r.ok) {
-            const text = await r.text();
-            console.error('❌ Auto-add to cart failed:', r.status, text);
-            setCartReady(true); // Allow navigation even on error
-          } else {
-            const result = await r.json();
-            console.log('✅ Auto-add to cart successful:', result);
-            
-            // Trigger claim-cart flow to sync browser session with the cart
-            const orderId = result.website_sale_order;
-            const accessToken = result.access_token;
-            triggerClaimCart(orderId, accessToken);
-          }
-        })
-        .catch(err => {
-          console.error('Error auto-adding to cart:', err);
-          setCartReady(true); // Allow navigation even on error
-        });
+      // For vectorization-only, the backend already added to cart during the request submission
+      // Use the cart data from the response to trigger claim-cart
+      else if (serviceType === "vectorization-only" && response.cart) {
+        console.log('🛒 Vectorization-only - cart data from backend:', response.cart);
+        const orderId = response.cart.order_id;
+        const accessToken = response.cart.access_token;
+        if (orderId && accessToken) {
+          triggerClaimCart(orderId, accessToken);
+        } else {
+          // No claim data - fallback to ready after delay
+          setTimeout(() => setCartReady(true), 2000);
+        }
       } else {
-        // Unknown service type - just enable the button
+        // Unknown service type or no cart data - just enable the button
         setCartReady(true);
       }
 

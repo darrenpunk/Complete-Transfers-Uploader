@@ -1,0 +1,184 @@
+2026-01-23 12:30:16,484 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: vector-service 
+2026-01-23 12:30:16,486 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['serviceType', 'requestId', 'source', 'website_id', 'template_id', 'partnerEmail', 'pdfBase64', 'artworkFilename'] 
+2026-01-23 12:30:16,486 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers 
+2026-01-23 12:30:16,488 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com' 
+2026-01-23 12:30:16,488 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com' 
+2026-01-23 12:30:16,488 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False' 
+2026-01-23 12:30:16,490 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: Untitled Project (ID: 3) 
+2026-01-23 12:30:16,490 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: Untitled Project, Template: , Qty: 1 
+2026-01-23 12:30:16,492 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True 
+2026-01-23 12:30:16,493 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-23 12:30:16,493 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email: enda@tees.ie 
+2026-01-23 12:30:16,553 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer: GLENROCK LOGOS LTD (ID: 79590) for email enda@tees.ie 
+2026-01-23 12:30:16,553 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Creating new cart for customer GLENROCK LOGOS LTD 
+2026-01-23 12:30:16,606 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created cart #82055 for customer GLENROCK LOGOS LTD 
+2026-01-23 12:30:16,606 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82055 for GLENROCK LOGOS LTD, Original Pricelist: DTF 
+2026-01-23 12:30:16,606 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it 
+2026-01-23 12:30:16,606 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82055, Partner: GLENROCK LOGOS LTD, Current lines: 0 
+2026-01-23 12:30:16,606 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'vector-service' (from request: True, project: '') 
+2026-01-23 12:30:16,610 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Artwork / Proof (ID: 36831) 
+2026-01-23 12:30:16,610 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=1 
+2026-01-23 12:30:16,713 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called 
+2026-01-23 12:30:16,713 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313410, 'quantity': 1, 'option_ids': [], 'warning': ''} 
+2026-01-23 12:30:16,713 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82055 
+2026-01-23 12:30:16,742 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313410 comments to artwork_comment field 
+2026-01-23 12:30:16,742 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313410 from project #3 
+2026-01-23 12:30:16,774 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313410 comments to artwork_comment field 
+2026-01-23 12:30:16,791 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ⚠️ No manufacturing task found for order line #313410 - will sync when task is created 
+2026-01-23 12:30:16,791 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📄 PDF uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): artwork.pdf 
+2026-01-23 12:30:16,791 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module 
+2026-01-23 12:30:16,791 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313410 to project 
+2026-01-23 12:30:16,792 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 1 items 
+2026-01-23 12:30:16,849 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.105.11.108 - - [23/Jan/2026 12:30:16] "POST /artwork/api/projects/vector-service/add-to-cart HTTP/1.0" 200 - 190 0.254 0.114
+2026-01-23 12:30:17,437 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: vector-service 
+2026-01-23 12:30:17,437 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['serviceType', 'requestId', 'partnerEmail', 'source', 'website_id', 'template_id'] 
+2026-01-23 12:30:17,437 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers 
+2026-01-23 12:30:17,439 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com' 
+2026-01-23 12:30:17,439 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com' 
+2026-01-23 12:30:17,439 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False' 
+2026-01-23 12:30:17,440 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found existing project in Odoo: Untitled Project (ID: 3) 
+2026-01-23 12:30:17,440 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: Untitled Project, Template: , Qty: 1 
+2026-01-23 12:30:17,442 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True 
+2026-01-23 12:30:17,442 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-23 12:30:17,442 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email: enda@tees.ie 
+2026-01-23 12:30:17,485 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer: GLENROCK LOGOS LTD (ID: 79590) for email enda@tees.ie 
+2026-01-23 12:30:17,486 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Found existing cart #82055 for customer GLENROCK LOGOS LTD 
+2026-01-23 12:30:17,488 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82055 for GLENROCK LOGOS LTD, Original Pricelist: DTF 
+2026-01-23 12:30:17,488 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it 
+2026-01-23 12:30:17,489 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82055, Partner: GLENROCK LOGOS LTD, Current lines: 1 
+2026-01-23 12:30:17,489 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'vector-service' (from request: True, project: '') 
+2026-01-23 12:30:17,492 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Artwork / Proof (ID: 36831) 
+2026-01-23 12:30:17,492 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=1 
+2026-01-23 12:30:17,553 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called 
+2026-01-23 12:30:17,553 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313410, 'quantity': 2.0, 'option_ids': [], 'warning': ''} 
+2026-01-23 12:30:17,553 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82055 
+2026-01-23 12:30:17,593 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313410 comments to artwork_comment field 
+2026-01-23 12:30:17,593 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313410 from project #3 
+2026-01-23 12:30:17,622 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313410 comments to artwork_comment field 
+2026-01-23 12:30:17,622 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313410 to project 
+2026-01-23 12:30:17,623 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 2 items 
+2026-01-23 12:30:17,642 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.105.11.108 - - [23/Jan/2026 12:30:17] "POST /artwork/api/projects/vector-service/add-to-cart HTTP/1.0" 200 - 103 0.161 0.047
+2026-01-23 12:30:20,745 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider() 
+2026-01-23 12:30:20,746 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(82055,) 
+2026-01-23 12:30:20,746 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(3,) 
+2026-01-23 12:30:20,746 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider() 
+2026-01-23 12:30:20,873 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:20] "GET /shop/cart HTTP/1.0" 200 - 122 0.043 0.126
+2026-01-23 12:30:21,278 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:21] "POST /shop/cart/quantity HTTP/1.0" 200 - 1 0.000 0.003
+2026-01-23 12:30:21,293 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:21] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 6 0.002 0.006
+2026-01-23 12:30:21,311 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:21] "POST /shop/get_product_data HTTP/1.0" 200 - 12 0.005 0.008
+2026-01-23 12:30:25,131 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:25] "POST /shop/cart/order/check/msg HTTP/1.0" 200 - 24 0.008 0.009
+2026-01-23 12:30:25,140 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:25] "POST /shop/cart/update_json/msg HTTP/1.0" 200 - 19 0.006 0.008
+2026-01-23 12:30:25,641 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:25] "POST /shop/check_submit_rfq HTTP/1.0" 200 - 10 0.004 0.007
+2026-01-23 12:30:25,713 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called 
+2026-01-23 12:30:25,764 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:25] "POST /shop/cart/update_json HTTP/1.0" 200 - 154 0.080 0.069
+2026-01-23 12:30:26,792 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:26] "GET /shop/checkout?express=1 HTTP/1.0" 303 - 36 0.010 0.014
+2026-01-23 12:30:26,894 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:26] "GET /shop/confirm_order HTTP/1.0" 303 - 99 0.029 0.047
+2026-01-23 12:30:27,050 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider(17,) 
+2026-01-23 12:30:27,050 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(82055,) 
+2026-01-23 12:30:27,050 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(3,) 
+2026-01-23 12:30:27,051 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider(17,) 
+2026-01-23 12:30:27,098 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "GET /shop/payment HTTP/1.0" 200 - 150 0.100 0.078
+2026-01-23 12:30:27,523 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/update_carrier HTTP/1.0" 200 - 28 0.019 0.017
+2026-01-23 12:30:27,552 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/carrier_rate_shipment HTTP/1.0" 200 - 32 0.033 0.019
+2026-01-23 12:30:27,560 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 6 0.011 0.009
+2026-01-23 12:30:27,573 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/get_product_data HTTP/1.0" 200 - 7 0.009 0.009
+2026-01-23 12:30:27,584 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/carrier_rate_shipment HTTP/1.0" 200 - 38 0.047 0.024
+2026-01-23 12:30:27,589 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:27] "POST /shop/carrier_rate_shipment HTTP/1.0" 200 - 38 0.041 0.021
+2026-01-23 12:30:32,666 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_rule: Access Denied by record rules for operation: read on record ids: [82055], uid: 2681, model: sale.order 
+2026-01-23 12:30:32,697 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment.models.payment_transaction: generic and provider-specific processing values for transaction with reference SO81022:
+{'amount': 30.75,
+ 'currency_id': 1,
+ 'partner_id': 141804,
+ 'provider_code': 'custom',
+ 'provider_id': 17,
+ 'reference': 'SO81022'} 
+2026-01-23 12:30:32,698 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment.models.payment_transaction: provider-specific rendering values for transaction with reference SO81022:
+{'api_url': '/payment/custom/process', 'reference': 'SO81022'} 
+2026-01-23 12:30:32,786 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:32] "POST /shop/payment/transaction/82055 HTTP/1.0" 200 - 60 0.104 0.034
+2026-01-23 12:30:32,820 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_custom.controllers.main: Handling custom processing with data:
+{'reference': 'SO81022'} 
+2026-01-23 12:30:32,823 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_so_confirm.models.models: validated custom payment for transaction with reference SO81022: set as pending 
+2026-01-23 12:30:32,847 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_custom.models.payment_transaction: validated custom payment for transaction with reference SO81022: set as pending 
+2026-01-23 12:30:32,847 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment.models.payment_transaction: tried to write on transaction with reference SO81022 with the same value for the state: pending 
+2026-01-23 12:30:32,858 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:32] "POST /payment/custom/process HTTP/1.0" 303 - 49 0.015 0.026
+2026-01-23 12:30:32,909 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:32] "GET /payment/status HTTP/1.0" 200 - 10 0.004 0.021
+2026-01-23 12:30:33,283 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:33] "POST /payment/status/poll HTTP/1.0" 200 - 7 0.002 0.006
+2026-01-23 12:30:33,294 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:33] "POST /shop/get_product_data HTTP/1.0" 200 - 7 0.002 0.006
+2026-01-23 12:30:33,354 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Refreshing access token. 
+2026-01-23 12:30:33,638 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to files/upload 
+2026-01-23 12:30:34,481 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to sharing/create_shared_link_with_settings 
+2026-01-23 12:30:36,319 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:36] "POST /payment/status/poll HTTP/1.0" 200 - 1 0.000 0.003
+2026-01-23 12:30:36,678 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----super True, stock.picking(2111589,) 
+2026-01-23 12:30:36,679 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----website website(3,) 
+2026-01-23 12:30:36,679 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----order.task_created False 
+2026-01-23 12:30:36,679 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----order.order_line sale.order.line(313410, 313411) 
+2026-01-23 12:30:36,679 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----line.product_id product.product(36831,) 
+2026-01-23 12:30:36,680 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -------projet-find===2  True, False, True, False 
+2026-01-23 12:30:36,684 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----default_value {'user_ids': [(<Command.LINK: 4>, 2681, 0)]} 
+2026-01-23 12:30:36,684 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -------projet-find===2  True, False, True, False 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----project_art project.project(54,) 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --all IF end----------task, {'user_ids': [(<Command.LINK: 4>, 2681, 0)], 'name': 'SO81022 - [VECT] Artwork / Proof (ADVT)', 'x_studio_field_2vIwU': [(6, 0, [82055])], 'partner_id': 79590, 'required_qty': 1.0, 'project_id': 54, 'user_id': 9}, project.project(54,) 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --line.artwork_file_name----------task, artwork.pdf 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --line.product_id.sale_delay----------task, product.product(36831,), 1.0 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --TASK dict {'user_ids': [(4, 9)], 'name': 'SO81022 - [VECT] Artwork / Proof (ADVT) artwork.pdf', 'x_studio_field_2vIwU': [(6, 0, [82055])], 'partner_id': 79590, 'required_qty': 1.0, 'project_id': 54, 'user_id': 9, 'sale_order_id': 82055, 'sale_line_id': 313410} 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---bool(task) and isinstance(task, dict)------------task True, True 
+2026-01-23 12:30:36,685 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---dddd------------task {'user_ids': [(4, 9)], 'name': 'SO81022 - [VECT] Artwork / Proof (ADVT) artwork.pdf', 'x_studio_field_2vIwU': [(6, 0, [82055])], 'partner_id': 79590, 'required_qty': 1.0, 'project_id': 54, 'user_id': 9, 'sale_order_id': 82055, 'sale_line_id': 313410} 
+2026-01-23 12:30:36,690 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.project_task_extend.models.project: ------------------------project project.project(54,)  
+2026-01-23 12:30:36,690 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.project_task_extend.models.project: hr.employee(28,) 
+2026-01-23 12:30:36,829 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---order.task_created------------task True, project.task(90989,) 
+2026-01-23 12:30:36,829 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---task_id and line.artwork_task_message------------task project.task(90989,), False 
+2026-01-23 12:30:37,077 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---OUT------------ 
+2026-01-23 12:30:37,078 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----line.product_id product.product(9419,) 
+2026-01-23 12:30:37,671 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.240.23.33 - - [23/Jan/2026 12:30:37] "GET /web/assets/4082115-5868230/3/web.report_assets_pdf.min.css HTTP/1.0" 200 - 4 0.001 0.004
+2026-01-23 12:30:37,683 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.240.23.33 - - [23/Jan/2026 12:30:37] "GET /web/assets/4183109-56345da/3/web.report_assets_common.min.css HTTP/1.0" 200 - 4 0.001 0.004
+2026-01-23 12:30:37,724 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_model: Access Denied by ACLs for operation: write, uid: 2681, model: website.page
+2026-01-23 12:30:37,745 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 35.240.23.33 - - [23/Jan/2026 12:30:37] "GET /?debug=0 HTTP/1.0" 200 - 11 0.006 0.027
+2026-01-23 12:30:37,751 4 INFO ? werkzeug: 35.240.23.33 - - [23/Jan/2026 12:30:37] "GET /web/static/fonts/google/Tajawal/Tajawal-Regular.ttf HTTP/1.0" 200 - 0 0.000 0.001
+2026-01-23 12:30:39,354 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:39] "POST /payment/status/poll HTTP/1.0" 200 - 1 0.000 0.002
+2026-01-23 12:30:39,886 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.base.models.ir_actions_report: The PDF report has been generated for model: sale.order, records [82055].
+2026-01-23 12:30:40,046 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----super True, stock.picking(2111589,)
+2026-01-23 12:30:40,046 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----website website(3,)
+2026-01-23 12:30:40,046 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----order.task_created True
+2026-01-23 12:30:40,062 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "GET /shop/payment/validate HTTP/1.0" 303 - 545 0.332 6.418
+2026-01-23 12:30:40,147 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "GET /shop/confirmation HTTP/1.0" 200 - 39 0.016 0.045
+2026-01-23 12:30:40,518 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "POST /shop/cart/quantity HTTP/1.0" 200 - 5 0.002 0.006
+2026-01-23 12:30:40,532 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.004 0.008
+2026-01-23 12:30:40,541 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 5 0.002 0.005
+2026-01-23 12:30:40,580 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:40] "POST /shop/get_product_data HTTP/1.0" 200 - 11 0.004 0.008
+2026-01-23 12:30:41,102 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "GET /web/image?model=res.users&field=avatar_128&id=5 HTTP/1.0" 304 - 9 0.004 0.008
+2026-01-23 12:30:41,257 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /web/dataset/call_kw/product.template/get_views HTTP/1.0" 200 - 163 0.054 0.100
+2026-01-23 12:30:41,485 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /web/dataset/call_kw/product.template/read HTTP/1.0" 200 - 161 0.090 0.053
+2026-01-23 12:30:41,525 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /web/dataset/call_kw/account.tax/read HTTP/1.0" 200 - 5 0.002 0.007
+2026-01-23 12:30:41,536 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /web/dataset/call_kw/account.tax/read HTTP/1.0" 200 - 5 0.003 0.005
+2026-01-23 12:30:41,569 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /web/dataset/call_kw/stock.route/name_search HTTP/1.0" 200 - 5 0.002 0.005
+2026-01-23 12:30:41,732 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "GET /web/bundle/web_editor.assets_wysiwyg?lang=en_US HTTP/1.0" 200 - 1 0.000 0.006
+2026-01-23 12:30:41,750 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /mail/thread/messages HTTP/1.0" 200 - 21 0.016 0.010
+2026-01-23 12:30:41,752 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /mail/thread/data HTTP/1.0" 200 - 19 0.014 0.013
+2026-01-23 12:30:41,771 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.008
+2026-01-23 12:30:41,898 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:41] "GET /web/image/res.partner/11/avatar_128 HTTP/1.0" 304 - 7 0.003 0.007
+2026-01-23 12:30:43,765 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:43] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.008
+2026-01-23 12:30:43,908 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:43] "POST /web/dataset/call_kw/res.users/has_group HTTP/1.0" 200 - 3 0.002 0.006
+2026-01-23 12:30:43,972 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:43] "POST /web/dataset/call_kw/product.template/web_search_read HTTP/1.0" 200 - 29 0.036 0.052
+2026-01-23 12:30:45,767 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:45] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.008
+2026-01-23 12:30:48,646 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:48] "POST /web/dataset/call_kw/sale.order/web_search_read HTTP/1.0" 200 - 29 0.110 0.061
+2026-01-23 12:30:48,768 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:48] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.007
+2026-01-23 12:30:51,565 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/sale.order/read HTTP/1.0" 200 - 66 0.077 0.035
+2026-01-23 12:30:51,617 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/sale.order.line/read HTTP/1.0" 200 - 23 0.010 0.015
+2026-01-23 12:30:51,708 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/account.tax/read HTTP/1.0" 200 - 5 0.002 0.006
+2026-01-23 12:30:51,745 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 6 0.002 0.007
+2026-01-23 12:30:51,755 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.002 0.006
+2026-01-23 12:30:51,769 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /web/dataset/call_kw/res.partner/name_get HTTP/1.0" 200 - 4 0.002 0.006
+2026-01-23 12:30:51,781 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.006
+2026-01-23 12:30:51,830 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /mail/thread/messages HTTP/1.0" 200 - 28 0.014 0.013
+2026-01-23 12:30:51,835 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:51] "POST /mail/thread/data HTTP/1.0" 200 - 19 0.011 0.010
+2026-01-23 12:30:54,462 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:54] "POST /mail/thread/messages HTTP/1.0" 200 - 4 0.002 0.004
+2026-01-23 12:30:54,484 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:54] "POST /mail/thread/data HTTP/1.0" 200 - 19 0.005 0.009
+2026-01-23 12:30:54,763 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:54] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.006
+2026-01-23 12:30:57,782 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:57] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.006 0.021
+2026-01-23 12:30:58,772 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:30:58] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.009
+2026-01-23 12:31:02,766 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:02] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.008
+2026-01-23 12:31:06,768 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:06] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.007
+2026-01-23 12:31:11,771 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:11] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.004 0.009
+2026-01-23 12:31:16,767 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:16] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.007
+2026-01-23 12:31:21,765 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:21] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.009
+2026-01-23 12:31:27,770 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 12:31:27] "POST /shop/payment/get_status/82055 HTTP/1.0" 200 - 9 0.003 0.008
