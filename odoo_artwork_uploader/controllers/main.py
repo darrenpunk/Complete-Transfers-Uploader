@@ -1005,14 +1005,35 @@ class ArtworkUploaderController(http.Controller):
             ]
             
             pricelist = None
+            fallback_pricelist = None  # CT Euro pricelist for products not in special pricelist
             
-            # PRIORITY 1: Check if customer has a SPECIAL/CUSTOM pricelist (e.g., Galaxy Crystal, Visual Vinyl)
+            # PRIORITY 1: Check if customer has a SPECIAL/CUSTOM pricelist (e.g., Galaxy Crystal, Visual Vinyl, DTF)
             if partner and partner.property_product_pricelist:
                 customer_pricelist = partner.property_product_pricelist
                 # Only use it if it's a special pricelist (not a standard one)
                 if customer_pricelist.name not in standard_pricelists:
-                    pricelist = customer_pricelist
-                    _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name}")
+                    # Check if this special pricelist actually has a rule for this product
+                    # If not, we'll need to fall back to CT Euro Pricelist
+                    has_product_rule = False
+                    
+                    # Search for pricelist items that apply to this product
+                    pricelist_items = request.env['product.pricelist.item'].sudo().search([
+                        ('pricelist_id', '=', customer_pricelist.id),
+                        '|', '|', '|',
+                        ('product_tmpl_id', '=', product.product_tmpl_id.id),
+                        ('product_id', '=', product.id),
+                        ('categ_id', '=', product.categ_id.id),
+                        ('applied_on', '=', '3_global')  # Global rules
+                    ], limit=1)
+                    
+                    if pricelist_items:
+                        has_product_rule = True
+                        pricelist = customer_pricelist
+                        _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name} (has rule for {product.name})")
+                    else:
+                        # Special pricelist doesn't cover this product - need CT Euro fallback
+                        _logger.info(f"⚠️ Customer has SPECIAL pricelist '{customer_pricelist.name}' but it doesn't cover product '{product.name}'")
+                        _logger.info(f"🔄 Will use CT Euro Pricelist for this product")
             
             # PRIORITY 2: If request is from Complete Transfers (detected via referrer, origin, or website), force CT Euro/GBP
             if not pricelist and is_complete_transfers:
