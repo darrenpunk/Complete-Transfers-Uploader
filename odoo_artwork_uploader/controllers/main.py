@@ -634,21 +634,29 @@ class ArtworkUploaderController(http.Controller):
                 order_line.artwork_project_id = project.id
                 order_line._update_artwork_comments()
                 
-                # Attach PDF to order line (production workflow via artwork_files_datas and artwork_file_name)
+                # Attach artwork file to order line (production workflow via artwork_files_datas and artwork_file_name)
                 # CRITICAL: Must use production's exact field names to trigger Dropbox workflow
                 if data.get('pdfBase64'):
                     # IMPORTANT: Odoo Binary fields expect base64-encoded STRING, not raw bytes!
                     # The pdfBase64 from frontend is already base64, so pass it directly
                     pdf_base64_string = data['pdfBase64']
-                    pdf_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                    
+                    # Use artworkFilename if provided (preserves original filename for vectorization uploads)
+                    # Otherwise fall back to project name with .pdf extension
+                    if data.get('artworkFilename'):
+                        artwork_filename = data['artworkFilename'].replace(' ', '_')
+                        _logger.info(f"📄 Using provided artworkFilename: {artwork_filename}")
+                    else:
+                        artwork_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
+                        _logger.info(f"📄 Generated filename from project name: {artwork_filename}")
                     
                     # CRITICAL: Upload to PRODUCTION fields (artwork_files_datas + artwork_file_name)
                     # artwork_files_datas expects base64-encoded string, NOT decoded bytes
                     order_line.write({
                         'artwork_files_datas': pdf_base64_string,    # Production field - must be base64 STRING
-                        'artwork_file_name': pdf_filename            # Production field (filename)
+                        'artwork_file_name': artwork_filename        # Production field (filename)
                     })
-                    _logger.info(f"📄 PDF uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {pdf_filename}")
+                    _logger.info(f"📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {artwork_filename}")
                     _logger.info(f"✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module")
                 
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
