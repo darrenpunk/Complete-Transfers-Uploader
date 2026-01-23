@@ -776,7 +776,16 @@ class ArtworkUploaderController(http.Controller):
             
             # Set the session's sale_order_id to this order
             request.session['sale_order_id'] = order_id
+            # Also set sale_last_order_id to prevent website_sale from overriding
+            request.session['sale_last_order_id'] = order_id
             _logger.info(f"✅ Session cart set to order #{order_id} for user {request.env.user.name}")
+            
+            # Check if we should redirect or return JSON
+            # If 'redirect' parameter is set, redirect to cart page after setting session
+            redirect_url = kwargs.get('redirect')
+            if redirect_url:
+                _logger.info(f"🔄 Redirecting to {redirect_url} after claiming cart")
+                return request.redirect(redirect_url)
             
             response_data = {
                 'success': True,

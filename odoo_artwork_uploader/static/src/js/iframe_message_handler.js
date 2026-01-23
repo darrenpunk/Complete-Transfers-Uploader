@@ -130,12 +130,35 @@
         
         console.log('🛒 Claiming cart:', orderId, 'token:', accessToken ? 'present' : 'none', 'skipNav:', skipNavigation);
         
-        // Call the claim-cart endpoint to sync session
+        // Build claim-cart URL with redirect parameter
+        // This ensures the session is set BEFORE the cart page loads (avoids race condition)
         var url = '/artwork/claim-cart?order_id=' + orderId;
         if (accessToken) {
             url += '&access_token=' + encodeURIComponent(accessToken);
         }
         
+        // If we need to navigate, use redirect mode to avoid race conditions
+        if (!skipNavigation) {
+            // Add redirect parameter - server will set session then redirect
+            url += '&redirect=' + encodeURIComponent(cartUrl);
+            console.log('🔄 Using server-side redirect to:', cartUrl);
+            
+            // Send confirmation back to iframe before navigating
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'cart-claimed',
+                    success: true,
+                    orderId: orderId
+                }, '*');
+                console.log('📤 Sent cart-claimed confirmation to iframe');
+            }
+            
+            // Navigate via server redirect (session is set before page loads)
+            window.location.href = url;
+            return;
+        }
+        
+        // If skipNavigation, use fetch to set session without redirect
         fetch(url, {
             method: 'GET',
             credentials: 'include',
@@ -159,11 +182,6 @@
                 }, '*');
                 console.log('📤 Sent cart-claimed confirmation to iframe');
             }
-            
-            // Navigate to cart unless skipNavigation is set
-            if (!skipNavigation) {
-                window.location.href = cartUrl;
-            }
         })
         .catch(function(error) {
             console.error('❌ Error claiming cart:', error);
@@ -176,11 +194,6 @@
                     orderId: orderId,
                     error: error.message
                 }, '*');
-            }
-            
-            // Navigate to cart anyway unless skipNavigation is set
-            if (!skipNavigation) {
-                window.location.href = cartUrl;
             }
         });
     }

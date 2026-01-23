@@ -1,0 +1,53 @@
+2026-01-23 15:47:46,786 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:46] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.006 0.019
+2026-01-23 15:47:52,950 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: 52657690-334a-4b31-919c-10bb9bbe21ca
+2026-01-23 15:47:52,952 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['name', 'templateSize', 'garmentColor', 'garmentColorName', 'garmentColors', 'inkColor', 'inkColorName', 'quantity', 'totalQuantity', 'comments', 'partnerEmail', 'pdfBase64', 'source', 'website_id']
+2026-01-23 15:47:52,952 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers
+2026-01-23 15:47:52,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com'
+2026-01-23 15:47:52,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com'
+2026-01-23 15:47:52,953 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False'
+2026-01-23 15:47:52,954 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Project not found in Odoo, creating new project
+2026-01-23 15:47:52,963 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created project in Odoo: raster (ID: 22)
+2026-01-23 15:47:52,964 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: raster, Template: template-A3, Qty: 10
+2026-01-23 15:47:52,964 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True
+2026-01-23 15:47:52,964 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3)
+2026-01-23 15:47:52,964 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email: enda@tees.ie
+2026-01-23 15:47:53,010 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer: GLENROCK LOGOS LTD (ID: 79590) for email enda@tees.ie
+2026-01-23 15:47:53,011 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Creating new cart for customer GLENROCK LOGOS LTD
+2026-01-23 15:47:53,052 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created cart #82064 for customer GLENROCK LOGOS LTD
+2026-01-23 15:47:53,052 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82064 for GLENROCK LOGOS LTD, Original Pricelist: DTF
+2026-01-23 15:47:53,052 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Customer has SPECIAL pricelist: DTF - keeping it
+2026-01-23 15:47:53,052 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82064, Partner: GLENROCK LOGOS LTD, Current lines: 0
+2026-01-23 15:47:53,052 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'template-A3' (from request: False, project: 'template-A3')
+2026-01-23 15:47:53,055 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Full Colour  A3 (ID: 35457)
+2026-01-23 15:47:53,055 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=10
+2026-01-23 15:47:53,156 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2026-01-23 15:47:53,156 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313435, 'quantity': 10, 'option_ids': [], 'warning': ''}
+2026-01-23 15:47:53,156 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82064
+2026-01-23 15:47:53,186 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313435 comments to artwork_comment field
+2026-01-23 15:47:53,186 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313435 from project #22
+2026-01-23 15:47:53,215 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313435 comments to artwork_comment field
+2026-01-23 15:47:53,215 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📄 Generated filename from project name: raster.pdf
+2026-01-23 15:47:53,230 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ⚠️ No manufacturing task found for order line #313435 - will sync when task is created
+2026-01-23 15:47:53,231 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): raster.pdf
+2026-01-23 15:47:53,231 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module
+2026-01-23 15:47:53,231 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313435 to project
+2026-01-23 15:47:53,231 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 10 items
+2026-01-23 15:47:53,273 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.105.11.108 - - [23/Jan/2026 15:47:53] "POST /artwork/api/projects/52657690-334a-4b31-919c-10bb9bbe21ca/add-to-cart HTTP/1.0" 200 - 204 0.236 0.089
+2026-01-23 15:47:54,511 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Claim cart request: Order #82064, Current user: GLENROCK LOGOS LTD, Is public: False
+2026-01-23 15:47:54,512 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Order belongs to logged-in user GLENROCK LOGOS LTD
+2026-01-23 15:47:54,512 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Session cart set to order #82064 for user GLENROCK LOGOS LTD
+2026-01-23 15:47:54,518 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:54] "GET /artwork/claim-cart?order_id=82064 HTTP/1.0" 200 - 9 0.004 0.010
+2026-01-23 15:47:54,522 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Claim cart request: Order #82064, Current user: GLENROCK LOGOS LTD, Is public: False
+2026-01-23 15:47:54,523 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Order belongs to logged-in user GLENROCK LOGOS LTD
+2026-01-23 15:47:54,523 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Session cart set to order #82064 for user GLENROCK LOGOS LTD
+2026-01-23 15:47:54,527 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:54] "GET /artwork/claim-cart?order_id=82064&access_token= HTTP/1.0" 200 - 9 0.003 0.007
+2026-01-23 15:47:54,627 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider()
+2026-01-23 15:47:54,627 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(81992,)
+2026-01-23 15:47:54,627 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(3,)
+2026-01-23 15:47:54,627 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider()
+2026-01-23 15:47:54,681 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:54] "GET /shop/cart HTTP/1.0" 200 - 93 0.027 0.053
+2026-01-23 15:47:55,825 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:55] "POST /shop/cart/quantity HTTP/1.0" 200 - 1 0.000 0.003
+2026-01-23 15:47:55,844 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:55] "POST /web_unsplash/get_app_id HTTP/1.0" 200 - 1 0.000 0.002
+2026-01-23 15:47:55,864 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:55] "POST /shop/fedex_access_point/get HTTP/1.0" 200 - 6 0.003 0.005
+2026-01-23 15:47:55,883 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:55] "POST /shop/get_product_data HTTP/1.0" 200 - 16 0.005 0.009
+2026-01-23 15:47:55,919 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [23/Jan/2026 15:47:55] "POST /web/dataset/call_kw/web_tour.tour/get_consumed_tours HTTP/1.0" 200 - 5 0.003 0.006
