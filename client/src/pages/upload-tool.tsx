@@ -314,7 +314,18 @@ export default function UploadTool() {
         
         setTimeout(() => {
           const isInIframe = window.self !== window.top;
-          const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+          
+          // Use parent origin when in iframe, fallback to env var
+          let odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+          if (isInIframe && document.referrer) {
+            try {
+              const referrerUrl = new URL(document.referrer);
+              odooBaseUrl = referrerUrl.origin;
+              console.log('🔗 Using parent origin for cart URL:', odooBaseUrl);
+            } catch (e) {
+              console.warn('Could not parse referrer URL, using fallback:', e);
+            }
+          }
           const cartUrl = `${odooBaseUrl}/shop/cart`;
           
           // Extract cart details for session claiming
@@ -324,7 +335,7 @@ export default function UploadTool() {
           if (isInIframe) {
             // Send cart details to parent window so it can claim the cart
             // This syncs the browser session with the cart updated via API
-            console.log('🔗 Sending claim-cart message to parent:', { orderId, accessToken });
+            console.log('🔗 Sending claim-cart message to parent:', { orderId, accessToken, cartUrl });
             window.parent.postMessage({
               type: 'claim-cart',
               orderId: orderId,
@@ -335,7 +346,7 @@ export default function UploadTool() {
             // Fallback: direct navigation after a longer delay
             // This gives the parent time to claim the cart first
             setTimeout(() => {
-              console.log('🔗 Fallback: direct parent navigation');
+              console.log('🔗 Fallback: direct parent navigation to:', cartUrl);
               window.parent.location.href = cartUrl;
             }, 1500);
           } else {
