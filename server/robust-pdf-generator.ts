@@ -373,6 +373,7 @@ grestore`;
           
           // Fill page with garment color background
           const parsedColor = await this.parseGarmentColor(colorHex);
+          console.log(`🎨 Drawing background for ${colorName}: hex=${colorHex}, parsedColor=`, parsedColor);
           colorPage.drawRectangle({
             x: 0,
             y: 0,
@@ -380,6 +381,7 @@ grestore`;
             height: pageHeight,
             color: parsedColor,
           });
+          console.log(`🎨 Background rectangle drawn: x=0, y=0, width=${pageWidth}, height=${pageHeight}`);
           
           garmentColorPages.push({
             page: colorPage,
@@ -422,42 +424,8 @@ grestore`;
       console.log(`📄 PASS-THROUGH MODE: Skipping generated page 2 - will append customer's original garment pages`);
     }
     
-    // Add project labels to each garment color page
-    for (const gcPage of garmentColorPages) {
-      // Determine text color based on background brightness
-      const bgColor = gcPage.color.toLowerCase();
-      const textColor = (bgColor === '#ffffff' || bgColor === '#f3f590' || bgColor === '#d9d2ab' || 
-                         bgColor === '#b9dbea' || bgColor === '#b5d55e' || bgColor === '#e7bbd0' ||
-                         bgColor === '#bcbfbb' || bgColor === '#a6a9a2' || bgColor === '#919393') 
-                        ? rgb(0, 0, 0) : rgb(1, 1, 1);
-      
-      const labelText = `Project: ${data.projectName}`;
-      const colorText = `Garment Color: ${gcPage.colorName}`;
-      const qtyText = `Quantity: ${gcPage.quantity}`;
-      
-      gcPage.page.drawText(labelText, {
-        x: 20,
-        y: 40,
-        size: 12,
-        color: textColor,
-      });
-      
-      gcPage.page.drawText(colorText, {
-        x: 20,
-        y: 25,
-        size: 10,
-        color: textColor,
-      });
-      
-      gcPage.page.drawText(qtyText, {
-        x: 200,
-        y: 25,
-        size: 10,
-        color: textColor,
-      });
-    }
-    
     // Process each canvas element and embed logos on page 1 and all garment color pages
+    // NOTE: Labels are added AFTER logo embedding to appear on top
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
@@ -480,6 +448,45 @@ grestore`;
         
         console.log(`✅ Completed embedding logo on ${1 + garmentColorPages.length} pages: ${logo.filename}`);
       }
+    }
+    
+    // Add project labels to each garment color page AFTER logo embedding (so labels appear on top)
+    console.log(`📝 Adding labels to ${garmentColorPages.length} garment color pages`);
+    for (const gcPage of garmentColorPages) {
+      // Determine text color based on background brightness
+      const bgColor = gcPage.color.toLowerCase();
+      const textColor = (bgColor === '#ffffff' || bgColor === '#f3f590' || bgColor === '#d9d2ab' || 
+                         bgColor === '#b9dbea' || bgColor === '#b5d55e' || bgColor === '#e7bbd0' ||
+                         bgColor === '#bcbfbb' || bgColor === '#a6a9a2' || bgColor === '#919393') 
+                        ? rgb(0, 0, 0) : rgb(1, 1, 1);
+      
+      // Draw a footer background strip for better label visibility
+      gcPage.page.drawRectangle({
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: 60,
+        color: gcPage.color.toLowerCase() === '#ffffff' ? rgb(0.9, 0.9, 0.9) : await this.parseGarmentColor(gcPage.color),
+      });
+      
+      const labelText = `Project: ${data.projectName}`;
+      const colorText = `Garment Color: ${gcPage.colorName}   Quantity: ${gcPage.quantity}`;
+      
+      gcPage.page.drawText(labelText, {
+        x: 20,
+        y: 40,
+        size: 12,
+        color: textColor,
+      });
+      
+      gcPage.page.drawText(colorText, {
+        x: 20,
+        y: 22,
+        size: 10,
+        color: textColor,
+      });
+      
+      console.log(`✅ Added labels to ${gcPage.colorName} page`);
     }
     
     // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
