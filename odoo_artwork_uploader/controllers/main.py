@@ -3,6 +3,7 @@ from odoo.http import request
 import json
 import base64
 import logging
+import uuid
 
 _logger = logging.getLogger(__name__)
 
@@ -529,15 +530,21 @@ class ArtworkUploaderController(http.Controller):
                     
                     if sale_order:
                         _logger.info(f"🛒 Found existing cart #{sale_order.id} for customer {partner.name}")
+                        # Ensure existing order has an access_token
+                        if not sale_order.access_token:
+                            sale_order.sudo().write({'access_token': str(uuid.uuid4())})
+                            _logger.info(f"🔑 Generated access_token for existing cart #{sale_order.id}")
                     else:
                         # Create new cart for this customer
+                        access_token = str(uuid.uuid4())
                         _logger.info(f"🆕 Creating new cart for customer {partner.name}")
                         sale_order = request.env['sale.order'].sudo().create({
                             'partner_id': partner.id,
                             'website_id': website.id,
                             'pricelist_id': partner.property_product_pricelist.id or website.pricelist_id.id,
+                            'access_token': access_token,
                         })
-                        _logger.info(f"✅ Created cart #{sale_order.id} for customer {partner.name}")
+                        _logger.info(f"✅ Created cart #{sale_order.id} for customer {partner.name} (token: {access_token[:8]}...)")
                 else:
                     _logger.warning(f"⚠️ Customer not found for email: {partner_email}, will use session cart")
             
