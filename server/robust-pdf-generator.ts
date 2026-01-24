@@ -349,36 +349,115 @@ grestore`;
     // Check for pass-through mode: use customer's original garment color pages
     const usePassThrough = data.useOriginalGarmentPages === true;
     
+    // Track all garment color pages for multi-color orders
+    interface GarmentColorPage {
+      page: typeof page1;
+      color: string;
+      colorName: string;
+      quantity: number;
+    }
+    const garmentColorPages: GarmentColorPage[] = [];
+    
     // Create page 2 only if NOT using pass-through mode
     let page2: typeof page1 | null = null;
     if (!usePassThrough) {
-      page2 = pdfDoc.addPage([pageWidth, pageHeight]);
-      console.log(`📄 Created page 2: Combined garment colors view - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+      // MULTI-COLOR ORDER SUPPORT: Check if garmentColors array is provided
+      if (data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0) {
+        console.log(`🎨 Multi-Color Order: Creating ${data.garmentColors.length} pages for different garment colors`);
+        
+        for (const garmentColorItem of data.garmentColors) {
+          const colorPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          const colorHex = garmentColorItem.color || '#FFFFFF';
+          const colorName = garmentColorItem.colorName || getGarmentColorName(colorHex);
+          const qty = garmentColorItem.quantity || 0;
+          
+          // Fill page with garment color background
+          const parsedColor = await this.parseGarmentColor(colorHex);
+          colorPage.drawRectangle({
+            x: 0,
+            y: 0,
+            width: pageWidth,
+            height: pageHeight,
+            color: parsedColor,
+          });
+          
+          garmentColorPages.push({
+            page: colorPage,
+            color: colorHex,
+            colorName,
+            quantity: qty
+          });
+          
+          console.log(`✅ Created page for ${colorName} (Qty: ${qty})`);
+        }
+        
+        // Use first garment color page as page2 for logo embedding
+        page2 = garmentColorPages[0]?.page || null;
+      } else {
+        // Single color mode - create one page with default garment color
+        page2 = pdfDoc.addPage([pageWidth, pageHeight]);
+        const defaultColor = data.garmentColor || '#171816';
+        const defaultColorName = getGarmentColorName(defaultColor);
+        
+        // Fill page with garment color background
+        const parsedColor = await this.parseGarmentColor(defaultColor);
+        page2.drawRectangle({
+          x: 0,
+          y: 0,
+          width: pageWidth,
+          height: pageHeight,
+          color: parsedColor,
+        });
+        
+        garmentColorPages.push({
+          page: page2,
+          color: defaultColor,
+          colorName: defaultColorName,
+          quantity: data.quantity
+        });
+        
+        console.log(`📄 Created page 2: ${defaultColorName} background - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+      }
     } else {
       console.log(`📄 PASS-THROUGH MODE: Skipping generated page 2 - will append customer's original garment pages`);
     }
     
-    // Add project labels (only on generated page 2, not for pass-through mode)
-    if (page2) {
-      const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
-      const garmentText = `Garment Colors: Combined View`;
+    // Add project labels to each garment color page
+    for (const gcPage of garmentColorPages) {
+      // Determine text color based on background brightness
+      const bgColor = gcPage.color.toLowerCase();
+      const textColor = (bgColor === '#ffffff' || bgColor === '#f3f590' || bgColor === '#d9d2ab' || 
+                         bgColor === '#b9dbea' || bgColor === '#b5d55e' || bgColor === '#e7bbd0' ||
+                         bgColor === '#bcbfbb' || bgColor === '#a6a9a2' || bgColor === '#919393') 
+                        ? rgb(0, 0, 0) : rgb(1, 1, 1);
       
-      page2.drawText(labelText, {
+      const labelText = `Project: ${data.projectName}`;
+      const colorText = `Garment Color: ${gcPage.colorName}`;
+      const qtyText = `Quantity: ${gcPage.quantity}`;
+      
+      gcPage.page.drawText(labelText, {
         x: 20,
         y: 40,
         size: 12,
-        color: rgb(0, 0, 0),
+        color: textColor,
       });
       
-      page2.drawText(garmentText, {
+      gcPage.page.drawText(colorText, {
         x: 20,
-        y: 20,
+        y: 25,
         size: 10,
-        color: rgb(0, 0, 0),
+        color: textColor,
+      });
+      
+      gcPage.page.drawText(qtyText, {
+        x: 200,
+        y: 25,
+        size: 10,
+        color: textColor,
       });
     }
     
-    // Process each canvas element and embed logos with individual garment backgrounds
+    // Process each canvas element and embed logos on page 1 and all garment color pages
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
@@ -389,51 +468,17 @@ grestore`;
       if (logo) {
         console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
         
-        // Add individual garment background for this logo on page 2 (only if not pass-through mode)
-        if (page2) {
-          const garmentColor = element.garmentColor || data.garmentColor || '#FFFFFF';
-          console.log(`🎨 Adding garment background ${garmentColor} for logo at position`);
-          
-          // Calculate logo bounds in points using PDF coordinate system
-          // Convert center-based coordinates to PDF bottom-left coordinates
-          const contentWidthPts = element.width * MM_TO_POINTS;
-          const contentHeightPts = element.height * MM_TO_POINTS;
-          const templateWidthMM = data.templateSize?.width || 297; // Use actual template width
-          const templateHeightMM = data.templateSize?.height || 420; // Use actual template height
-          const templateCenterX = templateWidthMM / 2;
-          const templateCenterY = templateHeightMM / 2;
-          
-          // Convert center position to bottom-left corner for PDF
-          const elementCenterX = templateCenterX + element.x;
-          const elementCenterY = templateCenterY + element.y;
-          const xPts = (elementCenterX - element.width / 2) * MM_TO_POINTS;
-          const yPts = pageHeight - ((elementCenterY + element.height / 2) * MM_TO_POINTS); // PDF coordinate system (bottom-left origin)
-          
-          // Draw garment color background behind this logo
-          const parsedColor = await this.parseGarmentColor(garmentColor);
-          page2.drawRectangle({
-            x: xPts,
-            y: yPts,
-            width: contentWidthPts,
-            height: contentHeightPts,
-            color: parsedColor
-          });
-          
-          // Add garment color label above the logo (in PDF coordinate system)
-          const labelY = yPts + contentHeightPts + 5; // Position label above the logo
-          const garmentName = getGarmentColorName(garmentColor);
-          page2.drawText(garmentName, {
-            x: xPts + 5,
-            y: labelY,
-            size: 10,
-            color: rgb(0, 0, 0),
-          });
+        // Embed logo on page 1 (transparent background)
+        console.log(`🎯 Embedding logo on page 1: ${logo.filename}`);
+        await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
+        
+        // Embed logo on ALL garment color pages (multi-color support)
+        for (const gcPage of garmentColorPages) {
+          console.log(`🎯 Embedding logo on ${gcPage.colorName} page: ${logo.filename}`);
+          await this.embedLogoInPages(pdfDoc, null, gcPage.page, logo, element, data.templateSize);
         }
         
-        // Embed logo on page 1 (and page 2 if not pass-through mode)
-        console.log(`🎯 About to call embedLogoInPages for logo: ${logo.filename}`);
-        await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, data.templateSize);
-        console.log(`✅ Completed embedLogoInPages for logo: ${logo.filename}`);
+        console.log(`✅ Completed embedding logo on ${1 + garmentColorPages.length} pages: ${logo.filename}`);
       }
     }
     

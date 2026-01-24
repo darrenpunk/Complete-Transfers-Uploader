@@ -636,6 +636,8 @@ export async function registerRoutes(app: express.Application) {
       }
 
       console.log(`✅ Project found: ${project.name || 'Untitled'}`);
+      console.log(`🎨 Project garmentColors:`, project.garmentColors);
+      console.log(`🎨 Project garmentColor (single):`, project.garmentColor);
 
       // Get project data
       const logos = await storage.getLogosByProject(projectId);
