@@ -1,0 +1,96 @@
+
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 374, in handle_one_request
+    self.run_wsgi()
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 319, in run_wsgi
+    execute(self.server.app)
+  File "/usr/lib/python3/dist-packages/werkzeug/serving.py", line 308, in execute
+    application_iter = app(environ, start_response)
+  File "/home/odoo/src/odoo/odoo/http.py", line 2261, in __call__
+    response = request._serve_db()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1848, in _serve_db
+    return service_model.retrying(self._serve_ir_http, self.env)
+  File "/home/odoo/src/odoo/odoo/service/model.py", line 152, in retrying
+    result = func()
+  File "/home/odoo/src/odoo/odoo/http.py", line 1876, in _serve_ir_http
+    response = self.dispatcher.dispatch(rule.endpoint, args)
+  File "/home/odoo/src/odoo/odoo/http.py", line 2080, in dispatch
+    result = self.request.registry['ir.http']._dispatch(endpoint)
+  File "/home/odoo/src/odoo/addons/website/models/ir_http.py", line 237, in _dispatch
+    response = super()._dispatch(endpoint)
+  File "/home/odoo/src/odoo/odoo/addons/base/models/ir_http.py", line 154, in _dispatch
+    result = endpoint(**request.params)
+  File "/home/odoo/src/odoo/odoo/http.py", line 763, in route_wrapper
+    result = endpoint(self, *args, **params_ok)
+  File "/home/odoo/src/odoo/addons/web/controllers/dataset.py", line 47, in call_button
+    action = self._call_kw(model, method, args, kwargs)
+  File "/home/odoo/src/user/printnode_base/controllers/main.py", line 44, in _call_kw
+    return super(DataSetProxy, self)._call_kw(model, method, args, kwargs)
+  File "/home/odoo/src/odoo/addons/web/controllers/dataset.py", line 34, in _call_kw
+    return call_kw(Model, method, args, kwargs)
+  File "/home/odoo/src/odoo/odoo/api.py", line 484, in call_kw
+    result = _call_kw_multi(method, model, args, kwargs)
+  File "/home/odoo/src/odoo/odoo/api.py", line 469, in _call_kw_multi
+    result = method(recs, *args, **kwargs)
+  File "/home/odoo/src/user/shipping_dropbox_customization/models/stock_picking.py", line 589, in action_confirm
+    res  = super(Order,self).action_confirm()
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 240, in action_confirm
+    record.upload_artwork_to_dropbox()
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 158, in upload_artwork_to_dropbox
+    line.order_id.upload_art_file_to_dropbox(line)
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 225, in upload_art_file_to_dropbox
+    line.sudo().write({'upload_failed': True,'dropbox_path': shared_path})
+  File "/home/odoo/src/user/artwork_uploader/models/sale_order.py", line 52, in write
+    result = super().write(vals)
+  File "/home/odoo/src/user/website_artwork_dropbox/models/models.py", line 391, in write
+    res = super(SaleOrderLine, self).write(vals)
+  File "/home/odoo/src/odoo/addons/sale_project/models/sale_order_line.py", line 119, in write
+    result = super().write(values)
+  File "/home/odoo/src/enterprise/sale_planning/models/sale_order_line.py", line 66, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale_stock/models/sale_order_line.py", line 203, in write
+    res = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_purchase/models/sale_order_line.py", line 63, in write
+    result = super(SaleOrderLine, self).write(values)
+  File "/home/odoo/src/odoo/addons/sale_loyalty/models/sale_order_line.py", line 83, in write
+    res = super().write(vals)
+  File "/home/odoo/src/odoo/addons/sale/models/sale_order_line.py", line 1037, in write
+    result = super().write(values)
+  File "/home/odoo/src/odoo/addons/analytic/models/analytic_mixin.py", line 82, in write
+    return super().write(vals)
+  File "/home/odoo/src/odoo/odoo/models.py", line 3766, in write
+    if self.pool.is_modifying_relations(field):
+  File "/home/odoo/src/odoo/odoo/modules/registry.py", line 458, in is_modifying_relations
+    result = field in self._field_triggers and (
+  File "/home/odoo/src/odoo/odoo/tools/func.py", line 28, in __get__
+    value = self.fget(obj)
+  File "/home/odoo/src/odoo/odoo/modules/registry.py", line 439, in _field_triggers
+    dependencies = list(field.resolve_depends(self))
+  File "/home/odoo/src/odoo/odoo/fields.py", line 809, in resolve_depends
+    warnings.warn(
+2026-01-24 12:13:36,174 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Refreshing access token.
+2026-01-24 12:13:36,401 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to files/upload
+2026-01-24 12:13:37,117 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to sharing/create_shared_link_with_settings
+2026-01-24 12:13:37,805 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_artwork_dropbox.models.models: Failed to upload artwork file 313440
+2026-01-24 12:13:37,805 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_artwork_dropbox.models.models: ApiError('a587ca4a4df940b4874d9e726974b771', CreateSharedLinkWithSettingsError('shared_link_already_exists', None))
+2026-01-24 12:13:37,818 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Refreshing access token.
+2026-01-24 12:13:38,037 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to files/upload
+2026-01-24 12:13:38,816 4 INFO support-atharva-serigraf-16-stage-0410-23999211 dropbox: Request to sharing/create_shared_link_with_settings
+2026-01-24 12:13:39,503 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_artwork_dropbox.models.models: Failed to upload artwork file 313441
+2026-01-24 12:13:39,503 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_artwork_dropbox.models.models: ApiError('9a430005c5d543bba0809eb96974b772', CreateSharedLinkWithSettingsError('shared_link_already_exists', None))
+2026-01-24 12:13:39,797 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----super True, stock.picking(2111601,)
+2026-01-24 12:13:39,797 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----website website(3,)
+2026-01-24 12:13:39,797 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----order.task_created False
+2026-01-24 12:13:39,797 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----order.order_line sale.order.line(313439, 313440, 313441, 313443)
+2026-01-24 12:13:39,797 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----line.product_id product.product(35457,)
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: -----default_value {'user_ids': [(<Command.LINK: 4>, 5, 0)]}
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: Ignore setup new project
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --all IF end----------task, {'user_ids': [(<Command.LINK: 4>, 5, 0)], 'name': 'SO81032 - [CTCCA31] Full Colour  A3 (ENNS2211)', 'x_studio_field_2vIwU': [(6, 0, [82065])], 'partner_id': 136601, 'required_qty': 400.0, 'project_id': 40}, project.project(40,)
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --line.artwork_file_name----------task, bun2.pdf
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --line.product_id.sale_delay----------task, product.product(35457,), 2.0
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: --TASK dict {'user_ids': [(4, 2)], 'name': 'SO81032 - [CTCCA31] Full Colour  A3 (ENNS2211) bun2.pdf', 'x_studio_field_2vIwU': [(6, 0, [82065])], 'partner_id': 136601, 'required_qty': 400.0, 'project_id': 40, 'user_id': 2, 'sale_order_id': 82065, 'sale_line_id': 313439}
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---bool(task) and isinstance(task, dict)------------task True, True
+2026-01-24 12:13:39,801 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.shipping_dropbox_customization.models.stock_picking: ---dddd------------task {'user_ids': [(4, 2)], 'name': 'SO81032 - [CTCCA31] Full Colour  A3 (ENNS2211) bun2.pdf', 'x_studio_field_2vIwU': [(6, 0, [82065])], 'partner_id': 136601, 'required_qty': 400.0, 'project_id': 40, 'user_id': 2, 'sale_order_id': 82065, 'sale_line_id': 313439}
+2026-01-24 12:13:51,406 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 51.186.217.60 - - [24/Jan/2026 12:13:51] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 19 0.247 0.098
+2026-01-24 12:14:52,672 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 51.186.217.60 - - [24/Jan/2026 12:14:52] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.075 0.088
+2026-01-24 12:16:19,935 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 51.186.217.60 - - [24/Jan/2026 12:16:19] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.078 0.079
+2026-01-24 12:17:20,197 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 51.186.217.60 - - [24/Jan/2026 12:17:20] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 12 0.088 0.080
