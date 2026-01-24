@@ -736,6 +736,33 @@ export async function registerRoutes(app: express.Application) {
           
           console.log(`✅ Robust PDF generated with original CMYK colors: ${pdfBuffer.length} bytes`);
           
+          // Check if this is an applique badges project - need to add form page
+          const isAppliqueBadges = project.templateSize?.includes('applique') || project.appliqueBadgesForm;
+          
+          if (isAppliqueBadges && project.appliqueBadgesForm) {
+            console.log('📋 Applique Badges project detected with form data - adding specification page');
+            try {
+              const { AppliqueBadgesPDFGenerator } = await import('./applique-badges-pdf-generator');
+              const appliqueGenerator = new AppliqueBadgesPDFGenerator();
+              
+              const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
+                originalPdfBuffer: pdfBuffer,
+                appliqueBadgesForm: project.appliqueBadgesForm,
+                projectName: project.name
+              });
+              
+              console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
+              
+              res.setHeader('Content-Type', 'application/pdf');
+              res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}_applique.pdf"`);
+              res.send(appliquePdfBytes);
+              return;
+            } catch (appliqueError) {
+              console.error('❌ Applique Badges PDF generation failed:', appliqueError);
+              console.log('🔄 Falling back to original PDF without applique form page');
+            }
+          }
+          
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
           res.send(pdfBuffer);
