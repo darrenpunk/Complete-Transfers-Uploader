@@ -71,50 +71,91 @@
             }
         }
         
-        // Fallback: try to get from session endpoint
-        if (!userEmail && window.odoo && odoo.csrf_token) {
-            // We already have a logged-in session, try fetching user info
-            fetch('/web/session/get_session_info', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'call',
-                    params: {},
-                    id: Math.floor(Math.random() * 1000000)
-                }),
-                credentials: 'include'
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                var email = '';
-                if (data.result) {
-                    email = data.result.partner_email || data.result.username || '';
-                }
+        // If we have email from quick sources, send it immediately
+        if (userEmail) {
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'odoo-user-data',
+                    email: userEmail
+                }, '*');
+                console.log('📤 Sent user email to iframe (sync):', userEmail);
+            }
+            return;
+        }
+        
+        // PRIMARY FALLBACK: Use the dedicated current-user API endpoint
+        // This is the most reliable method for portal users
+        fetch('/artwork/api/current-user', {
+            method: 'GET',
+            credentials: 'include'
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            var email = '';
+            if (data.success && data.email) {
+                email = data.email;
+                console.log('✅ Got user email from current-user API:', email);
+            }
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'odoo-user-data',
+                    email: email
+                }, '*');
+                console.log('📤 Sent user email to iframe (from API):', email);
+            }
+        })
+        .catch(function(err) {
+            console.error('Failed to fetch current user:', err);
+            
+            // SECONDARY FALLBACK: try old session endpoint
+            if (window.odoo && odoo.csrf_token) {
+                fetch('/web/session/get_session_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'call',
+                        params: {},
+                        id: Math.floor(Math.random() * 1000000)
+                    }),
+                    credentials: 'include'
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    var email = '';
+                    if (data.result) {
+                        email = data.result.partner_email || data.result.username || '';
+                    }
+                    if (event.source) {
+                        event.source.postMessage({
+                            type: 'odoo-user-data',
+                            email: email
+                        }, '*');
+                        console.log('📤 Sent user email to iframe (session fallback):', email);
+                    }
+                })
+                .catch(function(err2) {
+                    console.error('Failed to fetch session info:', err2);
+                    // Send empty email as last resort
+                    if (event.source) {
+                        event.source.postMessage({
+                            type: 'odoo-user-data',
+                            email: ''
+                        }, '*');
+                    }
+                });
+            } else {
+                // Send empty email
                 if (event.source) {
                     event.source.postMessage({
                         type: 'odoo-user-data',
-                        email: email
+                        email: ''
                     }, '*');
-                    console.log('📤 Sent user email to iframe (async):', email);
                 }
-            })
-            .catch(function(err) {
-                console.error('Failed to fetch session info:', err);
-            });
-            return; // Response will be sent async
-        }
-        
-        // Send user data back to iframe
-        if (event.source) {
-            event.source.postMessage({
-                type: 'odoo-user-data',
-                email: userEmail
-            }, '*');
-            console.log('📤 Sent user email to iframe:', userEmail);
-        }
+            }
+        });
     }
     
     function handleClaimCart(event) {

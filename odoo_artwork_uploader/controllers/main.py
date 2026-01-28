@@ -819,6 +819,64 @@ class ArtworkUploaderController(http.Controller):
             ]
             return request.make_response(json.dumps(response_data), headers=headers, status=500)
     
+    @http.route('/artwork/api/current-user', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    def get_current_user(self, **kwargs):
+        """Get current logged-in user's email for the artwork uploader iframe.
+        
+        This endpoint reliably returns the portal user's email, which is needed
+        for customer-specific pricing when the iframe can't access session cookies.
+        """
+        # Handle CORS preflight
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type'),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', origin),
+            ('Access-Control-Allow-Credentials', 'true'),
+        ]
+        
+        try:
+            user = request.env.user
+            partner = user.partner_id
+            
+            # Get email from partner (most reliable for portal users)
+            email = ''
+            name = ''
+            
+            if user and user.id != request.env.ref('base.public_user').id:
+                # Not public user - get their info
+                email = partner.email if partner else (user.email or user.login)
+                name = partner.name if partner else user.name
+                _logger.info(f"📧 Current user API: {name} ({email})")
+            else:
+                _logger.info("📧 Current user API: Public user (no email)")
+            
+            response_data = {
+                'success': True,
+                'email': email or '',
+                'name': name or '',
+                'is_public': user.id == request.env.ref('base.public_user').id
+            }
+            
+            return request.make_response(json.dumps(response_data), headers=headers)
+            
+        except Exception as e:
+            _logger.error(f"Error getting current user: {e}")
+            return request.make_response(json.dumps({
+                'success': False,
+                'email': '',
+                'error': str(e)
+            }), headers=headers, status=500)
+    
     @http.route('/artwork/api/pricing', type='http', auth='public', methods=['GET', 'POST', 'OPTIONS'], csrf=False)
     def get_pricing(self, templateId=None, copies=None, **kwargs):
         """Get pricing for a template from Odoo product mappings
