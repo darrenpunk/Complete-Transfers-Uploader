@@ -31,6 +31,10 @@ interface ProjectNameModalProps {
   template?: TemplateSize;
   title?: string;
   description?: string;
+  garmentColor?: string;
+  garmentColorName?: string;
+  inkColor?: string;
+  inkColorName?: string;
 }
 
 export default function ProjectNameModal({
@@ -41,7 +45,11 @@ export default function ProjectNameModal({
   isGeneratingPDF = false,
   template,
   title = "Name Your Project",
-  description = "Please provide project details before continuing. This information will be used for the PDF filename and Odoo integration."
+  description = "Please provide project details before continuing. This information will be used for the PDF filename and Odoo integration.",
+  garmentColor,
+  garmentColorName,
+  inkColor,
+  inkColorName
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
@@ -68,13 +76,27 @@ export default function ProjectNameModal({
     
     // Generate comments from garment colors if multi-color mode is enabled
     let finalComments = comments.trim();
+    
+    // Build color info section
+    const colorInfoParts: string[] = [];
+    
     if (useMultiColor && garmentColors.length > 0) {
       const colorComments = garmentColors
         .map(gc => `${gc.quantity} ${gc.colorName}`)
         .join('\n');
-      
-      // Prepend color info to existing comments
-      finalComments = colorComments + (finalComments ? '\n\n' + finalComments : '');
+      colorInfoParts.push(colorComments);
+    } else if (garmentColorName) {
+      colorInfoParts.push(`Garment Colour: ${garmentColorName}`);
+    }
+    
+    if (inkColorName) {
+      colorInfoParts.push(`Ink Colour: ${inkColorName}`);
+    }
+    
+    // Prepend color info to existing comments
+    if (colorInfoParts.length > 0) {
+      const colorSection = colorInfoParts.join('\n');
+      finalComments = colorSection + (finalComments ? '\n\n' + finalComments : '');
     }
     
     // Calculate total quantity from garment colors

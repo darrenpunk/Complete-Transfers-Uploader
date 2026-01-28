@@ -9,7 +9,8 @@ import CanvasWorkspace from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProductLauncherModal from "@/components/product-launcher-modal";
-import InkColorModal from "@/components/ink-color-modal";
+import InkColorModal, { getColorName as getInkColorName } from "@/components/ink-color-modal";
+import { getGarmentColorName } from "@/components/garment-color-modal";
 import ProjectNameModal from "@/components/project-name-modal";
 import AppliqueBadgesModal from "@/components/applique-badges-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
@@ -1499,6 +1500,10 @@ export default function UploadTool() {
             ? "Please provide a name for your project. This will be used for the PDF filename."
             : "Please provide a name for your project before continuing."
         }
+        garmentColor={currentProject?.garmentColor || undefined}
+        garmentColorName={currentProject?.garmentColor ? getGarmentColorName(currentProject.garmentColor) : undefined}
+        inkColor={currentProject?.inkColor || undefined}
+        inkColorName={currentProject?.inkColor ? getInkColorName(currentProject.inkColor) : undefined}
       />
 
       {/* Applique Badges Modal */}
