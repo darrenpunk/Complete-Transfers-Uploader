@@ -40,6 +40,7 @@ const inkColors = [
   { name: "Black", otCode: "OT 100", pantone: "BLACK 100", hex: "#201F1E", rgb: "32, 31, 30", cmyk: "68, 59, 46, 86", inkType: "Spot" },
   
   // Row 3 - Blues/Yellows/Reds/Metallics
+  { name: "Pantone 2102 C", otCode: "OT 10", pantone: "PANTONE 2102 C", hex: "#5F58AD", rgb: "95, 88, 173", cmyk: "72, 69, 0, 0", inkType: "Spot" },
   { name: "Pantone 7687 C", otCode: "OT 20", pantone: "PANTONE 7687 C", hex: "#294487", rgb: "41, 68, 135", cmyk: "96, 73, 0, 14", inkType: "Spot" },
   { name: "Pantone 7461 C", otCode: "OT 22", pantone: "PANTONE 7461 C", hex: "#217B87", rgb: "34, 123, 183", cmyk: "94, 34, 4, 2", inkType: "Spot" },
   { name: "Pantone 4151 C", otCode: "OT 24", pantone: "PANTONE 4151 C", hex: "#1F66A0", rgb: "31, 102, 169", cmyk: "97, 49, 1, 5", inkType: "Spot" },
