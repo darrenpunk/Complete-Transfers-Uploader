@@ -93,8 +93,8 @@ export default function InkDropSwatch({
         <img 
           src={svgSrc} 
           alt={colorName}
-          width={64}
-          height={64}
+          width={80}
+          height={80}
           className="drop-shadow-md"
         />
       ) : (
@@ -126,8 +126,8 @@ function FallbackDroplet({ color, colorName, variant }: { color: string; colorNa
 
   return (
     <svg 
-      width="64" 
-      height="64" 
+      width="80" 
+      height="80" 
       viewBox="0 0 283 283" 
       className="drop-shadow-md"
     >
