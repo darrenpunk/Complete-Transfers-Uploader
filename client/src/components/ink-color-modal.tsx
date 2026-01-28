@@ -143,7 +143,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
           {/* Ink Colors Grid */}
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Official Pantone Ink Colors</h4>
-            <div className="grid grid-cols-9 gap-3">
+            <div className="grid grid-cols-8 gap-4">
               {availableColors.map((color) => (
                 <TooltipProvider key={`${color.hex}-${color.otCode}`}>
                   <Tooltip>
@@ -154,6 +154,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
                           colorName={color.name}
                           isSelected={currentColor === color.hex}
                           onClick={() => handleColorSelect(color.hex)}
+                          otCode={color.otCode}
                           variant={color.otCode === 'OT 91' ? 'drop1' : color.otCode === 'OT 100' ? 'drop2' : 'drop3'}
                         />
                       </div>
