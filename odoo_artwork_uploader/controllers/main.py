@@ -571,6 +571,7 @@ class ArtworkUploaderController(http.Controller):
                 'CT Public Pricelist T1',
                 'Serigraf STD Pricelist',
                 'Hollister',  # Standard pricelist, not special customer pricing
+                'DTF',  # Product-type pricelist, not a special customer pricelist
             ]
             
             # Check if customer has a special/custom pricelist
@@ -1009,6 +1010,7 @@ class ArtworkUploaderController(http.Controller):
                 'CT Public Pricelist T1',
                 'Serigraf STD Pricelist',
                 'Hollister',  # Standard pricelist, not special customer pricing
+                'DTF',  # Product-type pricelist, not a special customer pricelist
             ]
             
             pricelist = None

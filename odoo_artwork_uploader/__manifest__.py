@@ -1,6 +1,6 @@
 {
     'name': 'Artwork Uploader',
-    'version': '16.0.47.4',
+    'version': '16.0.47.5',
     'category': 'Sales/Sales',
     'summary': 'Upload and design artwork on garment templates',
     'description': """

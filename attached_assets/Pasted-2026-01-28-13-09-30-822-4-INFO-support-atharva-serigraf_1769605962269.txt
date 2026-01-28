@@ -1,0 +1,72 @@
+2026-01-28 13:09:30,822 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-28 13:09:30,822 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email for pricing: ramworkwear@gmail.com 
+2026-01-28 13:09:30,865 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer for pricing: RAM Workwear and Safety (ID: 87503) 
+2026-01-28 13:09:30,866 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🎯 Explicit website_id=3 → Complete Transfers detected 
+2026-01-28 13:09:30,866 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Website: Complete Transfers (ID: 3), Is CT: True 
+2026-01-28 13:09:30,868 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Session user: Public user (ID: 3), Partner: RAM Workwear and Safety 
+2026-01-28 13:09:30,870 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Complete Transfers request → Using CT Euro Pricelist 
+2026-01-28 13:09:30,873 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Complete Transfers, Pricelist: CT Euro Pricelist, Product: Full Colour  A3, Qty: 1 
+2026-01-28 13:09:30,875 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 575, Website: Complete Transfers, Company: Serigraf Ltd. 
+2026-01-28 13:09:30,885 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ CT Euro Pricelist - Qty 1: €58.83 
+2026-01-28 13:09:30,885 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 58.83, Total: 58.83 for 1 items 
+2026-01-28 13:09:30,888 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:09:30] "GET /artwork/api/pricing?templateId=template-A3&copies=1&source=completetransfers&website_id=3&partnerEmail=ramworkwear%40gmail.com HTTP/1.0" 200 - 32 0.059 0.014
+2026-01-28 13:09:31,061 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-28 13:09:31,061 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email for pricing: ramworkwear@gmail.com 
+2026-01-28 13:09:31,095 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer for pricing: RAM Workwear and Safety (ID: 87503) 
+2026-01-28 13:09:31,096 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🎯 Explicit website_id=3 → Complete Transfers detected 
+2026-01-28 13:09:31,096 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Website: Complete Transfers (ID: 3), Is CT: True 
+2026-01-28 13:09:31,098 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Session user: Public user (ID: 3), Partner: RAM Workwear and Safety 
+2026-01-28 13:09:31,100 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Complete Transfers request → Using CT Euro Pricelist 
+2026-01-28 13:09:31,102 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Complete Transfers, Pricelist: CT Euro Pricelist, Product: Full Colour  A3, Qty: 10 
+2026-01-28 13:09:31,104 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 575, Website: Complete Transfers, Company: Serigraf Ltd. 
+2026-01-28 13:09:31,107 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ CT Euro Pricelist - Qty 10: €5.83 
+2026-01-28 13:09:31,107 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 5.83, Total: 58.3 for 10 items 
+2026-01-28 13:09:31,108 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:09:31] "GET /artwork/api/pricing?templateId=template-A3&copies=10&source=completetransfers&website_id=3&partnerEmail=ramworkwear%40gmail.com HTTP/1.0" 200 - 23 0.039 0.012
+2026-01-28 13:10:15,910 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 ADD TO CART START - Project UUID: b6e52d67-d73a-4669-b974-c964cc43d5b9 
+2026-01-28 13:10:15,913 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 Received project data keys: ['name', 'templateSize', 'garmentColor', 'garmentColorName', 'garmentColors', 'inkColor', 'inkColorName', 'quantity', 'totalQuantity', 'comments', 'partnerEmail', 'pdfBase64', 'source', 'website_id'] 
+2026-01-28 13:10:15,913 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📦 website_id from data: 3, source: completetransfers 
+2026-01-28 13:10:15,915 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=1, Name='Serigraf', Domain='https://stage-serigraf.odoo.com' 
+2026-01-28 13:10:15,915 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=3, Name='Complete Transfers', Domain='https://stage-completetransfers.odoo.com' 
+2026-01-28 13:10:15,915 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 AVAILABLE WEBSITE: ID=5, Name='compe', Domain='False' 
+2026-01-28 13:10:15,916 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🆕 Project not found in Odoo, creating new project 
+2026-01-28 13:10:15,931 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Created project in Odoo: qwd (ID: 29) 
+2026-01-28 13:10:15,931 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found project: qwd, Template: template-A3, Qty: 10 
+2026-01-28 13:10:15,932 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Current user: Public user (ID: 3), Is Public: True 
+2026-01-28 13:10:15,932 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-28 13:10:15,932 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📧 Looking up customer by email: ramworkwear@gmail.com 
+2026-01-28 13:10:15,970 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found customer: RAM Workwear and Safety (ID: 87503) for email ramworkwear@gmail.com 
+2026-01-28 13:10:15,971 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Found existing cart #82048 for customer RAM Workwear and Safety 
+2026-01-28 13:10:15,973 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Website cart: #82048 for RAM Workwear and Safety, Original Pricelist: CT Euro Pricelist 
+2026-01-28 13:10:15,974 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart already using correct CT pricelist: CT Euro Pricelist 
+2026-01-28 13:10:15,975 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Sale order: #82048, Partner: RAM Workwear and Safety, Current lines: 2 
+2026-01-28 13:10:15,975 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Looking up product for template: 'template-A3' (from request: False, project: 'template-A3') 
+2026-01-28 13:10:15,978 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Found product: Full Colour  A3 (ID: 35457)
+2026-01-28 13:10:15,978 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🛒 Calling _cart_update with qty=10
+2026-01-28 13:10:16,147 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.models.unlink: User #3 deleted sale.order.line records with IDs: [313397]
+2026-01-28 13:10:16,236 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.website_product_artworks.models.models: cart update called
+2026-01-28 13:10:16,237 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Cart updated: {'line_id': 313449, 'quantity': 10, 'option_ids': [], 'warning': ''}
+2026-01-28 13:10:16,237 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked project to sale order #82048
+2026-01-28 13:10:16,269 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313449 comments to artwork_comment field
+2026-01-28 13:10:16,269 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Comments updated for order line #313449 from project #29
+2026-01-28 13:10:16,300 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ✅ Updated order line #313449 comments to artwork_comment field
+2026-01-28 13:10:16,301 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📄 Generated filename from project name: qwd.pdf
+2026-01-28 13:10:17,962 4 WARNING support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.models.sale_order: ⚠️ No manufacturing task found for order line #313449 - will sync when task is created
+2026-01-28 13:10:17,962 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): qwd.pdf
+2026-01-28 13:10:17,962 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module
+2026-01-28 13:10:17,962 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Linked order line #313449 to project
+2026-01-28 13:10:17,963 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ ADD TO CART SUCCESS - Cart now has 11 items
+2026-01-28 13:10:17,995 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 34.187.246.105 - - [28/Jan/2026 13:10:17] "POST /artwork/api/projects/b6e52d67-d73a-4669-b974-c964cc43d5b9/add-to-cart HTTP/1.0" 200 - 230 0.324 1.764
+2026-01-28 13:10:19,176 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Claim cart request: Order #82048, Current user: RAM Workwear and Safety, Is public: False
+2026-01-28 13:10:19,177 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Order belongs to logged-in user RAM Workwear and Safety
+2026-01-28 13:10:19,177 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Session cart set to order #82048 for user RAM Workwear and Safety
+2026-01-28 13:10:19,182 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:10:19] "GET /artwork/claim-cart?order_id=82048&access_token=a867ae81-1baf-40f4-bafb-9af83cdcb65e HTTP/1.0" 200 - 9 0.003 0.008
+2026-01-28 13:10:19,212 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Claim cart request: Order #82048, Current user: RAM Workwear and Safety, Is public: False
+2026-01-28 13:10:19,214 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Order belongs to logged-in user RAM Workwear and Safety
+2026-01-28 13:10:19,214 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ Session cart set to order #82048 for user RAM Workwear and Safety
+2026-01-28 13:10:19,218 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:10:19] "GET /artwork/claim-cart?order_id=82048&access_token=a867ae81-1baf-40f4-bafb-9af83cdcb65e HTTP/1.0" 200 - 9 0.003 0.007
+2026-01-28 13:10:19,243 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider()
+2026-01-28 13:10:19,243 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(82048,)
+2026-01-28 13:10:19,244 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: payment_term------account.payment.term(1,)
+2026-01-28 13:10:19,244 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers_last------payment.provider()
+2026-01-28 13:10:19,316 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: providers------payment.provider()
+2026-01-28 13:10:19,317 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.payment_website_po.models.payment: sale_order------sale.order(82048,)

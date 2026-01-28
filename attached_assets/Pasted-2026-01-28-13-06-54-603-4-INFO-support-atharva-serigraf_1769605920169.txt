@@ -1,0 +1,23 @@
+2026-01-28 13:06:54,603 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-28 13:06:54,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Using SESSION user partner: Public user 
+2026-01-28 13:06:54,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🎯 Explicit website_id=3 → Complete Transfers detected 
+2026-01-28 13:06:54,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Website: Complete Transfers (ID: 3), Is CT: True 
+2026-01-28 13:06:54,607 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Session user: Public user (ID: 3), Partner: Public user 
+2026-01-28 13:06:54,612 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Using customer's SPECIAL pricelist: DTF 
+2026-01-28 13:06:54,615 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Complete Transfers, Pricelist: DTF, Product: Full Colour  A3, Qty: 1 
+2026-01-28 13:06:54,618 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 583, Website: Complete Transfers, Company: Serigraf Ltd. 
+2026-01-28 13:06:54,623 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ DTF - Qty 1: €8.57 
+2026-01-28 13:06:54,624 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 8.57 for 1 items 
+2026-01-28 13:06:54,625 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:06:54] "GET /artwork/api/pricing?templateId=template-A3&copies=1&source=completetransfers&website_id=3 HTTP/1.0" 200 - 31 0.015 0.015
+2026-01-28 13:06:54,833 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Using EXPLICIT website from parameter: Complete Transfers (ID: 3) 
+2026-01-28 13:06:54,836 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 👤 Using SESSION user partner: Public user 
+2026-01-28 13:06:54,836 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🎯 Explicit website_id=3 → Complete Transfers detected 
+2026-01-28 13:06:54,836 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🌐 Website: Complete Transfers (ID: 3), Is CT: True 
+2026-01-28 13:06:54,836 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔑 Session user: Public user (ID: 3), Partner: Public user 
+2026-01-28 13:06:54,840 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ⭐ Using customer's SPECIAL pricelist: DTF 
+2026-01-28 13:06:54,842 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricing debug - Website: Complete Transfers, Pricelist: DTF, Product: Full Colour  A3, Qty: 10 
+2026-01-28 13:06:54,844 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 🔍 Pricelist details - ID: 583, Website: Complete Transfers, Company: Serigraf Ltd. 
+2026-01-28 13:06:54,847 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: ✅ DTF - Qty 10: €8.57 
+2026-01-28 13:06:54,847 4 INFO support-atharva-serigraf-16-stage-0410-23999211 odoo.addons.artwork_uploader.controllers.main: 💵 Final pricing - Unit: 8.57, Total: 85.7 for 10 items 
+2026-01-28 13:06:54,849 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:06:54] "GET /artwork/api/pricing?templateId=template-A3&copies=10&source=completetransfers&website_id=3 HTTP/1.0" 200 - 21 0.008 0.012
+2026-01-28 13:06:55,040 4 INFO support-atharva-serigraf-16-stage-0410-23999211 werkzeug: 93.107.12.61 - - [28/Jan/2026 13:06:55] "POST /shop/payment/get_status/82067 HTTP/1.0" 200 - 9 0.003 0.008
