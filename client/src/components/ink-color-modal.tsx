@@ -14,44 +14,41 @@ interface InkColorModalProps {
   templateId?: string; // Optional template ID to filter colors
 }
 
-// Official Pantone ink colors from the chart
+// Official Pantone ink colors from the chart - Updated Jan 2026
 const inkColors = [
-  // Row 1
-  { name: "White", otCode: "OT 91", pantone: "WHITE", hex: "#FFFFFF", rgb: "255, 255, 255", cmyk: "0, 0, 0, 0", inkType: "Spot" },
-  { name: "Black", otCode: "OT 100", pantone: "BLACK", hex: "#000000", rgb: "0, 0, 0", cmyk: "0, 0, 0, 100", inkType: "Spot" },
-  { name: "Pantone 428C", otCode: "OT 155", pantone: "PANTONE 428C", hex: "#C7C9C7", rgb: "199, 201, 199", cmyk: "22, 17, 18, 0", inkType: "Pantone" },
-  { name: "Pantone 445C", otCode: "OT 156", pantone: "PANTONE 445C", hex: "#7A7C7A", rgb: "122, 124, 122", cmyk: "50, 42, 44, 8", inkType: "Pantone" },
-  { name: "Pantone 2102C", otCode: "OT 10", pantone: "PANTONE 2102C", hex: "#5A4FCF", rgb: "90, 79, 207", cmyk: "66, 74, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 3548C", otCode: "OT 20", pantone: "PANTONE 3548C", hex: "#00509D", rgb: "0, 80, 157", cmyk: "100, 75, 0, 2", inkType: "Pantone" },
-  { name: "Pantone 2383C", otCode: "OT 22", pantone: "PANTONE 2383C", hex: "#0077BE", rgb: "0, 119, 190", cmyk: "85, 37, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 4151C", otCode: "OT 24", pantone: "PANTONE 4151C", hex: "#4682B4", rgb: "70, 130, 180", cmyk: "68, 30, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 2191C", otCode: "OT 26", pantone: "PANTONE 2191C", hex: "#87CEEB", rgb: "135, 206, 235", cmyk: "43, 12, 0, 0", inkType: "Pantone" },
+  // Row 1 - Yellows/Oranges/Reds
+  { name: "Pantone 1255 C", otCode: "OT 81", pantone: "PANTONE 1255 C", hex: "#A2832D", rgb: "162, 131, 45", cmyk: "33, 46, 96, 2", inkType: "Spot" },
+  { name: "Pantone 1817 C", otCode: "OT 80", pantone: "PANTONE 1817 C", hex: "#5B3637", rgb: "91, 54, 55", cmyk: "50, 80, 65, 39", inkType: "Spot" },
+  { name: "Pantone 674 C", otCode: "OT 70", pantone: "PANTONE 674 C", hex: "#B25796", rgb: "178, 87, 150", cmyk: "18, 76, 2, 0", inkType: "Spot" },
+  { name: "Pantone 1797 C", otCode: "OT 60", pantone: "PANTONE 1797 C", hex: "#B3363C", rgb: "179, 54, 60", cmyk: "14, 90, 74, 0", inkType: "Spot" },
+  { name: "Pantone 179 C", otCode: "OT 56", pantone: "PANTONE 179 C", hex: "#C53F33", rgb: "197, 63, 51", cmyk: "3, 85, 81, 0", inkType: "Spot" },
+  { name: "Pantone 1655 C", otCode: "OT 51", pantone: "PANTONE 1655 C", hex: "#DF4E10", rgb: "223, 78, 16", cmyk: "0, 79, 93, 0", inkType: "Spot" },
+  { name: "Pantone 165 C", otCode: "OT 50", pantone: "PANTONE 165 C", hex: "#E66828", rgb: "230, 104, 40", cmyk: "0, 71, 93, 0", inkType: "Spot" },
+  { name: "Pantone 123 C", otCode: "OT 42", pantone: "PANTONE 123 C", hex: "#F3C53F", rgb: "243, 197, 63", cmyk: "0, 23, 84, 0", inkType: "Spot" },
+  { name: "Pantone 115 C", otCode: "OT 41", pantone: "PANTONE 115 C", hex: "#F3D83E", rgb: "243, 216, 62", cmyk: "0, 11, 86, 0", inkType: "Spot" },
   
-  // Row 2
-  { name: "Pantone 2396C", otCode: "OT 27", pantone: "PANTONE 2396C", hex: "#5DADE2", rgb: "93, 173, 226", cmyk: "59, 23, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 2965C", otCode: "OT 96", pantone: "PANTONE 2965C", hex: "#2C3E50", rgb: "44, 62, 80", cmyk: "75, 62, 45, 25", inkType: "Pantone" },
-  { name: "Pantone 7734C", otCode: "OT 30", pantone: "PANTONE 7734C", hex: "#556B2F", rgb: "85, 107, 47", cmyk: "65, 45, 100, 20", inkType: "Pantone" },
-  { name: "Pantone 7739C", otCode: "OT 31", pantone: "PANTONE 7739C", hex: "#6B8E23", rgb: "107, 142, 35", cmyk: "55, 30, 100, 5", inkType: "Pantone" },
-  { name: "Pantone 7489C", otCode: "OT 32", pantone: "PANTONE 7489C", hex: "#8FBC8F", rgb: "143, 188, 143", cmyk: "40, 10, 50, 0", inkType: "Pantone" },
-  { name: "Pantone 7482C", otCode: "OT 33", pantone: "PANTONE 7482C", hex: "#32CD32", rgb: "50, 205, 50", cmyk: "60, 0, 85, 0", inkType: "Pantone" },
-  { name: "Pantone 376C", otCode: "OT 34", pantone: "PANTONE 376C", hex: "#9ACD32", rgb: "154, 205, 50", cmyk: "40, 0, 85, 0", inkType: "Pantone" },
-  { name: "Pantone 604C", otCode: "OT 40", pantone: "PANTONE 604C", hex: "#FFD500", rgb: "255, 213, 0", cmyk: "0, 15, 100, 0", inkType: "Pantone" },
-  { name: "Pantone 115C", otCode: "OT 41", pantone: "PANTONE 115C", hex: "#FFFF00", rgb: "255, 255, 0", cmyk: "0, 0, 100, 0", inkType: "Pantone" },
+  // Row 2 - Greens/Grays/Black/White
+  { name: "Pantone 7489 C", otCode: "OT 32", pantone: "PANTONE 7489 C", hex: "#83A756", rgb: "131, 167, 86", cmyk: "59, 11, 81, 0", inkType: "Spot" },
+  { name: "Pantone 376 C", otCode: "OT 34", pantone: "PANTONE 376 C", hex: "#93BA1E", rgb: "147, 186, 30", cmyk: "53, 0, 100, 0", inkType: "Spot" },
+  { name: "Pantone 7482 C", otCode: "OT 33", pantone: "PANTONE 7482 C", hex: "#3E9B54", rgb: "62, 155, 84", cmyk: "88, 1, 87, 0", inkType: "Spot" },
+  { name: "Pantone 7724 C", otCode: "OT 31", pantone: "PANTONE 7724 C", hex: "#4E926E", rgb: "78, 146, 110", cmyk: "81, 15, 67, 0", inkType: "Spot" },
+  { name: "Pantone 7734 C", otCode: "OT 30", pantone: "PANTONE 7734 C", hex: "#406044", rgb: "64, 96, 68", cmyk: "81, 41, 78, 25", inkType: "Spot" },
+  { name: "Pantone 2965 C", otCode: "OT 96", pantone: "PANTONE 2965 C", hex: "#132A3F", rgb: "19, 42, 63", cmyk: "92, 53, 15, 74", inkType: "Spot" },
+  { name: "Pantone 445 C", otCode: "OT 156", pantone: "PANTONE 445 C", hex: "#515859", rgb: "81, 88, 89", cmyk: "61, 45, 42, 44", inkType: "Spot" },
+  { name: "Pantone 428 C", otCode: "OT 155", pantone: "PANTONE 428 C", hex: "#C0C4C6", rgb: "192, 196, 198", cmyk: "26, 17, 15, 0", inkType: "Spot" },
+  { name: "White", otCode: "OT 90", pantone: "WHITE 90", hex: "#FFFFFF", rgb: "255, 255, 255", cmyk: "0, 0, 0, 0", inkType: "Spot" },
+  { name: "Black", otCode: "OT 100", pantone: "BLACK 100", hex: "#201F1E", rgb: "32, 31, 30", cmyk: "68, 59, 46, 86", inkType: "Spot" },
   
-  // Row 3
-  { name: "Pantone 123C", otCode: "OT 42", pantone: "PANTONE 123C", hex: "#FFC72C", rgb: "255, 199, 44", cmyk: "0, 22, 83, 0", inkType: "Pantone" },
-  { name: "Pantone 1595C", otCode: "OT 50", pantone: "PANTONE 1595C", hex: "#D2691E", rgb: "210, 105, 30", cmyk: "0, 65, 95, 0", inkType: "Pantone" },
-  { name: "Pantone 1665C", otCode: "OT 51", pantone: "PANTONE 1665C", hex: "#B22222", rgb: "178, 34, 34", cmyk: "15, 95, 100, 5", inkType: "Pantone" },
-  { name: "Pantone 179C", otCode: "OT 56", pantone: "PANTONE 179C", hex: "#DC143C", rgb: "220, 20, 60", cmyk: "0, 95, 75, 0", inkType: "Pantone" },
-  { name: "Pantone 1797C", otCode: "OT 60", pantone: "PANTONE 1797C", hex: "#8B0000", rgb: "139, 0, 0", cmyk: "30, 100, 100, 30", inkType: "Pantone" },
-  { name: "Pantone 187C", otCode: "OT 61", pantone: "PANTONE 187C", hex: "#A52A2A", rgb: "165, 42, 42", cmyk: "25, 100, 85, 15", inkType: "Pantone" },
-  { name: "Pantone 674C", otCode: "OT 70", pantone: "PANTONE 674C", hex: "#DDA0DD", rgb: "221, 160, 221", cmyk: "15, 40, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 1817C", otCode: "OT 80", pantone: "PANTONE 1817C", hex: "#4B0082", rgb: "75, 0, 130", cmyk: "85, 100, 0, 0", inkType: "Pantone" },
-  { name: "Pantone 7617C", otCode: "OT 81", pantone: "PANTONE 7617C", hex: "#808000", rgb: "128, 128, 0", cmyk: "35, 25, 100, 10", inkType: "Pantone" },
-  
-  // Row 4
-  { name: "Pantone 873C Gold", otCode: "OT 120", pantone: "PANTONE 873C GOLD", hex: "#FFD700", rgb: "255, 215, 0", cmyk: "0, 15, 100, 0", inkType: "Metallic" },
-  { name: "Pantone 877C Silver", otCode: "OT 110", pantone: "PANTONE 877C SILVER", hex: "#C0C0C0", rgb: "192, 192, 192", cmyk: "25, 20, 20, 0", inkType: "Metallic" }
+  // Row 3 - Blues/Yellows/Reds/Metallics
+  { name: "Pantone 7687 C", otCode: "OT 20", pantone: "PANTONE 7687 C", hex: "#294487", rgb: "41, 68, 135", cmyk: "96, 73, 0, 14", inkType: "Spot" },
+  { name: "Pantone 7461 C", otCode: "OT 22", pantone: "PANTONE 7461 C", hex: "#217B87", rgb: "34, 123, 183", cmyk: "94, 34, 4, 2", inkType: "Spot" },
+  { name: "Pantone 4151 C", otCode: "OT 24", pantone: "PANTONE 4151 C", hex: "#1F66A0", rgb: "31, 102, 169", cmyk: "97, 49, 1, 5", inkType: "Spot" },
+  { name: "Pantone 2202 C", otCode: "OT 26", pantone: "PANTONE 2202 C", hex: "#00A1DD", rgb: "0, 161, 221", cmyk: "94, 3, 3, 0", inkType: "Spot" },
+  { name: "Pantone 2229 C", otCode: "OT 27", pantone: "PANTONE 2229 C", hex: "#0099B6", rgb: "0, 152, 182", cmyk: "100, 0, 24, 0", inkType: "Spot" },
+  { name: "Pantone 107 C", otCode: "OT 40", pantone: "PANTONE 107 C", hex: "#F3DF41", rgb: "243, 223, 65", cmyk: "3, 6, 86, 0", inkType: "Spot" },
+  { name: "Pantone 1788 C", otCode: "OT 61", pantone: "PANTONE 1788 C", hex: "#D02E39", rgb: "208, 46, 57", cmyk: "0, 92, 77, 0", inkType: "Spot" },
+  { name: "Pantone 871 C Gold", otCode: "OT 120", pantone: "PANTONE 871 C", hex: "#83754E", rgb: "131, 117, 78", cmyk: "49, 49, 74, 7", inkType: "Metallic" },
+  { name: "Pantone 877 C Silver", otCode: "OT 110", pantone: "PANTONE 877 C", hex: "#8C8E91", rgb: "140, 142, 145", cmyk: "43, 33, 29, 13", inkType: "Metallic" }
 ];
 
 function getColorName(hex: string): string {
@@ -73,7 +70,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
     // For Zero templates, show specific Zero ink colors only
     if (templateId?.includes('zero')) {
       const zeroColors = [
-        'OT 91', 'OT 10', 'OT 20', 'OT 30', 'OT 33', 'OT 40', 'OT 42', 
+        'OT 90', 'OT 100', 'OT 20', 'OT 30', 'OT 33', 'OT 40', 'OT 42', 
         'OT 51', 'OT 60', 'OT 61', 'OT 70', 'OT 120', 'OT 110'
       ];
       return inkColors.filter(color => zeroColors.includes(color.otCode));
@@ -155,7 +152,7 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
                           isSelected={currentColor === color.hex}
                           onClick={() => handleColorSelect(color.hex)}
                           otCode={color.otCode}
-                          variant={color.otCode === 'OT 91' ? 'drop1' : color.otCode === 'OT 100' ? 'drop2' : 'drop3'}
+                          variant={color.otCode === 'OT 90' ? 'drop1' : color.otCode === 'OT 100' ? 'drop2' : 'drop3'}
                         />
                       </div>
                     </TooltipTrigger>

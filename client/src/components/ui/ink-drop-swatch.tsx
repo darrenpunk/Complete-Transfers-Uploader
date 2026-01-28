@@ -29,7 +29,7 @@ import GOLD_120 from '@/assets/ink-splash-svgs/GOLD_120.svg';
 import SILVER_110 from '@/assets/ink-splash-svgs/SILVER_110.svg';
 
 const otCodeToSvg: Record<string, string> = {
-  'OT 91': WHITE_90,
+  'OT 90': WHITE_90,
   'OT 100': BLACK_100,
   'OT 155': GREY_155,
   'OT 156': GREY_156,
