@@ -55,7 +55,7 @@ export default function ProjectNameModal({
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
-  const [hasError, setHasError] = useState(false);
+  const [errorType, setErrorType] = useState<'none' | 'name' | 'quantity'>('none');
   const [useMultiColor, setUseMultiColor] = useState(false);
   // Initialize garment colors with original quantity when multi-color is first enabled
   const [garmentColors, setGarmentColors] = useState<GarmentColorItem[]>([]);
@@ -88,11 +88,11 @@ export default function ProjectNameModal({
     const trimmedName = projectName.trim();
     
     if (!trimmedName || trimmedName === 'Untitled Project') {
-      setHasError(true);
+      setErrorType('name');
       return;
     }
 
-    setHasError(false);
+    setErrorType('none');
     
     // Generate comments from garment colors if multi-color mode is enabled
     let finalComments = comments.trim();
@@ -119,24 +119,30 @@ export default function ProjectNameModal({
       finalComments = colorSection + (finalComments ? '\n\n' + finalComments : '');
     }
     
-    // Calculate total quantity from garment colors
-    const totalQuantity = useMultiColor && garmentColors.length > 0
-      ? garmentColors.reduce((sum, gc) => sum + gc.quantity, 0)
-      : undefined;
+    // For multi-color, validate that garment color quantities sum to original order quantity
+    if (useMultiColor && garmentColors.length > 0) {
+      const garmentTotal = garmentColors.reduce((sum, gc) => sum + gc.quantity, 0);
+      if (garmentTotal !== originalQuantity) {
+        // Show error - quantities don't match
+        setErrorType('quantity');
+        return;
+      }
+    }
     
+    // The order quantity stays the same (originalQuantity) - multi-color just splits it across colors
     onConfirm({
       name: trimmedName,
       comments: finalComments,
       garmentColors: useMultiColor && garmentColors.length > 0 ? garmentColors : undefined,
-      totalQuantity
+      totalQuantity: originalQuantity // Always use original quantity, not the sum
     });
     onOpenChange(false);
   };
 
   const handleInputChange = (value: string) => {
     setProjectName(value);
-    if (hasError && value.trim() && value.trim() !== 'Untitled Project') {
-      setHasError(false);
+    if (errorType === 'name' && value.trim() && value.trim() !== 'Untitled Project') {
+      setErrorType('none');
     }
   };
 
@@ -171,7 +177,7 @@ export default function ProjectNameModal({
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Enter project name..."
-              className={hasError ? "border-red-300 focus:border-red-500" : ""}
+              className={errorType === 'name' ? "border-red-300 focus:border-red-500" : ""}
               autoFocus
             />
           </div>
@@ -203,6 +209,7 @@ export default function ProjectNameModal({
                   garmentColors={garmentColors}
                   onChange={setGarmentColors}
                   className="border rounded-lg p-4 bg-card"
+                  targetQuantity={originalQuantity}
                 />
               )}
             </>
@@ -233,10 +240,13 @@ export default function ProjectNameModal({
             />
           </div>
           
-          {hasError && (
+          {errorType !== 'none' && (
             <div className="flex items-center gap-2 text-sm text-red-600">
               <AlertCircle className="w-4 h-4" />
-              Please enter a valid project name
+              {errorType === 'name' 
+                ? 'Please enter a valid project name'
+                : `Garment color quantities must equal order quantity (${originalQuantity})`
+              }
             </div>
           )}
           

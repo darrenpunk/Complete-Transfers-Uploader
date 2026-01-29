@@ -32,9 +32,10 @@ interface MultiColorSelectorProps {
   garmentColors: GarmentColorItem[];
   onChange: (colors: GarmentColorItem[]) => void;
   className?: string;
+  targetQuantity?: number; // The original order quantity that colors must sum to
 }
 
-export function MultiColorSelector({ garmentColors, onChange, className }: MultiColorSelectorProps) {
+export function MultiColorSelector({ garmentColors, onChange, className, targetQuantity }: MultiColorSelectorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const handleAddColor = (color: string, colorName: string) => {
@@ -173,11 +174,27 @@ export function MultiColorSelector({ garmentColors, onChange, className }: Multi
           ))}
 
           {/* Total */}
-          <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm font-medium">Total Quantity:</span>
-            <span className="text-lg font-bold" data-testid="text-total-quantity">
-              {totalQuantity}
-            </span>
+          <div className="pt-2 border-t space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Total Quantity:</span>
+              <span 
+                className={`text-lg font-bold ${targetQuantity && totalQuantity !== targetQuantity ? 'text-destructive' : ''}`} 
+                data-testid="text-total-quantity"
+              >
+                {totalQuantity}
+              </span>
+            </div>
+            {targetQuantity && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Order Quantity:</span>
+                <span className={`font-medium ${totalQuantity !== targetQuantity ? 'text-destructive' : 'text-green-600'}`}>
+                  {totalQuantity === targetQuantity 
+                    ? '✓ Matches order' 
+                    : `${totalQuantity > targetQuantity ? '+' : ''}${totalQuantity - targetQuantity} (must equal ${targetQuantity})`
+                  }
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
