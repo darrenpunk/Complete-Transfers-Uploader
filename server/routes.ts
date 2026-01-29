@@ -2793,6 +2793,22 @@ export async function registerRoutes(app: express.Application) {
                               displayWidth = contentWidthPts * pxToMm;
                               displayHeight = contentHeightPts * pxToMm;
                               console.log(`✅ Updated dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
+                              
+                              // CRITICAL FIX: Update originalPdfBounds with Inkscape-detected position
+                              // This ensures PDF cropping uses the correct content location (not the guessed center)
+                              if (originalPdfBounds && originalPdfBounds.width < 1 && svgBoundsX !== undefined && svgBoundsY !== undefined) {
+                                console.log(`🔧 Ghostscript bbox failed - updating originalPdfBounds with Inkscape position: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                                originalPdfBounds = {
+                                  xMin: svgBoundsX,
+                                  yMin: svgBoundsY,
+                                  xMax: svgBoundsX + inkscapeWidth,
+                                  yMax: svgBoundsY + inkscapeHeight,
+                                  width: inkscapeWidth,
+                                  height: inkscapeHeight,
+                                  units: 'pt'
+                                };
+                                console.log(`📋 Updated PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                              }
                             }
                           }
                         } catch (queryError) {
