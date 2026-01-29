@@ -575,30 +575,11 @@ class ArtworkUploaderController(http.Controller):
             
             # Check if customer has a special/custom pricelist
             has_special_pricelist = sale_order.pricelist_id.name not in standard_pricelists
+            original_pricelist = sale_order.pricelist_id
             
-            if has_special_pricelist:
-                # Customer has special pricing - DO NOT override
-                _logger.info(f"⭐ Customer has SPECIAL pricelist: {sale_order.pricelist_id.name} - keeping it")
-            elif website and website.name == 'Complete Transfers':
-                # On Complete Transfers website - force CT Euro/GBP pricelist
-                customer_country = partner.country_id.code if partner and partner.country_id else None
-                ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
-                
-                ct_pricelist = request.env['product.pricelist'].sudo().search([
-                    ('name', '=', ct_pricelist_name),
-                    ('active', '=', True)
-                ], limit=1)
-                
-                if ct_pricelist and sale_order.pricelist_id.id != ct_pricelist.id:
-                    sale_order.sudo().write({'pricelist_id': ct_pricelist.id})
-                    _logger.info(f"🌐 Complete Transfers website → Updated cart from '{sale_order.pricelist_id.name}' to '{ct_pricelist.name}'")
-                elif ct_pricelist:
-                    _logger.info(f"✅ Cart already using correct CT pricelist: {ct_pricelist.name}")
-                else:
-                    _logger.warning(f"⚠️ Could not find {ct_pricelist_name}, keeping original pricelist")
-            else:
-                # On serigraf.com or other - keep cart's current pricelist
-                _logger.info(f"📋 Using cart's assigned pricelist: {sale_order.pricelist_id.name}")
+            # We'll determine the correct pricelist AFTER we know the product
+            # Store the flag for now
+            _logger.info(f"📋 Cart pricelist: {sale_order.pricelist_id.name}, is_special: {has_special_pricelist}")
             
             _logger.info(f"✅ Sale order: #{sale_order.id}, Partner: {partner.name}, Current lines: {len(sale_order.order_line)}")
             
@@ -619,6 +600,79 @@ class ArtworkUploaderController(http.Controller):
                 return request.make_response(response, headers=headers)
             
             _logger.info(f"✅ Found product: {product.name} (ID: {product.id})")
+            
+            # NOW determine the correct pricelist based on the product
+            # This mirrors the logic in get_pricing() - check if special pricelist has rules for THIS product
+            if has_special_pricelist:
+                # Check if special pricelist has a SPECIFIC rule for this product
+                has_specific_product_rule = False
+                
+                # First check: exact product variant match
+                product_rule = request.env['product.pricelist.item'].sudo().search([
+                    ('pricelist_id', '=', original_pricelist.id),
+                    ('applied_on', '=', '0_product_variant'),
+                    ('product_id', '=', product.id)
+                ], limit=1)
+                
+                if product_rule:
+                    has_specific_product_rule = True
+                    _logger.info(f"✅ Found PRODUCT VARIANT rule in {original_pricelist.name} for {product.name}")
+                else:
+                    # Second check: product template match
+                    template_rule = request.env['product.pricelist.item'].sudo().search([
+                        ('pricelist_id', '=', original_pricelist.id),
+                        ('applied_on', '=', '1_product'),
+                        ('product_tmpl_id', '=', product.product_tmpl_id.id)
+                    ], limit=1)
+                    
+                    if template_rule:
+                        has_specific_product_rule = True
+                        _logger.info(f"✅ Found PRODUCT TEMPLATE rule in {original_pricelist.name} for {product.name}")
+                
+                if has_specific_product_rule:
+                    # Customer's special pricelist has rules for this product - keep it
+                    _logger.info(f"⭐ Using customer's SPECIAL pricelist: {original_pricelist.name} (has specific rule for {product.name})")
+                else:
+                    # Special pricelist doesn't have a SPECIFIC rule for this product
+                    # Fall back to CT Euro Pricelist for Complete Transfers website
+                    _logger.info(f"⚠️ Customer has SPECIAL pricelist '{original_pricelist.name}' but NO specific rule for '{product.name}'")
+                    
+                    if website and website.name == 'Complete Transfers':
+                        customer_country = partner.country_id.code if partner and partner.country_id else None
+                        ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
+                        
+                        ct_pricelist = request.env['product.pricelist'].sudo().search([
+                            ('name', '=', ct_pricelist_name),
+                            ('active', '=', True)
+                        ], limit=1)
+                        
+                        if ct_pricelist and sale_order.pricelist_id.id != ct_pricelist.id:
+                            sale_order.sudo().write({'pricelist_id': ct_pricelist.id})
+                            _logger.info(f"🔄 Falling back to {ct_pricelist.name} for {product.name} (no special rule)")
+                        else:
+                            _logger.warning(f"⚠️ Could not find {ct_pricelist_name}, keeping original pricelist")
+                    else:
+                        _logger.info(f"📋 Not CT website, keeping cart's pricelist: {original_pricelist.name}")
+            elif website and website.name == 'Complete Transfers':
+                # On Complete Transfers website with standard pricelist - force CT Euro/GBP pricelist
+                customer_country = partner.country_id.code if partner and partner.country_id else None
+                ct_pricelist_name = 'CT Public Pricelist GBP' if customer_country == 'GB' else 'CT Euro Pricelist'
+                
+                ct_pricelist = request.env['product.pricelist'].sudo().search([
+                    ('name', '=', ct_pricelist_name),
+                    ('active', '=', True)
+                ], limit=1)
+                
+                if ct_pricelist and sale_order.pricelist_id.id != ct_pricelist.id:
+                    sale_order.sudo().write({'pricelist_id': ct_pricelist.id})
+                    _logger.info(f"🌐 Complete Transfers website → Updated cart from '{sale_order.pricelist_id.name}' to '{ct_pricelist.name}'")
+                elif ct_pricelist:
+                    _logger.info(f"✅ Cart already using correct CT pricelist: {ct_pricelist.name}")
+                else:
+                    _logger.warning(f"⚠️ Could not find {ct_pricelist_name}, keeping original pricelist")
+            else:
+                # On serigraf.com or other - keep cart's current pricelist
+                _logger.info(f"📋 Using cart's assigned pricelist: {sale_order.pricelist_id.name}")
             
             # Add to cart
             _logger.info(f"🛒 Calling _cart_update with qty={project.quantity}")
