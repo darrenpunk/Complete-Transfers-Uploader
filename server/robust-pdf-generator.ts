@@ -810,9 +810,64 @@ grestore`;
             console.log(`📋 Original PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
             console.log(`📐 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
             
+            // Check if Ghostscript failed (returned 0×0) but we have element dimensions from Inkscape
+            // In this case, we need to calculate bounds from Inkscape-detected content
+            if (contentWidthPts < 1 && contentHeightPts < 1) {
+              // Ghostscript bbox failed - derive bounds from element size and SVG normalization
+              // The SVG was normalized to origin, so we need to calculate the original PDF content position
+              const MM_TO_PTS = 2.834645669;
+              const elementWidthPts = element.width * MM_TO_PTS;
+              const elementHeightPts = element.height * MM_TO_PTS;
+              
+              // Read the original PDF to get page size
+              const originalPdfBytes = fs.readFileSync(originalPdfPath);
+              const { PDFDocument } = await import('pdf-lib');
+              const tempDoc = await PDFDocument.load(originalPdfBytes);
+              const [tempPage] = tempDoc.getPages();
+              const pageWidth = tempPage.getWidth();
+              const pageHeight = tempPage.getHeight();
+              
+              // Calculate content position (centered on page typically)
+              // The offset is (pageSize - elementSize) / 2 approximately
+              const xMin = (pageWidth - elementWidthPts) / 2;
+              const yMin = (pageHeight - elementHeightPts) / 2;
+              
+              console.log(`⚠️ Ghostscript bbox failed (0×0) - using element dimensions for cropping`);
+              console.log(`📐 Element size: ${elementWidthPts.toFixed(1)}×${elementHeightPts.toFixed(1)}pts`);
+              console.log(`📐 Page size: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts`);
+              console.log(`📐 Calculated content offset: (${xMin.toFixed(1)}, ${yMin.toFixed(1)})`);
+              
+              // Only crop if there's significant offset
+              if (xMin > 10 || yMin > 10) {
+                const inkscapeBounds = {
+                  xMin: xMin,
+                  yMin: yMin,
+                  xMax: xMin + elementWidthPts,
+                  yMax: yMin + elementHeightPts,
+                  width: elementWidthPts,
+                  height: elementHeightPts
+                };
+                
+                console.log(`📐 PDF has content offset - resizing page to element bounds while preserving CMYK`);
+                
+                const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, inkscapeBounds);
+                if (resizedPdfPath) {
+                  console.log(`✅ PDF resized to element bounds: ${resizedPdfPath}`);
+                  logoPdfPath = resizedPdfPath;
+                  shouldCleanup = true;
+                  (element as any)._pdfWasCropped = true;
+                } else {
+                  console.log(`⚠️ PDF resizing failed, using original (may have dimension issues)`);
+                  logoPdfPath = originalPdfPath;
+                }
+              } else {
+                console.log(`✅ Content nearly fills page - using original PDF`);
+                logoPdfPath = originalPdfPath;
+              }
+            }
             // If bounds offset is non-zero, resize PDF page to content bounds
             // This preserves CMYK colors while fixing dimensions
-            if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
+            else if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
               console.log(`📐 PDF has content offset - resizing page to content bounds while preserving CMYK`);
               
               // Resize the original PDF to content bounds using Ghostscript
