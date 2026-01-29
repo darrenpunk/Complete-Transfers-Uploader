@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Plus, Palette } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { X, Plus, Palette, ChevronDown, ChevronRight } from "lucide-react";
 import type { GarmentColorItem } from "@shared/schema";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
+import { manufacturerColors } from "@shared/garment-colors";
+import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
+import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
 
 // Professional color palette - same as garment color modal
 const GARMENT_COLORS = [
@@ -46,6 +50,20 @@ interface MultiColorSelectorProps {
 
 export function MultiColorSelector({ garmentColors, onChange, className, targetQuantity }: MultiColorSelectorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [expandedManufacturers, setExpandedManufacturers] = useState<string[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  const toggleManufacturer = (name: string) => {
+    setExpandedManufacturers(prev => 
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupName) ? prev.filter(n => n !== groupName) : [...prev, groupName]
+    );
+  };
 
   const handleAddColor = (color: string, colorName: string) => {
     // Check if color already exists
@@ -122,6 +140,72 @@ export function MultiColorSelector({ garmentColors, onChange, className, targetQ
                 </button>
               );
             })}
+          </div>
+
+          {/* Manufacturer Colors */}
+          <div className="mt-4 pt-4 border-t space-y-2">
+            <Label className="text-xs text-muted-foreground">Manufacturer Colors</Label>
+            {Object.entries(manufacturerColors).map(([manufacturerName, colorGroups]) => (
+              <Collapsible
+                key={manufacturerName}
+                open={expandedManufacturers.includes(manufacturerName)}
+                onOpenChange={() => toggleManufacturer(manufacturerName)}
+              >
+                <CollapsibleTrigger className="w-full p-2 bg-muted/50 border rounded-lg flex items-center justify-between hover:bg-muted transition-colors">
+                  <div className="flex items-center justify-center flex-1">
+                    {manufacturerName === "Gildan" && (
+                      <img src={gildanLogoPath} alt="Gildan" className="h-5 w-auto object-contain" />
+                    )}
+                    {manufacturerName === "Fruit of the Loom" && (
+                      <img src={fruitOfTheLoomLogoPath} alt="Fruit of the Loom" className="h-6 w-auto object-contain" />
+                    )}
+                  </div>
+                  {expandedManufacturers.includes(manufacturerName) 
+                    ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    : <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  }
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-1 space-y-1">
+                  {colorGroups.map((group) => (
+                    <Collapsible
+                      key={group.name}
+                      open={expandedGroups.includes(`${manufacturerName}-${group.name}`)}
+                      onOpenChange={() => toggleGroup(`${manufacturerName}-${group.name}`)}
+                    >
+                      <CollapsibleTrigger className="flex items-center justify-between w-full p-2 text-left hover:bg-muted rounded text-xs">
+                        <span className="font-medium">{group.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{group.colors.length}</span>
+                          {expandedGroups.includes(`${manufacturerName}-${group.name}`) 
+                            ? <ChevronDown className="w-3 h-3" />
+                            : <ChevronRight className="w-3 h-3" />
+                          }
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="px-2 pb-2">
+                        <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
+                          {group.colors.map((color) => {
+                            const isSelected = garmentColors.some(existing => existing.color === color.hex);
+                            return (
+                              <button
+                                key={color.code}
+                                type="button"
+                                onClick={() => handleAddColor(color.hex, `${color.name} (${color.code})`)}
+                                disabled={isSelected}
+                                className={`p-1 rounded transition-all ${isSelected ? 'opacity-40 cursor-not-allowed' : 'hover:scale-105 cursor-pointer'}`}
+                                title={`${color.name} (${color.code})`}
+                              >
+                                <TShirtSwatch color={color.hex} size="sm" selected={isSelected} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
           </div>
         </div>
       )}
