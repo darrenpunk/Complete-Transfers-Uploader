@@ -1200,65 +1200,75 @@ export default function CanvasWorkspace({
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
+                // Center moves by half the size change (center-based positioning)
+                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
+                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'sw':
                 singleNewWidth = Math.max(20, initialSize.width - deltaX);
                 singleNewHeight = Math.max(20, initialSize.height + deltaY);
-                singleNewX = initialPosition.x + deltaX;
                 if (maintainAspectRatio) {
                   if (Math.abs(deltaX) > Math.abs(deltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
-                    singleNewX = initialPosition.x + initialSize.width - singleNewWidth;
                   }
                 }
+                // Center moves by half the size change (center-based positioning)
+                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
+                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'ne':
                 singleNewWidth = Math.max(20, initialSize.width + deltaX);
                 singleNewHeight = Math.max(20, initialSize.height - deltaY);
-                singleNewY = initialPosition.y + deltaY;
                 if (maintainAspectRatio) {
                   if (Math.abs(deltaX) > Math.abs(deltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
-                    singleNewY = initialPosition.y + initialSize.height - singleNewHeight;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
+                // Center moves by half the size change (center-based positioning)
+                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
+                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'nw':
                 singleNewWidth = Math.max(20, initialSize.width - deltaX);
                 singleNewHeight = Math.max(20, initialSize.height - deltaY);
-                singleNewX = initialPosition.x + deltaX;
-                singleNewY = initialPosition.y + deltaY;
                 if (maintainAspectRatio) {
                   if (Math.abs(deltaX) > Math.abs(deltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
-                    singleNewY = initialPosition.y + initialSize.height - singleNewHeight;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
-                    singleNewX = initialPosition.x + initialSize.width - singleNewWidth;
                   }
                 }
+                // Center moves by half the size change (center-based positioning)
+                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
+                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'e':
                 singleNewWidth = Math.max(20, initialSize.width + deltaX);
                 if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
+                // Center moves by half the width change
+                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
                 break;
               case 'w':
                 singleNewWidth = Math.max(20, initialSize.width - deltaX);
-                singleNewX = initialPosition.x + deltaX;
                 if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
+                // Center moves by half the width change
+                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
                 break;
               case 'n':
                 singleNewHeight = Math.max(20, initialSize.height - deltaY);
-                singleNewY = initialPosition.y + deltaY;
                 if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
+                // Center moves by half the height change
+                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
                 break;
               case 's':
                 singleNewHeight = Math.max(20, initialSize.height + deltaY);
                 if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
+                // Center moves by half the height change
+                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
                 break;
             }
 
