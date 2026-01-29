@@ -908,6 +908,11 @@ grestore`;
       const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
       const [logoPage] = logoDoc;
       
+      // Get the actual embedded PDF page dimensions
+      const actualPdfWidth = logoPage.width;
+      const actualPdfHeight = logoPage.height;
+      console.log(`📄 Actual embedded PDF size: ${actualPdfWidth.toFixed(1)}×${actualPdfHeight.toFixed(1)}pts`);
+      
       // Calculate exact position using user's actual element dimensions
       const MM_TO_POINTS = 2.834645669;
       
@@ -945,6 +950,32 @@ grestore`;
       // For PDF embedding, use element dimensions (matches canvas display)
       let contentWidthMM = element.width;
       let contentHeightMM = element.height;
+      
+      // CRITICAL: Check if actual PDF dimensions differ significantly from element dimensions
+      // This can happen when Inkscape reports larger bounds (including masks/clipping paths)
+      // but Ghostscript crops to actual visible content
+      const actualPdfWidthMM = actualPdfWidth / MM_TO_POINTS;
+      const actualPdfHeightMM = actualPdfHeight / MM_TO_POINTS;
+      const elementPdfWidthPts = contentWidthMM * MM_TO_POINTS;
+      const elementPdfHeightPts = contentHeightMM * MM_TO_POINTS;
+      
+      // If aspect ratios differ significantly (more than 10%), use actual PDF dimensions to preserve aspect ratio
+      const pdfAspect = actualPdfWidth / actualPdfHeight;
+      const elementAspect = elementPdfWidthPts / elementPdfHeightPts;
+      const aspectDiff = Math.abs(pdfAspect - elementAspect) / pdfAspect;
+      
+      if (aspectDiff > 0.1) {
+        console.log(`⚠️ ASPECT RATIO MISMATCH: PDF=${pdfAspect.toFixed(3)}, Element=${elementAspect.toFixed(3)}, Diff=${(aspectDiff*100).toFixed(1)}%`);
+        console.log(`🔧 Using actual PDF dimensions to preserve aspect ratio: ${actualPdfWidthMM.toFixed(2)}×${actualPdfHeightMM.toFixed(2)}mm`);
+        // Use the actual PDF dimensions (preserving aspect ratio)
+        // Scale to fit within element bounds while maintaining aspect ratio
+        const scaleX = contentWidthMM / actualPdfWidthMM;
+        const scaleY = contentHeightMM / actualPdfHeightMM;
+        const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit within bounds
+        contentWidthMM = actualPdfWidthMM * scale;
+        contentHeightMM = actualPdfHeightMM * scale;
+        console.log(`📐 Scaled to fit element bounds: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (scale=${scale.toFixed(3)})`);
+      }
       
       console.log(`🔍 CANVAS DIMENSIONS: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
       console.log(`🔄 Rotation: ${element.rotation || 0}° (isRotated: ${isRotated})`);
