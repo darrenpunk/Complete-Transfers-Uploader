@@ -703,13 +703,15 @@ class ArtworkUploaderController(http.Controller):
                     pdf_base64_string = data['pdfBase64']
                     
                     # Use artworkFilename if provided (preserves original filename for vectorization uploads)
-                    # Otherwise fall back to project name with .pdf extension
+                    # Otherwise fall back to project name with qty and .pdf extension
                     if data.get('artworkFilename'):
                         artwork_filename = data['artworkFilename'].replace(' ', '_')
                         _logger.info(f"📄 Using provided artworkFilename: {artwork_filename}")
                     else:
-                        artwork_filename = f"{data.get('name', 'artwork').replace(' ', '_')}.pdf"
-                        _logger.info(f"📄 Generated filename from project name: {artwork_filename}")
+                        project_name = data.get('name', 'artwork').replace(' ', '_')
+                        quantity = data.get('quantity', project.quantity or 1)
+                        artwork_filename = f"{project_name}_qty{quantity}.pdf"
+                        _logger.info(f"📄 Generated filename with quantity: {artwork_filename}")
                     
                     # CRITICAL: Upload to PRODUCTION fields (artwork_files_datas + artwork_file_name)
                     # artwork_files_datas expects base64-encoded string, NOT decoded bytes
