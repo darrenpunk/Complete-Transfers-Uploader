@@ -4,28 +4,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Plus, Palette } from "lucide-react";
 import type { GarmentColorItem } from "@shared/schema";
+import TShirtSwatch from "@/components/ui/tshirt-swatch";
 
+// Professional color palette - same as garment color modal
 const GARMENT_COLORS = [
   { name: "White", color: "#FFFFFF" },
-  { name: "Black", color: "#000000" },
-  { name: "Navy", color: "#000080" },
-  { name: "Royal Blue", color: "#4169E1" },
-  { name: "Red", color: "#FF0000" },
-  { name: "Gold", color: "#FFD700" },
-  { name: "Charcoal", color: "#36454F" },
-  { name: "Heather Grey", color: "#959595" },
-  { name: "Kelly Green", color: "#4CBB17" },
-  { name: "Bottle Green", color: "#006A4E" },
-  { name: "Maroon", color: "#800000" },
-  { name: "Purple", color: "#800080" },
-  { name: "Orange", color: "#FFA500" },
-  { name: "Yellow", color: "#FFFF00" },
-  { name: "Pink", color: "#FFC0CB" },
-  { name: "Light Blue", color: "#ADD8E6" },
-  { name: "Ash Grey", color: "#B2BEB5" },
-  { name: "Brown", color: "#8B4513" },
-  { name: "Forest Green", color: "#228B22" },
-  { name: "Burgundy", color: "#800020" },
+  { name: "Black", color: "#171816" },
+  { name: "Natural Cotton", color: "#D9D2AB" },
+  { name: "Pastel Yellow", color: "#F3F590" },
+  { name: "Yellow", color: "#F0F42A" },
+  { name: "Hi Viz", color: "#D2E31D" },
+  { name: "Hi Viz Orange", color: "#D98F17" },
+  { name: "HiViz Green", color: "#388032" },
+  { name: "HIViz Pink", color: "#BF0072" },
+  { name: "Sports Grey", color: "#767878" },
+  { name: "Light Grey Marl", color: "#919393" },
+  { name: "Ash Grey", color: "#A6A9A2" },
+  { name: "Light Grey", color: "#BCBFBB" },
+  { name: "Charcoal Grey", color: "#353330" },
+  { name: "Pastel Blue", color: "#B9DBEA" },
+  { name: "Sky Blue", color: "#5998D4" },
+  { name: "Navy", color: "#201C3A" },
+  { name: "Royal Blue", color: "#221866" },
+  { name: "Pastel Green", color: "#B5D55E" },
+  { name: "Lime Green", color: "#90BF33" },
+  { name: "Kelly Green", color: "#3C8A35" },
+  { name: "Pastel Pink", color: "#E7BBD0" },
+  { name: "Light Pink", color: "#D287A2" },
+  { name: "Fuchsia Pink", color: "#C42469" },
+  { name: "Red", color: "#C02300" },
+  { name: "Burgundy", color: "#762009" },
+  { name: "Purple", color: "#4C0A6A" },
 ];
 
 interface MultiColorSelectorProps {
@@ -86,7 +95,7 @@ export function MultiColorSelector({ garmentColors, onChange, className, targetQ
       {/* Color Picker */}
       {showColorPicker && (
         <div className="mb-4 p-4 border rounded-lg bg-muted/50">
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 gap-2">
             {GARMENT_COLORS.map((gc) => {
               const isSelected = garmentColors.some(existing => existing.color === gc.color);
               return (
@@ -96,19 +105,20 @@ export function MultiColorSelector({ garmentColors, onChange, className, targetQ
                   onClick={() => handleAddColor(gc.color, gc.name)}
                   disabled={isSelected}
                   className={`
-                    flex flex-col items-center gap-1 p-2 rounded-md transition-all
+                    flex flex-col items-center gap-1 p-1 rounded-md transition-all
                     ${isSelected 
                       ? 'opacity-40 cursor-not-allowed' 
                       : 'hover:bg-accent hover:scale-105 cursor-pointer'
                     }
                   `}
                   data-testid={`button-select-color-${gc.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  title={gc.name}
                 >
-                  <div
-                    className="w-8 h-8 rounded-full border-2 border-border shadow-sm"
-                    style={{ backgroundColor: gc.color }}
+                  <TShirtSwatch 
+                    color={gc.color} 
+                    size="md"
+                    selected={isSelected}
                   />
-                  <span className="text-xs text-center leading-tight">{gc.name}</span>
                 </button>
               );
             })}
