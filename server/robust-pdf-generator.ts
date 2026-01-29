@@ -508,14 +508,23 @@ grestore`;
           const elementColor = element.garmentColor || data.garmentColor || '#171816';
           const elementColorName = element.garmentColorName || getGarmentColorName(elementColor);
           
-          // Calculate element position in PDF coordinates (mm to pt conversion)
+          // Calculate element position in PDF coordinates - MUST MATCH embedLogoInPages logic
           const mmToPt = 2.834645669;
+          const templateWidthMM = data.templateSize?.width || 297;
+          const templateHeightMM = data.templateSize?.height || 420;
+          const templateCenterX = templateWidthMM / 2;
+          const templateCenterY = templateHeightMM / 2;
+          
+          // Element x,y is CENTER position relative to canvas center (0,0)
+          const elementCenterX = templateCenterX + element.x;
+          const elementCenterY = templateCenterY + element.y;
+          
           const elemWidthPt = element.width * mmToPt;
           const elemHeightPt = element.height * mmToPt;
-          // Element x,y is CENTER position - convert to bottom-left for PDF
-          const elemXPt = (element.x - element.width / 2) * mmToPt;
-          // PDF Y is from bottom, canvas Y is from top
-          const elemYPt = pageHeight - ((element.y + element.height / 2) * mmToPt);
+          
+          // Convert to PDF coordinates (bottom-left origin)
+          const elemXPt = (elementCenterX - element.width / 2) * mmToPt;
+          const elemYPt = pageHeight - ((elementCenterY + element.height / 2) * mmToPt);
           
           // Draw colored background rectangle behind this element
           const parsedElementColor = await this.parseGarmentColor(elementColor);
