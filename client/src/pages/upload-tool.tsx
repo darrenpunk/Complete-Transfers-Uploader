@@ -1504,6 +1504,7 @@ export default function UploadTool() {
         garmentColorName={currentProject?.garmentColor ? getGarmentColorName(currentProject.garmentColor) : undefined}
         inkColor={currentProject?.inkColor || undefined}
         inkColorName={currentProject?.inkColor ? getInkColorName(currentProject.inkColor) : undefined}
+        originalQuantity={currentProject?.quantity || 10}
       />
 
       {/* Applique Badges Modal */}

@@ -35,6 +35,7 @@ interface ProjectNameModalProps {
   garmentColorName?: string;
   inkColor?: string;
   inkColorName?: string;
+  originalQuantity?: number; // Original order quantity from template selection
 }
 
 export default function ProjectNameModal({
@@ -49,13 +50,32 @@ export default function ProjectNameModal({
   garmentColor,
   garmentColorName,
   inkColor,
-  inkColorName
+  inkColorName,
+  originalQuantity = 10 // Default to 10 if not provided
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
   const [hasError, setHasError] = useState(false);
   const [useMultiColor, setUseMultiColor] = useState(false);
+  // Initialize garment colors with original quantity when multi-color is first enabled
   const [garmentColors, setGarmentColors] = useState<GarmentColorItem[]>([]);
+  const [hasInitializedMultiColor, setHasInitializedMultiColor] = useState(false);
+  
+  // When multi-color is enabled for the first time, pre-populate with original garment color and quantity
+  const handleMultiColorToggle = (enabled: boolean) => {
+    setUseMultiColor(enabled);
+    if (enabled && !hasInitializedMultiColor && garmentColors.length === 0) {
+      // Pre-populate with original garment color and full quantity
+      if (garmentColor && garmentColorName) {
+        setGarmentColors([{
+          color: garmentColor,
+          colorName: garmentColorName,
+          quantity: originalQuantity
+        }]);
+      }
+      setHasInitializedMultiColor(true);
+    }
+  };
 
   // Check if template supports multi-color orders (Full-Colour, HD, Metallic only)
   const supportsMultiColor = template && (
@@ -172,7 +192,7 @@ export default function ProjectNameModal({
                 <Switch
                   id="multi-color-toggle"
                   checked={useMultiColor}
-                  onCheckedChange={setUseMultiColor}
+                  onCheckedChange={handleMultiColorToggle}
                   data-testid="switch-multi-color"
                 />
               </div>
