@@ -358,10 +358,46 @@ grestore`;
     }
     const garmentColorPages: GarmentColorPage[] = [];
     
+    // ELEMENT-LEVEL GARMENT COLOR SUPPORT:
+    // Check if canvas elements have individual garment colors set
+    // This is different from project-level multi-color orders (garmentColors array)
+    const elementGarmentColors = new Map<string, { color: string, colorName: string, elements: typeof data.canvasElements }>();
+    
+    for (const element of data.canvasElements) {
+      if (element.garmentColor && element.garmentColor !== data.garmentColor) {
+        const elemColor = element.garmentColor;
+        const elemColorName = element.garmentColorName || getGarmentColorName(elemColor);
+        
+        if (!elementGarmentColors.has(elemColor)) {
+          elementGarmentColors.set(elemColor, {
+            color: elemColor,
+            colorName: elemColorName,
+            elements: []
+          });
+        }
+        elementGarmentColors.get(elemColor)!.elements.push(element);
+      }
+    }
+    
+    // Also track elements with the default garment color
+    const defaultColorElements = data.canvasElements.filter(
+      el => !el.garmentColor || el.garmentColor === data.garmentColor
+    );
+    
+    const hasElementLevelColors = elementGarmentColors.size > 0;
+    if (hasElementLevelColors) {
+      console.log(`🎨 ELEMENT-LEVEL COLORS: Found ${elementGarmentColors.size} unique garment colors from canvas elements`);
+      Array.from(elementGarmentColors.entries()).forEach(([color, info]) => {
+        console.log(`  - ${info.colorName} (${color}): ${info.elements.length} elements`);
+      });
+      console.log(`  - Default ${getGarmentColorName(data.garmentColor || '#171816')}: ${defaultColorElements.length} elements`);
+    }
+    
     // Create page 2 only if NOT using pass-through mode
     let page2: typeof page1 | null = null;
     if (!usePassThrough) {
-      // MULTI-COLOR ORDER SUPPORT: Check if garmentColors array is provided
+      // MULTI-COLOR ORDER SUPPORT: Check if garmentColors array is provided (from project-level modal)
+      // OR element-level garment colors
       if (data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0) {
         console.log(`🎨 Multi-Color Order: Creating ${data.garmentColors.length} pages for different garment colors`);
         
@@ -395,6 +431,53 @@ grestore`;
         
         // Use first garment color page as page2 for logo embedding
         page2 = garmentColorPages[0]?.page || null;
+      } else if (hasElementLevelColors) {
+        // ELEMENT-LEVEL COLORS: Create separate pages for each unique element garment color
+        console.log(`🎨 Element-Level Colors: Creating ${elementGarmentColors.size + (defaultColorElements.length > 0 ? 1 : 0)} pages`);
+        
+        // First, create page for the default/project garment color (if any elements use it)
+        if (defaultColorElements.length > 0) {
+          const defaultColor = data.garmentColor || '#171816';
+          const defaultColorName = getGarmentColorName(defaultColor);
+          const defaultPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          
+          const parsedColor = await this.parseGarmentColor(defaultColor);
+          defaultPage.drawRectangle({
+            x: 0, y: 0, width: pageWidth, height: pageHeight, color: parsedColor,
+          });
+          
+          garmentColorPages.push({
+            page: defaultPage,
+            color: defaultColor,
+            colorName: defaultColorName,
+            quantity: data.quantity,
+            elements: defaultColorElements // Track which elements belong to this page
+          } as any);
+          
+          console.log(`📄 Created page for default color ${defaultColorName}: ${defaultColorElements.length} elements`);
+        }
+        
+        // Then create pages for each unique element-level color
+        for (const [color, info] of Array.from(elementGarmentColors.entries())) {
+          const colorPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          const parsedColor = await this.parseGarmentColor(color);
+          
+          colorPage.drawRectangle({
+            x: 0, y: 0, width: pageWidth, height: pageHeight, color: parsedColor,
+          });
+          
+          garmentColorPages.push({
+            page: colorPage,
+            color: color,
+            colorName: info.colorName,
+            quantity: data.quantity,
+            elements: info.elements // Track which elements belong to this page
+          } as any);
+          
+          console.log(`📄 Created page for ${info.colorName}: ${info.elements.length} elements`);
+        }
+        
+        page2 = garmentColorPages[0]?.page || null;
       } else {
         // Single color mode - create one page with default garment color
         page2 = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -424,29 +507,51 @@ grestore`;
       console.log(`📄 PASS-THROUGH MODE: Skipping generated page 2 - will append customer's original garment pages`);
     }
     
-    // Process each canvas element and embed logos on page 1 and all garment color pages
+    // Process each canvas element and embed logos on page 1 and matching garment color pages
     // NOTE: Labels are added AFTER logo embedding to appear on top
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
-      console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}`);
+      console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}, garmentColor=${element.garmentColor || 'default'}`);
       const logo = data.logos.find(l => l.id === element.logoId);
       console.log(`🔍 DEBUG: Logo lookup result:`, logo ? `Found logo: ${logo.filename}` : 'Logo not found');
       
       if (logo) {
         console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
         
-        // Embed logo on page 1 (transparent background)
+        // Embed logo on page 1 (transparent background) - ALL elements go on page 1
         console.log(`🎯 Embedding logo on page 1: ${logo.filename}`);
         await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
         
-        // Embed logo on ALL garment color pages (multi-color support)
-        for (const gcPage of garmentColorPages) {
-          console.log(`🎯 Embedding logo on ${gcPage.colorName} page: ${logo.filename}`);
-          await this.embedLogoInPages(pdfDoc, null, gcPage.page, logo, element, data.templateSize);
+        // For element-level colors, only embed on MATCHING garment color page
+        // For project-level multi-color orders, embed on ALL garment color pages
+        if (hasElementLevelColors) {
+          // Find the matching page for this element's garment color
+          const elementColor = element.garmentColor || data.garmentColor || '#171816';
+          const matchingPage = garmentColorPages.find((gcPage: any) => {
+            // Check if this page's elements array includes this element
+            if (gcPage.elements) {
+              return gcPage.elements.some((el: any) => el.logoId === element.logoId && el.x === element.x && el.y === element.y);
+            }
+            // Fallback: match by color
+            return gcPage.color.toLowerCase() === elementColor.toLowerCase();
+          });
+          
+          if (matchingPage) {
+            console.log(`🎯 Embedding logo on matching ${matchingPage.colorName} page: ${logo.filename}`);
+            await this.embedLogoInPages(pdfDoc, null, matchingPage.page, logo, element, data.templateSize);
+          } else {
+            console.warn(`⚠️ No matching page found for element color ${elementColor}`);
+          }
+        } else {
+          // Project-level multi-color or single color - embed on ALL garment color pages
+          for (const gcPage of garmentColorPages) {
+            console.log(`🎯 Embedding logo on ${gcPage.colorName} page: ${logo.filename}`);
+            await this.embedLogoInPages(pdfDoc, null, gcPage.page, logo, element, data.templateSize);
+          }
         }
         
-        console.log(`✅ Completed embedding logo on ${1 + garmentColorPages.length} pages: ${logo.filename}`);
+        console.log(`✅ Completed embedding logo: ${logo.filename}`);
       }
     }
     
