@@ -9,6 +9,7 @@ import TShirtSwatch from "@/components/ui/tshirt-swatch";
 import { manufacturerColors } from "@shared/garment-colors";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
+import CMYKColorModal from "@/components/cmyk-color-modal";
 
 // Professional color palette - same as garment color modal
 const GARMENT_COLORS = [
@@ -206,6 +207,24 @@ export function MultiColorSelector({ garmentColors, onChange, className, targetQ
                 </CollapsibleContent>
               </Collapsible>
             ))}
+          </div>
+
+          {/* Custom CMYK Color Picker */}
+          <div className="mt-4 pt-4 border-t">
+            <CMYKColorModal
+              initialColor="#FFFFFF"
+              currentColor="#FFFFFF"
+              onChange={(newColor) => {
+                handleAddColor(newColor, `Custom ${newColor.toUpperCase()}`);
+              }}
+              label="Custom Garment Color"
+              trigger={
+                <Button type="button" variant="outline" className="w-full">
+                  <Palette className="w-4 h-4 mr-2" />
+                  Create Custom CMYK Color
+                </Button>
+              }
+            />
           </div>
         </div>
       )}
