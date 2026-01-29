@@ -821,6 +821,8 @@ grestore`;
                 console.log(`✅ PDF resized to content bounds: ${resizedPdfPath}`);
                 logoPdfPath = resizedPdfPath;
                 shouldCleanup = true; // Clean up resized PDF after embedding
+                // Mark that PDF was cropped - aspect ratio fix may be needed
+                (element as any)._pdfWasCropped = true;
               } else {
                 console.log(`⚠️ PDF resizing failed, using original (may have dimension issues)`);
                 logoPdfPath = originalPdfPath;
@@ -954,27 +956,34 @@ grestore`;
       // CRITICAL: Check if actual PDF dimensions differ significantly from element dimensions
       // This can happen when Inkscape reports larger bounds (including masks/clipping paths)
       // but Ghostscript crops to actual visible content
-      const actualPdfWidthMM = actualPdfWidth / MM_TO_POINTS;
-      const actualPdfHeightMM = actualPdfHeight / MM_TO_POINTS;
-      const elementPdfWidthPts = contentWidthMM * MM_TO_POINTS;
-      const elementPdfHeightPts = contentHeightMM * MM_TO_POINTS;
+      // ONLY apply this fix when the PDF was actually cropped (not when using full page)
+      const pdfWasCropped = (element as any)._pdfWasCropped === true;
       
-      // If aspect ratios differ significantly (more than 10%), use actual PDF dimensions to preserve aspect ratio
-      const pdfAspect = actualPdfWidth / actualPdfHeight;
-      const elementAspect = elementPdfWidthPts / elementPdfHeightPts;
-      const aspectDiff = Math.abs(pdfAspect - elementAspect) / pdfAspect;
-      
-      if (aspectDiff > 0.1) {
-        console.log(`⚠️ ASPECT RATIO MISMATCH: PDF=${pdfAspect.toFixed(3)}, Element=${elementAspect.toFixed(3)}, Diff=${(aspectDiff*100).toFixed(1)}%`);
-        console.log(`🔧 Using actual PDF dimensions to preserve aspect ratio: ${actualPdfWidthMM.toFixed(2)}×${actualPdfHeightMM.toFixed(2)}mm`);
-        // Use the actual PDF dimensions (preserving aspect ratio)
-        // Scale to fit within element bounds while maintaining aspect ratio
-        const scaleX = contentWidthMM / actualPdfWidthMM;
-        const scaleY = contentHeightMM / actualPdfHeightMM;
-        const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit within bounds
-        contentWidthMM = actualPdfWidthMM * scale;
-        contentHeightMM = actualPdfHeightMM * scale;
-        console.log(`📐 Scaled to fit element bounds: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (scale=${scale.toFixed(3)})`);
+      if (pdfWasCropped) {
+        const actualPdfWidthMM = actualPdfWidth / MM_TO_POINTS;
+        const actualPdfHeightMM = actualPdfHeight / MM_TO_POINTS;
+        const elementPdfWidthPts = contentWidthMM * MM_TO_POINTS;
+        const elementPdfHeightPts = contentHeightMM * MM_TO_POINTS;
+        
+        // If aspect ratios differ significantly (more than 10%), use actual PDF dimensions to preserve aspect ratio
+        const pdfAspect = actualPdfWidth / actualPdfHeight;
+        const elementAspect = elementPdfWidthPts / elementPdfHeightPts;
+        const aspectDiff = Math.abs(pdfAspect - elementAspect) / pdfAspect;
+        
+        if (aspectDiff > 0.1) {
+          console.log(`⚠️ ASPECT RATIO MISMATCH (cropped PDF): PDF=${pdfAspect.toFixed(3)}, Element=${elementAspect.toFixed(3)}, Diff=${(aspectDiff*100).toFixed(1)}%`);
+          console.log(`🔧 Using actual PDF dimensions to preserve aspect ratio: ${actualPdfWidthMM.toFixed(2)}×${actualPdfHeightMM.toFixed(2)}mm`);
+          // Use the actual PDF dimensions (preserving aspect ratio)
+          // Scale to fit within element bounds while maintaining aspect ratio
+          const scaleX = contentWidthMM / actualPdfWidthMM;
+          const scaleY = contentHeightMM / actualPdfHeightMM;
+          const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit within bounds
+          contentWidthMM = actualPdfWidthMM * scale;
+          contentHeightMM = actualPdfHeightMM * scale;
+          console.log(`📐 Scaled to fit element bounds: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (scale=${scale.toFixed(3)})`);
+        }
+      } else {
+        console.log(`📄 PDF not cropped - using element dimensions directly: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
       }
       
       console.log(`🔍 CANVAS DIMENSIONS: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
