@@ -4723,8 +4723,9 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'Project ID is required' });
       }
 
-      // Get Odoo base URL from environment
-      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      // Get Odoo base URL from request body (set by frontend based on parent window) or fall back to env
+      const odooBaseUrl = projectData.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      console.log(`🌐 Using Odoo base URL: ${odooBaseUrl}`);
       
       // Use the projects add-to-cart endpoint for all requests
       // For vectorization-only, we pass template_id in the body to override project template lookup
