@@ -1,0 +1,443 @@
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal open state changed: false
+ 🔍 App running in iframe - requesting user data from parent window
+ showAppliqueBadgesModal state changed to: false
+ 📨 Iframe requested user data
+ 👤 Sending user data to iframe: Object
+ ✅ Received user email from Odoo: darren@serigraf.ie
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ 📡 Initializing global artwork uploader iframe message handler
+ ✅ Artwork uploader iframe message handler ready
+ 📡 Artwork Uploader iframe message listener initialized
+ Tour Manager is ready.  running_tour=null
+ 🔄 Iframe loaded - auto-sending user data: darren@serigraf.ie
+ ✅ Received user email from Odoo: darren@serigraf.ie
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ 📦 Odoo pricing response: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ 📦 Odoo pricing response: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ 📦 Odoo pricing response: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Template A3: 842x1191px, Workspace: 1700x1171, Zoom: 84%
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 handleFilesUpload called with files: Array(1)
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 Upload completed, checking for PDFs with raster content: Array(1)
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 ⚠️ Large SVG detected (4.1MB), using simplified rendering
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Mouse down on element 518eb545-683f-4530-a741-4592d4baf0ff, starting drag, shiftKey=false
+injected.js:37 🎯 Drag offset calculated: (71.0, -352.4)
+injected.js:37 🎯 Stored initial positions for 1 elements: Array(1)
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 518eb545-683f-4530-a741-4592d4baf0ff dimensions: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 518eb545-683f-4530-a741-4592d4baf0ff dimensions: Object
+injected.js:37 Preflight CMYK Check: Object
+injected.js:37 RasterWarningModal render check: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 518eb545-683f-4530-a741-4592d4baf0ff dimensions: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 PDFPreviewModal render: Object
+injected.js:37 VectorizationServiceForm render: Object
+injected.js:37 TemplateSelectorModal render Object
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: Object
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+[Violation] Permissions policy violation: fullscreen is not allowed in this document.
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+injected.js:37 Fullscreen error: TypeError: Disallowed by permissions policy
+    at toggleFullscreen (upload-tool.tsx:83:40)
+    at HTMLUnknownElement.callCallback2 (chunk-RPCDYKBN.js?v=36b1fdf5:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-RPCDYKBN.js?v=36b1fdf5:3699:24)
+    at invokeGuardedCallback (chunk-RPCDYKBN.js?v=36b1fdf5:3733:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-RPCDYKBN.js?v=36b1fdf5:3736:33)
+    at executeDispatch (chunk-RPCDYKBN.js?v=36b1fdf5:7014:11)
+    at processDispatchQueueItemsInOrder (chunk-RPCDYKBN.js?v=36b1fdf5:7034:15)
+    at processDispatchQueue (chunk-RPCDYKBN.js?v=36b1fdf5:7043:13)
+    at dispatchEventsForPlugins (chunk-RPCDYKBN.js?v=36b1fdf5:7051:11)
+    at chunk-RPCDYKBN.js?v=36b1fdf5:7174:20
+(anonymous) @ injected.js:37
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+injected.js:37 Template A3: 842x1191px, Workspace: 642x1171, Zoom: 65%
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 518eb545-683f-4530-a741-4592d4baf0ff dimensions: {dbWidth: 284.68954120981533, dbHeight: 406.76828769458456, pixelWidth: 524.54608375, pixelHeight: 749.4785772500001, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 4270934}

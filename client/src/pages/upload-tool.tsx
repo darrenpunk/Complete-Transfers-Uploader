@@ -76,18 +76,30 @@ export default function UploadTool() {
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Fullscreen toggle handler
-  const toggleFullscreen = async () => {
-    try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+  // Fullscreen toggle handler - opens new tab when in iframe, uses Fullscreen API otherwise
+  const toggleFullscreen = () => {
+    const isInIframe = window.self !== window.top;
+    
+    if (isInIframe) {
+      // In iframe: open app in a new browser tab (simpler and more reliable than popup)
+      const currentUrl = window.location.href;
+      window.open(currentUrl, '_blank');
+      return;
+    }
+    
+    // Standalone: use Fullscreen API
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
         setIsFullscreen(true);
-      } else {
-        await document.exitFullscreen();
+      }).catch((err) => {
+        console.error('Fullscreen error:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
         setIsFullscreen(false);
-      }
-    } catch (err) {
-      console.error('Fullscreen error:', err);
+      }).catch((err) => {
+        console.error('Exit fullscreen error:', err);
+      });
     }
   };
 
