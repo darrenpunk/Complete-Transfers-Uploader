@@ -76,7 +76,7 @@ export class MemStorage implements IStorage {
   private initializeTemplateSizes() {
     const standardSizes = [
       // Screen Printed Transfers - Full Colour
-      { id: "template-A3", name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null },
+      { id: "template-A3", name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, bleedMargin: 3 },
       { id: "template-A4", name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null },
       { id: "template-A5", name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null },
       { id: "template-A6", name: "A6", label: "A6", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null },
@@ -87,7 +87,7 @@ export class MemStorage implements IStorage {
       { id: "template-295x300", name: "295x300", label: "295×300mm", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null },
       
       // Screen Printed Transfers - Full Colour Metallic
-      { id: "metallic-A3", name: "metallic_A3", label: "A3 Metallic", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null },
+      { id: "metallic-A3", name: "metallic_A3", label: "A3 Metallic", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, bleedMargin: 3 },
       { id: "metallic-A4", name: "metallic_A4", label: "A4 Metallic", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null },
       { id: "metallic-A5", name: "metallic_A5", label: "A5 Metallic", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null },
       { id: "metallic-A6", name: "metallic_A6", label: "A6 Metallic", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null },
@@ -99,11 +99,11 @@ export class MemStorage implements IStorage {
       
       // Screen Printed Transfers - Full Colour HD
       { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
-      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
-      { id: "hd-295x300", name: "hd_295x300", label: "295×300mm HD", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
+      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null },
+      { id: "hd-295x300", name: "hd_295x300", label: "295×300mm HD", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null },
       
       // Screen Printed Transfers - Single Colour
-      { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
+      { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, bleedMargin: 3 },
       { id: "single-A4", name: "single_A4", label: "A4 Single Colour", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
       { id: "single-A5", name: "single_A5", label: "A5 Single Colour", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
       { id: "single-A6", name: "single_A6", label: "A6 Single Colour", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
@@ -114,7 +114,7 @@ export class MemStorage implements IStorage {
       { id: "single-295x300", name: "single_295x300", label: "295×300mm Single Colour", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
       
       // Screen Printed Transfers - Zero
-      { id: "zero-A3", name: "zero_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null },
+      { id: "zero-A3", name: "zero_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, bleedMargin: 3 },
       { id: "zero-A4", name: "zero_A4", label: "A4 Zero", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null },
       { id: "zero-A5", name: "zero_A5", label: "A5 Zero", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null },
       { id: "zero-A6", name: "zero_A6", label: "A6 Zero", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null },
@@ -128,7 +128,7 @@ export class MemStorage implements IStorage {
       { id: "dtf-large", name: "large_dtf", label: "1000×550mm DTF", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: "placeholders/dtf_large.svg", bleedMargin: 3 },
       
       // Digital Transfers - UV DTF
-      { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3 UV DTF", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Hard Surface Transfers", placeholderImage: null },
+      { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3 UV DTF", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Hard Surface Transfers", placeholderImage: null, bleedMargin: 3 },
       
       // Digital Transfers - Custom Badges
       { id: "woven-A6", name: "woven_A6", label: "A6 Woven", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null },
@@ -143,7 +143,7 @@ export class MemStorage implements IStorage {
       { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null },
       
       // Screen Printed Transfers - Reflective (Single Colour)
-      { id: "reflective-A3", name: "reflective_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null },
+      { id: "reflective-A3", name: "reflective_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, bleedMargin: 3 },
       { id: "reflective-A4", name: "reflective_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null },
       { id: "reflective-A5", name: "reflective_A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null },
       { id: "reflective-A6", name: "reflective_A6", label: "A6", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null },
@@ -156,7 +156,7 @@ export class MemStorage implements IStorage {
       { id: "sublimation-A2-fabric", name: "sublimation_A2_fabric", label: "A2 Fabric", width: 420, height: 594, pixelWidth: 1191, pixelHeight: 1684, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-A3-fabric", name: "sublimation_A3_fabric", label: "A3 Fabric", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-A4-fabric", name: "sublimation_A4_fabric", label: "A4 Fabric", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
-      { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Hard Surface", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
+      { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Hard Surface", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, bleedMargin: 3 },
       { id: "sublimation-A4", name: "sublimation_A4", label: "A4 Hard Surface", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-mug", name: "sublimation_mug", label: "Mug Size", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-A5", name: "sublimation_A5", label: "A5 Sublimation", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
