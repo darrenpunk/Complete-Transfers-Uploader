@@ -81,9 +81,25 @@ export default function UploadTool() {
     const isInIframe = window.self !== window.top;
     
     if (isInIframe) {
-      // In iframe: open app in a new browser tab (simpler and more reliable than popup)
-      const currentUrl = window.location.href;
-      window.open(currentUrl, '_blank');
+      // In iframe: open app in a new browser tab with partner email and Odoo URL preserved
+      const url = new URL(window.location.href);
+      
+      // Pass partner email if we have it (for cart assignment)
+      if (partnerEmail) {
+        url.searchParams.set('email', partnerEmail);
+      }
+      
+      // Pass the Odoo origin so the new tab knows which server to use
+      if (document.referrer) {
+        try {
+          const referrerOrigin = new URL(document.referrer).origin;
+          url.searchParams.set('odoo', referrerOrigin);
+        } catch (e) {
+          console.error('Failed to parse referrer:', e);
+        }
+      }
+      
+      window.open(url.toString(), '_blank');
       return;
     }
     
@@ -110,6 +126,25 @@ export default function UploadTool() {
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Track Odoo URL from URL params (for standalone mode opened from iframe)
+  const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(null);
+
+  // Check URL params for email and odoo URL (when opened from fullscreen button in iframe)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailFromUrl = urlParams.get('email');
+    const odooFromUrl = urlParams.get('odoo');
+    
+    if (emailFromUrl) {
+      console.log('✅ Partner email from URL params:', emailFromUrl);
+      setPartnerEmail(emailFromUrl);
+    }
+    if (odooFromUrl) {
+      console.log('✅ Odoo URL from URL params:', odooFromUrl);
+      setOdooUrlFromParams(odooFromUrl);
+    }
   }, []);
 
   // Detect if in iframe and get logged-in user's email from parent Odoo window
@@ -281,9 +316,16 @@ export default function UploadTool() {
       // Check if running in iframe
       const isInIframe = window.self !== window.top;
       
-      // Determine Odoo base URL dynamically based on parent window when in iframe
+      // Determine Odoo base URL dynamically:
+      // 1. First check URL params (set when opened from fullscreen button in iframe)
+      // 2. Then check parent window referrer (when running in iframe)
+      // 3. Fall back to environment variable
       let dynamicOdooUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-      if (isInIframe && document.referrer) {
+      
+      if (odooUrlFromParams) {
+        dynamicOdooUrl = odooUrlFromParams;
+        console.log('🌐 Using Odoo URL from URL params:', dynamicOdooUrl);
+      } else if (isInIframe && document.referrer) {
         try {
           const referrerUrl = new URL(document.referrer);
           dynamicOdooUrl = referrerUrl.origin;
