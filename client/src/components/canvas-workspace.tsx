@@ -1488,6 +1488,52 @@ export default function CanvasWorkspace({
     }
   };
 
+  // Function to center all content on canvas without scaling
+  const handleCenterOnCanvas = () => {
+    if (!template || !canvasElements || canvasElements.length === 0) {
+      console.log('❌ Cannot center: missing template or elements');
+      return;
+    }
+    
+    // Find the bounding box of all elements (using center-based coordinates)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    canvasElements.forEach(element => {
+      const isRotated = element.rotation === 90 || element.rotation === 270;
+      const visualWidth = isRotated ? element.height : element.width;
+      const visualHeight = isRotated ? element.width : element.height;
+      
+      const left = element.x - visualWidth / 2;
+      const right = element.x + visualWidth / 2;
+      const top = element.y - visualHeight / 2;
+      const bottom = element.y + visualHeight / 2;
+      
+      minX = Math.min(minX, left);
+      maxX = Math.max(maxX, right);
+      minY = Math.min(minY, top);
+      maxY = Math.max(maxY, bottom);
+    });
+    
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
+    const contentCenterX = (minX + maxX) / 2;
+    const contentCenterY = (minY + maxY) / 2;
+    
+    // The canvas center is at (0, 0) in our coordinate system
+    const offsetX = -contentCenterX;
+    const offsetY = -contentCenterY;
+    
+    console.log(`🎯 Centering content on canvas: offset (${offsetX.toFixed(1)}, ${offsetY.toFixed(1)})mm`);
+    
+    // Move all elements by the offset to center them
+    canvasElements.forEach(element => {
+      updateElementDirect(element.id, {
+        x: element.x + offsetX,
+        y: element.y + offsetY
+      });
+    });
+  };
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -1759,6 +1805,24 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Scale and center all content within safety margins</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {/* Center on Canvas Button - show when elements exist on canvas */}
+              {canvasElements && canvasElements.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCenterOnCanvas}
+                    >
+                      <AlignCenter className="w-4 h-4 mr-1" />
+                      Center
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Center all content on canvas without scaling</p>
                   </TooltipContent>
                 </Tooltip>
               )}
