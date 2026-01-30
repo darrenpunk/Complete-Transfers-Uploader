@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart } from "lucide-react";
+import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2 } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -74,6 +74,31 @@ export default function UploadTool() {
   const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Fullscreen toggle handler
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error('Fullscreen error:', err);
+    }
+  };
+
+  // Listen for fullscreen changes (e.g., user presses Escape)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   // Detect if in iframe and get logged-in user's email from parent Odoo window
   useEffect(() => {
@@ -1364,6 +1389,9 @@ export default function UploadTool() {
             <Button variant="outline" onClick={handleStartOver}>
               <RotateCcw className="w-4 h-4 mr-2" />
               Start Over
+            </Button>
+            <Button variant="outline" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
             <Button>
               <Save className="w-4 h-4 mr-2" />
