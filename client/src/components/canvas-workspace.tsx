@@ -1513,7 +1513,9 @@ export default function CanvasWorkspace({
   const hasElementsOutsideMargins = canvasElements.some(element => {
     if (!element.isVisible) return false;
     
-    const marginInMm = 3; // 3mm safety margin
+    // For templates with bleed, the bleed area serves as the safety zone
+    // so we only check against the canvas edge (no additional margin needed)
+    const marginInMm = bleedMarginMm > 0 ? 0 : 3; // 3mm safety margin only for non-bleed templates
     const templateHalfWidth = template.width / 2;
     const templateHalfHeight = template.height / 2;
     
