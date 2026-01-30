@@ -61,6 +61,22 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
           </DialogDescription>
         </DialogHeader>
 
+        {/* Action Button - at top for easy access */}
+        <Button
+          className="w-full mt-4"
+          onClick={() => {
+            if (onStartUploading) {
+              onStartUploading();
+            } else {
+              onOpenChange(false);
+            }
+          }}
+          data-testid="button-start-uploading"
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Start Uploading
+        </Button>
+
         <div className="space-y-6 py-4">
           {/* File Types */}
           <div>
@@ -141,22 +157,6 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
               View Full Artwork Requirements
             </Button>
           </div>
-
-          {/* Action Button */}
-          <Button
-            className="w-full"
-            onClick={() => {
-              if (onStartUploading) {
-                onStartUploading();
-              } else {
-                onOpenChange(false);
-              }
-            }}
-            data-testid="button-start-uploading"
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Start Uploading
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
