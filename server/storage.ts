@@ -98,9 +98,9 @@ export class MemStorage implements IStorage {
       { id: "metallic-295x300", name: "metallic_295x300", label: "295×300mm Metallic", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null },
       
       // Screen Printed Transfers - Full Colour HD
-      { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null },
-      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null },
-      { id: "hd-295x300", name: "hd_295x300", label: "295×300mm HD", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null },
+      { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
+      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
+      { id: "hd-295x300", name: "hd_295x300", label: "295×300mm HD", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3 },
       
       // Screen Printed Transfers - Single Colour
       { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null },
