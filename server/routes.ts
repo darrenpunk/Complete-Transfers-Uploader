@@ -2796,13 +2796,24 @@ export async function registerRoutes(app: express.Application) {
                               
                               // CRITICAL FIX: Update originalPdfBounds with Inkscape-detected position
                               // This ensures PDF cropping uses the correct content location (not the guessed center)
-                              if (originalPdfBounds && originalPdfBounds.width < 1 && svgBoundsX !== undefined && svgBoundsY !== undefined) {
-                                console.log(`🔧 Ghostscript bbox failed - updating originalPdfBounds with Inkscape position: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                              // IMPORTANT: Inkscape uses top-down Y coords (Y=0 at top), PDF uses bottom-up Y coords (Y=0 at bottom)
+                              // Must convert: pdfY = pageHeight - inkscapeY - contentHeight
+                              if (originalPdfBounds && originalPdfBounds.width < 1 && svgBoundsX !== undefined && svgBoundsY !== undefined && pdfPageDimensions) {
+                                // Convert Inkscape (top-down) Y to PDF (bottom-up) Y
+                                const pageHeight = pdfPageDimensions.heightPts;
+                                const pdfYMin = pageHeight - svgBoundsY - inkscapeHeight; // Bottom of content in PDF coords
+                                const pdfYMax = pageHeight - svgBoundsY; // Top of content in PDF coords
+                                
+                                console.log(`🔧 Ghostscript bbox failed - converting Inkscape coords to PDF coords:`);
+                                console.log(`   Inkscape: y=${svgBoundsY.toFixed(2)}, height=${inkscapeHeight.toFixed(2)} (top-down)`);
+                                console.log(`   Page height: ${pageHeight.toFixed(2)}pts`);
+                                console.log(`   PDF coords: yMin=${pdfYMin.toFixed(2)}, yMax=${pdfYMax.toFixed(2)} (bottom-up)`);
+                                
                                 originalPdfBounds = {
                                   xMin: svgBoundsX,
-                                  yMin: svgBoundsY,
+                                  yMin: pdfYMin,
                                   xMax: svgBoundsX + inkscapeWidth,
-                                  yMax: svgBoundsY + inkscapeHeight,
+                                  yMax: pdfYMax,
                                   width: inkscapeWidth,
                                   height: inkscapeHeight,
                                   units: 'pt'
