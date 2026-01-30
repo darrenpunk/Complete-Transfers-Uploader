@@ -1,0 +1,70 @@
+2026-01-30 14:37:22,009 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/update_json/msg HTTP/1.0" 200 - 19 0.006 0.007
+2026-01-30 14:37:22,040 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/order/check/msg HTTP/1.0" 200 - 24 0.019 0.011
+2026-01-30 14:37:22,159 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.iap.tools.iap_tools: iap jsonrpc https://ocn.odoo.com/iap/ocn/send
+2026-01-30 14:37:22,213 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/update_json HTTP/1.0" 200 - 303 0.176 0.214
+2026-01-30 14:37:22,256 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/order/check/msg HTTP/1.0" 200 - 24 0.005 0.008
+2026-01-30 14:37:22,273 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/update_json/msg HTTP/1.0" 200 - 19 0.009 0.008
+2026-01-30 14:37:22,379 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.fetchmail: Fetched 1 email(s) on imap server Zoho; 1 succeeded, 0 failed.
+2026-01-30 14:37:22,392 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "POST /websocket/peek_notifications HTTP/1.1" 200 - 14 0.004 0.008
+2026-01-30 14:37:22,402 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.fetchmail: start checking for new emails on imap server Zoho 
+2026-01-30 14:37:22,453 4 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.registry: At least one model cache has been invalidated, signaling through the database.
+2026-01-30 14:37:22,454 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 216.244.66.196 - - [30/Jan/2026 14:37:22] "GET /shop/category/embroidery-madeira-thread-polyester-polyneon-40-1000m-185/page/15 HTTP/1.0" 200 - 617 0.320 1.329
+2026-01-30 14:37:22,472 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874131?access_token=c55fa7e8-0e94-407b-ac82-0dcbf9cbc2d1 HTTP/1.0" 200 - 7 0.002 0.004
+2026-01-30 14:37:22,484 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874132?access_token=ad558cd8-d26d-4e43-9a68-0021ec891ff4 HTTP/1.0" 200 - 5 0.001 0.003
+2026-01-30 14:37:22,523 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874131?access_token=c55fa7e8-0e94-407b-ac82-0dcbf9cbc2d1 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,570 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874132?access_token=ad558cd8-d26d-4e43-9a68-0021ec891ff4 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,614 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874131?access_token=c55fa7e8-0e94-407b-ac82-0dcbf9cbc2d1 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,627 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874132?access_token=ad558cd8-d26d-4e43-9a68-0021ec891ff4 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,643 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874131?access_token=c55fa7e8-0e94-407b-ac82-0dcbf9cbc2d1 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,656 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874132?access_token=ad558cd8-d26d-4e43-9a68-0021ec891ff4 HTTP/1.0" 304 - 5 0.001 0.003
+2026-01-30 14:37:22,672 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874131?access_token=c55fa7e8-0e94-407b-ac82-0dcbf9cbc2d1 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,674 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.fetchmail: Fetched 0 email(s) on imap server Zoho; 0 succeeded, 0 failed.
+2026-01-30 14:37:22,685 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:22] "GET /web/image/4874132?access_token=ad558cd8-d26d-4e43-9a68-0021ec891ff4 HTTP/1.0" 304 - 5 0.001 0.004
+2026-01-30 14:37:22,695 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Job `Fetchmail Service` done.
+2026-01-30 14:37:22,707 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.modules.registry: Invalidating all model caches after database signaling.
+2026-01-30 14:37:22,711 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Starting job `Email Queue Manager`.
+2026-01-30 14:37:22,761 16 INFO ? odoo.modules.registry: Invalidating all model caches after database signaling.
+2026-01-30 14:37:22,767 16 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_http: Generating routing map for key 3
+2026-01-30 14:37:22,825 4 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.website_product_artworks.models.models: cart update called
+2026-01-30 14:37:22,918 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:22] "POST /shop/cart/update_json HTTP/1.0" 200 - 217 0.078 0.093
+2026-01-30 14:37:23,139 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:23] "POST /shop/check_submit_rfq HTTP/1.0" 200 - 27 0.008 0.371
+2026-01-30 14:37:23,276 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Mail (mail.mail) with ID 537475 and Message-Id '<69B0C8C2-F469-4D27-89C5-FF9ED1F40589@serigraf.ie>' from 'notifications@serigraf.com' to (redacted) 'd**********th@te.com' successfully sent
+2026-01-30 14:37:23,276 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Total emails tried by SMTP: 1
+2026-01-30 14:37:23,285 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.models.unlink: User #1 deleted mail.mail records with IDs: [537475] 
+2026-01-30 14:37:23,459 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Mail (mail.mail) with ID 537476 and Message-Id '<69B0C8C2-F469-4D27-89C5-FF9ED1F40589@serigraf.ie>' from 'notifications@serigraf.com' to (redacted) 'c****@serigraf.ie' successfully sent
+2026-01-30 14:37:23,459 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Total emails tried by SMTP: 1
+2026-01-30 14:37:23,465 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.models.unlink: User #1 deleted mail.mail records with IDs: [537476]
+2026-01-30 14:37:23,627 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Mail (mail.mail) with ID 537477 and Message-Id '<69B0C8C2-F469-4D27-89C5-FF9ED1F40589@serigraf.ie>' from 'notifications@serigraf.com' to (redacted) 'd**********ll@te.com' successfully sent
+2026-01-30 14:37:23,627 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Total emails tried by SMTP: 1
+2026-01-30 14:37:23,634 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.models.unlink: User #1 deleted mail.mail records with IDs: [537477]
+2026-01-30 14:37:23,635 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.mail.models.mail_mail: Sent batch 3 emails via mail server ID #23
+2026-01-30 14:37:23,636 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Job `Email Queue Manager` done.
+2026-01-30 14:37:23,641 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Starting job `Sync Artwork PDFs to Manufacturing Tasks`. 
+2026-01-30 14:37:24,598 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.artwork_uploader.models.sale_order: ✅ Cron PDF sync complete: 0 synced, 22805 skipped (no PDF on line), 0 errors
+2026-01-30 14:37:24,598 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Job `Sync Artwork PDFs to Manufacturing Tasks` done.
+2026-01-30 14:37:24,631 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Starting job `Do Not Delete : Process Queue Jobs (MailChimp)`.
+2026-01-30 14:37:24,633 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Job `Do Not Delete : Process Queue Jobs (MailChimp)` done.
+2026-01-30 14:37:24,638 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Starting job `Reminder scheduler`.
+2026-01-30 14:37:24,640 8578 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_cron: Job `Reminder scheduler` done.
+2026-01-30 14:37:24,643 8578 INFO ? werkzeug: 10.0.108.58 - - [30/Jan/2026 14:37:24] "POST /xmlrpc/2/object HTTP/1.1" 200 - 328 0.810 5.969
+2026-01-30 14:37:27,106 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 54.39.0.69 - - [30/Jan/2026 14:37:27] "GET /shop/813-3837-burmilana-12-1000m-dark-grey-3837-27664?page=54 HTTP/1.0" 200 - 204 0.061 0.237
+2026-01-30 14:37:27,704 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 54.145.186.166 - - [30/Jan/2026 14:37:27] "GET /shop/dtf60r-dtf-film-60cm-40899 HTTP/1.0" 200 - 107 0.036 0.078
+2026-01-30 14:37:30,443 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 78.16.243.110 - - [30/Jan/2026 14:37:30] "GET /web?debug=assets HTTP/1.0" 200 - 129 0.051 0.586
+2026-01-30 14:37:32,995 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 54.145.186.166 - - [30/Jan/2026 14:37:32] "GET /shop/sq45s-squeezer-scissors-straight-4-5-sq45s-28664 HTTP/1.0" 200 - 104 0.036 0.070
+2026-01-30 14:37:34,981 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 185.192.16.207 - - [30/Jan/2026 14:37:34] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 29 0.015 0.024
+2026-01-30 14:37:34,995 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 185.192.16.207 - - [30/Jan/2026 14:37:34] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.003 0.007
+2026-01-30 14:37:37,624 4 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_model: Access Denied by ACLs for operation: write, uid: 2427, model: website.page
+2026-01-30 14:37:37,993 16 INFO support-atharva-serigraf-16-main-12369616 odoo.addons.base.models.ir_http: Generating routing map for key 1
+2026-01-30 14:37:38,258 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 66.249.64.166 - - [30/Jan/2026 14:37:38] "GET /web/image/product.template/26356/image_1024?unique=51bcad0 HTTP/1.0" 200 - 5 0.006 0.008
+2026-01-30 14:37:38,344 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:38] "GET / HTTP/1.0" 200 - 165 0.064 0.791
+2026-01-30 14:37:38,714 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:38] "POST /website_mass_mailing/is_subscriber HTTP/1.0" 200 - 4 0.002 0.005
+2026-01-30 14:37:38,725 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:38] "POST /website_mass_mailing/is_subscriber HTTP/1.0" 200 - 4 0.002 0.005
+2026-01-30 14:37:38,748 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.1.201 - - [30/Jan/2026 14:37:38] "POST /shop/get_product_data HTTP/1.0" 200 - 16 0.006 0.011
+2026-01-30 14:37:39,302 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 54.145.186.166 - - [30/Jan/2026 14:37:39] "GET /shop/ht1008-multitrans-metallic-silver-a4-100-pack-31792 HTTP/1.0" 200 - 389 0.136 1.177
+2026-01-30 14:37:41,544 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 47.128.121.110 - - [30/Jan/2026 14:37:41] "GET /shop/subs6108-ultrachrome-ds-black-t46d140-1-1-litre-33888?page=4&search=6 HTTP/1.0" 200 - 110 0.044 0.102
+2026-01-30 14:37:41,984 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 47.128.121.110 - - [30/Jan/2026 14:37:41] "GET /web/image/product.template/33888/image_256 HTTP/1.0" 206 - 5 0.001 0.005
+2026-01-30 14:37:41,996 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:41] "POST /websocket/update_bus_presence HTTP/1.1" 200 - 28 0.013 0.023
+2026-01-30 14:37:42,005 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:42] "POST /websocket/peek_notifications HTTP/1.1" 200 - 12 0.003 0.005
+2026-01-30 14:37:42,005 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:42] "POST /websocket/peek_notifications HTTP/1.1" 200 - 9 0.002 0.005
+2026-01-30 14:37:42,406 4 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:42] "POST /mail/thread/messages HTTP/1.0" 200 - 8 0.005 0.006
+2026-01-30 14:37:42,420 16 INFO support-atharva-serigraf-16-main-12369616 werkzeug: 93.107.12.61 - - [30/Jan/2026 14:37:42] "POST /mail/thread/data HTTP/1.0" 200 - 36 0.016 0.016
