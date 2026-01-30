@@ -125,7 +125,7 @@ export class MemStorage implements IStorage {
       
       // Digital Transfers - DTF
       { id: "dtf-SRA3", name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: null },
-      { id: "dtf-large", name: "large_dtf", label: "1000×550mm DTF", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: "placeholders/dtf_large.svg" },
+      { id: "dtf-large", name: "large_dtf", label: "1000×550mm DTF", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: "placeholders/dtf_large.svg", bleedMargin: 3 },
       
       // Digital Transfers - UV DTF
       { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3 UV DTF", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Hard Surface Transfers", placeholderImage: null },

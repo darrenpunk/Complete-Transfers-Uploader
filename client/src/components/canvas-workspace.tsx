@@ -857,8 +857,11 @@ export default function CanvasWorkspace({
         mmToPixelRatio = 2.834645669; // 72 DPI conversion
       }
       // Convert element center position to screen coordinates
-      const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
-      const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
+      // Account for bleed margin offset if present
+      const bleedMm = (template as any).bleedMargin || 0;
+      const bleedOffset = bleedMm * mmToPixelRatio * (zoom / 100);
+      const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2 + bleedOffset;
+      const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2 + bleedOffset;
       const elementCenterX = templateCenterX + element.x * mmToPixelRatio * (zoom / 100);
       const elementCenterY = templateCenterY + element.y * mmToPixelRatio * (zoom / 100);
       
@@ -1493,8 +1496,18 @@ export default function CanvasWorkspace({
     );
   }
 
-  const canvasWidth = template.pixelWidth * (zoom / 100);
-  const canvasHeight = template.pixelHeight * (zoom / 100);
+  // Calculate bleed margin in pixels (if template has bleedMargin property)
+  const bleedMarginMm = (template as any).bleedMargin || 0;
+  const mmToPixels = template.pixelWidth / template.width; // pixels per mm at 100% zoom
+  const bleedInPixels = bleedMarginMm * mmToPixels * (zoom / 100);
+  
+  // Canvas dimensions including bleed
+  const canvasWidth = (template.pixelWidth * (zoom / 100)) + (bleedInPixels * 2);
+  const canvasHeight = (template.pixelHeight * (zoom / 100)) + (bleedInPixels * 2);
+  
+  // Inner canvas dimensions (the original template size without bleed)
+  const innerCanvasWidth = template.pixelWidth * (zoom / 100);
+  const innerCanvasHeight = template.pixelHeight * (zoom / 100);
 
   // Compute if any elements are outside safety margins
   const hasElementsOutsideMargins = canvasElements.some(element => {
@@ -1895,10 +1908,39 @@ export default function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: project.garmentColor || '#EAEAEA'
+                backgroundColor: bleedMarginMm > 0 ? '#808080' : (project.garmentColor || '#EAEAEA')
               }}
               onClick={handleCanvasClick}
             >
+            {/* Bleed Area Indicator - shows inner canvas area for templates with bleed margin */}
+            {bleedMarginMm > 0 && (
+              <div 
+                className="absolute pointer-events-none"
+                style={{
+                  left: bleedInPixels,
+                  top: bleedInPixels,
+                  width: innerCanvasWidth,
+                  height: innerCanvasHeight,
+                  backgroundColor: project.garmentColor || '#EAEAEA',
+                  border: '2px dashed rgba(0, 0, 0, 0.3)'
+                }}
+              >
+                {/* Labels showing canvas dimensions (original size, not including bleed) */}
+                <div 
+                  className="absolute text-xs font-medium text-gray-600 bg-white/80 px-1 rounded"
+                  style={{ top: 4, left: 4 }}
+                >
+                  {template.width}×{template.height}mm
+                </div>
+                <div 
+                  className="absolute text-xs text-gray-500 bg-white/80 px-1 rounded"
+                  style={{ bottom: 4, right: 4 }}
+                >
+                  Canvas (Bleed: {bleedMarginMm}mm)
+                </div>
+              </div>
+            )}
+            
             {/* Grid Pattern Overlay */}
             {showGrid && (
               <div
@@ -2016,9 +2058,11 @@ export default function CanvasWorkspace({
               
               // Convert center-based coordinates to top-left for rendering
               // element.x/y is the center position relative to template center
-              // Template center in pixels
-              const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2;
-              const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2;
+              // Template center in pixels (account for bleed margin offset if present)
+              const bleedMm = (template as any).bleedMargin || 0;
+              const bleedOffset = bleedMm * mmToPixelRatio * (zoom / 100);
+              const templateCenterX = (template.width * mmToPixelRatio * (zoom / 100)) / 2 + bleedOffset;
+              const templateCenterY = (template.height * mmToPixelRatio * (zoom / 100)) / 2 + bleedOffset;
               
               // Convert center position to top-left corner for CSS positioning
               const elementX = templateCenterX + (element.x * mmToPixelRatio * (zoom / 100)) - elementWidth / 2;

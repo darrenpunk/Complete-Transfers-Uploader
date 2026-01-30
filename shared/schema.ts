@@ -105,6 +105,7 @@ export const templateSizes = pgTable("template_sizes", {
   group: text("group").notNull(), // template group category
   description: text("description"), // product description
   placeholderImage: text("placeholder_image"), // Template-specific placeholder for Dropbox uploads
+  bleedMargin: integer("bleed_margin"), // Optional bleed margin in mm (added around canvas, label shows inner dimensions)
 });
 
 export const vectorizationRequests = pgTable("vectorization_requests", {
