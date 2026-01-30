@@ -1496,9 +1496,52 @@ export default function CanvasWorkspace({
   const canvasWidth = template.pixelWidth * (zoom / 100);
   const canvasHeight = template.pixelHeight * (zoom / 100);
 
+  // Compute if any elements are outside safety margins
+  const hasElementsOutsideMargins = canvasElements.some(element => {
+    if (!element.isVisible) return false;
+    
+    const marginInMm = 3; // 3mm safety margin
+    const templateHalfWidth = template.width / 2;
+    const templateHalfHeight = template.height / 2;
+    
+    const isRotated = element.rotation === 90 || element.rotation === 270;
+    const visualWidth = isRotated ? element.height : element.width;
+    const visualHeight = isRotated ? element.width : element.height;
+    
+    const elementHalfWidth = visualWidth / 2;
+    const elementHalfHeight = visualHeight / 2;
+    
+    const elementLeft = element.x - elementHalfWidth;
+    const elementRight = element.x + elementHalfWidth;
+    const elementTop = element.y - elementHalfHeight;
+    const elementBottom = element.y + elementHalfHeight;
+    
+    const marginLeft = -templateHalfWidth + marginInMm;
+    const marginRight = templateHalfWidth - marginInMm;
+    const marginTop = -templateHalfHeight + marginInMm;
+    const marginBottom = templateHalfHeight - marginInMm;
+    
+    return elementLeft < marginLeft || elementTop < marginTop || elementRight > marginRight || elementBottom > marginBottom;
+  });
+
   return (
     <TooltipProvider>
     <div className="flex-1 flex flex-col">
+      {/* Position Warning Banner - Outside Canvas */}
+      {(canvasElements.length === 0 || hasElementsOutsideMargins) && (
+        <div className="bg-red-50 border-b border-red-300 px-4 py-2 text-center">
+          <p className="text-sm text-red-800 font-medium">
+            {canvasElements.length === 0 ? '⚠️ Safety Zone Warning' : '⚠️ Position Warning'}
+          </p>
+          <p className="text-xs text-red-700">
+            {canvasElements.length === 0 
+              ? 'Keep all content within the red guide lines (3mm from edges) to avoid clipping during production'
+              : 'Some elements are outside the safety zone. Move them within the red guide lines to avoid clipping during production.'
+            }
+          </p>
+        </div>
+      )}
+      
       {/* Garment Color Required Warning */}
       {!project.garmentColor && (
         <div className="bg-red-500 text-white px-4 py-2 text-sm font-medium">
@@ -1914,72 +1957,6 @@ export default function CanvasWorkspace({
                       >
                         3mm
                       </div>
-                      {/* Dynamic Position Warning */}
-                      {(() => {
-                        // Check if any elements are outside safety margins
-                        const hasElementsOutsideMargins = canvasElements.some(element => {
-                          if (!element.isVisible) return false;
-                          
-                          const marginInMm = 3; // 3mm safety margin
-                          
-                          // Center-based coordinate system
-                          // (0,0) is at the center of the template
-                          const templateHalfWidth = template.width / 2;
-                          const templateHalfHeight = template.height / 2;
-                          
-                          // Use element dimensions directly (they're already correct for rotated elements)
-                          // The element.x/y position is the center of the element relative to template center
-                          const isRotated = element.rotation === 90 || element.rotation === 270;
-                          const visualWidth = isRotated ? element.height : element.width;
-                          const visualHeight = isRotated ? element.width : element.height;
-                          
-                          // Calculate element bounds from center position
-                          const elementHalfWidth = visualWidth / 2;
-                          const elementHalfHeight = visualHeight / 2;
-                          
-                          // Element edges in center-based coordinates (mm)
-                          const elementLeft = element.x - elementHalfWidth;
-                          const elementRight = element.x + elementHalfWidth;
-                          const elementTop = element.y - elementHalfHeight;
-                          const elementBottom = element.y + elementHalfHeight;
-                          
-                          // Safety margins in center-based coordinates (mm)
-                          const marginLeft = -templateHalfWidth + marginInMm;
-                          const marginRight = templateHalfWidth - marginInMm;
-                          const marginTop = -templateHalfHeight + marginInMm;
-                          const marginBottom = templateHalfHeight - marginInMm;
-                          
-                          // Check if element edges are outside safety margins
-                          const outsideLeft = elementLeft < marginLeft;
-                          const outsideTop = elementTop < marginTop;
-                          const outsideRight = elementRight > marginRight;
-                          const outsideBottom = elementBottom > marginBottom;
-                          
-                          return outsideLeft || outsideTop || outsideRight || outsideBottom;
-                        });
-                        
-                        return (
-                          <div 
-                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                                       bg-red-50 border border-red-300 rounded-lg px-4 py-3 max-w-md text-center"
-                            style={{ 
-                              opacity: canvasElements.length === 0 ? 0.9 : (hasElementsOutsideMargins ? 0.9 : 0),
-                              pointerEvents: 'none',
-                              transition: 'opacity 0.3s ease-in-out'
-                            }}
-                          >
-                            <p className="text-sm text-red-800 font-medium">
-                              {canvasElements.length === 0 ? 'Safety Zone Warning' : 'Position Warning'}
-                            </p>
-                            <p className="text-xs text-red-700 mt-1">
-                              {canvasElements.length === 0 
-                                ? 'Keep all content within the red guide lines (3mm from edges) to avoid clipping during production'
-                                : 'Some elements are outside the safety zone. Move them within the red guide lines to avoid clipping during production.'
-                              }
-                            </p>
-                          </div>
-                        );
-                      })()}
                     </>
                   );
                 })()}
