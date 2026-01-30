@@ -241,6 +241,21 @@ export default function UploadTool() {
         // Continue without PDF
       }
       
+      // Check if running in iframe
+      const isInIframe = window.self !== window.top;
+      
+      // Determine Odoo base URL dynamically based on parent window when in iframe
+      let dynamicOdooUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      if (isInIframe && document.referrer) {
+        try {
+          const referrerUrl = new URL(document.referrer);
+          dynamicOdooUrl = referrerUrl.origin;
+          console.log('🌐 Using parent window origin for Odoo:', dynamicOdooUrl);
+        } catch (e) {
+          console.warn('Could not parse referrer URL, using fallback:', e);
+        }
+      }
+      
       // Send full project data to Odoo so it can create/update the project in its database
       const projectData = {
         name: currentProject.name,
@@ -255,6 +270,7 @@ export default function UploadTool() {
         comments: currentProject.comments || '', // Send user comments from modal
         partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
         pdfBase64: pdfBase64, // Send PDF if generated
+        odooBaseUrl: dynamicOdooUrl, // Send Odoo URL so backend knows which server to call
       };
       
       console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
@@ -264,8 +280,6 @@ export default function UploadTool() {
         console.log('✅ Including partner email for cart assignment:', partnerEmail);
       }
       
-      // Check if running in iframe (for logging purposes)
-      const isInIframe = window.self !== window.top;
       console.log(`🔗 Running in ${isInIframe ? 'iframe' : 'standalone'} mode - calling backend proxy`);
       
       // BOTH MODES: Use Replit backend proxy to add to cart

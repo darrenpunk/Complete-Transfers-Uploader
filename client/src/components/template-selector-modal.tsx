@@ -60,8 +60,19 @@ interface PricingData {
 // Detect if running in iframe (for Odoo integration)
 const isInIframe = typeof window !== 'undefined' && window !== window.parent;
 
-// Get Odoo base URL for direct API calls when in iframe
-const odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+// Get Odoo base URL dynamically - use parent window origin when in iframe, fallback to env var
+const getOdooBaseUrl = () => {
+  if (isInIframe && typeof document !== 'undefined' && document.referrer) {
+    try {
+      const referrerUrl = new URL(document.referrer);
+      return referrerUrl.origin;
+    } catch (e) {
+      console.warn('Could not parse referrer URL, using fallback:', e);
+    }
+  }
+  return import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+};
+const odooBaseUrl = getOdooBaseUrl();
 
 export default function TemplateSelectorModal({
   open,
