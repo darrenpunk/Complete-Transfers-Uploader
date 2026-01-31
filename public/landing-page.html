@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artwork Uploader - Complete Transfers</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: rgba(0, 102, 204, 0.05);
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 102, 204, 0.1);
+            color: #0066cc;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        .hero h1 span { color: #0066cc; display: block; }
+        .hero p {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .btn-group { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+        .btn-primary:hover { background: #0052a3; transform: translateY(-2px); }
+        .btn-outline {
+            background: white;
+            color: #1a1a1a;
+            border: 2px solid #ddd;
+        }
+        .btn-outline:hover { border-color: #0066cc; }
+
+        /* Stats Section */
+        .stats {
+            background: #f8f9fa;
+            padding: 48px 20px;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: #0066cc; }
+        .stat-label { font-size: 0.875rem; color: #666; margin-top: 4px; }
+
+        /* Features Section */
+        .features { padding: 80px 20px; }
+        .section-title {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .section-title h2 { font-size: 2.25rem; font-weight: 700; margin-bottom: 16px; }
+        .section-title p { font-size: 1.25rem; color: #666; max-width: 600px; margin: 0 auto; }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        @media (max-width: 992px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .features-grid { grid-template-columns: 1fr; } }
+        .feature-card {
+            padding: 24px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: #0066cc; }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 102, 204, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .feature-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+        .feature-card p { color: #666; }
+
+        /* How It Works */
+        .how-it-works {
+            background: #f8f9fa;
+            padding: 80px 20px;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        @media (max-width: 992px) { .steps-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .steps-grid { grid-template-columns: 1fr; } }
+        .step-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: rgba(0, 102, 204, 0.2);
+            margin-bottom: 16px;
+        }
+        .step h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+        .step p { color: #666; }
+
+        /* Benefits Section */
+        .benefits { padding: 80px 20px; }
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        @media (max-width: 768px) { .benefits-grid { grid-template-columns: 1fr; } }
+        .benefits h2 { font-size: 2.25rem; font-weight: 700; margin-bottom: 24px; }
+        .benefits-list { list-style: none; }
+        .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .check-icon { color: #0066cc; font-size: 20px; flex-shrink: 0; }
+        .benefits-visual {
+            background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, rgba(0, 102, 204, 0.05) 100%);
+            border-radius: 16px;
+            padding: 48px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .visual-card {
+            aspect-ratio: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: #0066cc;
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        .cta h2 { font-size: 2.25rem; font-weight: 700; margin-bottom: 16px; }
+        .cta p { font-size: 1.25rem; opacity: 0.9; margin-bottom: 32px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .btn-cta {
+            background: white;
+            color: #0066cc;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+        .btn-cta:hover { transform: translateY(-2px); }
+
+        /* Footer */
+        .footer {
+            padding: 24px 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge">
+                ✨ Professional Heat Transfers Made Easy
+            </div>
+            <h1>
+                Design Your Transfers
+                <span>In Minutes, Not Hours</span>
+            </h1>
+            <p>
+                Upload your artwork, position it perfectly, and generate production-ready PDFs. 
+                Our intuitive design tool handles all the technical details so you can focus on what matters.
+            </p>
+            <div class="btn-group">
+                <a href="/artwork/upload" class="btn btn-primary">
+                    Start Designing Now →
+                </a>
+                <a href="#how-it-works" class="btn btn-outline">
+                    See How It Works
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div>
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Template Options</div>
+                </div>
+                <div>
+                    <div class="stat-number">27</div>
+                    <div class="stat-label">Garment Colors</div>
+                </div>
+                <div>
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">CMYK Accurate</div>
+                </div>
+                <div>
+                    <div class="stat-number">&lt;2min</div>
+                    <div class="stat-label">Average Design Time</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Everything You Need</h2>
+                <p>Powerful features designed to make your workflow faster and your results better.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📤</div>
+                    <h3>Drag & Drop Upload</h3>
+                    <p>Simply drag your artwork files onto the canvas. We support PDF, SVG, AI, and image files.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>CMYK Color Preservation</h3>
+                    <p>Your exact colors are preserved throughout the process. No color shifts, no surprises.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Precise Positioning</h3>
+                    <p>Position your logos exactly where you need them with pixel-perfect accuracy.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>Multi-Color Orders</h3>
+                    <p>Order the same design on multiple garment colors in one go. Save time on repeat orders.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Production-Ready PDFs</h3>
+                    <p>Generate print-ready PDFs with correct bleeds, margins, and color profiles instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Instant Preview</h3>
+                    <p>See exactly how your transfers will look before ordering. No guesswork required.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>From artwork to order in four simple steps.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-number">01</div>
+                    <h3>Choose Your Template</h3>
+                    <p>Select from our range of transfer sizes and types - Full Colour, HD, Metallic, and more.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">02</div>
+                    <h3>Upload Your Artwork</h3>
+                    <p>Drag and drop your logo or design. We handle all the technical conversions for you.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">03</div>
+                    <h3>Position & Preview</h3>
+                    <p>Place your design exactly where you want it. See a live preview on your chosen garment color.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">04</div>
+                    <h3>Add to Cart</h3>
+                    <p>Generate your production-ready PDF and add directly to your cart. It's that simple.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits">
+        <div class="container">
+            <div class="benefits-grid">
+                <div>
+                    <h2>Why Choose Our Design Tool?</h2>
+                    <p style="color: #666; margin-bottom: 24px;">
+                        We've built this tool specifically for heat transfer professionals. 
+                        Every feature is designed to save you time and deliver perfect results.
+                    </p>
+                    <ul class="benefits-list">
+                        <li><span class="check-icon">✓</span> Professional heat transfer designs in minutes</li>
+                        <li><span class="check-icon">✓</span> Automatic CMYK conversion for perfect prints</li>
+                        <li><span class="check-icon">✓</span> Support for vector and raster artwork</li>
+                        <li><span class="check-icon">✓</span> Multi-page PDFs for multi-color garments</li>
+                        <li><span class="check-icon">✓</span> Direct integration with your shopping cart</li>
+                        <li><span class="check-icon">✓</span> No design software required</li>
+                    </ul>
+                </div>
+                <div class="benefits-visual">
+                    <div class="visual-card">⏱️</div>
+                    <div class="visual-card">🛡️</div>
+                    <div class="visual-card">🖨️</div>
+                    <div class="visual-card">✨</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <h2>Ready to Create Your First Design?</h2>
+        <p>Join thousands of satisfied customers who trust our tool for their heat transfer designs.</p>
+        <a href="/artwork/upload" class="btn-cta">
+            Get Started Free →
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Complete Transfers. All rights reserved.</p>
+    </footer>
+</body>
+</html>
