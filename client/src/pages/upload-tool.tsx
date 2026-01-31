@@ -72,6 +72,7 @@ export default function UploadTool() {
     originalFileName?: string;
   } | null>(null);
   const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
+  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -150,14 +151,39 @@ export default function UploadTool() {
   // Detect if in iframe and get logged-in user's email from parent Odoo window
   useEffect(() => {
     const isInIframe = window !== window.parent;
+    
+    // Check for email in URL params (for fullscreen/standalone mode from iframe)
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailFromUrl = urlParams.get('email');
+    
+    if (emailFromUrl) {
+      console.log('✅ User email from URL params:', emailFromUrl);
+      setPartnerEmail(emailFromUrl);
+      setAuthStatus('authenticated');
+      return;
+    }
+    
     if (isInIframe) {
       console.log('🔍 App running in iframe - requesting user data from parent window');
       
+      // Set a timeout - if no response in 5 seconds, mark as not authenticated
+      const authTimeout = setTimeout(() => {
+        console.log('⏰ Auth timeout - no user data received from parent');
+        setAuthStatus('not-authenticated');
+      }, 5000);
+      
       // Listen for user data from parent window
       const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === 'odoo-user-data' && event.data.email) {
-          console.log('✅ Received user email from Odoo:', event.data.email);
-          setPartnerEmail(event.data.email);
+        if (event.data.type === 'odoo-user-data') {
+          clearTimeout(authTimeout);
+          if (event.data.email) {
+            console.log('✅ Received user email from Odoo:', event.data.email);
+            setPartnerEmail(event.data.email);
+            setAuthStatus('authenticated');
+          } else {
+            console.log('⚠️ User data received but no email - user not logged in');
+            setAuthStatus('not-authenticated');
+          }
         }
       };
       
@@ -166,7 +192,14 @@ export default function UploadTool() {
       // Request user data from parent
       window.parent.postMessage({ type: 'request-user-data' }, '*');
       
-      return () => window.removeEventListener('message', handleMessage);
+      return () => {
+        clearTimeout(authTimeout);
+        window.removeEventListener('message', handleMessage);
+      };
+    } else {
+      // Not in iframe and no email param - not authenticated
+      console.log('⚠️ Standalone mode without email param - access restricted');
+      setAuthStatus('not-authenticated');
     }
   }, []);
 
@@ -1406,6 +1439,57 @@ export default function UploadTool() {
   }
 
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
+
+  // Authentication gate - show loading or login required screen
+  if (authStatus === 'checking') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authStatus === 'not-authenticated') {
+    const isInIframe = window !== window.parent;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <div className="mb-6">
+            <img 
+              src={completeTransfersLogoPath} 
+              alt="Complete Transfers" 
+              className="h-16 mx-auto mb-4"
+            />
+          </div>
+          <div className="bg-card rounded-lg border p-8 shadow-lg">
+            <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Login Required</h1>
+            <p className="text-muted-foreground mb-6">
+              {isInIframe 
+                ? "Please log in to your Complete Transfers account to use the artwork uploader."
+                : "This tool is only available when accessed through the Complete Transfers website. Please log in to your account first."
+              }
+            </p>
+            <Button 
+              className="w-full"
+              onClick={() => {
+                if (isInIframe) {
+                  window.parent.postMessage({ type: 'redirect-to-login' }, '*');
+                } else {
+                  window.location.href = 'https://www.completetransfers.com/web/login';
+                }
+              }}
+            >
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
