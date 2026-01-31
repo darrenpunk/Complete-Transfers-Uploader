@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 Current focus: Core functionality over complex color management features.
 
 ## Recent Fixes (Oct 2025 - Jan 2026)
+- **Jan 2026: Authentication at Product Selector Level**: Moved authentication check from app entry to product selector. Upload tool is now publicly accessible for exploration, but users must log in before clicking a product to see pricing. Authentication uses postMessage to detect logged-in user from parent Odoo window (5-second timeout), or email URL param for standalone/fullscreen mode. Login modal shows in template selector with redirect to Odoo login.
 - **Jan 2026: SVG Bounds Extraction Overhaul**: Fixed critical bounding box issues causing clipping and off-center logos. Two key problems solved:
   1. **Centering Fix**: Inkscape rebases PDF coordinates during PDF→SVG conversion, so PDF bounds (e.g., xMin=68) don't match SVG content coordinates (which start near 0). Now query actual SVG bounds with `inkscape --query-all` after conversion and use those for translate normalization.
   2. **Clipping Fix**: Ghostscript's bbox can miss masked strokes/effects that Inkscape's renderer correctly measures. Now compare Ghostscript and Inkscape dimensions, and use the larger values to prevent clipping. Example: Heineken logo where Ghostscript reported 46.7mm but actual content was 47.8mm.

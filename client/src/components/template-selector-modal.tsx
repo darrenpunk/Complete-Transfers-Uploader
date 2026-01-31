@@ -9,7 +9,7 @@ import CompleteTransferLogo from "./complete-transfer-logo";
 import type { TemplateSize } from "@shared/schema";
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 
 // Import the same icons used in the sidebar
 import dtfIconPath from "@assets/DTF_1753540006979.png";
@@ -49,6 +49,7 @@ interface TemplateSelectorModalProps {
   onBack?: () => void;
   selectedGroup?: string;
   partnerEmail?: string | null;  // Customer email for pricing lookup
+  authStatus?: 'checking' | 'authenticated' | 'not-authenticated';  // Authentication status
 }
 
 interface PricingData {
@@ -81,12 +82,14 @@ export default function TemplateSelectorModal({
   onClose,
   onBack,
   selectedGroup,
-  partnerEmail
+  partnerEmail,
+  authStatus = 'authenticated'  // Default to authenticated for backward compatibility
 }: TemplateSelectorModalProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [copies, setCopies] = useState<number>(1); // Start at 1, will be adjusted based on template
   const [inputValue, setInputValue] = useState<string>('1'); // Separate state for input display
   const [debouncedCopies, setDebouncedCopies] = useState<number>(1);
+  const [showLoginRequired, setShowLoginRequired] = useState(false);
 
   // Group templates by category first
   const groupedTemplates = templates.reduce((groups, template) => {
@@ -187,6 +190,12 @@ export default function TemplateSelectorModal({
   }, [selectedTemplate, debouncedCopies, isPricingLoading, pricingData, pricingError]);
 
   const handleTemplateSelect = (templateId: string) => {
+    // Check authentication before showing pricing
+    if (authStatus !== 'authenticated') {
+      setShowLoginRequired(true);
+      return;
+    }
+    
     setSelectedTemplate(templateId);
     // Update copies to minimum when template changes
     const template = templates.find(t => t.id === templateId);
@@ -378,6 +387,44 @@ export default function TemplateSelectorModal({
           </Button>
         </div>
       </DialogContent>
+
+      {/* Login Required Modal */}
+      <Dialog open={showLoginRequired} onOpenChange={setShowLoginRequired}>
+        <DialogContent className="max-w-md z-[60]">
+          <DialogHeader>
+            <CompleteTransferLogo size="lg" className="mb-4" />
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <AlertCircle className="h-6 w-6 text-yellow-500" />
+              Login Required
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Please log in to your Complete Transfers account to view product pricing and place orders.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button 
+              className="w-full"
+              onClick={() => {
+                const isInIframe = window !== window.parent;
+                if (isInIframe) {
+                  window.parent.postMessage({ type: 'redirect-to-login' }, '*');
+                } else {
+                  window.location.href = 'https://www.completetransfers.com/web/login';
+                }
+              }}
+            >
+              Go to Login
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setShowLoginRequired(false)}
+            >
+              Continue Browsing
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

@@ -1418,6 +1418,7 @@ export default function UploadTool() {
           }}
           selectedGroup={selectedProductGroup}
           partnerEmail={partnerEmail}
+          authStatus={authStatus}
         />
         
         {/* Applique Badges Modal - Must be here since it appears before project creation */}
@@ -1439,57 +1440,6 @@ export default function UploadTool() {
   }
 
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
-
-  // Authentication gate - show loading or login required screen
-  if (authStatus === 'checking') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (authStatus === 'not-authenticated') {
-    const isInIframe = window !== window.parent;
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md text-center">
-          <div className="mb-6">
-            <img 
-              src={completeTransfersLogoPath} 
-              alt="Complete Transfers" 
-              className="h-16 mx-auto mb-4"
-            />
-          </div>
-          <div className="bg-card rounded-lg border p-8 shadow-lg">
-            <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Login Required</h1>
-            <p className="text-muted-foreground mb-6">
-              {isInIframe 
-                ? "Please log in to your Complete Transfers account to use the artwork uploader."
-                : "This tool is only available when accessed through the Complete Transfers website. Please log in to your account first."
-              }
-            </p>
-            <Button 
-              className="w-full"
-              onClick={() => {
-                if (isInIframe) {
-                  window.parent.postMessage({ type: 'redirect-to-login' }, '*');
-                } else {
-                  window.location.href = 'https://www.completetransfers.com/web/login';
-                }
-              }}
-            >
-              Go to Login
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -1653,6 +1603,7 @@ export default function UploadTool() {
         }}
         selectedGroup={selectedProductGroup}
         partnerEmail={partnerEmail}
+        authStatus={authStatus}
       />
 
       {/* PDF Preview Modal */}
