@@ -190,8 +190,9 @@ export default function TemplateSelectorModal({
   }, [selectedTemplate, debouncedCopies, isPricingLoading, pricingData, pricingError]);
 
   const handleTemplateSelect = (templateId: string) => {
-    // Check authentication before showing pricing
-    if (authStatus !== 'authenticated') {
+    // Check authentication before showing pricing (skip in dev mode)
+    const isDev = import.meta.env.DEV;
+    if (!isDev && authStatus !== 'authenticated') {
       setShowLoginRequired(true);
       return;
     }
