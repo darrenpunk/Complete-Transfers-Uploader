@@ -338,7 +338,7 @@ export default function TemplateSelectorModal({
               <div className="bg-muted/50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm text-muted-foreground">Price Estimate</p>
+                    <p className="text-sm text-muted-foreground">Prices</p>
                     {isPricingLoading ? (
                       <p className="text-sm">Loading pricing...</p>
                     ) : pricingData ? (
@@ -359,9 +359,6 @@ export default function TemplateSelectorModal({
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">
                       {copies} × {selectedTemplateData?.label}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Prices from Odoo system
                     </p>
                   </div>
                 </div>
