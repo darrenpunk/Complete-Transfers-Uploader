@@ -53,6 +53,9 @@ app.get('/uploads/:filename', async (req, res, next) => {
   }
 });
 
+// Serve static files from public folder (landing pages, images, etc.)
+app.use(express.static('./public'));
+
 // Configure proper MIME types for uploads directory
 app.use('/uploads', express.static('./uploads', {
   setHeaders: (res, path) => {
