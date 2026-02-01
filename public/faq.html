@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Artwork Uploader</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fafafa;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 60px 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* Header */
+        .faq-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(236, 72, 153, 0.15);
+            color: #ec4899;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        .faq-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .faq-header p {
+            font-size: 1.25rem;
+            color: #a1a1aa;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* FAQ Categories */
+        .faq-section {
+            margin-bottom: 48px;
+        }
+        .faq-section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ec4899;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        /* Accordion */
+        .faq-item {
+            background: rgba(39, 39, 42, 0.5);
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .faq-item:hover {
+            border-color: rgba(236, 72, 153, 0.3);
+        }
+        .faq-question {
+            width: 100%;
+            padding: 20px 24px;
+            background: transparent;
+            border: none;
+            color: #fafafa;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+        .faq-question:hover {
+            color: #ec4899;
+        }
+        .faq-icon {
+            font-size: 1.5rem;
+            color: #ec4899;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(45deg);
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+        .faq-answer-content {
+            padding: 0 24px 20px;
+            color: #a1a1aa;
+            line-height: 1.7;
+        }
+        .faq-answer-content a {
+            color: #ec4899;
+            text-decoration: none;
+        }
+        .faq-answer-content a:hover {
+            text-decoration: underline;
+        }
+        .faq-answer-content ul {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+        .faq-answer-content li {
+            margin-bottom: 8px;
+        }
+        .faq-answer-content strong {
+            color: #fafafa;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin-top: 60px;
+            padding: 48px;
+            background: rgba(236, 72, 153, 0.1);
+            border-radius: 16px;
+            border: 1px solid rgba(236, 72, 153, 0.2);
+        }
+        .cta-section h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .cta-section p {
+            color: #a1a1aa;
+            margin-bottom: 24px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            background: #ec4899;
+            color: white;
+        }
+        .btn:hover {
+            background: #db2777;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="faq-header">
+            <div class="badge">Help Center</div>
+            <h1>Frequently Asked Questions</h1>
+            <p>Find answers to common questions about our artwork uploader and heat transfer ordering process.</p>
+        </div>
+
+        <!-- Getting Started -->
+        <div class="faq-section">
+            <h2>Getting Started</h2>
+            
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What file formats can I upload?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        We accept a wide range of file formats:
+                        <ul>
+                            <li><strong>Vector files (recommended):</strong> PDF, AI, EPS, SVG</li>
+                            <li><strong>Raster files:</strong> PNG, JPG, JPEG, TIFF</li>
+                        </ul>
+                        For best results, we recommend uploading vector files (PDF or AI) as they maintain quality at any size and preserve your exact CMYK colors.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Do I need to create an account to use the uploader?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        You can explore the uploader and position your artwork without logging in. However, you'll need to log in to your account when you're ready to select a product and add items to your cart. This ensures your orders are properly linked to your account.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What are the different transfer types available?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        We offer several transfer types to suit different needs:
+                        <ul>
+                            <li><strong>Full Colour:</strong> For multi-color designs with photographic quality</li>
+                            <li><strong>HD Transfers:</strong> High-definition prints for detailed artwork</li>
+                            <li><strong>Single Colour:</strong> Cost-effective option for one-color designs</li>
+                            <li><strong>Metallic:</strong> Gold and silver metallic finishes</li>
+                            <li><strong>Zero:</strong> No-feel transfers for a soft hand</li>
+                            <li><strong>DTF:</strong> Direct-to-film transfers</li>
+                            <li><strong>Reflective:</strong> Hi-visibility reflective transfers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artwork & Design -->
+        <div class="faq-section">
+            <h2>Artwork & Design</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What is CMYK and why does it matter?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        CMYK (Cyan, Magenta, Yellow, Black) is the color model used in printing. Unlike RGB colors used on screens, CMYK colors are specifically designed for print production. Our system preserves your CMYK colors throughout the entire process, ensuring your printed transfers match your original design exactly.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What are the red boundary lines on the canvas?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        The red dotted lines represent a 3mm safety margin. Keep your artwork within these boundaries to ensure nothing gets cut off during production. The alignment tools will automatically align your artwork to these safe boundaries.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Can I order the same design on multiple garment colors?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes! For Full Colour, HD, and Metallic transfers, you can select multiple garment colors in a single order. When you name your project, you'll see an option to add different garment colors with individual quantities. The system will generate a multi-page PDF with each garment color shown separately for production.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What does "Fit to Bounds" do?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        The "Fit to Bounds" button automatically scales your logo to fit within the safe printing area (inside the red boundary lines) while maintaining its aspect ratio. This is useful if your logo is too large for the template you've selected.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders & Checkout -->
+        <div class="faq-section">
+            <h2>Orders & Checkout</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>How do I add my design to the cart?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Once you've positioned your artwork and completed the pre-flight checks, click "Continue to Pre-flight" then "Generate PDF". After reviewing your PDF preview, click "Add to Cart" to add it to your shopping cart. You'll be prompted to name your project and specify quantities.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Can I save my project and come back later?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes! Click the "Save Progress" button at any time to save your current project. Your uploaded logos, positions, and settings will be saved. You can return to the uploader later to continue where you left off.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What happens to my artwork file after I order?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Your production-ready PDF is automatically attached to your order and sent to our production team. The PDF contains all the information they need to print your transfers, including the correct colors, positioning, and any special instructions you've added.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Questions -->
+        <div class="faq-section">
+            <h2>Technical Questions</h2>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>Why is my logo appearing blurry?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Blurry logos usually indicate a low-resolution raster image. For best results, upload vector files (PDF, AI, SVG) which scale perfectly at any size. If you only have a raster image, ensure it's at least 300 DPI at the final print size. The pre-flight check will warn you if your image resolution is too low.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>What does "Complex file detected" mean?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Some artwork files contain very complex paths or effects that may cause processing issues. If you see this message, you can use our Dropbox File Request option to upload the file. We'll process it manually and notify you when it's ready. Alternatively, you can simplify your artwork in your design software before re-uploading.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    <span>My colors look different on screen vs. print - why?</span>
+                    <span class="faq-icon">+</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Computer monitors display colors using RGB (light), while printing uses CMYK (ink). Some bright colors visible on screen cannot be exactly reproduced in print. We recommend working in CMYK mode in your design software and using our CMYK color preservation feature to ensure the most accurate color reproduction possible.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <h3>Still have questions?</h3>
+            <p>Our support team is here to help you with any questions about your order.</p>
+            <a href="mailto:transferhelp@serigraf.com" class="btn">Contact Support</a>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
