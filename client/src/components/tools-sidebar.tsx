@@ -1000,8 +1000,11 @@ export default function ToolsSidebar({
           // Position Check - center-based coordinate system
           // (0,0) is at the center, valid range is -templateWidth/2 to +templateWidth/2
           // Use visual dimensions (after rotation) for bounds checking
-          const templateHalfWidth = 297 / 2;
-          const templateHalfHeight = 420 / 2;
+          // Use actual template dimensions instead of hardcoded values
+          const templateWidth = currentTemplate?.width || 297;
+          const templateHeight = currentTemplate?.height || 420;
+          const templateHalfWidth = templateWidth / 2;
+          const templateHalfHeight = templateHeight / 2;
           const elementHalfWidth = visualWidth / 2;
           const elementHalfHeight = visualHeight / 2;
           
@@ -1015,8 +1018,11 @@ export default function ToolsSidebar({
             value: isWithinBounds ? "In Bounds" : "Check Position"
           });
           
+          // Size check - element should be at least 5mm and fit within template bounds
+          const maxWidth = templateWidth - 6; // 3mm margin on each side
+          const maxHeight = templateHeight - 6;
           const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
-                                   visualWidth <= 280 && visualHeight <= 400;
+                                   visualWidth <= maxWidth && visualHeight <= maxHeight;
           checks.push({
             name: "Print Size",
             status: hasReasonableSize ? "pass" : "warning",
