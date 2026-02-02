@@ -127,7 +127,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                     <h4 className="font-medium">Quick Start Steps:</h4>
                     <ol className="list-decimal list-inside space-y-2 text-sm">
                       <li>Click "Change" to select a product template</li>
-                      <li>Upload your logo or artwork files (drag & drop or click)</li>
+                      <li>Click "Upload Logos" button to upload your artwork files</li>
                       <li>Position and resize your designs on the canvas</li>
                       <li>Choose garment color (for Full Colour, HD, Metallic transfers)</li>
                       <li>Review preflight checks and click "Continue to Pre-flight"</li>
@@ -165,8 +165,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div>
                     <h3 className="font-semibold mb-2">File Upload Methods</h3>
                     <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li><strong>Drag and Drop:</strong> Drag files from your computer onto the upload area</li>
-                      <li><strong>Click to Browse:</strong> Click the "Upload Logos" button to select files</li>
+                      <li><strong>Upload Logos Button:</strong> Click the "Upload Logos" button in the toolbar to select files from your computer</li>
                       <li><strong>Dropbox File Request:</strong> For complex or large files, use our Dropbox integration</li>
                     </ul>
                   </div>
