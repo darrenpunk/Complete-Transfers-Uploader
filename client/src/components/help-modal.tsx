@@ -165,7 +165,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div>
                     <h3 className="font-semibold mb-2">File Upload Methods</h3>
                     <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li><strong>Drag and Drop:</strong> Drag files from your computer onto the canvas or upload area</li>
+                      <li><strong>Drag and Drop:</strong> Drag files from your computer onto the upload area</li>
                       <li><strong>Click to Browse:</strong> Click the "Upload Logos" button to select files</li>
                       <li><strong>Dropbox File Request:</strong> For complex or large files, use our Dropbox integration</li>
                     </ul>
