@@ -17,7 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Wand2, Package, ChevronRight, Mail, Loader2 } from "lucide-react";
+import { HelpCircle, Upload, Palette, MousePointer, FileText, Printer, Package, ChevronRight, Mail, Loader2, ShoppingCart, Layers } from "lucide-react";
 import { z } from "zod";
 
 interface HelpModalProps {
@@ -64,10 +64,11 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
     { id: "getting-started", label: "Getting Started", icon: ChevronRight },
     { id: "uploading", label: "Uploading Files", icon: Upload },
     { id: "design", label: "Design Tools", icon: MousePointer },
+    { id: "grouping", label: "Grouping & Multi-Select", icon: Layers },
     { id: "colors", label: "Color Management", icon: Palette },
-    { id: "vectorizer", label: "Vectorization", icon: Wand2 },
     { id: "templates", label: "Templates", icon: Package },
-    { id: "printing", label: "Printing", icon: Printer },
+    { id: "printing", label: "Generating PDFs", icon: Printer },
+    { id: "ordering", label: "Ordering & Cart", icon: ShoppingCart },
     { id: "troubleshooting", label: "Troubleshooting", icon: FileText },
     { id: "support", label: "Contact Support", icon: Mail },
   ];
@@ -117,30 +118,40 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div>
                     <h3 className="font-semibold mb-2">Welcome to CompleteTransfers</h3>
                     <p className="text-muted-foreground">
-                      CompleteTransfers is a professional web-to-print platform for creating custom transfers and garment decorations. 
-                      Follow these simple steps to create your first design:
+                      CompleteTransfers is a professional web-to-print platform for creating custom heat transfers and garment decorations. 
+                      Design your artwork, position it perfectly, and generate production-ready PDFs in minutes.
                     </p>
                   </div>
 
                   <div className="bg-muted rounded-lg p-4 space-y-3">
                     <h4 className="font-medium">Quick Start Steps:</h4>
                     <ol className="list-decimal list-inside space-y-2 text-sm">
-                      <li>Select a product template from the product launcher</li>
-                      <li>Upload your logo or artwork files</li>
+                      <li>Click "Change" to select a product template</li>
+                      <li>Upload your logo or artwork files (drag & drop or click)</li>
                       <li>Position and resize your designs on the canvas</li>
-                      <li>Choose garment colors (for Full Colour Transfers)</li>
-                      <li>Review preflight checks and generate your PDF</li>
+                      <li>Choose garment color (for Full Colour, HD, Metallic transfers)</li>
+                      <li>Review preflight checks and click "Continue to Pre-flight"</li>
+                      <li>Generate your PDF and add to cart</li>
                     </ol>
                   </div>
 
                   <div>
                     <h4 className="font-medium mb-2">Supported File Types:</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                      <li>PDF (recommended for best quality)</li>
-                      <li>SVG (vector graphics)</li>
-                      <li>PNG (transparent backgrounds supported)</li>
-                      <li>JPEG/JPG (photos and raster images)</li>
+                      <li><strong>PDF</strong> - Recommended for best quality, preserves CMYK colors</li>
+                      <li><strong>AI</strong> - Adobe Illustrator files (converted automatically)</li>
+                      <li><strong>SVG</strong> - Vector graphics</li>
+                      <li><strong>PNG</strong> - Transparent backgrounds supported</li>
+                      <li><strong>JPEG/JPG</strong> - Photos and raster images</li>
                     </ul>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Login Required</h4>
+                    <p className="text-sm">
+                      You can explore the uploader and position artwork freely. Login is required when 
+                      you select a product to view pricing and add items to your cart.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -153,22 +164,20 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">File Upload Methods</h3>
-                    <p className="text-muted-foreground mb-3">
-                      You can upload files in two ways:
-                    </p>
                     <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li><strong>Drag and Drop:</strong> Simply drag files from your computer onto the upload area</li>
-                      <li><strong>Click to Browse:</strong> Click the upload button to select files from your computer</li>
+                      <li><strong>Drag and Drop:</strong> Drag files from your computer onto the canvas or upload area</li>
+                      <li><strong>Click to Browse:</strong> Click the "Upload Logos" button to select files</li>
+                      <li><strong>Dropbox File Request:</strong> For complex or large files, use our Dropbox integration</li>
                     </ul>
                   </div>
 
                   <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
                     <h4 className="font-medium mb-2">Pro Tips:</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Upload multiple files at once by selecting them all</li>
-                      <li>Vector files (PDF, SVG) provide the best print quality</li>
-                      <li>Files are automatically converted to CMYK for print-ready output</li>
-                      <li>Maximum file size: 100MB per file</li>
+                      <li>Upload multiple files at once</li>
+                      <li>Vector files (PDF, AI, SVG) provide the best print quality</li>
+                      <li>Files are automatically converted to CMYK for print</li>
+                      <li>Maximum file size: 200MB per file</li>
                     </ul>
                   </div>
 
@@ -178,11 +187,29 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       When you upload a file, the system automatically:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground mt-2">
-                      <li>Detects colors and converts them to CMYK</li>
-                      <li>Identifies fonts that may need outlining</li>
+                      <li>Extracts and preserves CMYK colors</li>
+                      <li>Detects fonts that may need outlining</li>
+                      <li>Calculates precise content bounds for accurate sizing</li>
                       <li>Centers the logo on your template</li>
-                      <li>Calculates the optimal size for your design</li>
+                      <li>Generates a preview thumbnail</li>
                     </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">Complex Files</h4>
+                    <p className="text-sm text-muted-foreground">
+                      If you see "Complex file detected", your artwork has many paths or effects. 
+                      Use our Dropbox File Request option - we'll process it manually and notify you when ready.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium mb-2">PDF Pass-Through Mode</h4>
+                    <p className="text-sm text-muted-foreground">
+                      If you upload a multi-page PDF that already contains garment color pages, 
+                      the system will ask if you want to use your original pages in the final output. 
+                      This preserves your exact CMYK colors and layout.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -197,33 +224,107 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                     <h3 className="font-semibold mb-2">Canvas Controls</h3>
                     <ul className="space-y-2 text-sm">
                       <li><strong>Move:</strong> Click and drag any logo to reposition it</li>
-                      <li><strong>Resize:</strong> Drag the corner handles to resize proportionally</li>
-                      <li><strong>Rotate:</strong> Use the rotation slider in the properties panel</li>
-                      <li><strong>Delete:</strong> Click the trash icon when multiple copies exist</li>
-                      <li><strong>Duplicate:</strong> Use the duplicate button in the properties panel</li>
+                      <li><strong>Resize:</strong> Drag the corner handles to resize (maintains aspect ratio)</li>
+                      <li><strong>Rotate:</strong> Use the "Rotate 90°" button or rotation slider in properties</li>
+                      <li><strong>Duplicate:</strong> Create copies using the "Duplicate Logo" button</li>
+                      <li><strong>Imposition:</strong> Create a grid of repeated logos automatically</li>
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Alignment Tools</h3>
-                    <p className="text-muted-foreground mb-3">
-                      Use the alignment panel to perfectly position your designs:
-                    </p>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Align elements to canvas edges (top, bottom, left, right)</li>
-                      <li>Center elements horizontally or vertically</li>
-                      <li>Select all elements for group alignment</li>
-                      <li>Use "Fit to Bounds" for A3 templates to ensure safe margins</li>
+                      <li>Align to canvas edges (top, bottom, left, right)</li>
+                      <li>Center horizontally or vertically</li>
+                      <li>"Center Logo" button for quick centering</li>
+                      <li>"Fit to Bounds" - automatically scale to fit within safety margins</li>
+                      <li>Alignment respects the 3mm safety margins (red dotted lines)</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Safety Margins</h3>
+                    <p className="text-sm text-muted-foreground">
+                      The red dotted lines show the 3mm safety margin. Keep your artwork inside 
+                      these boundaries to prevent anything being cut off during production.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Zoom Controls</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Use the zoom slider or +/- buttons in the toolbar</li>
+                      <li>Toggle "Grid" for alignment guides</li>
+                      <li>Toggle "Guides" for safety margin visibility</li>
                     </ul>
                   </div>
 
                   <div className="bg-muted rounded-lg p-4">
                     <h4 className="font-medium mb-2">Keyboard Shortcuts:</h4>
                     <ul className="space-y-1 text-sm">
-                      <li><kbd>Delete</kbd> - Remove selected element</li>
-                      <li><kbd>Ctrl+Z</kbd> - Undo last action</li>
-                      <li><kbd>Ctrl+Y</kbd> - Redo action</li>
-                      <li><kbd>Arrow Keys</kbd> - Fine-tune position</li>
+                      <li><kbd className="px-1 bg-background rounded">Delete</kbd> - Remove selected element</li>
+                      <li><kbd className="px-1 bg-background rounded">Shift+Click</kbd> - Multi-select elements</li>
+                      <li><kbd className="px-1 bg-background rounded">Arrow Keys</kbd> - Fine-tune position</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === "grouping" && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">Grouping & Multi-Select</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Selecting Multiple Elements</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li><strong>Shift+Click:</strong> Add or remove elements from selection</li>
+                      <li><strong>Select All:</strong> Click "Select All" button to select everything</li>
+                      <li>Selected elements show blue highlight borders</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Group Movement</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      When multiple elements are selected, you can:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Drag to move all selected elements together</li>
+                      <li>Elements maintain their relative positions</li>
+                      <li>Use alignment tools to align the entire group</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Group Resize & Rotation</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Resize multiple elements proportionally as a group</li>
+                      <li>Rotate all selected elements together around the group center</li>
+                      <li>Each element also rotates individually while orbiting</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Persistent Groups</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Create permanent groups that stay together:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li><strong>Group:</strong> Select 2+ elements and click "Group" button</li>
+                      <li><strong>Ungroup:</strong> Select a group and click "Ungroup" to split</li>
+                      <li>Clicking any element in a group selects the entire group</li>
+                      <li>Groups are saved and persist when you reload</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-muted rounded-lg p-4">
+                    <h4 className="font-medium mb-2">When to Use Grouping:</h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Multiple logos that should stay aligned together</li>
+                      <li>Creating consistent layouts across the canvas</li>
+                      <li>Moving complex arrangements without disturbing positions</li>
                     </ul>
                   </div>
                 </div>
@@ -236,89 +337,57 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Print Color Simulation</h3>
+                    <h3 className="font-semibold mb-2">CMYK Color Preservation</h3>
                     <p className="text-muted-foreground">
-                      The canvas shows how your colors will appear when printed. Toggle "Print Preview" 
-                      to see the difference between screen and print colors.
+                      Your exact CMYK colors are preserved throughout the entire process. 
+                      We use the FOGRA51 ICC profile for professional print accuracy.
                     </p>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold mb-2">Garment Colors</h3>
+                    <h3 className="font-semibold mb-2">Garment Colors (27 options)</h3>
                     <p className="text-muted-foreground mb-3">
-                      For Full Colour Transfers, you must select a garment color:
+                      For Full Colour, HD, and Metallic transfers, select your garment color:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Choose from professional garment colors (Gildan & Fruit of the Loom)</li>
-                      <li>Each logo can have its own garment color</li>
-                      <li>Colors include Hi-Viz options for safety garments</li>
-                      <li>PDF preview shows artwork on selected background</li>
+                      <li>Choose from Gildan or Fruit of the Loom colors</li>
+                      <li>Includes standard colors, Hi-Viz, pastels, and specialty options</li>
+                      <li>Preview shows your artwork on the selected background</li>
+                      <li>Final PDF includes garment color page for production reference</li>
                     </ul>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold mb-2">Ink Colors</h3>
+                    <h3 className="font-semibold mb-2">Ink Colors (29 Pantone options)</h3>
                     <p className="text-muted-foreground mb-3">
-                      For Single Colour Transfers, select from Pantone ink colors:
+                      For Single Colour and Zero transfers:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>31 standard Pantone colors available</li>
-                      <li>Your entire design will be printed in the selected ink color</li>
-                      <li>Perfect for single-color logos and text</li>
+                      <li>Select from 29 Pantone spot colors</li>
+                      <li>Includes 2 metallic options (Gold and Silver)</li>
+                      <li>Your design will be printed entirely in the selected ink</li>
+                      <li>Preview shows the recolored artwork</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">CMYK Color Editor</h3>
+                    <p className="text-muted-foreground mb-3">
+                      Fine-tune colors with the CMYK slider popup:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Click any color swatch to open the editor</li>
+                      <li>Adjust Cyan, Magenta, Yellow, and Black values</li>
+                      <li>See live preview of color changes</li>
+                      <li>Changes are saved automatically</li>
                     </ul>
                   </div>
 
                   <div className="bg-yellow-50 dark:bg-yellow-950 rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Color Accuracy:</h4>
+                    <h4 className="font-medium mb-2">Screen vs Print Colors:</h4>
                     <p className="text-sm">
-                      All colors are automatically converted to CMYK for professional printing. 
-                      The system uses industry-standard color profiles (FOGRA51) to ensure 
-                      accurate color reproduction.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSection === "vectorizer" && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold">AI Vectorization</h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">When to Use Vectorization</h3>
-                    <p className="text-muted-foreground">
-                      If you upload a raster image (JPEG, PNG), you'll be offered the option to 
-                      convert it to a vector format for superior print quality.
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Vectorizer Features</h3>
-                    <ul className="space-y-2 text-sm">
-                      <li><strong>Color Management:</strong> Remove unwanted background colors</li>
-                      <li><strong>Color Locking:</strong> Click colors to protect them from deletion</li>
-                      <li><strong>Eyedropper Tool:</strong> Copy colors from one element to another</li>
-                      <li><strong>CMYK Adjustments:</strong> Fine-tune color values with sliders</li>
-                      <li><strong>Zoom Controls:</strong> Inspect details up to 800% zoom</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-muted rounded-lg p-4">
-                    <h4 className="font-medium mb-2">Vectorization Workflow:</h4>
-                    <ol className="list-decimal list-inside space-y-2 text-sm">
-                      <li>Preview the vectorization (free)</li>
-                      <li>Remove unwanted colors or backgrounds</li>
-                      <li>Lock important colors to protect them</li>
-                      <li>Use "Delete Unlocked Colors" for quick cleanup</li>
-                      <li>Approve and use the vectorized result</li>
-                    </ol>
-                  </div>
-
-                  <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
-                    <p className="text-sm">
-                      <strong>Note:</strong> Vectorization uses credits only when you approve the final result. 
-                      Preview and color editing are free.
+                      Colors on screen (RGB) always appear brighter than print (CMYK). 
+                      The preflight panel shows your colors in CMYK format for accurate expectations.
                     </p>
                   </div>
                 </div>
@@ -331,22 +400,41 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Available Products</h3>
+                    <h3 className="font-semibold mb-2">Transfer Types</h3>
                     <ul className="space-y-3">
                       <li>
                         <strong>Full Colour Transfers</strong>
                         <p className="text-sm text-muted-foreground">
-                          Multi-color designs with white base layer. Requires garment color selection.
+                          Multi-color designs with white base layer. Requires garment color selection. 
+                          Available in A3, A4, A5, A6, and custom sizes.
+                        </p>
+                      </li>
+                      <li>
+                        <strong>HD Transfers</strong>
+                        <p className="text-sm text-muted-foreground">
+                          High-definition prints for detailed artwork. Supports multi-color garment orders.
+                        </p>
+                      </li>
+                      <li>
+                        <strong>Metallic Transfers</strong>
+                        <p className="text-sm text-muted-foreground">
+                          Gold and silver metallic finishes. Supports multi-color garment orders.
                         </p>
                       </li>
                       <li>
                         <strong>Single Colour Transfers</strong>
                         <p className="text-sm text-muted-foreground">
-                          One-color designs using Pantone inks. Perfect for simple logos and text.
+                          One-color designs using Pantone inks. Select from 29 ink colors.
                         </p>
                       </li>
                       <li>
-                        <strong>DTF Digital Film Transfers</strong>
+                        <strong>Zero Transfers</strong>
+                        <p className="text-sm text-muted-foreground">
+                          No-feel transfers for a soft hand. Limited ink color selection.
+                        </p>
+                      </li>
+                      <li>
+                        <strong>DTF Digital Film</strong>
                         <p className="text-sm text-muted-foreground">
                           Large format (1000×550mm) for oversized designs and all-over prints.
                         </p>
@@ -358,9 +446,15 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                         </p>
                       </li>
                       <li>
-                        <strong>Custom Badges</strong>
+                        <strong>Reflective Transfers</strong>
                         <p className="text-sm text-muted-foreground">
-                          Embroidered patches and appliques. Includes detailed form for specifications.
+                          Hi-visibility reflective transfers. Silver ink only.
+                        </p>
+                      </li>
+                      <li>
+                        <strong>Custom Badges & Applique</strong>
+                        <p className="text-sm text-muted-foreground">
+                          Embroidered patches and appliques. Includes detailed specification form.
                         </p>
                       </li>
                     </ul>
@@ -369,8 +463,9 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div className="bg-muted rounded-lg p-4">
                     <h4 className="font-medium mb-2">Template Sizes:</h4>
                     <p className="text-sm">
-                      Each product category offers multiple size options. The A3 template includes 
-                      safety margin guides to prevent edge clipping during production.
+                      Each product offers multiple size options (A3, A4, A5, A6, and custom dimensions). 
+                      Larger templates have higher minimum order quantities. Pricing is calculated 
+                      automatically based on size and quantity.
                     </p>
                   </div>
                 </div>
@@ -385,36 +480,114 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div>
                     <h3 className="font-semibold mb-2">Preflight Checks</h3>
                     <p className="text-muted-foreground mb-3">
-                      Before generating your PDF, review the preflight panel:
+                      Before generating your PDF, review the preflight panel on the left:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li><strong>Vector Status:</strong> Confirms your files are print-ready</li>
-                      <li><strong>Font Outlining:</strong> Shows if text needs to be converted</li>
-                      <li><strong>Color Analysis:</strong> Displays all colors in CMYK format</li>
-                      <li><strong>Size Check:</strong> Ensures artwork fits within print area</li>
+                      <li><strong>Print Resolution:</strong> Vector or raster quality status</li>
+                      <li><strong>File Format:</strong> Vector (preferred) or raster</li>
+                      <li><strong>Colour Mode:</strong> CMYK preservation status</li>
+                      <li><strong>Position:</strong> Confirms artwork is within bounds</li>
+                      <li><strong>Print Size:</strong> Current dimensions in mm</li>
+                      <li><strong>Typography:</strong> Font outlining status</li>
                     </ul>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">PDF Generation Process</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm">
-                      <li>Click "Generate CMYK PDF" button</li>
-                      <li>Review the 2-page preview (design + garment mockup)</li>
+                      <li>Click "Continue to Pre-flight" button</li>
+                      <li>Click "Generate PDF" to create your production file</li>
+                      <li>Review the multi-page preview</li>
                       <li>Check both approval checkboxes</li>
-                      <li>Enter project name and quantity</li>
-                      <li>Add any special instructions in comments</li>
-                      <li>Download your production-ready PDF</li>
+                      <li>Click "Attach to Order" to proceed</li>
                     </ol>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Multi-Page PDF Output</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Your final PDF contains multiple pages:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li><strong>Page 1:</strong> Artwork on transparent background (for production)</li>
+                      <li><strong>Page 2+:</strong> Artwork on each garment color background with footer</li>
+                      <li>Footer shows project name, color name, and quantity</li>
+                    </ul>
                   </div>
 
                   <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
                     <h4 className="font-medium mb-2">PDF Features:</h4>
                     <ul className="list-disc list-inside space-y-1 text-sm">
-                      <li>Professional CMYK color space with ICC profiles</li>
-                      <li>Vector graphics preserved for sharp printing</li>
-                      <li>300 DPI resolution for raster elements</li>
-                      <li>Includes all project specifications</li>
+                      <li>Professional CMYK color space with FOGRA51 ICC profile</li>
+                      <li>Vector graphics preserved for sharp printing at any scale</li>
+                      <li>Exact canvas dimensions replicated</li>
+                      <li>Automatic rotation handling for all orientations</li>
                     </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSection === "ordering" && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold">Ordering & Cart</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Project Naming</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Before adding to cart, you'll name your project. This name appears on the PDF 
+                      and helps identify your order in production.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Multi-Color Garment Orders</h3>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      For Full Colour, HD, and Metallic transfers, order the same design on multiple garment colors:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>Click "Add Color" in the project naming modal</li>
+                      <li>Select additional garment colors</li>
+                      <li>Set individual quantities for each color</li>
+                      <li>Example: "10 Black, 4 Gold, 4 Charcoal"</li>
+                      <li>PDF generates separate pages for each garment color</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Special Instructions</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add comments or special instructions for the production team. These are 
+                      included with your order and visible to our staff.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Add to Cart</h3>
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                      <li>Review your PDF preview</li>
+                      <li>Check both approval boxes</li>
+                      <li>Click "Add to Cart"</li>
+                      <li>Choose "Start New Project" or "View Cart"</li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Save Progress</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Save Progress" anytime to save your work. Your uploaded logos, 
+                      positions, and settings are preserved. Return later to continue where you left off.
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Order Workflow:</h4>
+                    <p className="text-sm">
+                      Your production-ready PDF is automatically attached to your order. 
+                      The production team sees your artwork, garment colors, quantities, 
+                      and any special instructions directly in their workflow.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -430,34 +603,66 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                     
                     <div className="space-y-4">
                       <div>
+                        <h4 className="font-medium">Position or Print Size warning after rotating</h4>
+                        <p className="text-sm text-muted-foreground">
+                          The preflight checks account for rotation. If you still see warnings after rotating, 
+                          try "Fit to Bounds" to automatically scale within safety margins, or manually resize.
+                        </p>
+                      </div>
+
+                      <div>
                         <h4 className="font-medium">White elements not visible</h4>
                         <p className="text-sm text-muted-foreground">
-                          White designs are preserved but may be hard to see on white canvas. 
-                          They will appear correctly in the final PDF.
+                          White designs are preserved but hard to see on a white canvas. 
+                          Select a garment color to see them, or they'll appear correctly in the final PDF.
                         </p>
                       </div>
 
                       <div>
                         <h4 className="font-medium">Colors look different than expected</h4>
                         <p className="text-sm text-muted-foreground">
-                          Toggle "Print Preview" to see accurate print colors. Screen colors 
-                          (RGB) always appear brighter than print colors (CMYK).
+                          Screen colors (RGB) always appear brighter than print (CMYK). 
+                          The preflight panel shows CMYK values for accurate expectations.
                         </p>
                       </div>
 
                       <div>
                         <h4 className="font-medium">Font outlining warning</h4>
                         <p className="text-sm text-muted-foreground">
-                          Click "Outline Fonts" in the properties panel to convert text to paths. 
-                          This ensures fonts print correctly even if not installed on production systems.
+                          If your file contains live text, convert fonts to outlines in your design software 
+                          before uploading, or the system will attempt to outline them automatically.
                         </p>
                       </div>
 
                       <div>
-                        <h4 className="font-medium">Large file upload fails</h4>
+                        <h4 className="font-medium">Large file upload fails (413 error)</h4>
                         <p className="text-sm text-muted-foreground">
-                          Maximum file size is 200MB. For larger files, try optimizing the PDF 
-                          or reducing image resolution before uploading.
+                          Maximum file size is 200MB. For larger files, use our Dropbox File Request 
+                          option, or optimize the PDF/reduce image resolution before uploading.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium">Complex file detected</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Files with many paths or complex effects may need manual processing. 
+                          Use the Dropbox File Request option and we'll process it for you.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium">Logo appears clipped or off-center</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Our system extracts precise content bounds. If clipping occurs, 
+                          try re-uploading the file or contact support for assistance.
+                        </p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium">Pricing unavailable</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Ensure you're logged in to see pricing. If logged in but still seeing this, 
+                          try refreshing the page or contact support.
                         </p>
                       </div>
                     </div>
@@ -466,8 +671,8 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                   <div className="bg-muted rounded-lg p-4">
                     <h4 className="font-medium mb-2">Need More Help?</h4>
                     <p className="text-sm">
-                      If you're experiencing issues not covered here, try using the "Start Over" 
-                      button to begin fresh, or contact support for assistance.
+                      Try "Start Over" to begin fresh, or use the Contact Support section 
+                      to reach our team directly.
                     </p>
                   </div>
                 </div>
@@ -502,7 +707,6 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                           </FormItem>
                         )}
                       />
-
                       <FormField
                         control={form.control}
                         name="email"
@@ -521,7 +725,6 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                           </FormItem>
                         )}
                       />
-
                       <FormField
                         control={form.control}
                         name="subject"
@@ -530,7 +733,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                             <FormLabel>Subject</FormLabel>
                             <FormControl>
                               <Input 
-                                placeholder="What do you need help with?" 
+                                placeholder="Brief description of your issue" 
                                 data-testid="input-support-subject"
                                 {...field} 
                               />
@@ -539,7 +742,6 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                           </FormItem>
                         )}
                       />
-
                       <FormField
                         control={form.control}
                         name="message"
@@ -548,9 +750,9 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                             <FormLabel>Message</FormLabel>
                             <FormControl>
                               <Textarea 
-                                placeholder="Please provide details about your issue..."
+                                placeholder="Describe your issue in detail..." 
                                 className="min-h-[120px]"
-                                data-testid="textarea-support-message"
+                                data-testid="input-support-message"
                                 {...field} 
                               />
                             </FormControl>
@@ -558,26 +760,37 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                           </FormItem>
                         )}
                       />
-
                       <Button 
                         type="submit" 
                         className="w-full"
                         disabled={supportTicketMutation.isPending}
-                        data-testid="button-submit-support"
+                        data-testid="btn-submit-support"
                       >
-                        {supportTicketMutation.isPending && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {supportTicketMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Submit Support Ticket
+                          </>
                         )}
-                        Submit Support Ticket
                       </Button>
                     </form>
                   </Form>
 
-                  <div className="bg-muted rounded-lg p-4 mt-4">
-                    <h4 className="font-medium mb-2">Before Contacting Support</h4>
+                  <div className="bg-muted rounded-lg p-4 mt-6">
+                    <h4 className="font-medium mb-2">Alternative Contact</h4>
                     <p className="text-sm text-muted-foreground">
-                      Check the other sections of this help guide - many common questions are answered in the 
-                      Getting Started, Uploading, Design Tools, and Troubleshooting sections.
+                      You can also email us directly at:{" "}
+                      <a href="mailto:transferhelp@serigraf.com" className="text-primary hover:underline">
+                        transferhelp@serigraf.com
+                      </a>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      We typically respond within 24 hours during business days.
                     </p>
                   </div>
                 </div>
