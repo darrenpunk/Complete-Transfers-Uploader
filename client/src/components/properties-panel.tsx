@@ -312,6 +312,10 @@ export default function PropertiesPanel({
         });
       } else {
         console.log('✅ Properties API update successful');
+        // Invalidate to ensure selectedElements syncs with latest data
+        queryClient.invalidateQueries({
+          queryKey: ["/api/projects", currentElement?.projectId, "canvas-elements"]
+        });
       }
     } catch (error) {
       console.error('Failed to update element:', error);
