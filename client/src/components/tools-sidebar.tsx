@@ -992,12 +992,18 @@ export default function ToolsSidebar({
             });
           }
           
+          // Size Check - display visual dimensions (account for rotation)
+          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
+          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
+          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
+          
           // Position Check - center-based coordinate system
           // (0,0) is at the center, valid range is -templateWidth/2 to +templateWidth/2
+          // Use visual dimensions (after rotation) for bounds checking
           const templateHalfWidth = 297 / 2;
           const templateHalfHeight = 420 / 2;
-          const elementHalfWidth = selectedElement.width / 2;
-          const elementHalfHeight = selectedElement.height / 2;
+          const elementHalfWidth = visualWidth / 2;
+          const elementHalfHeight = visualHeight / 2;
           
           const isWithinBounds = selectedElement.x >= -templateHalfWidth + elementHalfWidth && 
                                 selectedElement.x <= templateHalfWidth - elementHalfWidth && 
@@ -1008,11 +1014,6 @@ export default function ToolsSidebar({
             status: isWithinBounds ? "pass" : "warning",
             value: isWithinBounds ? "In Bounds" : "Check Position"
           });
-          
-          // Size Check - display visual dimensions
-          const isRotated = selectedElement.rotation === 90 || selectedElement.rotation === 270;
-          const visualWidth = isRotated ? selectedElement.height : selectedElement.width;
-          const visualHeight = isRotated ? selectedElement.width : selectedElement.height;
           
           const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
                                    visualWidth <= 280 && visualHeight <= 400;
