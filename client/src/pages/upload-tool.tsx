@@ -83,24 +83,38 @@ export default function UploadTool() {
     
     if (isInIframe) {
       // In iframe: open app in a new browser tab with partner email and Odoo URL preserved
-      const url = new URL(window.location.href);
+      // Use production URL if available, otherwise fall back to current URL
+      let baseUrl: URL;
+      
+      // Check if we're in production by looking for .replit.app domain or use current URL
+      const currentUrl = new URL(window.location.href);
+      const isDevDomain = currentUrl.hostname.includes('.replit.dev') || currentUrl.hostname.includes('localhost');
+      
+      if (isDevDomain && import.meta.env.PROD) {
+        // In production build but on dev domain - this shouldn't happen normally
+        // but if it does, try to construct production URL
+        const prodDomain = currentUrl.hostname.replace('.replit.dev', '.replit.app');
+        baseUrl = new URL(`https://${prodDomain}${currentUrl.pathname}`);
+      } else {
+        baseUrl = currentUrl;
+      }
       
       // Pass partner email if we have it (for cart assignment)
       if (partnerEmail) {
-        url.searchParams.set('email', partnerEmail);
+        baseUrl.searchParams.set('email', partnerEmail);
       }
       
       // Pass the Odoo origin so the new tab knows which server to use
       if (document.referrer) {
         try {
           const referrerOrigin = new URL(document.referrer).origin;
-          url.searchParams.set('odoo', referrerOrigin);
+          baseUrl.searchParams.set('odoo', referrerOrigin);
         } catch (e) {
           console.error('Failed to parse referrer:', e);
         }
       }
       
-      window.open(url.toString(), '_blank');
+      window.open(baseUrl.toString(), '_blank');
       return;
     }
     
