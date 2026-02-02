@@ -226,6 +226,22 @@ export default function UploadTool() {
     enabled: !!currentProject?.id,
   });
 
+  // Keep selectedElements synced with latest canvasElements data (e.g., after rotation updates)
+  useEffect(() => {
+    if (selectedElements.length > 0 && canvasElements.length > 0) {
+      const updatedSelectedElements = selectedElements.map(selectedEl => {
+        const latestEl = canvasElements.find(ce => ce.id === selectedEl.id);
+        return latestEl || selectedEl;
+      }).filter(el => canvasElements.some(ce => ce.id === el.id));
+      
+      // Only update if there are actual changes (compare by stringifying to avoid infinite loops)
+      const hasChanges = JSON.stringify(updatedSelectedElements) !== JSON.stringify(selectedElements);
+      if (hasChanges) {
+        setSelectedElements(updatedSelectedElements);
+      }
+    }
+  }, [canvasElements]);
+
   // Create new project
   const createProjectMutation = useMutation({
     mutationFn: async (projectData: { name: string; templateSize: string; garmentColor: string; inkColor?: string; appliqueBadgesForm?: any; quantity?: number }) => {

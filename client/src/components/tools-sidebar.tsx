@@ -1003,6 +1003,20 @@ export default function ToolsSidebar({
           // Use actual template dimensions instead of hardcoded values
           const templateWidth = currentTemplate?.width || 297;
           const templateHeight = currentTemplate?.height || 420;
+          
+          console.log('Preflight position check:', {
+            rotation: selectedElement.rotation,
+            isRotated,
+            originalWidth: selectedElement.width,
+            originalHeight: selectedElement.height,
+            visualWidth,
+            visualHeight,
+            templateWidth,
+            templateHeight,
+            currentTemplateId: currentTemplate?.id,
+            x: selectedElement.x,
+            y: selectedElement.y
+          });
           const templateHalfWidth = templateWidth / 2;
           const templateHalfHeight = templateHeight / 2;
           const elementHalfWidth = visualWidth / 2;

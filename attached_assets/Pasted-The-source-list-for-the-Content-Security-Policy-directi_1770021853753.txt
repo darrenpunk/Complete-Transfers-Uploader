@@ -1,0 +1,1298 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+4febd0094978dbe7.js:2 [Coframe] Replit Enterprise watcher loaded
+stallwart.build.js:1 stallwart: failed ping 1
+ProofDesigner:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+ProofDesigner:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+ProofDesigner:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+4febd0094978dbe7.js:2 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+4febd0094978dbe7.js:2 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+stallwart.build.js:1 stallwart: failed ping 1
+4febd0094978dbe7.js:2 [LaunchDarkly] LaunchDarkly client initialized
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+4febd0094978dbe7.js:2 [ai-chat] Creating connection with chat proxy enabled
+(anonymous) @ 4febd0094978dbe7.js:2
+(anonymous) @ 4dd6d416b55c667b.js:2
+uV @ 9a2446c69ceea6f9.js:2
+oA @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+stallwart.build.js:1 stallwart: failed ping 4
+stallwart.build.js:1 stallwart: failed ping 5
+stallwart.build.js:1 stallwart: session stalled
+4febd0094978dbe7.js:2 task queue exceeded allotted deadline by 49ms
+(anonymous) @ 4febd0094978dbe7.js:2
+value @ 765209f3eff1a345.js:2
+(anonymous) @ 765209f3eff1a345.js:2
+a @ 4febd0094978dbe7.js:2
+setTimeout
+(anonymous) @ 4febd0094978dbe7.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+e @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+t @ 765209f3eff1a345.js:2
+value @ 765209f3eff1a345.js:2
+value @ 81a022c20d9f008e.js:2
+value @ 81a022c20d9f008e.js:2
+(anonymous) @ 6bc0cce1734c9c18.js:2
+(anonymous) @ 6bc0cce1734c9c18.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+Promise.then
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 6bc0cce1734c9c18.js:2
+uV @ 9a2446c69ceea6f9.js:2
+uG @ 9a2446c69ceea6f9.js:2
+e @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oV @ 9a2446c69ceea6f9.js:2
+oN @ 9a2446c69ceea6f9.js:2
+r6 @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oV @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'ambient-light-sensor'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'battery'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'execution-while-not-rendered'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'execution-while-out-of-viewport'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'layout-animations'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'legacy-image-formats'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'navigation-override'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'oversized-images'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'publickey-credentials'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'speaker-selection'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'unoptimized-images'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'unsized-media'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Unrecognized feature: 'pointer-lock'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Allow attribute will take precedence over 'allowfullscreen'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9a2446c69ceea6f9.js:2 Allow attribute will take precedence over 'allowpaymentrequest'.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar2v%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Showing product launcher modal {templateSizesLength: 69, currentProject: null}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⏰ Auth timeout - no user data received from parent
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+attached_assets/uploader_1769854061242.png:1  GET https://replit.com/@darren190/attached_assets/uploader_1769854061242.png 404 (Not Found)
+attached_assets/Screenshot_2026-02-01_at_12.08.02_1769947811330.png:1  GET https://replit.com/@darren190/attached_assets/Screenshot_2026-02-01_at_12.08.02_1769947811330.png 404 (Not Found)
+injected.js:37 [vite] server connection lost. Polling for restart...
+injected.js:214  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/ 502 (Bad Gateway)
+apply @ VM7 injected.js:214
+ping @ VM11 client:736
+waitForSuccessfulPing @ VM11 client:749
+(anonymous) @ VM11 client:561
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@vite/client:562  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/ 502 (Bad Gateway)
+(anonymous) @ VM11 client:562
+9a2446c69ceea6f9.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar8f%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Showing product launcher modal {templateSizesLength: 69, currentProject: null}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 9}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⏰ Auth timeout - no user data received from parent
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 9}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 9}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: true, hasData: false, hasError: false, …}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: false, hasData: false, hasError: true, …}
+injected.js:37 Template selected: {templateId: 'dtf-large', selectedTemplate: {…}, group: 'Digital Transfers'}
+injected.js:37 Template checks: {isFullColourTemplate: false, isSingleColourTemplate: false, isCustomBadgesTemplate: false, isDTFTemplate: true, actualGroup: 'Digital Transfers'}
+injected.js:37 Non-Custom Badges template, creating project directly
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Canvas state update: {showVectorizer: false, hasPendingRasterFile: false}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Template large_dtf: 2834x1559px, Workspace: 797x866, Zoom: 50%
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 handleFilesUpload called with files: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Upload completed, checking for PDFs with raster content: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⚠️ Large SVG detected (1.5MB), using simplified rendering
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 🎯 Mouse down on element accd7cf9-0c61-4bff-815c-3a47251f43ca, starting drag, shiftKey=false
+injected.js:37 🎯 Drag offset calculated: (-87.8, -85.6)
+injected.js:37 🎯 Stored initial positions for 1 elements: [Array(2)]
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 Property change: rotation from 0 to 90
+injected.js:37 Sending updates: {rotation: 90}
+injected.js:37 Properties updateElementDirect called: {id: 'accd7cf9-0c61-4bff-815c-3a47251f43ca', updates: {…}}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 613.6199812000001, pixelHeight: 1126.5119656000002, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 460.21498590000004, pixelHeight: 844.8839742, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element accd7cf9-0c61-4bff-815c-3a47251f43ca dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 460.21498590000004, pixelHeight: 844.8839742, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ VM7 injected.js:37
+(anonymous) @ VM79 @radix-ui_react-dialog.js:344
+commitHookEffectListMount @ VM17 chunk-RPCDYKBN.js:16915
+commitPassiveMountOnFiber @ VM17 chunk-RPCDYKBN.js:18156
+commitPassiveMountEffects_complete @ VM17 chunk-RPCDYKBN.js:18129
+commitPassiveMountEffects_begin @ VM17 chunk-RPCDYKBN.js:18119
+commitPassiveMountEffects @ VM17 chunk-RPCDYKBN.js:18109
+flushPassiveEffectsImpl @ VM17 chunk-RPCDYKBN.js:19490
+flushPassiveEffects @ VM17 chunk-RPCDYKBN.js:19447
+commitRootImpl @ VM17 chunk-RPCDYKBN.js:19416
+commitRoot @ VM17 chunk-RPCDYKBN.js:19277
+performSyncWorkOnRoot @ VM17 chunk-RPCDYKBN.js:18895
+flushSyncCallbacks @ VM17 chunk-RPCDYKBN.js:9119
+(anonymous) @ VM17 chunk-RPCDYKBN.js:18627
+attached_assets/Screenshot_2026-02-02_at_08.33.35_1770021522488.png:1  GET https://replit.com/@darren190/attached_assets/Screenshot_2026-02-02_at_08.33.35_1770021522488.png 404 (Not Found)
+injected.js:37 [vite] server connection lost. Polling for restart...
+injected.js:214  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/ 502 (Bad Gateway)
+apply @ VM7 injected.js:214
+ping @ VM13 client:736
+waitForSuccessfulPing @ VM13 client:749
+(anonymous) @ VM13 client:561
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@vite/client:562  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/project/152a19c0-20eb-4940-a5a8-4a434bdd8ec8 502 (Bad Gateway)
+(anonymous) @ VM13 client:562
+e7086005e1ac5d2a.js:2 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'version')
+    at l (e7086005e1ac5d2a.js:2:29189)
+    at c (e7086005e1ac5d2a.js:2:30089)
+    at e7086005e1ac5d2a.js:2:31144
+    at Object.next (7541a3aaa165c9c4.js:2:4315)
+    at t (7541a3aaa165c9c4.js:2:11493)
+    at a (7541a3aaa165c9c4.js:2:11690)
+    at 7541a3aaa165c9c4.js:2:11749
+    at new Promise (<anonymous>)
+    at 7541a3aaa165c9c4.js:2:11631
+    at o.handleReconnect (e7086005e1ac5d2a.js:2:33251)
+    at e7086005e1ac5d2a.js:2:27243
+    at Object.next (7541a3aaa165c9c4.js:2:4315)
+    at t (7541a3aaa165c9c4.js:2:11493)
+    at a (7541a3aaa165c9c4.js:2:11690)
+    at 7541a3aaa165c9c4.js:2:11749
+    at new Promise (<anonymous>)
+    at 7541a3aaa165c9c4.js:2:11631
+    at o.handleStatus (e7086005e1ac5d2a.js:2:28714)
+    at e7086005e1ac5d2a.js:2:37516
+    at 67483a7e2b2224d3.js:2:14990
+    at Array.forEach (<anonymous>)
+    at e.handleCommand (67483a7e2b2224d3.js:2:14963)
+    at WebSocket.onSocketMessage (67483a7e2b2224d3.js:2:81156)
+l @ e7086005e1ac5d2a.js:2
+c @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 67483a7e2b2224d3.js:2
+handleCommand @ 67483a7e2b2224d3.js:2
+onSocketMessage @ 67483a7e2b2224d3.js:2
+e7086005e1ac5d2a.js:2 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'version')
+    at l (e7086005e1ac5d2a.js:2:29189)
+    at c (e7086005e1ac5d2a.js:2:30089)
+    at e7086005e1ac5d2a.js:2:31144
+    at Object.next (7541a3aaa165c9c4.js:2:4315)
+    at t (7541a3aaa165c9c4.js:2:11493)
+    at a (7541a3aaa165c9c4.js:2:11690)
+    at 7541a3aaa165c9c4.js:2:11749
+    at new Promise (<anonymous>)
+    at 7541a3aaa165c9c4.js:2:11631
+    at o.handleReconnect (e7086005e1ac5d2a.js:2:33251)
+    at e7086005e1ac5d2a.js:2:27243
+    at Object.next (7541a3aaa165c9c4.js:2:4315)
+    at t (7541a3aaa165c9c4.js:2:11493)
+    at a (7541a3aaa165c9c4.js:2:11690)
+    at 7541a3aaa165c9c4.js:2:11749
+    at new Promise (<anonymous>)
+    at 7541a3aaa165c9c4.js:2:11631
+    at o.handleStatus (e7086005e1ac5d2a.js:2:28714)
+    at e7086005e1ac5d2a.js:2:37516
+    at 67483a7e2b2224d3.js:2:14990
+    at Array.forEach (<anonymous>)
+    at e.handleCommand (67483a7e2b2224d3.js:2:14963)
+    at WebSocket.onSocketMessage (67483a7e2b2224d3.js:2:81156)
+l @ e7086005e1ac5d2a.js:2
+c @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+t @ 7541a3aaa165c9c4.js:2
+a @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ 7541a3aaa165c9c4.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ e7086005e1ac5d2a.js:2
+(anonymous) @ 67483a7e2b2224d3.js:2
+handleCommand @ 67483a7e2b2224d3.js:2
+onSocketMessage @ 67483a7e2b2224d3.js:2
+9a2446c69ceea6f9.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbk%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Showing product launcher modal {templateSizesLength: 69, currentProject: null}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⏰ Auth timeout - no user data received from parent
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: true, hasData: false, hasError: false, …}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: false, hasData: false, hasError: true, …}
+injected.js:37 Template selected: {templateId: 'dtf-large', selectedTemplate: {…}, group: 'Digital Transfers'}
+injected.js:37 Template checks: {isFullColourTemplate: false, isSingleColourTemplate: false, isCustomBadgesTemplate: false, isDTFTemplate: true, actualGroup: 'Digital Transfers'}
+injected.js:37 Non-Custom Badges template, creating project directly
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Canvas state update: {showVectorizer: false, hasPendingRasterFile: false}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Template large_dtf: 2834x1559px, Workspace: 797x866, Zoom: 50%
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 handleFilesUpload called with files: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Upload completed, checking for PDFs with raster content: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⚠️ Large SVG detected (1.5MB), using simplified rendering
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 🎯 Mouse down on element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480, starting drag, shiftKey=false
+injected.js:37 🎯 Drag offset calculated: (-55.8, -116.6)
+injected.js:37 🎯 Stored initial positions for 1 elements: [Array(2)]
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 Property change: rotation from 0 to 90
+injected.js:37 Sending updates: {rotation: 90}
+injected.js:37 Properties updateElementDirect called: {id: '6f516dbb-8ccf-44bd-a9ff-ac53377f6480', updates: {…}}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Property change: rotation from 90 to 180
+injected.js:37 Sending updates: {rotation: 180}
+injected.js:37 Properties updateElementDirect called: {id: '6f516dbb-8ccf-44bd-a9ff-ac53377f6480', updates: {…}}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 180}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Property change: rotation from 180 to 270
+injected.js:37 Sending updates: {rotation: 270}
+injected.js:37 Properties updateElementDirect called: {id: '6f516dbb-8ccf-44bd-a9ff-ac53377f6480', updates: {…}}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 270}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Template large_dtf: 2834x1559px, Workspace: 1063x866, Zoom: 50%
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 270}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: true, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 270}
+injected.js:37 ✅ Image loaded for preview
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 6f516dbb-8ccf-44bd-a9ff-ac53377f6480 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 270}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 Preflight position check: {rotation: 0, isRotated: false, originalWidth: 541.1787334750657, originalHeight: 993.5209697632231, visualWidth: 541.1787334750657, …}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 [vite] server connection lost. Polling for restart...
+injected.js:214  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/ 502 (Bad Gateway)
+apply @ VM6 injected.js:214
+ping @ VM11 client:736
+waitForSuccessfulPing @ VM11 client:749
+(anonymous) @ VM11 client:561
+9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/@vite/client:562  GET https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev/project/32b884e5-bb9d-4495-8bc1-86bcd5533e5a 502 (Bad Gateway)
+(anonymous) @ VM11 client:562
+9a2446c69ceea6f9.js:2 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+z @ 9a2446c69ceea6f9.js:2
+(anonymous) @ 9a2446c69ceea6f9.js:2
+oU @ 9a2446c69ceea6f9.js:2
+oI @ 9a2446c69ceea6f9.js:2
+oO @ 9a2446c69ceea6f9.js:2
+oE @ 9a2446c69ceea6f9.js:2
+C @ 9a2446c69ceea6f9.js:2
+M @ 9a2446c69ceea6f9.js:2
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Ard1%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 0}
+injected.js:37 AppliqueBadgesModal open state changed: false
+injected.js:37 🔍 App running in iframe - requesting user data from parent window
+injected.js:37 showAppliqueBadgesModal state changed to: false
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Showing product launcher modal {templateSizesLength: 69, currentProject: null}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⏰ Auth timeout - no user data received from parent
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: false}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔗 Iframe mode: calling Odoo pricing API directly for customer-specific pricing
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: true, hasData: false, hasError: false, …}
+injected.js:37 TemplateSelectorModal render {open: true, templatesLength: 2}
+injected.js:37 🔍 Pricing query: {templateId: 'dtf-large', copies: 1, isLoading: false, hasData: false, hasError: true, …}
+injected.js:37 Template selected: {templateId: 'dtf-large', selectedTemplate: {…}, group: 'Digital Transfers'}
+injected.js:37 Template checks: {isFullColourTemplate: false, isSingleColourTemplate: false, isCustomBadgesTemplate: false, isDTFTemplate: true, actualGroup: 'Digital Transfers'}
+injected.js:37 Non-Custom Badges template, creating project directly
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 AppliqueBadgesModal render: {open: false, isLoading: true}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Canvas state update: {showVectorizer: false, hasPendingRasterFile: false}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Template large_dtf: 2834x1559px, Workspace: 1063x866, Zoom: 50%
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 handleFilesUpload called with files: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 Upload completed, checking for PDFs with raster content: [{…}]
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ⚠️ Large SVG detected (1.5MB), using simplified rendering
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 🎯 Mouse down on element 263e3d09-64d5-478c-9b5c-21763e505432, starting drag, shiftKey=false
+injected.js:37 🎯 Drag offset calculated: (-166.0, -189.6)
+injected.js:37 🎯 Stored initial positions for 1 elements: [Array(2)]
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 Preflight position check: {rotation: 0, isRotated: false, originalWidth: 541.1787334750657, originalHeight: 993.5209697632231, visualWidth: 541.1787334750657, …}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 263e3d09-64d5-478c-9b5c-21763e505432 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 263e3d09-64d5-478c-9b5c-21763e505432 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 0}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 Property change: rotation from 0 to 90
+injected.js:37 Sending updates: {rotation: 90}
+injected.js:37 Properties updateElementDirect called: {id: '263e3d09-64d5-478c-9b5c-21763e505432', updates: {…}}
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 Preflight position check: {rotation: 0, isRotated: false, originalWidth: 541.1787334750657, originalHeight: 993.5209697632231, visualWidth: 541.1787334750657, …}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 263e3d09-64d5-478c-9b5c-21763e505432 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 ✅ Properties API update successful
+injected.js:37 Preflight CMYK Check: {hasConvertedColors: false, hasCMYKColors: true, isCMYKPreserved: true, hasColorOverrides: null, svgColors: Array(8)}
+injected.js:37 Preflight position check: {rotation: 0, isRotated: false, originalWidth: 541.1787334750657, originalHeight: 993.5209697632231, visualWidth: 541.1787334750657, …}
+injected.js:37 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+injected.js:37 Canvas element 263e3d09-64d5-478c-9b5c-21763e505432 dimensions: {dbWidth: 541.1787334750657, dbHeight: 993.5209697632231, pixelWidth: 767.0249765000001, pixelHeight: 1408.139957, rotation: 90}
+injected.js:37 🎨 Rendering large SVG with simplified inline rendering: {size: 1584871}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 2}
+injected.js:37 PDFPreviewModal render: {open: false, project: 'Untitled Project'}
+injected.js:37 VectorizationServiceForm render: {open: false}
+injected.js:37 TemplateSelectorModal render {open: false, templatesLength: 69}
