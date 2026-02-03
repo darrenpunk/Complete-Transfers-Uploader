@@ -107,9 +107,17 @@ export default function UploadTool() {
 
   // Check URL params for email and odoo URL (when opened from fullscreen button in iframe)
   useEffect(() => {
+    console.log('🔍 URL Params Debug:', {
+      href: window.location.href,
+      search: window.location.search,
+      pathname: window.location.pathname
+    });
+    
     const urlParams = new URLSearchParams(window.location.search);
     const emailFromUrl = urlParams.get('email');
     const odooFromUrl = urlParams.get('odoo');
+    
+    console.log('🔍 Parsed URL params:', { email: emailFromUrl, odoo: odooFromUrl });
     
     if (emailFromUrl) {
       console.log('✅ Partner email from URL params:', emailFromUrl);
