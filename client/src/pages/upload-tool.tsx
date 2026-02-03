@@ -431,9 +431,19 @@ export default function UploadTool() {
         setTimeout(() => {
           const isInIframe = window.self !== window.top;
           
-          // Use parent origin when in iframe, fallback to env var
+          // Determine Odoo base URL:
+          // 1. Check URL params first (for standalone/PWA mode opened from iframe)
+          // 2. Use parent origin when in iframe
+          // 3. Fall back to env var or production default
           let odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
-          if (isInIframe && document.referrer) {
+          
+          // Check URL params for odoo URL (standalone/PWA mode)
+          const urlParams = new URLSearchParams(window.location.search);
+          const odooFromUrl = urlParams.get('odoo');
+          if (odooFromUrl) {
+            odooBaseUrl = odooFromUrl;
+            console.log('🔗 Using Odoo URL from URL params for cart:', odooBaseUrl);
+          } else if (isInIframe && document.referrer) {
             try {
               const referrerUrl = new URL(document.referrer);
               odooBaseUrl = referrerUrl.origin;
