@@ -61,8 +61,18 @@ interface PricingData {
 // Detect if running in iframe (for Odoo integration)
 const isInIframe = typeof window !== 'undefined' && window !== window.parent;
 
-// Get Odoo base URL dynamically - use parent window origin when in iframe, fallback to env var
+// Get Odoo base URL dynamically - check URL params first, then parent window origin, fallback to env var
 const getOdooBaseUrl = () => {
+  // Check URL params first (for standalone/PWA mode opened from iframe)
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const odooFromUrl = urlParams.get('odoo');
+    if (odooFromUrl) {
+      console.log('🔗 Using Odoo URL from URL params:', odooFromUrl);
+      return odooFromUrl;
+    }
+  }
+  // Check referrer when in iframe
   if (isInIframe && typeof document !== 'undefined' && document.referrer) {
     try {
       const referrerUrl = new URL(document.referrer);

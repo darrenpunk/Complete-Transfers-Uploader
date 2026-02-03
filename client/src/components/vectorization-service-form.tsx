@@ -68,6 +68,14 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
   
   const isInIframe = window.self !== window.top;
   const getOdooBaseUrl = () => {
+    // Check URL params first (for standalone/PWA mode opened from iframe)
+    const urlParams = new URLSearchParams(window.location.search);
+    const odooFromUrl = urlParams.get('odoo');
+    if (odooFromUrl) {
+      console.log('🔗 Using Odoo URL from URL params:', odooFromUrl);
+      return odooFromUrl;
+    }
+    // Check referrer when in iframe
     try {
       if (isInIframe && document.referrer) {
         const referrerUrl = new URL(document.referrer);
@@ -76,10 +84,10 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
     } catch (e) {
       console.warn('Could not parse referrer URL:', e);
     }
-    return 'https://completetransfers.odoo.com';
+    return 'https://www.completetransfers.com';
   };
   const odooBaseUrl = getOdooBaseUrl();
-  const cartUrl = isInIframe ? `${odooBaseUrl}/shop/cart` : '/shop/cart';
+  const cartUrl = `${odooBaseUrl}/shop/cart`;
   
 
   // Fetch available templates
