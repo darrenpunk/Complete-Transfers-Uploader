@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Save, Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2 } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -78,73 +78,6 @@ export default function UploadTool() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Fullscreen toggle handler - opens new tab when in iframe, uses Fullscreen API otherwise
-  const toggleFullscreen = () => {
-    const isInIframe = window.self !== window.top;
-    
-    if (isInIframe) {
-      // In iframe: open app in a new browser tab with partner email and Odoo URL preserved
-      // Use production URL if available, otherwise fall back to current URL
-      let baseUrl: URL;
-      
-      // Check if we're in production by looking for .replit.app domain or use current URL
-      const currentUrl = new URL(window.location.href);
-      const isDevDomain = currentUrl.hostname.includes('.replit.dev') || currentUrl.hostname.includes('localhost');
-      
-      if (isDevDomain && import.meta.env.PROD) {
-        // In production build but on dev domain - this shouldn't happen normally
-        // but if it does, try to construct production URL
-        const prodDomain = currentUrl.hostname.replace('.replit.dev', '.replit.app');
-        baseUrl = new URL(`https://${prodDomain}${currentUrl.pathname}`);
-      } else {
-        baseUrl = currentUrl;
-      }
-      
-      // Pass partner email if we have it (for cart assignment)
-      if (partnerEmail) {
-        baseUrl.searchParams.set('email', partnerEmail);
-      }
-      
-      // Pass the Odoo origin so the new tab knows which server to use
-      if (document.referrer) {
-        try {
-          const referrerOrigin = new URL(document.referrer).origin;
-          baseUrl.searchParams.set('odoo', referrerOrigin);
-        } catch (e) {
-          console.error('Failed to parse referrer:', e);
-        }
-      }
-      
-      window.open(baseUrl.toString(), '_blank');
-      return;
-    }
-    
-    // Standalone: use Fullscreen API
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch((err) => {
-        console.error('Fullscreen error:', err);
-      });
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch((err) => {
-        console.error('Exit fullscreen error:', err);
-      });
-    }
-  };
-
-  // Listen for fullscreen changes (e.g., user presses Escape)
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
   // Track Odoo URL from URL params (for standalone mode opened from iframe)
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(null);
@@ -1556,13 +1489,6 @@ export default function UploadTool() {
             <Button variant="outline" onClick={handleStartOver}>
               <RotateCcw className="w-4 h-4 mr-2" />
               Start Over
-            </Button>
-            <Button variant="outline" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
-              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            </Button>
-            <Button>
-              <Save className="w-4 h-4 mr-2" />
-              Save Progress
             </Button>
           </div>
         </div>
