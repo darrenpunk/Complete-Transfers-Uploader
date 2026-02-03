@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, Plus, Palette, ChevronDown, ChevronRight, Shirt, Layers, Settings, CheckCircle2, Type, Square, Circle, Minus, Move, Info } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
+import { UploadProgressModal } from "./upload-progress-modal";
 import { TextDialog } from "./text-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
@@ -122,6 +123,11 @@ export default function ToolsSidebar({
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
   const [colorModesModalOpen, setColorModesModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFileName, setUploadFileName] = useState("");
+  const [uploadFileCount, setUploadFileCount] = useState(0);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isUploadProcessing, setIsUploadProcessing] = useState(false);
 
   
   const toggleGroup = (groupName: string) => {
@@ -379,23 +385,51 @@ export default function ToolsSidebar({
   const uploadLogosMutation = useMutation({
     mutationFn: async (files: File[]) => {
       console.log('Starting upload mutation...');
+      
+      // Show upload modal
+      setUploadFileName(files.map(f => f.name).join(', '));
+      setUploadFileCount(files.length);
+      setUploadProgress(0);
+      setIsUploadProcessing(false);
+      setIsUploadModalOpen(true);
+      
       const formData = new FormData();
       files.forEach(file => formData.append('files', file));
       
-      const response = await fetch(`/api/projects/${project.id}/logos`, {
-        method: 'POST',
-        body: formData,
+      return new Promise<any[]>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percentComplete);
+            if (percentComplete >= 100) {
+              setIsUploadProcessing(true);
+            }
+          }
+        });
+        
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              console.log('Upload response data:', data);
+              resolve(data);
+            } catch (e) {
+              reject(new Error('Failed to parse response'));
+            }
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        });
+        
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload failed'));
+        });
+        
+        xhr.open('POST', `/api/projects/${project.id}/logos`);
+        xhr.send(formData);
       });
-      
-      console.log('Upload response status:', response.status);
-      
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-      
-      const data = await response.json();
-      console.log('Upload response data:', data);
-      return data;
     },
     onSuccess: (newLogos) => {
       console.log('=== UPLOAD SUCCESS CALLBACK ===');
@@ -452,9 +486,17 @@ export default function ToolsSidebar({
           description: "Logos uploaded successfully!",
         });
       }
+      
+      // Close upload progress modal after brief delay to show completion
+      setTimeout(() => {
+        setIsUploadModalOpen(false);
+        setIsUploadProcessing(false);
+      }, 500);
     },
     onError: (error) => {
       console.error('Upload error:', error);
+      setIsUploadModalOpen(false);
+      setIsUploadProcessing(false);
       toast({
         title: "Error",
         description: "Failed to upload logos. Please try again.",
@@ -1246,6 +1288,16 @@ export default function ToolsSidebar({
       <ColorModesModal
         open={colorModesModalOpen}
         onOpenChange={setColorModesModalOpen}
+      />
+
+      {/* Upload Progress Modal */}
+      <UploadProgressModal
+        open={isUploadModalOpen}
+        progress={uploadProgress}
+        fileName={uploadFileName}
+        fileCount={uploadFileCount}
+        currentFileIndex={1}
+        isProcessing={isUploadProcessing}
       />
 
     </div>
