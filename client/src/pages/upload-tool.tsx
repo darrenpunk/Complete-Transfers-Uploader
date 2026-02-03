@@ -913,6 +913,30 @@ export default function UploadTool() {
 
 
 
+  // Helper to get visual bounding box dimensions for a rotated element
+  const getVisualBounds = (element: CanvasElement): { visualWidth: number; visualHeight: number } => {
+    const rotation = element.rotation || 0;
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
+    
+    // For 90° or 270° rotation, swap width and height
+    if (normalizedRotation === 90 || normalizedRotation === 270) {
+      return { visualWidth: element.height, visualHeight: element.width };
+    }
+    
+    // For 0° or 180°, dimensions stay the same
+    if (normalizedRotation === 0 || normalizedRotation === 180) {
+      return { visualWidth: element.width, visualHeight: element.height };
+    }
+    
+    // For arbitrary rotations, calculate the bounding box
+    const radians = (rotation * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    const visualWidth = element.width * cos + element.height * sin;
+    const visualHeight = element.width * sin + element.height * cos;
+    return { visualWidth, visualHeight };
+  };
+
   // Handle element alignment from ToolsSidebar (string-based)
   const handleAlignElement = (elementId: string, alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (!currentProject || !canvasElements) return;
@@ -928,8 +952,11 @@ export default function UploadTool() {
     // Center-based coordinate system - (0,0) is at center of template
     const templateHalfWidth = template.width / 2;
     const templateHalfHeight = template.height / 2;
-    const elementHalfWidth = element.width / 2;
-    const elementHalfHeight = element.height / 2;
+    
+    // Get visual bounding box dimensions accounting for rotation
+    const { visualWidth, visualHeight } = getVisualBounds(element);
+    const elementHalfWidth = visualWidth / 2;
+    const elementHalfHeight = visualHeight / 2;
     
     let updates: { x?: number; y?: number } = {};
     

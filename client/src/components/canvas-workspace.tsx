@@ -250,6 +250,8 @@ export default function CanvasWorkspace({
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [initialPosition, setInitialPosition] = useState({ x: 0, y: 0 });
   const [initialMousePos, setInitialMousePos] = useState({ x: 0, y: 0 });
+  // Store computed local handle at resize start (stable during drag)
+  const localHandleRef = useRef<string | null>(null);
   // Store initial positions of ALL selected elements for group dragging - use REFS for synchronous access
   const initialElementPositionsRef = useRef<Map<string, {x: number, y: number}>>(new Map());
   const initialDragMousePosRef = useRef({ x: 0, y: 0 });
@@ -802,6 +804,9 @@ export default function CanvasWorkspace({
       groupResizeStateRef.current = null;
       setInitialSize({ width: element.width, height: element.height });
       setInitialPosition({ x: element.x, y: element.y });
+      // Handles are already in local space (positioned on the rotated element)
+      // No mapping needed - just store the handle directly
+      localHandleRef.current = handle;
     }
     
     if (!isElementSelected(element.id)) {
@@ -1173,107 +1178,108 @@ export default function CanvasWorkspace({
               }, false);
             });
           } else if (selectedElement) {
-            // SINGLE ELEMENT RESIZE (original behavior)
-            // Transform deltas to account for rotation for single elements
+            // SINGLE ELEMENT RESIZE with proper rotation handling
             const rotation = selectedElement.rotation || 0;
-            if (rotation !== 0) {
-              const rotationRad = (rotation * Math.PI) / 180;
-              const cosR = Math.cos(-rotationRad);
-              const sinR = Math.sin(-rotationRad);
-              const rotatedDeltaX = deltaX * cosR - deltaY * sinR;
-              const rotatedDeltaY = deltaX * sinR + deltaY * cosR;
-              deltaX = rotatedDeltaX;
-              deltaY = rotatedDeltaY;
-            }
+            const rotationRad = (rotation * Math.PI) / 180;
+            const cosR = Math.cos(rotationRad);
+            const sinR = Math.sin(rotationRad);
             
-            // Recalculate for single element with rotation-adjusted deltas
+            // Use the pre-computed local handle (stable during drag)
+            const localHandle = localHandleRef.current || resizeHandle;
+            
+            // Transform screen deltas to element-local coordinates
+            const cosInv = Math.cos(-rotationRad);
+            const sinInv = Math.sin(-rotationRad);
+            const localDeltaX = deltaX * cosInv - deltaY * sinInv;
+            const localDeltaY = deltaX * sinInv + deltaY * cosInv;
+            
+            // Calculate new dimensions and local center offset based on LOCAL handle
             let singleNewWidth = initialSize.width;
             let singleNewHeight = initialSize.height;
-            let singleNewX = initialPosition.x;
-            let singleNewY = initialPosition.y;
+            let localOffsetX = 0;
+            let localOffsetY = 0;
             
-            switch (resizeHandle) {
+            switch (localHandle) {
               case 'se':
-                singleNewWidth = Math.max(20, initialSize.width + deltaX);
-                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                singleNewWidth = Math.max(20, initialSize.width + localDeltaX);
+                singleNewHeight = Math.max(20, initialSize.height + localDeltaY);
                 if (maintainAspectRatio) {
-                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  if (Math.abs(localDeltaX) > Math.abs(localDeltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
-                // Center moves by half the size change (center-based positioning)
-                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
-                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
+                localOffsetX = (singleNewWidth - initialSize.width) / 2;
+                localOffsetY = (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'sw':
-                singleNewWidth = Math.max(20, initialSize.width - deltaX);
-                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                singleNewWidth = Math.max(20, initialSize.width - localDeltaX);
+                singleNewHeight = Math.max(20, initialSize.height + localDeltaY);
                 if (maintainAspectRatio) {
-                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  if (Math.abs(localDeltaX) > Math.abs(localDeltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
-                // Center moves by half the size change (center-based positioning)
-                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
-                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
+                localOffsetX = -(singleNewWidth - initialSize.width) / 2;
+                localOffsetY = (singleNewHeight - initialSize.height) / 2;
                 break;
               case 'ne':
-                singleNewWidth = Math.max(20, initialSize.width + deltaX);
-                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewWidth = Math.max(20, initialSize.width + localDeltaX);
+                singleNewHeight = Math.max(20, initialSize.height - localDeltaY);
                 if (maintainAspectRatio) {
-                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  if (Math.abs(localDeltaX) > Math.abs(localDeltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
-                // Center moves by half the size change (center-based positioning)
-                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
-                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
+                localOffsetX = (singleNewWidth - initialSize.width) / 2;
+                localOffsetY = -(singleNewHeight - initialSize.height) / 2;
                 break;
               case 'nw':
-                singleNewWidth = Math.max(20, initialSize.width - deltaX);
-                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewWidth = Math.max(20, initialSize.width - localDeltaX);
+                singleNewHeight = Math.max(20, initialSize.height - localDeltaY);
                 if (maintainAspectRatio) {
-                  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  if (Math.abs(localDeltaX) > Math.abs(localDeltaY)) {
                     singleNewHeight = singleNewWidth / aspectRatio;
                   } else {
                     singleNewWidth = singleNewHeight * aspectRatio;
                   }
                 }
-                // Center moves by half the size change (center-based positioning)
-                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
-                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
+                localOffsetX = -(singleNewWidth - initialSize.width) / 2;
+                localOffsetY = -(singleNewHeight - initialSize.height) / 2;
                 break;
               case 'e':
-                singleNewWidth = Math.max(20, initialSize.width + deltaX);
+                singleNewWidth = Math.max(20, initialSize.width + localDeltaX);
                 if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
-                // Center moves by half the width change
-                singleNewX = initialPosition.x + (singleNewWidth - initialSize.width) / 2;
+                localOffsetX = (singleNewWidth - initialSize.width) / 2;
                 break;
               case 'w':
-                singleNewWidth = Math.max(20, initialSize.width - deltaX);
+                singleNewWidth = Math.max(20, initialSize.width - localDeltaX);
                 if (maintainAspectRatio) singleNewHeight = singleNewWidth / aspectRatio;
-                // Center moves by half the width change
-                singleNewX = initialPosition.x - (singleNewWidth - initialSize.width) / 2;
+                localOffsetX = -(singleNewWidth - initialSize.width) / 2;
                 break;
               case 'n':
-                singleNewHeight = Math.max(20, initialSize.height - deltaY);
+                singleNewHeight = Math.max(20, initialSize.height - localDeltaY);
                 if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
-                // Center moves by half the height change
-                singleNewY = initialPosition.y - (singleNewHeight - initialSize.height) / 2;
+                localOffsetY = -(singleNewHeight - initialSize.height) / 2;
                 break;
               case 's':
-                singleNewHeight = Math.max(20, initialSize.height + deltaY);
+                singleNewHeight = Math.max(20, initialSize.height + localDeltaY);
                 if (maintainAspectRatio) singleNewWidth = singleNewHeight * aspectRatio;
-                // Center moves by half the height change
-                singleNewY = initialPosition.y + (singleNewHeight - initialSize.height) / 2;
+                localOffsetY = (singleNewHeight - initialSize.height) / 2;
                 break;
             }
+            
+            // Transform local offset back to screen space
+            const screenOffsetX = localOffsetX * cosR - localOffsetY * sinR;
+            const screenOffsetY = localOffsetX * sinR + localOffsetY * cosR;
+            
+            const singleNewX = initialPosition.x + screenOffsetX;
+            const singleNewY = initialPosition.y + screenOffsetY;
 
             updateElementDirect(selectedElement.id, { 
               width: Math.round(singleNewWidth * 10) / 10, 
@@ -1293,6 +1299,8 @@ export default function CanvasWorkspace({
       // Clear group resize state
       isGroupResize.current = false;
       groupResizeStateRef.current = null;
+      // Clear local handle ref
+      localHandleRef.current = null;
       clearTimeout(updateTimeout);
     };
 
