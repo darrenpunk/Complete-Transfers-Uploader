@@ -1,0 +1,269 @@
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal open state changed: false
+ 🔍 URL Params Debug: Object
+ 🔍 Parsed URL params: Object
+ ✅ Partner email from URL params: darren@serigraf.ie
+ ✅ Odoo URL from URL params: https://www.completetransfers.com
+ ✅ User email from URL params: darren@serigraf.ie
+ showAppliqueBadgesModal state changed to: false
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ PWA: Service Worker registered with scope: https://proof-designer-darren190.replit.app/
+/?email=darren%40serigraf.ie&odoo=https%3A%2F%2Fwww.completetransfers.com:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ Showing product launcher modal Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ TemplateSelectorModal render Object
+ 🔍 Pricing query: Object
+ PWA: Cache opened
+ Template selected: Object
+ Template checks: Object
+ Non-Custom Badges template, creating project directly
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ AppliqueBadgesModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas state update: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ PWA: Clearing old cache: artwork-uploader-v3
+ Template A3: 842x1191px, Workspace: 1221x1024, Zoom: 73%
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+3f82eced-86ed-410a-93d2-d41d6c77a306:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+index-BlzaplDf.js:498 handleFilesUpload called with files: Array(1)
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:482 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ index-BlzaplDf.js:482
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:498 Upload completed, checking for PDFs with raster content: Array(1)
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 ✅ Image loaded for preview
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:498 PDF preview approved, showing project name modal. Current pendingAction: continue
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:498 Project data for Odoo integration: Object
+index-BlzaplDf.js:498 🎬 Executing pending action: continue
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 RasterWarningModal render check: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+index-BlzaplDf.js:494 PDFPreviewModal render: Object
+index-BlzaplDf.js:494 VectorizationServiceForm render: Object
+index-BlzaplDf.js:487 TemplateSelectorModal render Object
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-BlzaplDf.js:487 Template A3: 842x1191px, Workspace: 400x1024, Zoom: 50%
+index-BlzaplDf.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-BlzaplDf.js:487    Bounds: 269.3×140.8pts (95.0×49.7mm)
+index-BlzaplDf.js:487    Element: 95.0×49.7mm
