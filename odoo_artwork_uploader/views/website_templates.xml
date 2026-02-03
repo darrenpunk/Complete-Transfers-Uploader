@@ -8,7 +8,7 @@
                     <div class="container-fluid artwork-uploader-container" style="padding: 0; margin: 0; height: calc(100vh - 100px);">
                         <iframe 
                             id="artwork-iframe"
-                            src="https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.dev"
+                            src="https://9e65605c-2a89-4d92-87e7-b0473609432c-00-w27t8e2xc951.spock.replit.app"
                             style="width: 100%; height: 100%; border: none; display: block;"
                             title="Proof Designer - Artwork Uploader"
                             allow="clipboard-write">
