@@ -234,7 +234,7 @@ export default function TemplateSelectorModal({
   
   return (
     <Dialog open={open} onOpenChange={() => {}} modal={true}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50 top-[5%] translate-y-0">
         <DialogHeader>
           <CompleteTransferLogo size="xl" className="mb-6 transform scale-125" />
           <DialogTitle className="text-2xl font-bold text-center">
