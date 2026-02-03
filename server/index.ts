@@ -15,6 +15,11 @@ console.log("Loaded VECTORIZER_API_SECRET:", process.env.VECTORIZER_API_SECRET ?
 
 const app = express();
 
+// Health check endpoint for deployment - must respond before any async operations
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
@@ -106,38 +111,45 @@ app.use((req, res, next) => {
   next();
 });
 
+// Create HTTP server from Express app
+const server = createServer(app);
+
+// Start server immediately so health checks pass during initialization
+const port = parseInt(process.env.PORT || '5000', 10);
+server.listen(port, "0.0.0.0", () => {
+  log(`serving on port ${port}`);
+});
+
+// Initialize routes and other async operations after server is listening
 (async () => {
-  await registerRoutes(app);
+  try {
+    console.log('[SERVER] Starting route registration...');
+    await registerRoutes(app);
+    console.log('[SERVER] Routes registered successfully');
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    // Log the error for debugging but don't crash the process
-    console.error(`[ERROR] ${status}: ${message}`, err.stack || err);
+      // Log the error for debugging but don't crash the process
+      console.error(`[ERROR] ${status}: ${message}`, err.stack || err);
 
-    res.status(status).json({ message });
-    // Removed: throw err; - this was crashing the production server
-  });
+      res.status(status).json({ message });
+    });
 
-  // Create HTTP server from Express app
-  const server = createServer(app);
+    // Setup Vite in development or serve static files in production
+    if (app.get("env") === "development") {
+      console.log('[SERVER] Setting up Vite for development...');
+      await setupVite(app, server);
+      console.log('[SERVER] Vite setup complete');
+    } else {
+      console.log('[SERVER] Serving static files for production...');
+      serveStatic(app);
+      console.log('[SERVER] Static file serving configured');
+    }
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    console.log('[SERVER] Server fully initialized');
+  } catch (error) {
+    console.error('[SERVER] Initialization error:', error);
   }
-
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-  });
 })();
