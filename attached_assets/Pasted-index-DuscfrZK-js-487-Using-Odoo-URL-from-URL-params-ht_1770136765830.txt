@@ -1,0 +1,42 @@
+index-DuscfrZK.js:487 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:494 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal open state changed: false
+index-DuscfrZK.js:498 ✅ Partner email from URL params: darren@serigraf.ie
+index-DuscfrZK.js:498 ✅ Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:498 ✅ User email from URL params: darren@serigraf.ie
+index-DuscfrZK.js:498 showAppliqueBadgesModal state changed to: false
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:494 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:494 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:498 Showing product launcher modal Object
+?email=darren%40serigraf.ie&odoo=https%3A%2F%2Fwww.completetransfers.com:24 PWA: Service Worker registered with scope: https://proof-designer-darren190.replit.app/
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:494 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+?email=darren%40serigraf.ie&odoo=https%3A%2F%2Fwww.completetransfers.com:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:494 🔗 Using Odoo URL from URL params: https://www.completetransfers.com
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 Pricing query: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 Pricing query: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 Pricing query: Object
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
