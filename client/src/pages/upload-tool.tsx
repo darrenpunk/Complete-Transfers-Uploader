@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2 } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -78,6 +78,7 @@ export default function UploadTool() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Track Odoo URL from URL params (for standalone mode opened from iframe)
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(null);
@@ -1134,8 +1135,31 @@ export default function UploadTool() {
     setShowRasterWarning(false);
   };
 
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch((err) => {
+        console.error('Error entering fullscreen:', err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      }).catch((err) => {
+        console.error('Error exiting fullscreen:', err);
+      });
+    }
+  };
 
-
+  // Listen for fullscreen changes (e.g., user presses Escape)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
 
   // Upload logos handler for canvas toolbar with progress tracking
@@ -1489,6 +1513,19 @@ export default function UploadTool() {
             <Button variant="outline" onClick={handleStartOver}>
               <RotateCcw className="w-4 h-4 mr-2" />
               Start Over
+            </Button>
+            <Button variant="outline" onClick={toggleFullscreen}>
+              {isFullscreen ? (
+                <>
+                  <Minimize2 className="w-4 h-4 mr-2" />
+                  Exit Fullscreen
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-4 h-4 mr-2" />
+                  Fullscreen
+                </>
+              )}
             </Button>
           </div>
         </div>
