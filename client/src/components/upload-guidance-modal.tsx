@@ -84,6 +84,32 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
         </Button>
 
         <div className="py-4">
+          {/* Best Practices - Always visible */}
+          <div className="mb-4">
+            <h3 className="text-base font-semibold flex items-center gap-2 mb-3">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Best Practices
+            </h3>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Vector files (PDF, SVG, AI) provide the sharpest print quality</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Use JPEG/PNG only for photographic images that cannot be vectorized</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Files are automatically converted to CMYK for print-ready output</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span>Ensure all text is converted to outlines/paths</span>
+              </li>
+            </ul>
+          </div>
+
           <Accordion type="single" collapsible className="w-full">
             {/* File Types */}
             <AccordionItem value="file-types">
@@ -133,36 +159,6 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
                     For larger files, try optimizing the PDF or reducing image resolution
                   </p>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Best Practices */}
-            <AccordionItem value="best-practices">
-              <AccordionTrigger className="text-base font-semibold">
-                <span className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-primary" />
-                  Best Practices
-                </span>
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="space-y-2 text-sm pt-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Vector files (PDF, SVG, AI) provide the sharpest print quality</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Use JPEG/PNG only for photographic images that cannot be vectorized</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Files are automatically converted to CMYK for print-ready output</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span>Ensure all text is converted to outlines/paths</span>
-                  </li>
-                </ul>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
