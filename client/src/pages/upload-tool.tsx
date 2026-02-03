@@ -80,14 +80,30 @@ export default function UploadTool() {
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
-
-  // Detect if running in iframe
-  useEffect(() => {
-    setIsInIframe(window.self !== window.top);
-  }, []);
-
-  // Track Odoo URL from URL params (for standalone mode opened from iframe)
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(null);
+
+  // Detect if running in iframe and capture parent Odoo URL
+  useEffect(() => {
+    const inIframe = window.self !== window.top;
+    setIsInIframe(inIframe);
+    
+    // If in iframe, try to get parent Odoo URL from referrer
+    if (inIframe && !odooUrlFromParams) {
+      try {
+        const referrer = document.referrer;
+        if (referrer) {
+          const referrerUrl = new URL(referrer);
+          // Only use if it's a real Odoo server (not localhost or replit)
+          if (!referrerUrl.hostname.includes('replit') && !referrerUrl.hostname.includes('localhost')) {
+            console.log('🔗 Detected parent Odoo URL from referrer:', referrerUrl.origin);
+            setOdooUrlFromParams(referrerUrl.origin);
+          }
+        }
+      } catch (e) {
+        console.log('Could not parse referrer URL');
+      }
+    }
+  }, [odooUrlFromParams]);
 
   // Check URL params for email and odoo URL (when opened from fullscreen button in iframe)
   useEffect(() => {
@@ -326,7 +342,7 @@ export default function UploadTool() {
       // 1. First check URL params (set when opened from fullscreen button in iframe)
       // 2. Then check parent window referrer (when running in iframe)
       // 3. Fall back to environment variable
-      let dynamicOdooUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      let dynamicOdooUrl = import.meta.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
       
       if (odooUrlFromParams) {
         dynamicOdooUrl = odooUrlFromParams;
@@ -416,7 +432,7 @@ export default function UploadTool() {
           const isInIframe = window.self !== window.top;
           
           // Use parent origin when in iframe, fallback to env var
-          let odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+          let odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
           if (isInIframe && document.referrer) {
             try {
               const referrerUrl = new URL(document.referrer);
@@ -1173,6 +1189,10 @@ export default function UploadTool() {
     const params = new URLSearchParams();
     if (partnerEmail) {
       params.set('email', partnerEmail);
+    }
+    // Pass the detected Odoo URL so standalone mode uses the correct server
+    if (odooUrlFromParams) {
+      params.set('odoo', odooUrlFromParams);
     }
     const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
     window.open(url, '_blank');

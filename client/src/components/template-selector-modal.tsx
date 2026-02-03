@@ -71,7 +71,7 @@ const getOdooBaseUrl = () => {
       console.warn('Could not parse referrer URL, using fallback:', e);
     }
   }
-  return import.meta.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+  return import.meta.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
 };
 const odooBaseUrl = getOdooBaseUrl();
 
