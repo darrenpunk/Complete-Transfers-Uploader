@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artwork-uploader-v1';
+const CACHE_NAME = 'artwork-uploader-v2';
 const urlsToCache = [
   '/',
   '/index.html'
