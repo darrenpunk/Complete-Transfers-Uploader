@@ -1,0 +1,165 @@
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal open state changed: false
+index-DuscfrZK.js:498 ⚠️ Standalone mode without email param - access restricted
+index-DuscfrZK.js:498 showAppliqueBadgesModal state changed to: false
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 AppliqueBadgesModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+7bb097dc-5a2b-4be8-9b19-fd6ed04a8f3a:24 PWA: Service Worker registered with scope: https://proof-designer-darren190.replit.app/
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-DuscfrZK.js:487 Canvas state update: Object
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🧹 Canvas element e79c433b-a360-4f43-8256-cd5eb392cebc references missing logo 874e50db-8304-4636-9551-79013cca60c2, filtering out
+(anonymous) @ index-DuscfrZK.js:487
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🧹 Canvas element e79c433b-a360-4f43-8256-cd5eb392cebc references missing logo 874e50db-8304-4636-9551-79013cca60c2, filtering out
+(anonymous) @ index-DuscfrZK.js:487
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+7bb097dc-5a2b-4be8-9b19-fd6ed04a8f3a:1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+index-DuscfrZK.js:487 Template A3: 842x1191px, Workspace: 1221x1024, Zoom: 73%
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 ✅ Image loaded for preview
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:498 PDF preview approved, showing project name modal. Current pendingAction: continue
+index-DuscfrZK.js:487 RasterWarningModal render check: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+index-DuscfrZK.js:494 PDFPreviewModal render: Object
+index-DuscfrZK.js:494 VectorizationServiceForm render: Object
+index-DuscfrZK.js:487 TemplateSelectorModal render Object
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+index-DuscfrZK.js:487 Template A3: 842x1191px, Workspace: 400x1024, Zoom: 50%
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:494 PDFPreviewModal render: {open: false, project: 'sd'}
+index-DuscfrZK.js:494 VectorizationServiceForm render: {open: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:498 Project data for Odoo integration: {name: 'sd', comments: 'Garment Colour: Black', garmentColors: undefined, totalQuantity: 10}
+index-DuscfrZK.js:498 🎬 Executing pending action: continue
+index-DuscfrZK.js:487 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:494 PDFPreviewModal render: {open: false, project: 'sd'}
+index-DuscfrZK.js:494 VectorizationServiceForm render: {open: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+sw.js:53 Uncaught (in promise) TypeError: Failed to execute 'put' on 'Cache': Request scheme 'chrome-extension' is unsupported
+    at sw.js:53:19
+(anonymous) @ sw.js:53
+Promise.then
+(anonymous) @ sw.js:52
+Promise.then
+(anonymous) @ sw.js:45
+index-DuscfrZK.js:498 🛒 Adding to Odoo cart via backend proxy: /api/projects/7bb097dc-5a2b-4be8-9b19-fd6ed04a8f3a/add-to-cart
+index-DuscfrZK.js:498 📄 Generating PDF for Odoo attachment...
+index-DuscfrZK.js:487 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:494 PDFPreviewModal render: {open: false, project: 'sd'}
+index-DuscfrZK.js:494 VectorizationServiceForm render: {open: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:498 ✅ PDF generated and converted to base64
+index-DuscfrZK.js:498 📦 Sending project data to Odoo: {name: 'sd', templateSize: 'template-A3', garmentColor: '#171816', garmentColorName: '#171816', garmentColors: Array(0), …}
+index-DuscfrZK.js:498 🎯 TEMPLATE SIZE FOR ADD-TO-CART: template-A3
+index-DuscfrZK.js:498 🎯 IS SINGLE COLOUR: null
+index-DuscfrZK.js:498 🔗 Running in standalone mode - calling backend proxy
+index-DuscfrZK.js:498 ✅ Added to cart successfully: {success: true, cart_quantity: 10, website_sale_order: 82085, access_token: '', partner_id: 4}
+index-DuscfrZK.js:487 RasterWarningModal render check: {pendingRasterFile: null, showRasterWarning: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 🔍 PDF-derived element detected, using 72 DPI conversion: 2.834645669 px/mm
+index-DuscfrZK.js:487 ✅ Normalized SVG detected - rendering at full container size
+index-DuscfrZK.js:487    Bounds: 841.9×595.3pts (297.0×210.0mm)
+index-DuscfrZK.js:487    Element: 297.0×210.0mm
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}
+index-DuscfrZK.js:494 PDFPreviewModal render: {open: false, project: 'sd'}
+index-DuscfrZK.js:494 VectorizationServiceForm render: {open: false}
+index-DuscfrZK.js:487 TemplateSelectorModal render {open: false, templatesLength: 69}

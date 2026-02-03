@@ -1,0 +1,20 @@
+[Violation] Permissions policy violation: unload is not allowed in this document.
+[Violation] Permissions policy violation: unload is not allowed in this document.
+[Violation] Permissions policy violation: unload is not allowed in this document.
+[Violation] Permissions policy violation: unload is not allowed in this document.
+[Violation] Permissions policy violation: unload is not allowed in this document.
+[Violation] Permissions policy violation: unload is not allowed in this document.
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+ Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+classifier.js:1 Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+web.assets_frontend_lazy.min.js:10315 📡 Initializing global artwork uploader iframe message handler
+web.assets_frontend_lazy.min.js:10317 ✅ Artwork uploader iframe message handler ready
+web.assets_frontend_lazy.min.js:10405 📡 Artwork Uploader iframe message listener initialized
+web.assets_frontend_lazy.min.js:8393 Tour Manager is ready.  running_tour=null
+classifier.js:1 Compiling or instantiating a WebAssembly module violates the following Content Security policy directive because 'unsafe-eval' is not an allowed source of script: "script-src 'self'". The policy is report-only, so the violation has been logged but no further action has been taken.
+cart:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+cart:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+cart:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+cart:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+cart:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+cart:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
