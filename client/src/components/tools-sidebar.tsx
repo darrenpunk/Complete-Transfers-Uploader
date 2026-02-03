@@ -128,7 +128,6 @@ export default function ToolsSidebar({
   const [uploadFileCount, setUploadFileCount] = useState(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isUploadProcessing, setIsUploadProcessing] = useState(false);
-
   
   const toggleGroup = (groupName: string) => {
     setExpandedGroups(prev => 

@@ -28,6 +28,7 @@ import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
+import { UploadProgressModal } from "@/components/upload-progress-modal";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -62,6 +63,8 @@ export default function UploadTool() {
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploadProcessing, setIsUploadProcessing] = useState(false);
+  const [uploadFileName, setUploadFileName] = useState("");
   const [complexityError, setComplexityError] = useState<{
     message: string;
     details: string;
@@ -1207,8 +1210,11 @@ export default function UploadTool() {
     console.log('handleFilesUpload called with files:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     if (!currentProject) return;
     
+    // Show upload modal with file info
+    setUploadFileName(files.map(f => f.name).join(', '));
     setIsUploading(true);
     setUploadProgress(0);
+    setIsUploadProcessing(false);
     
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
@@ -1221,12 +1227,14 @@ export default function UploadTool() {
       if (event.lengthComputable) {
         const percentComplete = Math.round((event.loaded / event.total) * 100);
         setUploadProgress(percentComplete);
+        if (percentComplete >= 100) {
+          setIsUploadProcessing(true);
+        }
       }
     });
     
     // Handle completion
     xhr.addEventListener('load', () => {
-      setIsUploading(false);
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           const newLogos = JSON.parse(xhr.responseText);
@@ -1347,9 +1355,17 @@ export default function UploadTool() {
               });
             }
           }
+          
+          // Close upload progress modal after brief delay to show completion
+          setTimeout(() => {
+            setIsUploading(false);
+            setIsUploadProcessing(false);
+          }, 500);
         } catch (error) {
           console.error('Upload response parsing error:', error);
           console.log('Response text:', xhr.responseText);
+          setIsUploading(false);
+          setIsUploadProcessing(false);
           toast({
             title: "Error",
             description: "Failed to process upload response.",
@@ -1357,6 +1373,8 @@ export default function UploadTool() {
           });
         }
       } else if (xhr.status === 413) {
+        setIsUploading(false);
+        setIsUploadProcessing(false);
         // Handle 413 errors: either file_too_complex OR file size limit from reverse proxy
         try {
           const errorResponse = JSON.parse(xhr.responseText);
@@ -1389,6 +1407,8 @@ export default function UploadTool() {
           console.error('Suggest using Dropbox File Request for large files');
         }
       } else {
+        setIsUploading(false);
+        setIsUploadProcessing(false);
         console.error('Upload failed with status:', xhr.status);
         console.log('Response text:', xhr.responseText);
         toast({
@@ -1402,6 +1422,7 @@ export default function UploadTool() {
     // Handle errors
     xhr.addEventListener('error', () => {
       setIsUploading(false);
+      setIsUploadProcessing(false);
       console.error('XMLHttpRequest error event triggered');
       toast({
         title: "Error",
@@ -1413,6 +1434,7 @@ export default function UploadTool() {
     // Handle timeout
     xhr.addEventListener('timeout', () => {
       setIsUploading(false);
+      setIsUploadProcessing(false);
       console.error('XMLHttpRequest timeout');
       toast({
         title: "Timeout",
@@ -1939,6 +1961,16 @@ export default function UploadTool() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Upload Progress Modal */}
+      <UploadProgressModal
+        open={isUploading}
+        progress={uploadProgress}
+        fileName={uploadFileName}
+        fileCount={1}
+        currentFileIndex={1}
+        isProcessing={isUploadProcessing}
+      />
 
     </div>
   );
