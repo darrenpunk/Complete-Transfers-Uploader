@@ -4336,6 +4336,84 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Font outlining endpoint for SVG files
+  app.post('/api/logos/:logoId/outline-fonts', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      // Only works for SVG files
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ error: 'Font outlining only available for SVG files' });
+      }
+      
+      const svgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+      
+      console.log(`🔤 Manual font outlining requested for: ${logo.filename}`);
+      
+      // Import and run font outlining
+      const { outlineFonts } = await import('./font-outliner');
+      const outlinedPath = await outlineFonts(svgPath);
+      
+      if (outlinedPath !== svgPath && fs.existsSync(outlinedPath)) {
+        // Replace the original SVG with the outlined version
+        const outlinedContent = fs.readFileSync(outlinedPath, 'utf8');
+        fs.writeFileSync(svgPath, outlinedContent);
+        
+        // Clean up the temporary outlined file
+        fs.unlinkSync(outlinedPath);
+        
+        console.log(`✅ Fonts successfully outlined: ${logo.filename}`);
+        
+        // Re-analyze the outlined SVG to update text status
+        const { analyzeSVGWithStrokeWidths } = await import('./svg-color-utils');
+        const analysis = analyzeSVGWithStrokeWidths(svgPath);
+        
+        // Update the logo with fontsOutlined flag and new analysis
+        await storage.updateLogo(logoId, {
+          fontsOutlined: true,
+          svgColors: {
+            colors: analysis.colors,
+            fonts: analysis.fonts,
+            strokeWidths: analysis.strokeWidths,
+            minStrokeWidth: analysis.minStrokeWidth,
+            maxStrokeWidth: analysis.maxStrokeWidth,
+            hasText: analysis.hasText
+          },
+          svgFonts: analysis.fonts
+        });
+        
+        res.json({ 
+          success: true, 
+          message: 'Fonts outlined successfully',
+          fontsOutlined: true
+        });
+      } else {
+        // No text elements found or outlining returned same path
+        console.log(`ℹ️ No text elements to outline in: ${logo.filename}`);
+        
+        // Still mark as outlined since there's nothing to convert
+        await storage.updateLogo(logoId, { fontsOutlined: true });
+        
+        res.json({ 
+          success: true, 
+          message: 'No text elements found to outline',
+          fontsOutlined: true
+        });
+      }
+    } catch (error) {
+      console.error('Font outlining error:', error);
+      res.status(500).json({ error: 'Failed to outline fonts' });
+    }
+  });
+
   // CMYK Preview endpoint for SVG files
   app.get('/api/logos/:logoId/cmyk-preview', async (req, res) => {
     try {
