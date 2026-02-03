@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, ExternalLink } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2 } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -1201,20 +1201,6 @@ export default function UploadTool() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Open app in new tab (for PWA installation or standalone use)
-  const openInNewTab = () => {
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-    if (partnerEmail) {
-      params.set('email', partnerEmail);
-    }
-    // Pass the detected Odoo URL so standalone mode uses the correct server
-    if (odooUrlFromParams) {
-      params.set('odoo', odooUrlFromParams);
-    }
-    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
-    window.open(url, '_blank');
-  };
 
 
   // Upload logos handler for canvas toolbar with progress tracking
@@ -1582,12 +1568,6 @@ export default function UploadTool() {
                 </>
               )}
             </Button>
-            {isInIframe && (
-              <Button variant="outline" onClick={openInNewTab} title="Open in new tab for PWA installation">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open in New Tab
-              </Button>
-            )}
           </div>
         </div>
       </header>
