@@ -33,7 +33,11 @@ export function DropboxUploadModal({
   const [copied, setCopied] = useState(false);
 
   const handleSubmit = async () => {
-    if (!fileName) return;
+    console.log('[DropboxModal] Button clicked, fileName:', fileName);
+    if (!fileName) {
+      console.log('[DropboxModal] No filename, returning');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -47,6 +51,8 @@ export function DropboxUploadModal({
       
       if (result && 'uploadUrl' in result) {
         setUploadUrl(result.uploadUrl);
+      } else {
+        console.log('[DropboxModal] No uploadUrl in result');
       }
     } catch (error) {
       console.error('[DropboxModal] Error:', error);
