@@ -1738,35 +1738,35 @@ export default function CanvasWorkspace({
             <div className="h-6 w-px bg-gray-300"></div>
             
             {/* Grid and Guide Controls */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant={showGrid ? "default" : "outline"}
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setShowGrid(!showGrid)}
                   >
-                    <Grid3X3 className="w-4 h-4 mr-1" />
-                    Grid
+                    <Grid3X3 className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Toggle grid overlay for precise alignment</p>
+                  <p>Toggle grid</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant={showGuides ? "default" : "outline"}
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => setShowGuides(!showGuides)}
                   >
-                    <AlignCenter className="w-4 h-4 mr-1" />
-                    Guides
+                    <AlignCenter className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Toggle alignment guides for positioning elements</p>
+                  <p>Toggle guides</p>
                 </TooltipContent>
               </Tooltip>
               {/* Fit to Bounds Button - show when elements exist on canvas */}
