@@ -1756,7 +1756,7 @@ export async function registerRoutes(app: express.Application) {
                       const pngPath = path.join(uploadDir, pngFilename);
                       
                       try {
-                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                         await execAsync(gsCommand);
                         
                         if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -1834,7 +1834,7 @@ export async function registerRoutes(app: express.Application) {
                   const pngFilename = `${file.filename}_preview.png`;
                   const pngPath = path.join(uploadDir, pngFilename);
                   
-                  const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                   await execAsync(gsCommand);
                   
                   if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -1912,7 +1912,7 @@ export async function registerRoutes(app: express.Application) {
                     const pngPath = path.join(uploadDir, pngFilename);
                     
                     try {
-                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                       await execAsync(gsCommand);
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
