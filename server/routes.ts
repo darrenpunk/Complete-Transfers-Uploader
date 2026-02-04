@@ -3637,9 +3637,15 @@ export async function registerRoutes(app: express.Application) {
 
           } else {
             // Fallback: for large documents with no detectable content bounds
-            console.log(`Large format document with no detectable content bounds, using conservative sizing`);
-            displayWidth = 200;
-            displayHeight = 150;
+            // BUT preserve dimensions if already set for complex file PNG fallback
+            if ((file as any).isComplexFilePngFallback && (file as any).originalPdfBounds) {
+              console.log(`Large format complex file - using pre-extracted PDF bounds: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+              // displayWidth and displayHeight already set from originalPdfBounds
+            } else {
+              console.log(`Large format document with no detectable content bounds, using conservative sizing`);
+              displayWidth = 200;
+              displayHeight = 150;
+            }
           }
         } catch (error) {
           console.error('Failed to calculate content bounds:', error);
