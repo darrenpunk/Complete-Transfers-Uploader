@@ -137,7 +137,6 @@ export class MemStorage implements IStorage {
       { id: "woven-small", name: "woven_small", label: "60×60mm Woven", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null },
       
       // Digital Transfers - Applique Badges
-      { id: "applique-A6", name: "applique_A6", label: "A6 Applique", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null },
       { id: "applique-square", name: "applique_square", label: "95×95mm Applique", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null },
       { id: "applique-badge", name: "applique_badge", label: "100×70mm Applique", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null },
       { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null },
