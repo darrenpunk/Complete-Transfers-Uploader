@@ -1757,9 +1757,22 @@ export async function registerRoutes(app: express.Application) {
                       
                       try {
                         const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                        await execAsync(gsCommand);
+                        await execAsync(gsCommand, { encoding: 'buffer' as any });
                         
                         if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                          const pngBuffer = fs.readFileSync(pngPath);
+                          const pngSignature = pngBuffer.slice(0, 8).toString('hex');
+                          const isValidPng = pngSignature === '89504e470d0a1a0a';
+                          console.log(`🔍 PNG validation: signature=${pngSignature}, valid=${isValidPng}`);
+                          
+                          if (!isValidPng) {
+                            console.log(`⚠️ PNG corrupted, regenerating...`);
+                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer' });
+                            const regenBuffer = fs.readFileSync(pngPath);
+                            const regenSig = regenBuffer.slice(0, 8).toString('hex');
+                            console.log(`🔍 Regenerated PNG: signature=${regenSig}, valid=${regenSig === '89504e470d0a1a0a'}`);
+                          }
+                          
                           // Store original PDF path for final output
                           (file as any).originalPdfPath = pdfPath;
                           (file as any).isCMYKPreserved = true;
@@ -1913,9 +1926,19 @@ export async function registerRoutes(app: express.Application) {
                     
                     try {
                       const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                      await execAsync(gsCommand);
+                      await execAsync(gsCommand, { encoding: 'buffer' as any });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                        const pngBuffer = fs.readFileSync(pngPath);
+                        const pngSignature = pngBuffer.slice(0, 8).toString('hex');
+                        const isValidPng = pngSignature === '89504e470d0a1a0a';
+                        console.log(`🔍 PNG validation (RGB): signature=${pngSignature}, valid=${isValidPng}`);
+                        
+                        if (!isValidPng) {
+                          console.log(`⚠️ PNG corrupted, regenerating...`);
+                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer' });
+                        }
+                        
                         // Store original PDF path for final output
                         (file as any).originalPdfPath = pdfPath;
                         (file as any).isCMYKPreserved = false; // RGB PDF
