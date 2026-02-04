@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2 } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -58,6 +58,8 @@ export default function UploadTool() {
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
   const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
   const [showUploadGuidanceModal, setShowUploadGuidanceModal] = useState(false);
+  const [showLeftPanel, setShowLeftPanel] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string; logoId?: string; url?: string } | null>(null);
@@ -1521,51 +1523,45 @@ export default function UploadTool() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-foreground">Artwork Uploader & Gang Sheet Builder</div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span>Step {currentStep} of 5:</span>
+      <header className="bg-card border-b border-border px-3 md:px-6 py-2 md:py-4 flex-shrink-0">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="text-base md:text-xl font-semibold text-foreground truncate">Artwork Uploader</div>
+          <div className="flex items-center gap-1 md:gap-4 flex-wrap justify-end">
+            <div className="hidden sm:flex items-center space-x-2 text-xs md:text-sm text-muted-foreground">
+              <span>Step {currentStep}/5:</span>
               <span className="font-medium text-foreground">
-                {currentStep === 1 && "Upload Logos"}
-                {currentStep === 2 && "Design Layout"}
-                {currentStep === 3 && "Pre-flight Check"}
-                {currentStep === 4 && "Add to Cart"}
-                {currentStep === 5 && "Attach to Order"}
+                {currentStep === 1 && "Upload"}
+                {currentStep === 2 && "Design"}
+                {currentStep === 3 && "Check"}
+                {currentStep === 4 && "Cart"}
+                {currentStep === 5 && "Order"}
               </span>
             </div>
-            <Button variant="outline" onClick={() => setShowOnboardingTutorial(true)}>
-              <GraduationCap className="w-4 h-4 mr-2" />
-              Tutorial
+            <Button variant="outline" size="sm" className="hidden xl:flex" onClick={() => setShowOnboardingTutorial(true)}>
+              <GraduationCap className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Tutorial</span>
             </Button>
-            <Button variant="outline" onClick={() => setShowVectorizationForm(true)}>
-              <Palette className="w-4 h-4 mr-2" />
-              Vectorization Service
+            <Button variant="outline" size="sm" className="hidden xl:flex" onClick={() => setShowVectorizationForm(true)}>
+              <Palette className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Vectorization</span>
             </Button>
-            <Button variant="outline" onClick={() => setShowArtworkRequirementsModal(true)}>
-              <FileText className="w-4 h-4 mr-2" />
-              Artwork Requirements
+            <Button variant="outline" size="sm" className="hidden lg:flex" onClick={() => setShowArtworkRequirementsModal(true)}>
+              <FileText className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Requirements</span>
             </Button>
-            <Button variant="outline" onClick={() => setShowHelpModal(true)}>
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Help
+            <Button variant="outline" size="sm" onClick={() => setShowHelpModal(true)}>
+              <HelpCircle className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Help</span>
             </Button>
-            <Button variant="outline" onClick={handleStartOver}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Start Over
+            <Button variant="outline" size="sm" onClick={handleStartOver}>
+              <RotateCcw className="w-4 h-4" />
+              <span className="hidden md:inline ml-2">Restart</span>
             </Button>
-            <Button variant="outline" onClick={toggleFullscreen}>
+            <Button variant="outline" size="sm" className="hidden sm:flex" onClick={toggleFullscreen}>
               {isFullscreen ? (
-                <>
-                  <Minimize2 className="w-4 h-4 mr-2" />
-                  Exit Fullscreen
-                </>
+                <Minimize2 className="w-4 h-4" />
               ) : (
-                <>
-                  <Maximize2 className="w-4 h-4 mr-2" />
-                  Fullscreen
-                </>
+                <Maximize2 className="w-4 h-4" />
               )}
             </Button>
           </div>
@@ -1573,14 +1569,14 @@ export default function UploadTool() {
       </header>
 
       {/* Workflow Progress Bar with Logo */}
-      <div className="bg-card border-b border-border px-6 py-3">
-        <div className="flex items-center gap-8">
+      <div className="bg-card border-b border-border px-3 md:px-6 py-2 md:py-3">
+        <div className="flex items-center gap-4 md:gap-8">
           <img 
             src={completeTransfersLogoPath} 
             alt="CompleteTransfers" 
-            className="h-20 w-auto object-contain flex-shrink-0"
+            className="hidden md:block h-16 lg:h-20 w-auto object-contain flex-shrink-0"
           />
-          <div className="flex-1">
+          <div className="flex-1 overflow-x-auto">
             <ProgressSteps currentStep={currentStep} layout="horizontal" />
           </div>
         </div>
@@ -1588,8 +1584,32 @@ export default function UploadTool() {
 
       {/* Main Workspace */}
       <div className="flex flex-1 overflow-hidden" style={{ position: 'relative' }}>
-        {/* Left Sidebar */}
-        <div className="flex-shrink-0">
+        {/* Mobile Panel Toggle Buttons */}
+        <div className="lg:hidden fixed bottom-20 left-4 z-20 flex flex-col gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowLeftPanel(!showLeftPanel)}
+            className="shadow-lg"
+          >
+            <PanelLeft className="h-4 w-4 mr-1" />
+            Tools
+          </Button>
+        </div>
+        <div className="lg:hidden fixed bottom-20 right-4 z-20 flex flex-col gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowRightPanel(!showRightPanel)}
+            className="shadow-lg"
+          >
+            <PanelRight className="h-4 w-4 mr-1" />
+            Properties
+          </Button>
+        </div>
+
+        {/* Left Sidebar - Hidden on mobile, shown on lg+ */}
+        <div className="hidden lg:block flex-shrink-0">
           <ToolsSidebar
             currentStep={currentStep}
             project={currentProject}
@@ -1605,6 +1625,37 @@ export default function UploadTool() {
             onOpenVectorizationForm={() => setShowVectorizationForm(true)}
           />
         </div>
+
+        {/* Left Sidebar Mobile Overlay */}
+        {showLeftPanel && (
+          <div className="lg:hidden fixed inset-0 z-30 flex">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowLeftPanel(false)} />
+            <div className="relative z-40 h-full overflow-y-auto">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 z-50"
+                onClick={() => setShowLeftPanel(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <ToolsSidebar
+                currentStep={currentStep}
+                project={currentProject}
+                logos={logos}
+                templateSizes={templateSizes}
+                canvasElements={canvasElements}
+                selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
+                onTemplateChange={handleTemplateChange}
+                onGarmentColorChange={handleGarmentColorChange}
+                onInkColorChange={handleInkColorChange}
+                onAlignElement={handleAlignElement}
+                onCenterAllElements={handleCenterAllElements}
+                onOpenVectorizationForm={() => setShowVectorizationForm(true)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Main Canvas Area */}
         <div className="flex-1 min-w-0">
@@ -1624,8 +1675,8 @@ export default function UploadTool() {
           />
         </div>
 
-        {/* Right Properties Panel */}
-        <div className="flex-shrink-0" style={{ width: '320px' }}>
+        {/* Right Properties Panel - Hidden on mobile, shown on lg+ */}
+        <div className="hidden lg:block flex-shrink-0" style={{ width: '320px' }}>
           <PropertiesPanel
             selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
             selectedElements={selectedElements}
@@ -1640,6 +1691,36 @@ export default function UploadTool() {
             onMaintainAspectRatioChange={setMaintainAspectRatio}
           />
         </div>
+
+        {/* Right Properties Panel Mobile Overlay */}
+        {showRightPanel && (
+          <div className="lg:hidden fixed inset-0 z-30 flex justify-end">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowRightPanel(false)} />
+            <div className="relative z-40 h-full overflow-y-auto" style={{ width: '320px', maxWidth: '100vw' }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 left-2 z-50"
+                onClick={() => setShowRightPanel(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <PropertiesPanel
+                selectedElement={selectedElements.length > 0 ? selectedElements[0] : null}
+                selectedElements={selectedElements}
+                canvasElements={canvasElements}
+                logos={logos}
+                project={currentProject}
+                templateSizes={templateSizes}
+                onTemplateChange={handleTemplateChange}
+                onAlignElement={handleAlignElementByCoordinates}
+                onCenterAllElements={handleCenterAllElements}
+                maintainAspectRatio={maintainAspectRatio}
+                onMaintainAspectRatioChange={setMaintainAspectRatio}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Action Bar - Fixed at bottom */}
