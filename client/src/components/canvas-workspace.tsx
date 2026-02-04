@@ -124,6 +124,8 @@ interface CanvasWorkspaceProps {
   maintainAspectRatio?: boolean;
   onContinue?: () => void;
   currentStep?: number;
+  isFullscreen?: boolean;
+  onReenterFullscreen?: () => void;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -152,7 +154,9 @@ export default function CanvasWorkspace({
   uploadProgress = 0,
   maintainAspectRatio = true,
   onContinue,
-  currentStep = 1
+  currentStep = 1,
+  isFullscreen = false,
+  onReenterFullscreen
 }: CanvasWorkspaceProps) {
   // Helper to get first selected element (for backwards compatibility with single-select operations)
   const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
@@ -1636,6 +1640,9 @@ export default function CanvasWorkspace({
                   if (files.length > 0) {
                     handleCanvasFileUpload(files);
                     e.target.value = '';
+                  }
+                  if (isFullscreen && onReenterFullscreen) {
+                    setTimeout(() => onReenterFullscreen(), 100);
                   }
                 }}
               />

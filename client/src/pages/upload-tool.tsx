@@ -1672,6 +1672,12 @@ export default function UploadTool() {
             maintainAspectRatio={maintainAspectRatio}
             onContinue={handleNextStep}
             currentStep={currentStep}
+            isFullscreen={isFullscreen}
+            onReenterFullscreen={() => {
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+            }}
           />
         </div>
 
