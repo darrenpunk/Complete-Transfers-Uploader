@@ -114,12 +114,14 @@ export default function TemplateSelectorModal({
   // Get pricing data for selected template and copies
   const selectedTemplateData = selectedTemplate ? templates.find(t => t.id === selectedTemplate) : null;
   
-  // Determine minimum quantity based on template group
+  // Determine minimum quantity based on template type
   const getMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
-    // Digital transfers typically have lower minimum quantities
-    const digitalTransferGroups = ['Digital Transfers'];
-    return digitalTransferGroups.includes(template.group || '') ? 1 : 10;
+    // Only DTF and UV DTF templates have minimum quantity of 1
+    // Check template ID for dtf or uv-dtf patterns
+    const templateId = template.id.toLowerCase();
+    const isDtfTemplate = templateId.includes('dtf') || templateId.includes('uv-dtf');
+    return isDtfTemplate ? 1 : 10;
   };
   
   const minQuantity = getMinQuantity(selectedTemplateData || null);
@@ -339,7 +341,7 @@ export default function TemplateSelectorModal({
                     className="w-24 text-center"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Min: {minQuantity} {minQuantity === 1 ? '(DTF/UV DTF)' : '(Standard)'}
+                    Min: {minQuantity}
                   </p>
                 </div>
               </div>
