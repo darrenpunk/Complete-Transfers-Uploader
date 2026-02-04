@@ -1757,7 +1757,7 @@ export async function registerRoutes(app: express.Application) {
                       
                       try {
                         const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                        await execAsync(gsCommand, { encoding: 'buffer' as any });
+                        execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
                         if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                           const pngBuffer = fs.readFileSync(pngPath);
@@ -1783,6 +1783,10 @@ export async function registerRoutes(app: express.Application) {
                           finalUrl = `/uploads/${finalFilename}`;
                           
                           console.log(`✅ PNG preview created for complex file: ${pngFilename}, original PDF preserved at: ${pdfPath}`);
+                          
+                          // Final verification
+                          const finalCheck = fs.readFileSync(pngPath);
+                          console.log(`🔍 FINAL PNG check before return: signature=${finalCheck.slice(0,8).toString('hex')}, size=${finalCheck.length}`);
                         } else {
                           throw new Error('PNG generation failed');
                         }
@@ -1926,7 +1930,7 @@ export async function registerRoutes(app: express.Application) {
                     
                     try {
                       const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                      await execAsync(gsCommand, { encoding: 'buffer' as any });
+                      execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                         const pngBuffer = fs.readFileSync(pngPath);
