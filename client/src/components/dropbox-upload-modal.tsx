@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, ExternalLink, Check } from "lucide-react";
+import { Upload, ExternalLink, Check, Copy, CheckCircle } from "lucide-react";
 
 interface DropboxUploadModalProps {
   open: boolean;
@@ -30,6 +30,7 @@ export function DropboxUploadModal({
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadUrl, setUploadUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async () => {
     if (!fileName) return;
@@ -53,12 +54,19 @@ export function DropboxUploadModal({
     setFileName("");
     setDescription("");
     setUploadUrl(null);
+    setCopied(false);
     onOpenChange(false);
   };
 
-  const handleOpenUploadLink = () => {
+  const handleCopyLink = async () => {
     if (uploadUrl) {
-      window.open(uploadUrl, '_blank');
+      try {
+        await navigator.clipboard.writeText(uploadUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
     }
   };
 
@@ -146,14 +154,37 @@ export function DropboxUploadModal({
             <div className="space-y-4 py-4">
               <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Check className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-green-600" />
                   <p className="text-sm font-medium text-green-800 dark:text-green-200">
                     Upload Link Created!
                   </p>
                 </div>
                 <p className="text-xs text-green-700 dark:text-green-300">
-                  A placeholder has been added to your canvas. Click the button below to upload your file.
+                  A placeholder has been added to your canvas. Copy the link below and open it in a new browser tab to upload your file.
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Your Upload Link</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={uploadUrl || ''}
+                    readOnly
+                    className="font-mono text-xs"
+                    data-testid="input-dropbox-url"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleCopyLink}
+                    data-testid="button-copy-dropbox-link"
+                  >
+                    {copied ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {copied && (
+                  <p className="text-xs text-green-600">Link copied to clipboard!</p>
+                )}
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
@@ -161,34 +192,20 @@ export function DropboxUploadModal({
                   <strong>Next Steps:</strong>
                 </p>
                 <ol className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-decimal list-inside">
-                  <li>Click "Open Upload Link" below</li>
+                  <li>Copy the link above</li>
+                  <li>Open it in a new browser tab</li>
                   <li>Drag and drop your file to Dropbox</li>
                   <li>Return here and continue working on your project</li>
-                  <li>We'll automatically detect and process your file</li>
                 </ol>
               </div>
             </div>
 
             <div className="flex gap-2 justify-end">
               <Button
-                variant="outline"
                 onClick={handleClose}
                 data-testid="button-close-dropbox"
               >
                 Done
-              </Button>
-              <Button
-                asChild
-                data-testid="button-open-dropbox-link"
-              >
-                <a
-                  href={uploadUrl || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Open Upload Link
-                </a>
               </Button>
             </div>
           </>
