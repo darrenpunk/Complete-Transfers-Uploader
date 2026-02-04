@@ -50,6 +50,7 @@ export const logos = pgTable("logos", {
   isComplexVector: boolean("is_complex_vector").default(false), // Track if SVG has too many paths for browser rendering
   vectorComplexityMetrics: jsonb("vector_complexity_metrics"), // Store path counts and complexity metrics
   canvasFallbackFilename: text("canvas_fallback_filename"), // PNG fallback for canvas display of complex vectors
+  isComplexFilePngFallback: boolean("is_complex_file_png_fallback").default(false), // Track if complex PDF uses PNG for canvas but original PDF for output
   externalFileUrl: text("external_file_url"), // WeTransfer/Dropbox link for files too complex to upload directly
   externalFileService: text("external_file_service"), // Service used: wetransfer, dropbox, etc.
   isPlaceholder: boolean("is_placeholder").default(false), // Track if this is a placeholder for externally hosted file

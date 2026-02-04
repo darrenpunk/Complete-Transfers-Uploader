@@ -1712,47 +1712,90 @@ export async function registerRoutes(app: express.Application) {
                   const complexityCheck = checkFileComplexityEarly(svgPath, originalPdfSize, file.filename);
                   
                   if (complexityCheck.isLikelyTooComplex) {
-                    console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
-                    // Reject with helpful error message - show ORIGINAL file size, not converted SVG size
-                    res.status(413).json({ 
-                      error: 'file_too_complex',
-                      message: 'This file is too complex for automated processing',
-                      details: complexityCheck.reason,
-                      estimatedPaths: complexityCheck.estimatedPathCount,
-                      estimatedElements: complexityCheck.estimatedElementCount,
-                      originalFileSizeMB: complexityCheck.originalFileSizeMB,
-                      convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
-                      originalFileName: file.filename,
-                      suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
-                    });
-                    return;
+                    const fileSizeMB = typeof complexityCheck.originalFileSizeMB === 'number' ? complexityCheck.originalFileSizeMB : 0;
+                    
+                    // For complex files UNDER 50MB: Use PNG preview with original PDF for output
+                    if (fileSizeMB < 50) {
+                      console.log(`📸 Complex file under 50MB (${fileSizeMB.toFixed(1)}MB) - creating PNG preview, preserving PDF for output`);
+                      
+                      // Create PNG preview for canvas display
+                      const pngFilename = `${file.filename}_preview.png`;
+                      const pngPath = path.join(uploadDir, pngFilename);
+                      
+                      try {
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        await execAsync(gsCommand);
+                        
+                        if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                          // Store original PDF path for final output
+                          (file as any).originalPdfPath = pdfPath;
+                          (file as any).isCMYKPreserved = true;
+                          (file as any).isComplexFilePngFallback = true;
+                          
+                          finalFilename = pngFilename;
+                          finalMimeType = 'image/png';
+                          finalUrl = `/uploads/${finalFilename}`;
+                          
+                          console.log(`✅ PNG preview created for complex file: ${pngFilename}, original PDF preserved at: ${pdfPath}`);
+                        } else {
+                          throw new Error('PNG generation failed');
+                        }
+                      } catch (pngError) {
+                        console.error('❌ PNG fallback failed for complex file:', pngError);
+                        res.status(413).json({ 
+                          error: 'file_too_complex',
+                          message: 'This file is too complex for automated processing',
+                          details: complexityCheck.reason,
+                          originalFileSizeMB: fileSizeMB,
+                          originalFileName: file.filename,
+                          suggestion: 'Please upload via Dropbox for files this complex'
+                        });
+                        return;
+                      }
+                    } else {
+                      // For complex files OVER 50MB: Reject and suggest Dropbox
+                      console.log(`🚫 File too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires Dropbox upload`);
+                      res.status(413).json({ 
+                        error: 'file_too_complex',
+                        message: 'This file is too complex for automated processing',
+                        details: complexityCheck.reason,
+                        estimatedPaths: complexityCheck.estimatedPathCount,
+                        estimatedElements: complexityCheck.estimatedElementCount,
+                        originalFileSizeMB: fileSizeMB,
+                        convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
+                        originalFileName: file.filename,
+                        suggestion: 'Please upload via Dropbox for files over 50MB'
+                      });
+                      return;
+                    }
+                  } else {
+                    // File is NOT too complex - use normal SVG processing
+                    // CRITICAL FIX: DO NOT clean SVG content - removeVectorizedBackgrounds was corrupting artwork
+                    // The function was removing essential content, mistaking artwork for backgrounds
+                    console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity`);
+                    
+                    let svgContent = fs.readFileSync(svgPath, 'utf8');
+                    
+                    // Add CMYK marker to the SVG so color analysis knows this came from a CMYK PDF
+                    const markedSvg = svgContent.replace(
+                      /<svg/,
+                      '<!-- CMYK_PDF_CONVERTED -->\n<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
+                    );
+                    
+                    fs.writeFileSync(svgPath, markedSvg);
+                    console.log(`🧹 Cleaned SVG content and marked as CMYK for ${svgFilename}`);
+                    
+                    // Store original PDF info for later embedding
+                    (file as any).originalPdfPath = pdfPath;
+                    (file as any).isCMYKPreserved = true;
+                    
+                    // Use SVG for display but remember to use PDF for output
+                    finalFilename = svgFilename;
+                    finalMimeType = 'image/svg+xml';
+                    finalUrl = `/uploads/${finalFilename}`;
+                    
+                    console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
                   }
-                  
-                  // CRITICAL FIX: DO NOT clean SVG content - removeVectorizedBackgrounds was corrupting artwork
-                  // The function was removing essential content, mistaking artwork for backgrounds
-                  console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity`);
-                  
-                  let svgContent = fs.readFileSync(svgPath, 'utf8');
-                  
-                  // Add CMYK marker to the SVG so color analysis knows this came from a CMYK PDF
-                  const markedSvg = svgContent.replace(
-                    /<svg/,
-                    '<!-- CMYK_PDF_CONVERTED -->\n<svg data-vectorized-cmyk="true" data-original-cmyk-pdf="true"'
-                  );
-                  
-                  fs.writeFileSync(svgPath, markedSvg);
-                  console.log(`🧹 Cleaned SVG content and marked as CMYK for ${svgFilename}`);
-                  
-                  // Store original PDF info for later embedding
-                  (file as any).originalPdfPath = pdfPath;
-                  (file as any).isCMYKPreserved = true;
-                  
-                  // Use SVG for display but remember to use PDF for output
-                  finalFilename = svgFilename;
-                  finalMimeType = 'image/svg+xml';
-                  finalUrl = `/uploads/${finalFilename}`;
-                  
-                  console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
                 } else {
                   // Fallback to PNG preview if SVG conversion fails
                   const pngFilename = `${file.filename}_preview.png`;
@@ -1792,47 +1835,90 @@ export async function registerRoutes(app: express.Application) {
                 const complexityCheck = checkFileComplexityEarly(svgPath, originalPdfSize, file.filename);
                 
                 if (complexityCheck.isLikelyTooComplex) {
-                  console.log(`🚫 File too complex for automated processing: ${complexityCheck.reason}`);
-                  // Reject with helpful error message - show ORIGINAL file size, not converted SVG size
-                  res.status(413).json({ 
-                    error: 'file_too_complex',
-                    message: 'This file is too complex for automated processing',
-                    details: complexityCheck.reason,
-                    estimatedPaths: complexityCheck.estimatedPathCount,
-                    estimatedElements: complexityCheck.estimatedElementCount,
-                    originalFileSizeMB: complexityCheck.originalFileSizeMB,
-                    convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
-                    originalFileName: file.filename,
-                    suggestion: 'Please simplify the artwork or use our vectorization service for assistance'
-                  });
-                  return;
-                }
-                
-                // Check if this is an AI-vectorized file that should not be re-processed
-                const svgContent = fs.readFileSync(svgPath, 'utf8');
-                const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
-                                      svgContent.includes('AI_VECTORIZED_FILE');
-                
-                if (isAIVectorized) {
-                  console.log(`🤖 AI-vectorized file detected: ${svgFilename}, applying specialized cleaning...`);
-                  // Apply specialized cleaning for AI-vectorized content to fix extended elements and bounding box issues
-                  const { cleanAIVectorizedSVG } = await import('./dimension-utils');
-                  const cleanedSvg = cleanAIVectorizedSVG(svgContent);
-                  fs.writeFileSync(svgPath, cleanedSvg);
-                  console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
+                  const fileSizeMB = typeof complexityCheck.originalFileSizeMB === 'number' ? complexityCheck.originalFileSizeMB : 0;
+                  
+                  // For complex files UNDER 50MB: Use PNG preview with original PDF for output
+                  if (fileSizeMB < 50) {
+                    console.log(`📸 Complex RGB file under 50MB (${fileSizeMB.toFixed(1)}MB) - creating PNG preview, preserving PDF for output`);
+                    
+                    // Create PNG preview for canvas display
+                    const pngFilename = `${file.filename}_preview.png`;
+                    const pngPath = path.join(uploadDir, pngFilename);
+                    
+                    try {
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dMaxBitmap=2147483647 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      await execAsync(gsCommand);
+                      
+                      if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                        // Store original PDF path for final output
+                        (file as any).originalPdfPath = pdfPath;
+                        (file as any).isCMYKPreserved = false; // RGB PDF
+                        (file as any).isComplexFilePngFallback = true;
+                        
+                        finalFilename = pngFilename;
+                        finalMimeType = 'image/png';
+                        finalUrl = `/uploads/${finalFilename}`;
+                        
+                        console.log(`✅ PNG preview created for complex RGB file: ${pngFilename}, original PDF preserved at: ${pdfPath}`);
+                      } else {
+                        throw new Error('PNG generation failed');
+                      }
+                    } catch (pngError) {
+                      console.error('❌ PNG fallback failed for complex RGB file:', pngError);
+                      res.status(413).json({ 
+                        error: 'file_too_complex',
+                        message: 'This file is too complex for automated processing',
+                        details: complexityCheck.reason,
+                        originalFileSizeMB: fileSizeMB,
+                        originalFileName: file.filename,
+                        suggestion: 'Please upload via Dropbox for files this complex'
+                      });
+                      return;
+                    }
+                  } else {
+                    // For complex files OVER 50MB: Reject and suggest Dropbox
+                    console.log(`🚫 RGB file too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires Dropbox upload`);
+                    res.status(413).json({ 
+                      error: 'file_too_complex',
+                      message: 'This file is too complex for automated processing',
+                      details: complexityCheck.reason,
+                      estimatedPaths: complexityCheck.estimatedPathCount,
+                      estimatedElements: complexityCheck.estimatedElementCount,
+                      originalFileSizeMB: fileSizeMB,
+                      convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
+                      originalFileName: file.filename,
+                      suggestion: 'Please upload via Dropbox for files over 50MB'
+                    });
+                    return;
+                  }
                 } else {
-                  // CRITICAL FIX: Preserve original artwork content - removeVectorizedBackgrounds was corrupting artwork  
-                  console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity for ${svgFilename}`);
-                  // No cleaning - preserve original SVG content as-is
+                  // File is NOT too complex - use normal SVG processing
+                  // Check if this is an AI-vectorized file that should not be re-processed
+                  const svgContent = fs.readFileSync(svgPath, 'utf8');
+                  const isAIVectorized = svgContent.includes('data-ai-vectorized="true"') || 
+                                        svgContent.includes('AI_VECTORIZED_FILE');
+                
+                  if (isAIVectorized) {
+                    console.log(`🤖 AI-vectorized file detected: ${svgFilename}, applying specialized cleaning...`);
+                    // Apply specialized cleaning for AI-vectorized content to fix extended elements and bounding box issues
+                    const { cleanAIVectorizedSVG } = await import('./dimension-utils');
+                    const cleanedSvg = cleanAIVectorizedSVG(svgContent);
+                    fs.writeFileSync(svgPath, cleanedSvg);
+                    console.log(`🧹 Applied AI-vectorized cleaning for ${svgFilename}`);
+                  } else {
+                    // CRITICAL FIX: Preserve original artwork content - removeVectorizedBackgrounds was corrupting artwork  
+                    console.log(`🎯 PRESERVING ORIGINAL ARTWORK: Skipping removeVectorizedBackgrounds to maintain content integrity for ${svgFilename}`);
+                    // No cleaning - preserve original SVG content as-is
+                  }
+                  
+                  // This is an RGB PDF - explicitly mark as NOT CMYK preserved
+                  (file as any).isCMYKPreserved = false;
+                  console.log(`🎨 RGB PDF detected: ${file.filename} - marked as isCMYKPreserved=false`);
+                  
+                  finalFilename = svgFilename;
+                  finalMimeType = 'image/svg+xml';
+                  finalUrl = `/uploads/${finalFilename}`;
                 }
-                
-                // This is an RGB PDF - explicitly mark as NOT CMYK preserved
-                (file as any).isCMYKPreserved = false;
-                console.log(`🎨 RGB PDF detected: ${file.filename} - marked as isCMYKPreserved=false`);
-                
-                finalFilename = svgFilename;
-                finalMimeType = 'image/svg+xml';
-                finalUrl = `/uploads/${finalFilename}`;
               }
             }
           } catch (error) {
@@ -2383,6 +2469,12 @@ export async function registerRoutes(app: express.Application) {
           logoData.pageCount = (file as any).pageCount;
           logoData.hasGarmentPages = (file as any).hasGarmentPages;
           console.log(`💾 PDF page info: pageCount=${logoData.pageCount}, hasGarmentPages=${logoData.hasGarmentPages}`);
+        }
+        
+        // COMPLEX FILE PNG FALLBACK: Mark files using PNG preview with original PDF for output
+        if ((file as any).isComplexFilePngFallback) {
+          logoData.isComplexFilePngFallback = true;
+          console.log(`💾 Complex file PNG fallback: Using PNG for canvas, original PDF for output: ${logoData.originalFilename}`);
         }
         
         const logo = await storage.createLogo(logoData);
