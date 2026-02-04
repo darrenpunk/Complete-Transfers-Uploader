@@ -37,14 +37,19 @@ export function DropboxUploadModal({
 
     setIsSubmitting(true);
     try {
+      console.log('[DropboxModal] Submitting:', { fileName, description });
       const result = await onSubmit({
         fileName,
         description,
       });
       
+      console.log('[DropboxModal] Result:', result);
+      
       if (result && 'uploadUrl' in result) {
         setUploadUrl(result.uploadUrl);
       }
+    } catch (error) {
+      console.error('[DropboxModal] Error:', error);
     } finally {
       setIsSubmitting(false);
     }

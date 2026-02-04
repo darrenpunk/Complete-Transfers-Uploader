@@ -1147,11 +1147,21 @@ export default function UploadTool() {
   };
 
   const handleDropboxUpload = async (data: { fileName: string; description?: string }): Promise<{ uploadUrl: string } | void> => {
-    if (!currentProject) return;
+    if (!currentProject) {
+      toast({
+        title: "Error",
+        description: "Please select a template first before using Dropbox upload",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log('[Dropbox] Creating file request for project:', currentProject.id);
       const response = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/dropbox-upload`, data);
       const result = await response.json();
+      
+      console.log('[Dropbox] File request created:', result);
       
       // Invalidate queries to refresh the canvas
       await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'logos'] });
@@ -1163,10 +1173,11 @@ export default function UploadTool() {
       });
       
       return { uploadUrl: result.uploadUrl };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Dropbox] Error creating file request:', error);
       toast({
         title: "Error",
-        description: "Failed to create Dropbox upload link",
+        description: error.message || "Failed to create Dropbox upload link",
         variant: "destructive",
       });
     }
