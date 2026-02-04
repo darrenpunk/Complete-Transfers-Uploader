@@ -1263,13 +1263,16 @@ export default function UploadTool() {
           // Check if any uploaded logo is a PDF with raster only content OR a regular raster image OR extracted PNG from PDF
           const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
           const regularRasterFile = newLogos.find((logo: any) => 
-            logo.filetype === 'image/jpeg' || 
-            logo.filetype === 'image/jpg' || 
-            logo.filetype === 'image/png' ||
-            logo.mimeType === 'image/jpeg' ||
-            logo.mimeType === 'image/png'
+            !logo.isComplexFilePngFallback && (
+              logo.filetype === 'image/jpeg' || 
+              logo.filetype === 'image/jpg' || 
+              logo.filetype === 'image/png' ||
+              logo.mimeType === 'image/jpeg' ||
+              logo.mimeType === 'image/png'
+            )
           );
           const extractedPngFromPdf = newLogos.find((logo: any) => 
+            !logo.isComplexFilePngFallback &&
             logo.originalName?.endsWith('.pdf') && 
             logo.mimeType === 'image/png' && 
             logo.filename?.includes('_raster-gs.png')

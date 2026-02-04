@@ -1718,6 +1718,39 @@ export async function registerRoutes(app: express.Application) {
                     if (fileSizeMB < 50) {
                       console.log(`📸 Complex file under 50MB (${fileSizeMB.toFixed(1)}MB) - creating PNG preview, preserving PDF for output`);
                       
+                      // CRITICAL: Extract PDF bounds BEFORE creating PNG - the PNG display needs correct dimensions
+                      try {
+                        const bboxCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=bbox -f "${pdfPath}" 2>&1`;
+                        const bboxResult = await execAsync(bboxCommand, { maxBuffer: 5 * 1024 * 1024 });
+                        const bboxOutput = bboxResult.stderr || bboxResult.stdout || '';
+                        
+                        // Parse HiResBoundingBox from Ghostscript output
+                        const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                        if (hiresMatch) {
+                          const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
+                          const widthPt = xMax - xMin;
+                          const heightPt = yMax - yMin;
+                          const widthMm = widthPt * 0.352778;
+                          const heightMm = heightPt * 0.352778;
+                          
+                          console.log(`📐 Complex file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
+                          
+                          // Store original PDF bounds for canvas display sizing
+                          (file as any).originalPdfBounds = {
+                            xMin: xMin,
+                            yMin: yMin,
+                            xMax: xMax,
+                            yMax: yMax,
+                            width: widthPt,
+                            height: heightPt,
+                            widthMm: widthMm,
+                            heightMm: heightMm
+                          };
+                        }
+                      } catch (bboxError) {
+                        console.log(`⚠️ Could not extract PDF bounds for complex file: ${bboxError}`);
+                      }
+                      
                       // Create PNG preview for canvas display
                       const pngFilename = `${file.filename}_preview.png`;
                       const pngPath = path.join(uploadDir, pngFilename);
@@ -1840,6 +1873,39 @@ export async function registerRoutes(app: express.Application) {
                   // For complex files UNDER 50MB: Use PNG preview with original PDF for output
                   if (fileSizeMB < 50) {
                     console.log(`📸 Complex RGB file under 50MB (${fileSizeMB.toFixed(1)}MB) - creating PNG preview, preserving PDF for output`);
+                    
+                    // CRITICAL: Extract PDF bounds BEFORE creating PNG - the PNG display needs correct dimensions
+                    try {
+                      const bboxCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=bbox -f "${pdfPath}" 2>&1`;
+                      const bboxResult = await execAsync(bboxCommand, { maxBuffer: 5 * 1024 * 1024 });
+                      const bboxOutput = bboxResult.stderr || bboxResult.stdout || '';
+                      
+                      // Parse HiResBoundingBox from Ghostscript output
+                      const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                      if (hiresMatch) {
+                        const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
+                        const widthPt = xMax - xMin;
+                        const heightPt = yMax - yMin;
+                        const widthMm = widthPt * 0.352778;
+                        const heightMm = heightPt * 0.352778;
+                        
+                        console.log(`📐 Complex RGB file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
+                        
+                        // Store original PDF bounds for canvas display sizing
+                        (file as any).originalPdfBounds = {
+                          xMin: xMin,
+                          yMin: yMin,
+                          xMax: xMax,
+                          yMax: yMax,
+                          width: widthPt,
+                          height: heightPt,
+                          widthMm: widthMm,
+                          heightMm: heightMm
+                        };
+                      }
+                    } catch (bboxError) {
+                      console.log(`⚠️ Could not extract PDF bounds for complex RGB file: ${bboxError}`);
+                    }
                     
                     // Create PNG preview for canvas display
                     const pngFilename = `${file.filename}_preview.png`;
@@ -2546,6 +2612,26 @@ export async function registerRoutes(app: express.Application) {
         // Store original PDF content bounds for cropping during PDF generation
         // These are the ORIGINAL coordinates BEFORE normalization - needed to crop original PDF
         let originalPdfBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
+
+        // CRITICAL: For complex file PNG fallbacks, use the pre-extracted PDF bounds
+        if ((file as any).isComplexFilePngFallback && (file as any).originalPdfBounds) {
+          const pdfBounds = (file as any).originalPdfBounds;
+          displayWidth = pdfBounds.widthMm;
+          displayHeight = pdfBounds.heightMm;
+          
+          // Also set originalPdfBounds for PDF generation
+          originalPdfBounds = {
+            xMin: pdfBounds.xMin,
+            yMin: pdfBounds.yMin,
+            xMax: pdfBounds.xMax,
+            yMax: pdfBounds.yMax,
+            width: pdfBounds.width,
+            height: pdfBounds.height,
+            units: 'pt'
+          };
+          
+          console.log(`📐 COMPLEX FILE FALLBACK: Using pre-extracted PDF bounds: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        }
 
         // Use actual extracted PNG dimensions if available
         console.log('🔍 DEBUG: Checking for extracted PNG dimensions:', {
