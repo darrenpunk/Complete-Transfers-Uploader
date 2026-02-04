@@ -2249,7 +2249,8 @@ export async function registerRoutes(app: express.Application) {
             }
             
             // If this is a CMYK PDF that was converted to SVG, mark all colors as CMYK
-            if ((file as any).isCMYKPreserved && (file as any).originalPdfPath) {
+            // CRITICAL: Skip SVG modification for PNG files (complex file fallback) - would corrupt binary data
+            if ((file as any).isCMYKPreserved && (file as any).originalPdfPath && !finalFilename.endsWith('.png')) {
               console.log(`🎨 CMYK PDF detected - marking all colors as CMYK in analysis`);
               console.log(`🔍 DEBUG: File has isCMYKPreserved=${(file as any).isCMYKPreserved}, originalPdfPath=${(file as any).originalPdfPath}`);
               
@@ -2262,27 +2263,8 @@ export async function registerRoutes(app: express.Application) {
                 );
                 fs.writeFileSync(svgPath, updatedSvg);
               }
-              
-              // Re-analyze with the CMYK marker
-              analysis = analyzeSVGWithStrokeWidths(svgPath);
-              
-              // Re-extract universal colors after adding CMYK markers
-              const reExtractedColors = await UniversalColorExtractor.extractColors(svgPath, finalMimeType);
-              if (reExtractedColors.colors.length > 0) {
-                console.log(`🔄 Re-extracted ${reExtractedColors.colors.length} colors after CMYK marker`);
-                // Update analysis with re-extracted colors
-                analysis.colors = reExtractedColors.colors.map((color, index) => ({
-                  id: `color_${index}`,
-                  originalColor: color.originalString,
-                  originalFormat: color.originalString,
-                  cmykColor: UniversalColorExtractor.formatColorForDisplay(color),
-                  elementType: color.elementSelector?.split(':')[0] || 'path',
-                  attribute: 'fill',
-                  selector: color.elementSelector || `path:nth-of-type(${index + 1})`,
-                  isCMYK: color.format === 'cmyk',
-                  isExactMatch: true
-                }));
-              }
+            } else if ((file as any).isCMYKPreserved && finalFilename.endsWith('.png')) {
+              console.log(`🎨 CMYK PDF with PNG fallback - skipping SVG marker (preserving PNG binary data)`);
             }
             
             // CRITICAL FIX: Set the preservation flag based on actual color analysis
