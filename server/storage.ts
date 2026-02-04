@@ -165,6 +165,8 @@ export class MemStorage implements IStorage {
       { id: "sublimation-square", name: "sublimation_square", label: "95×95mm Sublimation", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-badge", name: "sublimation_badge", label: "100×70mm Sublimation", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
       { id: "sublimation-small", name: "sublimation_small", label: "60×60mm Sublimation", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
+      { id: "sublimation-1100x1000-fabric", name: "sublimation_1100x1000_fabric", label: "1100×1000mm Fabric", width: 1100, height: 1000, pixelWidth: 3118, pixelHeight: 2835, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null },
+      { id: "sublimation-1100x1000-hard", name: "sublimation_1100x1000_hard", label: "1100×1000mm Hard Surface", width: 1100, height: 1000, pixelWidth: 3118, pixelHeight: 2835, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, bleedMargin: 3 },
     ];
 
     standardSizes.forEach(size => {
