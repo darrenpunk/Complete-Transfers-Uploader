@@ -671,6 +671,13 @@ export default function CanvasWorkspace({
 
   // Function to get the image URL for display
   const getImageUrl = (logo: Logo): string => {
+    // For complex files using PNG fallback (e.g., very complex PDFs >15000 paths)
+    // The filename already points to the _preview.png file
+    if ((logo as any).isComplexFilePngFallback) {
+      console.log('📷 Using complex file PNG preview:', logo.filename);
+      return `/uploads/${logo.filename}`;
+    }
+    
     // For PDF files, check if we have a preview image (for CMYK PDFs)
     if (logo.mimeType === 'application/pdf') {
       // Check if a preview filename exists (for CMYK PDFs)
