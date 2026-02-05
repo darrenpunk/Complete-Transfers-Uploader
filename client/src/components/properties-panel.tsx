@@ -611,11 +611,10 @@ export default function PropertiesPanel({
       });
     }
     
-    // Position Check - ensure content is within safety margins (3mm)
+    // Position Check - ensure content is within canvas bounds
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     const templateWidth = currentTemplate?.width || 297;
     const templateHeight = currentTemplate?.height || 210;
-    const marginInMm = 3; // 3mm safety margin
     
     // Center-based coordinate system - (0,0) is at the center of the template
     const templateHalfWidth = templateWidth / 2;
@@ -685,22 +684,21 @@ export default function PropertiesPanel({
     const contentTop = contentCenterY - contentHalfHeight;
     const contentBottom = contentCenterY + contentHalfHeight;
     
-    // Safety margins in center-based coordinates
-    const marginLeft = -templateHalfWidth + marginInMm;
-    const marginRight = templateHalfWidth - marginInMm;
-    const marginTop = -templateHalfHeight + marginInMm;
-    const marginBottom = templateHalfHeight - marginInMm;
+    // Check against canvas bounds (not safety margins)
+    const canvasLeft = -templateHalfWidth;
+    const canvasRight = templateHalfWidth;
+    const canvasTop = -templateHalfHeight;
+    const canvasBottom = templateHalfHeight;
     
-    // Check if content is within safety margins
-    const isWithinMargins = contentLeft >= marginLeft && 
-                           contentRight <= marginRight && 
-                           contentTop >= marginTop && 
-                           contentBottom <= marginBottom;
+    const isWithinCanvas = contentLeft >= canvasLeft && 
+                           contentRight <= canvasRight && 
+                           contentTop >= canvasTop && 
+                           contentBottom <= canvasBottom;
     
     checks.push({
       name: "Position",
-      status: isWithinMargins ? "pass" : "warning",
-      value: isWithinMargins ? "Within Safety Zone" : "Outside Safety Margin"
+      status: isWithinCanvas ? "pass" : "warning",
+      value: isWithinCanvas ? "Within Canvas" : "Extends Beyond Canvas"
     });
     
     // Size Check - reasonable print size
