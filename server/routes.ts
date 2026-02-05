@@ -2722,6 +2722,51 @@ export async function registerRoutes(app: express.Application) {
           console.log(`📐 COMPLEX FILE FALLBACK: Using pre-extracted PDF bounds: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
         }
 
+        // CRITICAL FIX: For DIRECT PNG/JPEG uploads (not extracted from PDFs), detect actual dimensions
+        // The PNG might have DPI metadata - read pixel dimensions and convert using 300 DPI as standard
+        const isDirectRasterUpload = (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg') && 
+                                      !(file as any).isPdfWithRasterOnly && 
+                                      !(file as any).isComplexFilePngFallback;
+        
+        if (isDirectRasterUpload) {
+          console.log('📸 DIRECT PNG/JPEG UPLOAD: Detecting actual image dimensions');
+          const imagePath = path.join(uploadDir, file.filename);
+          
+          try {
+            // Use ImageMagick identify to get dimensions AND DPI
+            const { stdout: identifyOutput } = await execAsync(`identify -format "%wx%h %x %y" "${imagePath}" 2>/dev/null || echo ""`);
+            const parts = identifyOutput.trim().split(' ');
+            
+            if (parts.length >= 1 && parts[0].includes('x')) {
+              const [pixelW, pixelH] = parts[0].split('x').map(Number);
+              
+              // Try to parse DPI - ImageMagick returns values like "300 PixelsPerInch"
+              let dpi = 300; // Default to 300 DPI if not detected
+              if (parts.length >= 2) {
+                const dpiValue = parseFloat(parts[1]);
+                if (!isNaN(dpiValue) && dpiValue > 0 && dpiValue < 10000) {
+                  dpi = dpiValue;
+                }
+              }
+              
+              // Convert pixels to mm: pixels / dpi * 25.4 mm/inch
+              displayWidth = (pixelW / dpi) * 25.4;
+              displayHeight = (pixelH / dpi) * 25.4;
+              
+              console.log(`✅ DIRECT IMAGE DIMENSIONS: ${pixelW}×${pixelH}px @ ${dpi} DPI = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+              
+              // Store for later use
+              (file as any).extractedPngWidth = pixelW;
+              (file as any).extractedPngHeight = pixelH;
+              (file as any).imageDpi = dpi;
+            } else {
+              console.log('⚠️ Could not parse image dimensions from identify output:', identifyOutput);
+            }
+          } catch (err) {
+            console.log('⚠️ Failed to detect direct image dimensions:', err);
+          }
+        }
+        
         // Use actual extracted PNG dimensions if available
         console.log('🔍 DEBUG: Checking for extracted PNG dimensions:', {
           hasExtractedPngWidth: !!(file as any).extractedPngWidth,
