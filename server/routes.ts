@@ -2961,19 +2961,24 @@ export async function registerRoutes(app: express.Application) {
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   
                   if (gsBounds) {
-                    // CRITICAL: Check if Ghostscript bbox is suspiciously small compared to page dimensions
-                    // For nearly-square pages, if GS height is much less than page height, GS is likely missing content
+                    // Check if Ghostscript bbox aspect ratio dramatically differs from page
+                    // Only override if aspect ratios are truly mismatched (GS missing content)
                     const pageAspectRatio = pageWidth / pageHeight;
                     const gsAspectRatio = gsBounds.width / gsBounds.height;
                     const heightRatio = gsBounds.height / pageHeight;
                     const widthRatio = gsBounds.width / pageWidth;
                     
-                    // If page is nearly square (aspect ratio 0.9-1.1) but GS bbox is not, GS is wrong
+                    // Only override GS bbox if the ASPECT RATIOS are dramatically different
+                    // This indicates GS missed some content on one axis
+                    // Don't override just because content is smaller than page (valid whitespace)
                     const pageIsSquare = pageAspectRatio >= 0.9 && pageAspectRatio <= 1.1;
-                    const gsIsNotSquare = gsAspectRatio < 0.8 || gsAspectRatio > 1.25;
-                    const gsMissingContent = heightRatio < 0.85 || widthRatio < 0.85;
+                    const gsIsNotSquare = gsAspectRatio < 0.7 || gsAspectRatio > 1.43; // More than 30% aspect ratio difference
                     
-                    if (pageIsSquare && (gsIsNotSquare || gsMissingContent)) {
+                    // Only override if page is square but GS bbox is NOT square (aspect ratio mismatch)
+                    // AND the bbox is extremely small (less than 50% of page) - very suspicious
+                    const isTinyCoverage = heightRatio < 0.5 || widthRatio < 0.5;
+                    
+                    if (pageIsSquare && gsIsNotSquare && isTinyCoverage) {
                       console.log(`⚠️ GS BBOX SUSPICIOUS: Page is square (${pageAspectRatio.toFixed(2)}) but GS is ${gsAspectRatio.toFixed(2)}`);
                       console.log(`   Height ratio: ${(heightRatio * 100).toFixed(0)}%, Width ratio: ${(widthRatio * 100).toFixed(0)}%`);
                       console.log(`🔄 Using PDF PAGE DIMENSIONS instead of unreliable GS bbox`);
@@ -2989,6 +2994,8 @@ export async function registerRoutes(app: express.Application) {
                         height: pageHeight - 2 * margin
                       };
                       console.log(`✅ Corrected bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                    } else {
+                      console.log(`✅ GS BBOX TRUSTED: Content covers ${(heightRatio * 100).toFixed(0)}%×${(widthRatio * 100).toFixed(0)}% of page (aspect ratio ${gsAspectRatio.toFixed(2)} vs page ${pageAspectRatio.toFixed(2)})`);
                     }
                     
                     contentBoundsForNormalization = gsBounds;
