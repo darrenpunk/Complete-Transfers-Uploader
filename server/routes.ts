@@ -1165,6 +1165,30 @@ export async function registerRoutes(app: express.Application) {
                 embeddedImage = await pdfDoc.embedPng(rasterImageBytes);
                 console.log(`✅ Embedded image (fallback PNG): ${embeddedImage.width}×${embeddedImage.height}px`);
               }
+              
+              // CRITICAL: Scale image to fit element bounds while preserving aspect ratio
+              const imageAspect = embeddedImage.width / embeddedImage.height;
+              const elementAspect = widthPts / heightPts;
+              
+              let adjustedWidthPts = widthPts;
+              let adjustedHeightPts = heightPts;
+              
+              if (imageAspect > elementAspect) {
+                // Image is wider - fit to width, adjust height
+                adjustedHeightPts = widthPts / imageAspect;
+              } else {
+                // Image is taller - fit to height, adjust width
+                adjustedWidthPts = heightPts * imageAspect;
+              }
+              
+              // Update dimensions for embedding
+              console.log(`📐 Original element: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
+              console.log(`📐 Image native aspect: ${imageAspect.toFixed(2)}, element aspect: ${elementAspect.toFixed(2)}`);
+              console.log(`📐 Adjusted to preserve ratio: ${adjustedWidthPts.toFixed(1)}×${adjustedHeightPts.toFixed(1)}pts`);
+              
+              // Store adjusted dimensions for drawing
+              (element as any).adjustedWidthPts = adjustedWidthPts;
+              (element as any).adjustedHeightPts = adjustedHeightPts;
             } else {
               // Load and embed PDF artwork
               const vectorDoc = await PDFDocument.load(vectorBytes!);
@@ -1198,9 +1222,25 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
             
             // Helper function to draw either embedded page or embedded image
+            // For raster images, use adjusted dimensions to preserve aspect ratio
+            const adjustedWidthPts = (element as any).adjustedWidthPts || widthPts;
+            const adjustedHeightPts = (element as any).adjustedHeightPts || heightPts;
+            
+            // Calculate offset to center the aspect-corrected image within the element bounds
+            const xOffset = (widthPts - adjustedWidthPts) / 2;
+            const yOffset = (heightPts - adjustedHeightPts) / 2;
+            
             const drawArtwork = (targetPage: any, options: { x: number; y: number; width: number; height: number; rotate?: any }) => {
               if (embeddedImage) {
-                targetPage.drawImage(embeddedImage, options);
+                // Use adjusted dimensions for raster images to preserve aspect ratio
+                // Also apply offset to center within original bounds
+                targetPage.drawImage(embeddedImage, {
+                  ...options,
+                  x: options.x + xOffset,
+                  y: options.y + yOffset,
+                  width: adjustedWidthPts,
+                  height: adjustedHeightPts
+                });
               } else if (embeddedPage) {
                 targetPage.drawPage(embeddedPage, options);
               }
