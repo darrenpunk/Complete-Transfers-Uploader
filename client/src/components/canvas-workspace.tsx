@@ -1574,13 +1574,11 @@ export default function CanvasWorkspace({
   const innerCanvasWidth = template.pixelWidth * (zoom / 100);
   const innerCanvasHeight = template.pixelHeight * (zoom / 100);
 
-  // Compute if any elements are outside safety margins
-  const hasElementsOutsideMargins = canvasElements.some(element => {
+  // Compute if any elements are outside canvas bounds (not safety margins)
+  const hasElementsOutsideCanvas = canvasElements.some(element => {
     if (!element.isVisible) return false;
     
-    // For templates with bleed, the bleed area serves as the safety zone
-    // so we only check against the canvas edge (no additional margin needed)
-    const marginInMm = bleedMarginMm > 0 ? 0 : 3; // 3mm safety margin only for non-bleed templates
+    // Only warn when elements extend beyond the actual canvas bounds (0mm margin)
     const templateHalfWidth = template.width / 2;
     const templateHalfHeight = template.height / 2;
     
@@ -1596,28 +1594,22 @@ export default function CanvasWorkspace({
     const elementTop = element.y - elementHalfHeight;
     const elementBottom = element.y + elementHalfHeight;
     
-    const marginLeft = -templateHalfWidth + marginInMm;
-    const marginRight = templateHalfWidth - marginInMm;
-    const marginTop = -templateHalfHeight + marginInMm;
-    const marginBottom = templateHalfHeight - marginInMm;
-    
-    return elementLeft < marginLeft || elementTop < marginTop || elementRight > marginRight || elementBottom > marginBottom;
+    // Check against canvas bounds (no safety margin offset)
+    return elementLeft < -templateHalfWidth || elementTop < -templateHalfHeight || 
+           elementRight > templateHalfWidth || elementBottom > templateHalfHeight;
   });
 
   return (
     <TooltipProvider>
     <div className="flex-1 flex flex-col">
-      {/* Position Warning Banner - Outside Canvas */}
-      {(canvasElements.length === 0 || hasElementsOutsideMargins) && (
+      {/* Position Warning Banner - Only when elements are outside canvas bounds */}
+      {hasElementsOutsideCanvas && (
         <div className="bg-red-50 border-b border-red-300 px-4 py-2 text-center">
           <p className="text-sm text-red-800 font-medium">
-            {canvasElements.length === 0 ? '⚠️ Safety Zone Warning' : '⚠️ Position Warning'}
+            ⚠️ Position Warning
           </p>
           <p className="text-xs text-red-700">
-            {canvasElements.length === 0 
-              ? 'Keep all content within the red guide lines (3mm from edges) to avoid clipping during production'
-              : 'Some elements are outside the safety zone. Move them within the red guide lines to avoid clipping during production.'
-            }
+            Some elements extend beyond the canvas bounds and will be clipped in the final output.
           </p>
         </div>
       )}
