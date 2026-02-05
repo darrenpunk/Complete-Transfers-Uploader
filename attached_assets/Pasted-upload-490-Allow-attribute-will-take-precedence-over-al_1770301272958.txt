@@ -1,0 +1,1031 @@
+upload:490 Allow attribute will take precedence over 'allowfullscreen'.
+ 📨 Iframe requested user data
+ 👤 Sending user data to iframe: Object
+ 📡 Initializing global artwork uploader iframe message handler
+ ✅ Artwork uploader iframe message handler ready
+ 📡 Artwork Uploader iframe message listener initialized
+ Tour Manager is ready.  running_tour=null
+ 🔄 Iframe loaded - auto-sending user data: darren@serigraf.ie
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ 🎯 Mouse down on element 44bacf60-5b5f-48cc-919a-241c4563bbec, starting drag, shiftKey=false
+ 🎯 Drag offset calculated: (160.6, -5.7)
+ 🎯 Stored initial positions for 1 elements: Array(1)
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ ✅ Canvas API update successful
+ ✅ Canvas API update successful
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+ Canvas updateElementDirect called: Object
+ Canvas updateElementDirect called: Object
+ RasterWarningModal render check: Object
+ TemplateSelectorModal render Object
+ Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+ 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+ TemplateSelectorModal render Object
+ TemplateSelectorModal render Object
+ PDFPreviewModal render: Object
+ VectorizationServiceForm render: Object
+ TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 🎯 Mouse down on element 44bacf60-5b5f-48cc-919a-241c4563bbec, starting drag, shiftKey=false
+index-DwJdRoOT.js:497 🎯 Drag offset calculated: (160.8, -5.7)
+index-DwJdRoOT.js:497 🎯 Stored initial positions for 1 elements: Array(1)
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 Canvas updateElementDirect called: Object
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 ✅ Canvas API update successful
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 ✅ Image loaded for preview
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:508 PDF preview approved, showing project name modal. Current pendingAction: continue
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:508 Project data for Odoo integration: Object
+index-DwJdRoOT.js:508 🎬 Executing pending action: continue
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:508 🔽 Opening PDF in new window: de_qty10_cmyk.pdf
+index-DwJdRoOT.js:508 ✅ PDF download initiated: de_qty10_cmyk.pdf
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 ✅ Image loaded for preview
+index-DwJdRoOT.js:497 RasterWarningModal render check: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: Object
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+index-DwJdRoOT.js:504 PDFPreviewModal render: Object
+index-DwJdRoOT.js:504 VectorizationServiceForm render: Object
+index-DwJdRoOT.js:497 TemplateSelectorModal render Object
+upload:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+upload:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+index-DwJdRoOT.js:497 Template badge: 283x198px, Workspace: 400x1024, Zoom: 134%
+index-DwJdRoOT.js:497 Canvas element 44bacf60-5b5f-48cc-919a-241c4563bbec dimensions: {dbWidth: 85, dbHeight: 64, pixelWidth: 322.33700000000005, pixelHeight: 242.70080000000002, rotation: 0}
+index-DwJdRoOT.js:497 🖼️ Using image URL: /uploads/702b8b103515e8ea263142b0f53a1e4c for logo: 702b8b103515e8ea263142b0f53a1e4c image/png

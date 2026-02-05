@@ -983,8 +983,19 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📐 Visual size (rotated ${rotation}°): ${visualWidth.toFixed(1)}×${visualHeight.toFixed(1)}mm`);
             
             let vectorBytes: Buffer;
+            let isRasterImage = false; // Track if we're dealing with a raster image
+            let rasterImageBytes: Buffer | null = null;
             
-            if (useOriginalPdf) {
+            // Check if logo is a PNG/JPEG raster image (not a vector)
+            const logoMimeType = (logo as any).mimeType || (logo as any).originalMimeType;
+            const isRasterFile = logoMimeType === 'image/png' || logoMimeType === 'image/jpeg' || 
+                                 ((logo as any).filename && ((logo as any).filename.endsWith('.png') || (logo as any).filename.endsWith('.jpg') || (logo as any).filename.endsWith('.jpeg')));
+            
+            if (isRasterFile) {
+              console.log(`🖼️ RASTER IMAGE DETECTED: ${(logo as any).filename} - using embedPng/embedJpg`);
+              isRasterImage = true;
+              rasterImageBytes = fs.readFileSync(svgPath); // svgPath actually points to the image file
+            } else if (useOriginalPdf) {
               // CRITICAL FIX: Use original PDF at full page dimensions - NO cropping to painted pixels
               // Cropping to content bounds removes white elements which is unacceptable
               console.log(`🎯 USING ORIGINAL PDF AT FULL PAGE DIMENSIONS - NO cropping to painted pixels`);
@@ -1136,9 +1147,29 @@ export async function registerRoutes(app: express.Application) {
               [tempSvg, tempPdf].forEach(f => fs.existsSync(f) && fs.unlinkSync(f));
             }
             
-            // Load and embed artwork
-            const vectorDoc = await PDFDocument.load(vectorBytes);
-            const [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
+            // Load and embed artwork - handle raster images differently
+            let embeddedPage: any = null;
+            let embeddedImage: any = null;
+            
+            if (isRasterImage && rasterImageBytes) {
+              // Embed raster image (PNG/JPEG)
+              const filename = (logo as any).filename || '';
+              if (filename.endsWith('.png') || logoMimeType === 'image/png') {
+                embeddedImage = await pdfDoc.embedPng(rasterImageBytes);
+                console.log(`✅ Embedded PNG image: ${embeddedImage.width}×${embeddedImage.height}px`);
+              } else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || logoMimeType === 'image/jpeg') {
+                embeddedImage = await pdfDoc.embedJpg(rasterImageBytes);
+                console.log(`✅ Embedded JPEG image: ${embeddedImage.width}×${embeddedImage.height}px`);
+              } else {
+                // Fallback - try PNG
+                embeddedImage = await pdfDoc.embedPng(rasterImageBytes);
+                console.log(`✅ Embedded image (fallback PNG): ${embeddedImage.width}×${embeddedImage.height}px`);
+              }
+            } else {
+              // Load and embed PDF artwork
+              const vectorDoc = await PDFDocument.load(vectorBytes!);
+              [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
+            }
             
             // The PDF is now cropped to content bounds, so when we scale it to canvas dimensions
             // the content will appear at the correct size
@@ -1166,6 +1197,15 @@ export async function registerRoutes(app: express.Application) {
             console.log(`📍 Canvas position: ${element.x.toFixed(1)}×${element.y.toFixed(1)}mm`)
             console.log(`📍 PDF position: (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})pts`);
             
+            // Helper function to draw either embedded page or embedded image
+            const drawArtwork = (targetPage: any, options: { x: number; y: number; width: number; height: number; rotate?: any }) => {
+              if (embeddedImage) {
+                targetPage.drawImage(embeddedImage, options);
+              } else if (embeddedPage) {
+                targetPage.drawPage(embeddedPage, options);
+              }
+            };
+            
             // Embed artwork on both pages with rotation
             if (rotation === 90) {
               // For 90° rotation, dimensions swap visually
@@ -1187,7 +1227,7 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📐 Original dims: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts`);
               
               // Embed with 90° rotation on page 1
-              page1.drawPage(embeddedPage, {
+              drawArtwork(page1, {
                 x: rotatedX,
                 y: rotatedY,
                 width: widthPts,
@@ -1198,7 +1238,7 @@ export async function registerRoutes(app: express.Application) {
               
               // Embed with 90° rotation on all garment color pages
               for (const garmentPageInfo of garmentColorPages) {
-                garmentPageInfo.page.drawPage(embeddedPage, {
+                drawArtwork(garmentPageInfo.page, {
                   x: rotatedX,
                   y: rotatedY,
                   width: widthPts,
@@ -1225,7 +1265,7 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
               // Embed with 180° rotation on page 1
-              page1.drawPage(embeddedPage, {
+              drawArtwork(page1, {
                 x: rotatedX,
                 y: rotatedY,
                 width: widthPts,
@@ -1236,7 +1276,7 @@ export async function registerRoutes(app: express.Application) {
               
               // Embed with 180° rotation on all garment color pages
               for (const garmentPageInfo of garmentColorPages) {
-                garmentPageInfo.page.drawPage(embeddedPage, {
+                drawArtwork(garmentPageInfo.page, {
                   x: rotatedX,
                   y: rotatedY,
                   width: widthPts,
@@ -1263,7 +1303,7 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📐 Positioning at (${rotatedX.toFixed(1)}, ${rotatedY.toFixed(1)})`);
               
               // Embed with 270° rotation on page 1
-              page1.drawPage(embeddedPage, {
+              drawArtwork(page1, {
                 x: rotatedX,
                 y: rotatedY,
                 width: widthPts,
@@ -1274,7 +1314,7 @@ export async function registerRoutes(app: express.Application) {
               
               // Embed with 270° rotation on all garment color pages
               for (const garmentPageInfo of garmentColorPages) {
-                garmentPageInfo.page.drawPage(embeddedPage, {
+                drawArtwork(garmentPageInfo.page, {
                   x: rotatedX,
                   y: rotatedY,
                   width: widthPts,
@@ -1287,7 +1327,7 @@ export async function registerRoutes(app: express.Application) {
               // No rotation - use direct position
               console.log(`📐 No rotation: Positioning at (${xPosPts.toFixed(1)}, ${yPosPts.toFixed(1)})`);
               
-              page1.drawPage(embeddedPage, {
+              drawArtwork(page1, {
                 x: xPosPts,
                 y: yPosPts,
                 width: widthPts,
@@ -1297,7 +1337,7 @@ export async function registerRoutes(app: express.Application) {
               
               // Embed on all garment color pages
               for (const garmentPageInfo of garmentColorPages) {
-                garmentPageInfo.page.drawPage(embeddedPage, {
+                drawArtwork(garmentPageInfo.page, {
                   x: xPosPts,
                   y: yPosPts,
                   width: widthPts,
