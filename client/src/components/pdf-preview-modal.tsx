@@ -3,7 +3,36 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+
+// Helper function to get the correct image URL for display (matches canvas-workspace logic)
+const getImageUrl = (logo: any): string => {
+  // For complex files using PNG fallback
+  if (logo.isComplexFilePngFallback) {
+    return `/uploads/${logo.filename}`;
+  }
+  
+  // Check for canvas fallback filename (for complex vectors)
+  if (logo.canvasFallbackFilename) {
+    return `/uploads/${logo.canvasFallbackFilename}`;
+  }
+  
+  // For PDF files, check if we have a preview image or SVG conversion
+  if (logo.mimeType === 'application/pdf' || logo.originalMimeType === 'application/pdf') {
+    if (logo.previewFilename) {
+      return `/uploads/${logo.previewFilename}`;
+    }
+    // Check if SVG conversion exists
+    if (logo.filename && logo.filename.endsWith('.svg')) {
+      return `/uploads/${logo.filename}`;
+    }
+    // Try .svg version
+    return `/uploads/${logo.filename}.svg`;
+  }
+  
+  // For SVG and other image files
+  return `/uploads/${logo.filename}`;
+};
 
 interface PDFPreviewModalProps {
   open: boolean;
@@ -153,11 +182,8 @@ export default function PDFPreviewModal({
                       const leftPos = elementCenterX - element.width / 2;
                       const topPos = elementCenterY - element.height / 2;
                       
-                      // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
-                      const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
-                      const imageUrl = hasComplexVectorFallback 
-                        ? `/uploads/${(logo as any).canvasFallbackFilename}`
-                        : `/uploads/${logo.filename}`;
+                      // Use proper URL construction for all logo types
+                      const imageUrl = getImageUrl(logo);
                       
                       return (
                         <div
@@ -291,11 +317,8 @@ export default function PDFPreviewModal({
                           const leftPos = elementCenterX - element.width / 2;
                           const topPos = elementCenterY - element.height / 2;
                           
-                          // COMPLEX VECTOR FIX: Use PNG fallback for preview if available
-                          const hasComplexVectorFallback = !!(logo as any).canvasFallbackFilename;
-                          const imageUrl = hasComplexVectorFallback 
-                            ? `/uploads/${(logo as any).canvasFallbackFilename}`
-                            : `/uploads/${logo.filename}`;
+                          // Use proper URL construction for all logo types
+                          const imageUrl = getImageUrl(logo);
                           
                           return (
                             <div
