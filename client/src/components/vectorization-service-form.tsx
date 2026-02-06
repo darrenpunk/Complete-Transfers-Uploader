@@ -75,11 +75,21 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
       console.log('🔗 Using Odoo URL from URL params:', odooFromUrl);
       return odooFromUrl;
     }
-    // Check referrer when in iframe
+    // Check sessionStorage (persisted from previous page load or iframe context)
+    try {
+      const storedUrl = sessionStorage.getItem('odoo_base_url');
+      if (storedUrl) {
+        console.log('🔗 Using Odoo URL from session storage:', storedUrl);
+        return storedUrl;
+      }
+    } catch {}
+    // Check referrer when in iframe (exclude Replit/localhost origins)
     try {
       if (isInIframe && document.referrer) {
         const referrerUrl = new URL(document.referrer);
-        return referrerUrl.origin;
+        if (!referrerUrl.hostname.includes('replit') && !referrerUrl.hostname.includes('localhost')) {
+          return referrerUrl.origin;
+        }
       }
     } catch (e) {
       console.warn('Could not parse referrer URL:', e);

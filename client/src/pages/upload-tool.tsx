@@ -464,28 +464,34 @@ export default function UploadTool() {
         setTimeout(() => {
           const isInIframe = window.self !== window.top;
           
-          // Determine Odoo base URL:
-          // 1. Check URL params first (for standalone/PWA mode opened from iframe)
-          // 2. Use parent origin when in iframe
-          // 3. Fall back to env var or production default
-          let odooBaseUrl = import.meta.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+          // Use the same Odoo URL that the add-to-cart API used (from odooUrlFromParams state)
+          // This ensures the redirect goes to the same server the cart was created on
+          let odooBaseUrl = 'https://www.completetransfers.com';
           
-          // Check URL params for odoo URL (standalone/PWA mode)
-          const urlParams = new URLSearchParams(window.location.search);
-          const odooFromUrl = urlParams.get('odoo');
-          if (odooFromUrl) {
-            odooBaseUrl = odooFromUrl;
-            console.log('🔗 Using Odoo URL from URL params for cart:', odooBaseUrl);
-          } else if (isInIframe && document.referrer) {
-            try {
-              const referrerUrl = new URL(document.referrer);
-              odooBaseUrl = referrerUrl.origin;
-              console.log('🔗 Using parent origin for cart URL:', odooBaseUrl);
-            } catch (e) {
-              console.warn('Could not parse referrer URL, using fallback:', e);
+          if (odooUrlFromParams) {
+            odooBaseUrl = odooUrlFromParams;
+            console.log('🔗 Using stored Odoo URL for cart redirect:', odooBaseUrl);
+          } else {
+            // Fallback: check URL params directly
+            const urlParams = new URLSearchParams(window.location.search);
+            const odooFromUrl = urlParams.get('odoo');
+            if (odooFromUrl) {
+              odooBaseUrl = odooFromUrl;
+              console.log('🔗 Using Odoo URL from URL params for cart:', odooBaseUrl);
+            } else if (isInIframe && document.referrer) {
+              try {
+                const referrerUrl = new URL(document.referrer);
+                if (!referrerUrl.hostname.includes('replit') && !referrerUrl.hostname.includes('localhost')) {
+                  odooBaseUrl = referrerUrl.origin;
+                  console.log('🔗 Using parent origin for cart URL:', odooBaseUrl);
+                }
+              } catch (e) {
+                console.warn('Could not parse referrer URL, using fallback:', e);
+              }
             }
           }
           const cartUrl = `${odooBaseUrl}/shop/cart`;
+          console.log('🔗 Cart redirect URL:', cartUrl);
           
           // Extract cart details for session claiming
           const orderId = data?.website_sale_order;
