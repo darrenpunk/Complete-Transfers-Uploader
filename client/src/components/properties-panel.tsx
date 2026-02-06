@@ -113,7 +113,7 @@ interface PropertiesPanelProps {
   templateSizes: TemplateSize[];
   onTemplateChange: (templateId: string) => void;
   onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
-  onAlignElements?: (updates: Array<{ id: string; x: number; y: number }>) => void;
+  onAlignElements?: (updates: Array<{ id: string; x: number; y: number; rotation?: number }>) => void;
   onCenterAllElements?: () => void;
   maintainAspectRatio?: boolean;
   onMaintainAspectRatioChange?: (maintain: boolean) => void;
@@ -873,13 +873,31 @@ export default function PropertiesPanel({
                   variant="default"
                   size="sm"
                   onClick={() => {
-                    // Rotate each selected element by 90° from its own current rotation
-                    if (selectedElements.length > 1) {
-                      selectedElements.forEach(element => {
-                        const currentRotation = element.rotation || 0;
-                        const newRotation = (currentRotation + 90) % 360;
-                        updateElementDirect(element.id, { rotation: newRotation });
+                    if (selectedElements.length > 1 && onAlignElements) {
+                      let sumCx = 0, sumCy = 0;
+                      selectedElements.forEach(el => {
+                        sumCx += el.x + (el.width || 0) / 2;
+                        sumCy += el.y + (el.height || 0) / 2;
                       });
+                      const gcx = sumCx / selectedElements.length;
+                      const gcy = sumCy / selectedElements.length;
+
+                      const updates = selectedElements.map(el => {
+                        const cx = el.x + (el.width || 0) / 2;
+                        const cy = el.y + (el.height || 0) / 2;
+                        const relX = cx - gcx;
+                        const relY = cy - gcy;
+                        const newCx = gcx + relY;
+                        const newCy = gcy - relX;
+                        const newRotation = ((el.rotation || 0) + 90) % 360;
+                        return {
+                          id: el.id,
+                          x: Math.round((newCx - (el.width || 0) / 2) * 10) / 10,
+                          y: Math.round((newCy - (el.height || 0) / 2) * 10) / 10,
+                          rotation: newRotation,
+                        };
+                      });
+                      onAlignElements(updates);
                     } else {
                       const currentRotation = currentElement.rotation || 0;
                       const newRotation = (currentRotation + 90) % 360;

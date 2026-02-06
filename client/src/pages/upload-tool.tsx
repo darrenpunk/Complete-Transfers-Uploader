@@ -1000,15 +1000,19 @@ export default function UploadTool() {
   };
 
   // Handle batch alignment from PropertiesPanel (group of elements)
-  const handleAlignElementsBatch = async (updates: Array<{ id: string; x: number; y: number }>) => {
+  const handleAlignElementsBatch = async (updates: Array<{ id: string; x: number; y: number; rotation?: number }>) => {
     if (!currentProject) return;
     try {
       await Promise.all(
-        updates.map(({ id, x, y }) => apiRequest("PATCH", `/api/canvas-elements/${id}`, { x, y }))
+        updates.map(({ id, x, y, rotation }) => {
+          const payload: Record<string, number> = { x, y };
+          if (rotation !== undefined) payload.rotation = rotation;
+          return apiRequest("PATCH", `/api/canvas-elements/${id}`, payload);
+        })
       );
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
     } catch (error) {
-      console.error('Failed to batch align elements:', error);
+      console.error('Failed to batch update elements:', error);
     }
   };
 
