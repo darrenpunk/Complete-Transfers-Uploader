@@ -6,7 +6,7 @@ const VERSION_CHECK_INTERVAL = 60_000;
 const VERSION_STORAGE_KEY = "app-version";
 
 export function UpdateBanner() {
-  const [showBanner, setShowBanner] = useState(true); // TEMP: force show for preview
+  const [showBanner, setShowBanner] = useState(false);
   const [initialVersion, setInitialVersion] = useState<string | null>(null);
 
   const checkVersion = useCallback(async () => {
