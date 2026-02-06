@@ -43,7 +43,11 @@ export function UpdateBanner() {
         names.forEach((name) => caches.delete(name));
       });
     }
-    window.location.reload();
+    try {
+      window.top?.location.reload();
+    } catch {
+      window.location.reload();
+    }
   };
 
   if (!showBanner) return null;
