@@ -82,7 +82,9 @@ export default function UploadTool() {
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
-  const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(null);
+  const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
+    try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
+  });
 
   // Detect if running in iframe and capture parent Odoo URL
   useEffect(() => {
@@ -95,10 +97,10 @@ export default function UploadTool() {
         const referrer = document.referrer;
         if (referrer) {
           const referrerUrl = new URL(referrer);
-          // Only use if it's a real Odoo server (not localhost or replit)
           if (!referrerUrl.hostname.includes('replit') && !referrerUrl.hostname.includes('localhost')) {
             console.log('🔗 Detected parent Odoo URL from referrer:', referrerUrl.origin);
             setOdooUrlFromParams(referrerUrl.origin);
+            try { sessionStorage.setItem('odoo_base_url', referrerUrl.origin); } catch {}
           }
         }
       } catch (e) {
@@ -124,10 +126,20 @@ export default function UploadTool() {
     if (emailFromUrl) {
       console.log('✅ Partner email from URL params:', emailFromUrl);
       setPartnerEmail(emailFromUrl);
+      try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
+    } else {
+      try {
+        const storedEmail = sessionStorage.getItem('partner_email');
+        if (storedEmail) {
+          console.log('✅ Partner email restored from session:', storedEmail);
+          setPartnerEmail(storedEmail);
+        }
+      } catch {}
     }
     if (odooFromUrl) {
       console.log('✅ Odoo URL from URL params:', odooFromUrl);
       setOdooUrlFromParams(odooFromUrl);
+      try { sessionStorage.setItem('odoo_base_url', odooFromUrl); } catch {}
     }
   }, []);
 
@@ -418,18 +430,29 @@ export default function UploadTool() {
       console.log('✅ Added to cart successfully:', data);
       
       if (action === 'new-project') {
-        // Start new project - clear current project and reload
         toast({
           title: "Added to Cart",
           description: "Starting a new project...",
         });
         
         setTimeout(() => {
-          // Clear project state before reloading
           setCurrentProject(null);
           setPendingAction(null);
           setCurrentStep(1);
-          window.location.href = '/';
+          const currentParams = new URLSearchParams(window.location.search);
+          const newParams = new URLSearchParams();
+          ['email', 'odoo'].forEach(p => {
+            const val = currentParams.get(p);
+            if (val) newParams.set(p, val);
+          });
+          if (!newParams.has('email') && partnerEmail) {
+            newParams.set('email', partnerEmail);
+          }
+          if (!newParams.has('odoo') && odooUrlFromParams) {
+            newParams.set('odoo', odooUrlFromParams);
+          }
+          const paramString = newParams.toString();
+          window.location.href = paramString ? `/?${paramString}` : '/';
         }, 1000);
       } else if (action === 'view-cart') {
         // Redirect to Odoo cart
@@ -494,9 +517,21 @@ export default function UploadTool() {
       setShowAddToCartModal(false);
     },
     onError: (error) => {
+      console.error('❌ Add to cart failed:', error);
+      const errorMsg = error.message || '';
+      let description = "Unable to add to cart. Please try again.";
+      if (errorMsg.includes('404')) {
+        description = "The cart service could not be reached. Please refresh the page and try again.";
+      } else if (errorMsg.includes('401') || errorMsg.includes('403')) {
+        description = "Session expired. Please sign in again on the main website and retry.";
+      } else if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+        description = "Network error. Please check your connection and try again.";
+      } else if (errorMsg) {
+        description = errorMsg;
+      }
       toast({
         title: "Add to Cart Failed",
-        description: error.message || "Unable to add to cart. Please try again.",
+        description,
         variant: "destructive",
       });
     },

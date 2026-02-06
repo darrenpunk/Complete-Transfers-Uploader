@@ -5116,7 +5116,7 @@ export async function registerRoutes(app: express.Application) {
 
   // Debug endpoint to check Odoo configuration
   app.get('/api/odoo-config', async (req, res) => {
-    const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+    const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
     res.json({
       odooUrl: odooBaseUrl,
       pricingEndpoint: `${odooBaseUrl}/artwork/api/pricing`,
@@ -5144,8 +5144,8 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Get Odoo base URL and Complete Transfers website ID from environment
-      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
-      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default to Complete Transfers website ID
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
       
       // Build URL with query parameters (Odoo endpoint now uses type='http', not JSON-RPC)
       const odooApiUrl = `${odooBaseUrl}/artwork/api/pricing?templateId=${encodeURIComponent(templateId as string)}&copies=${copiesNum}&source=completetransfers&website_id=${ctWebsiteId}`;
@@ -5230,7 +5230,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Get Odoo base URL from request body (set by frontend based on parent window) or fall back to env
-      const odooBaseUrl = projectData.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+      const odooBaseUrl = projectData.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
       console.log(`🌐 Using Odoo base URL: ${odooBaseUrl}`);
       
       // Use the projects add-to-cart endpoint for all requests
@@ -6227,7 +6227,7 @@ ${svgClose}`;
 
       try {
         // Use odooBaseUrl from request if provided, otherwise fall back to env var
-        const odooBaseUrl = req.body.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://support-atharva-serigraf-16-stage-0410-23999211.dev.odoo.com';
+        const odooBaseUrl = req.body.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
         const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '3';
         const clientCookies = req.headers.cookie || '';
         const partnerEmail = req.body.partnerEmail || '';
