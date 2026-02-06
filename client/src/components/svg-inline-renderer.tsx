@@ -35,17 +35,17 @@ export default function SvgInlineRenderer({
       console.log(`🎨 Color manipulation needed, forcing SVG rendering (overrides: ${!!element.colorOverrides}, recolorForInk: ${shouldRecolorForInk})`);
       setUseFallbackImg(false);
     } else {
-      if (hasComplexVectorFallback) {
-        const metrics = (logo as any).vectorComplexityMetrics;
-        console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
+      const metrics = (logo as any).vectorComplexityMetrics;
+      
+      if (isSafari && (metrics?.hasSafariIncompatibleFeatures || hasComplexVectorFallback)) {
+        console.log(`🍎 Safari: Using cropped safari-png endpoint (incompatible: ${metrics?.hasSafariIncompatibleFeatures}, complex: ${hasComplexVectorFallback})`);
         setUseFallbackImg(true);
         setIsLoading(false);
         return;
       }
       
-      const metrics = (logo as any).vectorComplexityMetrics;
-      if (isSafari && metrics?.hasSafariIncompatibleFeatures) {
-        console.log(`🍎 Safari + known incompatible SVG (${metrics.safariIssues?.join(', ')}) - using PNG fallback`);
+      if (hasComplexVectorFallback) {
+        console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
         setUseFallbackImg(true);
         setIsLoading(false);
         return;
@@ -176,7 +176,29 @@ export default function SvgInlineRenderer({
 
   // PERFORMANCE FIX: Render complex vectors using PNG fallback or simplified SVG
   const renderSimplifiedLargeSvg = () => {
-    // COMPLEX VECTOR: Use PNG fallback if available
+    if (isSafari) {
+      console.log('🍎 Safari fallback: rendering via cropped safari-png endpoint');
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            overflow: 'visible'
+          }}
+        >
+          <img 
+            src={`/api/logos/${logo.id}/safari-png`}
+            alt={logo.originalName}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'fill'
+            }}
+            draggable={false}
+          />
+        </div>
+      );
+    }
+    
     if (hasComplexVectorFallback) {
       const pngUrl = `/uploads/${(logo as any).canvasFallbackFilename}`;
       const metrics = (logo as any).vectorComplexityMetrics;
@@ -185,12 +207,6 @@ export default function SvgInlineRenderer({
         pathCount: metrics?.pathCount,
         elementCount: metrics?.elementCount
       });
-      
-      // Use content bounds for positioning if available
-      const hasContentBounds = logo.contentBounds && 
-                              typeof logo.contentBounds === 'object' &&
-                              'xMin' in logo.contentBounds &&
-                              'yMin' in logo.contentBounds;
       
       return (
         <div 
@@ -213,29 +229,6 @@ export default function SvgInlineRenderer({
               maxHeight: '100%',
               objectFit: 'contain'
             }}
-          />
-        </div>
-      );
-    }
-    
-    if (isSafari && !hasComplexVectorFallback) {
-      console.log('🍎 Safari fallback: rendering via server-generated PNG for compatibility');
-      return (
-        <div 
-          className="w-full h-full"
-          style={{
-            overflow: 'visible'
-          }}
-        >
-          <img 
-            src={`/api/logos/${logo.id}/safari-png`}
-            alt={logo.originalName}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'fill'
-            }}
-            draggable={false}
           />
         </div>
       );
