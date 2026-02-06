@@ -28,7 +28,7 @@
             var messageType = event.data.type;
             
             // Filter to only our message types
-            if (['request-user-data', 'claim-cart', 'navigate-to-cart'].indexOf(messageType) === -1) {
+            if (['request-user-data', 'claim-cart', 'navigate-to-cart', 'artwork-uploader-refresh'].indexOf(messageType) === -1) {
                 return;
             }
             
@@ -45,6 +45,11 @@
                     
                 case 'navigate-to-cart':
                     handleNavigateToCart(event);
+                    break;
+
+                case 'artwork-uploader-refresh':
+                    console.log('🔄 Artwork uploader requested page refresh');
+                    window.location.reload();
                     break;
             }
         });

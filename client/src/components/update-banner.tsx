@@ -43,11 +43,14 @@ export function UpdateBanner() {
         names.forEach((name) => caches.delete(name));
       });
     }
-    try {
-      window.top?.location.reload();
-    } catch {
-      window.location.reload();
+    const isInIframe = window !== window.top;
+    if (isInIframe) {
+      try {
+        window.parent.postMessage({ type: 'artwork-uploader-refresh' }, '*');
+        return;
+      } catch {}
     }
+    window.location.reload();
   };
 
   if (!showBanner) return null;
