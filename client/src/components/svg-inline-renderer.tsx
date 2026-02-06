@@ -224,11 +224,6 @@ export default function SvgInlineRenderer({
         <div 
           className="w-full h-full"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
             overflow: 'visible'
           }}
         >
@@ -236,9 +231,9 @@ export default function SvgInlineRenderer({
             src={`/api/logos/${logo.id}/safari-png`}
             alt={logo.originalName}
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain'
+              width: '100%',
+              height: '100%',
+              objectFit: 'fill'
             }}
             draggable={false}
           />
