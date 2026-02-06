@@ -998,6 +998,21 @@ export default function CanvasWorkspace({
           let deltaX = mouseX - initialMousePos.x;
           let deltaY = mouseY - initialMousePos.y;
 
+          // For group resize with rotated elements, transform screen deltas to local space
+          if (isGroupResize.current && groupResizeStateRef.current) {
+            const firstEl = groupResizeStateRef.current.elements.values().next().value;
+            const groupRotation = firstEl ? (firstEl.rotation || 0) : 0;
+            if (groupRotation !== 0) {
+              const rotRad = -(groupRotation * Math.PI) / 180;
+              const cosR = Math.cos(rotRad);
+              const sinR = Math.sin(rotRad);
+              const localDX = deltaX * cosR - deltaY * sinR;
+              const localDY = deltaX * sinR + deltaY * cosR;
+              deltaX = localDX;
+              deltaY = localDY;
+            }
+          }
+
           // Calculate new group/element dimensions based on resize handle
           let newWidth = initialSize.width;
           let newHeight = initialSize.height;
