@@ -4437,19 +4437,12 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Logo not found' });
       }
       
-      if (logo.canvasFallbackFilename) {
-        const pngPath = path.join(uploadDir, logo.canvasFallbackFilename);
-        if (fs.existsSync(pngPath)) {
-          return res.sendFile(pngPath);
-        }
-      }
-      
       const svgPath = path.join(uploadDir, logo.filename);
       if (!fs.existsSync(svgPath)) {
         return res.status(404).json({ error: 'SVG file not found' });
       }
       
-      const pngFilename = logo.filename.replace(/\.svg$/, '-safari-fallback.png');
+      const pngFilename = logo.filename.replace(/\.svg$/, '-safari-cropped.png');
       const pngPath = path.join(uploadDir, pngFilename);
       
       if (fs.existsSync(pngPath)) {
@@ -4457,14 +4450,60 @@ export async function registerRoutes(app: express.Application) {
       }
       
       const { execSync } = await import('child_process');
+      
+      const bounds = logo.contentBounds as any;
+      const hasContentBounds = bounds && typeof bounds === 'object' &&
+        typeof bounds.xMin === 'number' && typeof bounds.yMin === 'number' &&
+        typeof bounds.width === 'number' && typeof bounds.height === 'number';
+      
+      let svgToConvert = svgPath;
+      let tempSvgPath: string | null = null;
+      
+      if (hasContentBounds) {
+        try {
+          let svgContent = fs.readFileSync(svgPath, 'utf8');
+          const newViewBox = `${bounds.xMin} ${bounds.yMin} ${bounds.width} ${bounds.height}`;
+          console.log(`🍎 Safari PNG: Cropping SVG to content bounds viewBox="${newViewBox}"`);
+          
+          if (/viewBox\s*=\s*["'][^"']*["']/i.test(svgContent)) {
+            svgContent = svgContent.replace(
+              /viewBox\s*=\s*["'][^"']*["']/i,
+              `viewBox="${newViewBox}"`
+            );
+          } else {
+            svgContent = svgContent.replace(/<svg([^>]*)>/i, `<svg$1 viewBox="${newViewBox}">`);
+          }
+          
+          svgContent = svgContent.replace(
+            /(<svg[^>]*?)(\s+width\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3'
+          );
+          svgContent = svgContent.replace(
+            /(<svg[^>]*?)(\s+height\s*=\s*["'][^"']*["'])([^>]*?>)/i,
+            '$1$3'
+          );
+          
+          tempSvgPath = svgPath.replace(/\.svg$/, '-safari-cropped.svg');
+          fs.writeFileSync(tempSvgPath, svgContent);
+          svgToConvert = tempSvgPath;
+        } catch (e) {
+          console.log('Could not crop SVG to content bounds, using original:', e);
+          svgToConvert = svgPath;
+        }
+      }
+      
       try {
-        execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -d 300 -p 300`, { 
+        execSync(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -d 300 -p 300`, { 
           stdio: 'pipe', timeout: 30000 
         });
       } catch {
-        execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=300`, {
+        execSync(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=300`, {
           stdio: 'pipe', timeout: 30000
         });
+      }
+      
+      if (tempSvgPath && fs.existsSync(tempSvgPath)) {
+        try { fs.unlinkSync(tempSvgPath); } catch {}
       }
       
       try {
